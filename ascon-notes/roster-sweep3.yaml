@@ -1,0 +1,44 @@
+# sweep3: multi-arb のコピー ascon-delta（既定=multi-arb と同一挙動）に、Grok/Codex の改善案をつまみとして 1 つずつ足す。
+# ascon-delta（既定）と multi-arb の T 差は「同一コード 2 体の測定ノイズ + 干渉」の目安（対照）。
+# 注意: バリアントは同じ世界で同じ信号に反応するため干渉する。差は方向として読み、最終候補は単独で再検証する。
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    description: does nothing (baseline)
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: upstream reference
+  - id: clean-arb
+    wallet: AUTO
+    description: upstream reference (two-leg)
+  - id: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: copy of multi-arb, default params (noise control)
+  - id: delta-persist3
+    dir: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"persistBlocks":3}' }
+    description: single-leg only after the gap persists 3 blocks (informed-flow guard)
+  - id: delta-exec
+    dir: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"useExecutableQuotes":true}' }
+    description: edge from executable buy/sell quotes
+  - id: delta-band50
+    dir: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"inventoryBandBps":5000}' }
+    description: post-trade inventory band +-50%
+  - id: delta-bid
+    dir: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidExtraBps":5000}' }
+    description: bid a higher priority fee on large edges
+  - id: delta-combo
+    dir: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"persistBlocks":3,"useExecutableQuotes":true,"inventoryBandBps":5000,"endgameNoNewBlocks":12}' }
+    description: persist + executable quotes + band + endgame stop
