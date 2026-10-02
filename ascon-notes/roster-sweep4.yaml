@@ -1,0 +1,35 @@
+# sweep4: ascon-epsilon（multi-arb 土台 + launch / eUSD 償還 / Stability Pool の専門戦略）の ablation。
+# epsilon の全オン vs 各専門戦略を 1 つずつ切った版 vs ascon-delta（= multi-arb 同一）。
+# 注意: バリアントは同じ世界で干渉する。差は方向として読み、最終候補は単独で再検証する。
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    description: does nothing (baseline)
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: upstream reference
+  - id: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: copy of multi-arb, default params (noise control)
+  - id: ascon-epsilon
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: delta + launch + redemption + stability pool (all on)
+  - id: eps-nolaunch
+    dir: ascon-epsilon
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_EPSILON_PARAMS: '{"launch":false}' }
+    description: epsilon without the launch specialist
+  - id: eps-nored
+    dir: ascon-epsilon
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_EPSILON_PARAMS: '{"redemption":false}' }
+    description: epsilon without eUSD redemption
+  - id: eps-nosp
+    dir: ascon-epsilon
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_EPSILON_PARAMS: '{"stabilityPool":false}' }
+    description: epsilon without the Stability Pool underwriter
