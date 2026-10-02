@@ -58,3 +58,5 @@ cf-service-token.env
 # ascon (Majisuke-dev) local-only
 .claude/worktrees/
 .codex-task/
+# practice-devnet wallet key written by ascon-notes/practice/wallet-new.ts (never commit)
+.env.wallet.local

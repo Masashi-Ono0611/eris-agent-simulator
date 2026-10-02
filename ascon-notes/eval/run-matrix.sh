@@ -72,6 +72,9 @@ for regime in $REGIMES; do
   for seed in $SEEDS; do
     run_one "$regime" "$seed" "$slot" &
     pids="$pids $!"
+    # Stagger launches: the backtest derives runs/<id> from a millisecond timestamp, so runs started in
+    # the same instant collide on one directory (observed in r1: calm/cex-drift shared a run dir).
+    sleep 3
     slot=$((slot + 1))
     if [ "$slot" -ge "$PARALLEL" ]; then
       for pid in $pids; do wait "$pid" || :; done
@@ -94,6 +97,12 @@ for regime in $REGIMES; do
     fi
   done
 done
+# A run directory claimed by two scenarios means their results overwrote each other: count as failures.
+dups=$(awk -F '\t' 'NR > 1 && $3 != "" {n[$3]++} END {c = 0; for (k in n) if (n[k] > 1) c += n[k]; print c}' "$TMP/index.tsv")
+if [ "$dups" -gt 0 ]; then
+  echo "ERROR: $dups scenario(s) share a run directory (results are not trustworthy)" >&2
+  failures=$((failures + dups))
+fi
 mv "$TMP/index.tsv" "$OUT/index.tsv"
 rm -rf "$TMP"
 echo "completed with $failures failed run(s); index: $OUT/index.tsv"
