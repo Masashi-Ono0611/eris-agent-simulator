@@ -26,6 +26,26 @@ if [ "$PARALLEL" -lt 1 ] || [ ! -f "$ROSTER" ]; then echo "invalid parallel coun
 for regime in $REGIMES; do
   if [ ! -f "config/regimes/$regime.yaml" ]; then echo "unknown regime: $regime" >&2; exit 2; fi
 done
+# Disk guard. anvil leaves ~4-6.5 GB of history per 12-minute scenario in ~/.foundry/anvil/tmp (SIGTERM does not
+# clean it); 50 runs filled a 460 GB disk and killed a sweep mid-run (2026-10-03). Before every round we require
+# MIN_FREE_GB free (default 40: a round of 3 needs about 20), clean idle leftovers if short, and abort if still short.
+MIN_FREE_GB=${MIN_FREE_GB:-40}
+CLEANER="$(cd "$(dirname "$0")" && pwd)/clean-anvil-tmp.py"
+free_gb() { df -k . | awk 'NR == 2 {printf "%d", $4 / 1048576}'; }
+clean_anvil_tmp() { python3 "$CLEANER" --idle-min 3 || echo "warning: anvil tmp cleanup failed" >&2; }
+ensure_space() {
+  have=$(free_gb)
+  if [ "$have" -lt "$MIN_FREE_GB" ]; then
+    echo "low disk (${have} GB free, need ${MIN_FREE_GB}); cleaning idle anvil tmp dirs" >&2
+    clean_anvil_tmp
+    have=$(free_gb)
+  fi
+  if [ "$have" -lt "$MIN_FREE_GB" ]; then
+    echo "ERROR: only ${have} GB free (need ${MIN_FREE_GB}); aborting before launching more backtests" >&2
+    return 1
+  fi
+  return 0
+}
 OUT="ascon-notes/eval/out/$LABEL"
 mkdir -p "$OUT"
 TMP="$OUT/.matrix-tmp-$$"
@@ -68,8 +88,10 @@ PY
 pids=
 slot=0
 failures=0
+aborted=0
 for regime in $REGIMES; do
   for seed in $SEEDS; do
+    if [ "$slot" -eq 0 ] && ! ensure_space; then aborted=1; break 2; fi
     run_one "$regime" "$seed" "$slot" &
     pids="$pids $!"
     # Stagger launches: the backtest derives runs/<id> from a millisecond timestamp, so runs started in
@@ -80,10 +102,15 @@ for regime in $REGIMES; do
       for pid in $pids; do wait "$pid" || :; done
       pids=
       slot=0
+      clean_anvil_tmp
     fi
   done
 done
 for pid in $pids; do wait "$pid" || :; done
+clean_anvil_tmp
+if [ "$aborted" -eq 1 ]; then
+  echo "ERROR: matrix aborted for lack of disk space; scenarios not yet run are recorded as failed" >&2
+fi
 for regime in $REGIMES; do
   for seed in $SEEDS; do
     rowfile="$TMP/$regime-$seed.row"
