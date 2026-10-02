@@ -24,8 +24,10 @@ export async function runChecks() {
   const before=results.length;
   try {
     const chain=await client.getChainId(); add('chainId = 31337',chain===31337?'PASS':'FAIL',`chainId ${chain}`);
-    const b1=await client.getBlockNumber(); await new Promise(r=>setTimeout(r,2200)); const b2=await client.getBlockNumber();
-    add('ブロック進行',b2>b1?'PASS':'FAIL',`block ${b1} → ${b2}`);
+    // 2s blocks: a 2.2s window can legitimately read the same block twice (false FAIL seen on 2026-10-03),
+    // so wait 8s and require at least 2 new blocks (measured rate on the practice devnet: 0.51 blocks/s).
+    const b1=await client.getBlockNumber(); await new Promise(r=>setTimeout(r,8000)); const b2=await client.getBlockNumber();
+    add('ブロック進行',b2-b1>=2n?'PASS':'FAIL',`block ${b1} → ${b2} (8s)`);
     const account=privateKeyToAccount(env.privateKey);
     const eth=await client.getBalance({address:account.address}); add('ETH残高',eth>0n?'PASS':'FAIL',`${formatEther(eth)} ETH${eth===0n?' — #faucet に投稿':''}`);
     let manifest:any=null;
@@ -35,7 +37,10 @@ export async function runChecks() {
       for(const [k,v] of Object.entries(obj)) { if(k.toLowerCase()===key && typeof v==='string' && /^0x[0-9a-fA-F]{40}$/.test(v)) return v as `0x${string}`; const found=findAddress(v,key); if(found)return found; }
     };
     for(const token of ['weth','usdc']) {
-      const address=findAddress(manifest?.contracts,token);
+      // The manifest publishes token addresses under tokens.<SYMBOL>.address (verified against the live manifest);
+      // the contracts-table search stays as a fallback for older manifest shapes.
+      const listed=manifest?.tokens?.[token.toUpperCase()]?.address;
+      const address=(typeof listed==='string' && /^0x[0-9a-fA-F]{40}$/.test(listed) ? listed : findAddress(manifest?.contracts,token)) as `0x${string}`|undefined;
       if(!address){add(`${token.toUpperCase()}残高`,'BLOCKED','manifest.json に token address がありません');continue;}
       try { const bal=await client.readContract({address,abi:parseAbi(['function balanceOf(address) view returns (uint256)']),functionName:'balanceOf',args:[account.address]});
         const decimals=token==='usdc'?6:18; add(`${token.toUpperCase()}残高`,bal>0n?'PASS':'FAIL',`${formatUnits(bal,decimals)} ${token.toUpperCase()}${bal===0n?' — #faucet に投稿':''}`);

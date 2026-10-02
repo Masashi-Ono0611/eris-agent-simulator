@@ -1,16 +1,19 @@
 import type { AgentAction, AgentObservation } from "@eris/sdk";
-import { affordable, canFund } from "../lib/affordable.js";
+import { balanceOf } from "../lib/affordable.js";
 import { marketViews, type MarketView } from "../lib/markets.js";
 
 const DEFAULT_PARAMS = {
   marginBps: 45,
-  adverseBps: 35,
+  // 80bps covers both legs at the 35bps slippage bound plus 10bps execution uncertainty.
+  adverseBps: 80,
   sizeGain: 200_000,
   maxSizeBps: 1_500,
   inventoryToleranceBps: 2_000,
   endgameBlocks: 12,
-  slippageBps: 80,
+  // Bound each leg to 35bps; adverseBps reserves at least the combined 70bps plus a buffer.
+  slippageBps: 35,
   sellReserveBps: 10_000,
+  maxFairDeviationBps: 60,
 } as const;
 type GammaParams = { -readonly [K in keyof typeof DEFAULT_PARAMS]: number };
 
@@ -38,6 +41,21 @@ const INITIAL: Record<string, { amount: bigint; decimals: number }> = {
   WETH: { amount: 8n * 10n ** 18n, decimals: 18 },
   WBTC: { amount: 4n * 10n ** 7n, decimals: 8 },
 };
+
+function dust(token: string, decimals: number): bigint {
+  return token === "USDC" ? 10n ** 6n : 10n ** BigInt(Math.max(0, decimals - 3));
+}
+function spendable(obs: AgentObservation, token: string, desired: bigint, decimals: number): bigint {
+  const held = balanceOf(obs, token);
+  const value = desired < held ? desired : held;
+  return value >= dust(token, decimals) ? value : 0n;
+}
+function canSpend(obs: AgentObservation, token: string, decimals: number): boolean {
+  return balanceOf(obs, token) >= dust(token, decimals);
+}
+function quoteForBase(amount: bigint, decimals: number, price: number): bigint {
+  return BigInt(Math.floor(Number(amount) / 10 ** decimals * price * 1e6));
+}
 
 type Candidate = { edge: number; action: AgentAction };
 function baseBalance(obs: AgentObservation, base: string): bigint {
@@ -81,23 +99,24 @@ export function chooseAction(obs: AgentObservation, params: GammaParams = PARAMS
       const current = baseBalance(obs, view.base);
       const cheapest = [...view.venues].sort((a, b) => a.price - b.price)[0];
       const richest = [...view.venues].sort((a, b) => b.price - a.price)[0];
-      if (cheapest && richest && cheapest !== richest && canFund(obs, "USDC")) {
+      if (cheapest && richest && cheapest !== richest && canSpend(obs, "USDC", 6) && params.slippageBps <= params.adverseBps) {
         // Use the mid spread to select venues, executable quotes to estimate proceeds/cost.
         const buyPrice = cheapest.buyPrice ?? cheapest.price * (1 + cheapest.feeBps / 10_000);
         const sellPrice = richest.sellPrice ?? richest.price * (1 - richest.feeBps / 10_000);
         const netBps = (sellPrice / buyPrice - 1) * 10_000 - params.marginBps - params.adverseBps;
-        if (netBps > 0 && sellPrice > buyPrice) {
+        const fairSafe = buyPrice <= view.fair * (1 + params.maxFairDeviationBps / 10_000) && sellPrice >= view.fair * (1 - params.maxFairDeviationBps / 10_000);
+        if (netBps > 0 && sellPrice > buyPrice && fairSafe) {
           const fraction = Math.min(params.maxSizeBps, Math.max(1, Math.floor(netBps * params.sizeGain / 10_000)));
           const desiredUsdc = bpsAmount(usdc, fraction);
           const desiredBase = floatToBase(Number(desiredUsdc) / 1e6 / buyPrice, band.decimals);
           const buyBase = afterBuySize(current, desiredBase, band);
-          const buySpend = buyBase < desiredBase
-            ? BigInt(Math.floor(Number(buyBase) / 10 ** band.decimals * buyPrice * 1e6))
-            : desiredUsdc;
+          const buySpend = quoteForBase(buyBase, band.decimals, buyPrice);
           // Since bundles may partially execute, sell only inventory available before this call.
           const inventoryCap = bpsAmount(current, params.sellReserveBps);
-          const sellBase = affordable(obs, view.base, afterSellSize(current, buyBase < inventoryCap ? buyBase : inventoryCap, band, endgame));
-          const fundedBuySpend = affordable(obs, "USDC", buySpend);
+          const possibleSell = afterSellSize(current, buyBase < inventoryCap ? buyBase : inventoryCap, band, endgame);
+          const commonBase = buyBase < possibleSell ? buyBase : possibleSell;
+          const sellBase = spendable(obs, view.base, commonBase, band.decimals);
+          const fundedBuySpend = spendable(obs, "USDC", quoteForBase(sellBase, band.decimals, buyPrice), 6);
           if (buyBase > 0n && sellBase > 0n && fundedBuySpend > 0n) {
             const action = { type: "bundle", actions: [
               { type: cheapest.swapType, tokenIn: "USDC", amountIn: fundedBuySpend.toString(), base: view.base === "WETH" ? undefined : view.base, slippageBps: params.slippageBps },
@@ -113,16 +132,16 @@ export function chooseAction(obs: AgentObservation, params: GammaParams = PARAMS
         const sellPrice = venue.sellPrice ?? venue.price * (1 - venue.feeBps / 10_000);
         const buyEdgeBps = (view.fair / buyPrice - 1) * 10_000 - params.marginBps - params.adverseBps;
         const sellEdgeBps = (sellPrice / view.fair - 1) * 10_000 - params.marginBps - params.adverseBps;
-        if (buyEdgeBps > 0 && canFund(obs, "USDC")) {
+        if (buyEdgeBps > 0 && canSpend(obs, "USDC", 6)) {
           const fraction = Math.min(params.maxSizeBps, Math.max(1, Math.floor(buyEdgeBps * params.sizeGain / 10_000)));
-          const spend = affordable(obs, "USDC", bpsAmount(usdc, fraction));
-          const amount = afterBuySize(current, floatToBase(Number(spend) / 1e6 / buyPrice, band.decimals), band);
+          const amount = afterBuySize(current, floatToBase(Number(bpsAmount(usdc, fraction)) / 1e6 / buyPrice, band.decimals), band);
+          const spend = spendable(obs, "USDC", quoteForBase(amount, band.decimals, buyPrice), 6);
           if (amount > 0n) candidates.push({ edge: buyEdgeBps, action: { type: venue.swapType, tokenIn: "USDC", amountIn: spend.toString(), ...(view.base === "WETH" ? {} : { base: view.base }), maxPriorityFeePerGasWei: fee, slippageBps: params.slippageBps } as AgentAction });
         }
-        if (sellEdgeBps > 0 && canFund(obs, view.base) && !endgame) {
+        if (sellEdgeBps > 0 && canSpend(obs, view.base, band.decimals) && !endgame) {
           const fraction = Math.min(params.maxSizeBps, Math.max(1, Math.floor(sellEdgeBps * params.sizeGain / 10_000)));
           const desired = bpsAmount(current, fraction);
-          const amount = affordable(obs, view.base, afterSellSize(current, desired, band, endgame));
+          const amount = spendable(obs, view.base, afterSellSize(current, desired, band, endgame), band.decimals);
           if (amount > 0n) candidates.push({ edge: sellEdgeBps, action: { type: venue.swapType, tokenIn: view.base, amountIn: amount.toString(), ...(view.base === "WETH" ? {} : { base: view.base }), maxPriorityFeePerGasWei: fee, slippageBps: params.slippageBps } as AgentAction });
         }
       }

@@ -1,0 +1,38 @@
+# spec: レジーム特化の参照エージェントが、そのレジームでどれだけ alpha を取れるか（移植の価値）を測る。
+# 使い方: run-matrix.sh --label spec --roster ascon-notes/roster-spec.yaml --seeds "101" \
+#   --regimes "lending-incident cdp-incident depeg depeg-persist launch vuln"
+# 注意: liquidator など run(ctx) 形式は「提出不可」。ここでは“上限の目安”を測るためにだけ走らせる。
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    description: does nothing (baseline)
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: generalist reference
+  - id: clean-arb
+    wallet: AUTO
+    description: generalist reference (two-leg)
+  - id: liquidator
+    wallet: AUTO
+    description: Aave liquidations (lending-incident)
+  - id: redemption-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: redeem cheap eUSD (cdp-incident)
+  - id: sp-underwriter
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: Stability Pool underwriting (cdp-incident)
+  - id: peg-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: buys a depegged stable (depeg / depeg-persist)
+  - id: discovery-arb-verify
+    wallet: AUTO
+    description: verifies then trades mid-run pools (vuln)
+  - id: launch-confirm
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: buys a new listing after sustained net buying (launch)
