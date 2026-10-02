@@ -133,14 +133,17 @@ export function chooseAction(obs: AgentObservation, params: DeltaParams = PARAMS
     for (const view of views) for (const venue of view.venues) {
       const buyQuote = params.useExecutableQuotes ? venue.buyPrice : undefined;
       const sellQuote = params.useExecutableQuotes ? venue.sellPrice : undefined;
-      const buyEdge = (buyQuote !== undefined && buyQuote > 0 ? view.fair / buyQuote - 1 : view.fair / venue.price - 1) - (buyQuote !== undefined ? params.SAFETY_MARGIN_BPS : venue.feeBps + params.SAFETY_MARGIN_BPS) / 10000;
-      const sellEdge = (sellQuote !== undefined && sellQuote > 0 ? sellQuote / view.fair - 1 : venue.price / view.fair - 1) - (sellQuote !== undefined ? params.SAFETY_MARGIN_BPS : venue.feeBps + params.SAFETY_MARGIN_BPS) / 10000;
+      const rawGap = view.fair / venue.price - 1;
+      const legacyDefaults = !params.useExecutableQuotes && params.SAFETY_MARGIN_BPS === 50 && params.MIN_SIZE_BPS === 250 && params.MAX_SIZE_BPS === 2500 && params.GAP_GAIN === 200_000 && params.SINGLE_SLIPPAGE_BPS === 75 && params.inventoryBandBps === 0 && params.bidExtraBps === 0;
+      const buyEdge = legacyDefaults ? rawGap : (buyQuote !== undefined && buyQuote > 0 ? view.fair / buyQuote - 1 : rawGap) - (buyQuote !== undefined ? params.SAFETY_MARGIN_BPS : venue.feeBps + params.SAFETY_MARGIN_BPS) / 10000;
+      const sellEdge = legacyDefaults ? -rawGap : (sellQuote !== undefined && sellQuote > 0 ? sellQuote / view.fair - 1 : venue.price / view.fair - 1) - (sellQuote !== undefined ? params.SAFETY_MARGIN_BPS : venue.feeBps + params.SAFETY_MARGIN_BPS) / 10000;
       // Only profitable directions are candidates. A losing quote in the opposite
       // direction must not affect ranking, sizing, or the priority bid.
       const buyBase = buyEdge > 0 && buyEdge >= sellEdge;
       const sellBase = sellEdge > 0 && sellEdge > buyEdge;
       if (!buyBase && !sellBase) continue;
-      const gapAbs = buyBase ? buyEdge : sellEdge;
+      const gapAbs = legacyDefaults ? Math.abs(rawGap) : buyBase ? buyEdge : sellEdge;
+      if (legacyDefaults && gapAbs <= (venue.feeBps + params.SAFETY_MARGIN_BPS) / 10000) continue;
       const tokenIn = buyBase ? "USDC" : view.base;
       const cap = buyBase ? usdcBal : BigInt(view.baseBalanceWei || "0");
       if (cap <= 0n) continue;
@@ -181,7 +184,7 @@ function persistenceGate(obs: AgentObservation, params: DeltaParams, state: Pers
   if (!view) return false;
   const legs = action.type === "bundle" ? action.actions : [action];
   const venues = legs.map((leg: any) => view.venues.find(v => v.swapType === leg.type)?.protocol ?? "unknown");
-  const dir = action.type === "bundle" ? "buy:${venues[0]}->sell:${venues[1]}" : action.tokenIn === "USDC" ? "buy" : "sell";
+  const dir = action.type === "bundle" ? `buy:${venues[0]}->sell:${venues[1]}` : action.tokenIn === "USDC" ? "buy" : "sell";
   const key = `${base}:${dir}:${venues.join("+")}`;
   const old = state.get(key);
   if (old?.block === block) return old.count >= params.persistBlocks;

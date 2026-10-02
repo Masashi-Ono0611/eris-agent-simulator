@@ -1,7 +1,7 @@
 import type { AgentAction, AgentContext, AgentObservation } from "@eris/sdk";
 import { TOKENS } from "@eris/sdk/constants.js";
 import { decide as deltaDecide } from "./delta.js";
-import { decide as launchDecide, hasOpenLaunchPosition } from "./launch.js";
+import { decide as launchDecide, resetLaunchState } from "./launch.js";
 
 type Params = { launch: boolean; redemption: boolean; stabilityPool: boolean };
 const DEFAULTS: Params = { launch: true, redemption: true, stabilityPool: true };
@@ -19,11 +19,17 @@ const PARAMS = parseEpsilonParams(process.env.ASCON_EPSILON_PARAMS);
 const MIN_USDC = 200n * 10n ** 6n, MIN_EUSD = 200n * 10n ** 18n;
 const EXIT_COST_BPS = 35, ENDGAME_BLOCKS = 20;
 let initialEth: bigint | undefined, initialWeth: bigint | undefined;
+let lastBlock: number | undefined;
 const noop = (reason: string) => ({ type: "noop", reason });
 
 export function decideWithParams(obs: AgentObservation, params: Params): AgentAction | Record<string, unknown> | null {
   try {
     const liq = obs.protocols.liquity, remaining = obs.blocksRemaining ?? Number.POSITIVE_INFINITY;
+    const block = Number(obs.blockNumber);
+    if (Number.isSafeInteger(block) && lastBlock !== undefined && (block < lastBlock || block > lastBlock + 1)) {
+      initialEth = undefined; initialWeth = undefined; resetLaunchState();
+    }
+    if (Number.isSafeInteger(block)) lastBlock = block;
     const fee = obs.limits.defaultPriorityFeePerGasWei;
     const usdc = BigInt(obs.balances.usdcUnits || "0"), eusd = BigInt(liq?.eusdBalanceWei || "0");
     const weth = BigInt(obs.balances.wethWei || "0"), eth = BigInt(obs.balances.ethWei || "0");
@@ -46,7 +52,7 @@ export function decideWithParams(obs: AgentObservation, params: Params): AgentAc
       if (BigInt(liq.spEthGainWei || "0") >= 10n ** 16n) return { type: "liquityWithdrawFromSP", amountEusdWei: "0", maxPriorityFeePerGasWei: fee };
       const worth = liq.discountBps > liq.redemptionRateBps + EXIT_COST_BPS + 20;
       if (remaining > ENDGAME_BLOCKS && !worth && eusd >= MIN_EUSD && BigInt(liq.spDepositEusdWei) === 0n) return { type: "liquityProvideToSP", amountEusdWei: eusd.toString(), maxPriorityFeePerGasWei: fee };
-      if (remaining > ENDGAME_BLOCKS && usdc >= MIN_USDC && liq.marketQuoted && liq.discountBps < 25 && liq.discountBps > -10 && liq.spDepositEusdWei === "0") {
+      if (remaining > ENDGAME_BLOCKS && usdc >= MIN_USDC && liq.marketQuoted && liq.discountBps < 25 && liq.discountBps > -10 && BigInt(liq.spDepositEusdWei || "0") === 0n) {
         const amountIn = usdc / 10n;
         if (amountIn >= MIN_USDC) return { type: "liquitySwapEusd", tokenIn: "USDC", amountIn: amountIn.toString(), slippageBps: 100, maxPriorityFeePerGasWei: fee };
       }
@@ -67,10 +73,14 @@ export function decideWithParams(obs: AgentObservation, params: Params): AgentAc
 
 export async function decide(obs: AgentObservation, ctx: AgentContext): Promise<AgentAction | Record<string, unknown> | null> {
   try {
+    const block = Number(obs.blockNumber);
+    if (Number.isSafeInteger(block) && lastBlock !== undefined && (block < lastBlock || block > lastBlock + 1)) {
+      initialEth = undefined; initialWeth = undefined; resetLaunchState();
+    }
+    if (Number.isSafeInteger(block)) lastBlock = block;
     if (PARAMS.launch && obs.registry?.entries?.some(e => e.kind === "uniswapV3Pool")) {
       const action = await launchDecide(obs, ctx);
       if (action && action.type !== "noop") return action;
-      if (hasOpenLaunchPosition()) return action ?? noop("launch position reserved");
     }
     return decideWithParams(obs, { ...PARAMS, launch: false });
   } catch { return noop("invalid observation"); }

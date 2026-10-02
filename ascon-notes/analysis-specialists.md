@@ -21,5 +21,6 @@
 ## launch-confirm 追記
 - launch-confirm: **可能**。registry の `uniswapV3Pool` と USDCペアから新規上場を見つけ、read-only `ctx.publicClient` で fee / reserve / Swapログ / token残高 / quoteを読み、連続買いフロー確認後に `rawBundle` で参入する。
 - `runtime/strategyWorker.ts` は `await decide(observation, ctx)` なので Promise を返す `decide` は対応済み。 epsilon には同戦略をコピーし、`../lib/launchSwap.js` のみ共有する。
-- 保有中は launch 専門判断を先に行い、売りが不要なブロックも delta にUSDCを使わせない予約状態を設ける必要がある。出口条件は売りフロー、保有60ブロック、残り12ブロック。
+- launch は売買の具体的 action がない観測で専門戦略と delta へフォールスルーする。保有予約で他戦略を停止しない。購入後に残高が増えない場合は5ブロックで予約を解除し、売却 action を返した後に実残高が減ったことも次の観測で確認する。
+- 出口条件は売りフロー、保有60ブロック、残り12ブロック。残り3ブロック以下では quote 失敗時にも最低受取量1で緊急売却を試す。Stability Pool の元本は末尾に自動引出しする経路を本変更では実装していない。SP預入分はエポック終了時に回収できず、資産価値が評価対象でも自由資金として再利用できない可能性が残る。実装/採点の実際の扱いは backtest で確認が必要。
 - 参入確認の連続性と持ち越し状態、RPC遅延/ログ取得失敗、提出ランタイム上の rawBundle 実行は実測 backtest で追加確認する。

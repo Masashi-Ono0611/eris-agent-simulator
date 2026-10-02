@@ -51,6 +51,7 @@ const EXIT_BEFORE_END_BLOCKS = numberEnv("ERIS_LAUNCH_EXIT_BLOCKS", 12);
 // quote; 3% lost the entry on the first measured run.
 const SLIPPAGE_BPS = numberEnv("ERIS_LAUNCH_SLIPPAGE_BPS", 1000);
 const MIN_USDC_UNITS = 1_000_000n;
+const RPC_TIMEOUT_MS = 1_200, DECIDE_BUDGET_MS = 4_000, PENDING_BLOCKS = 5, FORCE_EXIT_BLOCKS = 3;
 
 type Watch = {
   pool: LaunchPool;
@@ -62,17 +63,25 @@ type Watch = {
 };
 
 const watches = new Map<string, Watch>();
-
-/** Keep base arbitrage from consuming the USDC needed to manage an open launch position. */
-export function hasOpenLaunchPosition(): boolean {
-  return [...watches.values()].some((w) => w.entered && !w.entered.done);
+let lastBlock: number | undefined;
+export function resetLaunchState(): void { watches.clear(); lastBlock = undefined; }
+function timed<T>(work: Promise<T>, deadline: number): Promise<T> {
+  const ms = Math.max(1, Math.min(RPC_TIMEOUT_MS, deadline - Date.now()));
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("launch RPC timeout")), ms);
+    work.then((value) => { clearTimeout(timer); resolve(value); }, (error) => { clearTimeout(timer); reject(error); });
+  });
 }
 
+/** Keep base arbitrage from consuming the USDC needed to manage an open launch position. */
 export async function decide(
   obs: AgentObservation,
   ctx: AgentContext,
 ): Promise<AgentAction | Record<string, unknown>> {
   const block = Number(obs.blockNumber);
+  const deadline = Date.now() + DECIDE_BUDGET_MS;
+  if (Number.isSafeInteger(block) && lastBlock !== undefined && (block <= lastBlock || block > lastBlock + 1)) watches.clear();
+  if (Number.isSafeInteger(block)) lastBlock = block;
   const fee = obs.limits.defaultPriorityFeePerGasWei;
   const self = ctx.address as Address;
   const remaining =
@@ -85,28 +94,29 @@ export async function decide(
     if (pool.mine) continue;
     const key = pool.pool.toLowerCase();
     if (watches.has(key)) continue;
-    watches.set(key, {
+    try { watches.set(key, {
       pool,
-      fee: await poolFee(ctx.publicClient, pool.pool),
+      fee: await timed(poolFee(ctx.publicClient, pool.pool), deadline),
       // Start reading from the block after registration: the listing's own seed is not demand.
       readThrough: Math.max(pool.registeredAtBlock, block - 1),
       buyStreak: 0,
-    });
+    }); } catch { /* one unavailable pool must not suppress other decisions */ }
   }
 
   // ---- read the tape since the last look, one pool at a time ----
-  let action: Record<string, unknown> | null = null;
+  let exitAction: Record<string, unknown> | null = null, entryAction: Record<string, unknown> | null = null;
   const notes: string[] = [];
   for (const w of watches.values()) {
+    try {
     if (w.entered?.done) continue;
-    const state = await launchPoolState(ctx.publicClient, w.pool);
+    const state = await timed(launchPoolState(ctx.publicClient, w.pool), deadline);
     const reserve = state.usdcReserveUnits;
-    const flow = await poolFlow(
+    const flow = await timed(poolFlow(
       ctx.publicClient,
       w.pool,
       w.readThrough + 1,
       block,
-    );
+    ), deadline);
     w.readThrough = block;
     const net = flow.usdcInUnits - flow.usdcOutUnits;
     const netBps = reserve > 0n ? Number((net * 10_000n) / reserve) : 0;
@@ -115,13 +125,11 @@ export async function decide(
     notes.push(
       `${w.pool.pool.slice(0, 8)} net ${netBps}bps streak ${w.buyStreak}`,
     );
-    if (action) continue;
-
     if (w.entered) {
       // ---- exit? ----
-      const held = await tokenBalance(ctx.publicClient, w.pool.token, self);
+      const held = await timed(tokenBalance(ctx.publicClient, w.pool.token, self), deadline);
       if (held === 0n) {
-        if (w.entered.exiting) w.entered.done = true;
+        if (w.entered.exiting || block - w.entered.block >= PENDING_BLOCKS) w.entered = undefined;
         continue;
       }
       const sellSignal = net < 0n && -netBps >= EXIT_FLOW_BPS;
@@ -132,13 +140,18 @@ export async function decide(
       if (!due) continue;
       let quoted: bigint;
       try {
-        quoted = await quoteLaunch(ctx.publicClient, {
+        quoted = await timed(quoteLaunch(ctx.publicClient, {
           tokenIn: w.pool.token,
           tokenOut: TOKENS.USDC.address,
           fee: w.fee,
           amountIn: held,
-        });
+        }), deadline);
       } catch (error) {
+        if (remaining <= FORCE_EXIT_BLOCKS) {
+          w.entered.exiting = true;
+          exitAction ??= swapBundle({ tokenIn: w.pool.token, tokenOut: TOKENS.USDC.address, fee: w.fee,
+            recipient: self, amountIn: held, minOut: 1n, reason: "launch-confirm forced exit", maxPriorityFeePerGasWei: fee });
+        }
         notes.push(`sell quote failed: ${String(error).split("\n")[0]}`);
         continue;
       }
@@ -158,7 +171,7 @@ export async function decide(
         }`,
         signals: { quotedUsdcUnits: Number(quoted), netFlowBps: netBps },
       });
-      action = swapBundle({
+      exitAction ??= swapBundle({
         tokenIn: w.pool.token,
         tokenOut: TOKENS.USDC.address,
         fee: w.fee,
@@ -182,12 +195,12 @@ export async function decide(
     if (amountIn < MIN_USDC_UNITS) continue;
     let quoted: bigint;
     try {
-      quoted = await quoteLaunch(ctx.publicClient, {
+      quoted = await timed(quoteLaunch(ctx.publicClient, {
         tokenIn: TOKENS.USDC.address,
         tokenOut: w.pool.token,
         fee: w.fee,
         amountIn,
-      });
+      }), deadline);
     } catch (error) {
       notes.push(`buy quote failed: ${String(error).split("\n")[0]}`);
       continue;
@@ -203,7 +216,7 @@ export async function decide(
         priceUsdcPerToken: state.priceUsdcPerToken,
       },
     });
-    action = swapBundle({
+    entryAction ??= swapBundle({
       tokenIn: TOKENS.USDC.address,
       tokenOut: w.pool.token,
       fee: w.fee,
@@ -213,9 +226,11 @@ export async function decide(
       reason: "launch-confirm entry",
       maxPriorityFeePerGasWei: fee,
     });
+    } catch (error) { notes.push(`pool read failed: ${String(error).split("\n")[0]}`); }
   }
 
-  if (action) return action;
+  if (exitAction) return exitAction;
+  if (entryAction) return entryAction;
   ctx.log({
     round: obs.round,
     reason:
