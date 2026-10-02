@@ -21,6 +21,7 @@ config/*.yaml
 # committed example only; the live config/registrations.yaml stays ignored like every other live file.
 !config/registrations.example.yaml
 runs/
+practice-logs/
 cache/
 out/
 node_modules/
