@@ -25,6 +25,7 @@ export function chooseArbitrage(obs: AgentObservation): AgentAction | null {
     cheap: ReturnType<typeof marketViews>[number]["venues"][number];
     rich: ReturnType<typeof marketViews>[number]["venues"][number];
     netBps: number;
+    buyPrice: number;
     amountUsdc: bigint;
   } | undefined;
 
@@ -39,20 +40,21 @@ export function chooseArbitrage(obs: AgentObservation): AgentAction | null {
     const buy = cheap.buyPrice ?? cheap.price * (1 + cheap.feeBps / 10_000);
     const sell = rich.sellPrice ?? rich.price * (1 - rich.feeBps / 10_000);
     const grossBps = (sell / buy - 1) * 10_000;
-    const costBps = EXTRA_COST_BPS + (cheap.sellPrice !== undefined ? 0 : cheap.feeBps) +
-      (rich.sellPrice !== undefined ? 0 : rich.feeBps);
-    const netBps = grossBps - costBps;
+    // buy/sell above already include each venue's fee/half-spread, so only the extra
+    // impact + staleness allowance is charged here (no second fee deduction).
+    const netBps = grossBps - EXTRA_COST_BPS;
     if (!Number.isFinite(netBps) || netBps < MIN_NET_EDGE_BPS) continue;
 
     const amountUsdc = sized(obs, "USDC", Math.min(MAX_TRADE_BALANCE_BPS, Math.max(100, Math.floor(netBps * 5))));
     if (amountUsdc === 0n) continue;
-    if (!best || netBps > best.netBps) best = { base: view.base, cheap, rich, netBps, amountUsdc };
+    if (!best || netBps > best.netBps) best = { base: view.base, cheap, rich, netBps, buyPrice: buy, amountUsdc };
   }
   if (!best || !canFund(obs, "USDC")) return null;
 
   // Keep the sell leg slightly below estimated buy output so rounding/impact cannot
   // make the second leg unfundable. Residual exposure is bounded to ~1% of this small order.
-  const baseOut = Number(best.amountUsdc) / 1e6 / best.cheap.price;
+  // Size the sell from the executable buy price (fee/half-spread included), not the mid.
+  const baseOut = Number(best.amountUsdc) / 1e6 / best.buyPrice;
   const baseSell = BigInt(Math.floor(baseOut * (1 - LIQUIDATION_BUFFER_BPS / 10_000) * 10 **
     (obs.baseDecimals?.[best.base] ?? 18)));
   if (baseSell <= 0n || !canFund(obs, "USDC")) return null;

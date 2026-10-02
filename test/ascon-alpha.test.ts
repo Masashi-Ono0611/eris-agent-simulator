@@ -38,6 +38,18 @@ test("large cross-venue spread buys cheap and sells rich in a bundle", () => {
   assert.equal(action.actions[1].tokenIn, "WETH");
 });
 
+test("sell leg is sized from the executable buy price and never exceeds the bought amount", () => {
+  const action = chooseArbitrage(observation([2000, 2200, 1900]));
+  assert.equal(action?.type, "bundle");
+  if (action?.type !== "bundle") return;
+  const legs = action.actions as unknown as Array<{ amountIn: string }>;
+  const usdcIn = Number(legs[0].amountIn) / 1e6;
+  const executableBuy = 1900 * 1.004; // curve fixture: priceUsdcPerWeth * (1 + 40bps half spread)
+  const maxBoughtWeth = usdcIn / executableBuy;
+  const sellWeth = Number(legs[1].amountIn) / 1e18;
+  assert.ok(sellWeth > 0 && sellWeth <= maxBoughtWeth * 0.995, `sell ${sellWeth} vs bought ${maxBoughtWeth}`);
+});
+
 test("zero quote balance cannot send the buy leg", () => {
   assert.equal(chooseArbitrage(observation([2000, 2200, 1900], { balances: { wethWei: "1000000000000000000", usdcUnits: "0", ethWei: "1000000000000000000" } })), null);
 });
