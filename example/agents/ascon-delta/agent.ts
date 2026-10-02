@@ -41,6 +41,7 @@ export function parseDeltaParams(raw: string | undefined): DeltaParams {
       out[key] = v;
     }
   } catch { /* malformed JSON leaves defaults intact */ }
+  if (out.MIN_SIZE_BPS > out.MAX_SIZE_BPS) { out.MIN_SIZE_BPS = DEFAULT_PARAMS.MIN_SIZE_BPS; out.MAX_SIZE_BPS = DEFAULT_PARAMS.MAX_SIZE_BPS; }
   return out;
 }
 export const PARAMS = parseDeltaParams(process.env.ASCON_DELTA_PARAMS);
@@ -102,10 +103,22 @@ export function chooseAction(obs: AgentObservation, params: DeltaParams = PARAMS
       if (params.inventoryBandBps > 0) {
         const current = BigInt(bestTwo.base === "WETH" ? obs.balances.wethWei || "0" : obs.baseBalances?.[bestTwo.base] ?? "0");
         const buyBase = floatToBase(baseToFloat(usdcIn, 6) / bestTwo.cheap.price, viewDecimals(views, bestTwo.base));
-        const cappedBuy = inventoryCap(current, buyBase, bestTwo.base, true, params.inventoryBandBps);
-        const cappedSell = inventoryCap(current, baseSell, bestTwo.base, false, params.inventoryBandBps);
-        if (buyBase <= 0n || cappedBuy <= 0n || cappedSell <= 0n) bestTwo = null;
-        else { usdcIn = usdcIn * cappedBuy / buyBase; baseSell = cappedSell < cappedBuy ? cappedSell : cappedBuy; }
+        const initial = INITIAL[bestTwo.base], band = initial.amount * BigInt(params.inventoryBandBps) / 10_000n;
+        const lower = initial.amount - band, upper = initial.amount + band;
+        // Buy output uses displayed price as an estimate; execution may differ.
+        // Use the estimated net change for the band; at a boundary, trim the
+        // conservative 2% sell reserve so a nominally neutral bundle remains eligible.
+        if (baseSell < buyBase) baseSell = buyBase;
+        const net = buyBase - baseSell;
+        if (buyBase <= 0n || current < lower || current > upper) bestTwo = null;
+        else if (net > 0n && current + net > upper) {
+          const scale = (upper - current) * 10_000n / net;
+          usdcIn = usdcIn * scale / 10_000n; baseSell = baseSell * scale / 10_000n;
+        } else if (net < 0n && current + net < lower) {
+          const scale = (current - lower) * 10_000n / (-net);
+          usdcIn = usdcIn * scale / 10_000n; baseSell = baseSell * scale / 10_000n;
+        }
+        if (bestTwo && (usdcIn <= 0n || baseSell <= 0n)) bestTwo = null;
       }
       if (bestTwo) {
         const withBase = (a: Record<string, unknown>): Record<string, unknown> => bestTwo!.base === "WETH" ? a : { ...a, base: bestTwo!.base };
@@ -119,13 +132,15 @@ export function chooseAction(obs: AgentObservation, params: DeltaParams = PARAMS
     for (const view of views) for (const venue of view.venues) {
       const buyQuote = params.useExecutableQuotes ? venue.buyPrice : undefined;
       const sellQuote = params.useExecutableQuotes ? venue.sellPrice : undefined;
-      const gap = buyQuote !== undefined && buyQuote > 0 ? view.fair / buyQuote - 1 : view.fair / venue.price - 1;
-      const sellGap = sellQuote !== undefined && sellQuote > 0 ? sellQuote / view.fair - 1 : -gap;
-      const gapAbs = Math.max(Math.abs(gap), Math.abs(sellGap));
-      const executableSide = gap > 0 ? buyQuote : sellQuote;
-      const oneCost = executableSide !== undefined ? params.SAFETY_MARGIN_BPS / 10000 : (venue.feeBps + params.SAFETY_MARGIN_BPS) / 10000;
-      if (gapAbs <= oneCost) continue;
-      const buyBase = gap > 0, tokenIn = buyBase ? "USDC" : view.base;
+      const buyEdge = (buyQuote !== undefined && buyQuote > 0 ? view.fair / buyQuote - 1 : view.fair / venue.price - 1) - (buyQuote !== undefined ? params.SAFETY_MARGIN_BPS : venue.feeBps + params.SAFETY_MARGIN_BPS) / 10000;
+      const sellEdge = (sellQuote !== undefined && sellQuote > 0 ? sellQuote / view.fair - 1 : venue.price / view.fair - 1) - (sellQuote !== undefined ? params.SAFETY_MARGIN_BPS : venue.feeBps + params.SAFETY_MARGIN_BPS) / 10000;
+      // Only profitable directions are candidates. A losing quote in the opposite
+      // direction must not affect ranking, sizing, or the priority bid.
+      const buyBase = buyEdge > 0 && buyEdge >= sellEdge;
+      const sellBase = sellEdge > 0 && sellEdge > buyEdge;
+      if (!buyBase && !sellBase) continue;
+      const gapAbs = buyBase ? buyEdge : sellEdge;
+      const tokenIn = buyBase ? "USDC" : view.base;
       const cap = buyBase ? usdcBal : BigInt(view.baseBalanceWei || "0");
       if (cap <= 0n) continue;
       const sizeBps = Math.min(params.MAX_SIZE_BPS, Math.max(params.MIN_SIZE_BPS, Math.floor(gapAbs * params.GAP_GAIN)));
@@ -151,29 +166,29 @@ export function chooseAction(obs: AgentObservation, params: DeltaParams = PARAMS
 }
 function viewDecimals(views: MarketView[], base: string): number { return views.find(v => v.base === base)?.baseDecimals ?? 18; }
 
-// Persistence is intentionally outside the pure function. Counts consecutive observed blocks per (base, venue).
-const persistence = new Map<string, { block: number; count: number }>();
-function persisted(obs: AgentObservation, params: DeltaParams, persistence: Map<string, { block: number; count: number }>): boolean {
+// Persistence counts the chosen opportunity and is idempotent within a block.
+type PersistState = Map<string, { block: number; count: number }>;
+const persistence: PersistState = new Map();
+const lastBlocks = new WeakMap<object, number>();
+function persistenceGate(obs: AgentObservation, params: DeltaParams, state: PersistState, action: any): boolean {
   if (params.persistBlocks <= 0) return true;
-  const blocks = Number((obs as AgentObservation & { blockNumber?: number }).blockNumber ?? obs.blockNumber ?? 0);
-  const views = marketViews(obs);
-  let qualifying = false;
-  const active = new Set<string>();
-  for (const view of views) for (const venue of view.venues) {
-    const gap = Math.abs(view.fair / venue.price - 1);
-    if (gap <= (venue.feeBps + params.SAFETY_MARGIN_BPS) / 10000) continue;
-    qualifying = true;
-    const key = `${view.base}:${venue.protocol}`; active.add(key);
-    const prior = persistence.get(key);
-    persistence.set(key, { block: blocks, count: prior && prior.block === blocks - 1 ? prior.count + 1 : 1 });
-  }
-  for (const key of persistence.keys()) if (!active.has(key)) persistence.delete(key);
-  return qualifying && [...active].some(key => (persistence.get(key)?.count ?? 0) >= params.persistBlocks);
+  const block = Number((obs as any).blockNumber ?? 0), last = lastBlocks.get(state);
+  if (!Number.isSafeInteger(block) || block < 0 || last !== undefined && (block < last || block > last + 1)) state.clear();
+  if (Number.isSafeInteger(block) && block >= 0) lastBlocks.set(state, block);
+  if (!action || action.type === "noop") return false;
+  const base = action.base ?? "WETH", view = marketViews(obs).find(v => v.base === base);
+  if (!view) return false;
+  const legs = action.type === "bundle" ? action.actions : [action];
+  const venues = legs.map((leg: any) => view.venues.find(v => v.swapType === leg.type)?.protocol ?? "unknown");
+  const dir = action.type === "bundle" ? "buy:${venues[0]}->sell:${venues[1]}" : action.tokenIn === "USDC" ? "buy" : "sell";
+  const key = `${base}:${dir}:${venues.join("+")}`;
+  const old = state.get(key);
+  if (old?.block === block) return old.count >= params.persistBlocks;
+  const count = old?.block === block - 1 ? old.count + 1 : 1;
+  state.set(key, { block, count }); return count >= params.persistBlocks;
 }
-export function decideWithParams(obs: AgentObservation, params: DeltaParams, state: Map<string, { block: number; count: number }>): AgentAction | Record<string, unknown> | null {
-  try {
-    if (params.persistBlocks > 0 && !persisted(obs, params, state)) return { type: "noop", reason: "gap has not persisted" };
-    return chooseAction(obs, params) ?? { type: "noop", reason: "no funded venue gap" };
-  } catch { return { type: "noop", reason: "invalid observation" }; }
+export function decideWithParams(obs: AgentObservation, params: DeltaParams, state: PersistState): AgentAction | Record<string, unknown> | null {
+  try { const action = chooseAction(obs, params) ?? { type: "noop", reason: "no funded venue gap" }; return persistenceGate(obs, params, state, action) ? action : { type: "noop", reason: "gap has not persisted" }; }
+  catch { return { type: "noop", reason: "invalid observation" }; }
 }
 export function decide(obs: AgentObservation): AgentAction | Record<string, unknown> | null { return decideWithParams(obs, PARAMS, persistence); }
