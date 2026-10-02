@@ -1,0 +1,44 @@
+# sweep2: sweep1 の知見（余裕を絞る・在庫帯を広げる）を、WBTC 桁バグ修正済みの ascon-gamma に当てる。
+# 制約: slippageBps*2 <= adverseBps（超えると bundle が無効化される）。
+# 注意: バリアントは同じ世界で干渉するため結果は「方向」。最終候補は単独（参照のみとの対戦）の別 run で再検証する。
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    description: does nothing (baseline)
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: upstream reference
+  - id: clean-arb
+    wallet: AUTO
+    description: upstream reference (two-leg)
+  - id: ascon-gamma
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: gamma default params
+  - id: gamma-tight
+    dir: ascon-gamma
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_GAMMA_PARAMS: '{"marginBps":10,"adverseBps":40,"slippageBps":20}' }
+    description: gamma with a thinner margin
+  - id: gamma-tol50
+    dir: ascon-gamma
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_GAMMA_PARAMS: '{"inventoryToleranceBps":5000}' }
+    description: gamma with a wider inventory band (+-50%)
+  - id: gamma-tight-tol50
+    dir: ascon-gamma
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_GAMMA_PARAMS: '{"marginBps":10,"adverseBps":40,"slippageBps":20,"inventoryToleranceBps":5000}' }
+    description: thin margin + wide band
+  - id: gamma-open
+    dir: ascon-gamma
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_GAMMA_PARAMS: '{"marginBps":10,"adverseBps":40,"slippageBps":20,"inventoryToleranceBps":9500,"maxFairDeviationBps":100}' }
+    description: thin margin + almost no inventory limit
+  - id: beta-m0tol50
+    dir: ascon-beta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_BETA_PARAMS: '{"marginBps":0,"inventoryToleranceBps":5000}' }
+    description: beta combined (note - beta still has the WBTC sell bug)
