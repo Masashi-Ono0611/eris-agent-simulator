@@ -1,0 +1,1357 @@
+import { useMemo, useState } from "react";
+import { RoundsBar } from "@/components/RoundsBar";
+import { AppShell, PAGE_MAIN } from "@/components/AppShell";
+import { useIsMobile } from "@/lib/breakpoints";
+import { Stat, toneColor } from "@/components/competitionUi";
+import { Badge } from "@/design-system/Badge";
+import { StatCard } from "@/design-system/StatCard";
+import { Tabs } from "@/design-system/Tabs";
+import { InfoTip, TipText } from "@/design-system/InfoTip";
+import { StateChart } from "@/components/StateChart";
+import { LogStream } from "@/design-system/LogStream";
+import {
+  blockscoutAddressUrl,
+  blockscoutTxUrl,
+  useBlockscoutBase,
+} from "@/data/blockscout";
+import {
+  buildStandings,
+  decomposeAgent,
+  type AgentStandingDetail,
+} from "@/data/standings";
+import { useAgentDetailSnapshot } from "@/data/useAgentDetailSnapshot";
+import { useCompetitionSnapshot } from "@/data/useCompetitionSnapshot";
+import { useCursor } from "@/data/roundCursor";
+import { useMode } from "@/data/mode";
+import { decisionLogAbsence } from "@/data/logVisibility";
+import { useScenarioLabel } from "@/data/useScenarioLabel";
+import { t } from "@/i18n/messages";
+import {
+  formatBps,
+  formatMove,
+  formatPnlUsdc,
+  formatReturnPct,
+  formatScore,
+  formatUsd,
+} from "@/lib/format";
+import { cssVar } from "@/lib/cssVar";
+import type { AgentPosition, AgentTrade, VenueChart } from "@/data/types";
+
+const SECTION_LABEL_STYLE = {
+  font: "var(--weight-medium) 9px var(--font-mono)",
+  letterSpacing: "var(--tracking-widest)",
+  textTransform: "uppercase" as const,
+  color: "var(--text-tertiary)",
+};
+
+/**
+ * The scenario-level tabs. "Standing" is prepended when the agent ranks in a competition *and* the
+ * environment posts standings (rules §4.7: the trial environment does not, and a per-agent standing
+ * is one — issue #84 B). The decision log is dropped for a self-hosted participant: that log is on
+ * their machine and nothing here can show it (ADR 0021 §4). An empty tab would read as "this agent
+ * thought nothing".
+ */
+const scenarioTabs = (external: boolean) => [
+  { label: t("agent.tab.overview"), value: "overview" },
+  { label: t("agent.tab.rounds"), value: "rounds" },
+  { label: t("agent.tab.positions"), value: "positions" },
+  { label: t("agent.tab.trades"), value: "trades" },
+  ...(external ? [] : [{ label: t("agent.tab.log"), value: "log" }]),
+];
+
+const ROUNDS_GRID = "60px 150px 70px 110px 100px 90px";
+// Rules §4.7: without standings there is no rank column, and the row is one cell narrower.
+const ROUNDS_GRID_NO_RANK = "60px 150px 70px 110px 100px";
+
+const POSITIONS_GRID = "150px 70px 120px 130px minmax(0,1fr)";
+const TRADES_GRID = "120px 90px 1fr 100px 90px";
+
+function positionAvatar(agentId: string): string {
+  const digit = agentId.match(/\d/)?.[0] ?? "•";
+  return `A${digit}`;
+}
+
+function PositionRow({
+  position,
+  grid,
+  padding,
+  borderSide = "borderTop",
+}: {
+  position: AgentPosition;
+  grid: string;
+  padding: string;
+  borderSide?: "borderTop" | "borderBottom";
+}) {
+  const kindColor =
+    position.tone === "up"
+      ? "var(--success-text)"
+      : position.tone === "down"
+        ? "var(--danger-text)"
+        : "var(--text-secondary)";
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: grid,
+        minWidth: "fit-content",
+        padding,
+        [borderSide]: "1px solid var(--border-subtle)",
+        font: "var(--text-sm) var(--font-mono)",
+        color: "var(--text-primary)",
+        alignItems: "baseline",
+      }}
+    >
+      <span>{position.market}</span>
+      <span style={{ color: kindColor }}>{position.kind}</span>
+      <span>{position.size}</span>
+      <span style={{ color: "var(--text-secondary)" }}>{position.mark}</span>
+      <span
+        title={position.note ?? ""}
+        style={{
+          color:
+            position.pnlPercent === undefined
+              ? "var(--text-tertiary)"
+              : position.pnlPercent >= 0
+                ? "var(--success-text)"
+                : "var(--danger-text)",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {position.pnlPercent !== undefined
+          ? `${position.pnlPercent >= 0 ? "+" : ""}${position.pnlPercent.toFixed(1)}% · ${position.note ?? ""}`
+          : (position.note ?? "")}
+      </span>
+    </div>
+  );
+}
+
+/** Positions only exist as an end-of-run reconstruction, and a run can legitimately end with none.
+ * Saying which is which is the whole point — a bare table reads as a broken view. */
+function PositionsEmpty({ padding }: { padding: string }) {
+  return (
+    <div
+      style={{
+        padding,
+        font: "var(--text-xs) var(--font-mono)",
+        color: "var(--text-tertiary)",
+      }}
+    >
+      {t("agent.positions.empty")}
+    </div>
+  );
+}
+
+function TradeRow({ trade, href }: { trade: AgentTrade; href?: string }) {
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: TRADES_GRID,
+        minWidth: "fit-content",
+        padding: "11px 16px",
+        borderBottom: "1px solid var(--border-subtle)",
+        font: "var(--text-xs) var(--font-mono)",
+      }}
+    >
+      {href ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={t("agent.openTx")}
+          style={{ color: "var(--text-link)", textDecoration: "none" }}
+        >
+          {trade.hash}
+        </a>
+      ) : (
+        <span style={{ color: "var(--text-link)" }}>{trade.hash}</span>
+      )}
+      <span style={{ color: "var(--text-secondary)" }}>{trade.block}</span>
+      <span style={{ color: "var(--text-secondary)" }}>{trade.method}</span>
+      <span style={{ color: "var(--text-secondary)" }}>{trade.amount}</span>
+      <span style={{ textAlign: "right", color: "var(--text-tertiary)" }}>
+        {trade.time}
+      </span>
+    </div>
+  );
+}
+
+function ReturnHistogram({ values }: { values: number[] }) {
+  const bins = 41;
+  // Deviation scores, centred on 50 (the field's mean) so the sign is "above or below the field".
+  const bps = values.map((v) => v - 50);
+  // Scaled to a high quantile rather than the maximum: one epoch far past the rest would otherwise
+  // set the axis. Epochs past the edge are counted into the end bins and reported below, so
+  // nothing is hidden, only compressed at the tails.
+  const sortedAbs = [...bps].map(Math.abs).sort((a, b) => a - b);
+  const quantile =
+    sortedAbs[
+      Math.min(sortedAbs.length - 1, Math.floor(sortedAbs.length * 0.98))
+    ] ?? 0;
+  const edge = Math.max(quantile, 1e-9);
+  const clipped = bps.filter((v) => Math.abs(v) > edge).length;
+  const counts = new Array(bins).fill(0) as number[];
+  for (const v of bps) {
+    const idx = Math.min(
+      bins - 1,
+      Math.max(0, Math.floor(((v + edge) / (2 * edge)) * bins)),
+    );
+    counts[idx] += 1;
+  }
+  const peak = Math.max(...counts, 1);
+  const width = 100 / bins;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+      <svg
+        viewBox="0 0 100 34"
+        preserveAspectRatio="none"
+        style={{ width: "100%", height: "70px", display: "block" }}
+      >
+        {counts.map((c, i) => {
+          const h = (c / peak) * 32;
+          const centre = -edge + ((i + 0.5) / bins) * 2 * edge;
+          return (
+            <rect
+              key={i}
+              x={i * width}
+              y={33 - h}
+              width={width * 0.86}
+              height={h}
+              fill={
+                centre >= 0
+                  ? "color-mix(in oklch, var(--green-500), transparent 35%)"
+                  : "color-mix(in oklch, var(--red-500), transparent 35%)"
+              }
+            />
+          );
+        })}
+        <line
+          x1="50"
+          y1="0"
+          x2="50"
+          y2="33"
+          stroke="var(--border-strong)"
+          strokeWidth="0.3"
+        />
+      </svg>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          font: "var(--text-xs) var(--font-mono)",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        <span>≤ {(50 - edge).toFixed(1)}</span>
+        <span>
+          {clipped > 1
+            ? t("agent.histogram.clipped", { n: clipped })
+            : clipped === 1
+              ? t("agent.histogram.clippedOne")
+              : "0"}
+        </span>
+        <span>≥ {(50 + edge).toFixed(1)}</span>
+      </div>
+    </div>
+  );
+}
+
+/** The agent's place in the competition, and the round-level distribution that explains it. */
+interface CompetitionStanding {
+  rank: number;
+  tied: boolean;
+  fieldSize: number;
+  /** Score(a) of rules §4.4.1, at the two decimals §4.6 ranks on. Null when no epoch scored. */
+  score: number | null;
+  netPnlUsdc: number;
+  epochsScored: number;
+  /**
+   * Epochs the record holds this agent in but did not place it in: no starting value there, which
+   * is what a registration part-way through leaves behind (issue #84 X2). Left out of the score
+   * rather than counted as zero (rules §4.4.2).
+   */
+  epochsUnscored: number;
+  /** Practice only: days left out for starting below the capital floor (practiceReturn.ts). */
+  epochsBelowFloor: number;
+  /** What an epoch's P is: USDC (the competition) or a return (a practice period). */
+  pnlUnit: "usdc" | "return";
+  /** The round the standing is read through, or null for the finished result. */
+  throughRound: number | null;
+  regimes: { regime: string; value: number | undefined }[];
+  detail: AgentStandingDetail | null;
+  /** Rules §4.4.2: facts recorded beside the number (early exit, fee cap, unlogged txs). */
+  flags: string[];
+}
+
+/** The recorded facts, next to the standing they did not change. */
+function FlagsNote({ flags }: { flags: string[] }) {
+  if (flags.length === 0) return null;
+  return (
+    <div
+      style={{
+        border: "1px solid var(--warning-text)",
+        borderRadius: "var(--radius-lg)",
+        padding: "12px 16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "6px",
+      }}
+    >
+      <span style={{ ...SECTION_LABEL_STYLE, color: "var(--warning-text)" }}>
+        {t("agent.flags")}
+      </span>
+      {flags.map((flag) => (
+        <span
+          key={flag}
+          style={{
+            font: "var(--text-xs) var(--font-mono)",
+            color: "var(--text-secondary)",
+          }}
+        >
+          {flag}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * The agent's competition standing, read at the shared round cursor.
+ *
+ * At the cursor, not at the end: the standings page ranks through round k while it is scrubbed, and
+ * opening an agent from a row that says rank 4 used to land on a page that said rank 7, because
+ * this recomputed the finished result (issue #84 R). One cursor, one answer.
+ */
+function useCompetitionStanding(agentId: string): CompetitionStanding | null {
+  const { data } = useCompetitionSnapshot();
+  const cursor = useCursor();
+  return useMemo(() => {
+    if (!data) return null;
+    const standings = buildStandings(
+      data.competition,
+      data.rounds,
+      cursor.round,
+    );
+    const row = standings.rows.find((r) => r.id === agentId);
+    if (!row) return null;
+    const byRegime = standings.tByRegime[agentId] ?? {};
+    return {
+      rank: row.rank,
+      tied: row.tied,
+      fieldSize: standings.rows.length,
+      score: row.score,
+      netPnlUsdc: standings.netPnlByAgent[agentId] ?? 0,
+      epochsScored: row.epochs.length,
+      epochsUnscored: (standings.unscoredByAgent[agentId] ?? []).length,
+      epochsBelowFloor: (standings.belowFloorByAgent[agentId] ?? []).length,
+      pnlUnit: standings.pnlUnit,
+      throughRound: standings.throughRound,
+      regimes: standings.regimes.map((regime) => ({
+        regime,
+        value: byRegime[regime],
+      })),
+      detail: decomposeAgent(agentId, data.competition, data.rounds, standings),
+      flags: standings.flagsByAgent[agentId] ?? [],
+    };
+  }, [data, agentId, cursor.round]);
+}
+
+function StandingTab({ standing }: { standing: CompetitionStanding }) {
+  const d = standing.detail;
+  return (
+    <div
+      style={{
+        background: "var(--bg-surface-raised)",
+        border: "1px solid var(--border-subtle)",
+        borderRadius: "var(--radius-lg)",
+        padding: "20px 22px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "18px",
+      }}
+    >
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+          gap: "14px",
+        }}
+      >
+        <Stat
+          label={t("agent.standing.rank")}
+          value={
+            t("agent.standing.rankValue", {
+              r: standing.rank,
+              n: standing.fieldSize,
+            }) + (standing.tied ? " =" : "")
+          }
+        />
+        <div
+          title={
+            d
+              ? t("agent.standing.scoreTitle", {
+                  std: d.tStd.toFixed(2),
+                  worst: formatScore(d.worstT),
+                })
+              : undefined
+          }
+        >
+          <Stat
+            label={t("agent.standing.score")}
+            value={formatScore(standing.score)}
+            caps={false}
+          />
+        </div>
+        <Stat
+          label={t("agent.standing.netPnl")}
+          value={formatPnlUsdc(standing.netPnlUsdc)}
+        />
+        <div style={{ display: "flex", alignItems: "flex-end", gap: "2px" }}>
+          <Stat
+            label={t("agent.standing.rounds")}
+            value={
+              standing.epochsUnscored > 0
+                ? `${standing.epochsScored} · ${t("home.unscoredBadge", {
+                    n: standing.epochsUnscored,
+                  })}`
+                : String(standing.epochsScored)
+            }
+            caps={standing.epochsUnscored === 0}
+          />
+          {standing.epochsUnscored > 0 && (
+            <InfoTip label={t("agent.standing.rounds")}>
+              <TipText>
+                {t("home.unscoredTitle", { n: standing.epochsUnscored })}
+              </TipText>
+            </InfoTip>
+          )}
+        </div>
+      </div>
+
+      {/* Which moment this is: the finished result, or the same round the standings are scrubbed
+          to. Without it the numbers here and the row that was clicked look like a contradiction. */}
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "2px",
+          font: "var(--text-xs) var(--font-mono)",
+          color: "var(--text-tertiary)",
+        }}
+      >
+        {standing.throughRound === null
+          ? t("agent.standing.finalNote")
+          : t("agent.standing.throughRound", { at: standing.throughRound })}
+        <InfoTip label={t("agent.tab.standing")}>
+          <TipText>
+            {t(
+              standing.pnlUnit === "return"
+                ? "agent.standing.explainPractice"
+                : "agent.standing.explain",
+            )}
+          </TipText>
+        </InfoTip>
+      </span>
+
+      {standing.epochsUnscored > 0 && (
+        <span
+          style={{
+            font: "var(--text-xs) var(--font-sans)",
+            color: "var(--text-secondary)",
+            lineHeight: 1.6,
+          }}
+        >
+          {t("agent.standing.unscored", { n: standing.epochsUnscored })}
+        </span>
+      )}
+
+      {standing.epochsBelowFloor > 0 && (
+        <span
+          style={{
+            font: "var(--text-xs) var(--font-sans)",
+            color: "var(--text-secondary)",
+            lineHeight: 1.6,
+          }}
+        >
+          {t("agent.standing.belowFloor", { n: standing.epochsBelowFloor })}
+        </span>
+      )}
+
+      {!d ? (
+        <span
+          style={{
+            font: "var(--text-sm) var(--font-sans)",
+            color: "var(--text-tertiary)",
+            lineHeight: 1.6,
+          }}
+        >
+          {t("agent.standing.noSeries")}
+        </span>
+      ) : (
+        <>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))",
+              gap: "14px",
+            }}
+          >
+            <Stat
+              label={t("agent.standing.mean")}
+              value={formatScore(d.tMean)}
+              caps={false}
+            />
+            <Stat
+              label={t("agent.standing.std")}
+              value={d.tStd.toFixed(2)}
+              caps={false}
+            />
+            <Stat
+              label={t("agent.standing.worst")}
+              value={formatScore(d.worstT)}
+              caps={false}
+            />
+            <Stat
+              label={t("agent.standing.scoreLine")}
+              value={formatScore(standing.score)}
+              caps={false}
+            />
+          </div>
+
+          <ReturnHistogram values={d.epochs.map((e) => e.t)} />
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={SECTION_LABEL_STYLE}>
+              {t("agent.standing.byEpoch")}
+            </span>
+            <div style={{ overflowX: "auto" }}>
+              <div style={{ minWidth: "520px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "60px 1fr 110px 90px 80px",
+                    padding: "6px 8px",
+                    font: "var(--text-xs) var(--font-mono)",
+                    color: "var(--text-tertiary)",
+                    borderBottom: "1px solid var(--border-subtle)",
+                    textTransform: "uppercase",
+                    letterSpacing: "var(--tracking-wide)",
+                  }}
+                >
+                  <span>s</span>
+                  <span>{t("agent.standing.col.scenario")}</span>
+                  <span style={{ textAlign: "right" }}>
+                    {standing.pnlUnit === "return" ? "P (%)" : "P (USDC)"}
+                  </span>
+                  <span style={{ textAlign: "right" }}>
+                    {t("agent.standing.col.t")}
+                  </span>
+                  <span style={{ textAlign: "right" }}>
+                    {t("agent.standing.col.w")}
+                  </span>
+                </div>
+                {d.epochs.map((e) => (
+                  <div
+                    key={e.s}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "60px 1fr 110px 90px 80px",
+                      padding: "6px 8px",
+                      font: "var(--text-xs) var(--font-mono)",
+                      borderBottom: "1px solid var(--border-subtle)",
+                    }}
+                  >
+                    <span style={{ color: "var(--text-tertiary)" }}>{e.s}</span>
+                    <span style={{ color: "var(--text-secondary)" }}>
+                      {e.label}
+                    </span>
+                    <span
+                      style={{ textAlign: "right", color: toneColor(e.pnl) }}
+                    >
+                      {standing.pnlUnit === "return"
+                        ? formatReturnPct(e.pnl)
+                        : formatPnlUsdc(e.pnl)}
+                    </span>
+                    <span
+                      style={{ textAlign: "right", color: toneColor(e.t - 50) }}
+                    >
+                      {formatScore(e.t)}
+                    </span>
+                    <span
+                      style={{
+                        textAlign: "right",
+                        color: "var(--text-tertiary)",
+                      }}
+                    >
+                      {e.w.toFixed(3)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {d.byRegime.length > 1 && (
+            <div
+              style={{ display: "flex", flexDirection: "column", gap: "6px" }}
+            >
+              <span style={SECTION_LABEL_STYLE}>
+                {t("agent.standing.byRegime")}
+              </span>
+              <div style={{ overflowX: "auto" }}>
+                <div style={{ minWidth: "460px" }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 80px 100px 100px",
+                      padding: "6px 8px",
+                      font: "var(--text-xs) var(--font-mono)",
+                      color: "var(--text-tertiary)",
+                      borderBottom: "1px solid var(--border-subtle)",
+                      textTransform: "uppercase",
+                      letterSpacing: "var(--tracking-wide)",
+                    }}
+                  >
+                    <span>{t("agent.standing.col.regime")}</span>
+                    <span style={{ textAlign: "right" }}>
+                      {t("agent.standing.col.rounds")}
+                    </span>
+                    <span style={{ textAlign: "right" }}>
+                      {t("agent.standing.col.mean")}
+                    </span>
+                    <span style={{ textAlign: "right" }}>
+                      {t("agent.standing.col.std")}
+                    </span>
+                  </div>
+                  {d.byRegime.map((r) => (
+                    <div
+                      key={r.regime}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 80px 100px 100px",
+                        padding: "6px 8px",
+                        font: "var(--text-xs) var(--font-mono)",
+                        borderBottom: "1px solid var(--border-subtle)",
+                      }}
+                    >
+                      <span style={{ color: "var(--text-secondary)" }}>
+                        {r.regime}
+                      </span>
+                      <span
+                        style={{
+                          textAlign: "right",
+                          color: "var(--text-tertiary)",
+                        }}
+                      >
+                        {r.epochs}
+                      </span>
+                      <span
+                        style={{
+                          textAlign: "right",
+                          color: toneColor(r.tMean - 50),
+                        }}
+                      >
+                        {formatScore(r.tMean)}
+                      </span>
+                      <span
+                        style={{
+                          textAlign: "right",
+                          color: "var(--text-secondary)",
+                        }}
+                      >
+                        {r.tStd.toFixed(2)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {d.bankruptIn.length > 0 && (
+            <span
+              style={{
+                font: "var(--text-xs) var(--font-sans)",
+                color: "var(--danger-text)",
+                lineHeight: 1.6,
+              }}
+            >
+              {d.bankruptIn.length === 1
+                ? t("agent.standing.bankruptOne", {
+                    list: d.bankruptIn
+                      .map(
+                        (b) =>
+                          `${b.label} (${formatPnlUsdc(b.finalValueUsdc)})`,
+                      )
+                      .join(", "),
+                  })
+                : t("agent.standing.bankrupt", {
+                    n: d.bankruptIn.length,
+                    list: d.bankruptIn
+                      .map(
+                        (b) =>
+                          `${b.label} (${formatPnlUsdc(b.finalValueUsdc)})`,
+                      )
+                      .join(", "),
+                  })}
+            </span>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+export function AgentDetailPage({ agentId }: { agentId: string }) {
+  const mobile = useIsMobile();
+  const { data, loading, error } = useAgentDetailSnapshot(agentId);
+  const blockscout = useBlockscoutBase();
+  const standing = useCompetitionStanding(agentId);
+  // null = "not chosen yet": land on the standing when the agent ranks in a competition, on the
+  // scenario overview otherwise (seed mode, live runs).
+  const [chosenTab, setChosenTab] = useState<string | null>(null);
+  const mode = useMode();
+  const scenario = useScenarioLabel();
+  const external = data?.agent.external === true;
+  // No decision log to show: the server does not serve it while the competition runs (audience
+  // mode -- it is the participant's reasoning and their pending bids), or it is on the participant's
+  // machine (self-hosted). Either way the tab goes, with the reason said in its place; which reason
+  // is one rule shared with the board (data/logVisibility.ts, issue #69).
+  const logAbsence = decisionLogAbsence(external, mode.audience);
+  const hideLog = logAbsence !== null;
+  // Rules §4.7: where standings are not posted, this page posts none either — not the tab, not the
+  // header badge, not the score card, not the per-round rank column (issue #84 B). The page opens
+  // on Overview instead, and everything the chain says about the agent stays.
+  const showStanding = mode.standings && standing !== null;
+  const tab = chosenTab ?? (showStanding ? "standing" : "overview");
+  const tabs = showStanding
+    ? [
+        { label: t("agent.tab.standing"), value: "standing" },
+        ...scenarioTabs(hideLog),
+      ]
+    : scenarioTabs(hideLog);
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          padding: "var(--space-8) var(--page-pad-x)",
+          background: "var(--bg-canvas)",
+        }}
+      >
+        <span
+          style={{
+            font: "var(--text-sm) var(--font-mono)",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {t("common.loading")}
+        </span>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          padding: "var(--space-8) var(--page-pad-x)",
+          background: "var(--bg-canvas)",
+        }}
+      >
+        <span
+          style={{
+            font: "var(--text-sm) var(--font-mono)",
+            color: "var(--danger-text)",
+          }}
+        >
+          {t("common.loadFailed", {
+            detail: error ? `: ${error.message}` : "",
+          })}
+        </span>
+      </div>
+    );
+  }
+
+  const { round, agent } = data;
+  const series = agent.portfolioSeries;
+  const portfolioUp =
+    series.length < 2 || series[series.length - 1].value >= series[0].value;
+  // Both axes are named rather than left to be inferred: y is the account value the score is
+  // computed from, x is chain height — not wall-clock time, and not a point index.
+  const portfolioChart: VenueChart = {
+    id: `portfolio-${agent.agent}`,
+    title:
+      series.length >= 2
+        ? t("agent.portfolioRange", {
+            from: formatUsd(series[0].value),
+            to: formatUsd(series[series.length - 1].value),
+          })
+        : t("agent.portfolio"),
+    unit: "usd",
+    showBlockAxis: true,
+    yLabel: t("agent.yLabel"),
+    xLabel: t("agent.xLabel"),
+    height: 180,
+    lines: [
+      {
+        id: "value",
+        label: t("agent.lineLabel"),
+        color: portfolioUp ? cssVar("--success") : cssVar("--danger"),
+        points: series,
+      },
+    ],
+  };
+  const positionsGridWithHeader = "160px 80px 130px 140px minmax(0,1fr)";
+
+  return (
+    <AppShell>
+      <RoundsBar round={round} />
+      <main
+        style={{
+          ...PAGE_MAIN,
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+          flex: 1,
+        }}
+      >
+        <span
+          onClick={() => window.history.back()}
+          style={{
+            font: "var(--text-sm) var(--font-mono)",
+            color: "var(--text-link)",
+            textDecoration: "none",
+            cursor: "pointer",
+          }}
+        >
+          {t("agent.back")}
+        </span>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "16px",
+            padding: "18px 22px",
+            background: "var(--bg-surface-raised)",
+            border: "1px solid var(--border-subtle)",
+            borderRadius: "var(--radius-lg)",
+          }}
+        >
+          <div
+            style={{
+              width: "44px",
+              height: "44px",
+              borderRadius: "9px",
+              background: "var(--accent-muted)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              font: "var(--weight-bold) var(--text-md) var(--font-mono)",
+              color: "var(--accent-secondary)",
+            }}
+          >
+            {positionAvatar(agent.agent)}
+          </div>
+          <div>
+            <div
+              style={{
+                font: "var(--weight-semibold) var(--text-md) var(--font-sans)",
+                color: "var(--text-primary)",
+              }}
+            >
+              {agent.agent}
+            </div>
+            <div
+              style={{
+                font: "var(--text-xs) var(--font-mono)",
+                color: "var(--text-tertiary)",
+              }}
+            >
+              {blockscout && agent.fullAddress ? (
+                <a
+                  href={blockscoutAddressUrl(blockscout, agent.fullAddress)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={t("agent.openAddress")}
+                  style={{
+                    color: "var(--text-link)",
+                    textDecoration: "none",
+                  }}
+                >
+                  {agent.address}
+                </a>
+              ) : (
+                agent.address
+              )}{" "}
+              — {agent.strategy}
+            </div>
+          </div>
+          {/* The competition rank owns the header; the rank inside the selected scenario is a
+              different number and sits with the scenario's own figures below (issue #84 F). */}
+          <span style={{ marginLeft: "auto" }}>
+            {!mode.standings ? (
+              <span style={{ display: "inline-flex", alignItems: "center" }}>
+                <Badge tone="neutral">{t("agent.standingOffBadge")}</Badge>
+                <InfoTip label={t("agent.standingOffBadge")}>
+                  <TipText>{t("home.standingsOff")}</TipText>
+                </InfoTip>
+              </span>
+            ) : standing ? (
+              <Badge tone="success">
+                {t("agent.rankOf", {
+                  n: standing.rank,
+                  m: standing.fieldSize,
+                }) + (standing.tied ? " =" : "")}
+              </Badge>
+            ) : null}
+          </span>
+        </div>
+
+        <Tabs tabs={tabs} value={tab} onChange={setChosenTab} />
+
+        {/* The stat cards are the selected scenario's numbers; the standing tab carries its own,
+            competition-level ones — mixing the two scales on one row invites misreading. */}
+        {tab !== "standing" && (
+          <div
+            // The card count varies with the mode (rules §4.7 removes two of them), so the row is
+            // laid out by how many there are -- and capped, so two cards do not stretch to the
+            // width three used to fill.
+            style={{
+              display: "grid",
+              // Capped at 280px so one stat does not stretch across a wide monitor; on a phone the
+              // cap instead left a single 280px card in a 362px row, so there it fills.
+              gridTemplateColumns: mobile
+                ? "repeat(auto-fit, minmax(150px, 1fr))"
+                : "repeat(auto-fit, minmax(190px, 280px))",
+              gap: "16px",
+            }}
+          >
+            {mode.standings && (
+              <>
+                <StatCard
+                  label={t("agent.stat.score")}
+                  value={formatScore(agent.score)}
+                />
+                <StatCard
+                  label={
+                    scenario.name
+                      ? `${t("agent.rankScenario")} · ${scenario.name.replace(/^full-/, "")}`
+                      : t("agent.rankScenario")
+                  }
+                  // An agent this run did not place has no rank in it. The table sorts it to the
+                  // bottom to have somewhere to draw it, and printing that position as a rank
+                  // would make "not measured" look like "measured, and last".
+                  value={
+                    agent.unscored
+                      ? "—"
+                      : t("agent.rankOf", {
+                          n: agent.rank,
+                          m: agent.fieldSize,
+                        })
+                  }
+                />
+              </>
+            )}
+            <StatCard
+              label={t("agent.stat.pnl")}
+              value={
+                agent.netPnlUsdc === null
+                  ? "—"
+                  : formatPnlUsdc(agent.netPnlUsdc)
+              }
+              // The card only tints its delta line, so the sign is echoed there to keep the
+              // red/green signal -- the same shape the Max drawdown card uses.
+              tone={
+                agent.netPnlUsdc === null
+                  ? undefined
+                  : agent.netPnlUsdc >= 0
+                    ? "success"
+                    : "danger"
+              }
+              delta={
+                agent.netPnlUsdc === null
+                  ? undefined
+                  : formatPnlUsdc(agent.netPnlUsdc)
+              }
+            />
+            <StatCard
+              label={t("agent.stat.drawdown")}
+              value={`${agent.maxDrawdownPercent.toFixed(1)}%`}
+              tone="danger"
+              delta={`${agent.maxDrawdownPercent.toFixed(1)}%`}
+            />
+          </div>
+        )}
+
+        {/* An agent this run never placed: its numbers are absent for a reason, not missing. */}
+        {tab !== "standing" && agent.unscored && (
+          <p
+            style={{
+              margin: 0,
+              padding: "12px 16px",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-lg)",
+              font: "var(--text-xs) var(--font-sans)",
+              lineHeight: 1.6,
+              color: "var(--text-secondary)",
+            }}
+          >
+            {t("agent.unscoredHere")}
+          </p>
+        )}
+
+        {tab === "standing" && showStanding && standing && (
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+          >
+            <FlagsNote flags={standing.flags} />
+            <StandingTab standing={standing} />
+          </div>
+        )}
+
+        {tab === "overview" && (
+          <div
+            style={{
+              display: "grid",
+              // The side rail goes under the body below MOBILE rather than
+              // squeezing it to a column of wrapped words.
+              gridTemplateColumns: mobile ? "minmax(0,1fr)" : "minmax(0,1fr) 340px",
+              gap: "20px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "16px",
+                background: "var(--bg-surface-raised)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "var(--radius-lg)",
+                padding: "20px 22px",
+              }}
+            >
+              {agent.portfolioSeries.length >= 2 ? (
+                <StateChart chart={portfolioChart} />
+              ) : (
+                <span
+                  style={{
+                    font: "var(--text-xs) var(--font-mono)",
+                    color: "var(--text-tertiary)",
+                  }}
+                >
+                  {t("agent.noValueSeries")}
+                </span>
+              )}
+              <span style={{ ...SECTION_LABEL_STYLE, marginTop: "6px" }}>
+                {t("agent.openPositions")}
+              </span>
+              {/* 510px of fixed columns does not fit a phone; the card scrolls sideways rather
+                  than pushing the whole page, which is what a table this wide has to do. */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2px",
+                  overflowX: "auto",
+                }}
+              >
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: POSITIONS_GRID,
+                    minWidth: "fit-content",
+                    font: "9px var(--font-mono)",
+                    color: "var(--text-tertiary)",
+                    textTransform: "uppercase",
+                    padding: "0 2px 4px",
+                  }}
+                >
+                  <span>{t("agent.positions.col.venue")}</span>
+                  <span>{t("agent.positions.col.kind")}</span>
+                  <span>{t("agent.positions.col.size")}</span>
+                  <span>{t("agent.positions.col.mark")}</span>
+                  <span>{t("agent.positions.col.detail")}</span>
+                </div>
+                {agent.positions.length === 0 && (
+                  <PositionsEmpty padding="7px 2px" />
+                )}
+                {agent.positions.map((p, i) => (
+                  <PositionRow
+                    key={i}
+                    position={p}
+                    grid={POSITIONS_GRID}
+                    padding="7px 2px"
+                  />
+                ))}
+              </div>
+            </div>
+            <div
+              style={{
+                background: "var(--bg-surface-raised)",
+                border: "1px solid var(--border-subtle)",
+                borderRadius: "var(--radius-lg)",
+                padding: "20px 18px",
+              }}
+            >
+              <span
+                style={{
+                  ...SECTION_LABEL_STYLE,
+                  display: "block",
+                  marginBottom: "10px",
+                }}
+              >
+                {logAbsence === "audience"
+                  ? t("agent.audienceLog")
+                  : logAbsence === "self-hosted"
+                    ? t("agent.selfHosted")
+                    : t("agent.decisionLive")}
+              </span>
+              {hideLog ? (
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "12px",
+                    lineHeight: 1.6,
+                    color: "var(--text-secondary)",
+                  }}
+                >
+                  {logAbsence === "audience"
+                    ? t("agent.audienceLogNote")
+                    : t("agent.selfHostedLog")}
+                </p>
+              ) : (
+                <LogStream lines={agent.recentLog} height={320} />
+              )}
+            </div>
+          </div>
+        )}
+
+        {tab === "rounds" && (
+          <div
+            style={{
+              background: "var(--bg-surface-raised)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-lg)",
+              overflowX: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: mode.standings
+                  ? ROUNDS_GRID
+                  : ROUNDS_GRID_NO_RANK,
+                padding: "10px 16px",
+                background: "var(--bg-surface)",
+                font: "9px var(--font-mono)",
+                color: "var(--text-tertiary)",
+                textTransform: "uppercase",
+                letterSpacing: "var(--tracking-wide)",
+                borderBottom: "1px solid var(--border-subtle)",
+              }}
+            >
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}>
+                {t("agent.tab.rounds")}
+                <InfoTip label={t("agent.tab.rounds")}>
+                  <TipText>{t("agent.roundsNote")}</TipText>
+                </InfoTip>
+              </span>
+              <span>{t("agent.trades.col.block")}</span>
+              <span style={{ textAlign: "right" }}>Tx</span>
+              <span style={{ textAlign: "right" }}>
+                {t("rounds.col.delta")}
+              </span>
+              <span style={{ textAlign: "right" }}>
+                {t("rounds.col.logReturn")}
+              </span>
+              {mode.standings && (
+                <span style={{ textAlign: "right" }}>
+                  {t("rounds.col.rank")}
+                </span>
+              )}
+            </div>
+            {agent.rounds.length === 0 && (
+              <div
+                style={{
+                  padding: "16px",
+                  font: "var(--text-sm) var(--font-mono)",
+                  color: "var(--text-tertiary)",
+                }}
+              >
+                {t("agent.noRounds")}
+              </div>
+            )}
+            {agent.rounds.map((r) => {
+              const gainColor =
+                r.deltaUsdc > 0
+                  ? "var(--success-text)"
+                  : r.deltaUsdc < 0
+                    ? "var(--danger-text)"
+                    : "var(--text-tertiary)";
+              const moveColor =
+                r.move === 0
+                  ? "var(--text-disabled)"
+                  : r.move > 0
+                    ? "var(--success-text)"
+                    : "var(--danger-text)";
+              return (
+                <div
+                  key={r.index}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: mode.standings
+                      ? ROUNDS_GRID
+                      : ROUNDS_GRID_NO_RANK,
+                    padding: "10px 16px",
+                    borderBottom: "1px solid var(--border-subtle)",
+                    font: "var(--text-sm) var(--font-mono)",
+                  }}
+                >
+                  <span style={{ color: "var(--text-primary)" }}>
+                    {String(r.index).padStart(2, "0")}
+                  </span>
+                  <span style={{ color: "var(--text-tertiary)" }}>
+                    {r.fromBlock.toLocaleString("en-US")}–
+                    {r.toBlock.toLocaleString("en-US")}
+                  </span>
+                  <span
+                    style={{
+                      textAlign: "right",
+                      color: "var(--text-secondary)",
+                    }}
+                  >
+                    {r.txCount}
+                  </span>
+                  <span style={{ textAlign: "right", color: gainColor }}>
+                    {formatPnlUsdc(r.deltaUsdc)}
+                  </span>
+                  <span style={{ textAlign: "right", color: gainColor }}>
+                    {formatBps(r.logReturnBps)}
+                  </span>
+                  {mode.standings && (
+                    <span
+                      style={{
+                        textAlign: "right",
+                        color: "var(--text-secondary)",
+                      }}
+                    >
+                      {r.cumulativeRank}{" "}
+                      <span style={{ color: moveColor }}>
+                        {formatMove(r.move)}
+                      </span>
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {tab === "positions" && (
+          <div
+            style={{
+              background: "var(--bg-surface-raised)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-lg)",
+              overflowX: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: positionsGridWithHeader,
+                minWidth: "fit-content",
+                padding: "10px 16px",
+                background: "var(--bg-surface)",
+                font: "9px var(--font-mono)",
+                color: "var(--text-tertiary)",
+                textTransform: "uppercase",
+                letterSpacing: "var(--tracking-wide)",
+                borderBottom: "1px solid var(--border-subtle)",
+              }}
+            >
+              <span>{t("agent.positions.col.venue")}</span>
+              <span>{t("agent.positions.col.kind")}</span>
+              <span>{t("agent.positions.col.size")}</span>
+              <span>{t("agent.positions.col.mark")}</span>
+              <span>{t("agent.positions.col.detail")}</span>
+            </div>
+            {agent.positions.length === 0 && (
+              <PositionsEmpty padding="14px 16px" />
+            )}
+            {agent.positions.map((p, i) => (
+              <PositionRow
+                key={i}
+                position={p}
+                grid={positionsGridWithHeader}
+                padding="12px 16px"
+                borderSide="borderBottom"
+              />
+            ))}
+          </div>
+        )}
+
+        {tab === "trades" && (
+          <div
+            style={{
+              background: "var(--bg-surface-raised)",
+              border: "1px solid var(--border-subtle)",
+              borderRadius: "var(--radius-lg)",
+              overflowX: "auto",
+            }}
+          >
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: TRADES_GRID,
+                minWidth: "fit-content",
+                padding: "10px 16px",
+                background: "var(--bg-surface)",
+                font: "9px var(--font-mono)",
+                color: "var(--text-tertiary)",
+                textTransform: "uppercase",
+                letterSpacing: "var(--tracking-wide)",
+                borderBottom: "1px solid var(--border-subtle)",
+              }}
+            >
+              <span>{t("agent.trades.col.hash")}</span>
+              <span>{t("agent.trades.col.block")}</span>
+              <span>{t("agent.trades.col.method")}</span>
+              <span>{t("agent.trades.col.amount")}</span>
+              <span style={{ textAlign: "right" }}>
+                {t("agent.trades.col.time")}
+              </span>
+            </div>
+            {agent.trades.map((t, i) => (
+              <TradeRow
+                key={i}
+                trade={t}
+                href={
+                  blockscout && t.fullHash
+                    ? blockscoutTxUrl(blockscout, t.fullHash)
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        )}
+
+        {tab === "log" && <LogStream lines={agent.fullLog} height={420} />}
+      </main>
+    </AppShell>
+  );
+}

@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  # Typecheck, contract compilation, and Solidity format check (no anvil needed; fast)
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: "1.7.1"
+
+      - run: npm ci
+
+      - name: Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Compile shared mock contracts
+        run: forge build
+
+      - name: Check Solidity formatting
+        run: forge fmt --check
+
+  # Deploy every DeFi protocol onto an empty anvil and run E2E verification with vitest
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: "1.7.1"
+
+      - run: npm ci
+
+      - name: Compile shared mock contracts
+        run: forge build
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      # Prepare external vendors: clone+patch+yarn install GMX at a pinned SHA, npm install Aave.
+      # yarn (classic) is preinstalled on GitHub-hosted runners.
+      - name: Set up vendors (GMX / Aave)
+        run: ./scripts/setup-vendors.sh
+
+      # Start anvil in the background and wait for it to be ready using cast.
+      # The later deploy / test steps connect to this external anvil with MANAGE_ANVIL=false.
+      - name: Start anvil
+        run: |
+          npm run anvil &
+          until cast block-number --rpc-url http://127.0.0.1:8545 >/dev/null 2>&1; do sleep 1; done
+
+      # Deploy + seed every protocol. Writes deployments.json (do not pass --exit).
+      - name: Deploy all protocols
+        run: MANAGE_ANVIL=false npm run deploy -- --keep-fresh
+
+      # Verify with vitest against the running anvil + deployments.json (A/B/C/E).
+      # On failure, the per-test output shows which check of which protocol failed.
+      - name: E2E verification (vitest)
+        run: MANAGE_ANVIL=false npm run test:e2e
+
+      # Save the deployment result for failure investigation (on both success and failure)
+      - name: Upload deployments.json
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployments
+          path: deployments/deployments.json
+          if-no-files-found: ignore

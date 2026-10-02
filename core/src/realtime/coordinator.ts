@@ -1,0 +1,4443 @@
+import {
+  keccak256,
+  stringToBytes,
+  type Address,
+  type Hex,
+  type PublicClient,
+} from "viem";
+import { privateKeyForWalletName } from "../config.js";
+import { resolveRunInputs } from "../runConfig.js";
+import {
+  accountAddress,
+  activeStables,
+  fundWallet,
+  getBalances,
+  fundAddress,
+  GAS_BUFFER_WEI,
+  isPermissionlesslyMintable,
+  makeClients,
+  mine,
+  resetFork,
+  sendAndMine,
+  sendBatch,
+  setAutomine,
+  setBlockGasLimit,
+  setChainMode,
+  setEthBalance,
+  setIntervalMining,
+  transferEth,
+  waitForMiningToSettle,
+} from "@eris/sdk/chain.js";
+import { RUN_START_FILE, writeRunStart } from "@eris/sdk/runStart.js";
+import {
+  AGENT_CONFIG_FIELDS,
+  AGENT_CONFIG_FILE,
+  AGENT_VIEW_DIR,
+  agentNetworkPosture,
+  agentSandboxBanner,
+  agentSandboxWarning,
+  agentViewDir,
+  prepareAgentView,
+  renderAgentConfig,
+  type AgentSandboxWarning,
+} from "./agentView.js";
+import { spawnSync } from "node:child_process";
+import {
+  RunLogger,
+  txFeeColumns,
+  type RunArtifactWriter,
+} from "../logger.js";
+import {
+  SegmentedRun,
+  segmentAgentRecord,
+  segmentIndexAgent,
+  sliceIntervalSeries,
+} from "../segments.js";
+import {
+  buildManifest,
+  isLoopbackUrl,
+  MANIFEST_FILENAME,
+  publishedRpc,
+} from "../manifest.js";
+import { methodNameForCalldata } from "@eris/sdk/methodSelectors.js";
+import { valueUsdc } from "@eris/sdk/pnl.js";
+import {
+  marketPricedStables,
+  PAR_STABLE_PRICES,
+  readStablePrices,
+} from "@eris/sdk/stables.js";
+import {
+  checkRunFeeViolations,
+  checkRunGasViolations,
+  countRunRevertedTxs,
+  reconcileRunAgentTxs,
+} from "../postRunCheck.js";
+import { nextFairPrice, priceRngForAsset, Rng } from "@eris/sdk/rng.js";
+import type {
+  AgentObservation,
+  AgentSpec,
+  BalanceSnapshot,
+  ProtocolId,
+  WalletRole,
+} from "@eris/sdk/types.js";
+import { initProtocols } from "@eris/sdk/protocols/registry.js";
+import type {
+  FlowKind,
+  FlowWallet,
+  ProtocolAdapter,
+  SimContext,
+} from "@eris/sdk/protocols/types.js";
+import {
+  updateOracles,
+  updateOraclesMempool,
+  writeAaveOraclesStorage,
+} from "@eris/sdk/protocols/oracles.js";
+import { AAVE, GMX_MARKETS, TOKENS } from "@eris/sdk/constants.js";
+import {
+  baseTokens,
+  gmxMarketAddresses,
+  tokenInfo,
+} from "@eris/sdk/markets.js";
+import {
+  buildFlowContext,
+  flowOrdersToIntents,
+  initialFairPrice,
+  initialFairPriceFor,
+  requestFlowIntents,
+  submitIntent,
+} from "../coordinator.js";
+import { FlowProcess, type FlowOrderWire } from "../flowProcess.js";
+import { deployFlashArb, FLASH_ARB_ADDRESS } from "../flashArbDemo.js";
+import { RealtimeAgentProcess } from "./agentProcess.js";
+import {
+  EPOCH_COUNT_ENV,
+  EPOCH_INDEX_ENV,
+  readEpochOrdinal,
+} from "@eris/sdk/epoch.js";
+import {
+  deriveLiquityVictims,
+  liquityBreachMagnitude,
+  LIQUITY_VICTIM_ENV,
+  openLiquityVictimTroves,
+  readLiquitySystem,
+  readLiquityVictimTroves,
+  recoveryCohortCollateralWei,
+  seedStabilityPool,
+  setupLiquityVictims,
+  tcrAtCrashBottom,
+  type LiquityVictim,
+  type LiquityVictimTrove,
+} from "../liquityVictims.js";
+import { waitForAgentsReady } from "./agentsReady.js";
+import { agentStateRootFromEnv, prepareAgentState } from "./agentState.js";
+import { RealtimeFlowProcess } from "./flowProcess.js";
+import {
+  ensureScenarioKey,
+  scenarioKeyChildEnv,
+  scenarioKeyRecord,
+} from "../scenarioKey.js";
+import { StressAudit } from "./stressAudit.js";
+import {
+  deployPriceFeed,
+  setPriceFeedOpening,
+  setPriceFeedOpeningFor,
+  updatePriceFeedForMempool,
+  updatePriceFeedMempool,
+  writePriceFeedStorage,
+  writePriceFeedStorageFor,
+} from "./priceFeed.js";
+import { reconstructValueSeries } from "./reconstruct.js";
+import {
+  INTERVAL_EVENTS,
+  intervalSeriesFields,
+  type IntervalSeries,
+} from "../intervalSeries.js";
+import {
+  deployAgentMarketVenues,
+  registerPending,
+  sweepMarkets,
+  type MarketRegistryRuntime,
+} from "./marketRegistry.js";
+import { setLendingSingleton } from "@eris/sdk/protocols/lending.js";
+import { LiveScorer } from "./liveScoring.js";
+import { KeyedSerial } from "./keyedSerial.js";
+import { checkRoleKeys, refusalMessage } from "./roleKeyGuard.js";
+import {
+  LIVE_WEEK_OVERRIDE,
+  LiveWeekRefusal,
+  liveWeekRefusals,
+} from "./liveWeek.js";
+import type { RealtimeConfig } from "../config.js";
+import {
+  diffRegistrations,
+  RegistrationsWatcher,
+  startupRegistrations,
+  type Registration,
+} from "./registrations.js";
+import {
+  checkDeployment,
+  deploymentMismatchMessage,
+} from "@eris/sdk/deploymentCheck.js";
+import {
+  gmxFundingCheck,
+  gmxFundingEnforcement,
+  gmxFundingMissingMessage,
+  readGmxFundingConfig,
+} from "./gmxFunding.js";
+import {
+  environmentReserveAssets,
+  readAaveReserves,
+  strayAaveReserves,
+  strayAaveReservesMessage,
+} from "./aaveReserveGuard.js";
+import { marketSeriesMeta, reconstructMarketSeries } from "./marketSeries.js";
+import { epochPnlFromSeries } from "../scoring/epochPnl.js";
+import { epochEndBlock, intervalCount, loopStep } from "../epochExtent.js";
+import {
+  NoArbMonitor,
+  noArbFindings,
+  STARTUP_FAIL_BPS,
+  STARTUP_WARN_BPS,
+} from "./noArb.js";
+import { EventSchedule, withOuOverride } from "./events.js";
+import {
+  auditOwnerGuards,
+  guardFailureMessage,
+  guardProbesFor,
+  logGuardAudit,
+  unprotectedFindings,
+} from "./ownerGuards.js";
+import { buildWhaleOrder, whaleFunding, WHALE_WALLET_KEY } from "./whale.js";
+import {
+  setupTokenLaunch,
+  stepTokenLaunch,
+  summarizeTokenLaunch,
+  tokenLaunchEndowments,
+  type TokenLaunchRuntime,
+} from "./tokenLaunch.js";
+import {
+  accrueLst,
+  lstBlockEvent,
+  lstReserveExhausted,
+  lstReserveExhaustedEvent,
+  setupLst,
+  slashLst,
+  stepLstApy,
+  type LstRuntime,
+} from "./lst.js";
+import {
+  reconcileLiquidityPull,
+  restoreLiquidityPull,
+  setupLiquidityPull,
+  type LiquidityPullRuntime,
+} from "./liquidity.js";
+import {
+  liquityBlockEvent,
+  watchLiquityEvents,
+  setupEusdDepeg,
+  setupLiquity,
+  type LiquityRuntime,
+} from "./liquity.js";
+import {
+  reconcileStableDepeg,
+  restoreStableDepeg,
+  setupStableDepeg,
+  type StableDepegRuntime,
+} from "./stableDepeg.js";
+import { PULL_VENUES } from "./liquidityVenues.js";
+import type { LstState } from "@eris/sdk/protocols/lst.js";
+import type { LiquityState } from "@eris/sdk/protocols/liquity.js";
+import { VulnSchedule } from "./vulnEvents.js";
+import { SubmittedLedger } from "./submittedLedger.js";
+import { setLongTimeout } from "./longTimeout.js";
+import {
+  FLOW_TELEMETRY_BLOCKS,
+  FlowGuardLog,
+  planFlowTopUp,
+  type FlowWalletHoldings,
+} from "./flowWallets.js";
+import type { FlowContextWire } from "../flow/logic.js";
+import {
+  deployVulnPools,
+  fundVulnPoolsAt,
+  watchVulnSwaps,
+  type VulnRuntime,
+} from "./vulnPools.js";
+import {
+  deriveStressVictims,
+  openStressVictimPositions,
+  readVictimsAccount,
+  setupStressVictims,
+  type StressVictim,
+} from "../stressVictims.js";
+
+const GAS_ONLY_WEI = 2_000_000_000_000_000_000_000_000n; // 2,000,000 ETH (gas for admin/keeper)
+
+// Look up the WalletRole from a flowWalletMap key (`${protocol}:${kind}`).
+function flowRole(key: string): WalletRole {
+  return key.endsWith(":informed") ? "informed-flow" : "uninformed-flow";
+}
+
+// The chain's actual block cadence, from the last two blocks' timestamps. On anvil the environment
+// sets it; on an external chain the sequencer does, and a mismatch with run.blockTimeSec silently
+// mis-sizes every interval (ADR 0021 §3 sets interval length in real time, converted through this
+// number).
+async function observeBlockTimeSec(
+  publicClient: PublicClient,
+): Promise<number | null> {
+  try {
+    const head = await publicClient.getBlock();
+    if (head.number < 1n) return null;
+    const prev = await publicClient.getBlock({ blockNumber: head.number - 1n });
+    const dt = Number(head.timestamp - prev.timestamp);
+    return dt > 0 ? dt : null;
+  } catch {
+    return null;
+  }
+}
+
+// How far apart the two ways of reading the same boundary came out (ADR 0021 §3). Reported per run
+// rather than asserted in a test, because the thing that could break them apart -- a venue whose
+// state depends on when it is read rather than on which block -- would only show up on a chain.
+export function compareIntervalSeries(
+  live: IntervalSeries,
+  swept: IntervalSeries,
+): {
+  boundaries: number;
+  compared: number;
+  maxAbsDiffUsdc: number;
+  maxRelDiff: number;
+  worst?: {
+    agentId: string;
+    boundaryBlock: number;
+    live: number;
+    swept: number;
+  };
+} {
+  const sweptIndex = new Map(swept.boundaryBlocks.map((b, i) => [b, i]));
+  let compared = 0;
+  let maxAbsDiffUsdc = 0;
+  let maxRelDiff = 0;
+  let worst:
+    | { agentId: string; boundaryBlock: number; live: number; swept: number }
+    | undefined;
+  for (const [agentId, liveValues] of Object.entries(live.valuesByAgent)) {
+    const sweptValues = swept.valuesByAgent[agentId];
+    if (!sweptValues) continue;
+    live.boundaryBlocks.forEach((block, i) => {
+      const j = sweptIndex.get(block);
+      if (j === undefined) return;
+      const a = liveValues[i];
+      const b = sweptValues[j];
+      if (a === null || b === null || a === undefined || b === undefined)
+        return;
+      compared++;
+      const abs = Math.abs(a - b);
+      const rel = Math.abs(b) > 0 ? abs / Math.abs(b) : abs > 0 ? 1 : 0;
+      if (abs > maxAbsDiffUsdc) {
+        maxAbsDiffUsdc = abs;
+        worst = { agentId, boundaryBlock: block, live: a, swept: b };
+      }
+      maxRelDiff = Math.max(maxRelDiff, rel);
+    });
+  }
+  return {
+    boundaries: live.boundaryBlocks.length,
+    compared,
+    maxAbsDiffUsdc,
+    maxRelDiff,
+    ...(worst ? { worst } : {}),
+  };
+}
+
+// Free money check for a public chain (issue #33 (1) / ADR 0021 §7).
+//
+// "cheatcode-free" is about RPC methods, but the same hole can live in a *contract*: the deployer's
+// MockERC20 originally let anyone mint, which on a dev node is a convenience and on a chain
+// participants can reach is an unbounded balance for whoever notices. It is checked rather than
+// assumed because the answer depends on which build of the token the deployment happens to hold, and
+// a run scored against mintable tokens is not scored at all.
+async function assertTokensNotMintable(
+  ctx: SimContext,
+  logger: RunLogger,
+): Promise<void> {
+  const tokens = [
+    ...baseTokens().map((t) => ({ symbol: t.symbol, address: t.address })),
+    ...activeStables().map((address) => ({ symbol: "stable", address })),
+  ];
+  const open: string[] = [];
+  for (const t of tokens) {
+    if (await isPermissionlesslyMintable(ctx.publicClient, t.address))
+      open.push(`${t.symbol} (${t.address})`);
+  }
+  logger.event({
+    type: "external_chain_mint_guard",
+    checked: tokens.length,
+    permissionlessMint: open,
+  });
+  if (open.length > 0)
+    throw new Error(
+      `these scored tokens can be minted by anyone: ${open.join(", ")}. On a chain participants can ` +
+        "reach, that is an unlimited balance for whoever calls mint(), and no score computed against " +
+        "it means anything. Redeploy with a minter-gated token (deployer/contracts/MockERC20.sol)",
+    );
+}
+
+// Before the competition starts (= off the clock), run a short market loop with only the flow bot to make anvil
+// fetch and warm the protocols' working set (pool ticks, reserves, gmx, etc.). This keeps the competition
+// phase's mining from hitting upstream cold fetches (the anvil bottleneck mitigation of ADR 0006 Risks). It does
+// not resetFork, and the market moves only slightly (~blocks). The price main path is not consumed: the warm-up walks
+// on a stream of its own (it used to be `Rng(seed)`, the main path's own stream, so it replayed the run's first shocks).
+// Note: the competition uses RealtimeFlowProcess (push), but warmup is outside interval mining so it uses the
+// synchronous FlowProcess (request/response).
+async function prewarmWorkingSet(
+  ctx: SimContext,
+  adapters: ProtocolAdapter[],
+  enabledIds: ProtocolId[],
+  blocks: number,
+  startPrice: number,
+  runDir: string,
+): Promise<void> {
+  const warmFlow = new FlowProcess(
+    ctx.config.flowBotCommand,
+    ctx.config.flowBotArgs,
+    ctx.config.flowSeed,
+    runDir,
+  );
+  try {
+    const warmRng = Rng.fromSeed(ctx.config.seed, "prewarm");
+    let warmPrice = startPrice;
+    for (let i = 1; i <= blocks; i++) {
+      warmPrice = nextFairPrice(
+        warmPrice,
+        warmRng,
+        startPrice,
+        ctx.config.ou.global,
+      );
+      await updateOracles(ctx, warmPrice);
+      const states = await Promise.all(
+        adapters.map((adapter) => adapter.readState(ctx, warmPrice)),
+      );
+      const stateById = new Map<ProtocolId, unknown>(
+        adapters.map((adapter, idx) => [adapter.id, states[idx]]),
+      );
+      const intents = await requestFlowIntents(
+        ctx,
+        warmFlow,
+        enabledIds,
+        stateById,
+        warmPrice,
+        i,
+        ctx.config.agentTimeoutMs,
+      );
+      for (const intent of intents) {
+        try {
+          await submitIntent(ctx, intent, stateById);
+        } catch {
+          // the purpose is warming, so ignore individual tx failures
+        }
+      }
+      await mine(ctx.publicClient);
+      for (const adapter of adapters) {
+        if (!adapter.afterMine) continue;
+        try {
+          await adapter.afterMine(ctx);
+        } catch {
+          // ignore keeper failures too
+        }
+      }
+    }
+  } finally {
+    warmFlow.close();
+  }
+}
+
+type RealtimeAgentRuntime = {
+  id: string;
+  spec: AgentSpec;
+  // null for a registered participant who holds their own key (ADR 0021 §2). Everything the
+  // environment does with an agent -- fund it, attribute its txs, score it, rule-check it -- is
+  // address-based, so the key is only ever needed to *spawn* one, and an external agent is not
+  // spawned.
+  privateKey: Hex | null;
+  address: Address;
+  // True when nothing here starts the process (ADR 0021 §2). Distinct from `process === null`,
+  // which is also true for a local agent before setup finishes.
+  external: boolean;
+  process: RealtimeAgentProcess | null; // spawned after setup completes
+  initial: BalanceSnapshot;
+  included: number; // number of txs included in a block (read by aggregation)
+  reverted: number; // of those, the number that reverted
+  // Why the agent process went away before the run ended, if it did. Set from onExit, which only
+  // fires on an early exit or a spawn failure. Surfaced in summary.json because the alternative is
+  // grepping events.jsonl. It does not change the score -- rules §2.3 / §4.4.2 value a stopped agent
+  // on what it left behind -- but the standings carry it as a flag next to the number.
+  exitedEarly?: string;
+};
+
+// Who a mined transaction is attributed to in blocks.csv. `external` is a sender the run does not
+// know at all: on the trial devnet (rules §2.7) that is a participant who has sent a transaction
+// before being registered, and the row is the only place the operator can see them.
+type TxOwner = {
+  ownerId: string;
+  role: WalletRole | "system" | "external";
+};
+
+type SubmittedMeta = TxOwner & {
+  priorityFeeWei: bigint;
+  actionType: string;
+};
+
+// How often the registrations file is polled (ADR 0021 §2). A stat every thirty blocks -- about a
+// minute at the practice cadence -- is nothing against the loop, and a participant who registers
+// waits a minute rather than a restart.
+const REGISTRATIONS_POLL_BLOCKS = 30;
+
+// The realtime-mode orchestrator (reduced to "environment daemon + scorer" in ADR 0006).
+//
+// The environment moves the world only by writing to the chain:
+//   anvil lifecycle / fair price generation → PriceFeed & oracle update txs / flow orders / GMX keeper.
+// Agents perceive and act only by reading/writing the chain (unified on direct; relay was removed in ADR 0015 §5).
+// In-block ordering is decided by anvil --order fees in descending fee order.
+// Scoring (per-agent value series) is batch-reconstructed by reading historical blocks right after the run ends (§4).
+// The economic-gas (ADR 0011) endowment floor. 1 tx ~1.5M gas; a floor (~tens of txs) so even a modest tip does
+// not run out of gas on the first move. The final endowment value is decided by calibration measurement (ADR "undecided").
+const MIN_ECONOMIC_GAS_ETH_WEI = 500_000_000_000_000_000n; // 0.5 ETH
+
+// How long a window the post-run sweep will attempt. anvil retains roughly 1,050 blocks of state
+// (ADR 0006 Risks), and reading past that returns zeros rather than an error -- a value series that
+// silently reads as a cliff. Below the measured limit on purpose: the sweep also reads the G7 median
+// window before each boundary, which reaches a few blocks further back than the boundary itself.
+const HISTORY_SWEEP_LIMIT = 1000;
+
+// Roughly what one block of a full-venue run appends to events.jsonl, measured at 1,437 B/block on a
+// 400-block run with five venues and three agents (blocks.csv adds another ~731). It scales with the
+// roster and the venue count, so this is an order of magnitude rather than a figure -- which is all
+// the advisory below needs it to be.
+const EVENT_BYTES_PER_BLOCK = 1_400;
+
+// Past this, a run that writes one directory is a run whose artifacts nobody can open and whose
+// rounds bar renders one control per round. ADR 0021 §6 exists for exactly this, and 20,000 blocks
+// is around eleven hours at a two-second cadence -- comfortably longer than any calibration run and
+// comfortably shorter than a period.
+const SEGMENT_ADVISORY_BLOCKS = 20_000;
+
+export { LIVE_WEEK_OVERRIDE, isLiveWeekRefusal } from "./liveWeek.js";
+
+function assertLiveWeekPosture(
+  config: RealtimeConfig,
+  agents: AgentSpec[],
+): void {
+  const reasons = liveWeekRefusals({
+    keys: {
+      admin: config.privateKeys.admin,
+      keeper: config.privateKeys.keeper,
+      setup: config.privateKeys.setup,
+      deployer: config.privateKeys.deployer,
+    },
+    use: { marketRegistry: config.agentMarkets },
+    venueAdmin: config.enabledProtocols.includes("aave") ? AAVE.AclAdmin : undefined,
+    sandbox: config.agentSandbox,
+    agents,
+    env: process.env,
+  });
+  if (reasons.length > 0) throw new LiveWeekRefusal(reasons);
+}
+
+/**
+ * The live week's posture for one effective config, checked by the matrix runner before it waits for
+ * the first epoch: with --follow-schedule that start can be hours away, and a week that cannot start
+ * should say so when the operator launches it, not when the first epoch is due.
+ */
+export function preflightLiveWeek(
+  overrides: Record<string, string | number | boolean>,
+  argv: string[],
+): void {
+  const { config, agents } = resolveRunInputs(argv, overrides);
+  assertLiveWeekPosture(config, agents);
+}
+
+export async function runRealtimeSimulation(
+  // Evaluation tools inject per-regime SEED etc. programmatically (without mutating env).
+  overrides: Record<string, string | number | boolean> = {},
+  // Embedded callers pass their effective config explicitly; their own CLI flags have already
+  // been resolved (backtest bakes --agents into YAML, so parsing it again creates a conflict).
+  argv: string[] = process.argv,
+  // The return value is the run's location (so callers like the backtest CLI can read results without scanning runs/).
+): Promise<{ runId: string; runDir: string }> {
+  // ADR 0013: config resolves from YAML (config/local.yaml / --config) as the single source. If there is no YAML,
+  // it falls back to the legacy env-driven path (transitional). configPath propagates to child processes so that
+  // a direct-mode agent (directShim) can rebuild config from the same YAML.
+  const {
+    config,
+    agents: agentSpecs,
+    configPath,
+  } = resolveRunInputs(argv, overrides);
+  if (configPath) process.env.ERIS_CONFIG = configPath;
+
+  // ADR 0027: the key every scenario stream is drawn under. Installed before anything draws. The
+  // backtest runner installs its --scenario-key first; a plain run reads ERIS_SCENARIO_KEY_FILE,
+  // and with neither it is the public key.
+  const scenarioKey = ensureScenarioKey();
+
+  // ADR 0020 §1 fail-fast. `resetUnit: scenario` describes a world per (regime, seed), and only the
+  // scenario-matrix runner produces those -- it is the caller that resets between runs, not anything
+  // in here. Reaching this from a plain config file would run one continuous world and then stamp
+  // `scenario` into summary.json: a stored run whose mode is a lie, which later aggregation cannot
+  // detect (that is the whole reason the label exists). Hence the mode is only honoured when it
+  // arrives as a programmatic override from the runner, never from YAML alone.
+  if (
+    config.resetUnit === "scenario" &&
+    overrides.ERIS_RESET_UNIT !== "scenario"
+  )
+    throw new Error(
+      `run.resetUnit: scenario requires the scenario-matrix runner ` +
+        `(npm run backtest -- --scenarios <path>). A single run has one world, so use ` +
+        `resetUnit: continuous for sim:realtime (ADR 0020 §1)`,
+    );
+  // Issue #167: which epoch of the schedule this run is, handed to every agent. Like the reset unit,
+  // honoured only as the matrix runner's programmatic override -- an ordinal belongs to a run that
+  // is one epoch of a schedule, and nothing else is.
+  const epochOrdinal = readEpochOrdinal(
+    overrides[EPOCH_INDEX_ENV],
+    overrides[EPOCH_COUNT_ENV],
+  );
+  if (epochOrdinal && config.resetUnit !== "scenario")
+    throw new Error(
+      `an epoch ordinal (${EPOCH_INDEX_ENV}) is set only for one epoch of a scenario matrix ` +
+        `(resetUnit: scenario); this run is ${config.resetUnit}`,
+    );
+
+  // ---- the environment's own keys, on a chain participants can send to ----
+  // Before anything touches the chain: a period opened on public keys is one anyone with a gateway
+  // key can re-price (roleKeyGuard.ts has which key does what).
+  const roleKeyVerdict = checkRoleKeys({
+    keys: {
+      admin: config.privateKeys.admin,
+      keeper: config.privateKeys.keeper,
+      setup: config.privateKeys.setup,
+      deployer: config.privateKeys.deployer,
+    },
+    use: { marketRegistry: config.agentMarkets },
+    venueAdmin: config.enabledProtocols.includes("aave") ? AAVE.AclAdmin : undefined,
+    registrationsFile: config.registrationsFile,
+    agents: agentSpecs,
+    allowPublic: process.env.ERIS_ALLOW_PUBLIC_ROLE_KEYS === "1",
+  });
+  if (roleKeyVerdict.kind === "refused")
+    throw new Error(refusalMessage(roleKeyVerdict.exposed));
+  if (roleKeyVerdict.kind === "allowed")
+    console.error(
+      `[keys] WARNING: ERIS_ALLOW_PUBLIC_ROLE_KEYS=1 -- running a chain participants can send to on public keys: ${roleKeyVerdict.exposed.join("; ")}`,
+    );
+
+  // ---- the live week (liveWeek.ts) ----
+  // Honoured only as the matrix runner's override, like the reset unit: the runner is what knows this
+  // run is one epoch of the plan under the secret key. Here, before anything touches the chain, as a
+  // second line behind the runner's own preflight.
+  if (overrides[LIVE_WEEK_OVERRIDE] === "1") {
+    assertLiveWeekPosture(config, agentSpecs);
+    console.error(
+      "[live-week] posture checked: environment keys private, every agent in an isolated container",
+    );
+  }
+
+  // ---- chain mode (issue #33 / ADR 0021 §7) ----
+  // Installed before anything touches the chain, so a cheatcode reached for on an external chain
+  // throws at the call rather than returning an RPC error some catch swallows.
+  setChainMode(config.chainMode, config.treasuryPrivateKey);
+  const external = config.chainMode === "external";
+  if (external) {
+    if (!config.treasuryPrivateKey)
+      throw new Error(
+        "run.chainMode: external needs TREASURY_PRIVATE_KEY in .env.local — on a chain without " +
+          "cheatcodes every balance has to be sent from an account genesis prefunded (issue #33 (1))",
+      );
+    if (!config.localDeploy)
+      throw new Error(
+        "run.chainMode: external requires run.localDeploy: true. The external chain runs *our* venue " +
+          "deployment (issue #33 Notes: a closed economy the environment owns every contract of), and " +
+          "the address overlay that names those contracts is what localDeploy turns on",
+      );
+    if (config.economicGas)
+      throw new Error(
+        "run.chainMode: external cannot use run.economicGas: the profile finalizes prices with a " +
+          "storage write, which no real chain permits. Use the default tx-based profile until the " +
+          "redesign in issue #33 (2) lands (ADR 0021 Negative)",
+      );
+    if (config.stressVictimCount > 0)
+      throw new Error(
+        "run.chainMode: external cannot stage stress victims: they require a fresh state per run " +
+          "(ADR 0009 §4), and a chain that never resets has none. Victims for the practice devnet " +
+          "have to be staged once and left standing",
+      );
+    if (config.prewarmBlocks > 0)
+      throw new Error(
+        "run.chainMode: external cannot prewarm: the warmup loop mines its own blocks, and there is " +
+          "no cold fork state to warm in the first place (issue #33 (2))",
+      );
+  }
+
+  // A long run that writes one directory (ADR 0021 §6). Advisory rather than fatal: a deliberately
+  // long unsegmented run is a legitimate thing to do, and the operator is the one who knows whether
+  // this is a period or a calibration. But it should not be a surprise -- measured, a week
+  // unsegmented is a 435MB events.jsonl, a 221MB blocks.csv and 336 rounds in a single bar.
+  if (config.segmentHours === 0 && config.runBlocks > SEGMENT_ADVISORY_BLOCKS) {
+    const rounds = intervalCount(config.runBlocks, config.intervalBlocks);
+    console.error(
+      `[run] WARNING: ${config.runBlocks.toLocaleString("en-US")} blocks into one directory ` +
+        `(~${Math.round((config.runBlocks * EVENT_BYTES_PER_BLOCK) / 1e6)}MB of events.jsonl` +
+        (rounds > 0 ? `, ${rounds} rounds in one bar` : "") +
+        "). Set run.segmentHours to cut the output into days — the chain stays continuous, " +
+        "and each segment is an ordinary run directory (ADR 0021 §6).",
+    );
+  }
+
+  const adapters = initProtocols(config.enabledProtocols);
+  const enabledIds = adapters.map((a) => a.id);
+
+  // Precondition validation for economic gas (ADR 0011) (fail-fast).
+  if (config.economicGas) {
+    // Whether the endowment falls below the "minimum gas headroom" (too little runs out of gas on the first move
+    // → the run idles; ADR 0011 Risks). 1 tx ~1.5M gas; even a modest tip needs tens of txs' worth of ETH.
+    const minGasEthWei = MIN_ECONOMIC_GAS_ETH_WEI;
+    if (config.initialEthWei < minGasEthWei) {
+      throw new Error(
+        `ERIS_ECONOMIC_GAS=1: initialEthWei=${config.initialEthWei} is below the minimum ` +
+          `gas headroom (${minGasEthWei}); please raise INITIAL_ETH_WEI (ADR 0011 Risks)`,
+      );
+    }
+  }
+
+  const runId = new Date().toISOString().replace(/[:.]/g, "-");
+  // ADR 0021 §6: a chain that runs for a week cannot write one directory. When segmenting is on,
+  // the output is cut into day-sized run directories under one competition, and everything that
+  // writes goes through the same interface -- so nothing below this line knows it is happening.
+  const segments =
+    config.segmentHours > 0
+      ? new SegmentedRun({
+          root: config.runDirRoot,
+          competitionId: runId,
+          hours: config.segmentHours,
+          scenarioSet: config.segmentName || runId,
+        })
+      : null;
+  const logger: RunArtifactWriter =
+    segments ?? new RunLogger(config.runDirRoot, runId);
+  logger.event({
+    type: "run_started_realtime",
+    runId,
+    enabledProtocols: enabledIds,
+    blockTimeSec: config.blockTimeSec,
+    runSeconds: config.runSeconds,
+    runBlocks: config.runBlocks,
+    // Issue #136: when the run was stated as a date, the date it was converted from. runBlocks is
+    // what that date came to at this cadence when this process started.
+    ...(config.runEndsAt ? { runEndsAt: config.runEndsAt } : {}),
+    // The evaluation interval (rules §0.1), interim progress only -- the score uses the run's first
+    // and last boundary (ADR 0023). summary.json carries the boundaries, but only after the run
+    // ends -- a live viewer needs the length up front to lay the intervals out. `epochBlocks` is the
+    // same number under its name from before issue #140, for a dashboard that has not caught up.
+    intervalBlocks: config.intervalBlocks,
+    epochBlocks: config.intervalBlocks,
+    scoreEvery: config.scoreEvery,
+    // SEED is the label for this run's market conditions (ADR 0005): the fair-price path and the
+    // stress schedule are both drawn from it. Nothing recorded it, so a stored run could not say
+    // which world it was -- which is the one thing needed to replay it.
+    seed: config.seed,
+    flowSeed: config.flowSeed,
+    // ADR 0027: which key the seed was realized under -- the public one, or the commitment to a
+    // secret one. The seed alone no longer names the world.
+    scenarioKey: scenarioKeyRecord(scenarioKey),
+    // ADR 0021 §4: the endpoint the world is on, recorded by the environment. The dashboard's live
+    // mode used to discover it from an agent's `runtime_start` log line, which stops working the
+    // moment the agents are somebody else's processes on somebody else's machine. Reads go to
+    // readRpcUrl, which is the sequencer unless a replica is configured (#36).
+    rpcUrl: config.readRpcUrl,
+    // ADR 0020 §1: whether this run is one epoch of a scenario matrix or a continuous world. The
+    // hosted dashboard's public view reads it before summary.json exists, to decide how much of
+    // the stress schedule an audience may see (none for a scenario: a window's kind names the
+    // regime rules §3.3 does not announce).
+    resetUnit: config.resetUnit,
+    chainId: config.chainId,
+    chainMode: config.chainMode,
+    // Rules §2.6. 0 means the node's own limit was left in place.
+    blockGasLimit: config.blockGasLimit,
+    // Issue #167: the ordinal the agents were handed (ERIS_EPOCH_INDEX / ERIS_EPOCH_COUNT). The
+    // same `s` matrix.json carries; public, since it gives away the epoch's weight and nothing else.
+    ...(epochOrdinal ? { epoch: epochOrdinal } : {}),
+  });
+
+  if (roleKeyVerdict.kind === "allowed")
+    logger.event({
+      type: "public_role_keys_allowed",
+      exposed: roleKeyVerdict.exposed,
+      note: "ERIS_ALLOW_PUBLIC_ROLE_KEYS=1: a private rehearsal only; anyone who can send to this chain can sign with these",
+    });
+
+  // batch=true: automatically aggregate same-tick reads (parallel receipt fetches, readState, etc.) into
+  // JSON-RPC array batches / Multicall3, cutting the environment loop's round-trip count.
+  const { chain, publicClient, walletClient } = makeClients(
+    config.rpcUrl,
+    config.chainId,
+    { batch: true },
+  );
+  if (external) {
+    // There is nothing to reset (issue #33 (3)). On the practice devnet that is the design: the
+    // chain does not stop for the whole period, and a run is a window on it rather than a world of
+    // its own (ADR 0021 §1).
+    logger.event({
+      type: "fork_reset_skipped",
+      reason: "external-chain",
+      note: "a real chain cannot be rewound; this run continues the world already on it",
+    });
+  } else if (config.skipReset) {
+    // Diagnostic: keep the fork cache from the previous run (to isolate cold fetches; ADR 0006 Risks).
+    logger.event({ type: "fork_reset_skipped" });
+  } else {
+    await resetFork(publicClient, {
+      forkUrl: config.forkUrl,
+      forkBlockNumber: config.forkBlockNumber,
+      localDeploy: config.localDeploy,
+      localSnapshotFile: config.localSnapshotFile,
+    });
+  }
+
+  // Mining consistency in local mode: the deployer anvil starts with auto-mine, but a run in a separate process
+  // inherits the state after the previous run's teardown (setIntervalMining 0), so setup txs are not mined and it
+  // hangs. Explicitly turn auto-mine ON in the setup phase to reliably mine all setup txs (not needed for fork,
+  // which starts with --no-mining; turn it back OFF at competition start to make the fee competition work = see below).
+  if (config.localDeploy && !external) {
+    await setAutomine(publicClient, true);
+  }
+
+  // Registrations already on file join the roster here, before setup funds anyone, so they are
+  // valued from the first interval boundary like any roster entry. Left to the loop, they register
+  // after that boundary and go unscored on the first day -- every participant, after a restart
+  // (registrations.ts, startupRegistrations). A file that is missing or malformed right now is the
+  // loop's to report: its first poll reads the same file and records what is wrong with it.
+  let onFile: AgentSpec[] = [];
+  if (config.registrationsFile) {
+    try {
+      const read = new RegistrationsWatcher(config.registrationsFile).read();
+      if (read.kind === "changed")
+        onFile = startupRegistrations(read.entries, agentSpecs);
+    } catch {
+      onFile = [];
+    }
+    logger.event({
+      type: "registrations_read_at_start",
+      path: config.registrationsFile,
+      added: onFile.map((a) => a.id),
+    });
+  }
+  const rosterSpecs = [...agentSpecs, ...onFile];
+
+  // ---- agent wallets (processes start after setup completes; agentSpecs is already resolved from YAML/env) ----
+  const agentRuntimes: RealtimeAgentRuntime[] = rosterSpecs.map((spec) => {
+    // An entry registered by address has no key here at all; one registered by wallet still does,
+    // even when external, because a practice devnet that issues funded keys is a legitimate way to
+    // run one (the manifest hands the key to that participant).
+    const privateKey = spec.address
+      ? null
+      : privateKeyForWalletName(config, spec.wallet, spec.id);
+    return {
+      id: spec.id,
+      spec,
+      privateKey,
+      address: (spec.address as Address) ?? accountAddress(privateKey as Hex),
+      external: spec.external === true,
+      process: null,
+      initial: { ethWei: 0n, wethWei: 0n, usdcUnits: 0n },
+      included: 0,
+      reverted: 0,
+    };
+  });
+  const agentById = new Map(agentRuntimes.map((a) => [a.id, a]));
+  // A launched agent's id names its view directory (agentView.ts). Refused here, before setup,
+  // rather than at spawn after minutes of it.
+  for (const a of agentRuntimes)
+    if (!a.external && a.privateKey) agentViewDir(logger.runDir, a.id);
+
+  // ---- flow-bot process (realtime). Pushes context every block to move the market ----
+  // flow is the environment-side market mechanism, so it stays as relay (ADR 0006 "undecided").
+  const flowProcess = new RealtimeFlowProcess(
+    config.flowBotCommand,
+    config.flowBotArgs,
+    config.flowSeed,
+    logger.runDir,
+    scenarioKeyChildEnv(scenarioKey),
+  );
+  // Issue #159: the bot is the environment's market, and it used to die without a word -- the
+  // exporter counts this as an environment failure and the flow-stopped alert follows.
+  flowProcess.onExit = (info) => {
+    logger.event({
+      type: "flow_process_exited",
+      ...info,
+      stderrTail: flowProcess.getStderr().slice(-2000),
+    });
+    console.error(`[flow] ${info.reason}`);
+  };
+
+  // ---- flow wallets (per protocol/kind; used by submitIntent / ctx for selection) ----
+  const flowWalletMap = new Map<string, FlowWallet>();
+  for (const id of enabledIds) {
+    for (const kind of ["informed", "uninformed"] as FlowKind[]) {
+      const key = `${id}:${kind}`;
+      const privateKey = keccak256(stringToBytes(`flow:${config.seed}:${key}`));
+      flowWalletMap.set(key, {
+        id: `flow-${key}`,
+        address: accountAddress(privateKey),
+        privateKey,
+      });
+    }
+  }
+  // aave borrower pool: provide independent actors at separate addresses (persistent positions × N).
+  // Since they go on flowWalletMap, funding and blocks.csv attribution flow through the same path as other flow wallets.
+  if (enabledIds.includes("aave")) {
+    for (let i = 0; i < config.aaveFlowActorCount; i++) {
+      const key = `aave:actor${i}`;
+      const privateKey = keccak256(stringToBytes(`flow:${config.seed}:${key}`));
+      flowWalletMap.set(key, {
+        id: `flow-${key}`,
+        address: accountAddress(privateKey),
+        privateKey,
+      });
+    }
+  }
+
+  // Resolved before wallet funding, not at the start of the block loop: the whale wallet has to be
+  // endowed with enough inventory to place the largest order the seed drew, and that is only knowable
+  // from the resolved schedule. The schedule is a pure function of (config, seed, runBlocks) with no
+  // chain dependency, so building it early costs nothing.
+  const schedule = new EventSchedule(
+    config.stressEvents,
+    config.seed,
+    config.runBlocks,
+  );
+  const stressAudit = new StressAudit(schedule.events, event => logger.event(event));
+  // A dedicated wallet so a whale order does not drain the ordinary flow wallets mid-run (which
+  // would quietly change the flow bot's behavior for the rest of the run) and so blocks.csv
+  // attributes the print to the event rather than to background flow.
+  const whaleEvents = schedule.events.filter((e) => e.type === "whale");
+  if (whaleEvents.length > 0) {
+    const key = WHALE_WALLET_KEY;
+    const privateKey = keccak256(stringToBytes(`flow:${config.seed}:${key}`));
+    flowWalletMap.set(key, {
+      id: `flow-${key}`,
+      address: accountAddress(privateKey),
+      privateKey,
+    });
+  }
+  // Token launches (issue #29): one wallet that lists each token and one that buys it. On the flow
+  // map so they are funded, approved and attributed as flow like the whale; their sizes are set
+  // below once the pools have been read, for the same reason the whale's are.
+  const launchEndowments = tokenLaunchEndowments(schedule);
+  for (const e of launchEndowments) {
+    for (const key of [e.launchKey, e.waveKey]) {
+      const privateKey = keccak256(stringToBytes(`flow:${config.seed}:${key}`));
+      flowWalletMap.set(key, {
+        id: `flow-${key}`,
+        address: accountAddress(privateKey),
+        privateKey,
+      });
+    }
+  }
+
+  const adminPk = config.privateKeys.admin;
+  const keeperPk = config.privateKeys.keeper;
+  // The WETH price path. Derived like every other base's (`priceRngForAsset` hashes the seed), and
+  // distinct from the flow bot's stream, which used to be this very stream: flow.seed defaults to
+  // the run seed, and both were `Rng(seed)`.
+  const rng = priceRngForAsset(config.seed, "WETH");
+  const ctx: SimContext = {
+    publicClient,
+    walletClient,
+    chain,
+    config,
+    rng,
+    adminPk,
+    keeperPk,
+    oracle: { aaveAggregators: {} },
+    gmx: { market: GMX_MARKETS.ETH_USD, markets: gmxMarketAddresses() },
+    pendingGmxOrders: [],
+    flowWallet(protocol: ProtocolId, kind: FlowKind): FlowWallet {
+      const w = flowWalletMap.get(`${protocol}:${kind}`);
+      if (!w) throw new Error(`flow wallet not found: ${protocol}:${kind}`);
+      return w;
+    },
+    flowWalletByKey(key: string): FlowWallet {
+      const w = flowWalletMap.get(key);
+      if (!w) throw new Error(`flow wallet not found: ${key}`);
+      return w;
+    },
+  };
+
+  // tx attribution is primarily by from-address lookup (ADR 0006 §4; keeps blocks.csv even for direct sends).
+  // submittedByHash is used only to supplement actionType/fee for txs the environment/relay submitted itself.
+  const ownerByAddress = new Map<string, TxOwner>();
+  for (const agent of agentRuntimes) {
+    ownerByAddress.set(agent.address.toLowerCase(), {
+      ownerId: agent.id,
+      role: "agent",
+    });
+  }
+  for (const [key, wallet] of flowWalletMap) {
+    ownerByAddress.set(wallet.address.toLowerCase(), {
+      ownerId: wallet.id,
+      role: flowRole(key),
+    });
+  }
+  ownerByAddress.set(accountAddress(adminPk).toLowerCase(), {
+    ownerId: "oracle",
+    role: "system",
+  });
+  ownerByAddress.set(accountAddress(keeperPk).toLowerCase(), {
+    ownerId: "keeper",
+    role: "system",
+  });
+  // Read once, at the blocks.csv flush, and swept there too (issue #134).
+  const submittedByHash = new SubmittedLedger<SubmittedMeta>();
+
+  // Top an environment wallet up to a target native balance from the treasury (issue #33 (1)).
+  // "Up to", not "by": the practice devnet funds the same admin and keeper on every segment, and
+  // sending the full amount each time would drain the treasury over a week of restarts.
+  const topUpFromTreasury = async (
+    address: Address,
+    targetWei: bigint,
+  ): Promise<void> => {
+    const treasuryPk = config.treasuryPrivateKey;
+    if (!treasuryPk) return;
+    const held = await publicClient.getBalance({ address });
+    if (held >= targetWei) return;
+    await transferEth(
+      publicClient,
+      walletClient,
+      chain,
+      treasuryPk,
+      address,
+      targetWei - held,
+    );
+  };
+
+  // Realtime shared latest state (referenced by the relay's async action handler and flow context)
+  let latestStateById = new Map<ProtocolId, unknown>();
+  // Whether the LST reserve was already reported exhausted (issue #129), so the event fires once per
+  // exhaustion rather than every block after it.
+  let lstExhaustedReported = false;
+  let latestFairPrice = 0;
+  const latestHistory: AgentObservation["history"] = [];
+
+  try {
+    // Before anything else: is the deployment this run names actually on this chain? Two things pick
+    // the target and they are set in different places (the chain in .env.local, the addresses in
+    // constants.local.ts), so switching between a local node and a devnet means changing both. When
+    // only one moves, every read comes back "0x" and the failure surfaces as a decode error naming a
+    // bare address, several minutes into setup.
+    {
+      const check = await checkDeployment({ publicClient, enabledIds });
+      logger.event({
+        type: "deployment_check",
+        chainId: check.chainId,
+        checked: check.checked,
+        missing: check.missing,
+      });
+      if (check.missing.length > 0)
+        throw new Error(deploymentMismatchMessage(check, config.rpcUrl));
+    }
+
+    // And does it model GMX funding? A deploy or state dump baked before the funding patch runs and
+    // scores with a funding rate of exactly 0 on every block, and nothing else in the run says so.
+    // Stops on anvil; on the never-reset practice chain it records and warns (gmxFundingEnforcement).
+    if (config.localDeploy && enabledIds.includes("gmx")) {
+      const funding = gmxFundingCheck(
+        await readGmxFundingConfig(publicClient, gmxMarketAddresses()),
+      );
+      const enforcement = gmxFundingEnforcement(funding, config.chainMode);
+      logger.event({
+        type: "gmx_funding_check",
+        ok: funding.ok,
+        enforcement,
+        markets: funding.markets,
+      });
+      const message = funding.ok
+        ? ""
+        : gmxFundingMissingMessage(funding, config.chainMode);
+      if (enforcement === "fail") throw new Error(message);
+      if (enforcement === "warn") console.warn(`[gmx] WARNING: ${message}`);
+    }
+
+    // And does the Aave Pool hold only reserves the environment owns? The Aave score sums every
+    // reserve, so an active vendor test-token reserve is free score (issue #190). Local deploys only:
+    // a fork's Pool is Arbitrum's, whose reserves are real assets nobody mints for free.
+    if (config.localDeploy && enabledIds.includes("aave")) {
+      const reserves = await readAaveReserves(publicClient);
+      const stray = strayAaveReserves(reserves, environmentReserveAssets());
+      logger.event({
+        type: "aave_reserve_check",
+        reserves: reserves.length,
+        stray,
+      });
+      if (stray.length > 0) throw new Error(strayAaveReservesMessage(stray));
+    }
+
+    // Then, on a chain participants can reach, a token anyone can mint makes the endowment
+    // meaningless and the funding below pointless (issue #33 (1)).
+    if (external) await assertTokensNotMintable(ctx, logger);
+
+    // ---- setup (fast flush: no-mining + sendAndMine) ----
+    // The admin and keeper spend gas every block for the whole run, so on anvil they are simply
+    // given an absurd balance. On an external chain the treasury tops them up to a target instead:
+    // it is a finite account, and 2,000,000 ETH is not a number a genesis alloc can hand out twice.
+    if (external) {
+      const treasuryPk = config.treasuryPrivateKey as Hex;
+      await topUpFromTreasury(
+        accountAddress(adminPk),
+        config.externalRoleEthWei,
+      );
+      await topUpFromTreasury(
+        accountAddress(keeperPk),
+        config.externalRoleEthWei,
+      );
+      logger.event({
+        type: "treasury_funded_roles",
+        treasury: accountAddress(treasuryPk),
+        targetWei: config.externalRoleEthWei.toString(),
+      });
+    } else {
+      await setEthBalance(publicClient, accountAddress(adminPk), GAS_ONLY_WEI);
+      await setEthBalance(publicClient, accountAddress(keeperPk), GAS_ONLY_WEI);
+    }
+    for (const adapter of adapters) {
+      if (adapter.setupGlobal) await adapter.setupGlobal(ctx);
+    }
+    const fundTargets: Array<{
+      role: WalletRole;
+      privateKey: Hex | null;
+      address: Address;
+      key?: string;
+    }> = [
+      ...agentRuntimes.map((a) => ({
+        role: "agent" as WalletRole,
+        privateKey: a.privateKey,
+        address: a.address,
+      })),
+      ...[...flowWalletMap.entries()].map(([key, w]) => ({
+        role: flowRole(key),
+        privateKey: w.privateKey,
+        address: w.address,
+        key,
+      })),
+    ];
+    // Progress, because on a real chain this loop is minutes rather than instants, and an
+    // environment that prints nothing for ten minutes reads as one that has hung.
+    let funded = 0;
+    for (const t of fundTargets) {
+      // The whale passes through here too, even though its balances are overwritten a moment later
+      // once the fair price is known: this loop is also where each adapter's setupWallet grants the
+      // token approvals. Skipping it to avoid the redundant funding left the whale unapproved, and
+      // all four of its swaps reverted on-chain while every log said the event had fired.
+      const isFlow = t.key !== undefined;
+      // aave borrower actors are endowed with collateral WETH directly (a USDC→WETH prep swap tends to fail on
+      // slippage, and the actor struggles to secure collateral and never reaches borrowing). The collateral is
+      // supplied to Aave and stays in a non-scored flow wallet = it never affects the agent's β. Give it a thick
+      // buffer for multiple supplies.
+      const isAaveActor = t.key?.startsWith("aave:actor") ?? false;
+      // Give flow wallets base inventory of flowWethWei / flowBaseAmounts so they can also "sell" under USDC-only
+      // (agents stay at initial* = USDC-only/no-β unchanged).
+      const wethWei = isAaveActor
+        ? config.aaveFlowMaxWethWei * 6n
+        : isFlow
+          ? config.flowWethWei
+          : config.initialWethWei;
+      const baseAmounts = isFlow
+        ? config.flowBaseAmounts
+        : config.initialBaseAmounts;
+      // Agents are scored, so `funding.ethWei` is their whole native balance: the default gas buffer
+      // would be unchosen β in the live-marked interval series (ADR 0019 §6). Flow wallets keep it --
+      // they are machinery, and a dry flow bot removes market activity from everyone.
+      const gasBuffer = isFlow ? undefined : 0n;
+      const ethWei = isFlow ? config.flowEthWei : config.initialEthWei;
+      // Both sides of the flow's inventory are the regime's to size (issue #112): a flowTrend hold
+      // that leans one way for 30 blocks spends the wallet's whole balance on that side, and a
+      // wallet funded like an agent delivers x1.4 of a declared x2-3 lean.
+      const usdcUnits = isFlow ? config.flowUsdcUnits : config.initialUsdcUnits;
+      if (!t.privateKey) {
+        // A participant's own address (ADR 0021 §2). Same endowment, reached without signing as
+        // them -- and therefore without the venue approvals below, which only they can grant.
+        await fundAddress(
+          publicClient,
+          walletClient,
+          chain,
+          t.address,
+          ethWei,
+          wethWei,
+          usdcUnits,
+          baseAmounts,
+          gasBuffer,
+        );
+        continue;
+      }
+      await fundWallet(
+        publicClient,
+        walletClient,
+        chain,
+        t.privateKey,
+        ethWei,
+        wethWei,
+        usdcUnits,
+        baseAmounts,
+        gasBuffer,
+      );
+      // Every venue's approvals for this wallet, collected and sent as one batch. They all come
+      // from the same key with nothing between them, so on a dev node this is what it always was
+      // (send, mine, wait) and on a chain the environment does not mine it is one block instead of
+      // one per approval — fifteen wallets at eighteen transactions each is nine minutes of setup
+      // at a two-second block time, which the first external run spent in silence.
+      const approvals: Array<{ to: Address; data?: Hex; value?: bigint }> = [];
+      for (const adapter of adapters) {
+        if (!adapter.setupWallet) continue;
+        for (const tx of await adapter.setupWallet(ctx, t.address))
+          approvals.push({ to: tx.to, data: tx.data, value: tx.value });
+      }
+      await sendBatch(
+        publicClient,
+        walletClient,
+        chain,
+        t.privateKey,
+        approvals,
+      );
+      funded++;
+      if (funded % 5 === 0 || funded === fundTargets.length)
+        console.error(`[setup] funded ${funded}/${fundTargets.length} wallets`);
+    }
+
+    // The initial fair price is finalized here (used by the local oracle calibration and victim setup below).
+    latestFairPrice = await initialFairPrice(ctx, enabledIds);
+
+    // Every other base's opening fair, settled here with WETH's rather than after mining starts
+    // (issue #94). Until this existed the extra bases were first read after `interval_mining_started`,
+    // so everything between here and the first block that valued a holding through
+    // `ctx.fairPrices ?? {}` saw WETH only: the Aave calibration below (the WBTC aggregator kept the
+    // deployer's seed price until the first oracle tx), the whale's endowment, `initial_endowment`,
+    // and -- the one that reached the score -- the PriceFeed's opening state, which is what the
+    // first interval boundary marks V_0 against. `openingFair` is the number every one of those reads,
+    // and the OU walk in the block loop starts from it, so the mark and the walk agree.
+    const extraBaseSymbols = baseTokens()
+      .map((t) => t.symbol)
+      .filter((s) => s !== "WETH");
+    const openingFair: Record<string, number> = { WETH: latestFairPrice };
+    for (const b of extraBaseSymbols)
+      openingFair[b] = await initialFairPriceFor(ctx, b, enabledIds);
+    ctx.fairPrices = { ...openingFair };
+
+    // [Calibration] Local deploy aligns the Aave oracle to the run's initial fair price. On a fork,
+    // "oracle ≈ spot ≈ fair0" holds implicitly, but locally the deployer's seed price and fair0 can diverge (a
+    // miscalibration measured where a victim's HF0 breaks at run start and it becomes liquidatable before the
+    // crash window; even without victims, the same divergence appears in the initial observation until the first
+    // oracle update tx lands). The direct storage write is in the setup phase, so there is no front-run-side
+    // impact. If the aggregator is not deployed (aave disabled) it is a no-op (ADR 0016 Phase 0).
+    if (config.localDeploy) {
+      // The storage write is a cheatcode; on an external chain the same calibration is an ordinary
+      // mined setter tx from the admin key. Both land before any agent starts, so neither is
+      // front-runnable -- the difference is only which mechanism is available (issue #33 (1)/(4)).
+      if (external) await updateOracles(ctx, latestFairPrice);
+      else await writeAaveOraclesStorage(ctx, latestFairPrice);
+    }
+
+    // ---- whale endowment (ADR 0017 regime 3) ----
+    // Funded here rather than in the loop above because the size is denominated against the fair
+    // price, which is only known once the pools have been read. A whale's whole job is to place an
+    // order far larger than ordinary flow, so flow-sized funding would make it fail on balance and
+    // silently turn the regime into calm for that seed.
+    if (whaleEvents.length > 0) {
+      const wallet = flowWalletMap.get(WHALE_WALLET_KEY);
+      if (!wallet) throw new Error("whale wallet missing from flowWalletMap");
+      // Fail fast on a whale pointed at a venue this run does not have. Otherwise submitIntent
+      // cannot resolve an adapter, handleFlowOrders swallows the throw, and the run continues with
+      // the event silently missing -- every other calibration coupling here (victim HF, the LST rate
+      // oracle, the state dump's venues) fails at setup instead.
+      for (const ev of whaleEvents) {
+        const venue = ev.venue ?? "uniswap";
+        if (!enabledIds.includes(venue as ProtocolId))
+          throw new Error(
+            `whale event targets venue "${venue}", which is not enabled for this run ` +
+              `(enabled: ${enabledIds.join(", ")}). Enable it in run.protocols or retarget the event`,
+          );
+      }
+      const fairForFunding: Record<string, number> = {
+        WETH: latestFairPrice,
+        ...(ctx.fairPrices ?? {}),
+      };
+      const funding = whaleFunding(schedule.events, fairForFunding);
+      await fundWallet(
+        publicClient,
+        walletClient,
+        chain,
+        wallet.privateKey,
+        config.flowEthWei,
+        funding.baseWei.WETH ?? 0n,
+        funding.usdcUnits,
+        funding.baseWei,
+      );
+      logger.event({
+        type: "stress_whale_funded",
+        address: wallet.address,
+        baseWei: Object.fromEntries(
+          Object.entries(funding.baseWei).map(([k, v]) => [k, v.toString()]),
+        ),
+        usdcUnits: funding.usdcUnits.toString(),
+        events: whaleEvents.length,
+      });
+    }
+
+    // ---- token-launch endowment (issue #29) ----
+    // The launch wallet holds exactly the USDC side it seeds, the wave wallet exactly what the seed
+    // drew for it to spend (nothing for a dud). Flow-sized funding would list a thinner pool than
+    // the schedule says and cap the wave at the flow wallet's balance, silently turning the regime
+    // into a smaller one for that seed.
+    for (const e of launchEndowments) {
+      const launchWallet = flowWalletMap.get(e.launchKey);
+      const waveWallet = flowWalletMap.get(e.waveKey);
+      if (!launchWallet || !waveWallet)
+        throw new Error("token launch wallet missing from flowWalletMap");
+      await fundWallet(
+        publicClient,
+        walletClient,
+        chain,
+        launchWallet.privateKey,
+        config.flowEthWei,
+        0n,
+        e.liquidityUsdcUnits,
+      );
+      await fundWallet(
+        publicClient,
+        walletClient,
+        chain,
+        waveWallet.privateKey,
+        config.flowEthWei,
+        0n,
+        e.waveUsdcUnits,
+      );
+      logger.event({
+        type: "stress_token_launch_funded",
+        eventIndex: e.eventIndex,
+        index: e.index,
+        launchWallet: launchWallet.address,
+        waveWallet: waveWallet.address,
+        liquidityUsdcUnits: e.liquidityUsdcUnits.toString(),
+        waveUsdcUnits: e.waveUsdcUnits.toString(),
+      });
+    }
+
+    // ---- stress victims (ADR 0009 §4): build seed-derived victims that make liquidation possible ----
+    // Victims are not included in agentRuntimes = not scored (a profit source for the liquidator agent).
+    const stressVictims: StressVictim[] = deriveStressVictims(
+      config.seed,
+      config.stressVictimCount,
+    );
+    let victimEnv: Record<string, string> | undefined;
+    // Minimum victim HF right after setup (excluding the debt-free sentinel). Used for the crash calibration warning (§2).
+    let minVictimHf0: number | null = null;
+    if (stressVictims.length > 0) {
+      if (!enabledIds.includes("aave")) {
+        throw new Error(
+          "ERIS_STRESS_VICTIM_COUNT > 0 requires the aave protocol enabled (ADR 0009 §4)",
+        );
+      }
+      // [Hard requirement] fresh state. With a soft-reset, the previous run's victim positions persist and the HF
+      // computation breaks (anvil-reset-does-not-clear-state, the cause of the ADR 0007 correction) → fail-fast.
+      // A fork satisfies this via a full re-fork (ARB_RPC_URL); local deploy satisfies it because resetFork's
+      // snapshot/revert guarantees a "clean cross-section right after load-state / revert" (ADR 0016 §2).
+      const victimFreshState =
+        !config.skipReset && (config.localDeploy || Boolean(config.forkUrl));
+      if (!victimFreshState) {
+        throw new Error(
+          "stress victims require a fresh state: full re-fork (set ARB_RPC_URL) or local deploy mode, " +
+            "and do not set ERIS_SKIP_RESET (ADR 0009 §4 / ADR 0016 §2)",
+        );
+      }
+      await setupStressVictims(ctx, stressVictims);
+      await openStressVictimPositions(
+        ctx,
+        stressVictims,
+        config.stressVictimHf0,
+      );
+      const accounts = await readVictimsAccount(ctx, stressVictims);
+      for (const a of accounts) {
+        const hf = Number(a.healthFactor) / 1e18;
+        // Debt-free (HF is the uint256 max sentinel ≈ 1e59) is out of scope for calibration.
+        if (hf < 1e6 && (minVictimHf0 === null || hf < minVictimHf0))
+          minVictimHf0 = hf;
+      }
+      logger.event({
+        type: "stress_victims_setup",
+        hf0: config.stressVictimHf0,
+        victims: accounts.map((a) => ({
+          id: a.id,
+          address: a.address,
+          healthFactor: a.healthFactor.toString(),
+          totalCollateralBase: a.totalCollateralBase.toString(),
+          totalDebtBase: a.totalDebtBase.toString(),
+        })),
+      });
+      // Pass the victims to monitor to the liquidator agent (the detection-skill premise is preserved: the agent
+      // scans HF every block. Addresses are public on-chain info, and distributing them does not add a bidding game).
+      victimEnv = {
+        ERIS_LIQUIDATION_VICTIMS: stressVictims.map((v) => v.address).join(","),
+      };
+    }
+
+    for (const agent of agentRuntimes) {
+      agent.initial = await getBalances(publicClient, agent.address);
+    }
+
+    // What each agent actually starts with (ADR 0021 §2 / issue #33 (1)).
+    //
+    // The two funding mechanisms differ in a way that only shows up here. A cheatcode *assigns* a
+    // balance, so every agent starts at exactly the endowment whatever it held before. A treasury
+    // *adds* to one, so the endowment is a floor: an address that already holds something keeps it.
+    //
+    // That is right for a continuous economy — an agent that traded well yesterday should still have
+    // its gains — and it is a trap at the start of a period. Measured on the first external run:
+    // two agents bound to a prefunded dev account started with $3.0bn against a fresh address's
+    // $34k, and their per-round returns were then a report on one very large ETH holding. Nothing in
+    // the artifacts said so.
+    {
+      const fair: Record<string, number> = {
+        WETH: latestFairPrice,
+        ...(ctx.fairPrices ?? {}),
+      };
+      const values = agentRuntimes.map((a) => ({
+        id: a.id,
+        valueUsdc: valueUsdc(a.initial, fair, PAR_STABLE_PRICES),
+      }));
+      const positive = values.filter((v) => v.valueUsdc > 0);
+      const min = Math.min(...positive.map((v) => v.valueUsdc));
+      const max = Math.max(...positive.map((v) => v.valueUsdc));
+      const ratio = positive.length > 1 && min > 0 ? max / min : 1;
+      logger.event({ type: "initial_endowment", values, ratio });
+      // A factor of two is already a different competition; this is deliberately loud rather than
+      // fatal, because mid-period the spread is real history rather than a misconfiguration.
+      if (ratio > 2)
+        console.error(
+          `[funding] WARNING: agents start ${ratio.toFixed(1)}x apart ` +
+            `(${min.toFixed(0)} .. ${max.toFixed(0)} USDC). ` +
+            (external
+              ? "On a chain the environment cannot assign balances, the endowment is a floor: an " +
+                "address that already held something keeps it. Use fresh addresses for a fresh field."
+              : "Check the roster's funding overrides."),
+        );
+    }
+
+    // ---- On-chain distribution path for the fair price (ADR 0006 §3). Kept permanent and written every block ----
+    // The constructor carries WETH's opening fair; the other bases are written right behind it,
+    // before the first boundary is marked (issue #94 -- see setPriceFeedOpeningFor for what V_0
+    // looked like when they were left to the first per-block oracle tx).
+    const priceFeedAddress = await deployPriceFeed(ctx, latestFairPrice);
+    for (const b of extraBaseSymbols)
+      await setPriceFeedOpeningFor(
+        ctx,
+        priceFeedAddress,
+        tokenInfo(b).address,
+        openingFair[b],
+      );
+    logger.event({
+      type: "price_feed_deployed",
+      address: priceFeedAddress,
+      openingFair,
+    });
+
+    // ---- agent-created markets (issue #40): the discovery registry and the lending singleton ----
+    // Both are per-*run* contracts, like the PriceFeed: they are deployed here rather than living in
+    // constants.local.ts, and their addresses reach the agents through env and the manifest.
+    //
+    // The registrar has its own key. The oracle update sends from admin every block, and two
+    // concurrent senders on one key race on the nonce -- which is how the LST redemption rate once
+    // froze for a whole run.
+    let marketRegistry: MarketRegistryRuntime | undefined;
+    if (config.agentMarkets) {
+      // The registrar's key has to be nobody else's, and "has to" is not the same as "is".
+      //
+      // Two separate reasons, and the second is the serious one:
+      //   - nonce. The oracle update sends from admin every block and the registry write sends from
+      //     the registrar in the same Promise.all. On one key they resolve the same pending nonce
+      //     and one silently replaces the other, which is how the LST redemption rate once froze
+      //     for a whole run.
+      //   - authority. `MarketRegistry`'s owner is whoever deployed it, and the owner is the only
+      //     address that can publish an entry. A *participant* holding that key could publish
+      //     anything it liked as `verified` -- the one claim the environment makes about a
+      //     contract, made by the party the claim is supposed to protect everyone from.
+      //
+      // Compared by address rather than by key, so an externally-registered participant (ADR 0021
+      // §2 -- the environment holds no key for them, only an address) is covered too.
+      const registrarPk = config.privateKeys.setup;
+      const registrarAddress = accountAddress(registrarPk).toLowerCase();
+      const claimed = new Map<string, string>([
+        [
+          accountAddress(config.privateKeys.admin).toLowerCase(),
+          "the admin wallet",
+        ],
+        [
+          accountAddress(config.privateKeys.keeper).toLowerCase(),
+          "the keeper wallet",
+        ],
+        ...[...flowWalletMap.values()].map(
+          (w) => [w.address.toLowerCase(), `flow wallet ${w.id}`] as const,
+        ),
+        ...agentRuntimes.map(
+          (a) => [a.address.toLowerCase(), `participant ${a.id}`] as const,
+        ),
+      ]);
+      const collision = claimed.get(registrarAddress);
+      if (collision)
+        throw new Error(
+          `the market registrar's address (${registrarAddress}, from SETUP_PRIVATE_KEY) is also ` +
+            `${collision}. The registrar deploys and owns MarketRegistry, and its owner is the only ` +
+            "address that can publish an entry -- so a participant holding it could publish its own " +
+            "trap as `verified`. It also writes every block alongside the oracle update, and two " +
+            "senders on one key race on the nonce (issue #40 T0). Give the registrar an address " +
+            "nothing else in the run uses, or run with agentMarkets.enabled: false.",
+        );
+      marketRegistry = await deployAgentMarketVenues(
+        ctx,
+        registrarPk,
+        config.agentMarketsPerBlockCap,
+        logger,
+      );
+      ctx.marketRegistry = marketRegistry.address;
+      ctx.lending = marketRegistry.lending;
+      // The scorer's valuation context has no SimContext, so the singleton reaches it here.
+      setLendingSingleton(marketRegistry.lending);
+    } else if (enabledIds.includes("lending")) {
+      throw new Error(
+        "run.protocols includes `lending` but agentMarkets.enabled is false. The lending venue is a " +
+          "singleton the environment deploys as part of the agent-created-market capability " +
+          "(issue #40); without it every lending action would be rejected at build time and the " +
+          "roster would look like it chose not to lend. Set `agentMarkets: { enabled: true }`.",
+      );
+    }
+
+    // Contracts the environment owns. The CREATE scan only covers the competition window and every
+    // environment deploy happens in setup, so this is belt and braces -- but publishing an
+    // environment contract as an "agent-created market" would tell the field the environment is a
+    // participant, and that is worth being sure about.
+    const environmentAddresses = new Set<string>(
+      [
+        priceFeedAddress as string,
+        marketRegistry?.address as string | undefined,
+        marketRegistry?.lending as string | undefined,
+        FLASH_ARB_ADDRESS as string,
+      ]
+        .filter((a): a is string => typeof a === "string")
+        .map((a) => a.toLowerCase()),
+    );
+
+    // ---- flash arb demo (GitHub #3, env gate): deploy FlashArb (same gate as the synchronous coordinator) ----
+    // Deploy the FlashArb that the flasharb base (ADR 0012) invokes via rawTx here. A one-time setup-phase deploy
+    // that does not affect interval mining / mempool ordering (same nature as deployPriceFeed). Without deploying,
+    // the receiver has no code and flashLoanSimple reverts (discovered in a live run to be missing from realtime).
+    if (
+      config.flashArbDemo &&
+      enabledIds.includes("aave") &&
+      enabledIds.includes("uniswap") &&
+      enabledIds.includes("balancer")
+    ) {
+      await deployFlashArb(ctx);
+      logger.event({ type: "flash_arb_deployed", address: FLASH_ARB_ADDRESS });
+    }
+
+    // ---- vulnerability-appearance events (ADR 0014): deploy the factory + all pools (a mix of honest/rigged) in
+    // setup and issue disclosures. Funding (appearance) happens at each pool's window (the mining loop below).
+    // The schedule is SEED-derived and pure. Pools are not included in agentRuntimes = not scored (outside the
+    // victims/verifiers).
+    const vulnSchedule = new VulnSchedule(
+      config.vulnEvents,
+      config.seed,
+      config.runBlocks,
+      baseTokens().map((t) => t.symbol),
+    );
+    let vulnRuntime: VulnRuntime | null = null;
+    let vulnEnv: Record<string, string> | undefined;
+    if (vulnSchedule.hasEvents()) {
+      vulnRuntime = await deployVulnPools(ctx, vulnSchedule, config, logger);
+      // The agent subscribes to the factory and builds a pool graph (§3). fromBlock narrows the getLogs range
+      // (scans only from the factory onward even with the fork's huge block numbers). disclosures are referenced via ERIS_RUN_DIR.
+      vulnEnv = {
+        ERIS_VULN_FACTORY: vulnRuntime.factory,
+        ERIS_VULN_FROM_BLOCK: vulnRuntime.factoryDeployBlock.toString(),
+        ERIS_VULN_LLM: config.vulnLlm,
+      };
+    }
+    // Merge the stress victim env (ADR 0009) and vuln env (ADR 0014) into a single extra env for distribution.
+    // ERIS_RUN_DIR is fixed when the process starts; the segment it names is not (ADR 0021 sec 6).
+    // Hand the child the pointer so its log follows the roll instead of piling into segment 0.
+    const segmentEnv = segments
+      ? { ERIS_RUN_DIR_POINTER: segments.pointerPath }
+      : undefined;
+    // Issue #40: where the registry and the lending singleton are. Per-run contracts, so they
+    // cannot come from constants.local.ts the way a venue address does; a self-hosted participant
+    // reads them from the manifest instead (ADR 0021 §2).
+    const registryEnv = marketRegistry
+      ? {
+          ERIS_MARKET_REGISTRY_ADDRESS: marketRegistry.address,
+          ERIS_LENDING_ADDRESS: marketRegistry.lending,
+          ERIS_MARKET_REGISTRY_FROM_BLOCK: String(marketRegistry.deployBlock),
+        }
+      : undefined;
+    // The gas budget the run is actually enforcing (issue #40 T0). Handed to the agents so the
+    // runtime self-limits to the same number the post-run check judges by -- three copies of a
+    // ceiling is three chances for them to disagree, and the one that matters is the one that
+    // disqualifies.
+    const gasBudgetEnv = {
+      ERIS_MAX_TX_GAS: config.maxTxGas.toString(),
+      ERIS_MAX_AGENT_BLOCK_GAS: config.maxAgentBlockGas.toString(),
+    };
+    const agentExtraEnv = {
+      ...victimEnv,
+      ...vulnEnv,
+      ...segmentEnv,
+      ...registryEnv,
+      ...gasBudgetEnv,
+    };
+
+    // The roster as the world sees it, in two artifacts written by one function because they are
+    // re-published: on every segment roll so a day stands alone (ADR 0021 §6), and on every
+    // registration that arrives mid-period (§2) -- a list written once at startup is a list missing
+    // whoever joined after it. Both read `agentRuntimes` at call time for that reason.
+    //
+    //   agents_registered  one event line (ADR 0008 P0), so the dashboard has every agent
+    //                      (id / address / classification hint) from a file tail alone. Not read by
+    //                      scoring.
+    //   manifest.json      what a self-hosted participant reads instead of a coordinator's env
+    //                      (ADR 0021 §2). Written once the PriceFeed exists, because that address is
+    //                      the one piece a participant cannot look up anywhere else. No keys, no
+    //                      stress timings -- see core/src/manifest.ts.
+    // Issue #156: the manifest in the run directory is the one the dashboard serves to participants,
+    // and before run.publicRpcUrl it always named this process's own rpcUrl -- on the hosted box the
+    // loopback anvil, so a participant's agent dialled its own machine. Said once, when it matters:
+    // a run that expects agents from outside (an external roster entry or a registrations file).
+    let loopbackManifestWarned = false;
+    //
+    // The manifest is written a second time once the run's first block is declared, because that is
+    // when the period's clock starts: the block the run's length counts from and the instant the day
+    // grid is cut from, both of which a self-hosted runtime needs (sdk/src/periodClock.ts).
+    let periodStart: { block: number; startedAtMs: number } | undefined;
+    const publishManifest = (): void => {
+      logger.artifact(
+        MANIFEST_FILENAME,
+        buildManifest({
+          config,
+          priceFeed: priceFeedAddress,
+          ...(marketRegistry
+            ? {
+                marketRegistry: marketRegistry.address,
+                lending: marketRegistry.lending,
+                marketRegistryFromBlock: marketRegistry.deployBlock,
+              }
+            : {}),
+          ...(periodStart ? { periodStart } : {}),
+          participants: agentRuntimes.map((a) => ({
+            id: a.id,
+            address: a.address,
+            external: a.external,
+            baseline: a.spec.baseline ?? false,
+            description: a.spec.description,
+            ...(a.spec.participant !== undefined
+              ? { participant: a.spec.participant }
+              : {}),
+          })),
+        }),
+      );
+    };
+    const publishRoster = (): void => {
+      const published = publishedRpc(config);
+      if (
+        !loopbackManifestWarned &&
+        isLoopbackUrl(published.rpcUrl) &&
+        (config.registrationsFile !== undefined ||
+          agentRuntimes.some((a) => a.external))
+      ) {
+        loopbackManifestWarned = true;
+        logger.event({
+          type: "manifest_rpc_loopback_warning",
+          rpcUrl: published.rpcUrl,
+          note: "manifest.json names a loopback address, which on a participant's machine is their own. Set ERIS_PUBLIC_RPC_URL (or run.publicRpcUrl) to the gateway participants dial.",
+        });
+        console.warn(
+          `[manifest] WARNING: manifest.json publishes chain.rpcUrl=${published.rpcUrl}, a loopback address, ` +
+            "to agents that run elsewhere. Set ERIS_PUBLIC_RPC_URL in .env.local (issue #156).",
+        );
+      }
+      logger.event({
+        type: "agents_registered",
+        agents: agentRuntimes.map((a) => ({
+          id: a.id,
+          address: a.address,
+          baseline: a.spec.baseline ?? false,
+          description: a.spec.description,
+          // ADR 0021 §4: the dashboard hides the decision-log and mempool panels for these, because
+          // those artifacts are on the participant's machine and nothing here can show them. An
+          // empty panel and an absent one say different things.
+          external: a.external,
+          // Rules §2.2: the unit this agent is one submission of, when the roster stated it.
+          ...(a.spec.participant !== undefined
+            ? { participant: a.spec.participant }
+            : {}),
+        })),
+      });
+      publishManifest();
+    };
+    publishRoster();
+
+    // ---- pre-warm (anvil cold fetch mitigation of ADR 0006 Risks; see prewarmWorkingSet) ----
+    if (config.prewarmBlocks > 0) {
+      await prewarmWorkingSet(
+        ctx,
+        adapters,
+        enabledIds,
+        config.prewarmBlocks,
+        latestFairPrice,
+        logger.runDir,
+      );
+      // Re-read the fair price to match the competition's starting point (reflects pools moved during warmup).
+      // And put the re-read numbers on the PriceFeed: the values written at deploy predate the
+      // warmup's trading, and the first boundary is marked against the feed (issue #94).
+      latestFairPrice = await initialFairPrice(ctx, enabledIds);
+      openingFair.WETH = latestFairPrice;
+      await setPriceFeedOpening(ctx, priceFeedAddress, latestFairPrice);
+      for (const b of extraBaseSymbols) {
+        openingFair[b] = await initialFairPriceFor(ctx, b, enabledIds);
+        await setPriceFeedOpeningFor(
+          ctx,
+          priceFeedAddress,
+          tokenInfo(b).address,
+          openingFair[b],
+        );
+      }
+      ctx.fairPrices = { ...openingFair };
+      logger.event({
+        type: "prewarm_completed",
+        blocks: config.prewarmBlocks,
+        openingFair,
+      });
+    }
+
+    // ---- LST venue (issue #38): align the deployed vault with this run's economic clock, and
+    // refuse to start on a secondary market that is not tracking the redemption rate (an unwired
+    // rate oracle would hand every agent the same risk-free arb). Must happen before interval
+    // mining starts, since the reconfiguration is a mined setup tx.
+    const lstRuntime: LstRuntime | null = enabledIds.includes("lst")
+      ? await setupLst(ctx, logger)
+      : null;
+
+    // ---- Liquity venue (issue #39): point the CDP's permanent oracle adapter at this run's
+    // PriceFeed, and refuse to start on a venue that would mark Troves against another run's price
+    // or on a peg that is already broken. A mined setup transaction, so it belongs before interval
+    // mining starts -- and after the prewarm, whose trading is what settles the fair price it checks.
+    const liquityRuntime: LiquityRuntime | null = enabledIds.includes("liquity")
+      ? await setupLiquity(
+          ctx,
+          { priceFeed: priceFeedAddress, fairPrice: latestFairPrice },
+          logger,
+        )
+      : null;
+
+    // The environment's depth and its eUSD both belong to the deployer -- anvil account 0 on a
+    // chain deployed from the default mnemonic (ADR 0016 §4), whatever DEPLOYER_PRIVATE_KEY names
+    // on a chain deployed from a secret one (issue #74). An agent bound to that same key is the
+    // same account, and two senders on one key race on the nonce — the failure mode that once froze
+    // the LST redemption rate for a whole run. Checked once for both events, since they share it.
+    const deployerPk = config.privateKeys.deployer;
+
+    // ---- Liquity victims (issue #107): the CDP counterpart of the Aave cohort above ----
+    // Opened here, after the venue's oracle points at this run's PriceFeed, so the ICR they land
+    // at is the one the chain computes. Not scored; the crash liquidates them (the Stability Pool's
+    // work) and the eUSD depeg redeems against them (redemption arb's work).
+    const liquityVictims: LiquityVictim[] = deriveLiquityVictims(
+      config.seed,
+      config.stressLiquityVictimCount,
+    );
+    let minLiquityVictimIcr0: number | null = null;
+    let liquityVictimMcr: number | null = null;
+    // Issue #59: when the regime declares the TCR it wants at the crash bottom, the cohort's
+    // collateral is sized from the drawn crash rather than taken from config, and the record
+    // says what that sizing expects.
+    let liquityRecovery: {
+      targetTcr: number;
+      crashMagnitude: number;
+      collWei: bigint;
+      expectedTcrAtBottom: number;
+    } | null = null;
+    if (liquityVictims.length > 0) {
+      if (!liquityRuntime)
+        throw new Error(
+          "stress.liquityVictimCount > 0 requires the liquity protocol enabled (issue #107)",
+        );
+      const freshState =
+        !config.skipReset && (config.localDeploy || Boolean(config.forkUrl));
+      if (!freshState)
+        throw new Error(
+          "Liquity victims require a fresh state: full re-fork (set ARB_RPC_URL) or local deploy mode, " +
+            "and do not set ERIS_SKIP_RESET -- a Trove left over from a previous run sits in the sorted " +
+            "list at an ICR nobody configured (issue #107; ADR 0009 §4 / ADR 0016 §2)",
+        );
+      let victimCollWei = config.stressLiquityVictimCollWethWei;
+      if (config.stressLiquityRecoveryTcr > 0) {
+        const crash = schedule.events.find((e) => e.type === "crash");
+        if (!crash)
+          throw new Error(
+            "stress.liquityRecoveryTcr needs a crash event: the cohort is sized from its drawn magnitude (issue #59)",
+          );
+        const system = await readLiquitySystem(ctx);
+        const priceWad =
+          BigInt(Math.round(latestFairPrice * 1e6)) * (10n ** 18n / 1_000_000n);
+        const sized = recoveryCohortCollateralWei({
+          systemCollWei: system.collWei,
+          systemDebtWei: system.debtWei,
+          priceWad,
+          crashMagnitude: crash.magnitude,
+          icr0: config.stressLiquityVictimIcr,
+          count: liquityVictims.length,
+          targetTcr: config.stressLiquityRecoveryTcr,
+        });
+        if (sized === null)
+          throw new Error(
+            `no cohort of ${liquityVictims.length} Troves at ICR ${config.stressLiquityVictimIcr} reaches ` +
+              `TCR ${config.stressLiquityRecoveryTcr} on a ${(crash.magnitude * 100).toFixed(1)} % crash: the ` +
+              "cohort's own post-crash ICR has to be above the target and the system above it before the " +
+              "cohort (issue #59). Lower the target, raise the ICR, or widen the crash",
+          );
+        victimCollWei = sized;
+        const debtEach =
+          (sized * priceWad) /
+          (BigInt(Math.round(config.stressLiquityVictimIcr * 1e6)) *
+            (10n ** 18n / 1_000_000n));
+        liquityRecovery = {
+          targetTcr: config.stressLiquityRecoveryTcr,
+          crashMagnitude: crash.magnitude,
+          collWei: sized,
+          expectedTcrAtBottom: tcrAtCrashBottom({
+            systemCollWei:
+              system.collWei + BigInt(liquityVictims.length) * sized,
+            systemDebtWei:
+              system.debtWei + BigInt(liquityVictims.length) * debtEach,
+            priceWad,
+            crashMagnitude: crash.magnitude,
+          }),
+        };
+      }
+      await setupLiquityVictims(ctx, liquityVictims, victimCollWei);
+      const cohort = await openLiquityVictimTroves(ctx, liquityVictims, {
+        icr0: config.stressLiquityVictimIcr,
+        collWei: victimCollWei,
+        priceUsd: latestFairPrice,
+      });
+      if (config.stressLiquitySpSeedEusdWei > 0n)
+        await seedStabilityPool(
+          ctx,
+          deployerPk,
+          config.stressLiquitySpSeedEusdWei,
+        );
+      liquityVictimMcr = cohort.mcr;
+      for (const t of cohort.troves)
+        if (
+          Number.isFinite(t.icr) &&
+          (minLiquityVictimIcr0 === null || t.icr < minLiquityVictimIcr0)
+        )
+          minLiquityVictimIcr0 = t.icr;
+      logger.event({
+        type: "stress_liquity_victims_setup",
+        icr0: config.stressLiquityVictimIcr,
+        mcr: cohort.mcr,
+        ccr: cohort.ccr,
+        tcr: cohort.tcr,
+        collWeiPerVictim: victimCollWei.toString(),
+        spSeedEusdWei: config.stressLiquitySpSeedEusdWei.toString(),
+        ...(liquityRecovery
+          ? {
+              recovery: {
+                targetTcr: liquityRecovery.targetTcr,
+                crashMagnitude: liquityRecovery.crashMagnitude,
+                expectedTcrAtBottom: liquityRecovery.expectedTcrAtBottom,
+              },
+            }
+          : {}),
+        victims: cohort.troves.map((t) => ({
+          id: t.id,
+          address: t.address,
+          icr: t.icr,
+          debtEusdWei: t.debtEusdWei.toString(),
+          collWei: t.collWei.toString(),
+        })),
+      });
+      // Addresses are public on-chain information; handing them out adds no bidding game (the
+      // reference agents find Troves through the observation's sorted list anyway).
+      Object.assign(agentExtraEnv, {
+        [LIQUITY_VICTIM_ENV]: liquityVictims.map((v) => v.address).join(","),
+      });
+    }
+    if (
+      schedule.hasLiquidityPull() ||
+      schedule.hasEusdDepeg() ||
+      schedule.depegStables().length > 0
+    ) {
+      // By address, not by key: a participant registered by address collides just as hard, and the
+      // environment never sees their key to compare it against.
+      const deployerAddress = accountAddress(deployerPk).toLowerCase();
+      const clash = agentRuntimes.find(
+        (a) => a.address.toLowerCase() === deployerAddress,
+      );
+      if (clash) {
+        throw new Error(
+          `a stress event trades as the deployer account (${deployerAddress}), but agent ` +
+            `"${clash.id}" is bound to the same key. Move that agent to another wallet, or to AUTO`,
+        );
+      }
+    }
+
+    // ---- depeg stress events (issues #39 and #27 (c)): stage the accounts that will push each
+    // peg off par. Without one, a stable's market sits at par by construction and there is nothing
+    // to trade -- so a regime that wants the peg exercised has to ask for the event.
+    //
+    // One list rather than one variable: a run can depeg eUSD and a plain stable in the same window,
+    // and they differ only in which pool and which float.
+    const depegRuntimes: Array<{
+      runtime: StableDepegRuntime;
+      fractionAt: (blockIndex: number) => number;
+      ownerId: string;
+    }> = [];
+    if (schedule.hasEusdDepeg()) {
+      if (!liquityRuntime) {
+        throw new Error(
+          "stress event eusdDepeg needs the liquity venue: add it to run.protocols (it is the " +
+            "venue whose stablecoin the event depegs)",
+        );
+      }
+      depegRuntimes.push({
+        runtime: await setupEusdDepeg(
+          ctx,
+          { localDeploy: config.localDeploy, actorPk: deployerPk },
+          logger,
+        ),
+        fractionAt: (i) => schedule.eusdDepegFractionAt(i),
+        ownerId: "liquity-depeg",
+      });
+    }
+    for (const symbol of schedule.depegStables()) {
+      if (!config.localDeploy) {
+        throw new Error(
+          "stress event depeg requires run.localDeploy: the environment sells into a pool it seeded, " +
+            "and a fork has no such pool (issue #27 (c))",
+        );
+      }
+      // Enabled-venue gated (marketPricedStables reads the run's protocol set), not merely
+      // deployed: a stable this run did not enable is not swept, not priced and not tradable, so
+      // depegging it would move a price nobody can see or act on.
+      const market = marketPricedStables().find((m) => m.symbol === symbol);
+      if (!market) {
+        const known = marketPricedStables()
+          .map((m) => m.symbol)
+          .join(", ");
+        throw new Error(
+          `stress event depeg targets "${symbol}", which this run does not price from a market ` +
+            `(available: ${known || "none"}). Either the deployment has no pool for it, or its ` +
+            "venue is missing from run.protocols -- a stable with neither cannot be pushed off " +
+            "par, and would be scored at $1 whatever the event did.",
+        );
+      }
+      depegRuntimes.push({
+        runtime: await setupStableDepeg(
+          ctx,
+          {
+            market: {
+              symbol: market.symbol,
+              stable: market.token,
+              quote: TOKENS.USDC.address,
+              pool: market.pool,
+              stableIndex: market.stableIndex,
+              quoteIndex: market.quoteIndex,
+            },
+            label: "stress_depeg",
+            actorPk: deployerPk,
+            emptyInventoryHint:
+              `The deploy mints the initial ${symbol} supply to the deployer account and seeds only ` +
+              "part of it into the pool, so an empty balance means a different account deployed the " +
+              "tokens, or a previous run spent it.",
+          },
+          logger,
+        ),
+        fractionAt: (i) => schedule.depegFractionAt(symbol, i),
+        ownerId: `depeg-${symbol.toLowerCase()}`,
+      });
+    }
+    // Their swaps are environment transactions, like the oracle writes: attributing them to a
+    // participant would put them through the post-run fee check (core/src/postRunCheck.ts).
+    //
+    // One entry, not one per runtime. Every depeg -- and the liquidity pull below -- trades as the
+    // same deployer account, so per-mechanism entries would simply overwrite each other and label
+    // every unmatched tx from that account with whichever ran last. A tx whose hash *is* in
+    // submittedByHash still gets its own mechanism's id; this is only the fallback.
+    if (depegRuntimes.length > 0) {
+      ownerByAddress.set(depegRuntimes[0].runtime.actor.toLowerCase(), {
+        ownerId:
+          depegRuntimes.length === 1
+            ? depegRuntimes[0].ownerId
+            : depegRuntimes.map((d) => d.ownerId).join("+"),
+        role: "system",
+      });
+    }
+
+    // ---- liquidity-pull stress event (issue #52): find the environment-owned depth this run may
+    // withdraw, and refuse to start if the schedule asks for depth nobody here owns. Like the LST
+    // setup this sends mined transactions (standing approvals for the restore leg), so it belongs
+    // before interval mining starts.
+    let liquidityPullRuntime: LiquidityPullRuntime | null = null;
+    if (schedule.hasLiquidityPull()) {
+      liquidityPullRuntime = await setupLiquidityPull(
+        ctx,
+        schedule,
+        {
+          localDeploy: config.localDeploy,
+          ownerPk: deployerPk,
+          // Only the venues this run turned on: an event that names no venue thins every book, and
+          // asking for one that is not deployed would fail the discovery check for no reason.
+          enabledVenues: PULL_VENUES.filter((v) => enabledIds.includes(v)),
+        },
+        logger,
+      );
+      // Its withdrawals are environment transactions, like the oracle writes: attributing them to a
+      // participant would put them through the post-run fee check (core/src/postRunCheck.ts).
+      ownerByAddress.set(liquidityPullRuntime.owner.toLowerCase(), {
+        ownerId: "liquidity",
+        role: "system",
+      });
+    }
+
+    // ---- token launches (issue #29): stage the listings and refuse a deployment that cannot host
+    // them. The wallets are already on the flow map (funded, approved, attributed as flow above);
+    // this resolves the factory and the artifact so a missing build fails here, not on the window.
+    let tokenLaunchRuntime: TokenLaunchRuntime | null = null;
+    if (schedule.hasTokenLaunch()) {
+      tokenLaunchRuntime = await setupTokenLaunch(
+        ctx,
+        schedule,
+        {
+          localDeploy: config.localDeploy,
+          agentMarkets: config.agentMarkets,
+          uniswapEnabled: enabledIds.includes("uniswap"),
+          walletByKey: (key) => {
+            const w = flowWalletMap.get(key);
+            if (!w) throw new Error(`token launch wallet missing: ${key}`);
+            return { address: w.address, privateKey: w.privateKey };
+          },
+        },
+        logger,
+      );
+    }
+
+    // ---- cross-venue no-arbitrage check at startup (phantom-spread guard; see noArb.ts) ----
+    // Calibrated pools must not offer a positive *executable* cross-venue round trip. Fail fast on
+    // gross breakage (mis-deploy) before agent processes launch; smaller positives are warned and
+    // left to the per-block persistent monitor.
+    {
+      const states = await Promise.all(
+        adapters.map((adapter) => adapter.readState(ctx, latestFairPrice)),
+      );
+      const stateById = new Map<ProtocolId, unknown>(
+        adapters.map((adapter, i) => [adapter.id, states[i]]),
+      );
+      const findings = noArbFindings(stateById, enabledIds);
+      logger.event({
+        type: "no_arb_startup",
+        warnBps: STARTUP_WARN_BPS,
+        failBps: STARTUP_FAIL_BPS,
+        findings,
+        warned: findings.filter((f) => f.profitBps > STARTUP_WARN_BPS),
+      });
+      const worst = findings[0];
+      if (worst && worst.profitBps > STARTUP_FAIL_BPS) {
+        throw new Error(
+          `no-arbitrage check failed at startup: executable ${worst.profitBps.toFixed(1)}bps ` +
+            `arb on ${worst.base} (buy ${worst.buyVenue} / sell ${worst.sellVenue}) exceeds ` +
+            `${STARTUP_FAIL_BPS}bps — venue calibration or pricing is broken (check deploy order/constants)`,
+        );
+      }
+    }
+
+    // ---- owner guards on the environment's own contracts (issue #40 T0) ----
+    //
+    // Measured, not asserted: every privileged write is simulated from an address with no role, and
+    // a call that does not revert is a missing guard. Run here, after every venue is wired and
+    // before any agent process exists, so the answer describes the world the agents are about to
+    // enter.
+    {
+      const probes = guardProbesFor({
+        priceFeed: priceFeedAddress,
+        marketRegistry: marketRegistry?.address,
+        aaveAggregators: ctx.oracle.aaveAggregators,
+        lstVault: lstRuntime?.vault,
+        gmxOracleProvider: ctx.gmx.mockProvider,
+      });
+      const findings = await auditOwnerGuards(publicClient, probes);
+      logGuardAudit(logger, findings);
+      const unprotected = unprotectedFindings(findings, probes);
+      if (unprotected.length > 0) {
+        const message = guardFailureMessage(unprotected);
+        // Fatal only when participants can actually send arbitrary transactions. Without
+        // agent-created markets the same hole exists and has no reachable exploit -- the only
+        // senders are wallets the environment derives -- so it is reported and the run continues,
+        // which is what keeps every pre-existing regime running unchanged.
+        if (config.agentMarkets) throw new Error(message);
+        console.warn(
+          `${message}\n(not fatal: agentMarkets is off in this run)`,
+        );
+      }
+    }
+
+    // ---- launch agent processes (ADR 0015 §5: uniformly runtime/bot.ts; pass the private key and PriceFeed via env) ----
+    let sandboxWarning: AgentSandboxWarning | null = null;
+    // Each launched agent's view directory (agentView.ts), where run-start.json is also written.
+    const agentViewDirs: string[] = [];
+    // Under `docker` every agent goes through infra/docker-agent/run-agent.sh, the one path that
+    // applies the rules §2.3 caps. Checked once here rather than discovered per agent: a missing
+    // docker would otherwise surface as N `spawn error` early exits that read like agent bugs.
+    if (config.agentSandbox === "docker") {
+      const probe = spawnSync(
+        "docker",
+        ["version", "--format", "{{.Server.Version}}"],
+        {
+          encoding: "utf8",
+        },
+      );
+      if (probe.status !== 0)
+        throw new Error(
+          "run.agentSandbox is docker but `docker version` failed " +
+            `(${probe.error?.message ?? probe.stderr?.trim() ?? `exit ${probe.status}`}). ` +
+            "The official regimes launch every agent in a capped container (rules §2.3). For a local run " +
+            "without docker pass --agent-sandbox process (backtest) or set run.agentSandbox: process; " +
+            "with docker but no per-agent image, set ERIS_AGENT_BINDMOUNT=1 (infra/docker-agent/README.md)",
+        );
+      const posture = agentNetworkPosture(process.env);
+      logger.event({
+        type: "agent_sandbox",
+        sandbox: "docker",
+        dockerServerVersion: probe.stdout.trim(),
+        memory: process.env.ERIS_DOCKER_MEM ?? "4g",
+        cpus: process.env.ERIS_DOCKER_CPUS ?? "2",
+        network: posture.isolated
+          ? "per-agent (ERIS_AGENT_ISOLATE)"
+          : posture.network,
+        egress: posture.egress === "closed" ? "closed (--internal)" : "open",
+      });
+      // Not fatal: local checks and the operator's own reference field run on host networking. But
+      // an agent on a shared network can reach this host's services directly, so a scored run
+      // without isolation has to say so where nobody can scroll past it -- here, and again at the
+      // end. Read per agent, because the switches can sit in a roster entry's env as well.
+      sandboxWarning = agentSandboxWarning(
+        agentRuntimes
+          .filter(
+            (a) =>
+              !a.external && a.privateKey !== null && a.spec.command === undefined,
+          )
+          .map((a) => ({ id: a.id, env: { ...process.env, ...(a.spec.env ?? {}) } })),
+        { segmented: segments !== null },
+      );
+      if (sandboxWarning) {
+        logger.event({
+          type: "agent_sandbox_warning",
+          ...sandboxWarning,
+          liveWeek:
+            "ERIS_AGENT_ISOLATE=1 + ERIS_AGENT_INTERNAL=1, agents pointed at the RPC gateway " +
+            "(infra/docker-agent/ISOLATION.md)",
+        });
+        console.error(agentSandboxBanner(sandboxWarning));
+      }
+    } else {
+      logger.event({
+        type: "agent_sandbox",
+        sandbox: "process",
+        note:
+          "agents run as plain child processes: no CPU/memory caps, no egress control and the " +
+          "operator's filesystem (rules §2.3 are not enforced here, and this is not an isolation boundary)",
+      });
+    }
+    // What every launched agent is handed instead of the coordinator's config (agentView.ts): the
+    // same file for all of them, one copy per view directory.
+    const agentConfigText = renderAgentConfig(config);
+    logger.event({
+      type: "agent_config",
+      file: `${AGENT_VIEW_DIR}/<agentId>/${AGENT_CONFIG_FILE}`,
+      fields: [...AGENT_CONFIG_FIELDS],
+    });
+    const agentStateRoot = agentStateRootFromEnv();
+    for (const agent of agentRuntimes) {
+      if (agent.external || !agent.privateKey) {
+        // ADR 0021 §2: registered, funded, scored -- and started by whoever registered it. Recorded
+        // so a run whose participants never connected is distinguishable from one where the
+        // coordinator failed to launch them: both look like an agent that made no trades.
+        logger.event({
+          type: "agent_external_registered",
+          agentId: agent.id,
+          address: agent.address,
+          note: "the participant runs this agent; its decision log stays on their machine",
+        });
+        continue;
+      }
+      // Issue #77: the per-agent area that survives epochs, plus the snapshot this epoch started
+      // from. Absent unless a root is configured, which keeps every existing run byte-identical.
+      // A failure here is fatal rather than silent: an agent that was promised its memory and
+      // silently started from agent.ts is scored as if it had chosen to forget.
+      const stateDir = agentStateRoot
+        ? prepareAgentState(agentStateRoot, agent.id, runId)
+        : undefined;
+      const view = prepareAgentView(logger.runDir, agent.id, agentConfigText);
+      agentViewDirs.push(view.dir);
+      if (stateDir)
+        logger.event({
+          type: "agent_state_dir",
+          agentId: agent.id,
+          dir: stateDir,
+        });
+      agent.process = new RealtimeAgentProcess(
+        agent.spec,
+        config.rpcUrl,
+        agent.address,
+        logger.runDir,
+        { privateKey: agent.privateKey, priceFeedAddress, runId },
+        config.agentsDir,
+        config.runBlocks,
+        agentExtraEnv,
+        {
+          sandbox: config.agentSandbox,
+          configPath: view.configPath,
+          viewDir: view.dir,
+          ...(stateDir ? { stateDir } : {}),
+          ...(epochOrdinal ? { epoch: epochOrdinal } : {}),
+        },
+      );
+      // An agent that dies mid-run silently stops trading, which reads in summary.json exactly like
+      // an agent that chose not to trade. Record it so the two can be told apart.
+      const runtime = agent;
+      const child = agent.process;
+      if (!child) continue;
+      child.onExit = (info) => {
+        runtime.exitedEarly = info.reason;
+        logger.event({
+          type: "agent_process_exited",
+          agentId: runtime.id,
+          ...info,
+          stderrTail: child.getStderr().slice(-2000),
+        });
+        console.error(`[agent] ${runtime.id} ${info.reason}`);
+      };
+    }
+    // What `agents_ready` measures boot time from (issue #94).
+    const agentsSpawnedAt = Date.now();
+
+    // ---- flow wallets over a long period (issue #130): guards, balances, top-ups ----
+    const flowGuardLog = new FlowGuardLog();
+    // The trading flow wallets (`<protocol>:<informed|uninformed>`): the ones the balance guards
+    // protect. The Aave borrower actors and the whale move their balances on purpose and are left out.
+    const tradingFlowWallets = [...flowWalletMap.entries()].filter(([key]) =>
+      /^[a-z]+:(informed|uninformed)$/.test(key),
+    );
+    const flowTelemetryEvery =
+      config.flowTopUpEveryBlocks > 0
+        ? config.flowTopUpEveryBlocks
+        : FLOW_TELEMETRY_BLOCKS;
+    const flowWalletTelemetry = async (
+      bn: number,
+      flowContext: FlowContextWire,
+    ): Promise<void> => {
+      const ethWei = await Promise.all(
+        tradingFlowWallets.map(([, w]) =>
+          publicClient.getBalance({ address: w.address }),
+        ),
+      );
+      const holdings = new Map<string, FlowWalletHoldings>();
+      const wallets: Record<string, unknown> = {};
+      tradingFlowWallets.forEach(([key], i) => {
+        const b = flowContext.flowBalances?.[key];
+        const h: FlowWalletHoldings = {
+          ethWei: ethWei[i],
+          wethWei: BigInt(b?.wethWei ?? "0"),
+          usdcUnits: BigInt(b?.usdcUnits ?? "0"),
+          bases: Object.fromEntries(
+            Object.entries(b?.bases ?? {}).map(([sym, v]) => [sym, BigInt(v)]),
+          ),
+        };
+        holdings.set(key, h);
+        wallets[key] = {
+          ethWei: h.ethWei.toString(),
+          wethWei: h.wethWei.toString(),
+          usdcUnits: h.usdcUnits.toString(),
+          ...(b?.bases ? { bases: b.bases } : {}),
+        };
+      });
+      logger.event({
+        type: "flow_balances",
+        blockNumber: bn,
+        wallets,
+        // How often each balance guard changed an order since the last row, per wallet and base.
+        guardCounts: flowGuardLog.drain(),
+        topUpEveryBlocks: config.flowTopUpEveryBlocks,
+      });
+      if (config.flowTopUpEveryBlocks <= 0) return;
+      const target = {
+        // fundAddress restores native ETH to flowEthWei + its gas buffer whenever it runs.
+        ethWei: config.flowEthWei + GAS_BUFFER_WEI,
+        wethWei: config.flowWethWei,
+        usdcUnits: config.flowUsdcUnits,
+        bases: config.flowBaseAmounts,
+      };
+      for (const [key, w] of tradingFlowWallets) {
+        const plan = planFlowTopUp(holdings.get(key)!, target);
+        if (!plan) continue;
+        try {
+          // Through the same path the setup funded them: a cheatcode grant on anvil, a treasury
+          // transfer of the shortfall on an external chain. Only the tokens below their floor are
+          // passed, so nothing above it is reset. ETH is passed every time on purpose: on anvil
+          // fundAddress *assigns* the native balance, and it only ever falls (gas), so this is a
+          // raise -- passing 0 would set it to the bare gas buffer.
+          await fundAddress(
+            publicClient,
+            walletClient,
+            chain,
+            w.address,
+            config.flowEthWei,
+            plan.wethWei,
+            plan.usdcUnits,
+            plan.bases,
+          );
+          logger.event({
+            type: "flow_wallet_topped_up",
+            blockNumber: bn,
+            wallet: key,
+            refilled: plan.refilled,
+          });
+        } catch (error) {
+          logger.event({
+            type: "flow_wallet_top_up_failed",
+            blockNumber: bn,
+            wallet: key,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    };
+
+    // ---- flow order handler: relay the bot's orders to the mempool via the flow wallets ----
+    // Batches are relayed fire-and-forget (below), so one that outlasts the block overlaps the next,
+    // and two sends from one wallet then resolve the same pending nonce: the later is refused as
+    // `replacement transaction underpriced` and its order is lost (issue #148). Sequential per
+    // wallet, concurrent across wallets.
+    const flowSendSerial = new KeyedSerial();
+    const handleFlowOrders = async (orders: FlowOrderWire[]): Promise<Hex[]> => {
+      const submitted: Hex[] = [];
+      const intents = flowOrdersToIntents(ctx, orders);
+      for (const intent of intents) {
+        try {
+          const hashes = await flowSendSerial.run(intent.ownerId, () =>
+            submitIntent(ctx, intent, latestStateById),
+          );
+          submitted.push(...hashes);
+          for (const hash of hashes) {
+            submittedByHash.record(hash.toLowerCase(), {
+              ownerId: intent.ownerId,
+              role: intent.role,
+              priorityFeeWei: intent.priorityFeeWei,
+              actionType: intent.action.type,
+            });
+            logger.event({
+              type: "tx_submitted",
+              hash,
+              ownerId: intent.ownerId,
+              role: intent.role,
+              priorityFeeWei: intent.priorityFeeWei,
+              actionType: intent.action.type,
+              protocol: intent.protocol,
+            });
+          }
+        } catch (error) {
+          logger.event({
+            type: "tx_submit_failed",
+            ownerId: intent.ownerId,
+            actionType: intent.action.type,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+      return submitted;
+    };
+    flowProcess.onOrders((orders, guards, round) => {
+      // Issue #130: the first time in a telemetry interval that a balance guard changes a wallet's
+      // order, say so; flow_balances carries the counts for the whole interval.
+      for (const n of flowGuardLog.record(guards))
+        logger.event({
+          type: "flow_guard",
+          blockNumber: round,
+          wallet: `${n.protocol}:${n.kind}`,
+          base: n.base,
+          guard: n.guard,
+        });
+      void handleFlowOrders(orders);
+    });
+
+    // ---- write mined-block txs to blocks.csv (attribution by from-address lookup; ADR 0006 §4) ----
+    // Removed from the realtime loop and scanned in bulk over all blocks after the run ends (the same "off the
+    // critical path" move as scoring's history reconstruction). All source data remains on the chain, so a
+    // follow-up pass suffices. Consequence: if the run crashes midway, blocks.csv is empty (diagnose via events.jsonl).
+    const logBlock = async (b: number): Promise<void> => {
+      const block = await publicClient.getBlock({
+        blockNumber: BigInt(b),
+        includeTransactions: true,
+      });
+      const txs = block.transactions.filter(
+        (tx): tx is Exclude<typeof tx, string> => typeof tx !== "string",
+      );
+      // Note: bulk fetch via eth_getBlockReceipts cannot be used because it hits "Failed to decode receipt" on
+      // anvil's Arbitrum fork. Issue per-tx fetches in parallel (the batch transport bundles them into one HTTP).
+      // The receipt carries both the status and the gas actually burned (issue #40 T0). The gas is
+      // read here rather than estimated anywhere else: it is the chain's number, which is what makes
+      // the post-run gas-budget check as untamperable as the fee check beside it.
+      const receipts = await Promise.all(
+        txs.map(async (tx) => {
+          try {
+            const receipt = await publicClient.getTransactionReceipt({
+              hash: tx.hash,
+            });
+            return {
+              status: receipt.status as string,
+              gasUsed: receipt.gasUsed as bigint | undefined,
+            };
+          } catch {
+            return { status: "mined", gasUsed: undefined }; // fallback when receipt fetch fails
+          }
+        }),
+      );
+      const statuses = receipts.map((r) => r.status);
+      txs.forEach((tx, i) => {
+        const meta = submittedByHash.take(tx.hash);
+        // A sender the run does not know is recorded, not dropped (ADR 0021 §2, rules §2.7). On the
+        // trial devnet these are exactly the participants' transactions: whoever sends before their
+        // registration is read, or without registering at all. Dropping the row made them invisible
+        // in the one artifact that could show them -- a participant asking "did my tx land?" got
+        // nothing, and the operator could not tell an empty chain from an unregistered field. The
+        // owner is the address itself under role `external`; nothing here scores or rule-checks it
+        // (postRunCheck reads `agent` rows only), and `method` still comes from the calldata.
+        const owner: TxOwner = meta ??
+          ownerByAddress.get(tx.from.toLowerCase()) ?? {
+            ownerId: tx.from.toLowerCase(),
+            role: "external",
+          };
+        const status = statuses[i];
+        if (owner.role === "agent") {
+          const runtime = agentById.get(owner.ownerId);
+          if (runtime) {
+            runtime.included++;
+            if (status !== "success") runtime.reverted++;
+          }
+        }
+        logger.blockRow({
+          round: b,
+          blockNumber: BigInt(b),
+          txIndex: tx.transactionIndex,
+          hash: tx.hash,
+          from: tx.from,
+          // the fee's authority is the on-chain tx fields (the basis for post-run checks; not
+          // self-reported). Both the tip and maxFeePerGas: anvil orders the block on the latter.
+          ...txFeeColumns(tx, meta?.priorityFeeWei),
+          status,
+          ownerId: owner.ownerId,
+          role: owner.role,
+          actionType:
+            meta?.actionType ?? (owner.role === "agent" ? "direct" : ""),
+          // ADR 0021 §4: from the tx's own calldata, which this block fetch already has. The
+          // explorer used to name a participant's methods by joining their self-reported log, and a
+          // participant who runs their own agent files no such log with anyone.
+          method: methodNameForCalldata(tx.input) ?? "",
+          ...(receipts[i].gasUsed === undefined
+            ? {}
+            : { gasUsed: receipts[i].gasUsed }),
+        });
+      });
+    };
+
+    // How far blocks.csv has been written. The scan is off the critical path (it re-reads mined
+    // blocks), but *when* it runs matters: a single bulk pass at the end works for a run with an
+    // end and fails twice for a period that does not have one — nothing is written while it runs,
+    // and when it finally is, every block lands in whichever segment happened to be current. Both
+    // observed: five segments of a devnet period, every blocks.csv empty (ADR 0021 §6).
+    let loggedThroughBlock = 0;
+    const flushBlocks = async (upTo: number): Promise<void> => {
+      if (loggedThroughBlock === 0) loggedThroughBlock = runStartBlock - 1;
+      for (let b = loggedThroughBlock + 1; b <= upTo; b++) await logBlock(b);
+      loggedThroughBlock = Math.max(loggedThroughBlock, upTo);
+      submittedByHash.sweep(loggedThroughBlock);
+    };
+
+    // ADR 0010 profile: set the oracle/PriceFeed update fee above the agent cap so --order fees places it at
+    // txIndex 0. Place the keeper just below it, fixing the "oracle update → order execution" order within the
+    // same block (even with parallel submission, fee decides ordering regardless of arrival order).
+    // ADR 0011 economic-gas profile (economicGas): price finalization moves to a direct storage write (the
+    // front-run target mechanically disappears), so the env fee ordering guarantee is unnecessary. The keeper only
+    // needs to run after agent order placement and does not need front-row fixing, so env txs go out at the normal
+    // fee (defaultPriorityFeeWei).
+    const economicGas = config.economicGas;
+    const oracleFee = economicGas
+      ? config.defaultPriorityFeeWei
+      : config.maxPriorityFeeWei + 1_000_000_000n;
+    const keeperFee = economicGas
+      ? config.defaultPriorityFeeWei
+      : config.maxPriorityFeeWei + 500_000_000n;
+    if (economicGas) {
+      logger.event({
+        type: "economic_gas_enabled",
+        note: "ADR 0011: retire priority-fee cap enforcement, make price finalization a state-write",
+        oracleFeeWei: oracleFee.toString(),
+        keeperFeeWei: keeperFee.toString(),
+      });
+    }
+
+    // ---- start the competition phase: switch to interval mining every N real seconds ----
+    // Local mode turned auto-mine ON for setup, so turn it back OFF here.
+    // If auto-mine remains, each tx becomes its own block and the fee competition breaks (fork is OFF from the start).
+    if (config.localDeploy && !external) {
+      await setAutomine(publicClient, false);
+    }
+
+    // ---- the epoch clock waits for the field (issue #94; #91 F5) ----
+    // From here to interval mining no block is produced on anvil, and on an external chain the
+    // sequencer's blocks precede runStartBlock -- either way the epoch's first block, its first
+    // boundary (V_0) and its first stress window wait until every agent this coordinator launched
+    // has written `runtime_start`, bounded by run.agentsReadyTimeoutSec. Nothing an agent does
+    // before that line needs a new block: the preflight only reads, and the venue approvals were
+    // granted at funding (an agent that still has to send one mines its own on anvil). External
+    // participants are not waited for: nothing here started them. See agentsReady.ts.
+    {
+      const launched = agentRuntimes.filter((a) => a.process !== null);
+      if (launched.length > 0 && config.agentsReadyTimeoutSec > 0) {
+        console.error(
+          `[agents] waiting for ${launched.length} agent(s) to write runtime_start ` +
+            `before the first block (bound ${config.agentsReadyTimeoutSec} s)`,
+        );
+        const report = await waitForAgentsReady({
+          agents: launched.map((a) => ({
+            id: a.id,
+            isAlive: () =>
+              a.exitedEarly === undefined && (a.process?.isAlive() ?? false),
+          })),
+          runDir: logger.runDir,
+          spawnedAt: agentsSpawnedAt,
+          timeoutMs: config.agentsReadyTimeoutSec * 1000,
+        });
+        logger.event({
+          type: "agents_ready",
+          ...report,
+          launched: launched.length,
+          note: report.timedOut
+            ? "the bound was reached with agents still booting: the epoch starts without them " +
+              "watching, and the blocks they miss are on their own account"
+            : report.exited.length > 0
+              ? "every agent still running wrote runtime_start before the first block; the " +
+                "exited ones are in agent_process_exited"
+              : "every launched agent wrote runtime_start before the first block",
+        });
+        const slowest = report.ready.reduce(
+          (m, r) => Math.max(m, r.afterMs),
+          0,
+        );
+        console.error(
+          `[agents] ${report.ready.length}/${launched.length} ready ` +
+            `(slowest ${(slowest / 1000).toFixed(1)} s after spawn, waited ${(report.waitedMs / 1000).toFixed(1)} s)` +
+            (report.late.length > 0
+              ? `; still booting at the ${config.agentsReadyTimeoutSec} s bound: ${report.late.join(", ")}`
+              : "") +
+            (report.exited.length > 0
+              ? `; exited before runtime_start: ${report.exited.join(", ")}`
+              : ""),
+        );
+      }
+    }
+    if (external) {
+      // The sequencer has been producing blocks the whole time; there is no phase change to make.
+      // What the environment does have to know is the real cadence, because the block loop's
+      // polling interval and every "blocks per interval" conversion are derived from it -- so measure
+      // it rather than trusting the configured value (issue #33 (2) / #35 genesis block time).
+      const observed = await observeBlockTimeSec(publicClient);
+      logger.event({
+        type: "external_chain_block_time",
+        configuredSec: config.blockTimeSec,
+        observedSec: observed,
+        note:
+          observed !== null && Math.abs(observed - config.blockTimeSec) > 0.5
+            ? "run.blockTimeSec disagrees with the chain; interval lengths and the poll interval are " +
+              "derived from the configured value, so align it with the sequencer"
+            : undefined,
+      });
+    } else {
+      // Rules §2.6: the competition phase runs at the published block gas limit. Setup ran at the
+      // node's own (the deployer's 3,000,000,000, carried by the state dump), so this is the last
+      // thing before mining starts. Recorded, because a block that is not the published size changes
+      // what the fee auction means and nothing else in the run would say so.
+      if (config.blockGasLimit > 0) {
+        await setBlockGasLimit(publicClient, config.blockGasLimit);
+        logger.event({
+          type: "block_gas_limit_set",
+          gasLimit: config.blockGasLimit,
+        });
+      }
+      await setIntervalMining(publicClient, config.blockTimeSec);
+      // The mode change flushes whatever block-production backlog automine left behind (see
+      // waitForMiningToSettle): a burst of empty blocks, milliseconds apart, that the block loop
+      // below would otherwise count as the first N blocks of the run -- the stress schedule is
+      // relative to runStartBlock, and a depeg ramp scheduled 37 blocks in was skipped whole by
+      // a 68-block burst. So the run starts once the chain is quiet, and what was flushed is on
+      // the record. A quarter block time is far above the flush cadence and below the interval.
+      // cacheTime 0: viem serves getBlockNumber from a cache for the client's pollingInterval
+      // (4 s by default), which is longer than the whole flush -- the first attempt at this wait
+      // read the same number for 500 ms while 71 blocks went past.
+      const settle = await waitForMiningToSettle(
+        async () => Number(await publicClient.getBlockNumber({ cacheTime: 0 })),
+        {
+          quietMs: Math.max(
+            200,
+            Math.min(500, Math.floor((config.blockTimeSec * 1000) / 4)),
+          ),
+          maxWaitMs: 60_000,
+        },
+      );
+      if (settle.burstBlocks > 0 || !settle.settled) {
+        logger.event({
+          type: "mining_backlog_flushed",
+          ...settle,
+          note: settle.settled
+            ? "empty blocks anvil mined in a burst right after the mining mode changed; they " +
+              "precede runStartBlock and are not part of the run"
+            : "the chain did not go quiet within maxWaitMs; the run starts anyway, and its first " +
+              "blocks may be that burst",
+        });
+      }
+      logger.event({
+        type: "interval_mining_started",
+        blockTimeSec: config.blockTimeSec,
+        settledAfterMs: settle.waitedMs,
+        flushedBlocks: settle.burstBlocks,
+      });
+    }
+    const startTime = Date.now();
+    // base/effective separation (ADR 0009 §1): advance the OU state as the base series, and derive the effective
+    // price from stress events as a separable distortion. Outside the window, β≈0 as before (maintains ADR 0007).
+    let baseFair = latestFairPrice; // OU state. Not touched by events.
+    // Center of the mean-reverting price model (the base fair price at competition start). Fixed throughout the run.
+    const fairAnchor = baseFair;
+    // ADR 0013: independent OU prices for extra bases (WBTC etc.). Each base advances with its own Rng, so the
+    // WETH price path is unchanged (under the fork default, extraBaseSymbols=[] → exactly matches prior = byte-compatible).
+    // `extraBaseSymbols` and each base's opening fair were settled at setup, next to WETH's, and
+    // are what the PriceFeed already carries (issue #94): the walk starts from the number V_0 was
+    // marked at, not from a re-read of the pool after the LST / Liquity setup traded on it.
+    const extraPriceRng: Record<string, Rng> = {};
+    const extraBaseFair: Record<string, number> = {};
+    const extraAnchor: Record<string, number> = {};
+    for (const b of extraBaseSymbols) {
+      extraPriceRng[b] = priceRngForAsset(config.seed, b);
+      extraBaseFair[b] = openingFair[b];
+      extraAnchor[b] = openingFair[b];
+    }
+    // Passes of the block handler. Not the run's length: one pass covers every block mined since the
+    // previous one, so a loop that falls behind makes fewer passes than the chain makes blocks. The
+    // run ends on a chain block (endBlock below), never on this count.
+    let loopIterations = 0;
+    let processing = false;
+    // The pass in progress, so the run's end waits for it: a wall-clock limit fires between passes
+    // or in the middle of one, and the end block is the last block a *completed* pass processed.
+    let inFlight: Promise<void> = Promise.resolve();
+    // Fresh, not viem's 4 s cache: this is what runStartBlock is derived from, and a value from
+    // before the flush above would put the flushed blocks inside the run.
+    let lastProcessedBlock = Number(
+      await publicClient.getBlockNumber({ cacheTime: 0 }),
+    );
+    const runStartBlock = lastProcessedBlock + 1;
+    // The epoch ends on this chain block (epochExtent.ts): processed, valued as the last boundary,
+    // and the block every agent sees `blocksRemaining === 0` at, counted from the same declared start.
+    // Null for a run bounded only by the wall clock, which ends wherever its last pass got to.
+    const endBlock = epochEndBlock(runStartBlock, config.runBlocks);
+    // One instant for everything that starts the period's clock: run-start.json, the segment grid
+    // and the manifest all carry it, so a runtime's day end and the coordinator's roll are computed
+    // from the same number rather than from three Date.now() calls a few milliseconds apart.
+    const runStartedAtMs = Date.now();
+    // Issue #117: tell the agents. Their env was built before this block existed, so the run
+    // directory (which they already hold as ERIS_RUN_DIR and write their logs to) carries it. An
+    // agent that counts `blocksRemaining` from the first block *it* saw charged the backlog flush
+    // above against the run and exited inside the stress window; counted from here, a jump in
+    // block numbers is not run time. logger.runDir is the directory the agents were spawned with:
+    // segments roll only inside the block loop below.
+    const runStartRecord = writeRunStart(logger.runDir, {
+      runStartBlock,
+      runBlocks: config.runBlocks,
+      startedAtMs: runStartedAtMs,
+    });
+    // And into each agent's view directory, which is the run directory a containerised agent sees.
+    // Same instant as the run directory's copy, so a containerised agent's day end matches.
+    for (const dir of agentViewDirs)
+      writeRunStart(dir, {
+        runStartBlock,
+        runBlocks: config.runBlocks,
+        startedAtMs: runStartedAtMs,
+      });
+    logger.event({
+      type: "run_start_declared",
+      runStartBlock,
+      runBlocks: config.runBlocks,
+      ...(endBlock !== null ? { endBlock } : {}),
+      file: RUN_START_FILE,
+      // The origin of the day grid when segmenting (ADR 0021 §6): day k ends at this + (k + 1) x
+      // run.segmentHours.
+      startedAt: runStartRecord.startedAt,
+      writtenAt: runStartRecord.writtenAt,
+    });
+
+    // ---- live scoring (ADR 0021 §3) ----
+    // The interval boundary is read as it goes past rather than swept up afterwards. On a chain that
+    // never stops there is no afterwards, and on any chain the node's history depth is finite --
+    // both of which the sweep hits at exactly the run lengths a practice period needs.
+    const liveScorer = new LiveScorer({
+      publicClient,
+      logger,
+      agents: agentRuntimes.map((a) => ({ id: a.id, address: a.address })),
+      enabledIds,
+      activeStables: activeStables(),
+      priceFeed: priceFeedAddress,
+      runStartBlock,
+      endBlock,
+      intervalBlocks: config.intervalBlocks,
+      markMedianBlocks: config.markMedianBlocks,
+      // Venue state at each boundary, so a live viewer has something to draw before market.json
+      // exists. Off when the post-run reconstruction will cover it anyway *and* the run is short
+      // enough for that to be the richer artifact.
+      sampleMarket: true,
+    });
+    if (segments) segments.noteFirstBlock(runStartBlock, runStartedAtMs);
+    periodStart = { block: runStartBlock, startedAtMs: runStartedAtMs };
+    publishManifest();
+
+    // ---- registrations that arrive mid-period (ADR 0021 §2, rules §2.7) ----
+    // The trial devnet runs for weeks and participants register throughout. Restarting the
+    // coordinator to add one opens a new competition directory, which splits the standings -- so
+    // `run.registrationsFile` is re-read during the loop (see registrations.ts for the file), and a
+    // new entry goes through the same steps the setup path takes for an `external: true` + `address`
+    // roster entry: a runtime without a key, attribution by address, the same endowment, live scoring
+    // from the next boundary, and the roster republished.
+    const registerExternalAgent = async (reg: Registration): Promise<void> => {
+      const spec: AgentSpec = {
+        id: reg.id,
+        external: true,
+        address: reg.address,
+        ...(reg.participant !== undefined
+          ? { participant: reg.participant }
+          : {}),
+        ...(reg.description !== undefined
+          ? { description: reg.description }
+          : {}),
+      };
+      const runtime: RealtimeAgentRuntime = {
+        id: reg.id,
+        spec,
+        privateKey: null,
+        address: reg.address,
+        external: true,
+        process: null,
+        initial: { ethWei: 0n, wethWei: 0n, usdcUnits: 0n },
+        included: 0,
+        reverted: 0,
+      };
+      // Same endowment the setup loop grants an agent (cheatcode on anvil, treasury transfer on an
+      // external chain -- fundAddress picks), without the venue approvals only the key holder can
+      // sign. Funded before it is attributed, so a failure here leaves nothing half-registered.
+      await fundAddress(
+        publicClient,
+        walletClient,
+        chain,
+        reg.address,
+        config.initialEthWei,
+        config.initialWethWei,
+        config.initialUsdcUnits,
+        config.initialBaseAmounts,
+        0n,
+      );
+      runtime.initial = await getBalances(publicClient, reg.address);
+      agentRuntimes.push(runtime);
+      agentById.set(runtime.id, runtime);
+      ownerByAddress.set(reg.address.toLowerCase(), {
+        ownerId: reg.id,
+        role: "agent",
+      });
+      liveScorer.addAgent({ id: runtime.id, address: runtime.address });
+      logger.event({
+        type: "agent_external_registered",
+        agentId: runtime.id,
+        address: runtime.address,
+        ...(reg.participant !== undefined
+          ? { participant: reg.participant }
+          : {}),
+        source: "registrationsFile",
+        note:
+          "registered mid-period from run.registrationsFile; funded now, valued from the next " +
+          "interval boundary; the participant runs this agent and its decision log stays on their machine",
+      });
+    };
+    const registrations = config.registrationsFile
+      ? new RegistrationsWatcher(config.registrationsFile)
+      : null;
+    let registrationsCheckedAtBlock = -Infinity;
+    let registrationsFileMissingWarned = false;
+    const pollRegistrations = async (bn: number): Promise<void> => {
+      if (!registrations) return;
+      if (bn - registrationsCheckedAtBlock < REGISTRATIONS_POLL_BLOCKS) return;
+      registrationsCheckedAtBlock = bn;
+      let read: ReturnType<RegistrationsWatcher["read"]>;
+      try {
+        read = registrations.read();
+      } catch (error) {
+        // A malformed file is reported and the run goes on: the operator fixes the file, the next
+        // poll picks it up. Once per edit, not once per poll (the watcher takes the mtime first).
+        const message = error instanceof Error ? error.message : String(error);
+        logger.event({
+          type: "registrations_reload_failed",
+          path: registrations.path,
+          blockNumber: bn,
+          error: message,
+        });
+        console.error(`[registrations] ${message}`);
+        return;
+      }
+      if (read.kind === "missing") {
+        // Said once. A missing file is legitimate before the first participant, and a mistyped
+        // path would otherwise register nobody for five weeks in perfect silence.
+        if (registrationsFileMissingWarned) return;
+        registrationsFileMissingWarned = true;
+        logger.event({
+          type: "registrations_file_missing",
+          path: registrations.path,
+          note: "run.registrationsFile does not exist yet; polled until it does",
+        });
+        console.error(
+          `[registrations] ${registrations.path} does not exist yet (run.registrationsFile); polling`,
+        );
+        return;
+      }
+      registrationsFileMissingWarned = false;
+      if (read.kind === "unchanged") return;
+      const { added, ignored } = diffRegistrations(read.entries, {
+        ids: new Set(agentRuntimes.map((a) => a.id)),
+        addresses: new Map(
+          [...ownerByAddress].map(([address, owner]) => [
+            address,
+            owner.ownerId,
+          ]),
+        ),
+      });
+      for (const entry of ignored)
+        logger.event({
+          type: "registration_ignored",
+          blockNumber: bn,
+          ...entry,
+        });
+      for (const reg of added) {
+        try {
+          await registerExternalAgent(reg);
+          console.error(
+            `[registrations] registered ${reg.id} (${reg.address}) at block ${bn}`,
+          );
+        } catch (error) {
+          logger.event({
+            type: "registration_failed",
+            blockNumber: bn,
+            id: reg.id,
+            address: reg.address,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+      if (added.length > 0) publishRoster();
+      logger.event({
+        type: "registrations_reloaded",
+        path: registrations.path,
+        blockNumber: bn,
+        entries: read.entries.length,
+        added: added.map((r) => r.id),
+        ignored: ignored.length,
+      });
+    };
+
+    // Close a segment: write it a summary.json holding the intervals that fell inside it, so each
+    // segment is an ordinary run directory that every existing tool can read. The slice carries the
+    // boundary immediately before the segment's start as its own boundary 0 (see
+    // sliceIntervalSeries), because a segment's first interval ends inside it but begins in the one
+    // before.
+    const closeSegment = (atBlock: number): unknown[] => {
+      if (!segments) return [];
+      const whole = liveScorer.series();
+      const sliced = whole
+        ? sliceIntervalSeries(whole, segments.currentSegmentStartBlock, atBlock)
+        : undefined;
+      const agents = agentRuntimes.map((a) => {
+        // Segment endpoints, from the boundaries the segment covers. Deliberately not the run's
+        // opening balances: a segment is a window on a continuous economy, and an agent's PnL for
+        // Tuesday is what changed on Tuesday. P is the rules' V_K − V_0 (§4.4.1), each end at its
+        // own marks; a final boundary that did not report falls back to the last that did (§4.4.2).
+        // No V_0 (a mid-segment registration) is no P, recorded as such -- never as 0 (issue #84 X2).
+        const pnl = sliced
+          ? epochPnlFromSeries(sliced.valuesByAgent[a.id] ?? [])
+          : null;
+        return segmentAgentRecord(
+          {
+            id: a.id,
+            address: a.address,
+            baseline: a.spec.baseline ?? false,
+            ...(a.spec.participant !== undefined
+              ? { participant: a.spec.participant }
+              : {}),
+            includedTxCount: a.included,
+            revertCount: a.reverted,
+          },
+          pnl,
+        );
+      });
+      logger.summary({
+        runId: `${runId}/segment-${segments.currentSegment}`,
+        mode: config.runMode,
+        resetUnit: config.resetUnit,
+        blockTimeSec: config.blockTimeSec,
+        segment: segments.currentSegment,
+        fromBlock: segments.currentSegmentStartBlock,
+        toBlock: atBlock,
+        finalFairPriceUsdcPerWeth: latestFairPrice,
+        valueSeries: sliced
+          ? {
+              source: "live-interval-boundaries",
+              ...intervalSeriesFields({
+                intervalBlocks: config.intervalBlocks,
+                intervals: Math.max(0, sliced.boundaryBlocks.length - 1),
+                ...sliced,
+              }),
+            }
+          : { source: "live-interval-boundaries", failed: true },
+        violations: [],
+        agents,
+      });
+      // The index entry is standings-shaped (the dashboard reads a competition's scenarios with the
+      // same code either way), so it carries the score rather than only the balances.
+      return agents.map(segmentIndexAgent);
+    };
+
+    const rollSegment = async (atBlock: number): Promise<void> => {
+      if (!segments) return;
+      // Before the directory changes: these rows belong to the segment that is closing.
+      await flushBlocks(atBlock);
+      const agents = closeSegment(atBlock);
+      const previous = segments.currentSegment;
+      segments.roll(atBlock, agents);
+      // The new segment opens with the same header the first one did, so it stands alone: a viewer
+      // that lands on Thursday should not have to read Monday to learn what the chain is.
+      logger.event({
+        type: "run_started_realtime",
+        runId,
+        segment: segments.currentSegment,
+        previousSegment: previous,
+        enabledProtocols: enabledIds,
+        blockTimeSec: config.blockTimeSec,
+        runSeconds: config.runSeconds,
+        runBlocks: config.runBlocks,
+        intervalBlocks: config.intervalBlocks,
+        epochBlocks: config.intervalBlocks,
+        scoreEvery: config.scoreEvery,
+        seed: config.seed,
+        flowSeed: config.flowSeed,
+        scenarioKey: scenarioKeyRecord(scenarioKey),
+        rpcUrl: config.readRpcUrl,
+        // ADR 0020 §1: whether this run is one epoch of a scenario matrix or a continuous world. The
+        // hosted dashboard's public view reads it before summary.json exists, to decide how much of
+        // the stress schedule an audience may see (none for a scenario: a window's kind names the
+        // regime rules §3.3 does not announce).
+        resetUnit: config.resetUnit,
+        chainId: config.chainId,
+        chainMode: config.chainMode,
+        blockGasLimit: config.blockGasLimit,
+        fromBlock: atBlock,
+      });
+      // The plan too (ADR 0021 §6): a segment without it reads as a period with no episodes, and
+      // from day two every segment was one -- the dashboard showed "no plan" for the rest of the
+      // week. Same payload as the first segment's, resolved windows included. Withholding future
+      // windows from the public is the runs API's job (audience mode, dashboard side), not this
+      // writer's: the on-disk record stays complete so the period can be audited afterwards (§7.2).
+      if (schedule.hasEvents())
+        logger.event({
+          type: "stress_schedule",
+          runStartBlock,
+          events: schedule.events,
+        });
+      publishRoster();
+      console.error(
+        `[segment] rolled to ${logger.runDir} at block ${atBlock} (ADR 0021 §6)`,
+      );
+    };
+    if (schedule.hasEvents()) {
+      // Include runStartBlock → the dashboard can judge the window in absolute blocks (ADR 0008/0009).
+      logger.event({
+        type: "stress_schedule",
+        runStartBlock,
+        events: schedule.events,
+      });
+      // A cohort with nothing to breach it: every crash drew count 0 or flipped upwards (flipProb).
+      // The per-crash checks below cannot see an absent crash, so say it here.
+      if (
+        (minVictimHf0 !== null || minLiquityVictimIcr0 !== null) &&
+        !schedule.events.some((ev) => ev.type === "crash")
+      )
+        logger.event({
+          type: "stress_calibration_warning",
+          reason: "victims are configured but the schedule resolved no crash",
+        });
+      // Calibration check (§2): whether each crash's realized magnitude can breach a victim
+      // (m > (HF0−1)/HF0). If not, warn (victims are not liquidated and the stress axis is empty).
+      if (minVictimHf0 !== null) {
+        const breachThreshold = (minVictimHf0 - 1) / minVictimHf0;
+        for (const ev of schedule.events) {
+          if (ev.type === "crash" && ev.magnitude <= breachThreshold) {
+            logger.event({
+              type: "stress_calibration_warning",
+              reason: "crash magnitude may not breach victim HF",
+              minVictimHf0,
+              breachThreshold,
+              crashMagnitude: ev.magnitude,
+            });
+          }
+        }
+      }
+      // The same check for the Liquity cohort (issue #107): a Trove at ICR₀ goes under MCR at
+      // m > 1 − MCR/ICR₀.
+      if (liquityRecovery !== null) {
+        // The cohort was sized so the drawn crash lands the system on the target; the warning here
+        // is for a target that is not Recovery Mode at all (issue #59).
+        if (liquityRecovery.expectedTcrAtBottom >= 1.5)
+          logger.event({
+            type: "stress_calibration_warning",
+            reason: "crash magnitude may not reach Recovery Mode",
+            targetTcr: liquityRecovery.targetTcr,
+            expectedTcrAtBottom: liquityRecovery.expectedTcrAtBottom,
+            crashMagnitude: liquityRecovery.crashMagnitude,
+          });
+      } else if (minLiquityVictimIcr0 !== null && liquityVictimMcr !== null) {
+        const breachThreshold = liquityBreachMagnitude(
+          minLiquityVictimIcr0,
+          liquityVictimMcr,
+        );
+        for (const ev of schedule.events) {
+          if (ev.type === "crash" && ev.magnitude <= breachThreshold) {
+            logger.event({
+              type: "stress_calibration_warning",
+              reason: "crash magnitude may not breach victim ICR",
+              minLiquityVictimIcr0,
+              mcr: liquityVictimMcr,
+              breachThreshold,
+              crashMagnitude: ev.magnitude,
+            });
+          }
+        }
+      }
+    }
+    // Keep each victim's latest debt (USD 8-decimals) for liquidation detection. Debt decreases only via a
+    // liquidationCall (victims are passive) → emit stress_liquidation with the decrease as a liquidation signal.
+    const victimLastDebt = new Map<string, bigint>();
+    // The Liquity cohort's last-seen Trove, for liquidation / redemption detection (issue #107).
+    const liquityVictimLast = new Map<string, LiquityVictimTrove>();
+    // Cross-venue no-arbitrage monitor (phantom-spread guard; see noArb.ts). Persistent executable
+    // arb = structural pricing breakage; transient arb is the alpha agents are meant to capture.
+    const noArbMonitor = new NoArbMonitor();
+
+    // End stress/vuln runs by block count (avoids the footgun where the time limit ERIS_RUN_SECONDS expires first
+    // and the crash window / vuln window is never reached; ADR 0009 §4 / ADR 0014).
+    const stressRun =
+      schedule.hasEvents() ||
+      stressVictims.length > 0 ||
+      vulnSchedule.hasEvents();
+    const effectiveRunSeconds =
+      stressRun && config.runBlocks > 0 ? 0 : config.runSeconds;
+    if (
+      stressRun &&
+      config.runBlocks > 0 &&
+      config.runSeconds > 0 &&
+      effectiveRunSeconds === 0
+    ) {
+      logger.event({
+        type: "stress_run_time_limit_disabled",
+        runSeconds: config.runSeconds,
+        runBlocks: config.runBlocks,
+      });
+    }
+
+    await new Promise<void>((resolve) => {
+      let finished = false;
+      let unwatch: () => void = () => {};
+      const finish = (): void => {
+        if (finished) return;
+        finished = true;
+        cancelTimer?.();
+        unwatch();
+        resolve();
+      };
+      // Not setTimeout: the practice period's 42-day ceiling is past its 32-bit limit, which Node
+      // turns into 1 ms -- a run that kept its time limit ended before its first block.
+      const cancelTimer =
+        effectiveRunSeconds > 0
+          ? setLongTimeout(finish, effectiveRunSeconds * 1000)
+          : undefined;
+
+      const onBlock = async (notifiedBn: number): Promise<void> => {
+        if (processing || finished) return;
+        processing = true;
+        let settle: () => void = () => {};
+        inFlight = new Promise<void>((resolve) => (settle = resolve));
+        // Clamped to the epoch: a pass told about a head past the end block processes through the
+        // end block and no further, and is the run's last (epochExtent.ts). Every task below reads
+        // [fromBlock, bn], so nothing after the bell is valued, scheduled or observed.
+        const step = loopStep({
+          lastProcessedBlock,
+          notifiedBlock: notifiedBn,
+          endBlock,
+        });
+        const bn = step.block;
+        try {
+          const fromBlock = step.fromBlock;
+          lastProcessedBlock = Math.max(lastProcessedBlock, bn);
+
+          // Advance the market one step (RNG updates once per iteration; later parallel tasks share only the values).
+          // Advance base by OU only, and apply the (deterministic) stress overlay to derive the effective price.
+          // The effective price propagates consistently to PriceFeed / Aave WETH oracle / GMX / scoring (ADR 0009 §1).
+          const blockIndex = bn - runStartBlock;
+          // perBase.WETH, not global: readOuParams populates an entry for every registered base, so
+          // reading the global here made `market.baseVolatility: { WETH: ... }` parse, typecheck and
+          // do nothing. The entry falls back to the global when the regime sets no WETH override.
+          // A cexDrift episode changes the walk rather than multiplying its output (issue #56):
+          // an overlay would leave the base path where it was and let mean reversion erase the
+          // episode the moment the window closed. Identity outside every window, so a run without
+          // one steps exactly as before.
+          const beforeFair: Record<string, number> = { WETH: baseFair, ...extraBaseFair };
+          const ouWeth = withOuOverride(
+            config.ou.perBase.WETH ?? config.ou.global,
+            schedule.ouOverrideAt(blockIndex, "WETH"),
+          );
+          // A repricing episode moves what the walk reverts to, so the level it reached survives the
+          // window instead of being pulled back to where the run started (issue #56). 1 otherwise.
+          baseFair = nextFairPrice(
+            baseFair,
+            rng,
+            fairAnchor * schedule.anchorMultiplierAt(blockIndex, "WETH"),
+            ouWeth,
+          );
+          const overlay = schedule.at(blockIndex);
+          latestFairPrice = baseFair * overlay.wethMult;
+          // ADR 0013: advance extra bases with independent Rngs and distribute the effective prices into ctx.fairPrices.
+          const fairPrices: Record<string, number> = { WETH: latestFairPrice };
+          for (const b of extraBaseSymbols) {
+            extraBaseFair[b] = nextFairPrice(
+              extraBaseFair[b],
+              extraPriceRng[b],
+              extraAnchor[b] * schedule.anchorMultiplierAt(blockIndex, b),
+              withOuOverride(
+                config.ou.perBase[b] ?? config.ou.global,
+                schedule.ouOverrideAt(blockIndex, b),
+              ),
+            );
+            fairPrices[b] = extraBaseFair[b] * (overlay.baseMults[b] ?? 1);
+          }
+          ctx.fairPrices = fairPrices;
+          const auditPrice = (base: string, stage: "price_submitted" | "storage_written", hashes?: string[]) =>
+            stressAudit.price(base, blockIndex, bn, {
+              before: beforeFair[base],
+              unoverlaid: base === "WETH" ? baseFair : extraBaseFair[base],
+              fair: fairPrices[base],
+            }, { stage, hashes });
+
+          // Fund vulnerability pools (ADR 0014): burn reserve into the pools that entered their window (cheatcode;
+          // no mine needed), making the bait-laden opportunity appear on this block. Done synchronously after
+          // fairPrices is finalized and before other tasks so the reserve ratio reflects fair (rare processing, window blocks only).
+          if (vulnRuntime) {
+            try {
+              await fundVulnPoolsAt(
+                ctx,
+                vulnRuntime,
+                blockIndex,
+                bn,
+                fairPrices,
+                config,
+                logger,
+              );
+            } catch (error) {
+              logger.event({
+                type: "vuln_fund_failed",
+                blockIndex,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          }
+
+          // Point stress events (lstSlash, whale): one-shot shocks the coordinator executes,
+          // placed by the same seed-driven schedule as spike/crash. Applied here, before the block's
+          // other work, so what an agent observes this block already reflects them — and so the gap
+          // they open against the (not yet repriced) market is the opportunity the event creates.
+          //
+          // The caught-up range, not just this index: onBlock skips notifications while it is busy,
+          // and matching one index exactly let a dropped block swallow the whole event.
+          {
+            const fromIndex = Math.max(0, fromBlock - runStartBlock);
+            for (const ev of schedule.pointEventsAt(fromIndex, blockIndex)) {
+              if (ev.type === "lstSlash") {
+                if (!lstRuntime) continue;
+                try {
+                  await slashLst(
+                    ctx,
+                    lstRuntime,
+                    ev.magnitude,
+                    logger,
+                    oracleFee,
+                  );
+                  stressAudit.record(ev, blockIndex, bn, { stage: "applied" });
+                } catch (error) {
+                  logger.event({
+                    type: "lst_slash_failed",
+                    blockIndex,
+                    error:
+                      error instanceof Error ? error.message : String(error),
+                  });
+                }
+              } else if (ev.type === "whale") {
+                // Relayed through the ordinary flow path so the print is signed, ordered and
+                // attributed exactly like any other flow order, and competes for the same block
+                // space. It is not hidden: the whale trades from a dedicated address endowed during
+                // setup, so an agent watching balances at block 0 can identify the wallet and its
+                // capacity before any print. That is deliberate — reading the tape is part of the
+                // regime — but it does mean the event is anticipatable, not just reactable.
+                try {
+                  const order = buildWhaleOrder(
+                    ev,
+                    fairPrices[ev.base] ?? latestFairPrice,
+                    config.defaultPriorityFeeWei,
+                  );
+                  logger.event({
+                    type: "stress_whale",
+                    blockIndex,
+                    blockNumber: bn,
+                    venue: ev.venue,
+                    side: ev.side,
+                    base: ev.base,
+                    magnitude: ev.magnitude,
+                  });
+                  const hashes = await handleFlowOrders([order]);
+                  if (hashes.length > 0) stressAudit.record(ev, blockIndex, bn, { stage: "tx_submitted", hashes });
+                } catch (error) {
+                  logger.event({
+                    type: "stress_whale_failed",
+                    blockIndex,
+                    error:
+                      error instanceof Error ? error.message : String(error),
+                  });
+                }
+              }
+            }
+          }
+
+          // keeper / oracle write / state+flow are mutually independent (separate wallets too), so run them in
+          // parallel. tx recording (blocks.csv) is removed from the loop and scanned in bulk after the run (see logBlock).
+
+          // keeper (GMX order execution etc.). Scan the caught-up range in one getLogs.
+          const keeperTask = async (): Promise<void> => {
+            if (fromBlock > bn) return;
+            for (const adapter of adapters) {
+              if (!adapter.afterMine) continue;
+              try {
+                await adapter.afterMine(ctx, {
+                  noMine: true,
+                  priorityFeeWei: keeperFee,
+                  fromBlock: BigInt(fromBlock),
+                  toBlock: BigInt(bn),
+                });
+              } catch (error) {
+                logger.event({
+                  type: "keeper_failed",
+                  protocol: adapter.id,
+                  fromBlock,
+                  toBlock: bn,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+              }
+            }
+          };
+
+          // On-chain distribution of the fair price (PriceFeed) + oracle updates (aave/gmx).
+          // Economic gas (ADR 0011): the PriceFeed and Aave oracle are finalized at the block boundary via a direct
+          //   storage write (no tx → no front-run target). GMX is not front-run-relevant because the keeper does not
+          //   execute in realtime, so avoid direct mapping-storage writes and keep it a normal-fee mempool tx (undecided).
+          // 0010: put PriceFeed/oracle on the next block as fee-topping mempool txs.
+          // LST venue (issue #38): advance the vault's economic clock one block. Accrual is
+          // permissionless and its size is a pure function of blocks elapsed, so this only keeps
+          // the observable rate current -- it grants the environment nothing an agent could not do
+          // itself. It rides inside oracleTask rather than as its own parallel task because it
+          // sends from the same admin key: two concurrent senders race on the nonce, and anvil
+          // rejects the loser as "replacement transaction underpriced" (seen in a live run, which
+          // left the redemption rate frozen for the whole run).
+          const accrueLstTask = async (): Promise<void> => {
+            if (!lstRuntime) return;
+            try {
+              const hash = await accrueLst(ctx, lstRuntime, {
+                priorityFeeWei: oracleFee,
+              });
+              submittedByHash.record(hash.toLowerCase(), {
+                ownerId: "oracle",
+                role: "system",
+                priorityFeeWei: oracleFee,
+                actionType: "lstAccrue",
+              });
+              // Phase 2: resample the yield on its own cadence. Sent from the same key, so it is
+              // sequential with the accrual above rather than racing it on the nonce.
+              const apyBps = await stepLstApy(
+                ctx,
+                lstRuntime,
+                blockIndex,
+                oracleFee,
+              );
+              if (apyBps !== null)
+                logger.event({
+                  type: "lst_apy_changed",
+                  blockNumber: bn,
+                  apyBps,
+                });
+            } catch (error) {
+              logger.event({
+                type: "lst_accrual_failed",
+                blockNumber: bn,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          };
+
+          const oracleTask = async (): Promise<void> => {
+            try {
+              if (economicGas) {
+                // These oracle writes are independent, so run them concurrently instead of in
+                // series: at high agent counts this phase is the environment loop's dominant cost
+                // (it is what sizes the block time), and the calls only queue on anvil, they do not
+                // depend on each other. The PriceFeed / Aave / additional-base writes are keyless
+                // `anvil_setStorageAt` calls (no nonce). The GMX oracle update and the LST accrual
+                // both send txs from the admin key, so they share a nonce and must stay sequential
+                // with each other (two concurrent admin-key senders race and anvil drops the loser
+                // as "replacement transaction underpriced"); they form one sequential sub-task that
+                // runs alongside the storage writes.
+                await Promise.all([
+                  writePriceFeedStorage(
+                    publicClient,
+                    priceFeedAddress,
+                    latestFairPrice,
+                    BigInt(bn),
+                  ),
+                  writeAaveOraclesStorage(ctx, latestFairPrice),
+                  ...extraBaseSymbols.map((b) =>
+                    writePriceFeedStorageFor(
+                      publicClient,
+                      priceFeedAddress,
+                      tokenInfo(b).address,
+                      fairPrices[b],
+                      BigInt(bn),
+                    ),
+                  ),
+                  (async () => {
+                    if (ctx.oracle.gmxProvider && ctx.updateGmxOracle) {
+                      await ctx.updateGmxOracle(ctx, latestFairPrice, {
+                        noMine: true,
+                        priorityFeeWei: oracleFee,
+                      });
+                    }
+                    await accrueLstTask();
+                  })(),
+                ]);
+                for (const base of ["WETH", ...extraBaseSymbols]) auditPrice(base, "storage_written");
+                return;
+              }
+              const feedHash = await updatePriceFeedMempool(
+                ctx,
+                priceFeedAddress,
+                latestFairPrice,
+                oracleFee,
+              );
+              auditPrice("WETH", "price_submitted", [feedHash]);
+              submittedByHash.record(feedHash.toLowerCase(), {
+                ownerId: "oracle",
+                role: "system",
+                priorityFeeWei: oracleFee,
+                actionType: "priceFeedUpdate",
+              });
+              for (const b of extraBaseSymbols) {
+                const extraHash = await updatePriceFeedForMempool(
+                  ctx,
+                  priceFeedAddress,
+                  tokenInfo(b).address,
+                  fairPrices[b],
+                  oracleFee,
+                );
+                auditPrice(b, "price_submitted", [extraHash]);
+                submittedByHash.record(extraHash.toLowerCase(), {
+                  ownerId: "oracle",
+                  role: "system",
+                  priorityFeeWei: oracleFee,
+                  actionType: "priceFeedUpdate",
+                });
+              }
+              const oracleHashes = await updateOraclesMempool(
+                ctx,
+                latestFairPrice,
+                oracleFee,
+              );
+              for (const hash of oracleHashes) {
+                submittedByHash.record(hash.toLowerCase(), {
+                  ownerId: "oracle",
+                  role: "system",
+                  priorityFeeWei: oracleFee,
+                  actionType: "oracleUpdate",
+                });
+              }
+              await accrueLstTask();
+            } catch (error) {
+              logger.event({
+                type: "oracle_update_failed",
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          };
+
+          // state reads (for flow context and relay observation; a fixed cost independent of agent count) →
+          // relay observation push → context push to the flow-bot.
+          const stateAndFlowTask = async (): Promise<void> => {
+            const states = await Promise.all(
+              adapters.map((adapter) =>
+                adapter.readState(ctx, latestFairPrice),
+              ),
+            );
+            const stateById = new Map<ProtocolId, unknown>(
+              adapters.map((adapter, i) => [adapter.id, states[i]]),
+            );
+            latestStateById = stateById;
+            for (const w of noArbMonitor.check(
+              noArbFindings(stateById, enabledIds),
+            )) {
+              logger.event({
+                type: "no_arb_persistent_warning",
+                blockNumber: bn,
+                base: w.base,
+                buyVenue: w.buyVenue,
+                sellVenue: w.sellVenue,
+                profitBps: w.profitBps,
+                consecutiveBlocks: w.consecutiveBlocks,
+              });
+            }
+            // LST telemetry rides on the state the loop already read: how far the market sits from
+            // redemption, and whether the reward reserve is running dry. The primary post-run
+            // source for whether the venue behaved (issue #38).
+            const lstState = stateById.get("lst") as LstState | undefined;
+            if (lstState) {
+              logger.event(lstBlockEvent(lstState, bn));
+              // Issue #129: the block the reserve stops paying, once per exhaustion (anyone can
+              // refund it -- fundRewards is permissionless -- so it can end more than once).
+              const exhausted = lstReserveExhausted(lstState);
+              if (exhausted && !lstExhaustedReported)
+                logger.event(lstReserveExhaustedEvent(lstState, bn));
+              lstExhaustedReported = exhausted;
+            }
+            // Liquity telemetry rides on the same read: where the peg sat, how the fee curves moved
+            // and whether the system ever entered Recovery Mode (issue #39).
+            const liquityState = stateById.get("liquity") as
+              LiquityState | undefined;
+            if (liquityState) logger.event(liquityBlockEvent(liquityState, bn));
+            const uni = stateById.get("uniswap") as
+              { priceUsdcPerWeth?: number } | undefined;
+            latestHistory.push({
+              round: bn,
+              poolPriceUsdcPerWeth: uni?.priceUsdcPerWeth ?? latestFairPrice,
+              fairPriceUsdcPerWeth: latestFairPrice,
+            });
+
+            // push context to the flow-bot (move the market to create arb opportunities)
+            if (flowProcess.isAlive()) {
+              const flowContext = await buildFlowContext(
+                ctx,
+                enabledIds,
+                latestStateById,
+                latestFairPrice,
+                bn,
+                // A flowTrend episode leans the uninformed flow for the length of its window
+                // (issue #56). Applied here rather than inside the bot: the bot is a separate
+                // process with its own RNG, and having it rebuild the schedule would mean two
+                // copies of it that can disagree.
+                schedule.flowTrendAt(bn - runStartBlock),
+              );
+              if (flowProcess.pushContext(flowContext)) {
+                for (const event of stressAudit.active(blockIndex, e => e.type === "flowTrend"))
+                  stressAudit.record(event, blockIndex, bn, {
+                    stage: "flow_context_queued", sizeMult: schedule.flowTrendAt(blockIndex).sizeMult,
+                  });
+              }
+              // Issue #130: the flow wallets' balances into the run record (and refilled, when the
+              // config asks), from the balances this context was just built on.
+              if (bn > runStartBlock && (bn - runStartBlock) % flowTelemetryEvery === 0)
+                await flowWalletTelemetry(bn, flowContext);
+            }
+          };
+
+          // victim HF observation (ADR 0009 §4,7): read HF and debt only inside/near the stress event window and
+          // emit to events.jsonl (source data the dashboard shows as a band; the SSE contract is unchanged). Detect
+          // a debt decrease as a liquidation. Outside the window (overlay=1) it does not read, avoiding log bloat / RPC load.
+          const victimTask = async (): Promise<void> => {
+            if (stressVictims.length === 0) return;
+            // Price events only: a liquidityPull window leaves the price where it was, and its
+            // trapezoid outlasts the crash's, so gating on any active event would read health
+            // factors on blocks where nothing has moved.
+            const active = schedule.activePriceEventAt(blockIndex);
+            if (!active && overlay.wethMult === 1) return;
+            const accounts = await readVictimsAccount(ctx, stressVictims);
+            logger.event({
+              type: "stress_victim_hf",
+              blockNumber: bn,
+              blockIndex,
+              wethMult: overlay.wethMult,
+              victims: accounts.map((a) => ({
+                id: a.id,
+                healthFactor: a.healthFactor.toString(),
+                totalDebtBase: a.totalDebtBase.toString(),
+              })),
+            });
+            for (const a of accounts) {
+              const lastDebt = victimLastDebt.get(a.id);
+              if (lastDebt !== undefined && a.totalDebtBase < lastDebt) {
+                logger.event({
+                  type: "stress_liquidation",
+                  blockNumber: bn,
+                  blockIndex,
+                  victimId: a.id,
+                  victimAddress: a.address,
+                  repaidBaseUsd: (lastDebt - a.totalDebtBase).toString(),
+                  remainingDebtBase: a.totalDebtBase.toString(),
+                  healthFactor: a.healthFactor.toString(),
+                });
+              }
+              victimLastDebt.set(a.id, a.totalDebtBase);
+            }
+          };
+
+          // Liquity victims (issue #107): read the cohort's Troves while any window is open -- the
+          // crash is what breaks them, the depeg outlasts it and is when redemptions reach them --
+          // and record the ICR path, a Trove closed by liquidation, and debt taken by redemption.
+          const liquityVictimTask = async (): Promise<void> => {
+            if (liquityVictims.length === 0) return;
+            const active = schedule.activeEventAt(blockIndex);
+            if (!active && overlay.wethMult === 1) return;
+            const troves = await readLiquityVictimTroves(
+              ctx,
+              liquityVictims,
+              latestFairPrice,
+            );
+            logger.event({
+              type: "stress_liquity_victim_icr",
+              blockNumber: bn,
+              blockIndex,
+              wethMult: overlay.wethMult,
+              victims: troves.map((t) => ({
+                id: t.id,
+                status: t.status,
+                icr: Number.isFinite(t.icr) ? t.icr : null,
+                debtEusdWei: t.debtEusdWei.toString(),
+                collWei: t.collWei.toString(),
+              })),
+            });
+            for (const t of troves) {
+              const last = liquityVictimLast.get(t.id);
+              if (last && last.status === 1) {
+                if (t.status === 3) {
+                  logger.event({
+                    type: "stress_liquity_liquidation",
+                    blockNumber: bn,
+                    blockIndex,
+                    victimId: t.id,
+                    victimAddress: t.address,
+                    debtEusdWei: last.debtEusdWei.toString(),
+                    collWei: last.collWei.toString(),
+                    icrBefore: Number.isFinite(last.icr) ? last.icr : null,
+                  });
+                } else if (t.status === 4 || t.debtEusdWei < last.debtEusdWei) {
+                  logger.event({
+                    type: "stress_liquity_redemption",
+                    blockNumber: bn,
+                    blockIndex,
+                    victimId: t.id,
+                    victimAddress: t.address,
+                    redeemedEusdWei: (
+                      last.debtEusdWei - t.debtEusdWei
+                    ).toString(),
+                    remainingDebtEusdWei: t.debtEusdWei.toString(),
+                    closed: t.status === 4,
+                  });
+                }
+              }
+              liquityVictimLast.set(t.id, t);
+            }
+          };
+
+          // vulnerability pool hit/execution detection (ADR 0014 §6): scan funded pools' Swap logs as ground-truth
+          // and emit vulnerability_exploited / safe_pool_captured.
+          // Run only during a vuln run (do not add a per-block getLogs to the default run).
+          const vulnTask = async (): Promise<void> => {
+            if (!vulnRuntime) return;
+            try {
+              await watchVulnSwaps(ctx, vulnRuntime, fromBlock, bn, logger);
+            } catch (error) {
+              logger.event({
+                type: "vuln_watch_failed",
+                blockNumber: bn,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          };
+
+          // Agent-created markets (issue #40): find what appeared in the caught-up range and
+          // publish it. Its own task because the write is on the registrar key, not admin -- and
+          // sequential inside itself, because the sweep decides what the write publishes.
+          const registryTask = async (): Promise<void> => {
+            if (!marketRegistry) return;
+            try {
+              await sweepMarkets(
+                ctx,
+                marketRegistry,
+                fromBlock,
+                bn,
+                environmentAddresses,
+                logger,
+              );
+              const hash = await registerPending(
+                ctx,
+                marketRegistry,
+                bn,
+                oracleFee,
+                logger,
+              );
+              if (hash)
+                submittedByHash.record(hash.toLowerCase(), {
+                  ownerId: "registry",
+                  role: "system",
+                  priorityFeeWei: oracleFee,
+                  actionType: "marketRegister",
+                });
+            } catch (error) {
+              logger.event({
+                type: "market_registry_task_failed",
+                blockNumber: bn,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          };
+
+          // Liquidity-pull stress event (issue #52): move each seeded pool toward the depth this
+          // block's trapezoid asks for. Its own task rather than riding inside oracleTask because it
+          // sends from the LP owner key, not the admin key, so the two cannot collide on a nonce.
+          const liquidityTask = async (): Promise<void> => {
+            if (!liquidityPullRuntime) return;
+            try {
+              const hashes = await reconcileLiquidityPull(
+                ctx,
+                liquidityPullRuntime,
+                schedule,
+                blockIndex,
+                bn,
+                { priorityFeeWei: oracleFee },
+                logger,
+              );
+              if (hashes.length > 0) {
+                for (const event of stressAudit.active(blockIndex, e => e.type === "liquidityPull"))
+                  stressAudit.record(event, blockIndex, bn, { stage: "tx_submitted", hashes });
+              }
+              for (const hash of hashes) {
+                submittedByHash.record(hash.toLowerCase(), {
+                  ownerId: "liquidity",
+                  role: "system",
+                  priorityFeeWei: oracleFee,
+                  actionType: "liquidityPull",
+                });
+              }
+            } catch (error) {
+              // Distinct from liquidity.ts's per-position `stress_liquidity_pull_failed`: this one
+              // means *no* position was reconciled this block, which post-run analysis has to be
+              // able to tell apart from one market failing.
+              logger.event({
+                type: "stress_liquidity_task_failed",
+                blockIndex,
+                blockNumber: bn,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          };
+
+          // Depeg stress events (issues #39 and #27 (c)): move each peg toward where this block's
+          // trapezoid wants it.
+          const depegStep = async (): Promise<void> => {
+            // Sequential across stables as well as with the pull: they all send from the deployer
+            // key, and two senders on one key race on the nonce.
+            for (const { runtime, fractionAt, ownerId } of depegRuntimes) {
+              try {
+                const hashes = await reconcileStableDepeg(
+                  ctx,
+                  runtime,
+                  fractionAt(blockIndex),
+                  blockIndex,
+                  bn,
+                  { priorityFeeWei: oracleFee },
+                  logger,
+                );
+                if (hashes.length > 0) {
+                  for (const event of stressAudit.active(blockIndex, e =>
+                    (e.type === "eusdDepeg" && runtime.symbol === "EUSD") ||
+                    (e.type === "depeg" && e.stable === runtime.symbol)))
+                    stressAudit.record(event, blockIndex, bn, { stage: "tx_submitted", hashes });
+                }
+                for (const hash of hashes) {
+                  submittedByHash.record(hash.toLowerCase(), {
+                    ownerId,
+                    role: "system",
+                    priorityFeeWei: oracleFee,
+                    actionType: "depeg",
+                  });
+                }
+              } catch (error) {
+                logger.event({
+                  type: `${runtime.label}_task_failed`,
+                  stable: runtime.symbol,
+                  blockIndex,
+                  blockNumber: bn,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+              }
+            }
+          };
+
+          // Liquity ground truth (issue #39): a Trove that disappeared could have been closed,
+          // redeemed away or liquidated, and only the venue's own logs say which. The open question
+          // the issue leaves -- whether Liquity's ordering sensitivity needs special handling when
+          // the oracle is rewritten every block ahead of every agent -- is about liquidations, so
+          // they have to be counted rather than inferred from the block state.
+          // Token launches (issue #29): list, buy and sell back toward this block's targets. Its
+          // own keys (one launch wallet and one wave wallet per token), so it runs beside the
+          // deployer-key task rather than inside it.
+          const launchTask = async (): Promise<void> => {
+            if (!tokenLaunchRuntime) return;
+            try {
+              const sends = await stepTokenLaunch(
+                ctx,
+                tokenLaunchRuntime,
+                schedule,
+                blockIndex,
+                bn,
+                { priorityFeeWei: oracleFee },
+                logger,
+              );
+              if (sends.length > 0) {
+                for (const event of stressAudit.active(blockIndex, e => e.type === "tokenLaunch"))
+                  stressAudit.record(event, blockIndex, bn, { stage: "tx_submitted", hashes: sends.map(s => s.hash) });
+              }
+              for (const s of sends) {
+                const wallet = flowWalletMap.get(s.ownerKey);
+                submittedByHash.record(s.hash.toLowerCase(), {
+                  ownerId: wallet?.id ?? `flow-${s.ownerKey}`,
+                  role: flowRole(s.ownerKey),
+                  priorityFeeWei: oracleFee,
+                  actionType: s.actionType,
+                });
+              }
+            } catch (error) {
+              logger.event({
+                type: "stress_token_launch_task_failed",
+                blockIndex,
+                blockNumber: bn,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          };
+
+          const liquityWatchTask = async (): Promise<void> => {
+            if (!liquityRuntime || fromBlock > bn) return;
+            try {
+              await watchLiquityEvents(ctx, fromBlock, bn, logger);
+            } catch (error) {
+              logger.event({
+                type: "liquity_watch_failed",
+                blockNumber: bn,
+                error: error instanceof Error ? error.message : String(error),
+              });
+            }
+          };
+
+          // Record each task's duration (for diagnosing the environment loop's bottleneck; the measurement source for ADR 0006 "judgment metrics").
+          const timed = async (task: () => Promise<void>): Promise<number> => {
+            const t0 = Date.now();
+            await task();
+            return Date.now() - t0;
+          };
+          const roundStart = Date.now();
+          // Run victim/vuln observation only in the relevant run (do not add per-block tasks/Promises to the default run).
+          const tasks = [
+            timed(keeperTask),
+            timed(oracleTask),
+            timed(stateAndFlowTask),
+          ];
+          if (stressVictims.length > 0) tasks.push(timed(victimTask));
+          if (liquityVictims.length > 0) tasks.push(timed(liquityVictimTask));
+          if (vulnRuntime) tasks.push(timed(vulnTask));
+          if (marketRegistry) tasks.push(timed(registryTask));
+          // One task for both, actually rather than by comment. Every one of these sends from the
+          // deployer key, and `sendNoMine` resolves the nonce per call -- two of them in the same
+          // Promise.all resolve the same pending nonce and one silently replaces the other. The
+          // comment here used to claim they shared a task while the code pushed two; the crash +
+          // depeg combination `alignWith` exists to express is exactly when both are live.
+          const deployerKeyTask = async (): Promise<void> => {
+            if (liquidityPullRuntime) await liquidityTask();
+            if (depegRuntimes.length > 0) await depegStep();
+          };
+          if (liquidityPullRuntime || depegRuntimes.length > 0)
+            tasks.push(timed(deployerKeyTask));
+          if (tokenLaunchRuntime) tasks.push(timed(launchTask));
+          if (liquityRuntime) tasks.push(timed(liquityWatchTask));
+          const results = await Promise.all(tasks);
+
+          // After the block's own work, not beside it: this reads the block that has just been
+          // mined, so it cannot race anything above, and running it inside the Promise.all would
+          // put a cross-section read on the critical path of every block instead of one in twelve.
+          const boundaryMs = await timed(() => liveScorer.onBlock(bn));
+
+          // After the boundary read, so an agent registered here is valued from the *next* boundary
+          // rather than appearing in one it was not funded at. A stat on most blocks; a poll that
+          // finds an entry funds it (cheatcode on anvil, treasury transfer -- a few blocks -- on an
+          // external chain), which the loop absorbs the way it absorbs any slow block: by catching up.
+          await pollRegistrations(bn);
+
+          // Only while segmenting: keep blocks.csv within a block of the head, so a roll is a
+          // boundary rather than a bulk scan of a whole day stalling the environment loop. A run
+          // with an end keeps the single pass at the end, byte-identical to before.
+          //
+          // bn - 1, not bn: this block is being processed right now and the environment's own txs
+          // for it are still in flight.
+          const blocksMs = segments
+            ? await timed(() => flushBlocks(bn - 1))
+            : 0;
+
+          // ADR 0021 §6: cut the output, never the chain. Checked after the boundary read so a
+          // segment that ends on one keeps it -- the next segment carries it as its own first
+          // boundary, which is what stops each segment losing an interval at the seam.
+          // Not on the last pass: the run's end closes the final segment itself, and a roll on the
+          // end block would open a segment with nothing in it.
+          if (!step.final && bn >= runStartBlock && segments?.dueToRoll())
+            await rollSegment(bn);
+
+          const [keeperMs, oracleMs, stateFlowMs] = results;
+          let taskIdx = 3;
+          const victimMs =
+            stressVictims.length > 0 ? results[taskIdx++] : undefined;
+          const liquityVictimMs =
+            liquityVictims.length > 0 ? results[taskIdx++] : undefined;
+          const vulnMs = vulnRuntime ? results[taskIdx++] : undefined;
+          const registryMs = marketRegistry ? results[taskIdx++] : undefined;
+          // One measurement now that both share a task; reported under both names so the existing
+          // round_timing readers keep working.
+          const deployerKeyMs =
+            liquidityPullRuntime || depegRuntimes.length > 0
+              ? results[taskIdx++]
+              : undefined;
+          const liquidityMs = liquidityPullRuntime ? deployerKeyMs : undefined;
+          const depegMs = depegRuntimes.length > 0 ? deployerKeyMs : undefined;
+          const launchMs = tokenLaunchRuntime ? results[taskIdx++] : undefined;
+          const liquityMs = liquityRuntime ? results[taskIdx++] : undefined;
+          logger.event({
+            type: "round_timing",
+            blockNumber: bn,
+            blocksCaughtUp: Math.max(0, bn - fromBlock + 1),
+            // The head this pass was told about, when the end block cut it short.
+            ...(notifiedBn !== bn ? { notifiedBlock: notifiedBn } : {}),
+            keeperMs,
+            oracleMs,
+            stateFlowMs,
+            ...(victimMs !== undefined ? { victimMs } : {}),
+            ...(liquityVictimMs !== undefined ? { liquityVictimMs } : {}),
+            ...(vulnMs !== undefined ? { vulnMs } : {}),
+            ...(registryMs !== undefined ? { registryMs } : {}),
+            ...(liquidityMs !== undefined ? { liquidityMs } : {}),
+            ...(depegMs !== undefined ? { depegMs } : {}),
+            ...(launchMs !== undefined ? { launchMs } : {}),
+            ...(liquityMs !== undefined ? { liquityMs } : {}),
+            // Zero on the eleven blocks in twelve that are not a boundary; the non-zero ones are
+            // what live scoring costs the loop.
+            ...(boundaryMs > 0 ? { boundaryMs } : {}),
+            ...(blocksMs > 0 ? { blocksMs } : {}),
+            totalMs: Date.now() - roundStart,
+          });
+
+          loopIterations++;
+        } catch (error) {
+          logger.event({
+            type: "realtime_block_error",
+            blockNumber: bn,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        } finally {
+          processing = false;
+          settle();
+          // The end block has been processed -- or its pass failed, which does not move the end:
+          // a pass after it would only cover blocks past the bell. A boundary the failed pass did
+          // not reach is read by liveScorer.close() below.
+          if (step.final) finish();
+        }
+      };
+
+      unwatch = publicClient.watchBlockNumber({
+        emitOnBegin: true,
+        pollingInterval: Math.max(
+          100,
+          Math.floor((config.blockTimeSec * 1000) / 4),
+        ),
+        onBlockNumber: (bn) => void onBlock(Number(bn)),
+      });
+    });
+
+    // A wall-clock limit can end the run in the middle of a pass. Let it finish, so the end block
+    // below is one that was actually processed and nothing is still writing when the teardown starts.
+    await inFlight;
+    stressAudit.finish();
+    const elapsedMs = Date.now() - startTime;
+
+    // ---- competition end: stop the agents before scoring (a direct agent keeps placing orders unless stopped) ----
+    for (const agent of agentRuntimes) agent.process?.close();
+    flowProcess.close();
+    if (!external) await setIntervalMining(publicClient, 0);
+
+    // The epoch's last block: the end block on a run with a block budget (the pass loop is clamped to
+    // it), otherwise the last block a completed pass processed. Everything after it is outside the
+    // epoch -- orders the agents sent after the bell, and the environment putting the chain back.
+    // Scoring across the teardown would score it: a depeg restore buys the stable back to par (issue
+    // #27), so an agent that never unwound would be marked at par and holding through the end would
+    // cost nothing -- which is exactly the risk the regime exists to create. The teardowns below are
+    // sent after this block has been mined, so none of them can land on it.
+    //
+    // It used to be the chain head read here, after the agents were stopped. That was up to a pass's
+    // worth of blocks past the last block the loop had processed, and on a loaded host the loop
+    // itself ran up to 72 blocks past the point where the agents had read `blocksRemaining` 0.
+    const finalBlock = lastProcessedBlock;
+    // The last boundary is the end block itself (epochExtent.ts). Read here if the last pass did not
+    // get to it: a wall-clock end off the interval grid, or a final pass that failed before its read.
+    await liveScorer.close(finalBlock);
+
+    // ---- liquidity-pull teardown (issue #52): the run can end with a window still open, since the
+    // schedule may place it against the last block and the time limit can cut in mid-window. Restore
+    // here so a shared anvil does not hand the next run a thinner venue. Agents are already stopped,
+    // so this cannot be traded against.
+    if (liquidityPullRuntime) {
+      try {
+        await restoreLiquidityPull(ctx, liquidityPullRuntime, logger);
+      } catch (error) {
+        logger.event({
+          type: "stress_liquidity_teardown_failed",
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // ---- eUSD depeg teardown (issue #39): same argument as the depth restore above, plus one more.
+    // The startup check refuses to begin on a depegged pool, so a run that ended mid-window would
+    // not just hand the next run a different venue -- it would stop it from starting at all.
+    for (const { runtime } of depegRuntimes) {
+      try {
+        await restoreStableDepeg(ctx, runtime, logger);
+      } catch (error) {
+        logger.event({
+          type: `${runtime.label}_teardown_failed`,
+          stable: runtime.symbol,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // ---- blocks.csv: whatever is not yet written ----
+    // The whole window for a run with an end (unchanged), the final segment's tail for a period
+    // that has been flushing as it went. Finishes before resetFork erases history, and before the
+    // violation check and the summary.
+    // ---- token-launch summary (issue #29): no teardown -- the pools stay for the snapshot to
+    // revert, and the leftovers sit in flow wallets nobody scores -- only the record of what each
+    // wave paid and took back, which is what closes the books against the agents' P.
+    if (tokenLaunchRuntime) summarizeTokenLaunch(tokenLaunchRuntime, logger);
+
+    await flushBlocks(finalBlock);
+
+    // ---- scoring: batch-reconstruct the per-agent value series from historical blocks (ADR 0006 §4) ----
+    let valueSeries: Record<string, unknown> = {
+      source: "live-observation",
+      granularityBlocks: 1,
+    };
+    // agent -> α (β-removed PnL versus fair at execution; ADR 0015 Notes / equivalent to the amm-challenge edge).
+    let alphaByAgent: Record<string, number> = {};
+    // agent -> realizable value at the last cross-section, where it differs from the mark
+    // (issue #38: an LST redemption still in the queue when the run ends).
+    let markedValueByAgent: Record<string, number> = {};
+    // ---- the boundary series (ADR 0021 §3): P(a, s) is its two ends (rules §4.4.1) ----
+    // Taken here rather than out of the post-run sweep below, because this is the series that
+    // exists on a chain the sweep cannot cover: too long for the node's history, and with no end to
+    // start sweeping from. On a short run the two are the same numbers -- the same reader, the same
+    // blocks, the same median window -- so nothing about a bounded run changes.
+    const wholeIntervalSeries = liveScorer.series();
+    // The summary written here belongs to whichever directory `logger` points at -- which, when
+    // segmenting, is the *final segment*, not the whole period. Scoring it over the whole series
+    // gave the last day the week's intervals: every earlier segment's returns counted twice in any
+    // standings taken over the period, and the last day showed a score nothing that happened on it
+    // could explain (seen on a five-segment run: 9 intervals in the last segment against 1+3+2+3 in
+    // the others).
+    const liveIntervalSeries = ((): IntervalSeries | undefined => {
+      if (!wholeIntervalSeries || !segments) return wholeIntervalSeries;
+      const cut = sliceIntervalSeries(
+        wholeIntervalSeries,
+        segments.currentSegmentStartBlock,
+        finalBlock,
+      );
+      // `intervals` has to be recomputed, not inherited. Spreading the slice over the whole series
+      // replaced its blocks and values and left the period's count behind: the final segment's
+      // summary said 9 while carrying five boundaries — four returns. An artifact that
+      // contradicts itself is worse than one that is missing a field.
+      return {
+        ...wholeIntervalSeries,
+        ...cut,
+        intervals: Math.max(0, cut.boundaryBlocks.length - 1),
+      };
+    })();
+    if (liveIntervalSeries) {
+      logger.event({
+        type: INTERVAL_EVENTS.seriesScored,
+        ...liveScorer.meta(),
+        ...(segments
+          ? {
+              segment: segments.currentSegment,
+              boundaries: liveIntervalSeries.boundaryBlocks.length,
+              periodBoundaries: wholeIntervalSeries?.boundaryBlocks.length,
+            }
+          : {}),
+      });
+    }
+
+    // The post-run sweep produces things the boundary series does not: the equity curve between
+    // boundaries, alpha (which needs the first and last cross-section at a fixed reference fair),
+    // the unpriced-holdings report, and the venue-state artifact the dashboard draws from. All of it
+    // is worth having -- and none of it is reachable once the window outruns the node's history,
+    // which is precisely the case ADR 0021 exists for. So it is attempted for a window that fits and
+    // skipped, explicitly, for one that does not.
+    const sweepWindow = finalBlock - runStartBlock;
+    const sweepFits = sweepWindow <= HISTORY_SWEEP_LIMIT;
+    if (finalBlock >= runStartBlock && !sweepFits) {
+      logger.event({
+        type: "post_run_sweep_skipped",
+        windowBlocks: sweepWindow,
+        limit: HISTORY_SWEEP_LIMIT,
+        haveIntervalSeries: liveIntervalSeries !== undefined,
+        note:
+          "the run window is longer than the node retains state for, so a post-run sweep would " +
+          "read zeros rather than history. The score comes from the boundaries read live (ADR 0021 §3); " +
+          "the equity curve, alpha and market.json are what this costs",
+      });
+      console.error(
+        `[reconstruct] window ${sweepWindow} blocks exceeds the ~${HISTORY_SWEEP_LIMIT}-block sweep ` +
+          "limit; scoring used the live interval boundaries and the equity curve was not rebuilt",
+      );
+    }
+    if (finalBlock >= runStartBlock && sweepFits) {
+      try {
+        const meta = await reconstructValueSeries({
+          publicClient,
+          logger,
+          agents: agentRuntimes.map((a) => ({ id: a.id, address: a.address })),
+          enabledIds,
+          activeStables: activeStables(),
+          priceFeed: priceFeedAddress,
+          fromBlock: runStartBlock,
+          toBlock: finalBlock,
+          scoreEvery: config.scoreEvery,
+          intervalBlocks: config.intervalBlocks,
+          markMedianBlocks: config.markMedianBlocks,
+          ...(marketRegistry ? { marketRegistry: marketRegistry.address } : {}),
+        });
+        valueSeries = meta;
+        alphaByAgent = meta.alphaByAgent;
+        markedValueByAgent = meta.markedValueByAgent;
+        logger.event({ type: "value_series_reconstructed", ...meta });
+        // The claim that live scoring *replaces* the sweep rests on the two producing the same
+        // number at the same boundary. On a run short enough to have both, check it rather than
+        // assert it: a divergence means one of the two reads a different world, and the run that
+        // discovers it should be the one that says so.
+        if (liveIntervalSeries && meta.intervalSeries)
+          logger.event({
+            type: INTERVAL_EVENTS.seriesAgreement,
+            ...compareIntervalSeries(liveIntervalSeries, meta.intervalSeries),
+          });
+      } catch (err) {
+        // The reconstruction refuses a cross-section it cannot read rather than emitting a cliff in
+        // the value series (issue #44). Losing the series is bad; publishing a wrong one is worse —
+        // so keep the run's other artifacts and make the gap explicit instead of letting
+        // summary.json read as if the series were complete.
+        const error = err instanceof Error ? err.message : String(err);
+        valueSeries = {
+          source: "post-run-reconstruction",
+          failed: true,
+          error,
+        };
+        logger.event({ type: "value_series_reconstruction_failed", error });
+        console.error(`[reconstruct] value series unavailable: ${error}`);
+      }
+
+      // ---- dashboard market series (issue #63 Phase 2): venue prices/state + tx notionals ----
+      // Same historical-read machinery as the value series, same window, zero live-loop cost.
+      // A reporting artifact: losing it degrades the dashboard, never the run, so its failure is
+      // logged and swallowed independently of scoring.
+      try {
+        const artifact = await reconstructMarketSeries({
+          publicClient,
+          agents: agentRuntimes.map((a) => ({ id: a.id, address: a.address })),
+          enabledIds,
+          priceFeed: priceFeedAddress,
+          fromBlock: runStartBlock,
+          toBlock: finalBlock,
+          scoreEvery: config.scoreEvery,
+        });
+        logger.artifact("market.json", artifact);
+        logger.event({
+          type: "market_series_reconstructed",
+          ...marketSeriesMeta(artifact),
+        });
+      } catch (err) {
+        const error = err instanceof Error ? err.message : String(err);
+        logger.event({ type: "market_series_reconstruction_failed", error });
+        console.error(`[reconstruct] market series unavailable: ${error}`);
+      }
+    }
+
+    // The boundary series is the authoritative one wherever both exist, so that summary.json's
+    // intervals and its scores are the same object. They agree by construction on a run the sweep
+    // covers -- same reader, same blocks, same median window -- and only the live one exists on a
+    // run it does not. Written under both names (intervalSeriesFields; issue #140).
+    if (liveIntervalSeries) {
+      valueSeries = {
+        ...valueSeries,
+        // Nested rather than spread. `valueSeries.source` describes where the *equity curve* came
+        // from, and spreading the live meta over it renamed the sweep's own artifact to
+        // "live-interval-boundaries" -- a run that did sweep, claiming it had not.
+        ...intervalSeriesFields(liveIntervalSeries, liveScorer.meta()),
+      };
+    } else if (valueSeries.intervalSeries) {
+      valueSeries = {
+        ...valueSeries,
+        ...intervalSeriesFields(valueSeries.intervalSeries as IntervalSeries),
+      };
+    }
+
+    // ---- post-run rule check (ADR 0006 §5): the fee rule (sdk/src/feeRule.ts) over agent rows ----
+    // Under economic gas (ADR 0011 §2), priority-fee cap enforcement is retired (agents bid freely per their
+    // opportunity valuation, and whoever values it higher executes first = realistic priority gas auction),
+    // so the cap half is off (cap 0). The maxFeePerGas <= tip half stays on in every profile: it is what
+    // makes that auction one -- without it a bid is ordered by a number it does not pay.
+    const violations = checkRunFeeViolations(
+      logger.runDir,
+      config.economicGas ? 0n : config.maxPriorityFeeWei,
+    );
+
+    // The environment's own shocks must not fail quietly. A whale is submitted through the ordinary
+    // relay, so a *submission* error is caught and logged -- but an on-chain revert is not one: the
+    // tx lands, the schedule says the whale fired, and only blocks.csv shows it did nothing. A
+    // missing token approval once turned this regime into calm with every log looking healthy.
+    if (whaleEvents.length > 0) {
+      const whaleTxs = countRunRevertedTxs(
+        logger.runDir,
+        `flow-${WHALE_WALLET_KEY}`,
+      );
+      if (whaleTxs.reverted > 0)
+        logger.event({
+          type: "stress_whale_reverted",
+          reverted: whaleTxs.reverted,
+          total: whaleTxs.total,
+          note: "whale orders landed but reverted on-chain; this regime degraded toward calm",
+        });
+      console.error(
+        whaleTxs.reverted > 0
+          ? `[stress] WARNING: ${whaleTxs.reverted}/${whaleTxs.total} whale orders reverted on-chain — ` +
+              `the whale regime did not actually shock this run`
+          : `[stress] ${whaleTxs.total} whale orders executed`,
+      );
+    }
+    if (config.economicGas) {
+      logger.event({
+        type: "fee_cap_enforcement_disabled",
+        note:
+          "ADR 0011 §2: the economic gas profile does not enforce a priority-fee cap; " +
+          "maxFeePerGas above the tip is still a violation",
+      });
+    }
+    if (violations.length > 0) {
+      logger.event({ type: "rule_violations_detected", violations });
+      const offenders = [...new Set(violations.map((v) => v.ownerId))];
+      console.error(
+        `[rules] ${violations.length} fee-rule violation(s) by ${offenders.join(", ")} ` +
+          "(over the priority-fee cap, or maxFeePerGas above the tip); see rule_violations_detected",
+      );
+    }
+
+    // Gas budget (issue #40 T0). Checked whatever the fee profile is: the fee cap is about ordering
+    // and is deliberately unenforced under economic gas, but starving the block is about capacity
+    // and is a disqualifying offence either way (rules §6 / §8).
+    const gasViolations = checkRunGasViolations(logger.runDir, {
+      maxTxGas: config.maxTxGas,
+      maxAgentBlockGas: config.maxAgentBlockGas,
+    });
+    if (gasViolations.length > 0) {
+      logger.event({
+        type: "gas_budget_violations",
+        violations: gasViolations,
+      });
+      const offenders = [...new Set(gasViolations.map((v) => v.ownerId))];
+      console.error(
+        `[rules] ${gasViolations.length} gas-budget violation(s) by ${offenders.join(", ")} ` +
+          `(per-tx ${config.maxTxGas}, per-agent-per-block ${config.maxAgentBlockGas}); ` +
+          "see gas_budget_violations in events.jsonl",
+      );
+    }
+
+    // ---- on-chain txs the agent's own runtime never reported sending (rules §8) ----
+    // Reconciled only for the agents this coordinator started: an external participant's log is
+    // on their machine. Reported per agent and in the summary; the verdict is the operator's
+    // (postRunCheck.ts says why a runtime crash can leave the same mark).
+    //
+    // `!== null`, not `!== undefined`: `process` is null until spawned and stays null for an
+    // external agent, so the previous test admitted every external participant, found no log for
+    // any of them, and flagged every one of their transactions as unlogged -- on the trial devnet,
+    // the whole field (rules §2.7).
+    const unloggedTxs = reconcileRunAgentTxs(
+      logger.runDir,
+      agentRuntimes.filter((a) => a.process !== null).map((a) => a.id),
+    );
+    const unloggedTxCountByAgent: Record<string, number> = {};
+    for (const tx of unloggedTxs)
+      unloggedTxCountByAgent[tx.ownerId] =
+        (unloggedTxCountByAgent[tx.ownerId] ?? 0) + 1;
+    if (unloggedTxs.length > 0) {
+      logger.event({
+        type: "unlogged_agent_txs",
+        count: unloggedTxs.length,
+        byAgent: unloggedTxCountByAgent,
+        txs: unloggedTxs.slice(0, 200),
+        note:
+          "included on chain from the agent's wallet, absent from the agent's submitted log: sent by " +
+          "something other than the process the coordinator started, or the runtime died between " +
+          "send and log -- read with processExitedEarly / stderrTail",
+      });
+      console.error(
+        `[post-run] WARNING: ${unloggedTxs.length} on-chain agent tx(s) have no matching submitted log entry ` +
+          `(${Object.entries(unloggedTxCountByAgent)
+            .map(([id, n]) => `${id}: ${n}`)
+            .join(", ")})`,
+      );
+    }
+
+    // ---- final PnL ----
+    const finalFairPrice = latestFairPrice;
+    // Price every registered base, not just WETH. valueUsdc marks an unlisted base at `p[sym] ?? 0`,
+    // so passing the scalar WETH price valued an agent's WBTC at exactly zero: anyone holding a
+    // non-WETH base at the last block had that inventory deleted from netPnlUsdc. Measured on a
+    // 24-agent calm run, the WBTC-trading agents reported a reproducible -6,686 USDC "loss" while the
+    // reconstruction (which does price every base since issue #41) put the same agents at +13 alpha.
+    // ctx.fairPrices is the per-base map the block loop already maintains; the WETH-only fallback is
+    // for a run that ended before the first block was processed.
+    const finalFairPrices: Record<string, number> =
+      ctx.fairPrices && Object.keys(ctx.fairPrices).length > 0
+        ? ctx.fairPrices
+        : { WETH: finalFairPrice };
+    // Issue #27: what each market-priced stable settles at, at the last block. The initial
+    // valuation uses the same prices for the same reason the fair prices are shared -- netPnlUsdc is
+    // a difference, and pricing the two ends off different marks would book a peg's whole history
+    // as this agent's PnL. Nothing is endowed in a market-priced stable, so the initial snapshot
+    // holds none of them and the choice only bites on a run that ends mid-depeg.
+    const finalStablePrices = await readStablePrices(
+      publicClient,
+      activeStables(),
+      // At the last competition block, for the same reason the reconstruction stops there.
+      BigInt(finalBlock),
+    );
+    const agentsSummary = [];
+    for (const agent of agentRuntimes) {
+      const final = await getBalances(publicClient, agent.address);
+      const initialValue = valueUsdc(
+        agent.initial,
+        finalFairPrices,
+        finalStablePrices,
+      );
+      let finalValue = valueUsdc(final, finalFairPrices, finalStablePrices);
+      const protocolValues: Record<string, number> = {};
+      for (const adapter of adapters) {
+        const v = await adapter.valueUsdc(
+          ctx,
+          agent.address,
+          null,
+          finalFairPrice,
+        );
+        protocolValues[adapter.id] = v;
+        finalValue += v;
+      }
+      // Rules §4.4.1: P = V_K − V_0 with each end at its own marks (the 5-block median of §4.1),
+      // read off the boundary series. netPnlUsdc below marks both ends at the final prices; when
+      // everyone starts with the same basket the two differ by a constant across the field, so the
+      // deviation score is the same either way -- this is the number the rules name.
+      const rulesPnl = liveIntervalSeries
+        ? epochPnlFromSeries(liveIntervalSeries.valuesByAgent[agent.id] ?? [])
+        : null;
+      agentsSummary.push({
+        id: agent.id,
+        address: agent.address,
+        // §4.3: the benchmark is placed and valued like everyone else and kept out of the population.
+        baseline: agent.spec.baseline ?? false,
+        // Rules §2.2: the participant unit, so matrix.json can say which agents are one unit's two
+        // submissions. Absent when the roster did not state one (the agent is its own unit).
+        ...(agent.spec.participant !== undefined
+          ? { participant: agent.spec.participant }
+          : {}),
+        initialValueUsdc: initialValue,
+        finalValueUsdc: finalValue,
+        netPnlUsdc: finalValue - initialValue,
+        ...(rulesPnl
+          ? {
+              pnlUsdc: rulesPnl.pnlUsdc,
+              ...(rulesPnl.carriedFinal
+                ? { pnlFinalBoundaryIndex: rulesPnl.finalBoundaryIndex }
+                : {}),
+            }
+          : {}),
+        // alphaUsdc: β-removed PnL versus fair at execution (the trade's take; equivalent to the amm-challenge
+        // edge; ADR 0015 Notes). netPnlUsdc is the gross total including price drift β, so look at this for skill
+        // comparison. undefined when reconstruction did not run (finalBlock<runStartBlock).
+        ...(agent.id in alphaByAgent
+          ? { alphaUsdc: alphaByAgent[agent.id] }
+          : {}),
+        // The face mark at the run's last block, when the reconstruction found it above the value
+        // that was actually scored at that same cross-section. The score is the recoverable value
+        // (issue #40 axiom 3), so an entry here says the position was carried above what it could
+        // have been exited for -- an LST redemption whose queue outlives the run, a lending supply
+        // whose collateral is worthless, a borrower under water. Absent when the two agreed, which
+        // is the normal case.
+        ...(agent.id in markedValueByAgent
+          ? { markedValueUsdc: markedValueByAgent[agent.id] }
+          : {}),
+        // Present only when the agent process went away before the run ended (ADR 0017 §4 reads this
+        // to disqualify the agent for that scenario instead of scoring its frozen position).
+        ...(agent.exitedEarly !== undefined
+          ? { processExitedEarly: agent.exitedEarly }
+          : {}),
+        // submission count's primary source is the agent's self-reported log (agents/<id>.jsonl) (ADR 0006 §5)
+        includedTxCount: agent.included,
+        revertCount: agent.reverted,
+        // Included txs the agent's runtime never reported sending (rules §8; see postRunCheck.ts).
+        // Only for agents this coordinator started -- an external participant has no log here.
+        ...(agent.process !== null
+          ? { unloggedTxCount: unloggedTxCountByAgent[agent.id] ?? 0 }
+          : {}),
+        stderrTail: agent.process?.getStderr() ?? "",
+      });
+    }
+    logger.summary({
+      runId,
+      // the backtest CLI (ADR 0016) injects ERIS_RUN_MODE=backtest. Otherwise realtime.
+      mode: config.runMode,
+      // Which world shape produced these numbers (ADR 0020 §1). Recorded on every run so an
+      // aggregation across stored runs can refuse to mix the modes instead of averaging two
+      // different competitions together.
+      resetUnit: config.resetUnit,
+      blockTimeSec: config.blockTimeSec,
+      // Chain blocks the epoch covered after its first (= run.blocks when it ended on its block
+      // budget), not passes of the loop: a loop that catches up covers several blocks per pass.
+      blocksProcessed: Math.max(0, finalBlock - runStartBlock),
+      loopIterations,
+      runStartBlock,
+      finalBlock,
+      ...(schedule.hasEvents() ? { stressEvents: stressAudit.summaries() } : {}),
+      elapsedMs,
+      finalFairPriceUsdcPerWeth: finalFairPrice,
+      valueSeries,
+      violations,
+      // Kept apart from `violations` rather than merged into it: the fee cap is about ordering and
+      // the gas budget is about capacity, they have different enforcement and different remedies,
+      // and a reader counting "violations" across old and new runs must not see the number change
+      // meaning (issue #40 T0).
+      ...(gasViolations.length > 0 ? { gasViolations } : {}),
+      agents: agentsSummary,
+    });
+    // The last segment closes with the same index entry every other one got, so a period that ended
+    // is a complete list of days rather than a list missing its last (ADR 0021 §6). Its own
+    // summary.json is the one written just above -- the whole-run summary *is* the final segment's,
+    // since that is the directory `logger` points at.
+    if (segments)
+      segments.finish(
+        finalBlock,
+        agentsSummary.map((a) => {
+          // The same record every other segment got. The whole-run figures above are the run's
+          // (an agent registered mid-period has a real netPnlUsdc since it was funded), but the
+          // final segment's index entry is scored on this segment's boundaries alone, and an agent
+          // with no V_0 in it is unscored here too (issue #84 X2).
+          // No boundary series at all means the run never reached two boundaries, so this segment
+          // contains no interval and scores nobody -- P is V_K − V_0 and there is no V_0 to take.
+          // Substituting the whole-run figures here would hand the segment a number that is not
+          // its own, which is the same mistake in a smaller corner (issue #84 X2).
+          const pnl =
+            liveIntervalSeries === undefined
+              ? null
+              : epochPnlFromSeries(
+                  liveIntervalSeries.valuesByAgent[a.id] ?? [],
+                );
+          return segmentIndexAgent(
+            segmentAgentRecord(
+              {
+                id: a.id,
+                address: a.address,
+                baseline: a.baseline,
+                ...(a.participant !== undefined
+                  ? { participant: a.participant }
+                  : {}),
+                includedTxCount: a.includedTxCount,
+                revertCount: a.revertCount,
+              },
+              pnl,
+            ),
+          );
+        }),
+      );
+    logger.event({ type: "run_completed", runId, runDir: logger.runDir });
+    console.error(
+      `realtime simulation completed: ${logger.runDir} (blocks ${runStartBlock}..${finalBlock}, ` +
+        `${loopIterations} passes, ${Math.round(elapsedMs / 1000)}s)`,
+    );
+    // Repeated, because the startup copy has scrolled out of sight by now.
+    if (sandboxWarning) console.error(agentSandboxBanner(sandboxWarning));
+  } finally {
+    try {
+      if (config.chainMode !== "external")
+        await setIntervalMining(publicClient, 0);
+    } catch {
+      // ignore errors during teardown
+    }
+    for (const agent of agentRuntimes) agent.process?.close();
+    flowProcess.close();
+  }
+  return { runId, runDir: logger.runDir };
+}

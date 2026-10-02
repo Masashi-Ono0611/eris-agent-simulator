@@ -1,0 +1,24 @@
+# config/scenarios/full-boxB.yaml — the second half of config/scenarios/full.yaml, by seed.
+#
+# 7 regimes x 5 seeds = 35 scenarios, on the seeds the published set does not carry. The first half
+# is config/scenarios/public.yaml (seeds 101-505), which is the same 35-scenario shape and is sized
+# to one box and one working day — see its header for the measurement.
+#
+# Each half is a complete 7-regime matrix, which is the point of splitting by seed rather than by
+# regime: a box that dies loses draws, not a whole market condition. What it costs is that z-scores
+# are computed inside a matrix, so ranking both halves as one needs the two `scenarios` arrays
+# concatenated into a single matrix.json by hand (runs/matrix-metric-merged is the precedent).
+#
+# Run: npm run backtest -- --scenarios config/scenarios/full-boxB.yaml --agents config/rosters/full-field.yaml
+
+regimes:
+  - calm
+  - cex-drift
+  - informed-flow
+  - whale
+  - lending-incident
+  - crash
+  - depeg
+  - vuln
+
+seeds: [606, 707, 808, 909, 1010]

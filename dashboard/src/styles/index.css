@@ -1,0 +1,27 @@
+@import 'tailwindcss';
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+@import './tokens/base.css';
+@import './tokens/layout.css';
+
+/* Rows that navigate somewhere: inline styles cannot express :hover, so the one hover
+   affordance lives here. */
+.row-link {
+  cursor: pointer;
+}
+.row-link:hover {
+  background: var(--bg-surface-raised);
+}
+
+@keyframes marker-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* The world map's block gauge: one frame of wall clock, filling. Remounted per frame (keyed on the
+   block) so the animation restarts from 0 instead of being coalesced into a bar that sits full. */
+@keyframes world-slot {
+  from { width: 0%; }
+  to { width: 100%; }
+}

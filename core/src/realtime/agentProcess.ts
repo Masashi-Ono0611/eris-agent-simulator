@@ -1,0 +1,314 @@
+import { spawn, type ChildProcess } from "node:child_process";
+import { agentToken } from "../inference/proxy.js";
+import { existsSync } from "node:fs";
+import { join, resolve } from "node:path";
+import {
+  EPOCH_COUNT_ENV,
+  EPOCH_INDEX_ENV,
+  type EpochOrdinal,
+  epochOrdinalEnv,
+} from "@eris/sdk/epoch.js";
+import type { AgentSpec } from "@eris/sdk/types.js";
+import { AGENT_STATE_DIR_ENV } from "./agentState.js";
+import { AGENT_VIEW_DIR_ENV } from "./agentView.js";
+
+// How long a stopped agent gets to exit before it is killed outright. Short: by the time close() is
+// called the run is over and scored, and every extra second is one the environment spends waiting
+// for a process whose output nobody will read.
+const CLOSE_GRACE_MS = 2_000;
+
+// Credentials and connection endpoints passed to the agent child process in direct mode (ADR 0006 §2 / ADR 0015).
+export type DirectAccess = {
+  privateKey: string;
+  priceFeedAddress: string;
+  runId: string;
+};
+
+// Names the child needs to run at all -- node, tsx, and the subscription CLIs the self-improving
+// runtime shells out to (`codex exec` / `claude -p` read their login from HOME). Deliberately short:
+// anything else is either the runtime's own ERIS_* namespace or a secret belonging to the operator
+// or to another participant.
+const OS_PASSTHROUGH = new Set([
+  "PATH",
+  "HOME",
+  "USER",
+  "LOGNAME",
+  "SHELL",
+  "TMPDIR",
+  "TEMP",
+  "TMP",
+  "LANG",
+  "LC_ALL",
+  "LC_CTYPE",
+  "TZ",
+  "TERM",
+  "NODE_ENV",
+  "NODE_OPTIONS",
+  "NODE_PATH",
+  "NODE_EXTRA_CA_CERTS",
+  // Windows cannot spawn a process without these.
+  "SystemRoot",
+  "SYSTEMROOT",
+  "COMSPEC",
+  "PATHEXT",
+  "windir",
+  "APPDATA",
+  "LOCALAPPDATA",
+  "USERPROFILE",
+]);
+
+// ERIS_* names from the operator's environment that are the environment's, not the agent's.
+//   ERIS_CONFIG            the coordinator's own config file. The agent gets its own
+//                          (options.configPath, agentView.ts), which carries no seed.
+//   ERIS_PRACTICE_SEED     the practice period's seed, which systemd hands the coordinator.
+//   ERIS_FLOW_SEED         the flow bot's seed (set on the flow process, never on this one).
+//   ERIS_SCENARIO_KEY_*    the scenario key's file and commitment (ADR 0027, core/src/scenarioKey.ts).
+// Any other ERIS_*_SEED is held back the same way: a seed is never something an agent needs, and
+// neither is anything under ERIS_SCENARIO_KEY.
+const ENVIRONMENT_ONLY_ERIS = new Set([
+  "ERIS_AGENT_PRIVATE_KEY",
+  "ERIS_INFERENCE_SECRET",
+  "ERIS_CONFIG",
+  "ERIS_PRACTICE_SEED",
+  "ERIS_FLOW_SEED",
+]);
+export function isEnvironmentOnlyEnv(name: string): boolean {
+  return (
+    ENVIRONMENT_ONLY_ERIS.has(name) ||
+    /^ERIS_(?:[A-Z0-9]+_)*SEED$/.test(name) ||
+    name.startsWith("ERIS_SCENARIO_KEY")
+  );
+}
+
+// Inference credentials and endpoints (example/agents/runtime/llm.ts). Not secrets belonging to
+// other participants -- these are the operator's own defaults, overridable per agent by the roster.
+const INFERENCE_ENV = [
+  "ANTHROPIC_API_KEY",
+  "OPENAI_API_KEY",
+  "OPENAI_BASE_URL",
+  "OLLAMA_API_KEY",
+];
+
+// Agent process in realtime mode (ADR 0015 §5).
+// spawn is always `node --import tsx <agentsDir>/runtime/bot.ts` (the agent directory is passed via
+// env ERIS_AGENT_DIR). The stdin/stdout protocol has been retired; the child reads the chain itself
+// (runtime/read.ts) and signs/sends itself (runtime/send.ts). The contract with the coordinator is
+// only env variables, on-chain state, and runs/<id>/agents/<id>.jsonl.
+// The roster's explicit command/args remain as an override for fully self-contained agents (other languages, etc.; ADR 0015 §8).
+export class RealtimeAgentProcess {
+  private child: ChildProcess;
+  private stderr = "";
+  private alive = true;
+
+  constructor(
+    readonly spec: AgentSpec,
+    rpcUrl: string,
+    agentAddress: string,
+    runDir: string,
+    direct: DirectAccess,
+    agentsDir: string,
+    // The run's block budget as the environment resolved it. Passed explicitly because the child
+    // rebuilds its config from the YAML and would otherwise miss a CLI --blocks override: an agent
+    // that thinks the run is longer than it is will start exits it cannot finish (issue #38's
+    // withdrawal queue makes that a scoring loss, not just a missed trade).
+    runBlocks: number,
+    // Extra env the environment injects into all agents (e.g. ADR 0009 stress victim addresses).
+    // If spec.env specifies a value it takes precedence (extraEnv acts as the default).
+    extraEnv?: Record<string, string>,
+    // `docker` launches through infra/docker-agent/run-agent.sh (rules §2.3 caps; ADR 0023 task M5);
+    // `process` (default) spawns bot.ts directly. A roster `command` override is used as given
+    // either way -- it is the participant's own launcher.
+    //
+    // `stateDir` is the per-agent area that survives epochs (issue #77), when the run provides one.
+    // It rides in the same options object as the sandbox because it is the same decision: what the
+    // environment gives this agent to run in. Absent means this run does not persist, which is
+    // every path that existed before it.
+    //
+    // `configPath` / `viewDir` are the agent's own config file and view directory (agentView.ts).
+    // The coordinator always passes both; without `configPath` the child gets no ERIS_CONFIG at
+    // all rather than the coordinator's file.
+    //
+    // `epoch` is which epoch of the schedule this run is (issue #167), when it is one.
+    options: {
+      sandbox?: "process" | "docker";
+      stateDir?: string;
+      configPath?: string;
+      viewDir?: string;
+      epoch?: EpochOrdinal;
+    } = {},
+  ) {
+    // The child is participant code that the operator executes, so its environment is BUILT rather
+    // than inherited. `{ ...process.env }` handed every submitted agent the operator's whole
+    // environment: every other agent's wallet key, TREASURY_PRIVATE_KEY, the fork RPC URL, and --
+    // now that participants supply their own inference credentials -- one API key per participant.
+    // Nothing the runtime reads needs any of that (example/agents/runtime/*.ts reads ERIS_* plus the
+    // inference names below), and the child does not load .env.local: that is bootstrapEnv.ts, on
+    // this side of the spawn. The allowlist also drops CLAUDE_CODE_* / CLAUDECODE / AI_AGENT, which
+    // used to be deleted by name here to stop `claude -p` hanging on nesting detection.
+    const childEnv: NodeJS.ProcessEnv = {};
+    for (const [k, v] of Object.entries(process.env)) {
+      if (v === undefined) continue;
+      // ERIS_* is the runtime's own namespace. The private key is excluded because it is per-agent
+      // and injected below -- inheriting the parent's would be the leak this list exists to stop.
+      // ERIS_INFERENCE_SECRET is the operator's: the child gets a token derived from it below.
+      // ERIS_CONFIG and the seeds are the environment's (ENVIRONMENT_ONLY_ERIS above).
+      if (k.startsWith("ERIS_") && !isEnvironmentOnlyEnv(k)) childEnv[k] = v;
+      else if (OS_PASSTHROUGH.has(k)) childEnv[k] = v;
+    }
+    // Inference credentials are forwarded as a DEFAULT, so a single-operator local run keeps working
+    // with one key in .env.local. A roster entry's `env` is applied after this and overrides them,
+    // which is how each participant gets its own; an agent never sees another agent's, because
+    // another agent's key only ever exists in that other agent's spec.
+    for (const k of INFERENCE_ENV) {
+      const v = process.env[k];
+      if (v !== undefined) childEnv[k] = v;
+    }
+    Object.assign(childEnv, extraEnv ?? {});
+    Object.assign(childEnv, spec.env ?? {});
+    // Rules §2.3 / §2.5: inference goes through the operator's proxy. The agent authenticates to it
+    // with a token that is a function of its id and a secret only the coordinator and the proxy
+    // hold, so one agent cannot present itself as another and no agent holds an upstream key.
+    const inferenceSecret = process.env.ERIS_INFERENCE_SECRET;
+    if (inferenceSecret) childEnv.ERIS_INFERENCE_TOKEN = agentToken(inferenceSecret, spec.id);
+    childEnv.NODE_ENV = process.env.NODE_ENV ?? "development";
+    childEnv.ERIS_AGENT_ID = spec.id;
+    // The agent's view of the chain is not always the coordinator's. Under ERIS_AGENT_ISOLATE the
+    // agent sits in its own network and may only reach the rpc-gateway, while the coordinator must
+    // reach anvil DIRECTLY -- funding and the block gas limit are cheatcodes, which the gateway
+    // 403s by design (docs/24 §4). One URL cannot serve both, and deriving the agent's from the
+    // coordinator's silently forces them to be the same. ERIS_AGENT_RPC_URL splits them, which is
+    // what infra/docker-agent/ISOLATION.md already tells operators to set.
+    childEnv.ERIS_RPC_URL = process.env.ERIS_AGENT_RPC_URL || rpcUrl;
+    childEnv.ERIS_AGENT_ADDRESS = agentAddress;
+    childEnv.REPORT_DIR = process.env.REPORT_DIR ?? "./runs";
+    childEnv.ERIS_RUN_DIR = runDir;
+    childEnv.ERIS_AGENT_PRIVATE_KEY = direct.privateKey;
+    childEnv.ERIS_PRICE_FEED_ADDRESS = direct.priceFeedAddress;
+    childEnv.ERIS_RUN_ID = direct.runId;
+    if (runBlocks > 0) childEnv.ERIS_RUN_BLOCKS = String(runBlocks);
+    // Set after spec.env is merged, deliberately: which directory an agent gets is the
+    // environment's decision, and a roster that names its own would be pointing at somebody else's.
+    if (options.stateDir !== undefined)
+      childEnv[AGENT_STATE_DIR_ENV] = options.stateDir;
+    // Also after spec.env: which config an agent reads is the environment's decision too.
+    if (options.configPath !== undefined) childEnv.ERIS_CONFIG = options.configPath;
+    else delete childEnv.ERIS_CONFIG;
+    if (options.viewDir !== undefined)
+      childEnv[AGENT_VIEW_DIR_ENV] = options.viewDir;
+    // Which epoch this is: the environment's to say, so after spec.env too. Cleared when the run
+    // has none, so an ordinal left in the operator's shell does not reach an agent of a run that is
+    // not an epoch (a single run, the practice period).
+    delete childEnv[EPOCH_INDEX_ENV];
+    delete childEnv[EPOCH_COUNT_ENV];
+    if (options.epoch !== undefined)
+      Object.assign(childEnv, epochOrdinalEnv(options.epoch));
+
+    let command: string;
+    let args: string[];
+    if (spec.command !== undefined) {
+      // override: fully self-contained agent. read/send/validate are all its own (unsupported, for advanced users).
+      command = spec.command;
+      args = spec.args ?? [];
+    } else {
+      // Convention resolution (ADR 0015 §6): id (or the dir override) points to <agentsDir>/<dir>/, and
+      // bot.ts drives its contents (agent.ts decide/run, plus prompt.md when self-improving).
+      const agentDir = resolve(agentsDir, spec.dir ?? spec.id);
+      if (!existsSync(agentDir)) {
+        throw new Error(
+          `agent directory not found for id "${spec.id}": ${agentDir} ` +
+            `(the roster id is a directory name directly under ${agentsDir}/; use dir for an alias, or command/args for a different implementation)`,
+        );
+      }
+      childEnv.ERIS_AGENT_DIR = agentDir;
+      if (options.sandbox === "docker") {
+        // The wrapper reads everything it needs from env (ERIS_AGENT_ID / ERIS_AGENT_DIR / ...) and
+        // remaps host paths into the image itself. The repo root is two levels above agentsDir
+        // (<root>/example/agents); ERIS_REPO tells the script so, in case it was symlinked.
+        const repoRoot = resolve(agentsDir, "..", "..");
+        childEnv.ERIS_REPO = repoRoot;
+        command = "bash";
+        args = [join(repoRoot, "infra", "docker-agent", "run-agent.sh")];
+      } else {
+        command = "node";
+        args = ["--import", "tsx", join(agentsDir, "runtime", "bot.ts")];
+      }
+    }
+
+    this.child = spawn(command, args, {
+      stdio: ["ignore", "ignore", "pipe"],
+      env: childEnv,
+    });
+
+    this.child.stderr?.on("data", (data) => {
+      this.stderr += data.toString();
+      if (this.stderr.length > 20_000) this.stderr = this.stderr.slice(-20_000);
+    });
+    this.child.on("error", (error) => {
+      this.alive = false;
+      this.onExit?.({ reason: `spawn error: ${error.message}` });
+    });
+    this.child.on("exit", (code, signal) => {
+      const wasAlive = this.alive;
+      this.alive = false;
+      // Only interesting if it went on its own. close() kills every agent at the end of the run,
+      // and that is not news.
+      if (wasAlive && !this.stopped) {
+        this.onExit?.({
+          code: code ?? undefined,
+          signal: signal ?? undefined,
+          // The coordinator persists this reason in summary.json. Keep the termination details
+          // here too so report consumers can diagnose the exit without reading events.jsonl.
+          reason: "exited before the run ended" +
+            (code !== null ? ` (code ${code})` : "") +
+            (signal !== null ? ` (signal ${signal})` : ""),
+        });
+      }
+    });
+  }
+
+  /// Notified when the process dies on its own. Without this an agent that crashes mid-run just
+  /// stops trading, and the run looks like one where it chose not to act -- indistinguishable in
+  /// summary.json, and the difference is the whole result.
+  onExit?: (info: { code?: number; signal?: string; reason: string }) => void;
+
+  private stopped = false;
+
+  isAlive(): boolean {
+    return this.alive && !this.child.killed;
+  }
+
+  /// Stop the agent, and stop *waiting* on it.
+  ///
+  /// The environment's own exit must not depend on a participant's teardown. Measured 2026-09-05: a
+  /// run with containerised agents printed `realtime simulation completed`, wrote summary.json, and
+  /// then never exited — the coordinator sat at 0% CPU holding a pipe to a child that would not
+  /// die. The mechanism is that the agent's node process is **PID 1** inside its container, and
+  /// Linux does not deliver a signal with its default disposition to PID 1: node installs no
+  /// SIGTERM handler, so the agent ignored the stop entirely, `docker run` waited for a container
+  /// that was never going to stop, and this child's stderr pipe kept the environment's event loop
+  /// alive forever. `--init` on the container side fixes the ordinary case (see
+  /// infra/docker-agent/run-agent.sh); this is what makes the environment robust to an agent that
+  /// does not stop for any reason at all — which, in a competition where participants write the
+  /// agent, is a thing to be robust to rather than a thing to trust.
+  close(): void {
+    this.stopped = true;
+    this.child.kill();
+    // unref, not destroy: late stderr is still captured into the buffer that summary.json's
+    // stderrTail reads, it just stops being a reason for the environment to stay alive. The stream
+    // is a net.Socket at runtime; `Readable` is the declared type and has no unref.
+    (this.child.stderr as unknown as { unref?: () => void } | null)?.unref?.();
+    this.child.unref();
+    // Referenced, on purpose. An unref'd timer may never fire -- the coordinator can finish
+    // scoring and exit inside the grace window -- and an escalation that only sometimes happens is
+    // not an escalation. Two seconds of bounded wait at the very end of a run is not the failure
+    // this method exists to prevent; waiting forever was.
+    const escalation = setTimeout(() => {
+      if (this.alive) this.child.kill("SIGKILL");
+      escalation.unref();
+    }, CLOSE_GRACE_MS);
+  }
+
+  getStderr(): string {
+    return this.stderr;
+  }
+}

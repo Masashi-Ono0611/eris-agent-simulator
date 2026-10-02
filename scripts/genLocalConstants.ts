@@ -1,0 +1,736 @@
+/**
+ * Generate src/constants.local.ts from deployments.json (the bundled deployer/'s local-deploy output).
+ *
+ * Bridges the deterministic addresses from deploying all protocols to a local (non-fork) anvil into the
+ * poc constants. constants.ts overlays the generated LOCAL_DEPLOYMENT only when ERIS_LOCAL_DEPLOY=1
+ * (on a fork it uses the Arbitrum defaults).
+ *
+ * Usage:
+ *   DEPLOYMENTS_JSON=/path/to/deployments.json \
+ *     npm run gen:local-constants
+ *
+ * The default DEPLOYMENTS_JSON is this repo's bundled deployer/deployments/deployments.json.
+ *
+ * ADR 0013: if deployments.json has WBTC (tokens.WBTC + each venue's wbtcUsdc* / gmx WBTC market),
+ * generate TOKENS.WBTC and the WBTC leg of MARKET_LEGS. Otherwise WETH only (backward compatible).
+ */
+import { readFileSync, writeFileSync } from "node:fs";
+import { resolve, relative, dirname, isAbsolute } from "node:path";
+import { fileURLToPath } from "node:url";
+import { getAddress, type Address } from "viem";
+import { deploymentsFingerprint } from "../core/src/backtest/shared.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(__dirname, "..");
+
+// index 0 of anvil's public test mnemonic. Aave's ACL admin is the deployer, and this is the
+// deployer for as long as the chain runs on that mnemonic. A deploy under a secret MNEMONIC
+// (issue #74) moves it, which is why it is only the fallback: the deployer now writes the address
+// it actually used into deployments.json, and files written before it did are all default-mnemonic
+// ones by construction.
+const DEFAULT_MNEMONIC_DEPLOYER =
+  "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" as Address;
+
+type Deployments = {
+  chainId: number;
+  tokens: Record<string, string>;
+  // Written since issue #74; absent in deployments.json files generated before it.
+  accounts?: { deployer?: string; keeper?: string; trader?: string };
+  protocols: {
+    common?: { multicall3?: string };
+    uniswapV3?: Record<string, string>;
+    balancerV2?: Record<string, string>;
+    curve?: Record<string, string | number>;
+    gmxV2?: Record<string, unknown> & {
+      markets?: {
+        marketToken: string;
+        indexToken: string;
+        longToken: string;
+        shortToken: string;
+      }[];
+    };
+    aaveV3?: Record<string, unknown>;
+    lst?: Record<string, string | number>;
+    liquity?: Record<string, string | number>;
+  };
+};
+
+// Issue #38: the LST venue exists only locally (there is no Arbitrum contract to point at), and a
+// partial deploy may omit it, so every field is checked before a block is emitted.
+type LstInfo = {
+  vault: Address;
+  lstToken: Address;
+  asset: Address;
+  pool: Address;
+  poolLstIndex: number;
+  poolWethIndex: number;
+  simulatedSecondsPerBlock: number;
+  targetApyBps: number;
+  withdrawalDelayBlocks: number;
+  aaveAggregator?: Address;
+  aaveAToken?: Address;
+  aaveVariableDebtToken?: Address;
+};
+
+function readLst(
+  lst: Record<string, string | number> | undefined,
+): LstInfo | undefined {
+  if (!lst?.vault || !lst?.pool) return undefined;
+  return {
+    vault: getAddress(String(lst.vault)),
+    lstToken: getAddress(String(lst.lstToken ?? lst.vault)),
+    asset: getAddress(String(need(lst.asset, "lst.asset"))),
+    pool: getAddress(String(lst.pool)),
+    poolLstIndex: Number(need(lst.poolLstIndex, "lst.poolLstIndex")),
+    poolWethIndex: Number(need(lst.poolWethIndex, "lst.poolWethIndex")),
+    simulatedSecondsPerBlock: Number(lst.simulatedSecondsPerBlock ?? 0),
+    targetApyBps: Number(lst.targetApyBps ?? 0),
+    withdrawalDelayBlocks: Number(lst.withdrawalDelayBlocks ?? 0),
+    // Phase 3: only present when the deploy also had Aave to list it on.
+    ...(lst.aaveAToken
+      ? {
+          aaveAggregator: getAddress(String(lst.aaveAggregator)),
+          aaveAToken: getAddress(String(lst.aaveAToken)),
+          aaveVariableDebtToken: getAddress(String(lst.aaveVariableDebtToken)),
+        }
+      : {}),
+  };
+}
+
+// Issue #39: the Liquity venue. Local-only for the same reason as the LST vault, and a partial
+// deploy may omit it, so the whole block is emitted only when the core addresses are present.
+type LiquityInfo = {
+  troveManager: Address;
+  borrowerOperations: Address;
+  stabilityPool: Address;
+  sortedTroves: Address;
+  activePool: Address;
+  defaultPool: Address;
+  collSurplusPool: Address;
+  gasPool: Address;
+  hintHelpers: Address;
+  priceFeed: Address;
+  redemptionHelper?: Address;
+  eusd: Address;
+  lqtyToken: Address;
+  lqtyStaking: Address;
+  communityIssuance: Address;
+  eusdUsdcPool?: Address;
+  eusdIndex?: number;
+  usdcIndex?: number;
+  stable?: Address;
+};
+
+function readLiquity(
+  liquity: Record<string, string | number> | undefined,
+  usdc: Address,
+): LiquityInfo | undefined {
+  if (!liquity?.troveManager || !liquity?.eusd) return undefined;
+  const at = (key: string): Address =>
+    getAddress(String(need(liquity[key], `liquity.${key}`)));
+  return {
+    troveManager: at("troveManager"),
+    borrowerOperations: at("borrowerOperations"),
+    stabilityPool: at("stabilityPool"),
+    sortedTroves: at("sortedTroves"),
+    activePool: at("activePool"),
+    defaultPool: at("defaultPool"),
+    collSurplusPool: at("collSurplusPool"),
+    gasPool: at("gasPool"),
+    hintHelpers: at("hintHelpers"),
+    priceFeed: at("priceFeed"),
+    // Absent on a deployment that predates the helper; the adapter fails fast rather than building
+    // a redemption whose hints cannot survive the next oracle write.
+    ...(liquity.redemptionHelper
+      ? { redemptionHelper: getAddress(String(liquity.redemptionHelper)) }
+      : {}),
+    eusd: at("eusd"),
+    lqtyToken: at("lqtyToken"),
+    lqtyStaking: at("lqtyStaking"),
+    communityIssuance: at("communityIssuance"),
+    // The market is a separate concern: a Trove and the Stability Pool work without one, and a
+    // deploy with no curve factory legitimately has none.
+    ...(liquity.eusdUsdcPool
+      ? {
+          eusdUsdcPool: getAddress(String(liquity.eusdUsdcPool)),
+          eusdIndex: Number(need(liquity.eusdIndex, "liquity.eusdIndex")),
+          usdcIndex: Number(need(liquity.usdcIndex, "liquity.usdcIndex")),
+          stable: usdc,
+        }
+      : {}),
+  };
+}
+
+type GmxMarketList = NonNullable<
+  NonNullable<Deployments["protocols"]["gmxV2"]>["markets"]
+>;
+
+function loadDeployments(explicitPath?: string): {
+  path: string;
+  data: Deployments;
+} {
+  const path =
+    explicitPath ??
+    process.env.DEPLOYMENTS_JSON ??
+    resolve(ROOT, "deployer", "deployments", "deployments.json");
+  const data = JSON.parse(readFileSync(path, "utf8")) as Deployments;
+  return { path, data };
+}
+
+// How the input is named in the generated header.
+//
+// This file is committed, and the path it records is where *someone* happened to have the repo.
+// Absolute, it made the output machine-specific: the backtest CLI regenerates constants.local.ts
+// whenever its fingerprint does not match the state dump manifest (ADR 0016 §2), so the first
+// backtest on any new checkout rewrote this line and left the working tree dirty — a diff nobody
+// asked for, on a generated file, on every machine but one. Repo-relative, the same deployments
+// produce the same bytes everywhere.
+//
+// An input from outside the repo keeps its absolute path: it is genuinely somewhere else, and a
+// `../../..` chain would say less than the path does.
+function headerPath(path: string): string {
+  const rel = relative(ROOT, path);
+  return rel === "" || rel.startsWith("..") || isAbsolute(rel) ? path : rel;
+}
+
+function need<T>(v: T | undefined | null, what: string): T {
+  if (v === undefined || v === null)
+    throw new Error(`deployments.json is missing ${what}`);
+  return v;
+}
+
+function ca(v: string | undefined, what: string): Address {
+  return getAddress(need(v, what));
+}
+
+// ADR 0013: WBTC markets (built if deployments.json has WBTC; undefined otherwise).
+type WbtcInfo = {
+  token: Address;
+  uniPool?: Address;
+  balPool?: Address;
+  balPoolId?: string;
+  balTokens?: Address[];
+  curvePool?: Address;
+  curveBaseIndex?: number;
+  curveQuoteIndex?: number;
+  gmxMarket?: Address;
+};
+
+// Generate sdk/src/constants.local.ts from deployments.json (factored into a function so it can be
+// called both from the CLI itself and from the backtest tooling; ADR 0016). The returned fingerprint
+// uses the same computation as the state dump manifest's deploymentsFingerprint (core/src/backtest/shared.ts).
+export function generateLocalConstants(deploymentsPath?: string): {
+  target: string;
+  deploymentsPath: string;
+  fingerprint: string;
+} {
+  const { path, data } = loadDeployments(deploymentsPath);
+  const t = data.tokens;
+  const p = data.protocols;
+  const deployer = data.accounts?.deployer
+    ? getAddress(data.accounts.deployer)
+    : DEFAULT_MNEMONIC_DEPLOYER;
+
+  const weth = ca(t.WETH, "tokens.WETH");
+  const usdc = ca(t.USDC, "tokens.USDC");
+  const usdt = t.USDT ? getAddress(t.USDT) : usdc;
+
+  const uni = need(p.uniswapV3, "protocols.uniswapV3");
+  const bal = need(p.balancerV2, "protocols.balancerV2");
+  // gmx is optional (allows partial deploys like `deploy --only uniswap,balancer,curve,aave`).
+  // If not deployed, fill with the zero address (a run that enables the gmx venue naturally won't work).
+  const gmx = p.gmxV2 as
+    (Record<string, string> & { markets?: GmxMarketList }) | undefined;
+  const aave = need(p.aaveV3, "protocols.aaveV3") as Record<string, string>;
+  const multicall3 = ca(p.common?.multicall3, "protocols.common.multicall3");
+
+  // Balancer registers in ascending order. The deployer pool is [WETH, USDC] (80/20).
+  const balTokens = (
+    weth.toLowerCase() < usdc.toLowerCase() ? [weth, usdc] : [usdc, weth]
+  ) as Address[];
+
+  // GMX ETH/USD market = the one with indexToken==WETH (zero if gmx not deployed).
+  const ZERO = "0x0000000000000000000000000000000000000000" as Address;
+  const markets = gmx ? need(gmx.markets, "gmxV2.markets") : [];
+  const ethMarket = markets.find(
+    (m) => m.indexToken.toLowerCase() === weth.toLowerCase(),
+  );
+  const ethUsdMarket = gmx
+    ? ca(ethMarket?.marketToken, "gmxV2 ETH/USD market (indexToken==WETH)")
+    : ZERO;
+  const gmxAddr = (key: string): Address =>
+    gmx ? ca(gmx[key], `gmxV2.${key}`) : ZERO;
+
+  // Curve: the deployer stands up a twocrypto-ng WETH/USDC crypto pool (uint256 index).
+  // coin0=USDC(stable)=0, coin1=WETH=1. poc CURVE uses the WETH<->stable leg.
+  const curveP = p.curve as
+    | (Record<string, string | number> & {
+        wethUsdcCryptoPool?: string;
+        cryptoWethIndex?: number;
+        cryptoStableIndex?: number;
+        wbtcUsdcCryptoPool?: string;
+        cryptoWbtcIndex?: number;
+        cryptoWbtcStableIndex?: number;
+        usdcDaiPool?: string;
+        usdcDaiUsdcIndex?: number;
+        usdcDaiDaiIndex?: number;
+      })
+    | undefined;
+  const curve = {
+    pool: ca(curveP?.wethUsdcCryptoPool as string, "curve.wethUsdcCryptoPool"),
+    wethIndex: Number(need(curveP?.cryptoWethIndex, "curve.cryptoWethIndex")),
+    usdtIndex: Number(
+      need(curveP?.cryptoStableIndex, "curve.cryptoStableIndex"),
+    ),
+  };
+
+  // ---- ADR 0013: WBTC (if present, collect each venue's leg; otherwise WETH only) ----
+  const wbtc = t.WBTC ? getAddress(t.WBTC) : undefined;
+  let wbtcInfo: WbtcInfo | undefined;
+  if (wbtc) {
+    const wbtcMarket = markets.find(
+      (m) => m.indexToken.toLowerCase() === wbtc.toLowerCase(),
+    );
+    const balWbtcTokens = (
+      wbtc.toLowerCase() < usdc.toLowerCase() ? [wbtc, usdc] : [usdc, wbtc]
+    ) as Address[];
+    wbtcInfo = {
+      token: wbtc,
+      uniPool: uni.wbtcUsdcPool ? getAddress(uni.wbtcUsdcPool) : undefined,
+      balPool: bal.wbtcUsdcPool ? getAddress(bal.wbtcUsdcPool) : undefined,
+      balPoolId: bal.wbtcUsdcPoolId,
+      balTokens: balWbtcTokens,
+      curvePool: curveP?.wbtcUsdcCryptoPool
+        ? getAddress(curveP.wbtcUsdcCryptoPool)
+        : undefined,
+      curveBaseIndex:
+        curveP?.cryptoWbtcIndex !== undefined
+          ? Number(curveP.cryptoWbtcIndex)
+          : undefined,
+      curveQuoteIndex:
+        curveP?.cryptoWbtcStableIndex !== undefined
+          ? Number(curveP.cryptoWbtcStableIndex)
+          : undefined,
+      gmxMarket: wbtcMarket?.marketToken
+        ? getAddress(wbtcMarket.marketToken)
+        : undefined,
+    };
+  }
+
+  // ---- Issue #27 (c): DAI as the second market-priced stable. It needs both the token and the
+  // stableswap pool that quotes it; a deploy with either missing simply has no market-priced stable
+  // other than eUSD, and every registry stable stays the USDC-equivalent dollar.
+  const dai = t.DAI ? getAddress(t.DAI) : undefined;
+  const daiMarket =
+    dai &&
+    curveP?.usdcDaiPool &&
+    curveP.usdcDaiUsdcIndex !== undefined &&
+    curveP.usdcDaiDaiIndex !== undefined
+      ? {
+          token: dai,
+          pool: getAddress(curveP.usdcDaiPool),
+          stableIndex: Number(curveP.usdcDaiDaiIndex),
+          quoteIndex: Number(curveP.usdcDaiUsdcIndex),
+        }
+      : undefined;
+
+  const fingerprint = deploymentsFingerprint(data);
+  const out = render({
+    deploymentsPath: path,
+    fingerprint,
+    chainId: data.chainId,
+    weth,
+    usdc,
+    usdt,
+    daiMarket,
+    multicall3,
+    uni: {
+      pool: ca(uni.wethUsdcPool, "uniswapV3.wethUsdcPool"),
+      swapRouter: ca(uni.swapRouter, "uniswapV3.swapRouter"),
+      npm: ca(uni.positionManager, "uniswapV3.positionManager"),
+      quoterV2: ca(uni.quoterV2, "uniswapV3.quoterV2"),
+    },
+    bal: {
+      vault: ca(bal.vault, "balancerV2.vault"),
+      queries: ca(bal.queries, "balancerV2.queries"),
+      pool: ca(bal.wethUsdcPool, "balancerV2.wethUsdcPool"),
+      poolId: need(bal.wethUsdcPoolId, "balancerV2.wethUsdcPoolId"),
+      tokens: balTokens,
+    },
+    curve,
+    gmx: {
+      RoleStore: gmxAddr("RoleStore"),
+      DataStore: gmxAddr("DataStore"),
+      Oracle: gmxAddr("Oracle"),
+      EventEmitter: gmxAddr("EventEmitter"),
+      Router: gmxAddr("Router"),
+      ExchangeRouter: gmxAddr("ExchangeRouter"),
+      OrderHandler: gmxAddr("OrderHandler"),
+      OrderVault: gmxAddr("OrderVault"),
+      LiquidationHandler: gmxAddr("LiquidationHandler"),
+      Reader: gmxAddr("Reader"),
+      Config: gmxAddr("Config"),
+    },
+    ethUsdMarket,
+    aave: {
+      PoolAddressesProvider: ca(
+        aave.poolAddressesProvider,
+        "aaveV3.poolAddressesProvider",
+      ),
+      Pool: ca(aave.pool, "aaveV3.pool"),
+      AaveOracle: ca(aave.aaveOracle, "aaveV3.aaveOracle"),
+      AclAdmin: deployer,
+      AclManager: ca(aave.aclManager, "aaveV3.aclManager"),
+      PoolDataProvider: ca(aave.poolDataProvider, "aaveV3.poolDataProvider"),
+    },
+    wbtc: wbtcInfo,
+    lst: readLst(p.lst),
+    liquity: readLiquity(p.liquity, usdc),
+  });
+
+  const target = resolve(ROOT, "sdk", "src", "constants.local.ts");
+  writeFileSync(target, out);
+  console.log(`✓ generated: ${target}`);
+  console.log(`  input: ${path} (chainId=${data.chainId})`);
+  console.log(`  fingerprint: ${fingerprint}`);
+  console.log(`  WETH=${weth} USDC=${usdc} Multicall3=${multicall3}`);
+  if (wbtcInfo) {
+    console.log(
+      `  WBTC=${wbtcInfo.token} (uni=${wbtcInfo.uniPool ?? "-"} bal=${wbtcInfo.balPool ?? "-"} curve=${wbtcInfo.curvePool ?? "-"} gmx=${wbtcInfo.gmxMarket ?? "-"})`,
+    );
+  } else {
+    console.log(`  WBTC: none (WETH only. MARKET_LEGS is WETH-only)`);
+  }
+  const lstInfo = readLst(p.lst);
+  console.log(
+    lstInfo
+      ? `  LST=${lstInfo.vault} (pool=${lstInfo.pool} apy=${lstInfo.targetApyBps}bps clock=${lstInfo.simulatedSecondsPerBlock}s/block)`
+      : `  LST: none (the lst venue is unavailable in this deployment)`,
+  );
+  const liquityInfo = readLiquity(p.liquity, usdc);
+  console.log(
+    liquityInfo
+      ? `  LIQUITY=${liquityInfo.troveManager} (eUSD=${liquityInfo.eusd} market=${liquityInfo.eusdUsdcPool ?? "none"})`
+      : `  LIQUITY: none (the liquity venue is unavailable in this deployment)`,
+  );
+  console.log(`  local run: set ERIS_LOCAL_DEPLOY=1 to use`);
+  return { target, deploymentsPath: path, fingerprint };
+}
+
+function render(d: {
+  deploymentsPath: string;
+  fingerprint: string;
+  chainId: number;
+  weth: Address;
+  usdc: Address;
+  usdt: Address;
+  // Issue #27 (c): the second market-priced stable and the pool that quotes it, when the deploy
+  // produced both.
+  daiMarket?: {
+    token: Address;
+    pool: Address;
+    stableIndex: number;
+    quoteIndex: number;
+  };
+  multicall3: Address;
+  uni: { pool: Address; swapRouter: Address; npm: Address; quoterV2: Address };
+  bal: {
+    vault: Address;
+    queries: Address;
+    pool: Address;
+    poolId: string;
+    tokens: Address[];
+  };
+  curve: { pool: Address; wethIndex: number; usdtIndex: number };
+  gmx: Record<string, Address>;
+  ethUsdMarket: Address;
+  aave: Record<string, Address>;
+  wbtc?: WbtcInfo;
+  lst?: LstInfo;
+  liquity?: LiquityInfo;
+}): string {
+  const a = (x: string) => `"${x}" as Address`;
+  const w = d.wbtc;
+  const liq = d.liquity;
+  const liquityBlock = liq
+    ? `
+  // Issue #39: Liquity V1 as the CDP stablecoin venue (eUSD). priceFeed is the adapter Liquity holds
+  // forever, which each run repoints at its own PriceFeed -- not the run's feed itself.
+  LIQUITY: {
+    troveManager: ${a(liq.troveManager)},
+    borrowerOperations: ${a(liq.borrowerOperations)},
+    stabilityPool: ${a(liq.stabilityPool)},
+    sortedTroves: ${a(liq.sortedTroves)},
+    activePool: ${a(liq.activePool)},
+    defaultPool: ${a(liq.defaultPool)},
+    collSurplusPool: ${a(liq.collSurplusPool)},
+    gasPool: ${a(liq.gasPool)},
+    hintHelpers: ${a(liq.hintHelpers)},
+    priceFeed: ${a(liq.priceFeed)},${
+      liq.redemptionHelper
+        ? `
+    redemptionHelper: ${a(liq.redemptionHelper)},`
+        : ""
+    }
+    eusd: ${a(liq.eusd)},
+    lqtyToken: ${a(liq.lqtyToken)},
+    lqtyStaking: ${a(liq.lqtyStaking)},
+    communityIssuance: ${a(liq.communityIssuance)},${
+      liq.eusdUsdcPool
+        ? `
+    eusdUsdcPool: ${a(liq.eusdUsdcPool)},
+    eusdIndex: ${liq.eusdIndex},
+    usdcIndex: ${liq.usdcIndex},
+    stable: ${a(liq.stable!)},`
+        : ""
+    }
+  },`
+    : "";
+  const lstBlock = d.lst
+    ? `
+  // Issue #38: the LST venue (wstETH-style vault + LST/WETH stableswap-ng secondary market).
+  LST: {
+    vault: ${a(d.lst.vault)},
+    lstToken: ${a(d.lst.lstToken)},
+    asset: ${a(d.lst.asset)},
+    pool: ${a(d.lst.pool)},
+    poolLstIndex: ${d.lst.poolLstIndex},
+    poolWethIndex: ${d.lst.poolWethIndex},
+    simulatedSecondsPerBlock: ${d.lst.simulatedSecondsPerBlock},
+    targetApyBps: ${d.lst.targetApyBps},
+    withdrawalDelayBlocks: ${d.lst.withdrawalDelayBlocks},${
+      d.lst.aaveAToken
+        ? `
+    aaveAggregator: ${a(d.lst.aaveAggregator!)},
+    aaveAToken: ${a(d.lst.aaveAToken!)},
+    aaveVariableDebtToken: ${a(d.lst.aaveVariableDebtToken!)},`
+        : ""
+    }
+  },`
+    : "";
+
+  // ---- TOKENS' WBTC entry (if any) ----
+  const tokensWbtc = w
+    ? `\n    WBTC: { address: ${a(w.token)}, decimals: 8 },`
+    : "";
+
+  // ---- Issue #27 (c): DAI, and the pool the scorer prices it from ----
+  const dm = d.daiMarket;
+  const tokensDai = dm
+    ? `\n    DAI: { address: ${a(dm.token)}, decimals: 18 },`
+    : "";
+  const stableMarkets = dm
+    ? `
+  STABLE_MARKETS: {
+    DAI: { pool: ${a(dm.pool)}, stableIndex: ${dm.stableIndex}, quoteIndex: ${dm.quoteIndex} },
+  },`
+    : "";
+
+  // ---- MARKET_LEGS (WETH + WBTC leg. The WBTC leg is included only for venues whose addresses are all present) ----
+  const uniWbtc = w?.uniPool
+    ? `\n      WBTC: { pool: ${a(w.uniPool)}, fee: 3000, tickSpacing: 60 },`
+    : "";
+  const balWbtc =
+    w?.balPool && w?.balPoolId
+      ? `\n      WBTC: { poolId: "${w.balPoolId}" as \`0x\${string}\`, tokens: [${w.balTokens!.map(a).join(", ")}], stable: ${a(d.usdc)} },`
+      : "";
+  const curveWbtc =
+    w?.curvePool &&
+    w?.curveBaseIndex !== undefined &&
+    w?.curveQuoteIndex !== undefined
+      ? `\n      WBTC: { pool: ${a(w.curvePool)}, baseIndex: ${w.curveBaseIndex}, quoteIndex: ${w.curveQuoteIndex}, stable: ${a(d.usdc)} },`
+      : "";
+  const gmxWbtc = w?.gmxMarket
+    ? `\n      WBTC: { market: ${a(w.gmxMarket)} },`
+    : "";
+  const aaveWbtc = w ? `\n      WBTC: {},` : "";
+
+  const marketLegs = `
+  MARKET_LEGS: {
+    uniswap: {
+      WETH: { pool: ${a(d.uni.pool)}, fee: 3000, tickSpacing: 60 },${uniWbtc}
+    },
+    balancer: {
+      WETH: { poolId: "${d.bal.poolId}" as \`0x\${string}\`, tokens: [${d.bal.tokens.map(a).join(", ")}], stable: ${a(d.usdc)} },${balWbtc}
+    },
+    curve: {
+      WETH: { pool: ${a(d.curve.pool)}, baseIndex: ${d.curve.wethIndex}, quoteIndex: ${d.curve.usdtIndex}, stable: ${a(d.usdc)} },${curveWbtc}
+    },
+    gmx: {
+      WETH: { market: ${a(d.ethUsdMarket)} },${gmxWbtc}
+    },
+    aave: {
+      WETH: {},${aaveWbtc}
+    },
+  },`;
+
+  return `// AUTO-GENERATED by scripts/genLocalConstants.ts — do not edit by hand.
+// Input: ${headerPath(d.deploymentsPath)}
+// Deterministic addresses from deploying all protocols to a local (non-fork) anvil.
+// constants.ts overlays these only when ERIS_LOCAL_DEPLOY=1.
+import type { Address } from "viem";
+import type { MarketLegs } from "./types.js";
+
+// Canonical fingerprint of the source deployments.json (ADR 0016 §2). The backtest CLI
+// compares it against the state dump manifest and, on mismatch, regenerates from the manifest's bundled deployments.
+export const DEPLOYMENTS_FINGERPRINT = "${d.fingerprint}";
+
+export type LocalDeployment = {
+  CHAIN_ID: number;
+  TOKENS: {
+    WETH: { address: Address; decimals: number };
+    USDC: { address: Address; decimals: number };
+    WBTC?: { address: Address; decimals: number };
+    DAI?: { address: Address; decimals: number };
+  };
+  USDC_VARIANTS: { native: Address; bridged: Address; usdt: Address };
+  // Issue #27 (c): stables the deploy gave a market, so the scorer prices them from it instead of
+  // asserting $1. Keyed by registry symbol. eUSD is not here -- its market comes from LIQUITY.
+  STABLE_MARKETS?: Record<
+    string,
+    { pool: Address; stableIndex: number; quoteIndex: number }
+  >;
+  UNISWAP: {
+    poolWethUsdc500: Address;
+    swapRouter: Address;
+    nonfungiblePositionManager: Address;
+    quoterV2: Address;
+    fee: number;
+    tickSpacing: number;
+  };
+  MULTICALL3: Address;
+  BALANCER: {
+    vault: Address;
+    queries: Address;
+    pool: Address;
+    poolId: \`0x\${string}\`;
+    tokens: Address[];
+    usdcToken: Address;
+    seedWethWei: bigint;
+  };
+  CURVE: { pool: Address; wethIndex: number; usdtIndex: number; usdcToken: Address };
+  GMX: {
+    RoleStore: Address; DataStore: Address; Oracle: Address; EventEmitter: Address;
+    Router: Address; ExchangeRouter: Address; OrderHandler: Address; OrderVault: Address;
+    LiquidationHandler: Address; Reader: Address; Config: Address;
+  };
+  GMX_MARKETS: { ETH_USD: Address };
+  AAVE: {
+    PoolAddressesProvider: Address; Pool: Address; AaveOracle: Address;
+    AclAdmin: Address; AclManager: Address; PoolDataProvider: Address;
+  };
+  // ADR 0013: multi-asset market legs (WBTC etc.). Includes the WBTC leg if WBTC is in deployments.json.
+  MARKET_LEGS?: MarketLegs;
+  // Issue #38: present only when the deploy included the lst venue.
+  LST?: {
+    vault: Address;
+    lstToken: Address;
+    asset: Address;
+    pool: Address;
+    poolLstIndex: number;
+    poolWethIndex: number;
+    simulatedSecondsPerBlock: number;
+    targetApyBps: number;
+    withdrawalDelayBlocks: number;
+    aaveAggregator?: Address;
+    aaveAToken?: Address;
+    aaveVariableDebtToken?: Address;
+  };
+  // Issue #39: present only when the deploy included the liquity venue.
+  LIQUITY?: {
+    troveManager: Address;
+    borrowerOperations: Address;
+    stabilityPool: Address;
+    sortedTroves: Address;
+    activePool: Address;
+    defaultPool: Address;
+    collSurplusPool: Address;
+    gasPool: Address;
+    hintHelpers: Address;
+    priceFeed: Address;
+    redemptionHelper?: Address;
+    eusd: Address;
+    lqtyToken: Address;
+    lqtyStaking: Address;
+    communityIssuance: Address;
+    eusdUsdcPool?: Address;
+    eusdIndex?: number;
+    usdcIndex?: number;
+    stable?: Address;
+  };
+};
+
+export const LOCAL_DEPLOYMENT: LocalDeployment | null = {
+  CHAIN_ID: ${d.chainId},
+  TOKENS: {
+    WETH: { address: ${a(d.weth)}, decimals: 18 },
+    USDC: { address: ${a(d.usdc)}, decimals: 6 },${tokensWbtc}${tokensDai}
+  },${stableMarkets}
+  // Local uses a single USDC/USDT. native/bridged are the same USDC; usdt maps to USDT.
+  USDC_VARIANTS: {
+    native: ${a(d.usdc)},
+    bridged: ${a(d.usdc)},
+    usdt: ${a(d.usdt)},
+  },
+  UNISWAP: {
+    poolWethUsdc500: ${a(d.uni.pool)},
+    swapRouter: ${a(d.uni.swapRouter)},
+    nonfungiblePositionManager: ${a(d.uni.npm)},
+    quoterV2: ${a(d.uni.quoterV2)},
+    // The deployer's WETH/USDC pool is fee=3000 (0.3%) / tickSpacing=60.
+    fee: 3000,
+    tickSpacing: 60,
+  },
+  MULTICALL3: ${a(d.multicall3)},
+  BALANCER: {
+    vault: ${a(d.bal.vault)},
+    queries: ${a(d.bal.queries)},
+    pool: ${a(d.bal.pool)},
+    poolId: "${d.bal.poolId}" as \`0x\${string}\`,
+    // The deployer pool is 2 tokens [WETH, USDC] (80/20). There is no USDT leg.
+    tokens: [${d.bal.tokens.map((x) => a(x)).join(", ")}],
+    usdcToken: ${a(d.usdc)},
+    seedWethWei: 100_000_000_000_000_000_000n,
+  },
+  // Curve: twocrypto-ng's WETH/USDC crypto pool (uint256 index get_dy/exchange).
+  // coin0=USDC(stable)=${d.curve.usdtIndex}, coin1=WETH=${d.curve.wethIndex}. usdcToken is the pool's stable=USDC.
+  CURVE: {
+    pool: ${a(d.curve.pool)},
+    wethIndex: ${d.curve.wethIndex},
+    usdtIndex: ${d.curve.usdtIndex},
+    usdcToken: ${a(d.usdc)},
+  },
+  GMX: {
+    RoleStore: ${a(d.gmx.RoleStore)},
+    DataStore: ${a(d.gmx.DataStore)},
+    Oracle: ${a(d.gmx.Oracle)},
+    EventEmitter: ${a(d.gmx.EventEmitter)},
+    Router: ${a(d.gmx.Router)},
+    ExchangeRouter: ${a(d.gmx.ExchangeRouter)},
+    OrderHandler: ${a(d.gmx.OrderHandler)},
+    OrderVault: ${a(d.gmx.OrderVault)},
+    LiquidationHandler: ${a(d.gmx.LiquidationHandler)},
+    Reader: ${a(d.gmx.Reader)},
+    Config: ${a(d.gmx.Config)},
+  },
+  GMX_MARKETS: { ETH_USD: ${a(d.ethUsdMarket)} },
+  AAVE: {
+    PoolAddressesProvider: ${a(d.aave.PoolAddressesProvider)},
+    Pool: ${a(d.aave.Pool)},
+    AaveOracle: ${a(d.aave.AaveOracle)},
+    AclAdmin: ${a(d.aave.AclAdmin)},
+    AclManager: ${a(d.aave.AclManager)},
+    PoolDataProvider: ${a(d.aave.PoolDataProvider)},
+  },${lstBlock}${liquityBlock}${marketLegs}
+};
+`;
+}
+
+// Run generation only when executed directly (npm run gen:local-constants).
+// When imported from genStateDump etc., the caller invokes generateLocalConstants.
+if (
+  process.argv[1] &&
+  resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
+  generateLocalConstants();
+}

@@ -1,0 +1,173 @@
+# config/example.yaml
+#
+# Single source for user simulation settings. Copy to `config/local.yaml` to use:
+#   cp config/example.yaml config/local.yaml
+#   npm run sim:realtime                              # reads config/local.yaml by default
+#   npm run sim:realtime -- --config config/stress.yaml   # specify a different file
+#
+# Keys are nested (run / funding / limits / flow / stress + agents). Values can be typed (booleans,
+# numbers, arrays, objects). Unspecified keys use defaults. One-off overrides via CLI flags (--seed / --blocks / --protocols etc.).
+#
+# Do not put secrets here (this file may be committed). Put RPC URLs, private keys, and API keys in
+# `.env.local` (ARB_RPC_URL / *_PRIVATE_KEY / ANTHROPIC_API_KEY / OLLAMA_API_KEY).
+# The local Anvil dev keys are used by default even when unspecified.
+#
+# Local deploy by default (run.localDeploy: true), matching the README Quick Start and the official
+# backtest regimes: every venue is deployed onto a bare anvil by the bundled deployer/, so no fork
+# RPC is involved. Start it with `cd deployer && npm run deploy -- --keep-fresh`, then
+# `npm run gen:local-constants` to import the addresses. To run against an Arbitrum fork instead,
+# set localDeploy: false, drop `lst` from run.protocols (its vault has no Arbitrum counterpart) and
+# start `npm run anvil` in another terminal with ARB_RPC_URL set.
+#
+# The agents below are rule strategies (agent.ts) that trade every block. Three of them also ship an
+# prompt.md, so an LLM periodically rewrites the strategy while it runs (ADR 0018) -- the LLM is
+# never in the trade path. Prompt mode, where an LLM produced each action, was removed: it managed
+# one decision every 8-28 blocks and 1/64 the actions of the same strategy in rule mode.
+#
+# A self-improving agent needs an LLM backend. Pick one:
+#   - Ollama Cloud (default; model gpt-oss:120b): set OLLAMA_API_KEY in `.env.local`
+#   - local ollama (no key): ERIS_OLLAMA_BASE_URL=http://127.0.0.1:11434/api in `.env.local`
+#   - Claude Code / Codex subscription (no API key; spawns the logged-in CLI):
+#     ERIS_LLM_MODEL: "claude-cli:haiku" / "codex" in the agent's env
+# Without a backend the run still completes: revisions fail and are recorded, and the strategy keeps
+# trading unchanged. Set ERIS_AGENT_FROZEN=1 on an agent to skip the improvement loop entirely.
+# See docs/guide/llm-agents.md.
+
+run:
+  seed: 1
+  # The trading loop is rule-speed (one decision per block) regardless of the LLM, so the run length
+  # is not set by LLM latency any more. It does need to be long enough for at least one revision to
+  # land -- prompt.md declares reviseEveryBlocks: 60.
+  blocks: 100
+  seconds: 300
+  blockTimeSec: 2
+  # gmx is left out because it is the slow half of the deploy; add it once `deployer` has run with
+  # it. `aave` is in because the flash-arb agent below needs it: FlashArb borrows through
+  # `flashLoanSimple`, and the coordinator only deploys the contract when uniswap, balancer and aave
+  # are all enabled. `lst` (issue #38) and `liquity` (issue #39) are local-only and fail fast on a
+  # fork.
+  protocols: [uniswap, balancer, curve, aave, lst, liquity]
+  economicGas: false
+  # Deploy the FlashArb receiver (ADR 0015 §1's "a participant may bring their own contract"). It is
+  # a setup-phase deploy at a deterministic address, so it costs the block loop nothing and an agent
+  # that never calls it is unaffected. Without this the flash-arb agent's rawTx lands on an address
+  # with no code and reverts, which is a confusing way to learn the feature was off.
+  flashArb: true
+  localDeploy: true
+  # World reset unit (ADR 0020 §1). `continuous` = this run is one world from start to finish, which
+  # is all a single sim:realtime can be. The competition itself runs `scenario` (a fresh world per
+  # (regime, seed) — ADR 0020 §2), and only `npm run backtest -- --scenarios <path>` can declare it:
+  # written here it fails fast, because one world labelled as many is a stored run that lies.
+  resetUnit: continuous
+  reportDir: ./runs
+
+funding:
+  # WETH is handed out because the LST venue is WETH-denominated and cannot be traded without it.
+  # That reintroduces price drift (beta) into netPnlUsdc, which is fine for a template you run to
+  # see the thing work — read alphaUsdc for skill. The official regimes under config/regimes/ stay
+  # USDC-only (wethWei: "0") so evaluation runs keep their clean alpha; drop this to "0" too if you
+  # are measuring rather than exploring, and take `lst` out of run.protocols with it.
+  wethWei: "20000000000000000000" # 20 WETH
+  usdcUnits: "25000000000"
+  # base: { WBTC: "0" }   # initial inventory of additional bases (default 0)
+
+flow:
+  uninformedMaxWethWei: "1000000000000000000"
+  informedMaxWethWei: "2000000000000000000"
+  balancerMaxWethWei: "1000000000000000000"
+  curveMaxWethWei: "1000000000000000000"
+  # Realistic flow (from ADR 0015 Notes / amm-challenge). The following are defaults and take effect even if omitted.
+  #   informedArbFeeBps: makes informed flow fee-aware. Sizes against the excess past the fee band
+  #     (default 30bps), bounded by inventory and order caps. The realized residual also depends on
+  #     depth, noise flow and inclusion timing; it is not guaranteed to equal the fee. 0 is legacy.
+  #   uninformedArrivalRate: makes uninformed flow Poisson-arriving (lambda, default 0.45). 0 reverts to a fixed count.
+  #   uninformedSizeSigma: makes uninformed flow size lognormal (sigma, default 1.5. heavy tail = occasional large orders).
+  #   uninformedSizeClampMult: upper clamp on a lognormal size as a multiple of uninformedMax (default 3; the regimes set 10).
+  # Note: Poisson/lognormal increase variance, so read run comparisons as aggregates over multiple seeds. Disable with 0.
+  informedArbFeeBps: 30
+  uninformedArrivalRate: "0.45" # issue #79: Base measures 0.41-0.44 swaps per 2 s block on its two main WETH/USDC venues
+  uninformedSizeSigma: "1.5" # issue #79: mean-preserving; median 0.30 -> 0.16 WETH, mean / median 1.65 -> 3.1 (measured 3-11)
+  uninformedSizeClampMult: "10" # issue #79: was a constant 3. ~4 prints > 3 WETH per venue per epoch, ~1 > 10 WETH every two epochs
+  # Extend the same realistic flow to GMX / Aave (enabled by default. ADR 0015 Notes / amm-challenge).
+  #   gmxArrivalRate: makes GMX position count Poisson(lambda) and size lognormal (default 0.75). 0
+  #     reverts to the legacy Bernoulli(gmxActivityProb)+uniform burst+uniform size. gmxSizeSigma is the lognormal sigma (default 1.0).
+  #   aaveActorSizeSigma: makes each Aave actor's target collateral heterogeneous via lognormal (whale/minnow mix. default 1.0).
+  #     borrow tracks each one's 30% LTV of collateral, so HF safety is unchanged. 0 for uniform actors.
+  gmxArrivalRate: "0.75"
+  gmxSizeSigma: "1.0"
+  aaveActorSizeSigma: "1.0"
+  # Per-block probability of emitting gmx flow (used only in the legacy gmxArrivalRate=0 mode. 0..1, default 0.5).
+  # gmxActivityProb: "0.5"
+  # gmxMaxBurst: "2"        # cap on gmx count per firing block in legacy mode (1 = always single)
+  # aave borrower pool: aaveActorCount independent actors (distinct addresses, persistent positions). Each actor
+  # performs one borrow/repay/collateral/withdraw with probability aaveActivityProb every block, and borrowed debt persists to the next block.
+  # The number of simultaneous borrows in one block is at most aaveActorCount (arising naturally from separate actors).
+  # aaveActivityProb: "0.5"
+  # aaveActorCount: "4"
+  # To trade multi-asset (WBTC), enable WBTC flow (creates price divergence = arbitrage opportunities):
+  # baseMax: { WBTC: "50000000" }
+
+# stress (market stress events).
+#
+# The eUSD depeg is here rather than commented out because the CDP venue is otherwise correctly
+# inert: the deploy seeds the eUSD/USDC pool at par, and redemption costs a 50bps floor fee, so with
+# nothing pushing the peg the right move is to sit still and redemption-arb would do exactly that.
+# The event has the environment sell eUSD into its own market for the length of a window and buy it
+# back afterwards. See config/liquity.yaml for how the magnitude range was calibrated.
+#
+# Uncomment the crash below to add a price gap as well (ADR 0009); `victimCount` stages the Aave
+# positions a liquidator agent could take.
+stress:
+  events:
+    - {
+        type: eusdDepeg,
+        magnitudeRange: [0.4, 0.6],
+        windowFrac: [0.25, 0.6],
+        rampBlocks: 4,
+        holdBlocks: 10,
+        decayBlocks: 12,
+      }
+#     - { type: crash, magnitudeRange: [0.12, 0.16], windowFrac: [0.3, 0.7], rampBlocks: 3, holdBlocks: 6, decayBlocks: 8 }
+#   victimCount: 0
+
+# agents (roster. replaces the old agents.*.json. written inline)
+# Note: account0 overlaps with the deployer, so locally use AGENT1 onward. Each agent's env is a
+# strategy parameter passed to that agent's process (distinct from the sim settings).
+agents:
+  - id: noop
+    wallet: AGENT1_PRIVATE_KEY
+    baseline: true
+    description: does nothing (baseline; rule-based on purpose)
+  - id: venue-arb
+    wallet: AGENT2_PRIVATE_KEY
+    description: WETH-only cross-venue arbitrage, with an LLM revising it in-run (prompt.md)
+    env: { ERIS_IMPROVE_LOG_CALLS: "1" }
+    # Claude Code / Codex subscription instead of Ollama (no API key):
+    # env: { ERIS_IMPROVE_LOG_CALLS: "1", ERIS_LLM_MODEL: "claude-cli:haiku" }
+  - id: venue-arb-frozen
+    dir: venue-arb
+    wallet: AGENT3_PRIVATE_KEY
+    description: the same strategy with the improvement loop off — the control that says whether revising helped (ADR 0018 §5)
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: multi-arb
+    wallet: AGENT4_PRIVATE_KEY
+    description: base-agnostic cross-venue arbitrage (all active bases x all venues), revised in-run
+    env: { ERIS_IMPROVE_LOG_CALLS: "1" }
+  - id: lst-carry
+    wallet: AGENT5_PRIVATE_KEY
+    description: liquid staking — stake for yield, or trade the LST redemption/market gap, revised in-run
+    env: { ERIS_IMPROVE_LOG_CALLS: "1" }
+  - id: redemption-arb
+    wallet: AGENT6_PRIVATE_KEY
+    description: CDP stablecoin — buy eUSD below par and redeem it against the riskiest Trove, revised in-run
+    env: { ERIS_IMPROVE_LOG_CALLS: "1" }
+  - id: flash-arb
+    # AUTO, not a named wallet: AGENT1-6 are taken above and AGENT0 is the deployer account, which
+    # the environment trades as for the depeg event (the coordinator fails fast on that collision).
+    wallet: AUTO
+    description: >-
+      cross-venue arbitrage sized beyond its own capital by borrowing through an Aave flash loan.
+      The worked example for deploying your own contract (run.flashArb above); it cannot be an
+      LLM-revised strategy, because it acts through rawTx into a receiver contract
+  # config/lst.yaml is the same venue with a second competing participant and the calibration knobs
+  # spelled out, if you want to look at the LST market on its own.

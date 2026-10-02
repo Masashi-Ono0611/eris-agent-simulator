@@ -1,0 +1,1037 @@
+// Pure logic for orderflow generation.
+//
+// This used to be spread across each ProtocolAdapter.buildFlow, but to carve orderflow out into an
+// independent process (examples/flow/market-maker.ts) it was consolidated into pure functions that
+// never touch the RPC. The coordinator still owns flow wallets and tx submission; the bot only decides
+// "which orders to place".
+//
+// Determinism: the bot has its own Rng (flowRng(flowSeed)) and calls the functions here in the protocols order
+// the coordinator passes (= enabledAdapters order; the default is config.ALL_PROTOCOLS's
+// uniswap, balancer, curve, gmx, aave, with gmx before aave).
+// To keep the RNG consumption order identical to the original buildFlowIntents, the logic is ported
+// verbatim from the old adapters.
+import { fnv1a32, mix32, Rng } from "@eris/sdk/rng.js";
+import type { LeafAction, ProtocolId, TokenSymbol } from "@eris/sdk/types.js";
+import type { FlowKind, FlowOrder } from "@eris/sdk/protocols/types.js";
+import { tokenInfo } from "@eris/sdk/markets.js";
+
+// Decimals of the accounting quote (USDC-equivalent). Used for the digit gap in base->quote conversion.
+const QUOTE_DECIMALS = tokenInfo("USDC").decimals;
+
+// The flow bot's shared stream. Salted and hashed rather than `Rng(flowSeed)`: flow.seed defaults
+// to the run seed, and the price path was `Rng(seed)` too, so the bot drew the very numbers the
+// fair price walked on -- by round 16 it had drawn all 360 of the run's price shocks, in order. And an
+// unhashed LCG seed starts nearby seeds in the same place: the first draw (the first round's
+// uniswap arrival count) came out 0 on every seed from 1 to 200.
+export function flowRng(flowSeed: number): Rng {
+  return Rng.fromSeed(flowSeed, "flow");
+}
+
+const FLOW_SLIPPAGE_BPS = 100;
+
+// Flow-related caps passed by the coordinator as strings (form after bigint restoration).
+export type FlowLimits = {
+  uninformedFlowMaxWethWei: bigint;
+  // Number of uninformed flow orders per block per venue (default 1). >1 sends multiple independent
+  // random pushes to each venue, making cross-venue divergence "emerge naturally" (hybrid α).
+  uninformedFlowCountPerBlock: number;
+  // Persistence in blocks of the uninformed direction (default 1). >1 makes per-venue trends produce cross-venue divergence naturally.
+  uninformedFlowPersistBlocks: number;
+  // Probability [0,1] that a venue's persisted direction follows the market-wide one instead of its
+  // own (default 0 = independent per venue). Turns the trend from a cross-venue spread into
+  // one-sided pressure on the whole market (ADR 0017 regime 2).
+  uninformedFlowTrendCorrelation: number;
+  informedFlowMaxWethWei: bigint;
+  balancerFlowMaxWethWei: bigint;
+  curveFlowMaxWethWei: bigint;
+  // The uninformed leg's cap on the two venues that otherwise share one cap for both legs. A
+  // flowTrend window scales the uninformed size (issue #56), and until issue #112 that scaling only
+  // reached uniswap, whose uninformed leg reads `uninformedFlowMaxWethWei`: balancer and curve read
+  // their shared cap, which the coordinator sent unscaled, so two of the three venues sat at x1.0
+  // through every window (measured: uniswap x2.98, balancer x1.05, curve x1.00). Defaults to the
+  // venue cap when the wire omits it.
+  balancerUninformedFlowMaxWethWei: bigint;
+  curveUninformedFlowMaxWethWei: bigint;
+  gmxFlowMaxSizeUsd: bigint;
+  // Per-block probability of emitting gmx flow (0..1, default 0.5). Decided by rng each block and sent sporadically.
+  gmxFlowActivityProb: number;
+  // Max number of gmx orders emitted in a firing block (>=1, default 1). >1 bursts 1..N randomly.
+  gmxFlowMaxBurst: number;
+  aaveFlowMaxWethWei: bigint;
+  // Target debt the borrower pool sizes itself against (USDC units). Environment calibration; it
+  // was `limits.aaveBorrowUsdcUnits` while that doubled as the agent cap.
+  aaveFlowBorrowUsdcUnits: bigint;
+  // Per-block probability of emitting aave flow (0..1, default 0.5). In the actor pool, each actor's per-block action probability.
+  aaveFlowActivityProb: number;
+  // ADR 0015 Notes / amm-challenge: informed flow's fee boundary (bps). 0=off (linear gap).
+  informedArbFeeBps: number;
+  // ADR 0015 Notes / amm-challenge retail: uninformed arrivals Poisson(λ) / size lognormal σ.
+  // λ=0=off (fixed count + uniform).
+  uninformedArrivalRate: number;
+  uninformedSizeSigma: number;
+  // Issue #79: the upper clamp on a lognormal uninformed size, as a multiple of uninformedMax.
+  // 3 is the constant the clamp used to be (byte-compatible); the official regimes set 10 so
+  // the tail prints that replace the halved arrival count as the source of dislocations exist.
+  uninformedSizeClampMult: number;
+  // ADR 0015 Notes: extend the above to GMX/Aave. gmxArrivalRate=0 / aaveActorSizeSigma=0 is the legacy behavior.
+  gmxArrivalRate: number;
+  gmxSizeSigma: number;
+  aaveActorSizeSigma: number;
+  defaultPriorityFeeWei: bigint;
+};
+
+// Wire form of FlowContext (JSON. bigints are strings).
+export type FlowContextWire = {
+  round: number;
+  fairPriceUsdcPerWeth: number;
+  // Seeds the persisted uninformed trend's direction (see trendBit). Without it the direction is a
+  // function of the block window alone, i.e. identical across every seed and memorizable.
+  flowSeed?: number;
+  protocols: ProtocolId[];
+  poolPrices: Partial<Record<"uniswap" | "balancer" | "curve", number>>;
+  aaveReserves?: { wethSupplied: string; usdcBorrowed: string };
+  // Multi-actor aave borrower pool (the realtime main path). The coordinator reads each actor wallet's
+  // reserve and balance and passes them in. When set, use buildAaveActorsFlow; when unset, fall back to the single buildAaveFlow.
+  aaveActors?: Array<{
+    key: string;
+    wethSupplied: string;
+    usdcBorrowed: string;
+    wethWei: string;
+    usdcUnits: string;
+  }>;
+  // Per flow wallet: what it can sell. `bases` is the wallet's balance of every base symbol (WETH
+  // included); `wethWei` is kept for the wire's older readers. A base absent from `bases` reads as
+  // unheld, so its sell side flips to a buy rather than being submitted against nothing.
+  flowBalances?: Record<
+    string,
+    { wethWei: string; usdcUnits: string; bases?: Record<string, string> }
+  >;
+  usdcOnlyFlow?: boolean;
+  // ADR 0013 Phase 8: AMM flow per non-WETH base. Unset in a WETH-only run (off by default), in which
+  // case buildFlowOrders doesn't enter the extra-base loop and consumes no RNG at all (byte-compatible).
+  // Filled only when the coordinator enables WBTC, etc. If a base's max is "0", early-continue.
+  extraBases?: Array<{
+    base: TokenSymbol;
+    // protocol -> that venue's base/USD pool price for the base. Venues that aren't available are omitted.
+    poolPrices: Partial<Record<"uniswap" | "balancer" | "curve", number>>;
+    fairPriceUsd: number;
+    // AMM flow cap in base 1e(decimals) units. "0"/unset turns off flow for that base (no RNG consumed).
+    uninformedFlowMaxBaseWei?: string;
+    informedFlowMaxBaseWei?: string;
+    balancerFlowMaxBaseWei?: string;
+    curveFlowMaxBaseWei?: string;
+  }>;
+  limits: {
+    uninformedFlowMaxWethWei: string;
+    uninformedFlowCountPerBlock?: string;
+    uninformedFlowPersistBlocks?: string;
+    uninformedFlowTrendCorrelation?: string;
+    informedFlowMaxWethWei: string;
+    balancerFlowMaxWethWei: string;
+    curveFlowMaxWethWei: string;
+    // Issue #112: the uninformed leg's cap on balancer/curve, scaled by the flowTrend window like
+    // uninformedFlowMaxWethWei. Absent = the venue cap (the pre-#112 wire).
+    balancerUninformedFlowMaxWethWei?: string;
+    curveUninformedFlowMaxWethWei?: string;
+    gmxFlowMaxSizeUsd: string;
+    gmxFlowActivityProb?: string;
+    gmxFlowMaxBurst?: string;
+    aaveFlowMaxWethWei: string;
+    aaveFlowBorrowUsdcUnits: string;
+    aaveFlowActivityProb?: string;
+    // ADR 0015 Notes / amm-challenge: informed flow's fee boundary (bps). unset/"0"=off (byte-compatible).
+    informedArbFeeBps?: string;
+    // ADR 0015 Notes / amm-challenge retail: uninformed arrivals Poisson(λ) / lognormal σ. unset/"0"=off.
+    uninformedArrivalRate?: string;
+    uninformedSizeSigma?: string;
+    // Issue #79: size clamp multiple. unset = 3 (the old constant).
+    uninformedSizeClampMult?: string;
+    // ADR 0015 Notes: GMX/Aave extension. unset/"0"=off (legacy behavior).
+    gmxArrivalRate?: string;
+    gmxSizeSigma?: string;
+    aaveActorSizeSigma?: string;
+    defaultPriorityFeeWei: string;
+  };
+};
+
+// A single order the bot returns (protocol-tagged. Used by the coordinator to pick a flow wallet).
+export type FlowOrderOut = {
+  protocol: ProtocolId;
+  walletProtocol?: ProtocolId;
+  // Explicit flow wallet key (e.g. "aave:actor0"). When set, pick the wallet by this key rather than
+  // protocol/kind (for the multi-actor aave borrower pool. Resolved by flowOrdersToIntents).
+  walletKey?: string;
+  kind: FlowKind;
+  action: LeafAction;
+  priorityFeeWei: bigint;
+};
+
+// A balance guard changing what the flow would otherwise have sent (issue #130). The guards are
+// right -- a sell is not submitted against nothing -- but from outside, a wallet that can only buy is
+// indistinguishable from a market that happens to be trending, which is exactly what agents trade
+// against. The bot reports each one so the coordinator can put it in the run record. Collecting
+// these consumes no RNG: the orders are byte-identical with or without a collector.
+export type FlowGuardNote = {
+  protocol: "uniswap" | "balancer" | "curve";
+  kind: FlowKind;
+  base: TokenSymbol;
+  guard:
+    | "sell_flipped_to_buy" // the wallet lacked the base, so the sell became a buy
+    | "sell_capped" // sold only what the wallet held
+    | "sell_suppressed" // held none, so no sell went out
+    | "buy_capped" // spent only the USDC the wallet held
+    | "buy_suppressed"; // held no USDC, so no buy went out
+};
+
+function minBI(a: bigint, b: bigint): bigint {
+  return a < b ? a : b;
+}
+
+type FlowBalance = {
+  wethWei: bigint;
+  usdcUnits: bigint;
+  bases?: Record<string, bigint>;
+};
+
+// The wallet's balance of the base a sell would spend. Every guard below used to compare
+// `wethWei` whatever the base was, so with base = WBTC a wallet holding WETH and no WBTC passed
+// the check and the WBTC sell went out against a zero balance: ~90 % of the WBTC informed rows
+// reverted in every official epoch, and the WBTC pools sat 110 bps above fair because the flow
+// could only buy (issue #99, #92 F-B). WETH keeps reading `wethWei`, so the WETH path is unchanged.
+function baseHeld(balance: FlowBalance, base: TokenSymbol): bigint {
+  if (base === "WETH") return balance.wethWei;
+  return balance.bases?.[base] ?? 0n;
+}
+
+// Clamp a probability string to [0,1] (unset/non-numeric fall back). Used for the activity gate.
+function clampProb(value: string | undefined, fallback: number): number {
+  if (value === undefined || value.trim() === "") return fallback;
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(1, Math.max(0, n));
+}
+
+function randomBigInt(
+  rng: Rng,
+  minInclusive: bigint,
+  maxInclusive: bigint,
+): bigint {
+  const span = maxInclusive - minInclusive + 1n;
+  return (
+    minInclusive +
+    (BigInt(Math.floor(rng.next() * 1_000_000)) * span) / 1_000_000n
+  );
+}
+
+// Scale a bigint cap by a float fraction (ppm precision). Used to reduce a lognormal size to wei
+// (since uninformedMax can exceed the Number safe integer, float×bigint is computed via a fraction).
+function scaleFraction(cap: bigint, fraction: number): bigint {
+  const ppm = BigInt(Math.max(0, Math.round(fraction * 1_000_000)));
+  return (cap * ppm) / 1_000_000n;
+}
+
+// Build a stable Rng from an actor key (same key -> same random sequence. Used for per-actor size
+// draws that are invariant across blocks. It doesn't consume the shared flow rng, so it doesn't affect
+// other flows' deterministic sequences).
+function actorRng(key: string): Rng {
+  let h = 2166136261;
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return new Rng(h >>> 0);
+}
+
+// Convert a base amount (base decimals) into quote units (USDC decimals) at price (USDC/base).
+// This applies flow's base cap to the quote-side order size too, controlling both sides with the same
+// intensity knob. The WETH path is (wethWei * round(price*100)) / (100 * 10^(18-6)), byte-identical to the old formula.
+function baseToQuoteUnits(
+  baseAmount: bigint,
+  base: TokenSymbol,
+  price: number,
+): bigint {
+  const scale = 10n ** BigInt(tokenInfo(base).decimals - QUOTE_DECIMALS);
+  return (baseAmount * BigInt(Math.round(price * 100))) / (100n * scale);
+}
+
+// Backward-compatible wrapper (WETH base only). Doesn't change the values at existing call sites.
+function wethToUsdcUnits(wethWei: bigint, fairPrice: number): bigint {
+  return baseToQuoteUnits(wethWei, "WETH", fairPrice);
+}
+
+function flowBalance(
+  ctx: FlowContextWire,
+  protocol: ProtocolId,
+  kind: FlowKind,
+): FlowBalance | null {
+  const raw = ctx.flowBalances?.[`${protocol}:${kind}`];
+  if (!raw) return null;
+  return {
+    wethWei: BigInt(raw.wethWei),
+    usdcUnits: BigInt(raw.usdcUnits),
+    ...(raw.bases
+      ? {
+          bases: Object.fromEntries(
+            Object.entries(raw.bases).map(([sym, v]) => [sym, BigInt(v)]),
+          ),
+        }
+      : {}),
+  };
+}
+
+function capUsdc(amount: bigint, balance: FlowBalance | null): bigint {
+  if (!balance) return amount;
+  return amount > balance.usdcUnits ? balance.usdcUnits : amount;
+}
+
+// Direction bit for the persisted uninformed trend, from (flowSeed, window, tag).
+//
+// Deterministic and off the shared RNG stream on purpose: the trend must not consume draws, or
+// enabling it would shift every downstream order. But it must still depend on the seed, or the
+// direction is a pure function of the block window -- the same on every published seed and on every
+// unpublished one, which makes the whole regime memorizable.
+//
+// Bugs this has had, all measured:
+//   - The mixing step used float `*`, and (2^32 * 2^24) exceeds 2^53, so the product's low bits were
+//     rounded away and `% 2` was pinned. "uniswap" and "balancer" returned an even hash in *every*
+//     window, i.e. a permanent one-way bias rather than a trend. Math.imul keeps 32-bit arithmetic
+//     exact.
+//   - Reading the parity of an FNV accumulator is not enough even when the arithmetic is exact: the
+//     low bit stays tied to the window's parity, so every tag alternated on a perfect 1-block clock.
+//   - The key was `imul(flowSeed ^ (window + 1), prime) ^ tag`, which merges the seed and the window
+//     before hashing: 100 ^ (w + 1) = 101 ^ ((w + 1) ^ 1), so seeds 100 and 101 drew the same
+//     directions with each pair of windows swapped, and any two seeds whose XOR is below the run's
+//     window count shared directions outright. Seeds 1 apart agreed on 56.8% of their bits, not 50%.
+//
+// Now the seed is hashed into a key per tag first and the window is mixed in after, so a window
+// never stands in for a seed, and two windows of one key never alias (w ^ key differs). Measured
+// over 200 seeds x 50 windows x 4 tags: p(1) = 0.501, flip rate 0.500 (0.5 = no autocorrelation).
+// trendRng is also the follow draw's stream, under its own tag.
+export function trendRng(flowSeed: number, window: number, tag: string): Rng {
+  const key = mix32((flowSeed ^ 0x54_52_4e_44) >>> 0) ^ fnv1a32(tag); // "TRND"
+  return Rng.fromSeed(window, key);
+}
+
+export function trendBit(flowSeed: number, window: number, tag: string): boolean {
+  return trendRng(flowSeed, window, tag).bool();
+}
+
+// AMM (uniswap/balancer/curve) flow. uninformed noise + informed (pull price toward fair).
+// base defaults to WETH. When base!=="WETH", use that base symbol for tokenIn and attach action.base
+// so the adapter can resolve the WBTC/USDC market. The WETH path is byte-identical to before (no base
+// attached, tokenIn="WETH", same wethToUsdcUnits value, unchanged RNG consumption sequence).
+export function buildAmmFlow(
+  rng: Rng,
+  protocol: "uniswap" | "balancer" | "curve",
+  poolPrice: number,
+  fairPrice: number,
+  uninformedMaxWethWei: bigint,
+  informedMaxWethWei: bigint,
+  defaultPriorityFeeWei: bigint,
+  balances?: {
+    uninformed?: FlowBalance | null;
+    informed?: FlowBalance | null;
+  },
+  usdcOnlyFlow = false,
+  base: TokenSymbol = "WETH",
+  uninformedCount = 1,
+  round = 0,
+  persistBlocks = 1,
+  // ADR 0015 Notes / amm-challenge: have informed (arbitrage) flow fill "only the gap beyond the fee band".
+  // 0 (default) = the old linear gap (disabled. byte-compatible). >0 is fee-aware:
+  //   - |gap| <= feeBps is a no-arb band and is skipped (arb isn't profitable, so don't over-tighten the market)
+  //   - beyond that, size against the excess past the fee band; inventory and depth still bound the response
+  // Our venues are Uniswap v3 / weighted / crypto, not pure CPMM, so we port only the "fee-boundary
+  // economics" rather than closed-form coefficients (depth uses the existing informedMax as a proxy).
+  informedArbFeeBps = 0,
+  // ADR 0015 Notes / amm-challenge retail: make uninformed arrivals Poisson(λ) and sizes lognormal.
+  // arrivalRate=0 (default) = the old fixed count (uninformedCount) + uniform size (byte-compatible).
+  // >0 makes the per-block count Poisson(λ) and each size lognormal (mean = uninformedMax×0.5, σ=sizeSigma).
+  uninformedArrivalRate = 0,
+  uninformedSizeSigma = 1,
+  // ADR 0017 regime 2 (informed-flow): probability in [0,1] that a venue's persisted direction follows
+  // the market-wide direction instead of its own. 0 (default) = the old per-venue independent trend
+  // (byte-compatible). Only meaningful with persistBlocks > 1, which is what creates a direction at all.
+  trendCorrelation = 0,
+  // Seed the persisted trend so its direction is not a pure function of the block window (see
+  // trendBit). Comes from FlowContextWire.flowSeed; 0 is only reached by a direct unit-test call.
+  trendSeed = 0,
+  // Issue #79: the lognormal size clamp as a multiple of uninformedMax. 3 = the constant this
+  // used to be. Only the upper clamp is a knob; the 2% floor stays (it keeps a size from rounding
+  // to nothing, not the pool from breaking).
+  uninformedSizeClampMult = 3,
+  // Issue #130: where the balance guards below changed an order, noted for the run record.
+  guards?: FlowGuardNote[],
+): FlowOrder[] {
+  const orders: FlowOrder[] = [];
+  const note = (kind: FlowKind, guard: FlowGuardNote["guard"]): void => {
+    guards?.push({ protocol, kind, base, guard });
+  };
+  const swapType =
+    protocol === "uniswap"
+      ? "swap"
+      : protocol === "balancer"
+        ? "balancerSwap"
+        : "curveSwap";
+  // The WETH path doesn't attach action.base (same shape as the old output). Only WBTC, etc. attach base.
+  const baseField = base === "WETH" ? {} : { base };
+
+  // uninformed: push the pool away from fair to create a gap (bait for arbitrage). Use a random amount
+  // equivalent to the same base for both base/USDC, so uninformedMaxWethWei controls both sides uniformly.
+  // When uninformedCount>1, send multiple independent pushes (differing direction/size), so how hard each
+  // venue is pushed varies -> cross-venue divergence "emerges naturally" (hybrid α).
+  // At count=1, RNG consumption and output are byte-identical to before (backward-compatible).
+  // persistBlocks>1: persist each venue's uninformed direction for persistBlocks blocks
+  // (a deterministic trend windowed by round/persistBlocks). This mimics a run of same-direction bias =
+  // order-flow imbalance, and with a different trend per venue divergence "emerges naturally" (realistic α
+  // without artificial spread injection).
+  // persistBlocks<=1 is the old behavior that consumes rng.bool() = byte-compatible.
+  let trendTokenIn: TokenSymbol | null = null;
+  if (persistBlocks > 1) {
+    const window = Math.floor(round / persistBlocks);
+    // USDC in = buy (price up) / base in = sell (price down).
+    const venueUp = trendBit(trendSeed, window, protocol);
+    if (trendCorrelation > 0) {
+      // Correlated directional flow (ADR 0017 regime 2). The per-venue bit splits the venues up/down
+      // to manufacture a cross-venue spread; that is the wrong shape for "the whole market is being
+      // pushed one way". Drawing from a venue-independent bit makes every venue lean together, so
+      // the gap that opens is against fair rather than against each other -- and an agent has to
+      // take a side instead of arbitraging the middle.
+      //
+      // The correlation is a probability rather than a switch so the regime can sit anywhere between
+      // the two: at 0.7 most venues follow the market and the stragglers still leave relative value.
+      // The follow draw is its own stream, so it neither consumes the shared rng nor correlates with
+      // the direction it is choosing between.
+      const follow =
+        trendRng(trendSeed, window, `${protocol}|corr`).next() <
+        trendCorrelation;
+      const up = follow ? trendBit(trendSeed, window, "market") : venueUp;
+      trendTokenIn = up ? "USDC" : base;
+    } else {
+      trendTokenIn = venueUp ? "USDC" : base;
+    }
+  }
+  // Poisson mode (arrivalRate>0): draw the per-block arrival count as Poisson(λ) (0-count blocks arise naturally).
+  // Legacy mode (arrivalRate=0): fixed count max(1, uninformedCount). RNG consumption is as before (byte-compatible).
+  const arrivals =
+    uninformedArrivalRate > 0
+      ? rng.poisson(uninformedArrivalRate)
+      : Math.max(1, uninformedCount);
+  for (let u = 0; u < arrivals; u++) {
+    let uninformedTokenIn: TokenSymbol =
+      trendTokenIn ?? (rng.bool() ? base : "USDC");
+    // Poisson mode makes size lognormal (heavy-tailed = occasionally large). Mean = uninformedMax×0.5,
+    // about the same level as the old uniform (mean ~52.5%). Outliers are clamped to
+    // [2%, uninformedSizeClampMult × 100%]. The clamp used to be a constant 3; with the calibrated
+    // σ = 1.5 and 0.45 arrivals/block (issue #79) a 10× clamp lets ~4 prints per venue per epoch
+    // exceed 3 WETH (~60 bps of impact each on a 1,000 WETH full-range side) and about one every two
+    // epochs exceed 10 WETH -- the tail that stands in for the halved count.
+    const uninformedWethEquiv =
+      uninformedArrivalRate > 0
+        ? scaleFraction(
+            uninformedMaxWethWei,
+            Math.min(
+              uninformedSizeClampMult,
+              Math.max(0.02, rng.lognormal(0.5, uninformedSizeSigma)),
+            ),
+          )
+        : randomBigInt(rng, uninformedMaxWethWei / 20n, uninformedMaxWethWei);
+    if (
+      uninformedTokenIn === base &&
+      (usdcOnlyFlow ||
+        (balances?.uninformed &&
+          baseHeld(balances.uninformed, base) < uninformedWethEquiv))
+    ) {
+      // usdcOnlyFlow is the configuration, not a shortage; only the balance case is a guard.
+      if (!usdcOnlyFlow) note("uninformed", "sell_flipped_to_buy");
+      uninformedTokenIn = "USDC";
+    }
+    const uninformedWanted =
+      uninformedTokenIn === base
+        ? uninformedWethEquiv
+        : baseToQuoteUnits(uninformedWethEquiv, base, fairPrice);
+    const uninformedAmount =
+      uninformedTokenIn === base
+        ? uninformedWethEquiv
+        : capUsdc(uninformedWanted, balances?.uninformed ?? null);
+    if (uninformedTokenIn !== base && uninformedAmount < uninformedWanted)
+      note("uninformed", uninformedAmount > 0n ? "buy_capped" : "buy_suppressed");
+    const uninformedFee =
+      defaultPriorityFeeWei + BigInt(rng.int(1, 50)) * 1_000_000n;
+    if (uninformedAmount > 0n) {
+      orders.push({
+        kind: "uninformed",
+        action: {
+          type: swapType,
+          tokenIn: uninformedTokenIn,
+          amountIn: uninformedAmount.toString(),
+          slippageBps: FLOW_SLIPPAGE_BPS,
+          ...baseField,
+        } as LeafAction,
+        priorityFeeWei: uninformedFee,
+      });
+    }
+  }
+
+  // informed: pull the pool price toward fairPrice (the gap-closing side = competes with arb agents).
+  // Align both sides at informedMaxWethWei × gap, and control the USDC side by the base cap too.
+  // Lowering informedMaxWethWei makes the flow bot close the gap less, increasing the arb's take.
+  // fee-aware (informedArbFeeBps>0): if |gap| is within the fee band, arbitrage is unprofitable so don't
+  // emit informed; beyond it, size against the excess past the fee band. This is a bounded response,
+  // not a guarantee that the next pool mid will finish at the fee boundary.
+  const rawDeviation = Math.abs(fairPrice / poolPrice - 1);
+  if (informedArbFeeBps > 0 && rawDeviation * 10_000 <= informedArbFeeBps) {
+    return orders; // no-arb band: don't over-tighten the market (leave the arb agent's take)
+  }
+  const effectiveDeviation =
+    informedArbFeeBps > 0
+      ? Math.max(0, rawDeviation - informedArbFeeBps / 10_000)
+      : rawDeviation;
+  const informedTokenIn: TokenSymbol = poolPrice < fairPrice ? "USDC" : base;
+  const gap = Math.min(1, effectiveDeviation * 20);
+  let informedWethEquiv =
+    (informedMaxWethWei * BigInt(Math.max(1, Math.floor(gap * 100)))) / 100n;
+  if (informedTokenIn === base) {
+    // A depleted arbitrage wallet must not buy an already overpriced pool to restock (#124).
+    // Sell only what is held; when empty, wait until buying is itself toward fair. Keep the
+    // priority-fee RNG draw below even for a zero-size order so later flow draws do not shift.
+    if (balances?.informed) {
+      const held = baseHeld(balances.informed, base);
+      if (held < informedWethEquiv) {
+        note("informed", held > 0n ? "sell_capped" : "sell_suppressed");
+        informedWethEquiv = held;
+      }
+    } else if (usdcOnlyFlow) informedWethEquiv = 0n;
+  }
+  const informedWanted =
+    informedTokenIn === base
+      ? informedWethEquiv
+      : baseToQuoteUnits(informedWethEquiv, base, fairPrice);
+  const informedAmount =
+    informedTokenIn === base
+      ? informedWethEquiv
+      : capUsdc(informedWanted, balances?.informed ?? null);
+  if (informedTokenIn !== base && informedAmount < informedWanted)
+    note("informed", informedAmount > 0n ? "buy_capped" : "buy_suppressed");
+  const informedFee =
+    defaultPriorityFeeWei + BigInt(rng.int(50, 100)) * 1_000_000n;
+  if (informedAmount > 0n) {
+    orders.push({
+      kind: "informed",
+      action: {
+        type: swapType,
+        tokenIn: informedTokenIn,
+        amountIn: informedAmount.toString(),
+        slippageBps: FLOW_SLIPPAGE_BPS,
+        ...baseField,
+      } as LeafAction,
+      priorityFeeWei: informedFee,
+    });
+  }
+
+  return orders;
+}
+
+// GMX perp orderflow: open small longs/shorts to create fill volume (executed by the keeper).
+// ADR 0015 Notes / amm-challenge retail: with arrivalRate>0, make the per-block count Poisson(λ) and
+// size lognormal (heavy-tailed = occasionally large positions) (realistic perp flow).
+// arrivalRate=0 is the old Bernoulli(activityProb) + uniform burst + uniform size (byte-compatible).
+export function buildGmxFlow(
+  rng: Rng,
+  gmxFlowMaxSizeUsd: bigint,
+  defaultPriorityFeeWei: bigint,
+  fairPrice: number,
+  balance?: FlowBalance | null,
+  canPrepareWeth = false,
+  activityProb = 0.5,
+  maxBurst = 1,
+  arrivalRate = 0,
+  sizeSigma = 1,
+): FlowOrderOut[] {
+  // Count: Poisson mode (arrivalRate>0) uses poisson(λ) (0-count blocks arise naturally).
+  // Legacy mode is a Bernoulli(activityProb) gate -> a uniform burst of 1..maxBurst (byte-compatible).
+  let burst: number;
+  if (arrivalRate > 0) {
+    burst = rng.poisson(arrivalRate);
+    if (burst <= 0) return [];
+  } else {
+    if (rng.next() >= activityProb) return [];
+    burst = maxBurst <= 1 ? 1 : rng.int(1, maxBurst + 1);
+  }
+  const orders: FlowOrderOut[] = [];
+  for (let i = 0; i < burst; i++) {
+    const isLong = rng.bool();
+    // size: Poisson mode is lognormal (mean = gmxMax×0.025 = the median of the old uniform. clamped to [0.5%, 10%]).
+    // Legacy mode is uniform over gmxMax's 1/100..1/25 (baseline 1/50. about 2x leverage, so collateral = size/2x).
+    const sizeUsd =
+      arrivalRate > 0
+        ? scaleFraction(
+            gmxFlowMaxSizeUsd,
+            Math.min(0.1, Math.max(0.005, rng.lognormal(0.025, sizeSigma))),
+          )
+        : randomBigInt(rng, gmxFlowMaxSizeUsd / 100n, gmxFlowMaxSizeUsd / 25n);
+    // collateral (WETH wei) ≈ (sizeUsd/2) converted USD->WETH. oraclePrices aren't available, so divide by an approximate fairPrice-equivalent
+    const sizeUsdNum = Number(sizeUsd) / 1e30;
+    const collateralWei = BigInt(
+      Math.max(1, Math.floor(((sizeUsdNum / 2) * 1e18) / 2100)),
+    );
+    const fee = defaultPriorityFeeWei + BigInt(rng.int(1, 60)) * 1_000_000n;
+    if (
+      balance &&
+      balance.wethWei < collateralWei * (canPrepareWeth ? 2n : 1n)
+    ) {
+      if (!canPrepareWeth) break;
+      const usdcIn = capUsdc(
+        wethToUsdcUnits(collateralWei, fairPrice),
+        balance,
+      );
+      if (usdcIn <= 0n) break;
+      // On a block with no WETH inventory, prepare just one USDC->WETH for collateral and stop (open next block).
+      orders.push({
+        protocol: "uniswap",
+        walletProtocol: "gmx",
+        kind: "uninformed",
+        action: {
+          type: "swap",
+          tokenIn: "USDC",
+          amountIn: usdcIn.toString(),
+          slippageBps: FLOW_SLIPPAGE_BPS,
+        } as LeafAction,
+        priorityFeeWei: fee,
+      });
+      break;
+    }
+    const action = {
+      type: "gmxIncrease",
+      isLong,
+      collateral: "WETH",
+      collateralAmount: collateralWei.toString(),
+      sizeDeltaUsd: sizeUsd.toString(),
+    } as unknown as LeafAction;
+    orders.push({
+      protocol: "gmx",
+      kind: "uninformed",
+      action,
+      priorityFeeWei: fee,
+    });
+  }
+  return orders;
+}
+
+// Aave (single-wallet simple churn. Backward-compatible / fallback when aaveActors is unset).
+// Advance the state machine one step: supply -> (repeat borrow <-> repay) -> when debt is 0, withdraw with some probability.
+// The realtime main path uses buildAaveActorsFlow (multi-actor persistent positions).
+export function buildAaveFlow(
+  rng: Rng,
+  aaveFlowMaxWethWei: bigint,
+  aaveFlowBorrowUsdcUnits: bigint,
+  defaultPriorityFeeWei: bigint,
+  reserves: { wethSupplied: bigint; usdcBorrowed: bigint },
+  fairPrice: number,
+  balance?: FlowBalance | null,
+  canPrepareWeth = false,
+  activityProb = 0.5,
+): FlowOrderOut[] {
+  // Send in this block only with probability activityProb (default 0.5. 1 = churn every block, <1 = intermittent).
+  if (rng.next() >= activityProb) return [];
+  const fee = defaultPriorityFeeWei + BigInt(rng.int(1, 40)) * 1_000_000n;
+  let action: LeafAction;
+  if (reserves.wethSupplied === 0n) {
+    // supply amount is random over max's 1/4..3/4 (baseline 1/2).
+    const amount = randomBigInt(
+      rng,
+      aaveFlowMaxWethWei / 4n,
+      (aaveFlowMaxWethWei * 3n) / 4n,
+    );
+    if (balance && balance.wethWei < amount * (canPrepareWeth ? 2n : 1n)) {
+      if (!canPrepareWeth) return [];
+      const usdcIn = capUsdc(wethToUsdcUnits(amount, fairPrice), balance);
+      if (usdcIn <= 0n) return [];
+      return [
+        {
+          protocol: "uniswap",
+          walletProtocol: "aave",
+          kind: "informed",
+          action: {
+            type: "swap",
+            tokenIn: "USDC",
+            amountIn: usdcIn.toString(),
+            slippageBps: FLOW_SLIPPAGE_BPS,
+          } as LeafAction,
+          priorityFeeWei: fee,
+        },
+      ];
+    }
+    action = {
+      type: "aaveSupply",
+      asset: "WETH",
+      amount: amount.toString(),
+    } as unknown as LeafAction;
+  } else if (reserves.usdcBorrowed > 0n) {
+    action = {
+      type: "aaveRepay",
+      asset: "USDC",
+      amount: "max",
+    } as unknown as LeafAction;
+  } else if (rng.bool()) {
+    const amount = randomBigInt(
+      rng,
+      aaveFlowBorrowUsdcUnits / 10n,
+      (aaveFlowBorrowUsdcUnits * 3n) / 10n,
+    );
+    action = {
+      type: "aaveBorrow",
+      asset: "USDC",
+      amount: (amount > 0n ? amount : 100_000_000n).toString(),
+    } as unknown as LeafAction;
+  } else {
+    action = {
+      type: "aaveWithdraw",
+      asset: "WETH",
+      amount: "max",
+    } as unknown as LeafAction;
+  }
+  return [{ protocol: "aave", kind: "informed", action, priorityFeeWei: fee }];
+}
+
+// One actor's persistent position state (the coordinator reads it from each actor wallet and passes it in).
+export type AaveActorState = {
+  key: string; // flow wallet key (e.g. "aave:actor0")
+  wethSupplied: bigint; // WETH this actor has supplied to Aave
+  usdcBorrowed: bigint; // this actor's USDC debt (persistent. remains into the next block)
+  wethWei: bigint; // the wallet's WETH balance (source for topping up collateral)
+  usdcUnits: bigint; // the wallet's USDC balance (grows via borrow, source for repay)
+};
+
+// Aave borrower pool (closer to a real market). N independent actors each keep their own persistent
+// position and, each block, independently decide by probability to execute exactly one of
+// borrow/repay/supply/withdraw. There's no forced repay after a borrow, so debt persists into later
+// blocks. Multiple borrows in one block arise naturally from different actors (max = actor count).
+// Each borrow stays within HF headroom (collateral × LTV × safety factor) to avoid revert.
+export function buildAaveActorsFlow(
+  rng: Rng,
+  actors: AaveActorState[],
+  aaveFlowMaxWethWei: bigint,
+  aaveFlowBorrowUsdcUnits: bigint,
+  defaultPriorityFeeWei: bigint,
+  fairPrice: number,
+  activityProb: number,
+  // ADR 0015 Notes / amm-challenge retail: >0 makes each actor's target collateral heterogeneous via
+  // lognormal (a mix of whales/minnows). 0 makes all actors uniform = aaveFlowMaxWethWei (legacy).
+  // Borrows track 30% LTV of each actor's collateral, so HF safety is unchanged (only size gets heavy-tailed).
+  actorSizeSigma = 0,
+): FlowOrderOut[] {
+  // Target-leverage approach (suppresses staleness-driven reverts). The flow bot decides on actor state
+  // 1-2 blocks stale (async pipeline), so give large HF/balance headroom to stay "safe even on slightly old state":
+  //   - Build collateral up to target only once, then don't supply again (avoids thrashing the supply cap).
+  //   - Target debt at 30% of collateral value (large headroom to LT 0.84), and borrow small amounts only
+  //     while leaving room for 2 steps (a stale double-borrow won't breach HF). Once reached, repay part.
+  const TARGET_LTV_NUM = 30n;
+  const TARGET_LTV_DEN = 100n;
+  const minStep = aaveFlowBorrowUsdcUnits / 25n; // don't move a difference below this (avoids fractional loops)
+  const orders: FlowOrderOut[] = [];
+  for (const actor of actors) {
+    // Each actor independently decides "act this block?" (intermittent).
+    if (rng.next() >= activityProb) continue;
+    // Target collateral: if actorSizeSigma>0, make it heterogeneous per actor via a key-derived lognormal (whale/minnow).
+    // Seeded by key, so stable across blocks (doesn't thrash supply). If 0, uniform = aaveFlowMaxWethWei.
+    const targetCollateralWei =
+      actorSizeSigma > 0
+        ? scaleFraction(
+            aaveFlowMaxWethWei,
+            Math.min(
+              3,
+              Math.max(0.1, actorRng(actor.key).lognormal(1, actorSizeSigma)),
+            ),
+          )
+        : aaveFlowMaxWethWei;
+    const fee = defaultPriorityFeeWei + BigInt(rng.int(1, 40)) * 1_000_000n;
+    const pushAave = (action: LeafAction): void => {
+      orders.push({
+        protocol: "aave",
+        walletKey: actor.key,
+        kind: "informed",
+        action,
+        priorityFeeWei: fee,
+      });
+    };
+
+    // 1) Build collateral up to target only once (treat reaching 80% as established and stop supplying).
+    if (actor.wethSupplied < (targetCollateralWei * 8n) / 10n) {
+      const want = targetCollateralWei - actor.wethSupplied;
+      // Guard against stale balances by capping at 70% of wallet WETH.
+      const amount = minBI(want, (actor.wethWei * 7n) / 10n);
+      if (amount > 0n)
+        pushAave({
+          type: "aaveSupply",
+          asset: "WETH",
+          amount: amount.toString(),
+        } as unknown as LeafAction);
+      continue;
+    }
+
+    // 2) After collateral is established, only borrow/repay (persistent debt. no more supply).
+    const collateralValueUsdc = wethToUsdcUnits(actor.wethSupplied, fairPrice);
+    const targetDebt = (collateralValueUsdc * TARGET_LTV_NUM) / TARGET_LTV_DEN;
+    const r = rng.next();
+
+    if (actor.usdcBorrowed + 2n * minStep < targetDebt && r < 0.55) {
+      // Borrow a bit more toward the target debt (leave room for 2 steps = HF-safe even on a stale double-borrow).
+      const room = targetDebt - actor.usdcBorrowed;
+      const want = randomBigInt(
+        rng,
+        aaveFlowBorrowUsdcUnits / 20n,
+        aaveFlowBorrowUsdcUnits / 10n,
+      );
+      const amount = minBI(want, room);
+      if (amount > 0n)
+        pushAave({
+          type: "aaveBorrow",
+          asset: "USDC",
+          amount: amount.toString(),
+        } as unknown as LeafAction);
+    } else if (actor.usdcBorrowed > minStep && r < 0.9) {
+      // Partial repay (a partial amount, not max -> debt remains). Repay up to the smaller of wallet USDC balance and debt.
+      const want = randomBigInt(
+        rng,
+        actor.usdcBorrowed / 4n,
+        actor.usdcBorrowed / 2n,
+      );
+      const amount = minBI(want, actor.usdcUnits);
+      if (amount > 0n)
+        pushAave({
+          type: "aaveRepay",
+          asset: "USDC",
+          amount: amount.toString(),
+        } as unknown as LeafAction);
+    }
+    // Otherwise no-op (with collateral established and debt near target, some blocks do nothing = natural).
+  }
+  return orders;
+}
+
+// Restore the wire's string limits into bigint.
+export function decodeFlowLimits(wire: FlowContextWire["limits"]): FlowLimits {
+  return {
+    uninformedFlowMaxWethWei: BigInt(wire.uninformedFlowMaxWethWei),
+    uninformedFlowCountPerBlock: Math.max(
+      1,
+      Number(wire.uninformedFlowCountPerBlock ?? "1"),
+    ),
+    uninformedFlowPersistBlocks: Math.max(
+      1,
+      Number(wire.uninformedFlowPersistBlocks ?? "1"),
+    ),
+    uninformedFlowTrendCorrelation: clampProb(
+      wire.uninformedFlowTrendCorrelation,
+      0,
+    ),
+    informedFlowMaxWethWei: BigInt(wire.informedFlowMaxWethWei),
+    balancerFlowMaxWethWei: BigInt(wire.balancerFlowMaxWethWei),
+    curveFlowMaxWethWei: BigInt(wire.curveFlowMaxWethWei),
+    balancerUninformedFlowMaxWethWei: BigInt(
+      wire.balancerUninformedFlowMaxWethWei ?? wire.balancerFlowMaxWethWei,
+    ),
+    curveUninformedFlowMaxWethWei: BigInt(
+      wire.curveUninformedFlowMaxWethWei ?? wire.curveFlowMaxWethWei,
+    ),
+    gmxFlowMaxSizeUsd: BigInt(wire.gmxFlowMaxSizeUsd),
+    gmxFlowActivityProb: clampProb(wire.gmxFlowActivityProb, 0.5),
+    gmxFlowMaxBurst: Math.max(1, Number(wire.gmxFlowMaxBurst ?? "1")),
+    aaveFlowMaxWethWei: BigInt(wire.aaveFlowMaxWethWei),
+    aaveFlowBorrowUsdcUnits: BigInt(wire.aaveFlowBorrowUsdcUnits),
+    aaveFlowActivityProb: clampProb(wire.aaveFlowActivityProb, 0.5),
+    informedArbFeeBps: Math.max(0, Number(wire.informedArbFeeBps ?? "0")),
+    uninformedArrivalRate: Math.max(
+      0,
+      Number(wire.uninformedArrivalRate ?? "0"),
+    ),
+    uninformedSizeSigma: Math.max(0, Number(wire.uninformedSizeSigma ?? "1")),
+    uninformedSizeClampMult: Math.max(
+      0.02,
+      Number(wire.uninformedSizeClampMult ?? "3"),
+    ),
+    gmxArrivalRate: Math.max(0, Number(wire.gmxArrivalRate ?? "0")),
+    gmxSizeSigma: Math.max(0, Number(wire.gmxSizeSigma ?? "1")),
+    aaveActorSizeSigma: Math.max(0, Number(wire.aaveActorSizeSigma ?? "0")),
+    defaultPriorityFeeWei: BigInt(wire.defaultPriorityFeeWei),
+  };
+}
+
+// Generate all orders for one round from the FlowContext.
+// Iterate protocols in the order the coordinator passes (default uniswap, balancer, curve, gmx, aave), consuming RNG in that order.
+export function buildFlowOrders(
+  rng: Rng,
+  ctx: FlowContextWire,
+  // Issue #130: filled with every AMM order a balance guard changed. Optional and RNG-free.
+  guards?: FlowGuardNote[],
+): FlowOrderOut[] {
+  const limits = decodeFlowLimits(ctx.limits);
+  const out: FlowOrderOut[] = [];
+  const tag = (protocol: ProtocolId, orders: FlowOrder[]): void => {
+    for (const o of orders) out.push({ protocol, ...o });
+  };
+
+  // [uninformedMax, informedMax] per AMM (uniswap/balancer/curve).
+  // balancer/curve configure a single cap for both legs; the uninformed leg reads its own copy so
+  // a flowTrend window can scale it without scaling the informed leg (issue #112).
+  const ammMax: Record<"uniswap" | "balancer" | "curve", [bigint, bigint]> = {
+    uniswap: [limits.uninformedFlowMaxWethWei, limits.informedFlowMaxWethWei],
+    balancer: [
+      limits.balancerUninformedFlowMaxWethWei,
+      limits.balancerFlowMaxWethWei,
+    ],
+    curve: [limits.curveUninformedFlowMaxWethWei, limits.curveFlowMaxWethWei],
+  };
+
+  for (const protocol of ctx.protocols) {
+    if (
+      protocol === "uniswap" ||
+      protocol === "balancer" ||
+      protocol === "curve"
+    ) {
+      const [uninformedMax, informedMax] = ammMax[protocol];
+      tag(
+        protocol,
+        buildAmmFlow(
+          rng,
+          protocol,
+          ctx.poolPrices[protocol] ?? ctx.fairPriceUsdcPerWeth,
+          ctx.fairPriceUsdcPerWeth,
+          uninformedMax,
+          informedMax,
+          limits.defaultPriorityFeeWei,
+          {
+            uninformed: flowBalance(ctx, protocol, "uninformed"),
+            informed: flowBalance(ctx, protocol, "informed"),
+          },
+          ctx.usdcOnlyFlow === true,
+          "WETH",
+          limits.uninformedFlowCountPerBlock,
+          ctx.round,
+          limits.uninformedFlowPersistBlocks,
+          limits.informedArbFeeBps,
+          limits.uninformedArrivalRate,
+          limits.uninformedSizeSigma,
+          limits.uninformedFlowTrendCorrelation,
+          ctx.flowSeed ?? 0,
+          limits.uninformedSizeClampMult,
+          guards,
+        ),
+      );
+    } else if (protocol === "aave") {
+      if (ctx.aaveActors && ctx.aaveActors.length > 0) {
+        // Realtime main path: multi-actor persistent-position borrower pool.
+        out.push(
+          ...buildAaveActorsFlow(
+            rng,
+            ctx.aaveActors.map((a) => ({
+              key: a.key,
+              wethSupplied: BigInt(a.wethSupplied),
+              usdcBorrowed: BigInt(a.usdcBorrowed),
+              wethWei: BigInt(a.wethWei),
+              usdcUnits: BigInt(a.usdcUnits),
+            })),
+            limits.aaveFlowMaxWethWei,
+            limits.aaveFlowBorrowUsdcUnits,
+            limits.defaultPriorityFeeWei,
+            ctx.fairPriceUsdcPerWeth,
+            limits.aaveFlowActivityProb,
+            limits.aaveActorSizeSigma,
+          ),
+        );
+      } else {
+        // Backward-compatible: single-wallet simple churn.
+        out.push(
+          ...buildAaveFlow(
+            rng,
+            limits.aaveFlowMaxWethWei,
+            limits.aaveFlowBorrowUsdcUnits,
+            limits.defaultPriorityFeeWei,
+            {
+              wethSupplied: BigInt(ctx.aaveReserves?.wethSupplied ?? "0"),
+              usdcBorrowed: BigInt(ctx.aaveReserves?.usdcBorrowed ?? "0"),
+            },
+            ctx.fairPriceUsdcPerWeth,
+            flowBalance(ctx, "aave", "informed"),
+            ctx.protocols.includes("uniswap"),
+            limits.aaveFlowActivityProb,
+          ),
+        );
+      }
+    } else if (protocol === "gmx") {
+      out.push(
+        ...buildGmxFlow(
+          rng,
+          limits.gmxFlowMaxSizeUsd,
+          limits.defaultPriorityFeeWei,
+          ctx.fairPriceUsdcPerWeth,
+          flowBalance(ctx, "gmx", "uninformed"),
+          ctx.protocols.includes("uniswap"),
+          limits.gmxFlowActivityProb,
+          limits.gmxFlowMaxBurst,
+          limits.gmxArrivalRate,
+          limits.gmxSizeSigma,
+        ),
+      );
+    }
+  }
+
+  // ADR 0013 Phase 8: AMM flow for non-WETH bases (WBTC, etc.). Placed after WETH is fully processed
+  // above. If ctx.extraBases is unset (WETH-only run), zero iterations = no RNG consumed = byte-compatible.
+  // For each base × venue, early-continue if max=0/unset and consume no RNG for that base/venue
+  // (with WBTC off by default, the WETH-only RNG consumption sequence and output are unchanged).
+  for (const extra of ctx.extraBases ?? []) {
+    const extraMax: Record<"uniswap" | "balancer" | "curve", bigint> = {
+      uniswap: BigInt(extra.uninformedFlowMaxBaseWei ?? "0"),
+      balancer: BigInt(extra.balancerFlowMaxBaseWei ?? "0"),
+      curve: BigInt(extra.curveFlowMaxBaseWei ?? "0"),
+    };
+    const informedMax = BigInt(extra.informedFlowMaxBaseWei ?? "0");
+    for (const protocol of ctx.protocols) {
+      if (
+        protocol !== "uniswap" &&
+        protocol !== "balancer" &&
+        protocol !== "curve"
+      )
+        continue;
+      const uninformedMax = extraMax[protocol];
+      // If off (both uninformed and informed caps are 0), skip without consuming any RNG.
+      const venueInformedMax =
+        protocol === "uniswap" ? informedMax : extraMax[protocol];
+      if (uninformedMax <= 0n && venueInformedMax <= 0n) continue;
+      const poolPrice = extra.poolPrices[protocol];
+      if (poolPrice === undefined || poolPrice <= 0) continue;
+      tag(
+        protocol,
+        buildAmmFlow(
+          rng,
+          protocol,
+          poolPrice,
+          extra.fairPriceUsd,
+          uninformedMax,
+          venueInformedMax,
+          limits.defaultPriorityFeeWei,
+          {
+            uninformed: flowBalance(ctx, protocol, "uninformed"),
+            informed: flowBalance(ctx, protocol, "informed"),
+          },
+          ctx.usdcOnlyFlow === true,
+          extra.base,
+          limits.uninformedFlowCountPerBlock,
+          ctx.round,
+          limits.uninformedFlowPersistBlocks,
+          limits.informedArbFeeBps,
+          limits.uninformedArrivalRate,
+          limits.uninformedSizeSigma,
+          limits.uninformedFlowTrendCorrelation,
+          ctx.flowSeed ?? 0,
+          limits.uninformedSizeClampMult,
+          guards,
+        ),
+      );
+    }
+  }
+
+  return out;
+}

@@ -1,0 +1,106 @@
+[← Index](README.md) | [← 11 Invariants](11-invariants.md)
+
+# 12. Known limits and open questions
+
+The chapter that exists so nothing undecided gets written as decided ([README](README.md), rule 2).
+
+## 12.1 Open questions in scoring
+
+### The scoring rule (decided → ADR 0023)
+
+| | |
+|---|---|
+| Status | **Decided** (2026-09-06, rules §4.4) |
+| What | The deviation score. Per epoch (= one run) P = V_K − V_0, standardised over the whole field as T = 50 + 10 (P − μ) / σ, weighted-averaged with w_s linear from 1 to 1.5. No λ, no aggregator |
+| Questions that went away | λ for `scenario` mode, M4 vs M9, the cross-scenario aggregator (zscore / borda / mean and the #55 exposure). The code and `npm run metrics` were deleted |
+| Still open | The value of k (Appendix A; 40 recommended), the actual hidden set and lottery seed with their commitments, a load test of 500 agents on one chain (measured so far: 100 agents at a 4 s block) |
+
+### ~~What an LST is scored at (par or realizable)~~ — settled
+
+| | |
+|---|---|
+| State | **Settled (2026-09-05)** |
+| What | **Settled 2026-09-05 (issue #40 / ADR 0022 Amendment 1): realizable.** Scoring sums `liquidatableValueUsdc` for every venue; the face mark is reported as `markedValueUsdc` where it differs |
+| Why it took this long | It was not undecided because nobody knew which was right — there was no occasion to decide it. Issue #40 axiom 3 is that occasion: marking at par records an attack as fabricated value, and the argument carries to the LST queue unchanged |
+| Side effect | The reporting direction reverses: the face mark is what gets reported, as `markedValueUsdc` |
+
+### ETH-denominated scoring
+
+Under USDC denomination, an LST-holding strategy is structurally penalised by β (measured: noop 0 > lst-carry −203 > lst-carry-wide −233, while venue-arb, which holds no WETH, was +115). α removes β only from free inventory, and LST positions are live-marked. **ETH-denominated scoring is the follow-on issue #38 was motivated by.**
+
+## 12.2 Open questions and structural limits in the environment
+
+### The scenario count S
+
+The value that sets epochs per scenario in `scenario` mode — **undecided, including whether scenarios run serially or in parallel** (issue #36). λ's calibration is waiting on it.
+
+### Recovery Mode is unreachable at the current calibration
+
+| | |
+|---|---|
+| Measured | A minimum TCR of 2.244 against a CCR of 1.5 (seed 501) |
+| Cause | The genesis Trove (250 ETH / 250k eUSD, 300%) dominates the TCR |
+| What reaching it would break | System debt has to roughly triple, which **necessarily** thins both the redemption fee curve (inversely proportional to supply: +100bps per 5k redeemed at 250k becomes +36bps at 700k) and the Stability Pool's relative depth (a Recovery Mode liquidation only proceeds when the SP can absorb the whole debt) |
+| State | **Split out as issue #59** |
+
+### Venues that cannot run on a fork
+
+`lst` and `liquity` have no Arbitrum counterpart (the vault is ours, and Liquity is deployed by us), so enabling them on a fork **fails fast at startup**. There is no longer a reason to use fork mode — local deploy is faster and more stable — and it is the default.
+
+### Cross-asset correlation is zero
+
+Per-base Rngs are fully independent (`sdk/src/rng.ts`, `priceRngForAsset`). Adding correlation means consolidating onto a shared Rng, which would move WETH's consumption sequence every time a base is added, so **it is not done by default**.
+
+### `economicGas` cannot run on an external chain
+
+It finalizes prices with a storage write (which is what removes the front-run target), and that is impossible on a real chain. **Waiting on the redesign in issue #33 (2)**; until then, use the transaction-based profile (ADR 0021, Negative).
+
+### Aave propagation for market-priced stables is currently a no-op
+
+`stableAaveAggregators` is implemented, but **no market-priced stable is an Aave reserve today** (`aaveReserveSymbols()` is the bases plus USDC plus the LST). It activates the day one is listed; today it costs one pool read.
+
+### `run.readRpcUrl` is only plumbed
+
+The path for splitting reads to a replica exists, but **whether to actually split is waiting on issue #36**.
+
+## 12.3 Operational limits
+
+| Limit | Contents |
+|---|---|
+| **anvil's history retention** | About 1,050 blocks. The post-run sweep caps at 1,000 and **skips explicitly** beyond it (losing the equity curve, α and `market.json`) |
+| **Run non-determinism** | The same seed still gives different transaction timing and ordering. Single-run comparisons are meaningless; comparison needs samples |
+| **The spot AMI needs a rebake** | ADR 0015's workspace split changed what `npm install` targets and the paths it assumes, so the next spot use needs `/spot-bake` |
+| **One address overlay at a time** | Moving deployments means regenerating with `gen:local-constants` |
+| **A crashed run's `blocks.csv`** | An ordinary run writes it at the end, so a crash leaves it empty |
+| **`--only` partial redeploys** | Shared tokens are recreated, leaving venues on inconsistent addresses. Redeploy every venue together |
+
+## 12.4 Things deliberately not done
+
+These are not open questions. They are decisions.
+
+| Item | Reason |
+|---|---|
+| **Automatic rollback of a revision** | No threshold is defensible. The previous implementation fired zero times in 18 runs, and the obvious opposite ("any loss at all") reverts every revision in a regime where everyone is losing. Reverting is the model's call ([05 §5.7](05-agent-contract.md)) |
+| **Per-decision LLM calls (prompt mode)** | Measured at 8–28 blocks per decision and 1/64 the actions of the rule form. It could not compete (ADR 0018) |
+| **Enforcing G2 on-chain** | The bankruptcy freeze is a scoring rule, not a chain rule: on a live chain a participant reaches the sequencer directly (ADR 0019 §5) |
+| **Preventing self-stranding** | Liquity collateral is native ETH, the same balance that pays for gas. Sinking all of it and losing the ability to send is **a legitimate loss**. `suggestedGasReserveWei` is surfaced, not enforced |
+| **Tracking submitted-but-not-included for external agents** | Unverifiable in principle when the operator runs no process |
+| **Resets on the practice devnet** | On a practice ground that is the design (ADR 0021 §1) |
+| **A `liquidityPull` magnitude of 1.0** | With no depth every swap reverts, which is an outage rather than a thin book |
+
+## 12.5 Removed and not coming back
+
+| Item | State |
+|---|---|
+| The old LLM self-improvement machinery (`src/llm`) and unreferenced strategies in `_archive/` | Deleted (recoverable with `git checkout 4a65a8f -- _archive`) |
+| The 19 old-format `prompt.md` files (per-decision prompts) | Deleted in `f42fd2a`. **They survive in git history and in older bundles**, which is why the `kind: improve` marker exists |
+| `directShim` / `relay` / the stdin-stdout protocols | Retired (along with `ERIS_AGENT_DIRECT_TX`) |
+| The evaluation and visualization commands (`sim` / `evaluate` / `gate` / `discrimination` / `leaderboard` / `stress-report`) | Removed |
+| The dashboard's `/leaderboard`, `/archive`, `/run` | Removed ([09 §9.1](09-dashboard.md); `/standings` came back in issue #183 as the table's page) |
+| Reading configuration from env | Retired; a stale variable now warns |
+
+## 12.6 References
+
+- The primary measurement record: [`docs/scoring-metric-measurements.md`](../../scoring-metric-measurements.md)
+- The decision history: [`docs/adr/`](../../adr/) (ADR 0001–0021)
+- The participant-facing rules: [ascon.dev/rules](https://ascon.dev/rules) (outside this repository; its vocabulary is this document's and the code's — the rules' "epoch" is one run (`epoch` in the code), and the rules' "evaluation interval" is `interval` in the code. Until issue #140 the code called the evaluation interval an `epoch` too)

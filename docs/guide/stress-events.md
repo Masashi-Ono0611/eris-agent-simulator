@@ -1,0 +1,338 @@
+[← README](../../README.md)
+
+# Market Stress Events (`stress.events`; off by default)
+
+One config section holds every seed-placed shock a run can carry, because from the run's point of
+view they are the same thing: **something the agents have to survive, placed by the seed rather than
+by a constant they could memorise**. Ranges are given instead of values, and the actual timing and
+magnitude are drawn deterministically from SEED using an Rng independent of the price path and the
+flow bot — so the schedule is reproducible without being guessable across a published regime's seeds
+(ADR 0009 / ADR 0004).
+
+```yaml
+stress:
+  events:
+    - { type: crash, magnitudeRange: [0.12, 0.16], windowFrac: [0.3, 0.7], rampBlocks: 3, holdBlocks: 6, decayBlocks: 8 }
+    - { type: liquidityPull, magnitudeRange: [0.4, 0.6], windowFrac: [0.3, 0.7], alignWith: crash, rampBlocks: 3, holdBlocks: 6, decayBlocks: 8 }
+  victimCount: 0   # >0 builds liquidatable Aave victims (fresh state required; see below)
+```
+
+Every event needs `run.blocks > 0` (a window is a fraction of a fixed run length), and stress or vuln
+runs **automatically disable the time limit** and end on block count — otherwise `run.seconds` can
+expire before the window is ever reached (recorded as `stress_run_time_limit_disabled`).
+
+The fastest way to see one is an official regime through [Backtest](backtest.md):
+`npm run backtest -- --regime lending-incident --seed 202`.
+
+## The ten event types
+
+They differ in *kind*, not just in parameters, and the kind decides how the run consumes them:
+
+| kind | how the run consumes it | types |
+|---|---|---|
+| `overlay` | a multiplier layered on the fair price every block of the window | `spike` `crash` |
+| `point` | executed once, on the block it lands on | `lstSlash` `whale` |
+| `state` | a target the coordinator holds the venue at, reconciled every block | `liquidityPull` `eusdDepeg` `depeg` |
+| `process` | a parameter the generator itself reads while the window is open | `cexDrift` `flowTrend` `tokenLaunch` |
+
+`rampBlocks` / `holdBlocks` / `decayBlocks` describe a trapezoid and are required for every kind
+except `point`, which lands on a single block and takes them as optional.
+
+`state` events reconcile toward a target **every block** rather than firing once, because a one-shot
+write gets stranded by a dropped block — `pointEventsAt` shipped with exactly that hole once.
+`process` events change the generator instead of correcting its output: an overlay leaves the base
+path intact and multiplies the result, which is right for a gap that heals, but a drift episode has
+to change the walk itself or mean reversion pulls the price back to a path the drift never touched.
+
+### `spike` / `crash` — the fair price moves
+
+The effective price ramps away from the base price, holds, then decays back. It propagates
+consistently to the `PriceFeed`, the Aave oracle, GMX, and scoring, and holds β≈0 outside the window,
+so ADR 0007 is not compromised. `magnitudeRange` is the deviation width (`spike` up, `crash` down);
+`base` targets a non-WETH asset (ADR 0013).
+
+```mermaid
+xychart-beta
+  title "crash overlay: effective price / base price"
+  x-axis "block offset" 0 --> 20
+  y-axis "ratio" 0.8 --> 1.05
+  line [1.0, 1.0, 1.0, 0.953, 0.907, 0.86, 0.86, 0.86, 0.86, 0.86, 0.86, 0.8775, 0.895, 0.9125, 0.93, 0.9475, 0.965, 0.9825, 1.0, 1.0, 1.0]
+```
+
+A trapezoid rather than a jump on purpose: an instantaneous move interacts badly with the 1-block
+delay of oracle updates, and the ramp leaves everyone the same lag to react in.
+
+### `whale` — a single large order moves the pool, not the fair price
+
+A point event: one market order of `magnitudeRange` **whole base units** (30 = a 30 WETH order),
+printed on `venue` (default `uniswap`, the deepest book, so the size has to be real to move it).
+`side` is `buy` / `sell` / `random`, and `random` — the default — lets the seed pick, which is what
+keeps the direction from being memorisable.
+
+This is the opposite direction of dislocation from `crash`: the fair price does not move at all, the
+pool is knocked away from an unchanged fair. Different trade, different skill. Emits `stress_whale`
+(+ `_funded` / `_failed` / `_reverted`).
+
+### `liquidityPull` — the book thins for the length of the window
+
+Seeded pool depth is withdrawn while the window holds and put back afterwards (issue #52).
+`magnitudeRange` is **the fraction of depth withdrawn** at the top of the trapezoid.
+
+- **`venue:` omitted thins every enabled venue.** Thinning one while the others keep block-0 depth
+  just moves execution elsewhere, so narrowing is opt-in.
+- **1.0 is rejected.** With no depth at all every swap reverts and the venue stops existing for the
+  window — that is a halt, not a thin book.
+- **Depth is pulled proportionally on both sides**, so the mid does not move and no risk-free
+  arbitrage opens. It changes what a trade *costs*, not what it is worth.
+- **Local deploy only.** It moves the LP the environment seeded (the deployer = anvil account 0), so
+  a fork — where no such LP exists — fails fast, and so does a roster using `AGENT0_PRIVATE_KEY`
+  (nonce collision with the deployer).
+- Measured at a 50% pull: taking 10 WETH costs roughly 2x more on uniswap/balancer and 4x on curve,
+  while the price a small trade sees moves ≤0.1bps.
+
+Emits `stress_liquidity_pull` (+ `_setup` / `_failed` / `_reverted` / `_stuck`) and
+`stress_liquidity_teardown_restore`. For attribution, read `poolLiquidityBefore` (measured) and
+`targetLiquidity` off the events.
+
+### `eusdDepeg` / `depeg` — a stable stops being a dollar
+
+The environment sells the stable into its own pool for the length of the window and buys it back
+afterwards. `magnitudeRange` is **the fraction of the pool's seeded depth of that stable** the
+environment has dumped at the top of the trapezoid; the resulting discount is whatever the stableswap
+curve gives, not a number you set.
+
+`eusdDepeg` targets the Liquity venue's eUSD and needs no `stable:` (it predates the generalisation);
+`depeg` requires `stable:` naming a registry stable the deployment gave a market to
+(`STABLE_MARKET_LEGS` — today eUSD and DAI). Both run the same code in
+`core/src/realtime/stableDepeg.ts`; the events keep the `stress_eusd_depeg*` names for eUSD and
+`stress_depeg*` with the symbol in the payload for the rest.
+
+**The trades they open are not the same.** eUSD has a redemption floor the CDP enforces, so its
+discount is a dislocation against a price the protocol guarantees. A plain stable has only the belief
+that it is a dollar, so closing the gap is an opinion rather than a claim on collateral.
+
+Measured on a 100k/100k, A=100 eUSD/USDC pool: selling 40k moves it 114bps, 50k → 175bps, 60k →
+282bps. The 50bps redemption fee floor plus ~30bps to convert redeemed ETH back to USDC is the bar an
+arb has to clear before any of it is α. (The pool's A is 100, not the usual 2000: at 2000 selling
+half the pool moves it 4.4bps, which never clears the redemption fee.)
+
+`1.0` is rejected here too — selling the pool's entire stable side leaves nothing to buy, so the
+discount stops being a price and becomes an outage.
+
+### `lstSlash` — the staking rate drops permanently
+
+A point event that lowers the LST vault's redemption rate in one block (issue #38 Phase 2). The
+discount **does not open** — the pool reprices through its rate oracle, which is the evidence the
+oracle is wired correctly. A slash is a risk holders carry, not an arbitrage.
+
+That is why the magnitude is calibrated on the **yield** scale: against a 70-block run's ~3–8bps of
+accrual, 10–30bps is a real event. The first attempt at 100–300bps was fifteen times the yield and
+made staking a guaranteed loss. Emits `lst_slash` (or `lst_slash_skipped`).
+
+### `cexDrift` — the reference price walks away and does not come back
+
+A `process` event: it changes **the price walk itself**, adding a drift and multiplying mean
+reversion by `kappaMultRange` while the window is open. A drift the OU pulls straight back out is not
+a drift, so weakening kappa is part of the event, not a tuning extra. `side` picks the direction
+(`buy` = up), `random` by default.
+
+**`repriceAnchor: true`** moves the OU's anchor with the drift, so the new level becomes normal. Without
+it the window closes and mean reversion erases the episode — and then no event in the system can
+express "the price moved and stayed there", which is exactly the case that decides whether betting on
+a return is skill or habit.
+
+Calibrated from `config/regimes/cex-drift.yaml`: drift 0.0015, kappa 0.004 against the 0.02 default
+(a multiplier of 0.2).
+
+### `flowTrend` — the uninformed flow leans
+
+The other `process` event: while the window is open, uninformed order flow is scaled by
+`magnitudeRange` (a size multiplier — the `informed-flow` regime used 3x) and leans according to
+`trendCorrelation` (0–1) and `persistBlocks`.
+
+**Those two apply at full strength for the whole window**, ramp included. "Correlation 0.5 during the
+ramp" is not a weaker version of the regime, it is a different regime. Calibrated from
+`config/regimes/informed-flow.yaml`: size 3x, persist 12, correlation 1.0.
+
+**The lean is only as large as the flow wallets' inventory.** An uninformed sell larger than the
+wallet's base balance flips to a buy, and a buy is capped at the wallet's USDC, so a 30-block hold in
+one direction spends whatever the wallet holds on that side: a x3 hold is ~51 WETH of one-way flow
+per venue wallet (0.5 WETH mean x 3 x 0.9 arrivals/block x 38 effective blocks). With the wallets
+funded like agents (0 WETH / 25k USDC) the measured lean on `informed-flow#101` was x1.37 for 3 blocks
+against the declared x2-3 for 12; with 10 WETH, x1.67 for 8.6 blocks (issue #112). The official
+regimes therefore give every flow wallet `funding.flowWethWei` 150 WETH and `funding.flowUsdcUnits`
+450,000 USDC -- two same-direction windows with margin, 7.5 % of a venue's depth -- and a regime that
+declares a `flowTrend` without that inventory delivers a smaller, shorter lean than it says.
+
+The size multiplier reaches every AMM venue. Balancer and curve configure one cap for both flow legs
+(`flow.balancerMaxWethWei` / `curveMaxWethWei`); the window scales the uninformed leg's copy of it and
+leaves the informed leg -- the force pushing back -- where it was. Until issue #112 only uniswap's leg
+was scaled (measured x2.98 / x1.05 / x1.00 across the three venues).
+
+### `tokenLaunch` — new tokens list, and demand may or may not follow
+
+The third `process` event (issue #29, the `launch` regime). At the window's start the environment
+lists `tokenCount` new ERC-20 tokens, each in its own Uniswap V3 pool against USDC (0.3% tier,
+initialized at 1.00 USDC, `liquidityUsdc` seeded on each side) through the environment's own
+factory — so they surface through the [agent-created-market registry](../adr/0022-agent-created-markets-and-round-trip-scoring.md)
+one block later as a `uniswapV3Pool` plus an `erc20` entry, `creator` = the launch wallet.
+`agentMarkets.enabled: true` is required; the coordinator refuses the event without it.
+
+Then, **per token and independently**, a demand wave: a dedicated wave wallet buys the token with
+`waveUsdcMult × liquidityUsdc` of USDC over the ramp, holds, and sells `sellBackFrac` of what it
+bought back during the decay. With probability `dudProb` the wave is zero — a dud — and the draw is a
+mass at zero on purpose: a continuous range whose lower bound is 0 never lands on 0. The wave is
+drawn even for a dud so the RNG consumption per token is constant and the events after this one do
+not move. `magnitudeRange` does not apply and is rejected.
+
+Both targets are cumulative and reconciled every block like a `state` event: the buy fraction rises
+over the ramp and stays at 1 (a wave does not un-buy), the sell-back fraction rises over the decay
+and stays. Nothing is announced in advance; the ramp's first blocks are the only signal. Holdings at
+the bell are worth zero (ADR 0022 axiom 2, unchanged), so the only way to score is to buy before the
+wave, sell before the sell-back, and to have picked a token that got one. Always honest: no rigged
+launches (trap identification stays with `vuln`).
+
+Trading a launch pool is a `rawBundle` (exact approve + the router's `exactInputSingle`); the
+registered `swap` action cannot reach a pool outside the market set. `example/agents/lib/launchSwap.ts`
+has the reads (registry pools paired with USDC and an unpriced token, slot0 price, Swap-log flow,
+QuoterV2) and the two transactions; `launch-sniper` buys at first sight, `launch-confirm` waits for
+consecutive blocks of net buying.
+
+No teardown: the pools stay for the scenario snapshot to revert, and the environment's leftovers
+sit in flow wallets nobody scores. `stress_token_launch_summary` closes the books per token (gross
+USDC the wave paid, USDC it took back).
+
+## Options that cut across types
+
+| key | applies to | what it does |
+|---|---|---|
+| `alignWith: <type>` | any | Start where the nearest event of that type starts (window by window when it has a `count`). Required because *same range is not same window*: two events sampling `[0.25, 0.7]` of a 360-block run land ~160 blocks apart on average. Chained alignment and self-alignment are rejected |
+| `persist: true` | `depeg` `eusdDepeg` | The dislocation holds to the end of the run. **Requires `decayBlocks: 0`** — a decay that never runs would read as a window that closes. The teardown still buys back *after* the last scored block, because the startup check refuses to begin on a depegged pool. `config/regimes/depeg-persist.yaml` is the official regime built on it: without one, every dislocation in the set heals and "buy the discount and hold" is right by construction (issue #106) |
+| `repriceAnchor: true` | `cexDrift` | The OU anchor moves with the drift (above) |
+| `repriceAnchorProb: p` | `cexDrift` | `repriceAnchor` decided per window by the seed, with probability `p`. Exclusive with `repriceAnchor` |
+| `venue` | `whale` `liquidityPull` | `uniswap` / `balancer` / `curve`; `random` (whale only) lets the seed pick one per window |
+| `stable` | `depeg` | Which registry stable is pushed off par (required) |
+| `side` | `whale` `cexDrift` | `buy` / `sell` / `random` (default) |
+| `base` | overlays | Which asset the price event targets (default WETH; ADR 0013) |
+| `count: [min, max]` | any | How many windows the entry opens (inclusive integers; `0` allowed, so an entry can be "maybe"). Omitted = one, placed as always. The windows never overlap, every *start* falls inside `windowFrac`, and they are spread uniformly over the placements that fit. A follower (`alignWith`) takes its anchor's count and pairs window by window, so it cannot set its own. A count that cannot fit at the *longest* draws is refused at startup, not on the unlucky seed |
+| `minGapBlocks` | with `count` | The fewest blocks between one window's end (its followers' included) and the next one's start |
+| `rampBlocks` / `holdBlocks` / `decayBlocks: [min, max]` | trapezoids | Drawn per window instead of fixed, so the start of a shock no longer gives away the block it ends on |
+| `flipProb: p` | `crash` `spike` | The seed turns the shock the other way with probability `p`; the resolved event reads `type: spike, flippedFrom: crash`. The regime keeps its lean; its name no longer says which side to stand on. Leave it unset where victims are configured (an upward crash breaches nobody; the coordinator warns when no crash resolves) |
+| `recoverFrac: [min, max]` | `crash` `spike` | Share of the gap the decay closes; the rest stays to the end of the run. Without it every gap heals on a fixed clock and "fade any move, close it when the window does" is right by construction -- the hole `persist` closed for depeg. **Not for a continuous economy**: a residual there stays for weeks and compounds with the next one (the same reason `persist` and `repriceAnchor` stay out of `config/practice.yaml`) |
+
+**Schedules draw from keyed streams (ADR 0027).** The scenario key decides the draws; the seed
+and a salt only name the stream. A schedule that uses any of `count`, a drawn trapezoid,
+`flipProb`, `recoverFrac`, `venue: random` or `repriceAnchorProb` also mixes its event list into the
+salt; one that uses none draws from the stream of the seed alone.
+
+The salt takes the event list as well as the seed. With the seed alone, regimes whose lists differ
+only in a type or a flag drew the same numbers: `crash#s` and `spike#s` opened on the same block
+with the same size and recovery and flipped together, and `depeg` / `depeg-persist` and
+`lending-incident` / `cdp-incident` paired the same way. The hidden set gives every regime the same
+seed list, so an agent carrying state across epochs could recognise a shock by its first block.
+The cost: editing any value in a regime reshuffles all of its draws.
+
+Every one of these is validated at parse time and **rejected rather than ignored** when it does not
+apply to the type — an option silently dropped is a regime that logs itself and then does something
+else.
+
+**Why compose several types in one run:** a week built out of a single event type only makes work for
+one kind of strategy. Measured — in a week of nothing but depeg windows, `venue-arb` never traded at
+all in 3 of 5 seeds (`docs/scoring-metric-measurements.md`).
+
+## Aave liquidation victims
+
+`victimCount` (default 0 = off) builds a seed-derived group of liquidatable Aave positions, excluded
+from scoring, so that a crash actually produces liquidations for a liquidator agent to take.
+
+- **Fresh state is required.** With a soft reset the previous run's victim positions linger and break
+  the health factors, so it fails fast: a fork needs a full re-fork (`ARB_RPC_URL` set,
+  `ERIS_SKIP_RESET` unavailable), and local deploy satisfies it through the resetFork snapshot/revert
+  clean cross-section. On local, the coordinator first calibrates the Aave oracle to the initial fair
+  price, because the fork's "oracle ≈ market ≈ fair0" does not hold there.
+- **To be able to build them**: `victimHf0 ≳ LT/(0.97·LTV)` — with the measured Arbitrum WETH
+  LT=0.84 / LTV=0.80 that is ≈1.08, and below it the borrow pins to the LTV edge and fails fast.
+- **To breach them**: the crash magnitude must satisfy `m > (HF0−1)/HF0` — for the default HF0=1.10
+  that is m>9.1%, which the `[0.12, 0.16]` example clears reliably. A configuration that cannot
+  breach emits `stress_calibration_warning`.
+- `victimWethWei` is the supply per victim.
+
+Victim addresses are handed to the liquidator agent via `ERIS_LIQUIDATION_VICTIMS`. For attribution,
+cross-reference `stress_liquidation` in `events.jsonl` against each agent's `liquidationCall` (rawTx)
+in `agents/<id>.jsonl` — the agent log is the primary source.
+
+## Liquity liquidation victims
+
+`liquityVictimCount` (default 0 = off) is the CDP counterpart of the Aave cohort (issue #107):
+seed-derived accounts (`eris-liquity-victim:<seed>:<i>`) that each open one Trove with
+`liquityVictimCollWethWei` of collateral at `liquityVictimIcr` (default 1.20), through the same
+`liquityOpenTrove` builder an agent uses (hints, WETH unwrap). The debt is sized so the Trove *lands*
+at that ICR once Liquity has added the borrowing fee and the 200 eUSD gas compensation, and the
+coordinator reads it back and refuses a cohort that did not. They hold the eUSD they minted and
+never trade; they are not scored.
+
+- **Needs `liquity` and fresh state**, as the Aave cohort does — a Trove left over from a previous run
+  sits in the sorted list at an ICR nobody configured.
+- **Cannot open the epoch in Recovery Mode**: the coordinator refuses a cohort that pushes the system
+  TCR under CCR.
+- **Calibration**: a Trove at ICR₀ goes under MCR (1.10) at a crash of m > 1 − MCR/ICR₀ — 8.3 % at
+  1.20 — and `stress_calibration_warning` (`crash magnitude may not breach victim ICR`) says when a
+  drawn crash cannot.
+- Records: `stress_liquity_victims_setup` (ICR, debt, collateral, and the system's MCR / CCR / TCR),
+  `stress_liquity_victim_icr` on every block a window is open, `stress_liquity_liquidation` when a
+  victim's Trove is closed by liquidation, `stress_liquity_redemption` when its debt falls (or it is
+  closed) by a redemption. The venue's own `liquity_liquidation` / `liquity_redemption` keep firing.
+- `ERIS_LIQUITY_VICTIMS` carries the addresses to every agent, for symmetry with
+  `ERIS_LIQUIDATION_VICTIMS`; the reference agents find Troves through `riskiestTrove` in the
+  observation and do not need it.
+
+`config/regimes/cdp-incident.yaml` puts the cohort under a crash with the pull and an `eusdDepeg`
+aligned to it: liquidation for the Stability Pool, redemption against the victims for redemption arb,
+and a redemption path a borrower has to stay out of.
+
+### Recovery Mode (issue #59)
+
+`liquityRecoveryTcr` makes the same cohort the thing that breaks the *system*: the regime declares the
+TCR it wants at the bottom of its crash, and the coordinator sizes each victim's collateral from the
+crash magnitude the seed drew, the system as it stands and the cohort's ICR (`recoveryCohortCollateralWei`),
+failing fast at setup when no cohort can reach it. The record (`stress_liquity_victims_setup.recovery`)
+says what the sizing expects, and `liquity_block` shows `recoveryMode` / `tcr` as it happens. Recovery
+Mode liquidates a Trove between MCR and TCR only when the Stability Pool can absorb its whole debt, so
+`liquitySpSeedEusdWei` lets the environment put the deployer's eUSD surplus into the pool. The genesis
+Trove is left alone on purpose: lowering it would invert the redemption order and thin the pool for
+every regime (the issue's three reasons). `config/regimes/cdp-recovery.yaml` is the worked example,
+outside the official set.
+
+## Events emitted
+
+`stress_schedule` (the resolved schedule, once) / `stress_victims_setup` / `stress_victim_hf` /
+`stress_liquidation` / `stress_liquity_victims_setup` / `stress_liquity_victim_icr` /
+`stress_liquity_liquidation` / `stress_liquity_redemption` / `stress_calibration_warning` / `stress_run_time_limit_disabled` /
+`stress_whale*` / `stress_liquidity_pull*` / `stress_liquidity_teardown*` / `stress_eusd_depeg*` /
+`stress_depeg*` / `lst_slash*` / `stress_token_launch*` (`_setup` / `_funded` / `_listing` / the listing itself /
+`_wave` / `_sellback` / `_dud` / `_closed` / `_reverted` / `_stuck` / `_failed` / `_summary`). See [Run Output and Analysis](run-output.md) for reading them.
+
+## Where the calibrated examples live
+
+| regime | what it holds |
+|---|---|
+| `config/regimes/crash.yaml` | 1-2 price gaps (a quarter of them upward, 40-100% of each recovering) plus a `liquidityPull` on each gap's window via `alignWith` |
+| `config/regimes/spike.yaml` | the same distribution leaning upward (`spike`), with the pull aligned to it — the tail that rewards holding the basket (issue #105) |
+| `config/regimes/lending-incident.yaml` | the same crash, plus victims, a liquidator slot, and thinned books |
+| `config/regimes/cdp-incident.yaml` | the CDP side of the same incident: Liquity victim Troves at ICR 1.20, the crash, and an `eusdDepeg` on the same window (issue #107) |
+| `config/regimes/cex-drift.yaml` / `informed-flow.yaml` | the calibration the `cexDrift` / `flowTrend` windows were derived from |
+| `config/regimes/whale.yaml` | 3-5 single large orders against an unchanged fair, each on a venue the seed picks |
+| `config/regimes/depeg.yaml` | a registry stable off par (issue #27) |
+| `config/regimes/depeg-persist.yaml` | the same depeg that never closes (`persist: true`), so the final mark is taken at the discount (issue #106) |
+| `config/regimes/launch.yaml` | a `tokenLaunch` window: 2–3 listings, a wave or a dud per token (issue #29) |
+| `config/example.yaml` | an `eusdDepeg` window, on by default — the CDP venue is correctly inert at par, so without it redemption arb has nothing to do |
+| `config/lst.yaml` | `lstSlash` alongside the LST calibration knobs |
+
+
+### Application audit
+
+The resolved schedule is a plan, not proof that its windows fired. `stress_event_applied` now records
+per-entry execution/publication evidence, including price overlays and drift/flow process inputs.
+`stress_event_summary` and `stress_application_warning` expose skipped windows and price overlays
+that missed their configured peak. See [Run Output and Analysis](run-output.md#was-the-scheduled-event-applied)
+for stages, hashes and the distinction between submission and on-chain execution.

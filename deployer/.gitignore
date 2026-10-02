@@ -1,0 +1,26 @@
+node_modules/
+out/
+cache/
+broadcast/
+.env
+deployments/deployments.json
+state.json
+*.log
+
+# hardhat build outputs inside vendor
+vendor/**/artifacts/
+vendor/**/cache/
+vendor/**/deployments/localhost/
+vendor/**/node_modules/
+vendor/aave/deployments/
+vendor/aave/typechain-types/
+
+# External repo clones are not tracked (reproduced by scripts/setup-vendors.sh)
+#  - gmx-src: localhost support is kept as vendor/gmx-localhost.patch
+#  - curve-src: build-only (runtime uses the bytecode in vendor/curve)
+#  - twocrypto-src: same (build lite-0.3.10 with Docker vyper 0.3.10 -> vendor/curve)
+#  - liquity-src: built in place with foundry (solc 0.6.11); the deployer reads its out/ (issue #39)
+vendor/gmx-src/
+vendor/curve-src/
+vendor/twocrypto-src/
+vendor/liquity-src/

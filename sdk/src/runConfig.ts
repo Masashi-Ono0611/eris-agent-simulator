@@ -1,0 +1,347 @@
+// Shared part of the run-config loader that makes YAML the single source of config (ADR 0013 / ADR 0015).
+//
+// Policy:
+//   - Manage user config values (run knobs / funding / limits / flow / stress / vuln) in a single YAML
+//     (default `config/local.yaml`). YAML keys match the existing env names; convert types
+//     (bool→"1"/"0", string/number array→CSV, object→JSON) and feed the source map that loadConfig
+//     reads. This reuses all of loadConfig's parsers (bigintEnv/intEnv, etc.) unchanged.
+//   - **Only secrets stay in env (.env)** (do not put secrets in committed YAML, because external SDKs
+//     read env directly). Only SECRET_ENV_KEYS are brought from process.env into source.
+//   - IPC to the agent subprocess (ERIS_AGENT_* etc.) is passed separately via env by the coordinator
+//     (not covered by YAML). The child receives the config file path ERIS_CONFIG and rebuilds config
+//     from the same YAML via this loadYamlConfig (environment and agent share the same config
+//     cross-section = the reason this file lives in the sdk).
+//   - Roster resolution and CLI flags are the environment's job, so they live in core/src/runConfig.ts.
+import { existsSync, readFileSync } from "node:fs";
+import { parse as parseYaml } from "yaml";
+import { loadConfig, unitSuffixFor, type SimConfig } from "./config.js";
+import { tokenInfo } from "./markets.js";
+
+// Secrets / RPC that stay in .env (not put in YAML). These are brought from process.env into source.
+export const SECRET_ENV_KEYS = [
+  "ARB_RPC_URL",
+  "FORK_BLOCK_NUMBER",
+  "ANVIL_RPC_URL",
+  // The external chain's endpoints and its funding account (issue #33 / #35). The URLs are not
+  // secret in the way a key is, but they are per-deployment rather than per-config, which is the
+  // same reason ANVIL_RPC_URL lives here: a committed regime YAML must not name one operator's node.
+  "ERIS_READ_RPC_URL",
+  // The public URL the published manifest names (issue #156): the gateway in front of the chain, as
+  // participants reach it. Per-deployment for the same reason -- the rehearsal box and the hosted
+  // one publish different hosts from the same committed config/practice.yaml.
+  "ERIS_PUBLIC_RPC_URL",
+  "CHAIN_ID",
+  "TREASURY_PRIVATE_KEY",
+  "ANTHROPIC_API_KEY",
+  "OLLAMA_API_KEY",
+  "ERIS_OLLAMA_API_KEY",
+  "ADMIN_PRIVATE_KEY",
+  "KEEPER_PRIVATE_KEY",
+  "SETUP_PRIVATE_KEY",
+  // The key that deployed the venues (issue #74). Per-deployment rather than per-config, and on a
+  // chain deployed under a secret mnemonic it is a secret.
+  "DEPLOYER_PRIVATE_KEY",
+  "FLOW_UNINFORMED_PRIVATE_KEY",
+  "FLOW_INFORMED_PRIVATE_KEY",
+  "AGENT0_PRIVATE_KEY",
+  "AGENT1_PRIVATE_KEY",
+  "AGENT2_PRIVATE_KEY",
+  "AGENT3_PRIVATE_KEY",
+  "AGENT4_PRIVATE_KEY",
+  "AGENT5_PRIVATE_KEY",
+  "AGENT6_PRIVATE_KEY",
+] as const;
+
+// Config is managed under the config/ directory. The local real file is config/local.yaml (gitignored),
+// and committed templates/scenarios are config/example.yaml etc.
+export const DEFAULT_CONFIG_PATH = "config/local.yaml";
+// The zero-config default when config/local.yaml is absent (env config reading was retired, so this instead of env).
+export const EXAMPLE_CONFIG_PATH = "config/example.yaml";
+
+// YAML value → env string. Normalizes into the shape each loadConfig parser expects.
+//   boolean          → "1" / "0" (loadConfig decides truth via `=== "1"`)
+//   string/num array → CSV (ENABLED_PROTOCOLS / FLOW_BOT_ARGS, etc.)
+//   object / object array → JSON (ERIS_STRESS_EVENTS, etc.)
+//   otherwise        → String(v)
+export function toEnvString(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "boolean") return value ? "1" : "0";
+  if (Array.isArray(value)) {
+    if (value.every((v) => typeof v === "string" || typeof v === "number"))
+      return value.map((v) => String(v)).join(",");
+    return JSON.stringify(value);
+  }
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
+}
+
+// Mapping from the nested lowercase schema (the human-authored form) to the internal env names (the
+// form loadConfig reads). E.g. `run.protocols` → ENABLED_PROTOCOLS. A thin translation layer that keeps the all-caps env names out of sight.
+const SCHEMA: Record<string, string> = {
+  // run
+  "run.seed": "SEED",
+  "run.blocks": "ERIS_RUN_BLOCKS",
+  "run.endsAt": "ERIS_RUN_ENDS_AT", // issue #136: the run's end as a date; runBlocks is derived at load
+  "run.seconds": "ERIS_RUN_SECONDS",
+  "run.blockTimeSec": "ERIS_BLOCK_TIME_SEC",
+  "run.protocols": "ENABLED_PROTOCOLS",
+  "run.economicGas": "ERIS_ECONOMIC_GAS",
+  "run.localDeploy": "ERIS_LOCAL_DEPLOY",
+  "run.chainMode": "ERIS_CHAIN_MODE", // anvil | external (issue #33 / ADR 0021 §7)
+  // The external chain's id (issue #35 genesis design). Also readable from env, for the usual
+  // reason: it belongs to the deployment, not to the regime. Setting it here wins, like every other
+  // schema key -- so a committed regime YAML should leave it out and let .env.local name the chain.
+  "run.chainId": "CHAIN_ID",
+  // Issue #156: what the published manifest names as the chain (default: the coordinator's own
+  // rpcUrl). Also readable from env, which is where a committed config should leave it.
+  "run.publicRpcUrl": "ERIS_PUBLIC_RPC_URL",
+  "run.externalRoleEthWei": "ERIS_EXTERNAL_ROLE_ETH_WEI",
+  "run.resetUnit": "ERIS_RESET_UNIT", // continuous | scenario (ADR 0020 §1)
+  "run.skipReset": "ERIS_SKIP_RESET",
+  "run.prewarmBlocks": "ERIS_PREWARM_BLOCKS",
+  "run.scoreEvery": "ERIS_SCORE_EVERY",
+  // The evaluation interval (rules §0.1), in blocks or in real time (ADR 0021 §3).
+  "run.intervalBlocks": "ERIS_INTERVAL_BLOCKS",
+  "run.intervalSeconds": "ERIS_INTERVAL_SECONDS",
+  // Their names before issue #140. Still read, with a warning, until the results are published.
+  "run.epochBlocks": "ERIS_EPOCH_BLOCKS",
+  "run.epochSeconds": "ERIS_EPOCH_SECONDS",
+  "run.segmentHours": "ERIS_SEGMENT_HOURS", // ADR 0021 §6: hours per output segment (0 = one dir)
+  "run.segmentName": "ERIS_SEGMENT_NAME",
+  "run.markMedianBlocks": "ERIS_MARK_MEDIAN_BLOCKS",
+  // Rules §2.6: the block gas limit the coordinator sets once setup is done (0 = leave the node's).
+  "run.blockGasLimit": "ERIS_BLOCK_GAS_LIMIT",
+  // Issue #94: seconds the run's clock waits for every launched agent's `runtime_start` (0 = no wait).
+  "run.agentsReadyTimeoutSec": "ERIS_AGENTS_READY_TIMEOUT_SEC",
+  // process | docker: how the coordinator launches each agent (rules §2.3 caps apply only under docker).
+  "run.agentSandbox": "ERIS_AGENT_SANDBOX",
+  "run.reportDir": "REPORT_DIR",
+  "run.flashArb": "ERIS_FLASH_ARB",
+  "run.localSnapshotFile": "ERIS_LOCAL_SNAPSHOT_FILE",
+  "run.agentTimeoutMs": "AGENT_TIMEOUT_MS",
+  "run.agentsConfig": "AGENTS_CONFIG", // roster file path when there are no inline agents
+  // ADR 0021 §2: external registrations the coordinator hot-reloads during a period (rules §2.7).
+  "run.registrationsFile": "ERIS_REGISTRATIONS_FILE",
+  "run.agentsDir": "ERIS_AGENTS_DIR", // root of the agent directory convention (ADR 0015 §6)
+  // market (the fair-price OU process. ADR 0017 regime 1 "cex-drift" needs these per regime, and
+  // until now they were only reachable through raw env, which a regime YAML cannot set)
+  "market.volatility": "ERIS_PRICE_VOLATILITY",
+  "market.kappa": "ERIS_PRICE_REVERT_KAPPA",
+  "market.drift": "ERIS_PRICE_DRIFT",
+  // funding
+  "funding.ethWei": "INITIAL_ETH_WEI",
+  "funding.wethWei": "INITIAL_WETH_WEI",
+  "funding.usdcUnits": "INITIAL_USDC_UNITS",
+  "funding.flowEthWei": "ERIS_FLOW_ETH_WEI",
+  "funding.flowWethWei": "FLOW_WETH_WEI",
+  "funding.flowUsdcUnits": "FLOW_USDC_UNITS",
+  // fees. What used to be the `limits` section -- per-order size caps for every venue, plus the
+  // bundle-length and open-position counts -- is gone: the competition has no order-size cap, and
+  // a knob that only ever reads "unlimited" is a knob someone will eventually set.
+  "fees.priorityFeeWei": "DEFAULT_PRIORITY_FEE_WEI",
+  "fees.maxPriorityFeeWei": "MAX_PRIORITY_FEE_WEI",
+  // flow
+  "flow.uninformedMaxWethWei": "UNINFORMED_FLOW_MAX_WETH_WEI",
+  "flow.uninformedCount": "UNINFORMED_FLOW_COUNT",
+  "flow.uninformedPersistBlocks": "UNINFORMED_FLOW_PERSIST_BLOCKS",
+  "flow.uninformedTrendCorrelation": "UNINFORMED_FLOW_TREND_CORRELATION",
+  "flow.informedMaxWethWei": "INFORMED_FLOW_MAX_WETH_WEI",
+  "flow.balancerMaxWethWei": "BALANCER_FLOW_MAX_WETH_WEI",
+  "flow.curveMaxWethWei": "CURVE_FLOW_MAX_WETH_WEI",
+  "flow.gmxMaxSizeUsd": "GMX_FLOW_MAX_SIZE_USD",
+  "flow.gmxActivityProb": "GMX_FLOW_ACTIVITY_PROB",
+  "flow.gmxMaxBurst": "GMX_FLOW_MAX_BURST",
+  "flow.aaveMaxWethWei": "AAVE_FLOW_MAX_WETH_WEI",
+  // Target debt for the borrower pool. Was `limits.aaveBorrowUsdcUnits`, which doubled as the
+  // agent's borrow cap; it lives here now so that removing the cap did not also re-calibrate the
+  // background market.
+  "flow.aaveBorrowUsdcUnits": "AAVE_FLOW_BORROW_USDC_UNITS",
+  "flow.aaveActivityProb": "AAVE_FLOW_ACTIVITY_PROB",
+  "flow.aaveActorCount": "AAVE_FLOW_ACTOR_COUNT",
+  "flow.informedArbFeeBps": "ERIS_INFORMED_ARB_FEE_BPS",
+  "flow.uninformedArrivalRate": "ERIS_UNINFORMED_ARRIVAL_RATE",
+  "flow.uninformedSizeSigma": "ERIS_UNINFORMED_SIZE_SIGMA",
+  "flow.uninformedSizeClampMult": "ERIS_UNINFORMED_SIZE_CLAMP_MULT",
+  "flow.gmxArrivalRate": "ERIS_GMX_ARRIVAL_RATE",
+  "flow.gmxSizeSigma": "ERIS_GMX_SIZE_SIGMA",
+  "flow.aaveActorSizeSigma": "ERIS_AAVE_ACTOR_SIZE_SIGMA",
+  "flow.seed": "FLOW_SEED",
+  // Issue #130: top the flow wallets back up every N blocks (0 = never, the default -- the official
+  // regimes are calibrated on wallets funded once). Balances are logged on the same cadence either way.
+  "flow.topUpEveryBlocks": "ERIS_FLOW_TOPUP_EVERY_BLOCKS",
+  "flow.botCommand": "FLOW_BOT_COMMAND",
+  "flow.botArgs": "FLOW_BOT_ARGS",
+  // stress
+  "stress.events": "ERIS_STRESS_EVENTS",
+  "stress.victimCount": "ERIS_STRESS_VICTIM_COUNT",
+  "stress.victimHf0": "ERIS_STRESS_VICTIM_HF0",
+  "stress.victimWethWei": "ERIS_STRESS_VICTIM_WETH_WEI",
+  // Issue #107: Liquity victim Troves (the CDP counterpart of the Aave cohort).
+  "stress.liquityVictimCount": "ERIS_STRESS_LIQUITY_VICTIM_COUNT",
+  "stress.liquityVictimIcr": "ERIS_STRESS_LIQUITY_VICTIM_ICR",
+  "stress.liquityVictimCollWethWei": "ERIS_STRESS_LIQUITY_VICTIM_COLL_WETH_WEI",
+  // Issue #59: the TCR the cohort has to reach at the crash bottom, and an environment SP seed.
+  "stress.liquityRecoveryTcr": "ERIS_STRESS_LIQUITY_RECOVERY_TCR",
+  "stress.liquitySpSeedEusdWei": "ERIS_STRESS_LIQUITY_SP_SEED_EUSD_WEI",
+  // lst (issue #38: liquid staking venue)
+  "lst.simulatedSecondsPerBlock": "ERIS_LST_SIMULATED_SECONDS_PER_BLOCK",
+  "lst.apyBps": "ERIS_LST_APY_BPS",
+  "lst.withdrawalDelayBlocks": "ERIS_LST_WITHDRAWAL_DELAY_BLOCKS",
+  "lst.maxDepositWethWei": "ERIS_LST_MAX_DEPOSIT_WETH_WEI",
+  "lst.apyRangeBps": "ERIS_LST_APY_RANGE_BPS",
+  "lst.apyStepBlocks": "ERIS_LST_APY_STEP_BLOCKS",
+  "lst.queueThroughputWeiPerBlock": "ERIS_LST_QUEUE_THROUGHPUT_WEI_PER_BLOCK",
+  // vuln (ADR 0014: vulnerability-occurrence events)
+  "vuln.events": "ERIS_VULN_EVENTS",
+  "vuln.poolLiquidityUsdcUnits": "ERIS_VULN_POOL_LIQUIDITY_USDC_UNITS",
+  "vuln.poolFeeBps": "ERIS_VULN_POOL_FEE_BPS",
+  "vuln.llm": "ERIS_VULN_LLM",
+  // agentMarkets (issue #40: agent-created markets)
+  "agentMarkets.enabled": "ERIS_AGENT_MARKETS",
+  "agentMarkets.registrationsPerBlock": "ERIS_AGENT_MARKETS_CAP",
+  "agentMarkets.maxTxGas": "ERIS_MAX_TX_GAS",
+  "agentMarkets.maxAgentBlockGas": "ERIS_MAX_AGENT_BLOCK_GAS",
+};
+// per-base map (`{WBTC: value}` → `<prefix>_<SYM>[_<infix>]_<unit>`. unit is derived from decimals).
+const BASE_SECTIONS: Record<string, { prefix: string; infix?: string }> = {
+  "funding.base": { prefix: "INITIAL" },
+  "funding.flowBase": { prefix: "FLOW_BASE" },
+  "flow.baseMax": { prefix: "FLOW_MAX" },
+  "flow.baseInformedMax": { prefix: "FLOW_INFORMED_MAX" },
+};
+// Per-base overrides whose env name is `<PREFIX>_<SYMBOL>` with no unit suffix. Distinct from
+// BASE_SECTIONS, whose names carry one (`MAX_AGENT_WBTC_IN_SATS`): a volatility has no unit.
+const BASE_PLAIN_SECTIONS: Record<string, string> = {
+  "market.baseVolatility": "ERIS_PRICE_VOLATILITY",
+  "market.baseKappa": "ERIS_PRICE_REVERT_KAPPA",
+  "market.baseDrift": "ERIS_PRICE_DRIFT",
+};
+const SECTIONS = [
+  "run",
+  "market",
+  "funding",
+  "fees",
+  "flow",
+  "stress",
+  "vuln",
+  "lst",
+  "agentMarkets",
+];
+
+// Keys read under a name they have since lost -> the name to write instead. Accepted, and said so
+// once per load (issue #140: the practice period's config said `epochSeconds` while its coordinator
+// ran, and a coordinator reads its file only on a restart). Removed once the results are published.
+export const RENAMED_KEYS: Record<string, string> = {
+  "run.epochBlocks": "run.intervalBlocks",
+  "run.epochSeconds": "run.intervalSeconds",
+};
+
+function baseEnvName(prefix: string, sym: string, infix?: string): string {
+  const unit = unitSuffixFor(tokenInfo(sym).decimals);
+  return [prefix, sym, infix, unit].filter(Boolean).join("_");
+}
+
+// Expand the nested doc into the internal env-name source. Unknown keys are warned about (typo detection).
+function applyDoc(
+  doc: Record<string, unknown>,
+  source: NodeJS.ProcessEnv,
+): void {
+  const unknown: string[] = [];
+  const renamed: string[] = [];
+  for (const [k, v] of Object.entries(doc)) {
+    if (k === "agents") continue; // the roster is handled on the environment side (core/src/runConfig.ts)
+    if (
+      SECTIONS.includes(k) &&
+      v &&
+      typeof v === "object" &&
+      !Array.isArray(v)
+    ) {
+      for (const [sk, sv] of Object.entries(v as Record<string, unknown>)) {
+        const path = `${k}.${sk}`;
+        const baseDef = BASE_SECTIONS[path];
+        const basePlainPrefix = BASE_PLAIN_SECTIONS[path];
+        if (basePlainPrefix) {
+          if (sv && typeof sv === "object" && !Array.isArray(sv))
+            for (const [sym, value] of Object.entries(
+              sv as Record<string, unknown>,
+            ))
+              source[`${basePlainPrefix}_${sym.toUpperCase()}`] =
+                toEnvString(value);
+        } else if (baseDef) {
+          if (sv && typeof sv === "object" && !Array.isArray(sv))
+            for (const [sym, amt] of Object.entries(
+              sv as Record<string, unknown>,
+            ))
+              source[baseEnvName(baseDef.prefix, sym, baseDef.infix)] =
+                toEnvString(amt);
+        } else if (SCHEMA[path]) {
+          if (RENAMED_KEYS[path]) renamed.push(path);
+          const env = SCHEMA[path];
+          // FLOW_BOT_ARGS is the only one that is space-separated (config.ts splits on /\s+/).
+          source[env] =
+            env === "FLOW_BOT_ARGS" && Array.isArray(sv)
+              ? sv.map((x) => String(x)).join(" ")
+              : toEnvString(sv);
+        } else {
+          unknown.push(path);
+        }
+      }
+    } else if (/^[A-Z]/.test(k)) {
+      source[k] = toEnvString(v); // backward compatible: pass uppercase keys through as-is as env names
+    } else {
+      unknown.push(k);
+    }
+  }
+  if (unknown.length > 0)
+    process.stderr.write(
+      `[config] warning: unknown config keys (ignored): ${unknown.join(", ")}. See SCHEMA in sdk/src/runConfig.ts for the schema.\n`,
+    );
+  // The environment says it; an agent process loads the same file and would say it once per agent.
+  if (renamed.length > 0 && process.env.ERIS_AGENT_ID === undefined)
+    process.stderr.write(
+      `[config] warning: ${renamed.map((k) => `${k} is now ${RENAMED_KEYS[k]}`).join("; ")} ` +
+        "(issue #140). The old name is still read until the results are published.\n",
+    );
+}
+
+// Build the source map from YAML (layered in order: secret env → YAML → overrides).
+export function buildSource(
+  doc: Record<string, unknown>,
+  overrides: Record<string, string | number | boolean> = {},
+  configPath?: string,
+): NodeJS.ProcessEnv {
+  const source: NodeJS.ProcessEnv = {};
+  for (const k of SECRET_ENV_KEYS)
+    if (process.env[k] !== undefined) source[k] = process.env[k];
+  applyDoc(doc, source);
+  // overrides use internal env-name keys (CLI aliases are already mapped to env names) and take top priority.
+  for (const [k, v] of Object.entries(overrides)) source[k] = toEnvString(v);
+  if (configPath) source.ERIS_CONFIG = configPath;
+  return source;
+}
+
+export type YamlConfigResult = {
+  config: SimConfig;
+  doc: Record<string, unknown>;
+  configPath: string;
+  source: NodeJS.ProcessEnv;
+};
+
+// Read a YAML config file and resolve it into a SimConfig (roster not included = safe to call from
+// the agent process too). The environment side uses loadRunConfig in core/src/runConfig.ts (roster + stress/vuln extensions).
+export function loadYamlConfig(
+  path = DEFAULT_CONFIG_PATH,
+  overrides: Record<string, string | number | boolean> = {},
+): YamlConfigResult {
+  if (!existsSync(path)) throw new Error(`config file not found: ${path}`);
+  const doc = parseYaml(readFileSync(path, "utf8")) as Record<
+    string,
+    unknown
+  > | null;
+  if (!doc || typeof doc !== "object" || Array.isArray(doc))
+    throw new Error(`${path} must be a YAML mapping`);
+
+  const source = buildSource(doc, overrides, path);
+  const config = loadConfig(source);
+  return { config, doc, configPath: path, source };
+}

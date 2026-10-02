@@ -1,0 +1,665 @@
+// The run's rounds. A round is an evaluation interval (rules §0.1): the run's value series is
+// recorded at every boundary and shown as interim progress, while the score itself uses only the
+// first and last boundary (ADR 0023; ADR 0019, which named these intervals "epochs" -- the name
+// issue #140 retired -- scored every round). The bar is the run's own boundary series, not a
+// season of runs: one segment per round, filled by progress, and clicking one opens that round's
+// result.
+import { useEffect, useState } from "react";
+import {
+  REPLAY_SPEEDS,
+  seekReplay,
+  setReplayPlaying,
+  setReplaySpeed,
+  startReplay,
+  stopReplay,
+} from "@/data/replay";
+import {
+  effectiveSelectedCompetitionId,
+  SINGLE_RUNS,
+} from "@/data/competitionSelection";
+import { setCursorRange } from "@/data/roundCursor";
+import { setSelectedRound, useSelectedRound } from "@/data/roundSelection";
+import { runDisplayName } from "@/data/competition";
+import { useMode } from "@/data/mode";
+import { useScenarioLabel } from "@/data/useScenarioLabel";
+import { WorldSwitcher } from "@/components/WorldSwitcher";
+import { InfoTip, TipText } from "@/design-system/InfoTip";
+import { t } from "@/i18n/messages";
+import { navigate } from "@/navigation";
+import { formatBps, formatMove, formatPnlUsdc } from "@/lib/format";
+import type { RoundInterval, RoundInfo } from "@/data/types";
+
+function useNow(intervalMs = 1000): number {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(timer);
+  }, [intervalMs]);
+  return now;
+}
+
+function formatCountdown(remainingMs: number): string {
+  const totalSec = Math.floor(remainingMs / 1000);
+  const hh = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+  const ss = String(totalSec % 60).padStart(2, "0");
+  return `${hh}:${mm}:${ss}`;
+}
+
+/**
+ * A round's transaction count, or why there is not one.
+ *
+ * Three states, and the difference between them is the whole point. A round that has not begun has
+ * no transactions and says so in words rather than as "0 tx", which reads as a round that happened
+ * and was quiet. A round the view does not cover has no count to report at all. Everything else has
+ * a number (issue #84 I).
+ */
+function formatTxCount(interval: RoundInterval): string {
+  if (interval.status === "upcoming") return t("rounds.txNotStarted");
+  return interval.txCount === null
+    ? t("rounds.txOutside")
+    : t("rounds.txN", { n: interval.txCount });
+}
+
+const LABEL_STYLE = {
+  font: "var(--weight-medium) 9px var(--font-mono)",
+  letterSpacing: "var(--tracking-widest)",
+  textTransform: "uppercase" as const,
+  color: "var(--text-tertiary)",
+};
+
+function RoundSegment({
+  interval,
+  selected,
+  liveFillPercent,
+  onSelect,
+}: {
+  interval: RoundInterval;
+  selected: boolean;
+  liveFillPercent: number;
+  onSelect: () => void;
+}) {
+  const fillPercent =
+    interval.status === "done"
+      ? 100
+      : interval.status === "live"
+        ? liveFillPercent
+        : 0;
+  const fillColor =
+    interval.status === "done"
+      ? "var(--purple-600)"
+      : interval.status === "live"
+        ? "var(--pink-500)"
+        : "transparent";
+  return (
+    <div
+      onClick={onSelect}
+      title={t("rounds.segmentTitle", {
+        i: interval.index,
+        from: interval.fromBlock.toLocaleString("en-US"),
+        to: interval.toBlock.toLocaleString("en-US"),
+        tx: formatTxCount(interval),
+      })}
+      style={{
+        flex: 1,
+        height: "40px",
+        position: "relative",
+        cursor: "pointer",
+        background:
+          interval.status === "upcoming" ? "var(--gray-900)" : "var(--bg-surface)",
+        boxShadow: selected
+          ? "inset 0 3px 0 var(--pink-300), inset 0 0 0 1px var(--pink-300)"
+          : "inset 2px 0 0 var(--bg-canvas), inset 3px 0 0 var(--border-strong)",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: `${fillPercent}%`,
+          background: fillColor,
+        }}
+      />
+      {interval.status === "live" && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: `${fillPercent}%`,
+            width: "2px",
+            background: "var(--gray-50)",
+            boxShadow: "0 0 10px rgba(255,255,255,0.8)",
+            animation: "marker-pulse 1.2s ease-in-out infinite",
+          }}
+        />
+      )}
+      <span
+        style={{
+          position: "absolute",
+          top: "5px",
+          left: "8px",
+          font: "var(--weight-semibold) var(--text-xs) var(--font-mono)",
+          letterSpacing: "var(--tracking-wide)",
+          color:
+            interval.status === "upcoming"
+              ? "var(--text-tertiary)"
+              : "var(--gray-50)",
+          background:
+            interval.status === "live" ? "var(--gray-950)" : "transparent",
+          padding: "1px 3px",
+        }}
+      >
+        {String(interval.index).padStart(2, "0")}
+      </span>
+    </div>
+  );
+}
+
+const RESULT_GRID = "28px minmax(0,1fr) 96px 90px 70px";
+
+function RoundResults({ interval }: { interval: RoundInterval }) {
+  // Rules §4.7: a per-round ranking is a standing, so where standings are not posted this panel
+  // keeps the round's window, its transaction count and what the environment did, and says why the
+  // table is absent instead of printing ranks (issue #84 B).
+  const mode = useMode();
+  return (
+    <div
+      style={{
+        borderTop: "1px solid var(--border-subtle)",
+        background: "var(--bg-surface)",
+        padding: "12px 16px 16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          gap: "14px",
+          flexWrap: "wrap",
+        }}
+      >
+        <span
+          style={{
+            font: "var(--weight-bold) var(--text-md) var(--font-mono)",
+            color: "var(--text-primary)",
+          }}
+        >
+          {t("rounds.heading", { i: String(interval.index).padStart(2, "0") })}
+        </span>
+        <span
+          style={{
+            font: "var(--text-xs) var(--font-mono)",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {t("rounds.blocks", {
+            from: interval.fromBlock.toLocaleString("en-US"),
+            to: interval.toBlock.toLocaleString("en-US"),
+          })}{" "}
+          · {formatTxCount(interval)}
+        </span>
+        <span
+          onClick={() => {
+            navigate("/explorer");
+          }}
+          style={{
+            font: "var(--text-xs) var(--font-mono)",
+            color: "var(--text-link)",
+            cursor: "pointer",
+          }}
+        >
+          {t("rounds.openExplorer")}
+        </span>
+        <span
+          onClick={() => setSelectedRound(null)}
+          style={{
+            marginLeft: "auto",
+            font: "var(--text-xs) var(--font-mono)",
+            color: "var(--text-link)",
+            cursor: "pointer",
+          }}
+        >
+          {t("rounds.close")}
+        </span>
+      </div>
+
+      {!mode.standings ? (
+        <span
+          style={{
+            font: "var(--text-sm) var(--font-sans)",
+            color: "var(--text-tertiary)",
+            lineHeight: 1.6,
+          }}
+        >
+          {t("home.standingsOff")}
+        </span>
+      ) : interval.results.length === 0 ? (
+        <span
+          style={{
+            font: "var(--text-sm) var(--font-mono)",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {interval.status === "done" ? t("rounds.notScored") : t("rounds.scoredLater")}
+        </span>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: RESULT_GRID,
+              gap: "8px",
+              padding: "0 0 6px",
+              ...LABEL_STYLE,
+            }}
+          >
+            <span>#</span>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "2px" }}>
+              {t("rounds.col.agent")}
+              {/* What the three numbers are, and are not: none of them is the score. */}
+              <InfoTip label={t("rounds.heading", { i: String(interval.index).padStart(2, "0") })}>
+                <TipText>{t("rounds.deltaNote")}</TipText>
+                <TipText>{`✱ — ${t("rounds.bankrupt")}`}</TipText>
+              </InfoTip>
+            </span>
+            <span style={{ textAlign: "right" }}>{t("rounds.col.delta")}</span>
+            <span style={{ textAlign: "right" }}>{t("rounds.col.logReturn")}</span>
+            <span style={{ textAlign: "right" }}>{t("rounds.col.rank")}</span>
+          </div>
+          {interval.results.map((row) => {
+            const gainColor =
+              row.deltaUsdc > 0
+                ? "var(--success-text)"
+                : row.deltaUsdc < 0
+                  ? "var(--danger-text)"
+                  : "var(--text-tertiary)";
+            const moveColor =
+              row.move === 0
+                ? "var(--text-disabled)"
+                : row.move > 0
+                  ? "var(--success-text)"
+                  : "var(--danger-text)";
+            return (
+              <div
+                key={row.agent}
+                onClick={() => navigate(`/agent/${row.agent}`)}
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: RESULT_GRID,
+                  gap: "8px",
+                  padding: "5px 0",
+                  borderTop: "1px solid var(--border-subtle)",
+                  font: "var(--text-sm) var(--font-mono)",
+                  cursor: "pointer",
+                }}
+              >
+                <span style={{ color: "var(--text-tertiary)" }}>
+                  {row.rank}
+                </span>
+                <span
+                  style={{
+                    color: "var(--text-link)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {row.agent}
+                  {row.bankrupt && (
+                    <span
+                      role="img"
+                      aria-label={t("rounds.bankrupt")}
+                      style={{ color: "var(--danger-text)" }}
+                    >
+                      {" "}
+                      ✱
+                    </span>
+                  )}
+                </span>
+                <span style={{ textAlign: "right", color: gainColor }}>
+                  {formatPnlUsdc(row.deltaUsdc)}
+                </span>
+                <span style={{ textAlign: "right", color: gainColor }}>
+                  {formatBps(row.logReturnBps)}
+                </span>
+                <span
+                  style={{ textAlign: "right", color: "var(--text-secondary)" }}
+                >
+                  {row.cumulativeRank}{" "}
+                  <span style={{ color: moveColor }}>
+                    {formatMove(row.move)}
+                  </span>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {interval.events.length > 0 && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <span style={LABEL_STYLE}>{t("rounds.envDid")}</span>
+          {interval.events.map((e, i) => (
+            <span
+              key={i}
+              style={{
+                font: "var(--text-xs) var(--font-mono)",
+                color: "var(--text-secondary)",
+              }}
+            >
+              {e.time} — {e.text}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Replay transport. An archived run is a complete record, so walking it forward is a matter of
+// clamping what the views derive from -- the control here only moves the head.
+//
+// Without `transport` the bar offers no replay and moves no head: the scenario page walks blocks on
+// its own axis, and a second scrubber there would be a second clock. An armed replay still shows,
+// with the way out of it, because it clamps that page's frames too.
+function ReplayControls({
+  round,
+  transport,
+}: {
+  round: RoundInfo;
+  transport: boolean;
+}) {
+  const replay = round.replay;
+  const first = round.intervals[0]?.fromBlock;
+  const last = round.intervals[round.intervals.length - 1]?.toBlock;
+
+  if (!replay) {
+    if (!transport) return null;
+    // Replay needs a finished run with rounds to walk: a live run is already moving, and a run with
+    // no interval series has no boundaries to step between.
+    if (
+      round.status !== "archived" ||
+      first === undefined ||
+      last === undefined
+    )
+      return null;
+    return (
+      <span
+        onClick={() => startReplay(round.runId, first, last)}
+        title={t("rounds.replayStartTitle")}
+        style={{
+          font: "var(--text-xs) var(--font-mono)",
+          color: "var(--text-link)",
+          cursor: "pointer",
+        }}
+      >
+        {t("rounds.replayStart")}
+      </span>
+    );
+  }
+
+  if (!transport)
+    return (
+      <span style={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
+        <span
+          style={{
+            font: "var(--text-xs) var(--font-mono)",
+            color: "var(--text-secondary)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {t("rounds.blk", {
+            b: replay.block.toLocaleString("en-US"),
+            to: replay.toBlock.toLocaleString("en-US"),
+          })}
+        </span>
+        <span
+          onClick={stopReplay}
+          style={{
+            font: "var(--text-xs) var(--font-mono)",
+            color: "var(--text-link)",
+            cursor: "pointer",
+          }}
+        >
+          {t("rounds.replayExit")}
+        </span>
+      </span>
+    );
+
+  const done = replay.block >= replay.toBlock;
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "10px",
+        flex: 1,
+        minWidth: "260px",
+      }}
+    >
+      <span
+        onClick={() => setReplayPlaying(!replay.playing)}
+        style={{
+          font: "var(--text-sm) var(--font-mono)",
+          color: "var(--pink-300)",
+          cursor: "pointer",
+          width: "14px",
+        }}
+        title={replay.playing ? t("rounds.pause") : done ? t("rounds.playAgain") : t("rounds.play")}
+      >
+        {replay.playing ? "❚❚" : "▶"}
+      </span>
+      <input
+        type="range"
+        min={replay.fromBlock}
+        max={replay.toBlock}
+        value={replay.block}
+        onChange={(e) => seekReplay(Number(e.target.value))}
+        style={{ flex: 1, minWidth: 0, accentColor: "var(--pink-500)" }}
+      />
+      <span
+        style={{
+          font: "var(--text-xs) var(--font-mono)",
+          color: "var(--text-secondary)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {t("rounds.blk", {
+          b: replay.block.toLocaleString("en-US"),
+          to: replay.toBlock.toLocaleString("en-US"),
+        })}
+      </span>
+      {REPLAY_SPEEDS.map((speed) => (
+        <span
+          key={speed}
+          onClick={() => setReplaySpeed(speed)}
+          style={{
+            font: "var(--text-xs) var(--font-mono)",
+            color:
+              replay.speed === speed
+                ? "var(--pink-300)"
+                : "var(--text-tertiary)",
+            cursor: "pointer",
+          }}
+        >
+          {speed}x
+        </span>
+      ))}
+      <span
+        onClick={stopReplay}
+        style={{
+          font: "var(--text-xs) var(--font-mono)",
+          color: "var(--text-link)",
+          cursor: "pointer",
+        }}
+      >
+        {t("rounds.replayExit")}
+      </span>
+    </div>
+  );
+}
+
+export function RoundsBar({
+  round,
+  transport = true,
+}: {
+  round: RoundInfo;
+  /** Offer replay and its scrubber. Off on the page that has a block axis of its own. */
+  transport?: boolean;
+}) {
+  const now = useNow();
+  const selectedRound = useSelectedRound();
+  const scenario = useScenarioLabel();
+  const running = round.status === "live";
+  const countdown = formatCountdown(Math.max(0, round.endsAt - now));
+  // The bar names the world it shows: the scenario ("calm#101"), or the run's own timestamp when
+  // it belongs to no competition. Never a serial number over the local runs/ directory.
+  const worldName = scenario.name
+    ? scenario.name.replace(/^full-/, "")
+    : runDisplayName(round.runId);
+
+  // The round selection lives in the shared cursor (roundCursor.ts), and a cursor position is only
+  // meaningful against a length. A competition owns the range while one is selected -- its longest
+  // scenario -- so a standalone run only claims it when nothing longer is in view. Without this,
+  // seeking on a run opened outside a competition would clamp every round to 1.
+  // Re-run once the mode is known: until then a stored competition counts as absent.
+  const mode = useMode();
+  useEffect(() => {
+    const stored = effectiveSelectedCompetitionId();
+    if (stored !== null && stored !== SINGLE_RUNS) return;
+    setCursorRange(round.intervals.length);
+  }, [round.intervals.length, mode.known, mode.audience]);
+
+  // The live segment fills by chain progress through its own block range, not by wall clock: the
+  // bar is a block series, and a stalled chain should show a stalled round.
+  const liveInterval = round.intervals.find((e) => e.status === "live");
+  const liveFillPercent = liveInterval
+    ? Math.min(
+        100,
+        Math.max(
+          0,
+          ((round.blockNumber - liveInterval.fromBlock) /
+            Math.max(1, liveInterval.toBlock - liveInterval.fromBlock)) *
+            100,
+        ),
+      )
+    : 100;
+
+  const selected = round.intervals.find((e) => e.index === selectedRound) ?? null;
+  const doneCount = round.intervals.filter((e) => e.status === "done").length;
+
+  return (
+    <div
+      style={{
+        width: "100%",
+        background: "var(--bg-sunken)",
+        borderBottom: "1px solid var(--border-subtle)",
+      }}
+    >
+      {round.intervals.length > 0 ? (
+        // A 2016-round live run gives each segment ~0.2px, and the round number inside it — an
+        // absolutely positioned 34px label — then reaches past the last segment. The segment
+        // clips it, but the strip has to own the clip too, or those few pixels scroll the page.
+        <div style={{ display: "flex", width: "100%", overflow: "hidden" }}>
+          {round.intervals.map((interval) => (
+            <RoundSegment
+              key={interval.index}
+              interval={interval}
+              selected={interval.index === selectedRound}
+              liveFillPercent={liveFillPercent}
+              onSelect={() =>
+                setSelectedRound(
+                  interval.index === selectedRound ? null : interval.index,
+                )
+              }
+            />
+          ))}
+        </div>
+      ) : (
+        <div
+          style={{
+            height: "40px",
+            display: "flex",
+            alignItems: "center",
+            padding: "0 var(--space-3)",
+            font: "var(--text-xs) var(--font-mono)",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {t("rounds.noRounds")}
+        </div>
+      )}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "baseline",
+          gap: "var(--space-3)",
+          padding: "var(--space-2) var(--space-3)",
+          flexWrap: "wrap",
+        }}
+      >
+        <span
+          style={{
+            font: "var(--font-mono)",
+            fontSize: "var(--text-xs)",
+            letterSpacing: "var(--tracking-widest)",
+            color: running ? "var(--pink-300)" : "var(--text-tertiary)",
+            textTransform: "uppercase",
+          }}
+        >
+          {worldName}{" "}
+          {/* Step to another world of the same competition without leaving the page. */}
+          <WorldSwitcher /> ·{" "}
+          {round.replay
+            ? t("rounds.replay")
+            : running
+              ? t("common.live")
+              : t("common.finished")}
+          {round.intervals.length > 0 && (
+            <>
+              {" · "}
+              {round.intervalBlocks > 0
+                ? t("rounds.progressBlocks", {
+                    done: doneCount,
+                    total: round.intervals.length,
+                    blocks: round.intervalBlocks,
+                  })
+                : t("rounds.progress", {
+                    done: doneCount,
+                    total: round.intervals.length,
+                  })}
+            </>
+          )}
+        </span>
+        <ReplayControls round={round} transport={transport} />
+        <span
+          style={{
+            font: "var(--weight-bold) var(--text-lg) var(--font-mono)",
+            color: running ? "var(--pink-300)" : "var(--text-tertiary)",
+          }}
+        >
+          {round.replay
+            ? t("rounds.replayPct", {
+                pct: Math.round(
+                  ((round.replay.block - round.replay.fromBlock) /
+                    Math.max(1, round.replay.toBlock - round.replay.fromBlock)) *
+                    100,
+                ),
+              })
+            : running
+              ? t("rounds.left", { t: countdown })
+              : t("common.finished")}
+        </span>
+      </div>
+      {selected && <RoundResults interval={selected} />}
+    </div>
+  );
+}

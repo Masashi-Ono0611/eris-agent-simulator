@@ -1,0 +1,126 @@
+# config/regimes/whale.yaml — official regime 3: single large orders that move the mid. ADR 0017 §1
+#
+# regime = this file (market conditions), seed = supplied at run time. This file defines the OU fair
+# price / flow intensity / stress; the seed picks the realized path out of that family.
+# Run: npm run backtest -- --regime whale --seed 101 [--agents <roster>]
+# Or as part of a scenario matrix: npm run backtest -- --scenarios config/scenarios/public.yaml
+#
+# Note:
+#   - There is deliberately no `run.seed` here (ADR 0017 §1). The seed is the second axis of a
+#     scenario, not a property of the regime, so it must be given explicitly and a run cannot
+#     silently inherit one.
+#   - blockTimeSec and blocks are part of the regime (fixed to the production values). Shortening is
+#     an explicit override for behavior checks and smoke tests only; runs whose scores you read must
+#     use these defaults (ADR 0016 §3).
+#   - every venue is deployed, `lst` and `liquity` included. That is not merely a wider set: liquity
+#     promotes eUSD into the market-priced stable registry, so a stable that can lose its peg exists
+#     in every regime rather than only in depeg, and a liquidityPull with no `venue:` thins every
+#     enabled venue. This file used to be full-whale.yaml, a separate set beside a five-venue one;
+#     the five-venue set was retired rather than kept as a second answer to what the competition is.
+#   - funding is an ETH/BTC/USDC basket, not USDC-only (issue #54) -- the reasoning is on the
+#     funding block itself.
+# The roster is the default for pre-submission verification. Replaceable via --agents <roster.yaml|json>.
+
+run:
+  blocks: 360 # R: ADR 0017 §1
+  seconds: 1800 # a stress run auto-disables the time limit and ends by block count (ADR 0009)
+  blockTimeSec: 2 # fixed to the regime (ADR 0016 §2)
+  protocols: [uniswap, balancer, curve, gmx, aave, lst, liquity]
+  economicGas: false
+  localDeploy: true
+  reportDir: ./runs
+  # Rules §4.1: a mark is the median over the 5 blocks ending at the valuation block, so an
+  # agent cannot reprice a pool at the close and book the move. Unset means 0 = mark live off a
+  # single block, which leaves that open; the metric-* regimes have carried 5 all along.
+  markMedianBlocks: 5
+  # Rules §2.3: every agent runs in a 2 vCPU / 4 GiB container. Only the docker path applies the
+  # caps (infra/docker-agent/run-agent.sh), so the official regimes name it. A local run without
+  # docker: `--agent-sandbox process` (no caps, and it says so in events.jsonl as agent_sandbox).
+  agentSandbox: docker
+
+funding:
+  # An ETH/BTC/USDC basket rather than USDC only. The score is excess over the do-nothing
+  # baseline, which holds the same funding, so the basket's beta cancels out of the metric by
+  # construction (lp-provider's own comment says as much: "handed inventory is beta nobody chose
+  # and it cancels out of every score because the benchmark holds it too"). What USDC-only was
+  # protecting is netPnlUsdc, a reporting figure. What it cost was reachability: the LST vault and
+  # the Trove are WETH/ETH denominated, and the sell side of every arbitrage had no inventory
+  # behind it, so half of each strategy was structurally dead (issue #54).
+  wethWei: "8000000000000000000" # 8 WETH
+  base: { WBTC: "40000000" } # 0.4 WBTC (8 decimals)
+  # Gas ETH: rules §4.2 grant it on top of the basket and count it in asset value; the published
+  # amount is 1 ETH. Measured spend is <= 0.005 ETH per agent per epoch, and the runtime's gas manager
+  # refills from the agent's own WETH if a run ever outlasts it. (Unset, it used to be 100 ETH -- four
+  # times the basket -- and that gas money's price was most of every agent's P.)
+  ethWei: "1000000000000000000" # 1 ETH
+  # The flow wallets' own inventory, sized so a flowTrend hold can be delivered rather than declared
+  # (issue #112). A x3 lean held for 30 blocks is ~26 WETH of one-way flow per venue wallet
+  # (0.5 WETH mean x 3 x 0.45 arrivals/block x 38 effective blocks; ~51 WETH before issue #79 halved
+  # the arrival rate), and informed-flow holds two such windows (~51 WETH); a wallet funded like an
+  # agent (0 WETH / 25k USDC = ~8 WETH at $3,000) runs dry within
+  # the ramp on either side -- sells flip to buys once the WETH bought earlier in the window is gone,
+  # buys are capped at the USDC left -- and the measured lean was x1.4 for 3 blocks against the
+  # declared x2-3 for 12. 150 WETH and its USDC equivalent cover two same-direction windows with
+  # margin (kept at the pre-#79 size: the 10x size clamp means a single tail print can be 10 WETH);
+  # against ~$6M of depth per venue that is a 7.5 % depth question, not a fairness one (the
+  # flow is machinery and unscored). WBTC is the same fix one issue earlier (#99: every WBTC sell was
+  # submitted against a zero balance, ~90 % of the WBTC informed rows reverted).
+  flowWethWei: "150000000000000000000" # 150 WETH per flow wallet
+  flowUsdcUnits: "450000000000" # 450,000 USDC per flow wallet (= 150 WETH at $3,000)
+  flowBase: { WBTC: "750000000" } # 7.5 WBTC: same opening notional as 150 WETH (#124)
+  usdcUnits: "25000000000"
+
+flow:
+  uninformedMaxWethWei: "1000000000000000000"
+  informedMaxWethWei: "2000000000000000000"
+  balancerMaxWethWei: "1000000000000000000"
+  curveMaxWethWei: "1000000000000000000"
+  informedArbFeeBps: 30
+  uninformedArrivalRate: "0.45" # issue #79: Base measures 0.41-0.44 swaps per 2 s block on its two main WETH/USDC venues
+  uninformedSizeSigma: "1.5" # issue #79: mean-preserving; median 0.30 -> 0.16 WETH, mean / median 1.65 -> 3.1 (measured 3-11)
+  uninformedSizeClampMult: "10" # issue #79: was a constant 3. ~4 prints > 3 WETH per venue per epoch, ~1 > 10 WETH every two epochs
+  gmxArrivalRate: "0.75"
+  gmxSizeSigma: "1.0"
+  aaveActorSizeSigma: "1.0"
+  # WBTC orderflow. Without it nothing exogenous moves the WBTC pools: the fair price walks and
+  # the pool sits still, so the funded WBTC leg is inventory nobody trades against (measured on a
+  # 60-block calm run: 390 WETH base-leg txs against 7 WBTC, all 7 from one agent, and a pool that
+  # moved +0.07% while its fair moved -1.17%). Sized to the WETH flow by notional; one value covers
+  # uninformed flow and Balancer/Curve; Uniswap informed flow has its own 2x cap (#124).
+  baseMax: { WBTC: "5000000" } # 0.05 BTC (8 decimals)
+  baseInformedMax: { WBTC: "10000000" } # 0.1 BTC: matches the 2 WETH Uniswap informed cap
+
+stress:
+  # Ranges, not values: the seed samples the size, the block, the side and the book (ADR 0009).
+  #
+  # The number of prints is drawn too (3-5). This used to be four entries in four fixed bands, two
+  # on uniswap, then balancer, then curve -- so the first print told an agent that three more were
+  # coming, roughly when, and on which venue. One entry with a count spreads 3-5 prints uniformly
+  # over the placements that fit, at least 15 blocks apart so two of them do not merge into one
+  # larger shock, each on a venue the seed picks.
+  #
+  # The magnitude is WETH and is meaningful only against the pool's depth (events.ts says so):
+  # 25-60 WETH is 2.5-6 % of a 1,000 WETH full-range side. Issue #79 left spot depth at 1,000 WETH
+  # + 3M USDC per venue and left this range alone; if depth ever changes, scale the range with it
+  # so a print stays 2.5-6 % of a side rather than a fixed number of WETH.
+  events:
+    - {
+        type: whale,
+        count: [3, 5],
+        minGapBlocks: 15,
+        magnitudeRange: [25, 60],
+        windowFrac: [0.10, 0.85],
+        venue: random,
+      }
+
+agents:
+  - id: noop
+    wallet: AGENT1_PRIVATE_KEY
+    baseline: true
+    description: does nothing (baseline)
+  - id: venue-arb
+    wallet: AGENT2_PRIVATE_KEY
+    description: WETH-only cross-venue arbitrage
+  - id: multi-arb
+    wallet: AGENT3_PRIVATE_KEY
+    description: base-agnostic cross-venue arbitrage (all active bases x all venues)

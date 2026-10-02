@@ -1,0 +1,83 @@
+# config/regimes/metric-informed-flow.yaml — AUTO-GENERATED from config/regimes/informed-flow.yaml.
+#
+# Same market conditions, ADR 0019 §6 funding (1 ETH gas reserve + 100k USDC, economicGas), and
+# no base inventory at all. The official regime hands out a native ETH reserve plus a WETH/WBTC
+# basket: netPnlUsdc nets those out (both ends are priced at the final price) but an interval series
+# marks them live, so every agent's std_e would be the market's volatility and M9's lambda term
+# would measure the market rather than the agent. Used only to compare M4 / M9 / M27 in scenario
+# mode (ADR 0020 §4); the competition's own regimes are the files this was generated from.
+#
+# Known cost of USDC-only: lp-provider cannot mint an LP position at all (measured: 21 of 24
+# rounds "insufficient LP budget"), so the one inventory-holding strategy sits the comparison out.
+run:
+  blocks: 360
+  seconds: 1800
+  blockTimeSec: 2
+  protocols:
+    - uniswap
+    - balancer
+    - curve
+    - gmx
+    - aave
+    - lst
+    - liquity
+  economicGas: true
+  localDeploy: true
+  reportDir: ./runs
+  intervalBlocks: 12
+  markMedianBlocks: 5
+funding:
+  wethWei: "0"
+  usdcUnits: "100000000000"
+  ethWei: "1000000000000000000"
+flow:
+  uninformedMaxWethWei: "1000000000000000000"
+  informedMaxWethWei: "2000000000000000000"
+  balancerMaxWethWei: "1000000000000000000"
+  curveMaxWethWei: "1000000000000000000"
+  informedArbFeeBps: 30
+  uninformedArrivalRate: "0.45" # issue #79: Base measures 0.41-0.44 swaps per 2 s block on its two main WETH/USDC venues
+  uninformedSizeSigma: "1.5" # issue #79: mean-preserving; median 0.30 -> 0.16 WETH, mean / median 1.65 -> 3.1 (measured 3-11)
+  uninformedSizeClampMult: "10" # issue #79: was a constant 3. ~4 prints > 3 WETH per venue per epoch, ~1 > 10 WETH every two epochs
+  gmxArrivalRate: "0.75"
+  gmxSizeSigma: "1.0"
+  aaveActorSizeSigma: "1.0"
+  baseMax:
+    WBTC: "5000000"
+stress:
+  events:
+    - type: flowTrend
+      magnitudeRange:
+        - 2
+        - 3
+      trendCorrelation: 1
+      persistBlocks: 12
+      windowFrac:
+        - 0.15
+        - 0.3
+      rampBlocks: 6
+      holdBlocks: 30
+      decayBlocks: 10
+    - type: flowTrend
+      magnitudeRange:
+        - 2
+        - 3
+      trendCorrelation: 1
+      persistBlocks: 12
+      windowFrac:
+        - 0.55
+        - 0.75
+      rampBlocks: 6
+      holdBlocks: 30
+      decayBlocks: 10
+agents:
+  - id: noop
+    wallet: AGENT1_PRIVATE_KEY
+    baseline: true
+    description: does nothing (baseline)
+  - id: venue-arb
+    wallet: AGENT2_PRIVATE_KEY
+    description: WETH-only cross-venue arbitrage
+  - id: multi-arb
+    wallet: AGENT3_PRIVATE_KEY
+    description: base-agnostic cross-venue arbitrage (all active bases x all venues)
