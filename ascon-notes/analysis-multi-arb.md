@@ -1,0 +1,21 @@
+# 参照エージェントの損益源とβの注意点
+
+- 実測: calm#101 の5体比較で P は noop −144、ascon-alpha −120（T=38）、venue-arb −17、clean-arb +71、multi-arb +267。
+- 実測: 別の alpha 集計では multi-arb +411.60、clean-arb +215.67、venue-arb +127.36、ascon-alpha +24.71 USDC（run `2026-10-02T13-27-19-033Z/summary.json`）。条件・集計範囲が異なるので混同しない。
+- 実測: 同 run の agent JSONL は multi-arb 252 submitted / 151 noop、venue-arb 340 / 22、clean-arb 42 / 341、ascon-alpha 10 / 357。
+- 実測: multi-arb の全252件が単発 swap という依頼時の約定集計。JSONLの `submitted` には bundle leg もあるため、単純な行数だけでは単発/二脚を判別できない。
+- multi-arb の主な期待利益は各 venue の mid と `view.fair` の差を縮める単発売買。安値買い・高値売りは ETH/BTC を参照価格で評価する採点と整合する。
+- `example/agents/multi-arb/agent.ts`: 単発は乖離 > venue fee + 50bps、サイズは乖離×200,000 bps、250〜2,500bps（残高比）。slippage 75bps。
+- 同コードの二脚経路は venue 間 spread > 両 venue fee + 50bps、net edge×200,000で同じ250〜2,500bps。Leg slippage は120bps。
+- `venue-arb/agent.ts`: WETHのみ、mid乖離 10bps以上で発火、gap×200,000を250〜2,500bpsへ制限。在庫が無い方向を飛ばす。
+- venue-arb の340 submittedと +127.36 alpha は「回数が多いほど良い」ではない実例。実行価格、手数料、在庫変化を含めて比較する。
+- `clean-arb/agent.ts`: 二脚限定。実行可能な buy/sell quote があれば使い、往復実コストに75bpsを加えて net edge 25bps以上、残高の1〜5%を発注。
+- clean-arb は開始在庫不要のUSDC買い leg を使うが、§0.1により bundle は原子的でない。片 leg 残り・約定順・価格変化のリスクがある。
+- `ascon-alpha/agent.ts`: `marketViews` の fair は使うが、乖離条件が厳しく約定10回に留まった（`agents/ascon-alpha.jsonl`）。閾値とサイズの差が参加機会を減らした。
+- 評価では ETH/WBTC を fair で採点するため、初期在庫を終盤に売ると概ね手数料・impact分を失う（`competition-start.md` §1、§4、規約 §4）。
+- crash と lending-incident は参照価格急落に depth 40〜60%減、spike は15〜22%急騰とdepth減（§1）。安値買い/高値売りを続けると在庫が片寄りうる。
+- depeg-persist はDAIの話だが、相場が戻る前提の逆張りが最終評価で損になる例（§1）。この戦略はDAIを扱わないが、persistent gapへの無制限な追随も同型の在庫リスク。
+- cdp-incident は急落・depth減とeUSD depegが重なる（§1）。AMM単発戦略に専用の利益源はなく、WETH/WBTCの在庫偏りだけ負う可能性。
+- launch の新規上場トークンは終了時評価0（§1、規約 §4.1）。この設計はWETH/WBTC/USDCの既存市場だけを見る。
+- 推測: ギャップが基礎価格変化そのもの、または薄いvenueのquote誤差なら、fairへ戻る取引は逆張りとなり、サイズ比例で損失が拡大し得る。
+- βでは初期保有量の許容帯と終盤制限を設け、偏った側をさらに積み増さない。二脚裁定は補助扱いにする。
