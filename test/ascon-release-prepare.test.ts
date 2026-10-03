@@ -10,6 +10,23 @@ const script = join(root, "ascon-notes/release/prepare-release.py");
 const py = (code: string) => spawnSync("python3", ["-c", code, script], { encoding: "utf8" });
 const call = (args: string[]) => spawnSync("python3", [script, ...args], { encoding: "utf8" });
 
+test("scan_passed accepts a clean scan whose summary contains the word BLOCK, and fails closed otherwise", () => {
+  const cases: Array<[number, string, boolean]> = [
+    [0, "=== submission scan: x.zip ===\n  [WARN] package.json: non-registry dependency\n--- 0 BLOCK, 1 WARN -> ACCEPT\n", true], // real output of a clean bundle
+    [0, "--- 0 BLOCK, 0 WARN -> ACCEPT\n", true],
+    [0, "  [BLOCK] agent.ts: eval\n--- 1 BLOCK, 0 WARN -> REJECT\n", false],
+    [0, "--- 2 BLOCK, 3 WARN -> ACCEPT\n", false], // blocks present even if the verdict word were wrong
+    [0, "--- 0 BLOCK, 0 WARN -> REJECT\n", false],
+    [0, "no summary line at all\n", false], // unparsable output is BLOCKED, never PASS
+    [1, "--- 0 BLOCK, 0 WARN -> ACCEPT\n", false], // non-zero exit
+  ];
+  for (const [code, out, expected] of cases) {
+    const r = py(`import importlib.util,sys; s=importlib.util.spec_from_file_location('prep',sys.argv[1]); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); print(m.scan_passed(${code}, ${JSON.stringify(out)}))`);
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stdout.trim(), expected ? "True" : "False", `${code} ${JSON.stringify(out)}`);
+  }
+});
+
 test("pure source rewrites safely quote hostile JSON and substitute env/numberEnv", () => {
   const bad = JSON.stringify({ text: "quote' slash\\ line\n ${process.env.PWN}" });
   const r = py(`import importlib.util,sys; s=importlib.util.spec_from_file_location('prep',sys.argv[1]); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); print(m.rewrite_source('const d = parseDeltaParams(process.env.ASCON_DELTA_PARAMS); const e = parseEpsilonParams(process.env.ASCON_EPSILON_PARAMS); const n = numberEnv("ERIS_LAUNCH_TEST", 12);', ${JSON.stringify(bad)}, None))`);

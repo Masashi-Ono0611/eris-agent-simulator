@@ -64,6 +64,20 @@ def inspect_tree(path):
     return problems
 
 
+def scan_passed(returncode, stdout):
+    """True only for a zero exit AND a parsed summary line `--- N BLOCK, M WARN -> ACCEPT` with N == 0.
+
+    The bare word BLOCK also appears in the summary of a clean scan ("0 BLOCK"), so it cannot be searched
+    for. A missing or unparsable summary fails closed (BLOCKED is not PASS)."""
+    if returncode != 0:
+        return False
+    found = re.findall(r'^---\s*(\d+)\s+BLOCK,\s*(\d+)\s+WARN\s*->\s*(\w+)\s*$', stdout, re.M)
+    if not found:
+        return False
+    block, _warn, verdict = found[-1]
+    return int(block) == 0 and verdict == 'ACCEPT'
+
+
 def run(root, command):
     return subprocess.run(command, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
@@ -125,7 +139,7 @@ def main():
             res = run(root, cmd); checks.append((label, res.returncode == 0, res.stdout[-1200:]))
         if zip_path.exists():
             res = run(root, ['python3','infra/submission/scan-submission.py',str(zip_path)])
-            passed = res.returncode == 0 and not re.search(r'\bBLOCK\b', res.stdout)
+            passed = scan_passed(res.returncode, res.stdout)
             checks.append(('submission scan (0 BLOCK)', passed, res.stdout[-1200:]))
         else: checks.append(('submission scan', False, 'bundle ZIP がありません'))
         try:
