@@ -17,12 +17,15 @@
 2. 推論サービスの API キーは**別フォームで1回だけ**登録（本番で使えるモデル一覧は推論プロキシ側の公表を確認）
 3. 送信数秒後に受理/不受理メールが届く
 
+## 登録状況（2026-10-03）
+- **参加登録は済み**（本人の認識）。裏付け: 公開マニフェストの参加者一覧に、ウォレットが `masa-ascon`（external・registered 2026-10-03）として載っている／運営が各チームに送る試行環境の接続情報メールを受領済み。フォーム受理の確認メール自体は未確認（Gmail 連携がエラーで検索できなかった）。締切は 10/24。
+
 ## 練習 devnet（スコア対象外）
 - RPC `https://ascon-rpc.nyx.foundation/`（chainId 31337、2秒/ブロック）、ダッシュボード/エクスプローラは認証不要
 - RPC は HTTP ヘッダ3つ必須（値は contact@nyx.foundation からのメール。チーム専用キーは共有禁止）
 - 資金: Discord #faucet に `id: <英字・-_>` / `address: 0x...` を投稿（秘密鍵は絶対に貼らない）。**実測: 投稿（2026-10-03 朝・土曜）から着金まで約 3.5 時間**。着金額はマニフェストの `funding`（ETH 1 / WETH 8 / USDC 25,000 / WBTC 0.4）と一致
 - 使用不可: `anvil_*` / `evm_*` / `eth_sendTransaction` / `txpool_*` / `eth_subscribe`。100 req/秒（バースト300、call/estimateGas/getLogs は5回分）
-- **接続の実測（2026-10-03）**: 疎通チェック `ascon-notes/practice/check-practice.ts` は全 9 項目 PASS（ブロック速度 0.51 blocks/s）。実エージェント（`ascon-epsilon`・既定設定）を `ascon-notes/practice/run-agent.ts` で約 2 分走らせ、**約定 20 件が着地**。`approval_failed` 29 件（原因未特定）と `submit_failed` 2 件（`ERC20: transfer amount exceeds balance` / `BAL#507`）が残る。
+- **接続の実測（2026-10-03）**: 疎通チェック `ascon-notes/practice/check-practice.ts` は全 9 項目 PASS（ブロック速度 0.51 blocks/s）。実エージェント（`ascon-epsilon`・既定設定）を `ascon-notes/practice/run-agent.ts` で約 2 分走らせ、**約定 20 件が着地**。`approval_failed` 29 件は**見かけの失敗**（チェーンで allowance を直接照会し、全 venue の承認 23 組が最大値で着地していることを確認。承認後の確認段階の例外とみられる。詳細: `ascon-notes/analysis-approval-failed.md`）。`submit_failed` 2 件（`ERC20: transfer amount exceeds balance` / `BAL#507`）は原因未特定（桁の誤りは確認できず、取引の継続は妨げない）。
 - **実行は必ずリリース用 worktree（バックテストを走らせない）で行う**: バックテストは追跡対象の `sdk/src/constants.local.ts`（運営環境の住所表）をローカル deployer の住所表に書き換えるため、書き換わったままでは「18 件すべてコードなし」で起動拒否される。詳細: `ascon-notes/submission-checklist.md` の C0。
 - 詳細: `docs/guide/practice-devnet.md`、接続テンプレ: `ascon-notes/practice.env.template`
 
@@ -41,6 +44,6 @@
 - 賞金: リーダーボード総額 300 万円（1 位 100 万・2 位 50 万・3 位 30 万…）、レポートトラック総額 200 万円（応募締切 11/21）
 
 ## 未確認（要対応）
-- 参加登録/チーム登録の完了状況、チームコード
-- 推論 API キー登録フォームの実施、本番で利用可能なモデル一覧（LLM 改訂を使う場合）
-- 練習 devnet での `approval_failed` の原因（取引の着地は確認済みで、致命的かは未確認）
+- チームコード（チームで参加する場合のみ。#qa で運営に確認）
+- 推論 API キー（**必須**・**Ollama Cloud のキーのみ**・利用上限の設定が必須）: ZIP 提出と同時に登録する方針（2026-10-03 決定）。最初の提出は早めに 1 回行い、受理メールで形式を確認する。キー未登録で提出が受理されるかは未確認。本番で利用可能なモデル一覧も未発見（`prompt.md` の `model:` は一覧確定後に合わせる）
+- 練習 devnet での `submit_failed` 2 件の原因（残高競合・価格変化・スリッページのいずれか。`approval_failed` は見かけの失敗と確認済み）
