@@ -12,6 +12,11 @@
 - [ ] 環境変数が**未設定**でテストが通る（既定値＝採用設定であることを単体テストで固定）。`ERIS_AGENT_FROZEN` や `ERIS_LAUNCH_*` に依存していないこと。
 - [ ] 運営スキャンの WARN（`reads process env`）は許容だが、可能なら環境変数の読み取り自体を削る。
 
+## C0. 住所表の汚染ゲート（実害由来・致命的）
+- バックテスト（`npm run backtest`）は、追跡対象の `sdk/src/constants.local.ts` を**ローカル deployer の住所表に毎回書き換える**（fingerprint 不一致で自動再生成）。upstream が commit している版は**練習 devnet / 運営環境の住所表**で、練習 devnet に繋ぐランナーも、提出 ZIP（sdk を同梱する）も、この版でなければ動かない。2026-10-03 に、書き換わったまま練習 devnet に繋ぎ「18 件すべてコードなし」で起動拒否された。
+- **バンドル・練習 devnet 実行・selftest は、バックテストを一切走らせない専用のリリース用 worktree で行う**（`git worktree add` でコミット済みの状態から作る）。リリース用 worktree で `git diff --quiet upstream/main -- sdk/src/constants.local.ts`（または `git status --short sdk/src/constants.local.ts` が空）を確認する。
+- [ ] 提出 ZIP の `sdk/src/constants.local.ts` が upstream の commit 版と**バイト一致**（`unzip -p bundle-<dir>.zip sdk/src/constants.local.ts | shasum -a 256` と `git show <upstream commit>:sdk/src/constants.local.ts | shasum -a 256` が一致）。
+
 ## C. 自己完結と提出形式
 - [ ] 提出ディレクトリが他のエージェントディレクトリへ相対 import していない（提出 ZIP には自分のディレクトリ + runtime + lib + sdk しか入らない）。`rg 'from "\.\./' <dir> | rg -v '\.\./(lib|runtime)/'` が 0 件。
 - [ ] `agent.ts` は `decide()` 形式（`run(ctx)` 形式は prompt.md と共存できず提出不可）。`prompt.md` の frontmatter に `kind: improve` / `name` / `description`。
