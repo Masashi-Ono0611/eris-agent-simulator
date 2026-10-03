@@ -146,6 +146,16 @@ class ReleaseTests(unittest.TestCase):
                 extra=['--verify-existing'] if (self.root/'example/agents/out').exists() else []
                 code,out=self.call([*extra,*args])
                 self.assertNotEqual(code,0,out); self.assertNotIn('RELEASE READY',out)
+    def test_release_public_set_matches_config_yaml(self):
+        # The release gate's own constants are the fail-open surface: pin them to the published file, not to a test copy.
+        text=(ROOT/'config/scenarios/public.yaml').read_text()
+        regs=re.search(r'^regimes:\n((?:  - .+\n)+)',text,re.M).group(1)
+        yaml_regimes={l.strip()[2:].strip() for l in regs.splitlines()}
+        yaml_seeds={x.strip() for x in re.search(r'^seeds:\s*\[(.*?)\]',text,re.M).group(1).split(',')}
+        mod=load(ROOT/'ascon-notes/release/prepare-release.py')
+        self.assertEqual(set(mod.PUBLIC_REGIMES),yaml_regimes)
+        self.assertEqual(set(mod.PUBLIC_SEEDS),yaml_seeds)
+        self.assertEqual(len(yaml_regimes)*len(yaml_seeds),60)
     def test_stale_zip_not_ready(self):
         code,out=self.call(self.evidence(zip_sha256='0'*64)); self.assertNotEqual(code,0); self.assertNotIn('RELEASE READY',out)
     def test_stale_commit_not_ready(self):
