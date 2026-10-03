@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -7,7 +7,7 @@ import { test } from "node:test";
 
 const repo = process.cwd();
 const script = resolve(repo, "ascon-notes/eval/aggregate.py");
-function runIndex(rows: Array<{ regime: string; seed: number; dir: string; code?: number }>, summaries: Record<string, unknown>) {
+function runIndex(rows: Array<{ regime: string; seed: number; dir: string; code?: number }>, summaries: Record<string, unknown>, expectedCode = 0) {
   const temp = mkdtempSync(join(tmpdir(), "ascon-eval-fixture-"));
   for (const [name, summary] of Object.entries(summaries)) {
     mkdirSync(join(temp, name), { recursive: true });
@@ -15,20 +15,20 @@ function runIndex(rows: Array<{ regime: string; seed: number; dir: string; code?
   }
   const index = join(temp, "index.tsv");
   writeFileSync(index, `regime\tseed\trun_dir\texit_code\n${rows.map(r => `${r.regime}\t${r.seed}\t${join(temp, r.dir)}\t${r.code ?? 0}`).join("\n")}\n`);
-  try { return execFileSync("python3", [script, index], { encoding: "utf8" }); }
+  try { const r = spawnSync("python3", [script, index], { encoding: "utf8" }); assert.equal(r.status, expectedCode, r.stderr); return r.stdout; }
   finally { rmSync(temp, { recursive: true, force: true }); }
 }
 function summary(p: number, q = p, failedReads = 0, violations: unknown[] = []) {
   return { agents: [{ id: "noop", pnlUsdc: 0, includedTxCount: 0 }, { id: "a", pnlUsdc: p, includedTxCount: 2 }, { id: "b", pnlUsdc: q, includedTxCount: 1 }], valueSeries: { failedReads, alphaByAgent: {} }, violations };
 }
 
-test("synthetic: all ties get T=50; missing agent and uneven seeds use regime weighting", () => {
+test("synthetic: all ties get T=50; missing agent invalidates whole scenario", () => {
   const output = runIndex([
     { regime: "calm", seed: 1, dir: "c1" }, { regime: "calm", seed: 2, dir: "c2" },
     { regime: "storm", seed: 1, dir: "s1" },
-  ], { c1: summary(0), c2: summary(0), s1: { agents: [{ id: "noop", pnlUsdc: 0 }, { id: "a", pnlUsdc: 10 }], valueSeries: { failedReads: 0 }, violations: [] } });
+  ], { c1: summary(0), c2: summary(0), s1: { agents: [{ id: "noop", pnlUsdc: 0 }, { id: "a", pnlUsdc: 10 }], valueSeries: { failedReads: 0 }, violations: [] } }, 1);
   assert.match(output, /\| calm \| 1 \| a \| 0\.00 \| 50\.0/);
-  assert.match(output, /\| a \| 55\.0 \| 50\.0 \|/);
+  assert.match(output, /\| a \| 50\.0 \| 50\.0 \|/);
   assert.match(output, /\| b \| 50\.0 \| 50\.0 \|/);
   assert.match(output, /1\/2/);
 });
@@ -40,7 +40,9 @@ test("synthetic: failed run and duplicate run_dir are invalid and excluded", () 
   const index = join(temp, "index.tsv");
   writeFileSync(index, `regime\tseed\trun_dir\texit_code\ncalm\t1\t${runDir}\t0\ncalm\t2\t${runDir}\t0\ncrash\t1\t${runDir}\t9\n`);
   try {
-    const out = execFileSync("python3", [script, index], { encoding: "utf8" });
+    const result = spawnSync("python3", [script, index], { encoding: "utf8" });
+    assert.equal(result.status, 1);
+    const out = result.stdout;
     assert.match(out, /無効: run_dir重複/);
     assert.match(out, /有効\/対象レジーム/);
     assert.match(out, /\| a \| 欠測 \| 欠測 \| 0 \| 0\/2 \| 0\/2 \| 3 \|/);
@@ -50,14 +52,14 @@ test("synthetic: failed run and duplicate run_dir are invalid and excluded", () 
 test("synthetic: nonzero failedReads and violations are invalid", () => {
   const output = runIndex([{ regime: "r", seed: 1, dir: "bad1" }, { regime: "r", seed: 2, dir: "bad2" }], {
     bad1: summary(50, 0, 1), bad2: summary(50, 0, 0, ["policy"]),
-  });
+  }, 1);
   assert.match(output, /無効: failedReads不正/);
   assert.match(output, /無効: violationsあり/);
   assert.match(output, /\| a \| 欠測 \| 欠測 \| 0 \| 0\/1 \| 0\/1 \| 2 \|/);
 });
 
 test("synthetic: nonzero index exit_code is invalid", () => {
-  const output = runIndex([{ regime: "r", seed: 1, dir: "failed", code: 23 }], { failed: summary(50) });
+  const output = runIndex([{ regime: "r", seed: 1, dir: "failed", code: 23 }], { failed: summary(50) }, 1);
   assert.match(output, /無効: exit_code不正/);
   assert.match(output, /\| a \| 欠測 \| 欠測 \| 0 \| 0\/1 \| 0\/1 \| 1 \|/);
 });

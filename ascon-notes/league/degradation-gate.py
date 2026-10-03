@@ -15,6 +15,7 @@ import statistics
 from pathlib import Path
 from league_harness import ROOT, number
 from league_timing import events
+from g0_contract import summary_errors
 
 
 def integer(v):
@@ -56,6 +57,7 @@ def extract(source, args):
         if not isinstance(s, dict): raise ValueError()
     except (OSError, ValueError):
         block('summary.json'); return r
+    r['failed'].extend(summary_errors(s))
     r['id'] = s.get('runId')
     if not isinstance(r['id'], str) or not r['id']:
         block('runId'); r['id'] = None
@@ -144,6 +146,31 @@ def extract(source, args):
     return r
 
 
+def compare(base, candidates, a):
+    seen_ids, seen_paths = set(), set()
+    for r in base + candidates:
+        if r['id'] in seen_ids or r['path'] in seen_paths: r['failed'].append('duplicate run ID/path')
+        if r['id']: seen_ids.add(r['id'])
+        seen_paths.add(r['path'])
+    for r in candidates:
+        refs = [b for b in base if b['regime'] == r['regime']]
+        if not refs:
+            r['blocked'].append('baseline regime'); continue
+        if any(set(b['agents']) != set(r['agents']) for b in refs):
+            r['blocked'].append('baseline agent roster/telemetry mismatch'); continue
+        if r['catchups'] is not None and all(b['catchups'] is not None for b in refs):
+            if r['catchups'] > statistics.mean(b['catchups'] for b in refs) + a.max_catchup_increase:
+                r['failed'].append('catch-up increase')
+        for aid, m in r['agents'].items():
+            for metric, tolerance, drop in [('decisions', a.max_decision_drop, True),
+                    ('coverage', a.max_coverage_drop_pp, True), ('timeouts', a.max_timeout_increase, False),
+                    ('submit_failed', a.max_submit_failure_increase, False)]:
+                if tolerance is None: continue  # informational only (printed below)
+                baseline = statistics.mean(b['agents'][aid][metric] for b in refs)
+                delta = baseline - m[metric] if drop else m[metric] - baseline
+                if delta > tolerance + 1e-9: r['failed'].append(aid + ' ' + metric)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--baseline', nargs='+', required=True, help='parallel=3 output dirs / run dirs')
@@ -168,28 +195,7 @@ def main():
     except (OSError, ValueError, TypeError) as e:
         print('取得不能: input artifacts (' + type(e).__name__ + ')')
         print('GATE BLOCKED'); return 2
-    seen_ids, seen_paths = set(), set()
-    for r in base + candidates:
-        if r['id'] in seen_ids or r['path'] in seen_paths: r['failed'].append('duplicate run ID/path')
-        if r['id']: seen_ids.add(r['id'])
-        seen_paths.add(r['path'])
-    for r in candidates:
-        refs = [b for b in base if b['regime'] == r['regime']]
-        if not refs:
-            r['blocked'].append('baseline regime'); continue
-        if any(set(b['agents']) != set(r['agents']) for b in refs):
-            r['blocked'].append('baseline agent roster/telemetry mismatch'); continue
-        if r['catchups'] is not None and all(b['catchups'] is not None for b in refs):
-            if r['catchups'] > statistics.mean(b['catchups'] for b in refs) + a.max_catchup_increase:
-                r['failed'].append('catch-up increase')
-        for aid, m in r['agents'].items():
-            for metric, tolerance, drop in [('decisions', a.max_decision_drop, True),
-                    ('coverage', a.max_coverage_drop_pp, True), ('timeouts', a.max_timeout_increase, False),
-                    ('submit_failed', a.max_submit_failure_increase, False)]:
-                if tolerance is None: continue  # informational only (printed below)
-                baseline = statistics.mean(b['agents'][aid][metric] for b in refs)
-                delta = baseline - m[metric] if drop else m[metric] - baseline
-                if delta > tolerance + 1e-9: r['failed'].append(aid + ' ' + metric)
+    compare(base, candidates, a)
     def show(v): return '取得不能' if v is None else str(round(v, 3)) if isinstance(v, float) else str(v)
     print('group\trun\tblocks\tloops\tcatch-up>1\tenv p99 ms\tstatus')
     for group, records in [('baseline', base), ('candidate', candidates)]:
@@ -203,6 +209,7 @@ def main():
     print('判断回数はログで観測した distinct blocks（decide 呼出総数・採掘遅延は取得不能）。')
     print('基準は --baseline の3並列実測を利用。catch-up はrun当たり基準平均との差（統計的有意差検定なし）。')
     code = 2 if any(r['blocked'] for r in base + candidates) else 1 if any(r['failed'] for r in base + candidates) else 0
+    print('負荷のみ: 採点完全性・選抜可否は G0 で確認する。')
     print('GATE ' + {0: 'PASS', 1: 'FAIL', 2: 'BLOCKED'}[code])
     return code
 

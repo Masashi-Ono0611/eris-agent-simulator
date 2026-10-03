@@ -1,61 +1,59 @@
 # Offline degradation gate
 
+評価・選抜の入口は **G0**。`degradation-gate.py` の PASS は「負荷のみ」で、
+予定シナリオ・ロスターの完全一致や提出許可を意味しない。
+
+```bash
+python3 -B ascon-notes/league/g0.py ascon-notes/eval/out/round-1/index.tsv \
+  --roster ascon-notes/league/roster-round-1.yaml \
+  --regimes 'calm cdp-incident launch' --seeds '201 202 203' \
+  --baseline ascon-notes/eval/out/probe-p3 --manifest round-1 --json
 ```
+
+G0 は予定の regime × seed とロスター全 ID の一致（欠け・余り・重複なし）、全員有限 P、
+failedReads=0、violations=[]、360 blocks、362 loops、起動・完了・timing・agent ログ、
+blocks.csv と包含数の一致を積集合で確認する。1 人でも P が欠測/NaN/Infinity なら
+シナリオ全体を無効にし、残った人で μ/σ を再計算しない。timeout は絶対数 0。
+予定値を省略して観測値から補完することはない。
+
+終了コードは PASS=0 / FAIL=1 / BLOCKED=2。既知の不一致は FAIL、必要証跡の欠測・不正は BLOCKED。
+両方あれば BLOCKED を優先し、JSON の failed / blocked と表で両方を表示する。
+`--json` は標準出力に JSON だけを出す。既定は人間向けの表。
+
+## 負荷の比較
+
+```bash
 python3 -B ascon-notes/league/degradation-gate.py \
   --baseline ascon-notes/eval/out/probe-p3 \
   --candidate ascon-notes/eval/out/probe-p5 ascon-notes/eval/out/probe-p6
-bash ascon-notes/league/load-probe.sh --agents 12 --parallel 6 --base-port 8800 --dry-run
 ```
 
-ラウンドの出力ディレクトリ、`index.tsv`、個別の `runs/<id>` を受け取る。
-相対 `run_dir` はリポジトリルート基準。全入力を通じて run ID / 実パスの重複を拒否。
-実行中の `.matrix-tmp-*` がある出力は BLOCKED。基準も候補も全 run の検査を通る必要がある。
-終了コードは PASS=0 / FAIL=1 / BLOCKED=2。欠測と違反が同時にある場合は BLOCKED を優先し、違反も表示する。
+G0 はこのスクリプトの `extract` / `compare` と `league_timing.py` のイベント読取を呼ぶ。
+負荷ロジックを複製しない。単体ゲートでも failedReads / violations / 全員有限 P を拒否するが、
+選抜に必要な全条件を検査するのは G0。基準が無ければ絶対検査だけを行い、JSON に明記する。
 
-既定は 360 blocks、**厳密に 362 loops**（実測: 正常な run は常に 360 blocks + 開始前の 2 パス = 362。league-r1・load-probe・分離スイートの全 run で確認）、block time 2 秒、環境 p99 < 1000 ms。
-362 以外の loops（例 361・360・352）は既定では FAIL（355 などの負荷劣化も検出する）。実ログには開始前の `blocksCaughtUp=0` の pass があり、
-360 blocks / 362 loops も実在する。`--expected-loops` で明示的に変更できるが、
-loops と timing 行数の一致・epoch 内 block の連続被覆・他の全条件を満たす必要がある。
-`--expected-loops` を `--blocks` 未満にはできない。
+G0 の閾値は `g0_contract.py` に固定: 360 blocks、厳密に362 loops、block time 2秒、
+nearest-rank の環境 p99 < 1000ms。R1 launch/201 は361 loopsだったため、
+「R1 は全362」という旧記述は誤り。360 blocks 完走だけでは無劣化とはいえない。
 
-p99 は run ごとの nearest-rank。最大値だけを p99 と呼ばず、最悪の run も平均で隠さない。
-catch-up は `blocksCaughtUp > 1` の run ごとの発生回数を、同 regime の基準 run 群の平均と比較する。
-ポリシーには有意差検定の方式・閾値が無いため、暫定の保守的な許容増加 0 を使用する。
-これは統計的有意差の検定ではない。`--max-catchup-increase` で許容回数を指定できる。
-判断数低下・timeout 増加・送信失敗増加はそれぞれ既定 0、被覆低下は 1 percentage point 以下。
-`--max-decision-drop` / `--max-timeout-increase` / `--max-submit-failure-increase` /
-`--max-coverage-drop-pp` / `--max-p99-fraction` / `--block-time-sec` / `--blocks` で変更する。
+基準を渡す場合、同 regime の基準平均から catch-up (`blocksCaughtUp>1`) 増加0、
+timeout増加0、判断被覆低下≤1 percentage point。これは統計的有意差検定ではない。
+判断ブロック数の差と送信失敗数の差は既定で情報表示のみ（単体ゲートでは引数で有効化可）。
+基準も候補も検査し、同じ roster / regime / seed と並列3の事前固定対照を使う。
+基準が実際に並列3だったことは開始時 manifest と運用記録で確認する。
 
-`--baseline` が実際に 3 並列だったことは実験者が保証する（既存出力に並列度の記録なし）。
-index 入力では regime ごとに比較し、基準にない regime は BLOCKED。
-個別 run 入力は同じ条件の比較対象を渡すこと。個別 run をまとめた `direct` 群として扱う。
-seed の違いによる変動はこのゲートでは補正しない。同じ roster / 同じ regime・seed の反復測定を推奨する。
+## 証跡の意味と限界
 
-## 実在の取得元と限界
+- summary: blocksProcessed、loopIterations、runStartBlock / finalBlock、blockTimeSec、agents。
+- events.jsonl: run_started_realtime / run_completed の runId、agents_registered / agents_ready の全員一致。
+- round_timing: 行数=loops、epoch内ブロックの連続被覆、blocksCaughtUp、totalMs。
+- agents/*.jsonl: runtime_start、ID一致、log cap/truncationなし、action / decide timeout / submitted等。
+- blocks.csv: agent別 includedTxCount と一致する行数、有限の非負整数のgas/fee値。
 
-- `core/src/realtime/coordinator.ts:3865-3887` → `events.jsonl` の `round_timing`:
-  `blockNumber`, `blocksCaughtUp`, `keeperMs`, `oracleMs`, `stateFlowMs`, `totalMs`。
-  protocol 別 `*Ms`、`boundaryMs`, `blocksMs`, `notifiedBlock` は条件付き。
-- `coordinator.ts:4360-4388` → `summary.json`:
-  `runId`, `blockTimeSec`, `blocksProcessed`, `loopIterations`, `runStartBlock`, `finalBlock`, `agents`。
-- `events.jsonl` の `agents_registered`, `agents_ready` と agent log の `runtime_start` を照合し起動確認する。
-- `example/agents/runtime/botMain.ts:599-640` と `send.ts:263-275` → `agents/<id>.jsonl`:
-  `round` を持つ action / decide error / decide timeout、または `blockSeen` を持つ
-  `mempool submitted / submit_failed` から観測判断ブロック数を得る。同一ブロックを重複計上しない。
-  被覆の分母は `finalBlock - runStartBlock`、対象は `runStartBlock < block <= finalBlock`。
-- **decide() 呼出総数は取得不能**。同じブロックに複数判断・複数送信があり、完全な呼出ログではない。
-  観測判断ブロック数を代理指標として比較する。採掘遅延もこの実装では取得不能。
-  出力でこれらを明記し、取得できる範囲の agent 指標で判定する。
-- 必須 timing / summary / 起動記録 / agent log の欠測、壊れた JSONL、log cap / truncation、
-  timing の block 欠落・重複は BLOCKED。JSONL 自体に連番・終了マーカーはないため、
-  構文的に有効な agent log の任意の行欠落を完全に証明することはできない。
+判断回数は観測した distinct blocks。実際の decide() 呼出総数や採掘遅延は取得不能。
+JSONL に連番・終了マーカーが無いため、構文的に有効な任意の行欠落を完全には証明できない。
+G0 は現在の形式で検査できる完全性を保証し、暗号署名や過去コードの遡及証明はしない。
 
-`round_status.py` は完了行に加え、その round の `.log` に出た runId の実行中 events も読む。
-最大値は観測分であり、欠測数も併記する。書き込み途中の不完全な JSONL 行は欠測扱い。
-
-プリフライトは output と `${TMPDIR:-/tmp}` の両 filesystem を `df -Pk` で確認し、
-6.5 GiB × 並列度 + 20 GiB を要求する（既存 matrix と同じ GiB 換算で保守的）。
-ポートは `base + parallel <= 65535`。`memory_pressure -Q` の free <10% は警告のみ、
-`vm_stat` は compressor / swap の単一時点値を表示する。swap 増加の継続観測は未実装。
-実行時は既存 matrix の `MIN_FREE_GB` に必要量を整数切り上げして渡し、バッチ前再確認にも適用する。
-`--dry-run` は roster / 出力 / 一時ディレクトリを作らず、何も起動しない。
+`load-probe.sh --dry-run` のプリフライトは output と TMPDIR の両方に
+6.5 GiB × 並列度 + 20 GiB を要求し、ポート範囲を確認する。
+メモリ圧力は単一時点の警告。実負荷校正・devnet・anvil はオフライン fixture 検査の対象外。

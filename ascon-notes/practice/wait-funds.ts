@@ -1,9 +1,10 @@
+import { practiceTransport } from './transport.js';
 // Polls the practice-devnet balances of the agent wallet and exits 0 once ETH, WETH and USDC are all > 0
 // (the faucet sends the manifest's `funding` amounts). Prints amounts only, never keys or headers.
 // Usage: npx tsx ascon-notes/practice/wait-funds.ts [--interval-sec 90] [--max-min 240]
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { createPublicClient, formatEther, formatUnits, http, parseAbi } from "viem";
+import { createPublicClient, formatEther, formatUnits, parseAbi } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { loadPracticeEnv } from "./env.js";
 
@@ -23,7 +24,7 @@ const addrIdx = process.argv.indexOf("--address");
 const watched = addrIdx >= 0 ? process.argv[addrIdx + 1] : undefined;
 if (watched !== undefined && !/^0x[0-9a-fA-F]{40}$/.test(watched)) throw new Error("--address must be a 0x address");
 const account = { address: (watched ?? privateKeyToAccount(env.privateKey).address) as `0x${string}` };
-const client = createPublicClient({ transport: http(env.rpcUrl, { fetchOptions: { headers: env.headers } }) });
+const client = createPublicClient({ transport: practiceTransport(env.rpcUrl, env.headers) });
 const manifest = JSON.parse(await readFile(resolve(process.cwd(), "manifest.json"), "utf8"));
 const abi = parseAbi(["function balanceOf(address) view returns (uint256)"]);
 const tokenAddress = (symbol: string): `0x${string}` => {

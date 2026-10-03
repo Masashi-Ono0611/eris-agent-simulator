@@ -6,6 +6,7 @@ import fcntl
 import hashlib
 import json
 import os
+import g0
 import subprocess
 from pathlib import Path
 from league_harness import ROOT, analysis_args, from_args, index_path, roster_agents, tree_hash, fmt, agent_path, ci_text, stability_text
@@ -19,7 +20,7 @@ def markdown(rows):
     for r in rows:
         out.append('| ' + ' | '.join(cell(x) for x in [r['round'], r['datetime'], r['git_commit'], r['roster']['sha256'],
                    ','.join(r['regimes'])+' / '+','.join(r['seeds']), r['parallel'], r['excluded_scenarios'],
-                   fmt(r['top_mean_t']), stability_text(r), r['notes']]) + ' |')
+                   fmt(r['top_mean_t']), stability_text(r), r['notes'] + ' / G0 ' + r.get('g0',{}).get('status','未記録') + (' / allow-unverified' if r.get('allow_unverified') else '') + ' / manifest ' + str(r.get('manifest_sha256','未記録'))]) + ' |')
     out += ['', '## Agent versions', '']
     for r in rows:
         out += [f"{cell(r['round'])}: " + '; '.join(f"{cell(a)} `{v['sha256']}`" for a,v in r['agents'].items()), '']
@@ -86,10 +87,15 @@ def main():
     p.add_argument('--parallel', type=int, required=True)
     p.add_argument('--notes', default='')
     p.add_argument('--ledger', type=Path, default=Path(__file__).with_name('ledger.jsonl'))
+    g0.add_args(p, roster=False)
+    p.add_argument('--allow-unverified', action='store_true')
     analysis_args(p); a = p.parse_args()
     if a.parallel < 1: p.error('parallel must be positive')
     try:
-        data = from_args(a)
+        gate = g0.from_args(a)
+        if gate['status'] != 'PASS' and not a.allow_unverified:
+            raise ValueError('未検証（G0 '+gate['status']+'）: refusing append')
+        data = from_args(a, expected_ids=gate.get('expected',{}).get('agents'))
         if not data['ranking']: raise ValueError('no common scored scenarios for competitors')
         versions = {}
         for agent in roster_agents(a.roster):
@@ -97,7 +103,8 @@ def main():
             path = agent_path(a.agent_root, agent['dir'])
             versions[agent['id']] = dict(directory=str(path), **tree_hash(path))
         if set(data['players']) - set(versions): raise ValueError('scored player missing from roster')
-        entry = dict(round=a.name or index_path(a.round).parent.name,
+        entry = dict(g0=gate, allow_unverified=a.allow_unverified,
+                     manifest_sha256=gate.get('manifest_sha256') or '未記録', round=a.name or index_path(a.round).parent.name,
                      datetime=datetime.datetime.now(datetime.timezone.utc).isoformat(),
                      git_commit=subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD'],text=True).strip(),
                      roster=dict(path=str(a.roster.resolve()), sha256=hashlib.sha256(a.roster.read_bytes()).hexdigest()),

@@ -30,7 +30,8 @@ class GateTests(unittest.TestCase):
         p.mkdir(exist_ok=True)
         (p / 'agents').mkdir(exist_ok=True)
         self.write(p / 'summary.json', dict(runId=name, blocksProcessed=360, loopIterations=loops,
-                    runStartBlock=100, finalBlock=460, blockTimeSec=2, agents=[dict(id='a')]))
+                    runStartBlock=100, finalBlock=460, blockTimeSec=2, valueSeries={'failedReads':0},
+                    violations=[], agents=[dict(id='a',pnlUsdc=1)]))
         logs = [dict(type='run_started_realtime', runId=name, runBlocks=360),
                 dict(type='agents_registered', agents=[dict(id='a')]),
                 dict(type='agents_ready', ready=[dict(id='a')], launched=1, timedOut=False, late=[], exited=[])]
@@ -87,6 +88,9 @@ class GateTests(unittest.TestCase):
     def test_partial_timing_blocked(self):
         p=self.candidate/'events.jsonl'; lines=p.read_text().splitlines(); del lines[4]; p.write_text('\n'.join(lines)+'\n'); self.gate(2)
     def test_missing_agent_log_blocked(self): (self.candidate/'agents/a.jsonl').unlink(); self.gate(2)
+    def test_valid_but_unterminated_log_blocked(self):
+        p=self.candidate/'agents/a.jsonl'; p.write_text(p.read_text().rstrip('\n'))
+        self.gate(2)
     def test_truncated_log_blocked(self):
         with (self.candidate/'agents/a.jsonl').open('a') as f: f.write('{broken');
         self.gate(2)

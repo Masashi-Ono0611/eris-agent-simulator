@@ -4,13 +4,18 @@ import argparse
 import csv
 import json
 import math
+import sys
 from collections import defaultdict
 from pathlib import Path
 
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "league"))
+from g0_contract import summary_errors, scoring_errors
+
 def read_records(index_file):
     with index_file.open(newline="", encoding="utf-8") as handle:
         rows = list(csv.DictReader(handle, delimiter="\t"))
+    if not rows: raise ValueError("empty index: no scenarios")
     counts = defaultdict(int)
     for row in rows:
         if row.get("run_dir"):
@@ -33,14 +38,9 @@ def read_records(index_file):
             if not invalid_reason:
                 invalid_reason = "summary欠測/不正"
         value_series = (summary.get("valueSeries") or {}) if isinstance(summary, dict) else {}
-        if summary is not None and not invalid_reason:
-            try:
-                if value_series.get("failedReads") != 0:
-                    invalid_reason = "failedReads不正/欠測"
-                elif summary.get("violations"):
-                    invalid_reason = "violationsあり"
-            except (AttributeError, TypeError):
-                invalid_reason = "summary不正"
+        if summary is not None:
+            errors = summary_errors(summary)
+            if errors: invalid_reason = invalid_reason or "; ".join(errors)
         agents = None
         alpha = {}
         if summary is not None:
@@ -53,6 +53,11 @@ def read_records(index_file):
         records.append({"regime": row.get("regime", ""), "seed": row.get("seed", ""),
                         "agents": agents, "alpha": alpha,
                         "invalid": invalid_reason})
+    expected_ids = {aid for r in records if r['agents'] for aid in r['agents']}
+    for r in records:
+        if r['agents']:
+            errors = scoring_errors(list(r['agents'].values()), expected_ids)
+            if errors: r['invalid'] = r['invalid'] or '; '.join(errors)
     return records
 
 
@@ -68,6 +73,8 @@ def render(records):
     per_agent_regime = defaultdict(lambda: defaultdict(lambda: {"p": [], "t": [], "noop": []}))
     for rec in records:
         agents = rec["agents"]
+        errors = scoring_errors(list(agents.values()), ids) if agents else ['agents missing']
+        if errors: rec['invalid'] = rec['invalid'] or '; '.join(errors)
         if rec["invalid"]:
             for aid in ids or ["全体"]:
                 output.append(f"| {rec['regime']} | {rec['seed']} | {aid} | 欠測 | 欠測 | 欠測 | 欠測 | 無効: {rec['invalid']} |")
@@ -112,11 +119,17 @@ def main():
     parser.add_argument("index_tsv", type=Path)
     parser.add_argument("-o", "--output", type=Path)
     args = parser.parse_args()
-    result = render(read_records(args.index_tsv)) + "\n"
+    try:
+        records = read_records(args.index_tsv)
+        result = render(records) + "\n"
+    except (OSError, ValueError) as e: parser.error(str(e))
     if args.output:
         args.output.write_text(result, encoding="utf-8")
     else:
         print(result, end="")
+    if any(r["invalid"] for r in records):
+        print("ERROR: invalid scenarios; no partial scoring", file=sys.stderr)
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

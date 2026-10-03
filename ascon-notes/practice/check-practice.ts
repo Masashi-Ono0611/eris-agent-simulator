@@ -1,6 +1,7 @@
+import { practiceTransport, rpc } from './transport.js';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { createPublicClient, http, formatEther, formatUnits, parseAbi } from 'viem';
+import { createPublicClient, formatEther, formatUnits, parseAbi } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { loadPracticeEnv } from './env.js';
 
@@ -13,10 +14,6 @@ export function resultsExitCode(results: readonly Result[]): number {
 export function headerStatus(headers: Record<string,string>): Result {
   return Object.keys(headers).length === 3 ? { name:'認証ヘッダ設定',status:'PASS',detail:'3項目あり' } : { name:'ヘッダ付き検査',status:'BLOCKED',detail:'必要な認証ヘッダを設定してください' };
 }
-async function rpc(url: string, method: string, params: unknown[] = [], headers: Record<string,string> = {}) {
-  const r = await fetch(url,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});
-  return { status:r.status, body: await r.json().catch(()=>null) as any };
-}
 const results: Result[] = [];
 function add(name:string,status:Result['status'],detail:string){results.push({name,status,detail});}
 export async function runChecks() {
@@ -26,7 +23,7 @@ export async function runChecks() {
   catch(e) { add('設定', 'BLOCKED', e instanceof Error ? e.message : '設定エラー'); print(); return results; }
   const noAuth = await rpc(env.rpcUrl,'eth_chainId').catch(()=>null);
   add('ヘッダ無しで403',noAuth?.status===403?'PASS':noAuth?'FAIL':'BLOCKED',noAuth?`HTTP ${noAuth.status}`:'ネットワーク接続不可');
-  const client=createPublicClient({transport:http(env.rpcUrl,{fetchOptions:{headers:env.headers}})});
+  const client=createPublicClient({transport:practiceTransport(env.rpcUrl,env.headers)});
   const before=results.length;
   try {
     const chain=await client.getChainId(); add('chainId = 31337',chain===31337?'PASS':'FAIL',`chainId ${chain}`);

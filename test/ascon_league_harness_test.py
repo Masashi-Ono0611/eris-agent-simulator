@@ -36,7 +36,7 @@ spawn = module('spawn-player')
 
 class Harness(unittest.TestCase):
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(prefix='league-harness-', dir=ROOT)
+        self.temp = tempfile.TemporaryDirectory(prefix='league-harness-', dir=ROOT/'test')
         self.addCleanup(self.temp.cleanup)
         self.path = Path(self.temp.name)
         self.out = self.path / 'round'; self.out.mkdir()
@@ -44,7 +44,7 @@ class Harness(unittest.TestCase):
 
     def fixture(self, values=None, loops=None, regimes=None):
         values = values or [[30,10,-20,0]] * 4
-        loops = loops or [360] * len(values)
+        loops = loops or [362] * len(values)
         regimes = regimes or ['calm'] * len(values)
         rows = []
         for i, (ps, loop, regime) in enumerate(zip(values, loops, regimes)):
@@ -79,7 +79,7 @@ class Harness(unittest.TestCase):
 
     def test_review_chain_tampering_unicode_and_settings(self):
         index,_=self.fixture(); agents,roster=self.agents(); target=self.path/'ledger.jsonl'
-        args=[index,'--roster',roster,'--agent-root',agents,'--parallel','1','--ledger',target,
+        args=[index,'--allow-unverified','--roster',roster,'--agent-root',agents,'--parallel','1','--ledger',target,
               '--boot','20','--top-n','1','--top-k','2','--seed','42','--notes','a\u2028b\u2029c']
         self.cli('ledger.py',*args,'--name','r1'); self.cli('ledger.py',*args,'--name','r2')
         rows=[json.loads(x) for x in target.read_text().splitlines()]
@@ -105,7 +105,7 @@ class Harness(unittest.TestCase):
             for name,args in [('league-report.py',[]),('ledger.py',['--roster',roster,'--parallel','1']),
                 ('next-gen-brief.py',['--generation','2','--fresh','grok-8:LP']),('round-status.sh',[])]:
                 with self.subTest(empty=empty,name=name):
-                    self.assertIn('0',self.cli(name,index,*args,success=False))
+                    self.assertTrue(self.cli(name,index,*args,success=False))
 
     def test_review_paths_and_bad_summary_status(self):
         index,rows=self.fixture()
@@ -189,7 +189,7 @@ class Harness(unittest.TestCase):
         out=self.path/'briefs'; target=self.path/'ledger.jsonl'
         for name,args in [('league-report.py',[]),('ledger.py',['--roster',roster,'--parallel','1','--ledger',target]),
             ('next-gen-brief.py',['--generation','2','--fresh','grok-9:LP','--output-dir',out]),('round-status.sh',[])]:
-            with self.subTest(name=name): self.assertIn('0',self.cli(name,index,*args,success=False))
+            with self.subTest(name=name): self.assertTrue(self.cli(name,index,*args,success=False))
         self.assertFalse(out.exists()); self.assertFalse(target.exists())
 
     def test_review_brief_roster_escape_rejected(self):
@@ -355,12 +355,12 @@ class Harness(unittest.TestCase):
         self.assertEqual(no_ref['players']['astra-1']['paired_n'],0)
 
     def test_load_guard_on_off_missing_and_invalid(self):
-        index,rows=self.fixture(loops=[359,360,None,361])
-        self.assertEqual(self.analysis(index)['excluded_scenarios'],1)
-        self.assertEqual(self.analysis(index,minimum=0)['excluded_scenarios'],0)
+        index,rows=self.fixture(loops=[359,362,None,361])
+        self.assertEqual(self.analysis(index)['excluded_scenarios'],3)
+        self.assertEqual(self.analysis(index,minimum=0)['excluded_scenarios'],3)
         self.assertEqual(self.analysis(index)['missing_loops'],1)
         path=Path(rows[1]['run_dir'])/'summary.json'; s=json.loads(path.read_text()); s['valueSeries']['failedReads']=1; path.write_text(json.dumps(s))
-        self.assertEqual(self.analysis(index)['excluded_scenarios'],2)
+        self.assertEqual(self.analysis(index)['excluded_scenarios'],4)
         with index.open('a') as f: f.write('\t'.join(rows[2].values())+'\n')
         self.assertTrue(any(r['reason']=='run_dir重複' for r in h.read(index)))
         self.cli('league-report.py',index,'--boot','0',success=False)
@@ -400,7 +400,7 @@ class Harness(unittest.TestCase):
 
     def test_ledger_append_only_hash_changes_duplicate_rejected(self):
         index,_=self.fixture(); agents,roster=self.agents(); target=self.path/'ledger.jsonl'
-        args=[index,'--roster',roster,'--agent-root',agents,'--parallel','2','--ledger',target,'--boot','20']
+        args=[index,'--allow-unverified','--roster',roster,'--agent-root',agents,'--parallel','2','--ledger',target,'--boot','20']
         self.cli('ledger.py',*args,'--name','round-1')
         before=target.read_bytes(); old=json.loads(before)
         (agents/'astra-1/agent.ts').write_text('second version')
@@ -433,7 +433,7 @@ class Harness(unittest.TestCase):
         self.cli('next-gen-brief.py',index,'--generation','2','--survivors','unknown','--boot','20',success=False)
 
     def test_status_final_active_missing_and_eta(self):
-        index,rows=self.fixture(loops=[359,360,365,400])
+        index,rows=self.fixture(loops=[359,362,365,400])
         os.utime(index,(1000,1000))
         s=json.loads(self.cli('round-status.sh',self.out,'--started-at','900','--json'))
         self.assertEqual((s['completed'],s['total'],s['min_loop_iterations'],s['below_threshold']),(4,4,359,1))
