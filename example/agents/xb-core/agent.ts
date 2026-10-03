@@ -21,6 +21,9 @@ const BASES = ["WETH", "WBTC"] as const;
 type Base = typeof BASES[number];
 const INITIAL = { WETH: 8n * W, WBTC: 40_000_000n };
 const GAS_RESERVE = W / 20n;
+// Common spot/bundle dust filter, independent of every factor (see README arithmetic).
+export const MIN_PROFIT_USDC = 0.05;
+const GAS_MOD_BUY = 350_000;
 const SWAPS = { uniswap: "swap", balancer: "balancerSwap", curve: "curveSwap" } as const;
 type Venue = { protocol: keyof typeof SWAPS; mid: number; cost: number; depth: number };
 type Market = { base: Base; fair: number; decimals: number; held: bigint; venues: Venue[] };
@@ -82,12 +85,17 @@ export function sizeUsd(edge: number, slope: number, balanceUsd: number, cap: nu
 }
 export const profitUsd = (usd: number, edge: number, slope: number, legs: number) =>
   usd * (edge - usd * slope) * (legs > 1 ? 0.8 : 1);
+function priorityFloor(obs: AgentObservation): bigint {
+  const floor = BigInt(obs.limits.defaultPriorityFeePerGasWei);
+  return min(floor > 0n ? floor : 1n, BigInt(obs.limits.maxPriorityFeePerGasWei));
+}
 export function bidWei(obs: AgentObservation, profit: number, gas: number, mode: Params["BID_MODE"]): bigint {
   const fair = obs.fairPricesUsd?.WETH ?? obs.fairPriceUsdcPerWeth;
   if (!positive(profit) || !positive(fair) || !positive(gas)) return 0n;
-  const budget = BigInt(Math.max(0, Math.floor(profit * 0.1 / fair / gas * 1e18)));
-  const target = mode === "budget10" ? budget : BigInt(obs.competition?.maxCompetitorPriorityFeeWei ?? "0") + 100_000_000n;
-  return min(budget, target, BigInt(obs.limits.maxPriorityFeePerGasWei));
+  const extra = BigInt(Math.max(0, Math.floor(profit * 0.1 / fair / gas * 1e18)));
+  const floor = priorityFloor(obs), budgetBid = floor + extra;
+  const target = mode === "budget10" ? budgetBid : BigInt(obs.competition?.maxCompetitorPriorityFeeWei ?? "0") + 100_000_000n;
+  return min(budgetBid, target > floor ? target : floor, BigInt(obs.limits.maxPriorityFeePerGasWei));
 }
 function swap(m: Market, v: Venue, tokenIn: string, amount: bigint): Action {
   return { type: SWAPS[v.protocol], ...(m.base === "WETH" ? {} : { base: m.base }),
@@ -98,7 +106,8 @@ function remaining(obs: AgentObservation): number {
   return values.length ? Math.min(...values) : 0;
 }
 function gasSafe(obs: AgentObservation, gas: number, bid: bigint, value = 0n): boolean {
-  return bid >= 0n && BigInt(obs.balances.ethWei) - value - BigInt(gas) * bid >= GAS_RESERVE;
+  // Backtest base fee is assumed zero; reject a zero ceiling rather than emit a zero bid.
+  return bid > 0n && BigInt(obs.balances.ethWei) - value - BigInt(gas) * bid >= GAS_RESERVE;
 }
 
 function candidates(obs: AgentObservation, ms: Market[], p: Params, cooling: Set<Base>, cap: number): Candidate[] {
@@ -142,7 +151,7 @@ function candidates(obs: AgentObservation, ms: Market[], p: Params, cooling: Set
         profit: profitUsd(usd, edge, slope, 2), gas: 350_000, base: m.base });
     }
   }
-  return out.filter(c => Number.isFinite(c.profit) && c.profit >= 0.5).sort((a, b) => b.profit - a.profit);
+  return out.filter(c => Number.isFinite(c.profit) && c.profit >= MIN_PROFIT_USDC).sort((a, b) => b.profit - a.profit);
 }
 
 function redeemable(l: LiquityObservation): boolean {
@@ -191,7 +200,7 @@ export function createAgent(params: Params = BASE_PARAMS, now: () => number = ()
         return gasSafe(obs, gas, fee, value) ? { ...action, maxPriorityFeePerGasWei: fee.toString() } : noop("gas reserve");
       };
       // Recoveries are identical for every Params combination, including MOD=none and GATE pauses.
-      const recoveryFee = min(BigInt(obs.limits.defaultPriorityFeePerGasWei), BigInt(obs.limits.maxPriorityFeePerGasWei));
+      const recoveryFee = priorityFloor(obs);
       const recover = (a: Action, gas = 350_000, value = 0n): Action => {
         const result = finish(a, gas, recoveryFee, value);
         if (result.type !== "noop") waitUntil = block + 3;
@@ -270,10 +279,13 @@ export function createAgent(params: Params = BASE_PARAMS, now: () => number = ()
         if (r && /^0x[0-9a-fA-F]{40}$/.test(r.owner) && liquidatable(l) && liquidationCount < 3 &&
             block - (attempted.get(r.owner) ?? -100) >= 5) {
           const profit = Number(BigInt(l.gasCompensationEusdWei)) / 1e18 * (l.marketSellPriceUsdc ?? l.marketPriceUsdc) * 0.9;
-          if (!positive(profit) || !gasSafe(obs, 700_000, bidWei(obs, profit, 700_000, "budget10"))) return noop("gas reserve");
-          const a = finish({ type: "liquityLiquidate", borrowers: [r.owner] }, 700_000, bidWei(obs, profit, 700_000, p.BID_MODE));
-          if (a.type !== "noop") { attempted.set(r.owner, block); liquidationCount++; waitUntil = block + 3; }
-          return a;
+          if (positive(profit) && gasSafe(obs, 700_000, bidWei(obs, profit, 700_000, "budget10"))) {
+            const a = finish({ type: "liquityLiquidate", borrowers: [r.owner] }, 700_000, bidWei(obs, profit, 700_000, p.BID_MODE));
+            if (a.type !== "noop") {
+              attempted.set(r.owner, block); liquidationCount++; waitUntil = block + 3;
+              return a;
+            }
+          }
         }
         const buy = l.marketBuyPriceUsdc ?? l.marketPriceUsdc * 1.001;
         const headroom = 1 - (l.redemptionRateBps + 65) / 10000 - buy - 0.01;
@@ -286,23 +298,26 @@ export function createAgent(params: Params = BASE_PARAMS, now: () => number = ()
             imbalance * headroom / Math.max(0.001, 4 * (1 - buy)), debt * headroom / 2,
             Number(BigInt(r!.netDebtEusdWei)) / 1e18 * buy * 0.9);
           if (usd >= 100 && funded(obs, "USDC", units(usd))) {
-            if (!gasSafe(obs, 1_500_000, bidWei(obs, usd * headroom, 1_500_000, "budget10"))) return noop("gas reserve");
-            const a = finish({ type: "liquitySwapEusd", tokenIn: "USDC", amountIn: units(usd).toString(), slippageBps: 40 },
-              350_000, bidWei(obs, usd * headroom, 1_500_000, p.BID_MODE));
-            if (a.type !== "noop") { spent += units(usd); waitUntil = block + 3; }
-            return a;
+            if (gasSafe(obs, GAS_MOD_BUY, bidWei(obs, usd * headroom, GAS_MOD_BUY, "budget10"))) {
+              const a = finish({ type: "liquitySwapEusd", tokenIn: "USDC", amountIn: units(usd).toString(), slippageBps: 40 },
+                GAS_MOD_BUY, bidWei(obs, usd * headroom, GAS_MOD_BUY, p.BID_MODE));
+              if (a.type !== "noop") { spent += units(usd); waitUntil = block + 3; return a; }
+            }
           }
         }
       }
       const cooling = new Set<Base>();
       for (const [base, at] of lastSent) if (block - at < 2) cooling.add(base);
-      const best = candidates(obs, ms, p, cooling, cap)[0];
-      if (!best) return noop("no funded edge");
+      const ranked = candidates(obs, ms, p, cooling, cap);
+      if (!ranked.length) return noop("no funded edge");
       // Reserve the same maximum economic bid in both modes so BID cannot change admission.
-      if (!gasSafe(obs, best.gas, bidWei(obs, best.profit, best.gas, "budget10"))) return noop("gas reserve");
-      const a = finish(best.action, best.gas, bidWei(obs, best.profit, best.gas, p.BID_MODE));
-      if (a.type !== "noop") lastSent.set(best.base, block);
-      return a;
+      for (const best of ranked) {
+        if (!gasSafe(obs, best.gas, bidWei(obs, best.profit, best.gas, "budget10"))) continue;
+        const a = finish(best.action, best.gas, bidWei(obs, best.profit, best.gas, p.BID_MODE));
+        if (a.type !== "noop") lastSent.set(best.base, block);
+        return a;
+      }
+      return noop("gas reserve");
     } catch {
       return noop("invalid observation");
     }

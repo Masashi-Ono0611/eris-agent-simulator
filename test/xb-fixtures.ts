@@ -64,6 +64,10 @@ export function safeAction(o: AgentObservation, a: Action): void {
   for (const leg of a.type === "bundle" ? a.actions : [a]) {
     for (const key of ["amountIn", "amountEusdWei"])
       if (leg[key] !== undefined) assert.ok(BigInt(leg[key]) > 0n);
+    if (leg.amountEusdWei) {
+      spent.set("EUSD", (spent.get("EUSD") ?? 0n) + BigInt(leg.amountEusdWei));
+      assert.ok(spent.get("EUSD")! <= BigInt(o.protocols.liquity?.eusdBalanceWei ?? "0"), "existing inventory funds redemption");
+    }
     if (leg.amountIn) {
       const token = leg.tokenIn as string;
       const held = token === "USDC" ? BigInt(o.balances.usdcUnits) : token === "WETH" ? BigInt(o.balances.wethWei)
@@ -78,6 +82,23 @@ export function safeAction(o: AgentObservation, a: Action): void {
     }
   }
   if (a.tx?.value) assert.ok(BigInt(a.tx.value) > 0n && BigInt(a.tx.value) < BigInt(o.balances.ethWei));
-  assert.ok(BigInt(a.maxPriorityFeePerGasWei) >= 0n);
+  assert.ok(BigInt(a.maxPriorityFeePerGasWei) > 0n);
   assert.ok(BigInt(a.maxPriorityFeePerGasWei) <= BigInt(o.limits.maxPriorityFeePerGasWei));
+}
+
+// Independent monetary invariant: only the EXTRA over the effective default floor
+// spends the profit budget. Notional rounding can change estimated profit by <1e-6.
+export function profitBid(o: AgentObservation, a: Action, profit: number, gas: number): void {
+  assert.ok(profit > 0);
+  assert.notEqual(a.type, "noop");
+  const fee = BigInt(a.maxPriorityFeePerGasWei);
+  const ceiling = BigInt(o.limits.maxPriorityFeePerGasWei);
+  const configured = BigInt(o.limits.defaultPriorityFeePerGasWei);
+  const requested = configured > 0n ? configured : 1n;
+  const floor = requested < ceiling ? requested : ceiling;
+  assert.ok(fee > 0n, "positive profit must send a positive priority fee");
+  assert.ok(fee >= floor && fee <= ceiling, "default floor and runtime ceiling");
+  const ethPrice = o.fairPricesUsd?.WETH ?? o.fairPriceUsdcPerWeth;
+  assert.ok(Number(fee - floor) * gas * ethPrice / 1e18 <= profit * 0.1 + 1e-7, "EXTRA costs at most 10 percent of profit");
+  assert.ok(BigInt(o.balances.ethWei) - BigInt(gas) * fee >= W / 20n, "actual sent fee preserves gas reserve");
 }

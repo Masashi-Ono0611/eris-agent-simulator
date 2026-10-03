@@ -37,12 +37,37 @@ WETH/WBTC at fair; native gas ETH and specialty holdings are excluded.
 
 Estimated spot profit is notional × (edge − notional × slope), with sonnet's
 0.8 haircut for bundles. It does not deduct the entry threshold or priority
-fee. The priority budget is floor(0.1 × profit / ETH fair / gas × 1e18).
-Budget10 pays that budget, capped by the runtime ceiling. BID1 pays the
-lesser of competitor + 100,000,000 wei, that same budget and the ceiling.
-The runtime default fee is never added or forced as a floor. An unaffordable
+fee. `MIN_PROFIT_USDC = 0.05` is an explicit common spot/bundle dust filter
+for **all** variants, not a Params factor. At depth 300,000 with no binding
+size caps, notional = 75,000 × e and profit = **56,250 × e²** USDC. Thus
+21/25/29 bps yield approximately 0.24806/0.35156/0.47306 USDC. All clear
+0.05, whereas the old 0.5 floor discarded all three and made V1 behave like
+V0 in this band. A still controls admission only; this common filter and
+other funding/size constraints can reject trades independently of A.
+
+Bidding follows sonnet-1's default-floor-plus-extra semantics. Let F be the
+runtime default priority fee (at least 1 wei, clipped to the runtime ceiling),
+and E = floor(0.1 × profit / ETH fair / estimated gas × 1e18). In wei/gas:
+
+- BID0: min(ceiling, F + E).
+- BID1: min(ceiling, F + E, max(F, competitor_max + 100,000,000)).
+
+This chooses the requested competitor-target interpretation: **total extra
+above F**, not the total fee or an extra above the competitor, spends at most
+10% of estimated profit. BID1 remains distinguishable when its competitor
+target is below F + E. For profit 5.625 USDC, ETH 3,000, gas 200,000 and
+F = 0.1 gwei, E = 0.9375 gwei: BID0 pays 1.0375 gwei, while a competitor
+at 0.1 gwei makes BID1 pay 0.2 gwei. For profit 0.3515625, E = 0.05859375
+gwei; that same competitor target is clipped to F + E in both modes.
+An extra rounded to zero still pays F. A zero/nonpositive ceiling rejects
+the action instead of sending a zero fee. A ceiling below the default takes
+precedence and becomes the effective floor.
+
+Admission conservatively reserves gas at BID0 in both modes so changing BID
+alone cannot change the candidate or size. Final `gasSafe` also checks the
+actual fee sent, including its floor. Candidates are tried in descending
+profit order until one passes this shared admission guard. An unaffordable
 competitor target is clipped, not used to reject or rerank candidates.
-Admission reserves gas at the budget10 bid in both modes.
 
 ## Common safety and state
 
@@ -58,11 +83,11 @@ four blocks prohibit new spot risk and restore deviations toward those
 anchors at available venues, subject to funding, depth and gas guards.
 The earliest of epoch/day remaining blocks wins; an unknown horizon or
 valuation boundary produces noop. Recovery fee policy is identical for all
-variants: runtime default capped by the runtime ceiling, with gas reserve
-enforcement. Recovery may realize a loss and is not filtered by entry edge.
+variants: the same effective default floor, with gas reserve enforcement.
+A zero ceiling cannot produce a recovery transaction either. Recovery may realize a loss and is not filtered by entry edge.
 
 Every action preserves at least 0.05 native ETH after its estimated gas
-cost. Collateral wrapping retains the greater of 1 ETH and Liquity's
+cost under the zero-base-fee assumption below. Collateral wrapping retains the greater of 1 ETH and Liquity's
 suggested reserve before estimating transaction gas. No agent RPC calls,
 promises, timers, logging or context accesses occur: the RPC call budget is
 zero, so there is no RPC timeout or outstanding request. Work is bounded
@@ -97,6 +122,16 @@ protocol debt/fee-rise and the front trove's redeemable debt. Failed buys
 consume that one-shot allocation; a late fill still enters common recovery.
 Liquidations target the observed borrower, with at most three submissions
 per epoch and five blocks between attempts on one borrower.
+Both MOD entries use the same floor-plus-budget bid rule, with positive
+estimated liquidation reward or discount-purchase profit. The spot/bundle
+0.05 dust filter does not discard tiny positive liquidation rewards.
+Liquidations use 700,000 gas; discount purchases use **350,000** consistently
+for bidding, admission and final reserve (replacing the mixed 1.5M/350k
+estimates). Later redemption/wrap/sale actions each have their own recovery
+gas guard. A failed MOD admission or finish does not spend the attempt/allocation
+state and falls through to redeem-buy and then spot candidates as applicable.
+The common deadline guard still prevents a late fallback from being sent.
+
 
 Recovery consumes only already observed eUSD. With sufficient time and
 eligible troves it redeems at most 1,200 eUSD per action with a bounded fee
@@ -112,6 +147,19 @@ Common recoveries also apply to V0–V5/V7 if given inherited specialty
 balances, and ignore MOD/GATE/entry/sizing/band/bid settings. A worker
 restart discovers held eUSD and excess native ETH; wrapped holdings are
 also subject to the common endgame inventory exit.
+
+## Known limits
+
+- Gas cost assumes **backtest base fee = 0** and charges estimated gas × the
+  actual priority fee. A nonzero base fee is not covered by this reserve model.
+- Gas estimates are fixed: spot 200k, bundle/purchase 350k, liquidation and
+  redemption 700k, wrapping 100k. Actual gas above the estimate can violate the
+  modeled extra budget or reserve. No transaction execution was measured here.
+- Estimated profit excludes priority costs. The default floor is paid separately
+  from the 10% extra budget and may exceed a tiny reward; positive estimated
+  profit is not a guarantee of positive profit after gas or transaction inclusion.
+- GATE=off still maintains fair-price/pause bookkeeping; that state cannot gate
+  actions while the factor is off.
 
 Fixed-observation validation is recorded in `VALIDATION.md`. Real inclusion,
 contract execution, liquidity disappearance and complete epoch exits remain

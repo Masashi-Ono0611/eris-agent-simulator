@@ -1,10 +1,10 @@
-import { bundle, liquity, observation, safeAction, single, U, W } from "./xb-fixtures.js";
+import { bundle, liquity, observation, profitBid, safeAction, single, U, W } from "./xb-fixtures.js";
 import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import type { AgentObservation } from "@eris/sdk";
 import { loadImproveAgent } from "../example/agents/runtime/improve.js";
-import { BASE_PARAMS, createAgent, type Params, type Action } from "../example/agents/xb-core/agent.js";
+import { BASE_PARAMS, MIN_PROFIT_USDC, createAgent, type Params, type Action } from "../example/agents/xb-core/agent.js";
 import * as v0 from "../example/agents/xb-v0/agent.js";
 import * as v1 from "../example/agents/xb-v1/agent.js";
 import * as v2 from "../example/agents/xb-v2/agent.js";
@@ -38,6 +38,52 @@ for (const [i, variant] of variants.entries()) {
     const source = readFileSync(new URL("agent.ts", dir), "utf8");
     assert.match(source, /export const decide = createAgent\(PARAMS\)/);
     assert.equal(source.split("\n").length <= 15, true);
+  });
+  test(`V${i}: positive-profit spot, bundle and MOD fees obey floor, extra budget and reserve`, t => {
+    for (const hugeFair of [false, true]) {
+      for (const isBundle of [false, true]) {
+        const o = isBundle ? bundle() : single();
+        if (hugeFair) {
+          const scale = 1e15; // Forces the old absolute profit budget to round down to zero wei.
+          o.fairPricesUsd!.WETH *= scale;
+          o.fairPriceUsdcPerWeth *= scale;
+          o.protocols.uniswap!.pool.priceUsdcPerWeth *= scale;
+          if (o.protocols.balancer) {
+            o.protocols.balancer.priceUsdcPerWeth *= scale;
+            o.protocols.balancer.buyPriceUsdcPerWeth! *= scale;
+            o.protocols.balancer.sellPriceUsdcPerWeth! *= scale;
+          }
+        }
+        const a = action(variant.PARAMS, o);
+        assert.equal(a.type, isBundle ? "bundle" : "swap");
+        const usd = Number(isBundle ? a.actions[0].amountIn : a.amountIn) / 1e6;
+        const edge = isBundle ? 3100 / 2900 - 1 - 0.006 : 0.01;
+        const profit = usd * (edge - usd * (isBundle ? 2 : 1) / 300000) * (isBundle ? 0.8 : 1);
+        profitBid(o, a, profit, isBundle ? 350000 : 200000);
+        safeAction(o, a);
+        if (hugeFair) {
+          assert.equal(a.maxPriorityFeePerGasWei, o.limits.defaultPriorityFeePerGasWei);
+          const gas = isBundle ? 350000 : 200000;
+          const oldFee = BigInt(Math.floor(profit * 0.1 / o.fairPricesUsd!.WETH / gas * 1e18));
+          assert.equal(oldFee, 0n);
+          assert.throws(() => profitBid(o, { ...a, maxPriorityFeePerGasWei: String(oldFee) }, profit, gas), { name: "AssertionError" });
+          t.diagnostic(`RED-CONTROL V${i} old ${isBundle ? "bundle" : "spot"} bid: zero fee rejected`);
+        }
+      }
+    }
+    for (const liquidate of [false, true]) {
+      const o = observation(); o.protocols.liquity = liquity();
+      if (liquidate) o.protocols.liquity.riskiestTrove!.icr = 1.05;
+      // Production wiring stays unchanged: only V6 admits MOD entries. Explicitly enable
+      // MOD here as well to exercise its fee policy with every other factor combination.
+      assert.equal(action(variant.PARAMS, o).type, i === 6 ? (liquidate ? "liquityLiquidate" : "liquitySwapEusd") : "noop");
+      const a = action({ ...variant.PARAMS, MOD: v6.PARAMS.MOD }, o);
+      assert.equal(a.type, liquidate ? "liquityLiquidate" : "liquitySwapEusd");
+      const profit = liquidate ? 200 * 0.949 * 0.9
+        : Number(a.amountIn) / 1e6 * (1 - (50 + 65) / 10000 - 0.951 - 0.01);
+      profitBid(o, a, profit, liquidate ? 700000 : 350000);
+      safeAction(o, a);
+    }
   });
   test(`V${i}: irrelevant factors preserve quiet, recovery, endgame and gas guard actions`, () => {
     const quiet = observation();
@@ -91,9 +137,29 @@ test("SIZ common inventory cap gives identical actions when desired size exceeds
   assert.deepEqual(action(v0.PARAMS, o), action(v4.PARAMS, o));
   assert.notEqual(action(v4.PARAMS, o).type, "noop");
 });
-test("red A: V1 admits 40bps and factor-off fails the same action assertion", t => {
-  assert.equal(action(v0.PARAMS, single(0.004)).type, "noop");
-  red(t, "A", p => assert.equal(action(p, single(0.004)).type, "swap"), v1.PARAMS, { ...v1.PARAMS, A_EDGE_BPS: 60 });
+test("red A: V1 admits 25bps and factor-off fails the same action assertion", t => {
+  assert.equal(action(v0.PARAMS, single(0.0025)).type, "noop");
+  red(t, "A", p => assert.equal(action(p, single(0.0025)).type, "swap"), v1.PARAMS, { ...v1.PARAMS, A_EDGE_BPS: 60 });
+});
+test("regression profit floor: V1 acts throughout 20-30bps while the old 0.5 floor erases A", t => {
+  assert.equal(MIN_PROFIT_USDC, 0.05);
+  for (const edge of [0.0021, 0.0025, 0.0029]) {
+    const o = single(edge);
+    const v1Action = action(v1.PARAMS, o), v0Action = action(v0.PARAMS, o);
+    assert.equal(v1Action.type, "swap");
+    assert.equal(v0Action.type, "noop");
+    const usd = Number(v1Action.amountIn) / 1e6;
+    const profit = usd * (edge - usd / 300000);
+    assert.ok(profit >= MIN_PROFIT_USDC && profit < 0.5);
+    assert.ok(Math.abs(profit - 56250 * edge ** 2) < 1e-7);
+    // Reapply exactly the old candidate filter: with only this venue there is no
+    // surviving candidate for either level. The same action assertion must go red.
+    const oldAction = profit >= 0.5 ? v1Action : { type: "noop", reason: "no funded edge" };
+    assert.deepEqual(oldAction, v0Action);
+    assert.throws(() => assert.equal(oldAction.type, "swap"), { name: "AssertionError" });
+    profitBid(o, v1Action, profit, 200000);
+  }
+  t.diagnostic("RED-CONTROL old 0.5 floor: V1 equals V0 noop at 21, 25 and 29bps; swap assertion rejected");
 });
 test("red BID: competitor plus exactly 0.1gwei when affordable", t => {
   red(t, "BID", p => assert.equal(action(p, single(0.02)).maxPriorityFeePerGasWei, "200000000"),

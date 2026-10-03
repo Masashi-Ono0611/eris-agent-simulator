@@ -4,7 +4,7 @@ import type { AgentContext, AgentObservation } from "@eris/sdk";
 import { BASE_PARAMS, bidWei, createAgent, entryAllowed, funded, profitUsd, sizeUsd } from "../example/agents/xb-core/agent.js";
 import { PARAMS as MOD } from "../example/agents/xb-v6/agent.js";
 import { PARAMS as GATE } from "../example/agents/xb-v7/agent.js";
-import { bundle, liquity, observation, safeAction, single, U, W } from "./xb-fixtures.js";
+import { bundle, liquity, observation, profitBid, safeAction, single, U, W } from "./xb-fixtures.js";
 
 test("entry uses strict cost-adjusted thresholds without changing size or profit", () => {
   assert.equal(entryAllowed(0.006, 60), false);
@@ -22,20 +22,102 @@ test("balance sizing clamps its desired fraction to 2.5-25 percent with the same
   for (const mode of ["depth", "balance-2.5-25"] as const)
     assert.equal(sizeUsd(0.1, 1 / 300000, 10000, 100, mode), 100);
 });
-test("bids are absolute 10 percent budgets, never default plus budget or a forced minimum", () => {
+test("bids pay the default floor plus a capped extra, with distinct competitor targets", () => {
   const o = observation(); o.limits.defaultPriorityFeePerGasWei = "9000000000";
   for (const mode of ["budget10", "competitor+0.1gwei capped by the same 10% budget"] as const) {
-    for (const profit of [0, 0.0000001, 0.5, 5, 500]) {
+    assert.equal(bidWei(o, 0, 200000, mode), 0n);
+    for (const profit of [1e-15, 0.0000001, 0.5, 5, 500]) {
       const fee = bidWei(o, profit, 200000, mode);
-      assert.ok(Number(fee) * 200000 * 3000 / 1e18 <= profit * 0.1 + 1e-12);
-      assert.ok(fee <= BigInt(o.limits.maxPriorityFeePerGasWei));
+      profitBid(o, { type: "swap", maxPriorityFeePerGasWei: String(fee) }, profit, 200000);
     }
   }
+  assert.equal(bidWei(o, 50, 200000, "competitor+0.1gwei capped by the same 10% budget"), 9000000000n);
+  o.limits.defaultPriorityFeePerGasWei = "100000000";
   assert.equal(bidWei(o, 50, 200000, "competitor+0.1gwei capped by the same 10% budget"), 200000000n);
+  assert.ok(bidWei(o, 50, 200000, "budget10") > 200000000n);
   o.competition!.maxCompetitorPriorityFeeWei = "999999999999";
   assert.equal(bidWei(o, 1, 200000, "competitor+0.1gwei capped by the same 10% budget"), bidWei(o, 1, 200000, "budget10"));
   o.limits.maxPriorityFeePerGasWei = "1";
   assert.equal(bidWei(o, 1, 200000, "budget10"), 1n);
+  o.limits.defaultPriorityFeePerGasWei = "0";
+  assert.equal(bidWei(o, 1e-15, 200000, "budget10"), 1n);
+});
+test("zero ceiling fails closed, including tiny positive-profit MOD rewards", () => {
+  for (const o of [single(), bundle(), observation()]) {
+    o.limits.maxPriorityFeePerGasWei = "0";
+    o.protocols.liquity = liquity({ gasCompensationEusdWei: "1000" });
+    o.protocols.liquity.riskiestTrove!.icr = 1.05;
+    assert.equal(createAgent(MOD)(o).type, "noop");
+  }
+});
+test("tiny MOD reward pays the floor and cannot bypass the native reserve", t => {
+  const o = observation(); o.protocols.liquity = liquity({ gasCompensationEusdWei: "1000" });
+  o.protocols.liquity.riskiestTrove!.icr = 1.05;
+  const profit = 1e-15 * 0.949 * 0.9;
+  const a = createAgent(MOD)(o);
+  assert.equal(a.type, "liquityLiquidate");
+  assert.equal(a.maxPriorityFeePerGasWei, o.limits.defaultPriorityFeePerGasWei);
+  profitBid(o, a, profit, 700000);
+  const oldFee = BigInt(Math.floor(profit * 0.1 / 3000 / 700000 * 1e18));
+  assert.equal(oldFee, 0n);
+  assert.throws(() => profitBid(o, { ...a, maxPriorityFeePerGasWei: String(oldFee) }, profit, 700000), { name: "AssertionError" });
+  t.diagnostic("RED-CONTROL old MOD bid: rounded zero fee rejected by the positive-profit fee assertion");
+  const required = 700000n * BigInt(a.maxPriorityFeePerGasWei);
+  o.balances.ethWei = String(W / 20n + required);
+  assert.equal(createAgent(MOD)(o).type, "liquityLiquidate");
+  o.balances.ethWei = String(W / 20n + required - 1n);
+  assert.equal(createAgent(MOD)(o).type, "noop");
+  o.balances.ethWei = String(W / 20n);
+  assert.equal(createAgent(MOD)(o).type, "noop");
+});
+test("gas-blocked best bundle falls through to a funded spot candidate", () => {
+  const o = bundle();
+  assert.equal(createAgent()(o).type, "bundle");
+  o.balances.ethWei = String(W / 20n + 2_500_000_000_000_000n);
+  const a = createAgent()(o);
+  assert.ok(["swap", "balancerSwap"].includes(a.type));
+  safeAction(o, a);
+  assert.ok(BigInt(o.balances.ethWei) - 200000n * BigInt(a.maxPriorityFeePerGasWei) >= W / 20n);
+});
+test("MOD gas-blocked liquidation and purchase both fall through to spot", () => {
+  for (const liquidate of [false, true]) {
+    const o = single(); o.protocols.liquity = liquity();
+    if (liquidate) o.protocols.liquity.riskiestTrove!.icr = 1.05;
+    o.balances.ethWei = String(W / 20n + 300_000_000_000_000n);
+    const a = createAgent(MOD)(o);
+    assert.equal(a.type, "swap"); safeAction(o, a);
+    profitBid(o, a, 5.625, 200000);
+  }
+});
+test("MOD failed liquidation finish falls through to eligible redeem-buy", () => {
+  const o = observation(); o.protocols.liquity = liquity({ recoveryMode: true, tcr: 1.5 });
+  o.protocols.liquity.riskiestTrove!.icr = 1.2;
+  let tick = 0;
+  // Synthetic finish failure at the deadline, then allow the next finish. No state is spent on failure.
+  const decide = createAgent(MOD, () => [0, 4000, 0][tick++] ?? 0);
+  const a = decide(o);
+  assert.equal(a.type, "liquitySwapEusd"); safeAction(o, a);
+});
+test("MOD gas-blocked liquidation falls through to cheaper redeem-buy", () => {
+  const o = observation(); o.protocols.liquity = liquity({ recoveryMode: true, tcr: 1.5 });
+  o.protocols.liquity.riskiestTrove!.icr = 1.2;
+  o.balances.ethWei = String(W / 20n + 1_500_000_000_000_000n);
+  const a = createAgent(MOD)(o);
+  assert.equal(a.type, "liquitySwapEusd"); safeAction(o, a);
+});
+test("MOD purchase uses 350k consistently for bidding, admission and final reserve", () => {
+  const o = observation(); o.protocols.liquity = liquity();
+  const a = createAgent(MOD)(o);
+  assert.equal(a.type, "liquitySwapEusd");
+  const profit = Number(a.amountIn) / 1e6 * (1 - (50 + 65) / 10000 - 0.951 - 0.01);
+  const expected = 100000000n + BigInt(Math.floor(profit * 0.1 / 3000 / 350000 * 1e18));
+  assert.ok(BigInt(a.maxPriorityFeePerGasWei) - expected <= 1n);
+  assert.ok(BigInt(a.maxPriorityFeePerGasWei) >= expected);
+  profitBid(o, a, profit, 350000);
+  o.balances.ethWei = String(W / 20n + 350000n * BigInt(a.maxPriorityFeePerGasWei));
+  assert.equal(createAgent(MOD)(o).type, "liquitySwapEusd");
+  o.balances.ethWei = String(BigInt(o.balances.ethWei) - 1n);
+  assert.equal(createAgent(MOD)(o).type, "noop");
 });
 test("canFund normalization preserves WBTC's real balance limit", () => {
   const o = observation();
