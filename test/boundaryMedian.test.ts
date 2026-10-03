@@ -31,6 +31,7 @@ const { lstValuationRun } = await import("@eris/sdk/protocols/lst.js");
 const { aaveAdapter } = await import("@eris/sdk/protocols/aave.js");
 const { liquityValuationRun } = await import("@eris/sdk/protocols/liquity.js");
 const { MarkMedian } = await import("../core/src/realtime/reconstruct.js");
+const { getSqrtRatioAtTick } = await import("@eris/sdk/tickMath.js");
 type ValuationContext = import("@eris/sdk/protocols/types.js").ValuationContext;
 type ValuationRead = import("@eris/sdk/protocols/types.js").ValuationRead;
 
@@ -104,8 +105,9 @@ function uniPosition() {
 // A pool with no fee growth, so the mark is principal alone and what moves it is the tick.
 function uniAnswer(tick: number) {
   return (read: ValuationRead): unknown => {
-    if (is(read, "slot0", UNI_WETH.pool)) return [0n, tick, 0, 0, 0, 0, true];
-    if (is(read, "slot0")) return [0n, 0, 0, 0, 0, 0, true];
+    if (is(read, "slot0", UNI_WETH.pool))
+      return [getSqrtRatioAtTick(tick), tick, 0, 0, 0, 0, true];
+    if (is(read, "slot0")) return [getSqrtRatioAtTick(0), 0, 0, 0, 0, 0, true];
     if (is(read, "balanceOf")) return 1n;
     if (is(read, "tokenOfOwnerByIndex")) return TOKEN_ID;
     if (is(read, "positions")) return uniPosition();
@@ -119,7 +121,7 @@ function uniAnswer(tick: number) {
 function principalAt(tick: number): number {
   const { amount0, amount1 } = liquidityToTokenAmounts({
     liquidity: LIQUIDITY,
-    tick,
+    sqrtPriceX96: getSqrtRatioAtTick(tick),
     tickLower: TICK_LOWER,
     tickUpper: TICK_UPPER,
   });
@@ -140,7 +142,12 @@ test("uniswap: an LP position splits at the boundary block's tick", async () => 
   assert.deepEqual(v.unpriced, []);
   // Same answer as the primitive, fed the same tick.
   const direct = lpPositionValuation(uniPosition() as never, {
-    tickByPool: { [UNI_WETH.pool.toLowerCase()]: tick },
+    slot0ByPool: {
+      [UNI_WETH.pool.toLowerCase()]: {
+        tick,
+        sqrtPriceX96: getSqrtRatioAtTick(tick),
+      },
+    },
     fairByBase: { WETH: FAIR },
   });
   assert.ok(Math.abs(v.valueUsdc - direct.valueUsdc) < 1e-6);
@@ -483,7 +490,7 @@ function liquityAnswer(q: { depositSale: bigint; debtBuyback: bigint }) {
   };
 }
 
-test("liquity: the realizable mark uses the boundary block's own-size quotes", async () => {
+test("liquity: the realizable mark uses the boundary block's own-size buyback", async () => {
   const { values } = await driveValuation(
     liquityValuationRun(LIQUITY!, ctx()),
     liquityAnswer({
@@ -492,15 +499,16 @@ test("liquity: the realizable mark uses the boundary block's own-size quotes", a
     }),
   );
   const v = values[AGENT.id];
-  // Trove 3 ETH (6,000) less a 4,040 USDC buyback, plus the deposit sold for 990.
-  assert.ok(Math.abs(v.liquidatableValueUsdc - (6_000 - 4_040 + 990)) < 1e-6);
-  // The face mark prices both legs at the mid (par here).
+  // Trove 3 ETH (6,000) less a 4,040 USDC buyback, plus the deposit at the mid (par here): the
+  // deposit is eUSD the agent holds, sold by the scorer with the rest of its eUSD at its own size.
+  assert.ok(Math.abs(v.liquidatableValueUsdc - (6_000 - 4_040 + 1_000)) < 1e-6);
+  // The face mark prices both legs at the mid.
   assert.ok(Math.abs(v.valueUsdc - (6_000 - 4_000 + 1_000)) < 1e-6);
 });
 
-test("liquity: at a boundary both own-size quotes are medians over the window", async () => {
-  // In the boundary block eUSD was bid up for the deposit's sale and offered down for the debt's
-  // buyback -- both flattering the position. Before it: 980 and 4,080.
+test("liquity: at a boundary the debt's own-size buyback is the median over the window", async () => {
+  // In the boundary block eUSD was offered down for the debt's buyback, flattering the position.
+  // Before it: 4,080.
   const steady = liquityAnswer({
     depositSale: 980n * USDC_UNIT,
     debtBuyback: 4_080n * USDC_UNIT,
@@ -523,13 +531,13 @@ test("liquity: at a boundary both own-size quotes are medians over the window", 
     }),
   );
   const v = values[AGENT.id];
-  assert.ok(Math.abs(v.liquidatableValueUsdc - (6_000 - 4_080 + 980)) < 1e-6);
+  assert.ok(Math.abs(v.liquidatableValueUsdc - (6_000 - 4_080 + 1_000)) < 1e-6);
   // The face mark is the mid, which reaches this adapter already medianed (ctx.stablePrices()).
   assert.ok(Math.abs(v.valueUsdc - (6_000 - 4_000 + 1_000)) < 1e-6);
-  // The boundary's sizes, re-quoted: one sale and one buyback per window block.
+  // The boundary's debt, re-quoted once per window block; the deposit is not quoted here.
   assert.deepEqual(
-    asked.map((r) => r.functionName).sort(),
-    [...WINDOW.map(() => "get_dx"), ...WINDOW.map(() => "get_dy")],
+    asked.map((r) => r.functionName),
+    WINDOW.map(() => "get_dx"),
   );
 });
 
@@ -583,7 +591,7 @@ test("the window: the stables' probe is medianed alongside the venue surfaces", 
     });
     const prices = await median.at(BOUNDARY);
     assert.ok(prices);
-    assert.deepEqual(median.summary()?.surfaces, ["stables"]);
+    assert.deepEqual(median.summary()?.surfaces, ["stables", "stables-own-size"]);
   } finally {
     setEnabledProtocolIds([]);
   }
@@ -635,8 +643,8 @@ function lpChain() {
     if (c.functionName === "balanceOf") return 0n;
     if (c.functionName === "slot0")
       return is(c, "slot0", UNI_WETH.pool)
-        ? [0n, tickAt(block), 0, 0, 0, 0, true]
-        : [0n, 0, 0, 0, 0, 0, true];
+        ? [getSqrtRatioAtTick(tickAt(block)), tickAt(block), 0, 0, 0, 0, true]
+        : [getSqrtRatioAtTick(0), 0, 0, 0, 0, 0, true];
     return uniAnswer(tickAt(block))(c);
   };
   return {
