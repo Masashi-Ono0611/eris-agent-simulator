@@ -6,6 +6,7 @@ import io
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
 import tempfile
@@ -14,6 +15,9 @@ from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[1]
 LEAGUE=ROOT/'ascon-notes/league'
+PUBLIC_REGIMES = ['calm', 'cex-drift', 'informed-flow', 'whale', 'lending-incident',
+                  'crash', 'depeg', 'vuln', 'spike', 'depeg-persist', 'cdp-incident', 'launch']
+PUBLIC_SEEDS = ['101', '202', '303', '404', '505']
 sys.path.insert(0,str(LEAGUE))
 
 def load(path):
@@ -85,7 +89,10 @@ class ReleaseTests(unittest.TestCase):
         return code,out.getvalue()
     def evidence(self,**changes):
         back=dict(schema='ascon-g0-v1',status='PASS',failed=[],blocked=[],manifest_verified=True,manifest_sha256='b'*64,
-                  commit=self.commit,zip_sha256=self.digest,expected={'agents':['out']})
+                  commit=self.commit,zip_sha256=self.digest,
+                  expected={'agents':['out'], 'regimes':PUBLIC_REGIMES, 'seeds':PUBLIC_SEEDS},
+                  runs=[dict(regime=r, seed=s, status='PASS', failed=[], blocked=[])
+                        for r in PUBLIC_REGIMES for s in PUBLIC_SEEDS])
         back.update(changes)
         selftest=dict(schema='ascon-selftest-v1',status='PASS',exit_code=0,commit=self.commit,zip_sha256=self.digest,
                       agent_id='out',command='agent:selftest',stdout='[3/3] PASS out: completed the self-test at memory cap 4g; 0 included transactions, 0 reverted.\nReport: runs/fixture/summary.json\n')
@@ -102,6 +109,43 @@ class ReleaseTests(unittest.TestCase):
         code,out=self.call(); self.assertEqual(code,3,out); self.assertIn('READY ではない',out)
     def test_matching_evidence_ready(self):
         code,out=self.call(self.evidence()); self.assertEqual(code,0,out); self.assertIn('RELEASE READY',out)
+    def test_public_matrix_matches_published_config(self):
+        public=(ROOT/'config/scenarios/public.yaml').read_text()
+        self.assertEqual(re.findall(r'^  - ([a-z-]+)$',public,re.M), PUBLIC_REGIMES)
+        self.assertEqual(json.loads(re.search(r'^seeds: (\[.*\])$',public,re.M)[1]),
+                         [int(seed) for seed in PUBLIC_SEEDS])
+        self.assertEqual(len(PUBLIC_REGIMES)*len(PUBLIC_SEEDS),60)
+    def test_verified_smaller_matrix_not_ready_then_public_60_ready(self):
+        # A valid G0 PASS for its manifest still cannot satisfy release coverage.
+        args=self.evidence(expected={'agents':['out'], 'regimes':['calm'], 'seeds':['101']},
+                           runs=[dict(regime='calm',seed='101',status='PASS',failed=[],blocked=[])])
+        code,out=self.call(args)
+        self.assertNotEqual(code,0,out); self.assertNotIn('RELEASE READY',out)
+        code,out=self.call(['--verify-existing',*self.evidence()])
+        self.assertEqual(code,0,out); self.assertIn('RELEASE READY',out)
+    def test_same_size_wrong_matrix_not_ready(self):
+        # 12 x 5 alone is insufficient: these are not the published seeds/regimes.
+        for regimes,seeds in [(PUBLIC_REGIMES,['101','102','103','104','105']),
+                              (PUBLIC_REGIMES[:-1]+['agent-markets'],PUBLIC_SEEDS)]:
+            with self.subTest(regimes=regimes,seeds=seeds):
+                args=self.evidence(expected={'agents':['out'],'regimes':regimes,'seeds':seeds},
+                    runs=[dict(regime=r,seed=s,status='PASS',failed=[],blocked=[])
+                          for r in regimes for s in seeds])
+                # Reuse the prepared copy for the second subcase.
+                extra=['--verify-existing'] if (self.root/'example/agents/out').exists() else []
+                code,out=self.call([*extra,*args])
+                self.assertNotEqual(code,0,out); self.assertNotIn('RELEASE READY',out)
+    def test_incomplete_public_run_evidence_not_ready(self):
+        args=self.evidence(); p=self.root/'g0.json'; valid=json.loads(p.read_text())
+        mutations = [[], valid['runs'][:-1], valid['runs']+[valid['runs'][0]],
+                     [{**valid['runs'][0], 'status':'FAIL'},*valid['runs'][1:]],
+                     [{**valid['runs'][0], 'blocked':['missing telemetry']},*valid['runs'][1:]]]
+        for runs in mutations:
+            with self.subTest(runs=len(runs)):
+                p.write_text(json.dumps({**valid,'runs':runs}))
+                extra=['--verify-existing'] if (self.root/'example/agents/out').exists() else []
+                code,out=self.call([*extra,*args])
+                self.assertNotEqual(code,0,out); self.assertNotIn('RELEASE READY',out)
     def test_stale_zip_not_ready(self):
         code,out=self.call(self.evidence(zip_sha256='0'*64)); self.assertNotEqual(code,0); self.assertNotIn('RELEASE READY',out)
     def test_stale_commit_not_ready(self):

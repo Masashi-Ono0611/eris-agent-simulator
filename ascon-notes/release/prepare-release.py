@@ -17,6 +17,13 @@ ENV_RE = re.compile(r'process\.env')
 NUMBER_RE = re.compile(r'numberEnv\(\s*(["\'])ERIS_LAUNCH_[A-Z0-9_]+\1\s*,\s*((?:\d+(?:\.\d+)?|\.\d+)(?:n)?)\s*\)')
 NUMBER_ANY_RE = re.compile(r'numberEnv\s*\(')
 IMPORT_RE = re.compile(r'(?:from\s*|import\s*\(|require\s*\()(["\'])(\.{1,2}/[^"\']+)\1')
+# docs/competition-start.md identifies config/scenarios/public.yaml as the public
+# set. schedule.ts uses (regime, seed) identities; the published Cartesian product
+# is these 12 regimes x 5 seeds (not the league pilot's consecutive seeds).
+PUBLIC_REGIMES = frozenset(('calm', 'cex-drift', 'informed-flow', 'whale',
+                           'lending-incident', 'crash', 'depeg', 'vuln', 'spike',
+                           'depeg-persist', 'cdp-incident', 'launch'))
+PUBLIC_SEEDS = frozenset(('101', '202', '303', '404', '505'))
 
 
 def json_literal(raw):
@@ -82,6 +89,40 @@ def run(root, command):
     return subprocess.run(command, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
+def validate_public_coverage(back):
+    expected = back.get('expected')
+    if not isinstance(expected, dict):
+        raise ValueError('backtest evidence lacks public-60 expectations')
+    axes = {}
+    for name in ('regimes', 'seeds'):
+        values = expected.get(name)
+        allowed_types = (str,) if name == 'regimes' else (str, int)
+        if (not isinstance(values, list) or not values
+                or any(type(value) not in allowed_types for value in values)):
+            raise ValueError('backtest evidence lacks public-60 ' + name)
+        axes[name] = {str(value) for value in values}
+        if len(axes[name]) != len(values):
+            raise ValueError('backtest evidence has duplicate ' + name)
+    if not PUBLIC_REGIMES <= axes['regimes'] or not PUBLIC_SEEDS <= axes['seeds']:
+        raise ValueError('backtest evidence does not cover public-60 scenarios')
+    planned = {(r, s) for r in axes['regimes'] for s in axes['seeds']}
+    runs = back.get('runs')
+    if not isinstance(runs, list):
+        raise ValueError('backtest evidence lacks public-60 runs')
+    seen = set()
+    for run in runs:
+        if (not isinstance(run, dict) or not isinstance(run.get('regime'), str)
+                or type(run.get('seed')) not in (str, int) or run.get('status') != 'PASS'
+                or run.get('failed') != [] or run.get('blocked') != []):
+            raise ValueError('backtest run missing/failed')
+        pair = (run['regime'], str(run['seed']))
+        if pair in seen:
+            raise ValueError('backtest evidence has duplicate scenario runs')
+        seen.add(pair)
+    if seen != planned:
+        raise ValueError('backtest runs do not cover the planned public-60 matrix')
+
+
 def validate_evidence(backtest_path, selftest_path, commit, digest, agent_id):
     back = json.loads(Path(backtest_path).read_text())
     test = json.loads(Path(selftest_path).read_text())
@@ -91,6 +132,7 @@ def validate_evidence(backtest_path, selftest_path, commit, digest, agent_id):
         if not isinstance(evidence, dict) or evidence.get('status') != 'PASS': raise ValueError('evidence not PASS')
         if evidence.get('commit') != commit or evidence.get('zip_sha256') != digest:
             raise ValueError('evidence commit/ZIP SHA-256 mismatch')
+    validate_public_coverage(back)
     if (back.get('schema') != 'ascon-g0-v1' or back.get('failed') != [] or back.get('blocked') != []
             or back.get('manifest_verified') is not True or not re.fullmatch(r'[0-9a-f]{64}', back.get('manifest_sha256',''))
             or agent_id not in back.get('expected',{}).get('agents',[])):

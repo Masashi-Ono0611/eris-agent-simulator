@@ -1,5 +1,7 @@
 """Offline regression checks: all shell runners use isolated roots and fake executables."""
 import importlib.util
+import contextlib
+import io
 import json
 import os
 from pathlib import Path
@@ -25,6 +27,86 @@ def executable(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
     path.chmod(0o755)
+
+
+class PlayerVerification(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix='ascon-verify-')
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.agent = self.root/'league-fixture/example/agents/fixture'
+        self.agent.mkdir(parents=True)
+        (self.agent/'agent.ts').write_text('export const decide = () => null;')
+        (self.agent/'prompt.md').write_text('---\nkind: improve\nname: fixture\ndescription: test\n---\n')
+        self.test = self.root/'league-fixture/test/fixture.test.ts'
+        self.test.parent.mkdir()
+        self.verify = module('ascon-notes/league/verify-player.py')
+        self.verify.__file__ = str(self.root/'scaffold/ascon-notes/league/verify-player.py')
+
+    def verify_tests(self, source, output, exit_code=0):
+        self.test.write_text(source)
+        def run(command, **kwargs):
+            return subprocess.CompletedProcess(command, exit_code if '--test' in command else 0,
+                                               output if '--test' in command else 'PASS')
+        # Never start Node/npm: only their captured output is under test.
+        with patch.object(self.verify.subprocess, 'run', side_effect=run), \
+                patch.object(sys, 'argv', ['verify-player', 'fixture', '--json']), \
+                contextlib.redirect_stdout(io.StringIO()) as stdout:
+            code = self.verify.main()
+        return code, json.loads(stdout.getvalue())['checks']['tests']
+
+    def test_empty_and_all_skipped_suite_fail(self):
+        for prefix in ('#', 'ℹ'):
+            for source, count in [('// empty file', 0),
+                                  ("import { test } from 'node:test'; test.skip('skipped', () => {});", 1)]:
+                with self.subTest(prefix=prefix, source=source):
+                    output = f'{prefix} tests {count}\n{prefix} pass 0\n{prefix} fail 0\n{prefix} skipped {count}\n'
+                    code, check = self.verify_tests(source, output)
+                    self.assertEqual(code, 1)
+                    self.assertEqual(check, {'status':'FAIL', 'exit_code':0})
+
+    def test_executed_test_required_with_no_failures(self):
+        for prefix in ('#', 'ℹ'):
+            for output, exit_code, expected in [
+                (f'{prefix} pass 1\n{prefix} fail 0\n', 0, 'PASS'),
+                (f'{prefix} pass 1\n{prefix} fail 1\n', 0, 'FAIL'),
+                (f'{prefix} pass 1\n{prefix} fail 0\n', 7, 'FAIL'),
+                (f'{prefix} pass 1\n', 0, 'FAIL'), ('PASS\n', 0, 'FAIL'), ('', 0, 'FAIL')]:
+                with self.subTest(output=output, exit_code=exit_code):
+                    _, check = self.verify_tests('// output fixture', output, exit_code)
+                    self.assertEqual(check['status'], expected)
+
+    def test_imported_lib_forbidden_rpc(self):
+        lib = self.agent.parent/'lib'
+        lib.mkdir()
+        (lib/'helper.ts').write_text("client.request({ method: 'anvil_setBalance' });")
+        for statement in ["import { helper } from '../lib/helper.js';",
+                          "export * from '../lib/helper.js';", "import '../lib/helper.js';",
+                          "require('../lib/helper.js');", "import('../lib/helper.js');"]:
+            with self.subTest(statement=statement):
+                (self.agent/'agent.ts').write_text(statement)
+                self.assertIn('forbidden RPC: ../lib/helper.ts', self.verify.scan(self.agent))
+
+    def test_transitive_runtime_dependency_and_cycle(self):
+        lib = self.agent.parent/'lib'; lib.mkdir()
+        runtime = self.agent.parent/'runtime'; runtime.mkdir()
+        (runtime/'nested').mkdir()
+        (self.agent/'agent.ts').write_text("import '../lib/helper.js';")
+        (lib/'helper.ts').write_text("export * from '../runtime/nested';")
+        helper = runtime/'nested/index.ts'
+        helper.write_text("import '../../lib/helper.js';")
+        self.assertEqual(self.verify.scan(self.agent), [])
+        helper.write_text("import '../../lib/helper.js'; client.request({ method: 'evm_mine' });")
+        self.assertEqual(self.verify.scan(self.agent), ['forbidden RPC: ../runtime/nested/index.ts'])
+
+    def test_shared_dependency_escape_and_missing_import_fail(self):
+        lib = self.agent.parent/'lib'; lib.mkdir()
+        (self.agent/'agent.ts').write_text("import '../lib/helper.js';")
+        for source, error in [("import '../other/agent.js';", 'cross-agent import:'),
+                              ("import './missing.js';", 'unresolved local import:')]:
+            with self.subTest(source=source):
+                (lib/'helper.ts').write_text(source)
+                self.assertTrue(any(e.startswith(error) for e in self.verify.scan(self.agent)))
 
 
 class OfflineTools(unittest.TestCase):
