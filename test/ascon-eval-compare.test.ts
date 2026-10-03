@@ -7,13 +7,13 @@ import { test } from "node:test";
 
 const repo = process.cwd();
 const script = resolve(repo, "ascon-notes/eval/compare.py");
-function fixture(label: string, rows: Array<{ regime: string; seed: number; p: number; ref?: number; noop?: number; crowd?: number; code?: number; bad?: string }>) {
+function fixture(label: string, rows: Array<{ regime: string; seed: number; p: number; ref?: number; noop?: number; crowd?: number; code?: number; bad?: string; loops?: number }>) {
   const root = mkdtempSync(join(tmpdir(), "ascon-compare-"));
   const indexDir = join(root, "out", label); mkdirSync(indexDir, { recursive: true });
   const lines = ["regime\tseed\trun_dir\texit_code"];
   rows.forEach((r, i) => {
     const dir = join(root, `run${i}`); mkdirSync(dir);
-    writeFileSync(join(dir, "summary.json"), JSON.stringify({ valueSeries: { failedReads: r.bad === "failed" ? 1 : 0 }, violations: r.bad === "violation" ? ["x"] : [], agents: [
+    writeFileSync(join(dir, "summary.json"), JSON.stringify({ ...(r.loops === undefined ? {} : { loopIterations: r.loops }), valueSeries: { failedReads: r.bad === "failed" ? 1 : 0 }, violations: r.bad === "violation" ? ["x"] : [], agents: [
       { id: "noop", pnlUsdc: r.noop ?? 0 }, { id: "multi-arb", pnlUsdc: r.ref ?? 0 }, { id: "crowd", pnlUsdc: r.crowd ?? 0 }, { id: "clean-arb", pnlUsdc: 0 }, { id: "cand", pnlUsdc: r.p },
     ] }));
     lines.push(`${r.regime}\t${r.seed}\t${dir}\t${r.code ?? 0}`);
@@ -57,6 +57,29 @@ test("candidate comparisons with fewer than 12 pairs are explicitly undecidable"
   const b = fixture("iso-b", Array.from({ length: 4 }, (_, i) => ({ regime: "r", seed: i, p: 5 })));
   try { assert.match(run(a.index, b.index), /対が少なく判定不能/); }
   finally { rmSync(a.root, { recursive: true, force: true }); rmSync(b.root, { recursive: true, force: true }); }
+});
+
+test("low loop scenario is excluded across candidates while normal scenarios remain paired", () => {
+  const a = fixture("iso-a", [{ regime: "r", seed: 1, p: 10, loops: 359 }, { regime: "r", seed: 2, p: 10, loops: 362 }]);
+  const b = fixture("iso-b", [{ regime: "r", seed: 1, p: 8, loops: 362 }, { regime: "r", seed: 2, p: 8, loops: 362 }]);
+  try {
+    const output = run(a.index, b.index, "--boot", "100");
+    assert.match(output, /excluded 1/);
+    assert.match(output, /a \/ r \/ 1: loopIterations=359/);
+    assert.match(output, /使用した \(regime, seed\): 2（候補別の合計）/);
+    assert.match(output, /## a[\s\S]*?使用した \(regime, seed\): 1/);
+    assert.match(output, /## b[\s\S]*?使用した \(regime, seed\): 1/);
+  } finally { rmSync(a.root, { recursive: true, force: true }); rmSync(b.root, { recursive: true, force: true }); }
+});
+
+test("loop guard can be disabled and missing loopIterations warns without exclusion", () => {
+  const f = fixture("iso-a", [{ regime: "r", seed: 1, p: 10, loops: 1 }, { regime: "r", seed: 2, p: 10 }]);
+  try {
+    const output = run(f.index, "--min-loop-iterations", "0", "--boot", "100");
+    assert.match(output, /excluded 0/);
+    assert.match(output, /警告: loopIterations 欠落シナリオ 1 件（除外せず）/);
+    assert.match(output, /使用した \(regime, seed\): 2/);
+  } finally { rmSync(f.root, { recursive: true, force: true }); }
 });
 
 const labels = ["iso-delta-bid", "iso-eps-bid5000", "iso-zeta-a30", "iso-eps-bid10000"];

@@ -21,14 +21,16 @@
 - [ ] 提出ディレクトリが他のエージェントディレクトリへ相対 import していない（提出 ZIP には自分のディレクトリ + runtime + lib + sdk しか入らない）。`rg 'from "\.\./' <dir> | rg -v '\.\./(lib|runtime)/'` が 0 件。
 - [ ] `agent.ts` は `decide()` 形式（`run(ctx)` 形式は prompt.md と共存できず提出不可）。`prompt.md` の frontmatter に `kind: improve` / `name` / `description`。
 - [ ] `npm run typecheck` / `check:strategy` / 全単体テストが pass。差分ファジング（multi-arb との同一性）が、改変した範囲に応じて意図どおりの結果。
-- [ ] `node --import tsx scripts/bundleAgent.ts <dir>` → `python3 infra/submission/scan-submission.py bundle-<dir>.zip` が **0 BLOCK**。ZIP の中身を `unzip -l` で確認。
+- [ ] 提出用 ZIP は **`npm run bundle:agent <id> -- --submission`**（提出フォームの指定）で作る（手で圧縮しない）。**2026-10-03 時点で、この `--submission` フラグは当 repo（取り込み SHA 32e9f40）にも upstream main（cbec5ad）の `scripts/bundleAgent.ts`・`docs/competition-start.md` にも見当たらない**（未知フラグがどう扱われるかは未検証）＝提出前に upstream を fetch して実装の有無を再確認し、無ければ通常の bundle の ZIP を使うか運営に確認する→ `python3 infra/submission/scan-submission.py bundle-<dir>.zip` が **0 BLOCK**。ZIP の中身を `unzip -l` で確認。受理条件（運営の形式検証）: ZIP が展開できる／`agent.ts` と `strategy.py` のどちらか一方だけ／`prompt.md` に `kind: improve`・`name`・`description`／`artifacts.json` で契約を宣言する場合は forge 成果物を同梱。
 - [ ] `npm run agent:build -- team <dir>` と `npm run agent:selftest -- <dir>` が PASS（2 vCPU・4GB の上限下。OOM-kill は「取引しない」と区別できないので必ず確認）。Docker が必要（Colima 起動・ディスク空きに注意）。
 
 ## D. 運用・安全
 - [ ] 5 秒の応答制限内（launch の RPC は個別タイムアウト付き）。例外で `decide` 全体が落ちない。
 - [ ] 規約 §8: 評価価格を歪める取引・自己取引・他者の環境への干渉が無い。
 - [ ] 秘密（鍵・ヘッダ値）が ZIP・コード・ログに含まれていない（`gitleaks`、ZIP を展開して grep）。
-- [ ] 推論 API キーの登録フォーム（別フォーム・1 回だけ）。LLM 改訂（`reviseEveryBlocks`）を使うか決める。使わない場合も prompt.md は必須。LLM 改訂が戦略を壊さない方針（パラメータとガードの調整に限る）になっている。
+- [ ] **推論 API キーの登録は必須**（規約 §8-1/8-2/8-5。未登録だと除外の恐れ）。キーは **Ollama Cloud のキーのみ**（OpenAI キーは不可）。登録フォーム（https://forms.gle/yYHU9deG4JJ5RnJQ6・参加単位ごとに 1 回）に、提出フォームと**同じ代表者メール**で、**ZIP の最初の提出と同時**に登録する（本人作業。キーはチャット・提出フォーム・ファイルに書かない）。
+- [ ] Ollama Cloud アカウントに**利用上限を設定**済み（提出フォームの同意項目・参加規約 第8条の2第5項）。
+- [ ] `prompt.md` の `model:` / `reviseEveryBlocks` は ZIP 内の frontmatter から読まれる。モデル一覧は 2026-10-03 時点で未公表（暫定 `gpt-oss:120b`）＝**公表され次第、一覧と照合**して合わせる。提出する全エージェントは戦略改訂を行う構成（競技規約 §2.5）。LLM 改訂が戦略を壊さない方針（パラメータとガードの調整に限る）になっている。
 
 ## E. 練習 devnet での疎通（スコア対象外・任意だが推奨）
 - [ ] faucet 着金（`ascon-notes/practice/wait-funds.ts` が自動検知）→ `npx tsx ascon-notes/practice/check-practice.ts` で全項目 PASS。

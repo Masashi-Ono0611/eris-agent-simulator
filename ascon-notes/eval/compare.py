@@ -60,7 +60,8 @@ def read_index(value):
                 agents = {a["id"]: a["pnlUsdc"] for a in summary["agents"] if isinstance(a.get("pnlUsdc"), (int, float))}
             except (KeyError, TypeError, AttributeError):
                 reason = reason or "agents不正"
-        parsed.append((row.get("regime", ""), row.get("seed", ""), agents, reason))
+        parsed.append((row.get("regime", ""), row.get("seed", ""), agents, reason,
+                       summary.get("loopIterations") if summary is not None else None))
     return parsed
 
 
@@ -89,14 +90,31 @@ def verdict(ci, n, minimum=1):
     return "有意に正" if ci[0] > 0 else "有意に負" if ci[1] < 0 else "有意差なし"
 
 
-def render(inputs, ref, boot, seed):
+def render(inputs, ref, boot, seed, min_loop_iterations=360):
     candidates = {}
     excluded = Counter()
+    low_scenarios = {}
+    missing_loop = set()
+    loaded = []
     for value in inputs:
         index = resolve_index(value)
         name = candidate_name(value, index)
+        rows = read_index(value)
+        loaded.append((name, rows))
+        for regime, scenario_seed, _agents, _reason, loops in rows:
+            scenario = (regime, scenario_seed)
+            if loops is None:
+                missing_loop.add(scenario)
+            elif min_loop_iterations > 0 and isinstance(loops, (int, float)) and loops < min_loop_iterations:
+                low_scenarios.setdefault(scenario, (name, loops))
+    out = ["# ASCON 候補比較", "", f"負荷ガード: 閾値 {min_loop_iterations} loopIterations", f"excluded {len(low_scenarios)}"]
+    out.extend([f"- {label} / {regime} / {scenario_seed}: loopIterations={loops}" for (regime, scenario_seed), (label, loops) in sorted(low_scenarios.items())] or ["- なし"])
+    out.append(f"警告: loopIterations 欠落シナリオ {len(missing_loop)} 件（除外せず）")
+    for name, rows in loaded:
         target = candidates.setdefault(name, {})
-        for regime, scenario_seed, agents, reason in read_index(value):
+        for regime, scenario_seed, agents, reason, _loops in rows:
+            if (regime, scenario_seed) in low_scenarios:
+                continue
             if reason:
                 excluded[reason] += 1
                 continue
@@ -114,7 +132,7 @@ def render(inputs, ref, boot, seed):
             else:
                 excluded["必要roster P欠測"] += 1
     total_pairs = sum(len(data) for data in candidates.values())
-    out = [f"# ASCON 候補比較", "", f"使用した (regime, seed): {total_pairs}（候補別の合計）", f"除外した run: {sum(excluded.values())}"]
+    out.extend([f"使用した (regime, seed): {total_pairs}（候補別の合計）", f"除外した run: {sum(excluded.values())}"])
     out.extend([f"- {reason}: {count}" for reason, count in sorted(excluded.items())] or ["- なし"])
     out.extend([f"候補: {len(candidates)} / bootstrap: {boot}, seed: {seed}", ""])
     for name, data in candidates.items():
@@ -155,9 +173,10 @@ def main():
     parser.add_argument("--ref", default="multi-arb")
     parser.add_argument("--boot", type=int, default=10000)
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--min-loop-iterations", type=int, default=360)
     parser.add_argument("-o", "--output", type=Path)
     args = parser.parse_args()
-    result = render(args.inputs, args.ref, args.boot, args.seed)
+    result = render(args.inputs, args.ref, args.boot, args.seed, args.min_loop_iterations)
     if args.output:
         args.output.write_text(result, encoding="utf-8")
     else:
