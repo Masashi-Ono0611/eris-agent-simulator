@@ -42,6 +42,7 @@ for lock in package-lock.json dashboard/package-lock.json deployer/package-lock.
   if [ -e "$CO/$lock" ] && ! git -C "$ROOT" diff --quiet HEAD -- "$lock" 2>/dev/null; then echo "BLOCKED: $lock in the working tree differs from HEAD; reused node_modules may not match the ref" >&2; exit 2; fi
   if [ -e "$CO/$lock" ] && [ -e "$ROOT/$lock" ] && ! cmp -s "$CO/$lock" "$ROOT/$lock"; then echo "BLOCKED: $lock at $REF differs from the working tree's; reused node_modules may not match" >&2; exit 2; fi
 done
+[ -d "$ROOT/node_modules" ] || { echo "BLOCKED: $ROOT/node_modules missing - install dependencies in this checkout first (bash ~/Developer/.claude/bin/worktree-bootstrap.sh $ROOT)" >&2; exit 2; }
 for rel in node_modules dashboard/node_modules deployer/node_modules; do
   if [ -e "$ROOT/$rel" ] && [ ! -e "$CO/$rel" ]; then ln -s "$ROOT/$rel" "$CO/$rel"; fi
 done
