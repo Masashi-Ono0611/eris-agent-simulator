@@ -16,7 +16,10 @@ RM="ascon-notes/eval/run-matrix.sh"
 pair() {
   # $1,$2 = candidate names (roster-iso-<name>.yaml); labels iso-<name>-s<seeds-with-underscores>
   a=$1; b=$2
-  la="iso-$a"; lb="iso-$b"
+  # Seeds are part of the label so a re-run with other seeds never overwrites an earlier index.
+  # (The first batch, seed 101 only, was labeled iso-<name> without a suffix.)
+  suffix="s$(echo "$SEEDS" | tr ' ' '_')"
+  la="iso-$a-$suffix"; lb="iso-$b-$suffix"
   bash "$RM" --label "$la" --roster "ascon-notes/roster-iso-$a.yaml" --seeds "$SEEDS" --parallel "$PARALLEL" --base-port 8547 &
   pa=$!
   sleep 5
