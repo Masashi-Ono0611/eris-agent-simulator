@@ -3,10 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASCON 中間まとめ — 2026-10-03</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>ASCON 中間まとめ・master plan revision 2 — 2026-10-04</title>
 <style>
   :root{
     color-scheme: light;
@@ -115,33 +112,69 @@
   table.st .tb.acc{background:var(--accent);} table.st .tb.bad{background:var(--bad);}
   .tv{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; color:var(--ink); font-weight:600;}
   .chain{display:flex; gap:0; flex-wrap:wrap; align-items:stretch;}
+  /* Keep intrinsic text/table widths inside their containers; no page-level clipping. */
+  body{overflow-wrap:anywhere;}
+  .wrap,section,.fig,.flow,.chain,.node,.stats,.stat,.legend,.card,.br,.nm,.val,.tw{min-width:0; max-width:100%;}
+  .tw{width:100%; overscroll-behavior-x:contain;}
+  .latlab{gap:8px; flex-wrap:wrap;}
+  a{color:var(--accent); text-underline-offset:3px;}
+  .budget-track{display:flex; width:100%; height:42px; border-radius:8px; overflow:hidden; transform:scaleX(0); transform-origin:left; transition:transform 1.6s cubic-bezier(.2,.8,.2,1);}
+  .in .budget-track{transform:scaleX(1);}
+  .budget-segment{flex:var(--hours) 1 0; min-width:0; background:var(--c);}
+  .budget-key{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 18px; margin-top:20px; font-size:13px;}
+  .budget-key div{min-width:0;}
+  .swatch{display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:6px; background:var(--c);}
+  .factor-grid,.single-grid,.m2-grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;}
+  .factor-grid .node,.single-grid .node,.m2-grid .node{min-width:0; text-align:left;}
+  .single-grid{margin-top:16px;}
+  .calendar{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px;}
+  .day{min-width:0; border:1px solid var(--line); border-top:3px solid var(--accent); border-radius:8px; padding:12px; background:var(--bg); opacity:0; transform:translateY(8px); transition:opacity .5s,transform .5s; transition-delay:var(--delay,0ms);}
+  .in .day{opacity:1; transform:none;}
+  .day time{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; color:var(--accent);}
+  .day b{display:block; font-size:13px; margin:4px 0;}
+  .day p{font-size:12px; color:var(--muted);}
+  .day.human{border-color:var(--warn-line); border-top-color:var(--warn); background:var(--warn-tint);}
+  .day.sealed{border-top-color:var(--good);}
+  .feedback{margin-top:16px; border-left:3px solid var(--accent); padding:10px 14px; background:var(--accent-tint); font-size:13px;}
   @media (max-width:720px){
     h1{font-size:38px;} .tagline{font-size:20px;}
     .stats{grid-template-columns:repeat(2,minmax(0,1fr));}
     .legend{grid-template-columns:1fr;}
     .br{grid-template-columns:78px minmax(0,1fr) 84px;}
     .arrow{flex-basis:100%; transform:rotate(90deg); height:22px;}
+    .in .arrow{transform:rotate(90deg);}
+    .calendar{grid-template-columns:repeat(2,minmax(0,1fr));}
   }
+  @media (max-width:420px){
+    .wrap{padding-left:16px; padding-right:16px;}
+    .fig{padding:20px 12px;}
+    .budget-key,.factor-grid,.single-grid,.m2-grid{grid-template-columns:1fr;}
+    .br{grid-template-columns:72px minmax(0,1fr) 72px; gap:8px;}
+    .node{flex-basis:100%;}
+  }
+  @media (max-width:320px){.calendar,.stats{grid-template-columns:1fr;} .br{grid-template-columns:64px minmax(0,1fr) 64px; gap:4px;}}
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important; animation:none!important;}
     .ev,.node,.arrow{opacity:1; transform:none;}
+    .budget-track,.day{transform:none; opacity:1;}
     .br .b{width:var(--w);} .lat i{height:var(--h);} .tl .fill{height:calc(100% - 12px);} table.st .tb{width:var(--w);}
   }
   @media print{ table.st .tb{width:var(--w);} .ev,.node,.arrow{opacity:1; transform:none;} .br .b{width:var(--w);} .lat i{height:var(--h);} .tl .fill{height:calc(100% - 12px);} }
+  @media print{.budget-track,.day{transform:none; opacity:1;} .tw{overflow:visible;} table.st{min-width:0; table-layout:fixed; font-size:9px;} table.st td.p,table.st td.t,table.st th{white-space:normal; min-width:0;}}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
-  <div class="kicker">ASCON · 2026-10-03 · 中間まとめ</div>
-  <h1>土台は整った。<br>本命の優位は、新しい世界で消えた。</h1>
-  <p class="tagline">CI の失敗を仕組みで止め、upstream の 40 commit を取り込み、<strong>新しい基準</strong>を作りました。その基準では、これまで本命だった戦略が上位の中に埋もれ、修正版の zeta-2 は大きく劣化しました。</p>
-  <p class="sub">数字はすべて、このセッションで実行した結果です。順位は 3 seed・自分たちの場（参照と派生が多い）での診断で、優勝確率の推定ではありません。</p>
+  <div class="kicker">ASCON · 10/3の記録 → 10/4 master plan revision 2 · JST</div>
+  <h1>独自戦略を一体。<br>まず受理、その先は二つの場で確かめる。</h1>
+  <p class="tagline">Grokの18指摘を反映しました。<strong>独自MVPの受理と改訂ONの時間校正が先</strong>です。既消費は18.6h以上。探索は最大20h、更新には混成場とF_refの両ゲートを要求します。</p>
+  <p class="sub">18.6hは本人提供の実測下限、過去の成績は既存資料の引用です。原ログは再監査していません。u1mはG0 BLOCKEDの診断。以下の予算・閾値は計画値です。<a href="MASTER-PLAN-2026-10-04.md">統合マスタープラン</a>が運用上の正です。</p>
 </header>
 
 <section id="s1">
-  <div class="label"><span class="n">01</span> · この一日の流れ</div>
+  <div class="label"><span class="n">1</span> · この一日の流れ</div>
   <h2>8 つの出来事</h2>
   <div class="fig">
     <div class="tl">
@@ -151,15 +184,15 @@
       <div class="ev good"><div class="t">PR #3・#4 を merge</div><div class="d">レビューの Critical 2 件を修正してから。CI は全 job pass</div></div>
       <div class="ev"><div class="t">upstream 40 commit を取り込み</div><div class="d">採点式の変更・launch の罠プール対策を含む。agent とテストを適合</div></div>
       <div class="ev bad"><div class="t">U1（並列 5）の G0 が FAIL</div><div class="d">36 本中 21 本で環境の遅れ（p99 1.1〜2.7 秒）。順位には使わず</div></div>
-      <div class="ev good"><div class="t">u1m（並列 3）は健全</div><div class="d">36 本すべて処理回数 362、p99 最大 233ms</div></div>
-      <div class="ev warn"><div class="t">本命の優位が消えた</div><div class="d">旧世界 59.68 → 新世界 53.70。上位 5 体と区別できない</div></div>
-      <div class="ev bad"><div class="t">zeta-2 が大きく劣化</div><div class="d">本命との差 −13.28。原因は Codex が分析中</div></div>
+      <div class="ev warn"><div class="t">u1m（並列 3）は負荷のみ通過</div><div class="d">36 本すべて処理回数 362、p99 最大 233ms。begin欠落・telemetryによりG0全体はBLOCKED</div></div>
+      <div class="ev warn"><div class="t">本命の優位を確認できない</div><div class="d">旧世界59.68、新世界53.70。世界が異なり直接比較不可。新世界の上位差CIは0を含む</div></div>
+      <div class="ev bad"><div class="t">zeta-2 が大きく劣化</div><div class="d">本命との差 −13.28。分析済みの有力仮説は選択とbid予算の不整合、隔離した因果効果は未測定</div></div>
     </div>
   </div>
 </section>
 
 <section id="s2">
-  <div class="label"><span class="n">02</span> · CI の再発防止</div>
+  <div class="label"><span class="n">2</span> · CI の再発防止</div>
   <h2>push する前に、CI と同じ形で動かす</h2>
   <p class="lead">commit 済みの内容だけをクリーンに取り出し、環境を空にして、CI と同じ空きディスク（13GB）に見せて走らせます。検査できない時は <strong>PASS にせず BLOCKED</strong> にします。</p>
   <div class="fig">
@@ -170,9 +203,9 @@
       <div class="arrow">→</div>
       <div class="node hi"><div class="nt">クリーン環境</div><div class="nd">export・<code>env -i</code><br>df 13GB スタブ</div></div>
       <div class="arrow">→</div>
-      <div class="node"><div class="nt">GitHub CI</div><div class="nd">全 job pass で merge</div></div>
+      <div class="node"><div class="nt">GitHub CI</div><div class="nd">結果と実行commitを照合</div></div>
     </div>
-    <div class="fig-cap">提出する commit は <code>--full</code>（全体テスト 1674 件）を通す</div>
+    <div class="fig-cap">件数は当時の記録。提出commitは別途 <code>--full</code> 必須。計測中はhookを含む重い検査を起動しない</div>
   </div>
   <div class="stats">
     <div class="stat bad"><div class="v">4</div><div class="k">CI 失敗の回数</div></div>
@@ -183,23 +216,22 @@
 </section>
 
 <section id="s3">
-  <div class="label"><span class="n">03</span> · 並列度</div>
-  <h2>並列 5 は遅れ、並列 3 は健全</h2>
-  <p class="lead">各バーは 1 本の run の「環境処理の p99」です（短いほど良い）。破線は G0 の上限 1,000ms。12 体を同時に走らせた結果です。</p>
+  <div class="label"><span class="n">3</span> · 並列度</div>
+  <h2>負荷の合格と、計測の合格を分ける</h2>
+  <p class="lead">12体の過去記録では、並列5は負荷不良、並列3は負荷基準内でした。ただし<strong>begin・telemetryを含むG0全体は未通過</strong>。新計画はp=3・等速に固定します。</p>
   <div class="fig">
-    <div style="font-weight:700; font-size:14px; margin-bottom:10px;">U1 · 並列 5 <span class="tag bad">✕ 21 本が上限超え</span></div>
-    <div class="lat" id="latA"><div class="thr" style="bottom:calc(1000/2800*100%)"><span>1,000ms</span></div></div>
-    <div class="latlab"><span>calm</span><span>…（12 レジーム × 3 seed、左から順）…</span><span>launch</span></div>
-    <div style="font-weight:700; font-size:14px; margin-bottom:10px;">u1m · 並列 3 <span class="tag good">✓ 全 36 本が基準内</span></div>
-    <div class="lat g" id="latB"><div class="thr" style="bottom:calc(1000/2800*100%)"><span>1,000ms</span></div></div>
-    <div class="latlab"><span>calm</span><span>最大 233ms・処理回数は 36/36 が 362</span><span>launch</span></div>
-    <div class="fig-cap">縦軸 0〜2,800ms。並列 5 の測定中は私の別作業も重なっていたため、原因が並列度だけとは断定できない</div>
+    <div class="flow">
+      <div class="node bad"><div class="nt">U1 · p=5</div><div class="nd">21 FAIL / 1 BLOCKED / 14 PASS<br>不良p99 1.1〜2.7秒</div></div><div class="arrow">→</div>
+      <div class="node"><div class="nt">u1m · p=3</div><div class="nd">負荷36/36通過・最大233ms<br>G0全体はBLOCKED</div></div><div class="arrow">→</div>
+      <div class="node hi"><div class="nt">U2 · これから固定</div><div class="nd">begin/end＋完全性＋負荷<br>p99 &lt;1,000ms・CPU排他</div></div>
+    </div>
+    <div class="fig-cap">G0は負荷・採点・追跡可能性の積集合。別作業とレジームも交絡し、p=5だけを原因とは断定しない</div>
   </div>
 </section>
 
 <section id="s4">
-  <div class="label"><span class="n">04</span> · 新しい基準での順位</div>
-  <h2>上位 5 体は、区別できない</h2>
+  <div class="label"><span class="n">4</span> · 新しい基準での順位</div>
+  <h2>上位候補と本命の差は、未識別</h2>
   <p class="lead">平均 T（12 レジームの等重み・36 本）。本命 inc-zeta との差は、上位 4 体とも 95% 区間が 0 を含みます。</p>
   <div class="fig">
     <div class="bars" id="rank"></div>
@@ -213,10 +245,10 @@
   </div>
 </section>
 
-<section id="s4b">
-  <div class="label"><span class="n">05</span> · モデル → 戦略 → 結果</div>
+<section id="s5">
+  <div class="label"><span class="n">5</span> · モデル → 戦略 → 結果</div>
   <h2>どのモデルが、どんな戦略を書いたか</h2>
-  <p class="lead">どのプレイヤーも、<strong>WETH/WBTC の公正価格からの乖離を、3 つの AMM（Uniswap・Balancer・Curve）の間で裁定する</strong>核を持っています。違いは、動く閾値・サイズ・入札・専門モジュールです。構造の違う利益源を持つのは opus-1 と grok-1 だけです。</p>
+  <p class="lead">共通核は<strong>公正価格からの乖離裁定</strong>。venueはWETHのみ、他の多くはWETH/WBTCを扱い、Liquity・launch・GMX等の追加機構があります。閾値のgross/net・単脚/両脚も異なるため、この順位からモデルの優劣や単独因子の効果は分離できません。</p>
   <div class="fig">
     <div class="chain">
       <div class="flow" style="width:100%">
@@ -248,14 +280,14 @@
     <div class="fig-cap">コードから読み取った値（サイズ・撤退の詳細は省略）。T は u1m の平均（12 レジーム等重み・36 本）</div>
   </div>
   <div class="legend">
-    <div class="card"><h3>強さを分けたもの</h3><p>閾値と在庫の扱いです。専門モジュールの数は順位と相関しませんでした。最小構成の venue-arb が首位、専門が最多の astra-2 は astra-1 と ±1T。</p></div>
-    <div class="card"><h3>入札の効き方</h3><p>利益に連動して入札する inc-zeta と opus-1 は上位、入札なしの multi-arb と clean-arb は下位。ただし入札なしの venue-arb が首位で、入札だけでは説明できません。</p></div>
+    <div class="card"><h3>次に分けて測るもの</h3><p>入口・サイズ・在庫・入札。モジュール数と性能の関係は未識別です。venueの首位も、少数seed・混成場の診断に限られます。</p></div>
+    <div class="card"><h3>入札の効き方</h3><p>固定feeの参照と利益連動の候補が混在しています。固定feeは入札ゼロではありません。A×BIDで入口と執行競争の相互作用を調べます。</p></div>
     <div class="card warn"><h3>未検証</h3><p>inc-zeta と multi-arb の差（約 +14T）が入札か専門モジュールかは、このレポートでは切り分けられません。F_ref の隔離測定で確かめます。</p></div>
   </div>
 </section>
 
-<section id="s5">
-  <div class="label"><span class="n">06</span> · zeta-2 の劣化</div>
+<section id="s6">
+  <div class="label"><span class="n">6</span> · zeta-2 の劣化</div>
   <h2>同じ設定なのに、損が 6 倍</h2>
   <p class="lead">zeta-2 の既定値は、本命のパラメータと同一です（bidMode 2・利益の 30%・gas 140,000）。違いはレビューで入れた修正だけです。calm / seed 201 の損益（P、USDC）を見ます。</p>
   <div class="fig">
@@ -264,22 +296,22 @@
   </div>
   <div class="legend">
     <div class="card bad"><h3>✕ 測れたこと</h3><ul><li>平均 T の差 −13.28</li><li>calm・cdp-incident の T が約 29</li></ul></div>
-    <div class="card warn"><h3>! まだ分からないこと</h3><ul><li>どの修正が損を出したか</li><li>他のレジームの内訳</li></ul></div>
-    <div class="card good"><h3>✓ 次にやること</h3><ul><li>Codex がログから原因を分析</li><li>修正を 1 つずつ外して隔離測定</li></ul></div>
+    <div class="card warn"><h3>! 有力仮説</h3><ul><li>旧入口と保守化bid利益の不整合</li><li>在庫往復・不利約定による増幅</li><li>寄与率・修正後の回復は未検証</li></ul></div>
+    <div class="card good"><h3>→ 今夜の診断</h3><ul><li>C: 競争不能な注文を見送る</li><li>A: 旧bid-edge入力のみ戻す</li><li>Aの回復を安全同等とは呼ばない</li></ul></div>
   </div>
 </section>
 
-<section id="s6">
-  <div class="label"><span class="n">07</span> · 判断の整理</div>
+<section id="s7">
+  <div class="label"><span class="n">7</span> · 判断の整理</div>
   <h2>確かなこと・限界・次の一手</h2>
   <div class="legend">
-    <div class="card good"><h3>✓ 確かなこと</h3><ul><li>CI の再現と BLOCKED の仕組み</li><li>新 upstream に適合・全体テスト pass</li><li>並列 3 の 12 体は健全</li><li>PR #3・#4 は merge 済み</li></ul></div>
+    <div class="card good"><h3>✓ 記録されたこと</h3><ul><li>CI再現・反例の仕組みを導入</li><li>当時の適合テストのPASS</li><li>並列3の負荷36/36通過</li><li>PR #3・#4 mergeの報告（今回live未照合）</li></ul></div>
     <div class="card warn"><h3>! 限界</h3><ul><li>3 seed・身内の場</li><li>G0 は開始時マニフェストなしの診断</li><li>LLM 改訂は未測定（全員 FROZEN）</li><li>grok-1 は不正な注文を 1 件出した</li></ul></div>
-    <div class="card"><h3>→ 次の一手</h3><ul><li>zeta-2 の原因特定と ablation</li><li>並列 5 を静かな状態で再測定</li><li>新世界で本命を再評価</li><li>最後に Ollama 最終ゲート（10/28）</li></ul></div>
+    <div class="card"><h3>→ 決まった方針</h3><ul><li>提出は独自戦略1体、参照コピーなし</li><li>p=3固定、V2に最大20h</li><li>10/7まで初回Ollama＋本人鍵登録</li><li>10/28最後にOllama再確認</li></ul></div>
   </div>
   <div class="fig" style="margin-top:28px">
     <div class="flow">
-      <div class="node bad"><div class="nt">10/3 いま</div><div class="nd">基準を作り直した</div></div>
+      <div class="node bad"><div class="nt">10/4 いま</div><div class="nd">U2の事前登録・独自候補診断</div></div>
       <div class="arrow">→</div>
       <div class="node hi"><div class="nt">10/8 目標</div><div class="nd">初回の提出・受理 1 件</div></div>
       <div class="arrow">→</div>
@@ -287,26 +319,185 @@
       <div class="arrow">→</div>
       <div class="node"><div class="nt">10/31 23:59 JST</div><div class="nd">提出締切（最後の受理が評価）</div></div>
     </div>
-    <div class="fig-cap">Ollama Cloud の上限・無料枠・鍵登録の最終確認は、提出の前に最後にやる（期日 10/28）</div>
+    <div class="fig-cap">dec-008:10/7まで初回確認・本人鍵登録 → dec-007:10/28最後に再確認。未受理なら10/9に質問方針を本人再判断</div>
   </div>
 </section>
 
+<section id="s8">
+  <div class="label"><span class="n">8</span> · Air budget · 本人判断待ち</div>
+  <h2>18.6hを織り込んだ、二つの100h</h2>
+  <p class="lead"><strong>100hはPCを使える状態に保つための自主枠</strong>です。運営ルールではありません。10/28まで約600hあっても、連続占有の許可にはしません。推奨はB、本人が選ぶまではAの保守的な解放範囲に止めます。</p>
+  <div class="stats">
+    <div class="stat acc"><div class="v">18.6h+</div><div class="k">run占有の和集合。C_usedの下限</div></div>
+    <div class="stat"><div class="v">71.1h</div><div class="k">run-hoursの和。Airへ加算しない</div></div>
+    <div class="stat"><div class="v">327</div><div class="k">summaryあり完了run、360-blockは326</div></div>
+    <div class="stat warn"><div class="v">δ 未確定</div><div class="k">killed・途中run・非run作業の追加占有</div></div>
+  </div>
+<div class="fig"><h3>A · 過去を含めて100h</h3><p class="lead">未来は81.4h−δ。探索の初期配分1.4hは支援のみ、実走0。Sだけの二場240世界を基本に、35h枠の残りはON遅延への余白です。</p>
+<div class="budget-track" style="margin-top:20px" role="img" aria-label="A · 過去を含めて100h。内訳は直下に記載">
+<div class="budget-segment" data-budget-row="historical" data-budget-reading="total" data-hours="18.6" style="--hours:18.6;--c:#72767F" title="既消費（Bは枠外）: 18.6h"></div>
+<div class="budget-segment" data-budget-row="g0-overnight" data-budget-reading="total" data-hours="5" style="--hours:5;--c:#B58A47" title="夜間診断・G0: 5h"></div>
+<div class="budget-segment" data-budget-row="first-submission" data-budget-reading="total" data-hours="16" style="--hours:16;--c:#92651E" title="独自MVP・初回受理: 16h"></div>
+<div class="budget-segment" data-budget-row="deep" data-budget-reading="total" data-hours="1.4" style="--hours:1.4;--c:#0D73BD" title="探索・支援: 1.4h"></div>
+<div class="budget-segment" data-budget-row="final-g3" data-budget-reading="total" data-hours="12" style="--hours:12;--c:#456F86" title="改訂ON/OFF・障害: 12h"></div>
+<div class="budget-segment" data-budget-row="final-g2" data-budget-reading="total" data-hours="35" style="--hours:35;--c:#0E7E56" title="二場10seedの確認: 35h"></div>
+<div class="budget-segment" data-budget-row="final-g4" data-budget-reading="total" data-hours="9" style="--hours:9;--c:#639D83" title="最終P60・配置・適合: 9h"></div>
+<div class="budget-segment" data-budget-row="reserve" data-budget-reading="total" data-hours="3" style="--hours:3;--c:#C0392B" title="共通予備: 3h"></div>
+</div><div class="budget-key">
+<div><i class="swatch" style="--c:#72767F"></i><b>18.6h</b> 既消費（Bは枠外）</div>
+<div><i class="swatch" style="--c:#B58A47"></i><b>5h</b> 夜間診断・G0</div>
+<div><i class="swatch" style="--c:#92651E"></i><b>16h</b> 独自MVP・初回受理</div>
+<div><i class="swatch" style="--c:#0D73BD"></i><b>1.4h</b> 探索・支援</div>
+<div><i class="swatch" style="--c:#456F86"></i><b>12h</b> 改訂ON/OFF・障害</div>
+<div><i class="swatch" style="--c:#0E7E56"></i><b>35h</b> 二場10seedの確認</div>
+<div><i class="swatch" style="--c:#639D83"></i><b>9h</b> 最終P60・配置・適合</div>
+<div><i class="swatch" style="--c:#C0392B"></i><b>3h</b> 共通予備</div>
+</div><div class="fig-cap">上限配分の合計100h（正確値）。支出実績や実行時間の保証ではありません</div></div>
+<div class="fig"><h3>B · 10/4から先に100h（推奨・未決）</h3><p class="lead">過去18.6h以上は枠外に明記。未来枠を全額使った場合のみ累積118.6h以上（現在の消費額ではありません）。初回受理・時間校正後に最大20hの探索を段階解放します。</p>
+<div class="budget-track" style="margin-top:20px" role="img" aria-label="B · 10/4から先に100h（推奨・未決）。内訳は直下に記載">
+<div class="budget-segment" data-budget-row="historical" data-budget-reading="forward" data-hours="0" style="--hours:0;--c:#72767F" title="既消費（Bは枠外）: 0h"></div>
+<div class="budget-segment" data-budget-row="g0-overnight" data-budget-reading="forward" data-hours="5" style="--hours:5;--c:#B58A47" title="夜間診断・G0: 5h"></div>
+<div class="budget-segment" data-budget-row="first-submission" data-budget-reading="forward" data-hours="16" style="--hours:16;--c:#92651E" title="独自MVP・初回受理: 16h"></div>
+<div class="budget-segment" data-budget-row="deep" data-budget-reading="forward" data-hours="20" style="--hours:20;--c:#0D73BD" title="探索・支援: 20h"></div>
+<div class="budget-segment" data-budget-row="final-g3" data-budget-reading="forward" data-hours="12" style="--hours:12;--c:#456F86" title="改訂ON/OFF・障害: 12h"></div>
+<div class="budget-segment" data-budget-row="final-g2" data-budget-reading="forward" data-hours="35" style="--hours:35;--c:#0E7E56" title="二場10seedの確認: 35h"></div>
+<div class="budget-segment" data-budget-row="final-g4" data-budget-reading="forward" data-hours="9" style="--hours:9;--c:#639D83" title="最終P60・配置・適合: 9h"></div>
+<div class="budget-segment" data-budget-row="reserve" data-budget-reading="forward" data-hours="3" style="--hours:3;--c:#C0392B" title="共通予備: 3h"></div>
+</div><div class="budget-key">
+<div><i class="swatch" style="--c:#72767F"></i><b>0h</b> 既消費（Bは枠外）</div>
+<div><i class="swatch" style="--c:#B58A47"></i><b>5h</b> 夜間診断・G0</div>
+<div><i class="swatch" style="--c:#92651E"></i><b>16h</b> 独自MVP・初回受理</div>
+<div><i class="swatch" style="--c:#0D73BD"></i><b>20h</b> 探索・支援</div>
+<div><i class="swatch" style="--c:#456F86"></i><b>12h</b> 改訂ON/OFF・障害</div>
+<div><i class="swatch" style="--c:#0E7E56"></i><b>35h</b> 二場10seedの確認</div>
+<div><i class="swatch" style="--c:#639D83"></i><b>9h</b> 最終P60・配置・適合</div>
+<div><i class="swatch" style="--c:#C0392B"></i><b>3h</b> 共通予備</div>
+</div><div class="fig-cap">上限配分の合計100h（正確値）。支出実績や実行時間の保証ではありません</div></div>
+
+  <div class="legend">
+    <div class="card"><h3>10/7の最小G3で測る</h3><p>遅くとも10/10、探索より先。2場×calm/crash/depeg×3seed×ON/OFF＝36世界。場・mode別の観測最大batch時間×1.2で再予算化。</p></div>
+    <div class="card warn"><h3>ONが1.5–2倍なら</h3><p>480世界は52–69.33h。7日×6hの窓に入らないため、探索を縮小しSのみ240世界（26–34.67h）へ。G4も増えるので全体再計算が必要です。</p></div>
+    <div class="card bad"><h3>足りなければ開始しない</h3><p>seedを減らさず、F_mixを外さず、途中開封しない。Sのみでも予算不足なら最終campaignを開始せず、適合受理済み版の維持を本人へ推奨します。</p></div>
+  </div>
+  <p class="fig-cap">両案の今夜解放は同じ5診断のみ。20h投資自体の再承認ではありません。18.6hと今夜の2cは区間で切り、二重計上しません</p>
+</section>
+<section id="s9">
+  <div class="label"><span class="n">9</span> · Acceptance gates</div>
+  <h2>混成場の改善と、F_refの非劣性を両方要求</h2>
+  <p class="lead">Sは資格・G3・受理証跡のある安全版、R*は挑戦者1体。<strong>同じ候補スロットに別世界で置き換え</strong>ます。F_refだけのT改善では更新しません。</p>
+  <div class="legend">
+    <div class="card good" data-gate="F_mix"><h3>主yardstick · F_mix</h3><p>固定コードの相手10＋候補1＋noop。T差の保守的95%下限&gt;0、0.5×平均差−1&gt;0（点推定&gt;2T）、P−noop差の下限≥0。相手とslotを途中変更しません。</p></div>
+    <div class="card" data-gate="F_ref"><h3>co-gate · F_ref</h3><p>候補＋noop＋multi-arb＋clean-arb。T差の保守的下限≥−1、平均P−noop差≥0。機構探索/資格に使い、最終は非劣性を守ります。</p></div>
+    <div class="card warn" data-gate="tail"><h3>尾部にも拒否権</h3><p>両場の最悪regime差≥−2。i.i.d.60epoch・後半重み1→1.5のストレスでES5差の下限≥−1。絶対安全・全regime対noopも必須。</p></div>
+  </div>
+  <div class="fig" data-gate="safe-version">
+    <div class="flow">
+      <div class="node"><div class="nt">10/18までに事前登録</div><div class="nd">2候補・2場・未知10seed<br>統計コード/閾値/hashも固定</div></div><div class="arrow">→</div>
+      <div class="node hi"><div class="nt">全480世界後、一回だけ</div><div class="nd">G0/安全/時間だけ監視<br>途中のP/Tは封印</div></div><div class="arrow">→</div>
+      <div class="node"><div class="nt">差不明・同点はS</div><div class="nd">全ゲートを満たす時だけ更新<br>Sも不適合なら本人へ</div></div>
+    </div>
+    <div class="fig-cap">Sのみの場合は240世界で絶対適合を確認し、比較優位を主張しません</div>
+  </div>
+  <p class="lead"><strong>独立クラスタは最大10です。</strong> 480世界や再標本化回数は独立標本数ではありません。小さい+0.5〜1T差の確実な検出、同等性、稀な損失率、本番勝率は示せません。shrinkageは保守的な切替ルールで、校正済み事後確率ではありません。</p>
+  <p class="fig-cap">F_mix相手案: venue / multi / clean / astra-1 / astra-2 / sonnet-1 / sonnet-2 / opus-1 / inc-zeta / fixed-bid-5gwei。存在・適合・hashは事前確認待ち。F_bid単独場は基本計画から廃止</p>
+</section>
+<section id="s10">
+  <div class="label"><span class="n">10</span> · Development and holdout</div>
+  <h2>開発・選抜・確認のseedを分ける</h2>
+  <p class="lead">既存案もE1とE2は別seedでした。ただし選抜E2の拡張を確認に使わず、<strong>別E3を72世界、最初から測る</strong>よう変更しました。その費用は単独4変種の実走を外して捻出します。</p>
+  <div class="fig">
+    <div class="flow">
+      <div class="node"><div class="nt">E1 · 48世界</div><div class="nd">A×BIDの2×2、6×2seed<br>親PとF＋へのfeedback</div></div><div class="arrow">→</div>
+      <div class="node"><div class="nt">E2 · 60世界</div><div class="nd">4改訂＋P、開封前にコード凍結<br>R*を選ぶだけ</div></div><div class="arrow">→</div>
+      <div class="node hi"><div class="nt">新E3 · 72世界</div><div class="nd">全12×新3seed×P/R*<br>失敗なら打切り、次点へ戻らない</div></div><div class="arrow">→</div>
+      <div class="node"><div class="nt">Q1 · 60世界</div><div class="nd">新5seedで資格<br>その後G3、未知Hfinal</div></div>
+    </div>
+    <div class="fig-cap">B: 240世界＝17.3333h＋支援2.6667h＝20h。初回受理・ON時間校正が開始条件</div>
+  </div>
+  <div class="factor-grid">
+    <div class="card"><h3>A · 入口を分離</h3><p>同じ費用控除後edgeで60→20bps。入口marginをサイズ・bid利益式へ流さず、V0–V3の完全2×2でA×BIDを測ります。</p></div>
+    <div class="card"><h3>BID · 同じ利益上限</h3><p>純利益10%上限まで → 競合+0.1gwei目標、同じ10%上限。資金・正額・gas・退出の安全条件は共通です。</p></div>
+    <div class="card warn"><h3>V4–V7は実装棚</h3><p>SIZ / INV / Liquity / 観測GATEの仕様は維持。基本実走の単独48世界は外しました。実装担当のファイルには今回触れません。</p></div>
+    <div class="card warn"><h3>M1は今夜0件</h3><p>16仕様で最大5h20、追加8実装も初回分5h20以上。初回受理後2h/日、10/12まで、支援枠内。各セル1生成からモデル一般の優劣は言えません。</p></div>
+  </div>
+  <p class="fig-cap">P60の101/202/303/404/505は公開回帰のみ。202はu1mと重複し、汎化holdoutや安全認定には使いません</p>
+</section>
+<section id="s11">
+  <div class="label"><span class="n">11</span> · 10/4–10/31 · JST</div>
+  <h2>初回受理 → 時間確認 → 探索 → 封印</h2>
+  <p class="lead">通常6h/日。Bを基本とし、AはS確認を優先します。<strong>10/18封印・10/25性能凍結</strong>を維持し、遅れたら探索を削ります。各日の詳細はマスターと同じです。</p>
+  <div class="fig"><div class="calendar">
+<article class="day"><time datetime="2026-10-04">10/4</time><b>新queue、朝のG0/C_used/A-B確認、MVP固定</b><p>前提: 既存chunkと共有入力の証跡</p><p>停止: G0不良なら後続停止。M1/因子実走なし</p></article>
+<article class="day"><time datetime="2026-10-05">10/5</time><b>初回Q0 60世界</b><p>前提: 独自性・U2・新Q・予算</p><p>停止: 失敗はQ0b契約へ、同seed修理禁止</p></article>
+<article class="day"><time datetime="2026-10-06">10/6</time><b>初回P60 60、mix smoke12</b><p>前提: Q0と固定roster</p><p>停止: 欠陥なら修理/必要再資格、探索停止</p></article>
+<article class="day human"><time datetime="2026-10-07">10/7</time><b>最小G3/cal36・G4・dec-008</b><p>前提: モデル/本人鍵・正常/障害証跡</p><p>停止: ON時間未測なら深いリーグ未解放</p></article>
+<article class="day human"><time datetime="2026-10-08">10/8</time><b>初回受理確認、BのみA×BID48</b><p>前提: G4/鍵/受理/cal/全残量</p><p>停止: 未受理なら性能探索0。AはS経路のみ</p></article>
+<article class="day"><time datetime="2026-10-09">10/9</time><b>親PとM2仕様凍結、M1空き窓</b><p>前提: E1完了・B残量・初回受理</p><p>停止: 未受理なら原因/質問方針を本人判断</p></article>
+<article class="day"><time datetime="2026-10-10">10/10</time><b>M2 E2 60、新コード固定</b><p>前提: Pと4改訂hash、別E2</p><p>停止: cal未完ならここまでに先行実施、探索待機</p></article>
+<article class="day"><time datetime="2026-10-11">10/11</time><b>新E3全12×3×2=72</b><p>前提: E2選抜後のR*不変</p><p>停止: G1未達なら挑戦者終了、次点再挑戦なし</p></article>
+<article class="day"><time datetime="2026-10-12">10/12</time><b>Q1 60、仕様/ON予算再確認</b><p>前提: E3・新Q1・最新規約差分</p><p>停止: ON遅延/資格不良ならSのみへ</p></article>
+<article class="day"><time datetime="2026-10-13">10/13</time><b>Sのfull G3 ON/OFF72</b><p>前提: 初回資格と受理版固定</p><p>停止: S不適合なら提出経路再点検</p></article>
+<article class="day"><time datetime="2026-10-14">10/14</time><b>R*のfull G3 ON/OFF72（Bのみ）</b><p>前提: Q1・実測予算</p><p>停止: A/挑戦者なしなら0。無検証でHへ進めない</p></article>
+<article class="day"><time datetime="2026-10-15">10/15</time><b>3障害・復帰/履歴、遅延時残G3</b><p>前提: 正常G3とCPU排他</p><p>停止: 危険取引/予算超過なら候補除外</p></article>
+<article class="day"><time datetime="2026-10-16">10/16</time><b>結論・人間/生成費用を整理</b><p>前提: 全探索記録</p><p>停止: 第三世代・追加モデル生成なし</p></article>
+<article class="day"><time datetime="2026-10-17">10/17</time><b>480/240/未実施の容量判定</b><p>前提: G3実測・残枠・受理証跡</p><p>停止: 不足なら開始せずS維持を推奨</p></article>
+<article class="day"><time datetime="2026-10-18">10/18</time><b>場/候補/10seed/判定コード封印</b><p>前提: 正常10seed計画・資格/G3</p><p>停止: 未達ならHを開始しない</p></article>
+<article class="day"><time datetime="2026-10-19">10/19</time><b>H開始、通常最大6h</b><p>前提: 封印・校正後chunk上限</p><p>停止: G0/安全/時間のみ監視</p></article>
+<article class="day"><time datetime="2026-10-20">10/20</time><b>H継続、通常最大6h</b><p>前提: 前chunk正常・入力不変</p><p>停止: 障害で停止、性能再走禁止</p></article>
+<article class="day"><time datetime="2026-10-21">10/21</time><b>H継続、通常最大6h</b><p>前提: 全予定の完了見通し</p><p>停止: 相手/seed/版の交換禁止</p></article>
+<article class="day"><time datetime="2026-10-22">10/22</time><b>H継続、通常最大6h</b><p>前提: 残枠とG0</p><p>停止: model変更は同一試験へプール不可</p></article>
+<article class="day"><time datetime="2026-10-23">10/23</time><b>H継続、通常最大6h</b><p>前提: 予定集合を維持</p><p>停止: 欠測の黙示除外禁止</p></article>
+<article class="day"><time datetime="2026-10-24">10/24</time><b>H継続、通常最大6h</b><p>前提: 終了検査の時間も確保</p><p>停止: 部分成績で採用禁止</p></article>
+<article class="day human"><time datetime="2026-10-25">10/25</time><b>全予定Hを一回判定、性能凍結</b><p>前提: 480又は事前指定240全件G0</p><p>停止: 差不明/未完は適合S、比較主張なし</p></article>
+<article class="day"><time datetime="2026-10-26">10/26</time><b>最終P60 60 ON</b><p>前提: 選定版・実測時間</p><p>停止: 失格/資産喪失/受理不能以外の性能変更なし</p></article>
+<article class="day"><time datetime="2026-10-27">10/27</time><b>配置/起動順24 ON、G4</b><p>前提: 事前固定の配置・残枠</p><p>停止: 逆転なら優位主張撤回、無検証差替えなし</p></article>
+<article class="day human"><time datetime="2026-10-28">10/28</time><b>G4照合、最後にdec-007</b><p>前提: 全技術証跡・本人確認</p><p>停止: 修正なら影響検証とF0を再実施</p></article>
+<article class="day human"><time datetime="2026-10-29">10/29</time><b>本人最終送信・受理/hash</b><p>前提: READYと鍵登録証跡</p><p>停止: 未受理版を最終扱いしない</p></article>
+<article class="day"><time datetime="2026-10-30">10/30</time><b>受理ZIP/鍵の確認・予備</b><p>前提: 受理メール/commit/hash</p><p>停止: 探索再開なし</p></article>
+<article class="day human"><time datetime="2026-10-31">10/31</time><b>最後に受理された版の照合</b><p>前提: 最新締切の確認</p><p>停止: ローカル資料は23:59 JST、駆込み無検証更新なし</p></article>
+</div><div class="fig-cap">日付は実行許可ではありません。ONは場別に再見積りし、110分以内に収まるchunkへ縮小します</div></div>
+</section>
+<section id="s12">
+  <div class="label"><span class="n">12</span> · Overnight and human decisions</div>
+  <h2>今夜は初回候補の診断を先に</h2>
+  <p class="lead">本人変更済みの順序です。A/Bともこの5件だけを条件付き解放。現在の2cを重複起動せず、<strong>G0・対照・入力hashが未確認なら後続停止</strong>です。D0のTを朝の資格認定へ使いません。</p>
+  <div class="fig"><ol style="padding-left:22px">
+<li data-experiment="fref-zeta-2c" style="padding:8px 0"><b>fref-zeta-2c</b> — runningの終了/G0確認<br><span style="color:var(--muted)">対照/証跡確認、重複禁止、≤110分</span></li>
+<li data-experiment="fref-sonnet-1" style="padding:8px 0"><b>fref-sonnet-1</b> — 初回独自MVP診断<br><span style="color:var(--muted)">1正常、G0/資源/残量、8世界</span></li>
+<li data-experiment="fref-opus-1" style="padding:8px 0"><b>fref-opus-1</b> — 初回独自MVP診断<br><span style="color:var(--muted)">2正常、G0/資源/残量、8世界</span></li>
+<li data-experiment="fref-zeta-2a" style="padding:8px 0"><b>fref-zeta-2a</b> — zeta旧bid-edge診断<br><span style="color:var(--muted)">3正常、MVP診断が先、8世界</span></li>
+<li data-experiment="fref-zeta-2" style="padding:8px 0"><b>fref-zeta-2</b> — zeta回帰対照<br><span style="color:var(--muted)">4正常、8世界、朝の窓に収まる</span></li>
+</ol><div class="fig-cap">8世界×5、見積3h15。Q0・因子・M2・M1起動・新mixed matrixは今夜未解放</div></div>
+  <div class="legend">
+    <div class="card bad"><h3>fail-closed</h3><p>M1とmatrixは同じ排他リース。5秒heartbeat、10秒欠落で新規禁止、30秒以内取消。重複したmatrixはBLOCKED。結線を確認できなければM1を起動しません。</p></div>
+    <div class="card bad"><h3>無人で行わないこと</h3><p>鍵・支払い・フォーム・外部送信・運営質問・main変更。親round中のcommit、別matrix/CI/buildも禁止。diskは開始39.5GiB、緊急下限25GBを区別します。</p></div>
+    <div class="card warn"><h3>Q0が全滅したら</h3><p>2資格で停止。適合Sがあれば維持、なければ初回を延期して独自防御版へ戻すことを推奨。第3試行や経済許容変更は本人の新契約と新seedが必要です。</p></div>
+  </div>
+  <div class="fig">
+    <h3>独自戦略とconfig portの境界</h3>
+    <p class="lead">改名・定数変更・env焼込みだけでは独自性を認定しません。由来、意思決定、資金と出口、参照との差を示す固定観測例を確認します。自作の既存核は由来確認後に継承可能です。</p>
+  </div>
+  <p class="lead">本人判断は<strong>A/Bの予算起点、全滅時契約、モデル費用上限、未受理時の10/9質問方針</strong>。独自戦略1体・最大20h/2世代・10/7と10/28のOllama/鍵確認・新queueは既決です。</p>
+  <div class="fig">
+    <h3>変えた点・残る弱さ</h3>
+    <p class="lead">18.6h下限と二予算、新queue、MVP優先、早期ON校正、F_mix＋F_ref＋尾部、新E3、保守的な採否へ変更。10seed・固定相手・各セル1生成・予備3hは依然弱く、適合fallbackもまだ未確認です。</p>
+    <h3 style="margin-top:18px">上位3つの不確実性</h3>
+    <ol style="padding-left:22px"><li>独自MVPがQ0・改訂ON・受理に届くか。</li><li>追加既消費δとON速度が、本人の選ぶ枠と日程に収まるか。</li><li>固定混成場の改善が、未知相手・尾部・改訂の非決定性でも再現するか。</li></ol>
+  </div>
+  <p class="fig-cap"><a href="MASTER-PLAN-2026-10-04.md">revision 2・Grok全18件への回答・checker出力</a> ／ <a href="check-plan-consistency.py">軽量checker</a>。PASSは静的整合のみ。ブラウザ描画、統計被覆率、ON実時間、戦略適合、最新規約・受理は未検証です。</p>
+</section>
 </div>
 
 <script>
 (function(){
-  // ---- data (all measured in this session) ----
+  // Historical diagnostics from report-u1m and ZETA2-REGRESSION; no live data requests.
   var rank=[["venue-arb",54.48,"gray"],["opus-1",54.33,"gray"],["sonnet-1",53.92,"gray"],["inc-zeta",53.70,"acc"],["grok-1",53.52,"gray"],["astra-1",51.23,"gray"],["astra-2",51.14,"gray"],["clean-arb",51.51,"gray"],["sonnet-2",46.30,"gray"],["zeta-2",40.42,"bad"],["multi-arb",39.45,"gray"]];
   rank.sort(function(a,b){return b[1]-a[1];});
   var pl=[["noop",-53.89,"gray"],["inc-zeta",-180.99,"acc"],["zeta-2",-1118.67,"bad"]];
-  var u1=[1478,1505,1125,1331,1243,1924,2120,2684,2332,1990,1652,1210,1735,1722,1384,1152,911,1334,1500,1153,2141,1684,2541,2423,2201,632,367,177,160,146,837,688,588,652,288,187];
-  var u1m=[210,207,204,198,197,173,174,212,178,193,202,176,192,194,181,204,189,160,99,88,99,187,198,209,203,186,188,122,99,94,180,192,175,233,184,173];
-  var order=["calm","cex-drift","informed-flow","whale","lending-incident","crash","depeg","vuln","spike","depeg-persist","cdp-incident","launch"];
-  // the matrix order printed by G0 is calm,cex-drift,informed-flow,whale,lending,depeg,crash,vuln,spike,depeg-persist,cdp,launch; keep the printed order
   function bars(id,rows,max,fmt,markVal){
     var el=document.getElementById(id);
     rows.forEach(function(r){
-      var w=Math.max(1,Math.abs(r[1])/max*100);
+      var w=Math.min(100,Math.max(1,Math.abs(r[1])/max*100));
       var d=document.createElement("div"); d.className="br";
       d.innerHTML='<div class="nm">'+r[0]+'</div><div class="tr"><div class="b '+(r[2]==="gray"?"":r[2])+'" style="--w:'+w+'%"></div>'+
         (markVal!=null?'<div class="mark" style="left:'+(markVal/max*100)+'%"></div>':'')+'</div><div class="val">'+fmt(r[1])+'</div>';
@@ -315,23 +506,18 @@
   }
   bars("rank",rank,60,function(v){return v.toFixed(2);},53.70);
   bars("pl",pl,1200,function(v){return v.toFixed(2);},null);
-  function lat(id,arr){
-    var el=document.getElementById(id);
-    arr.forEach(function(v,i){
-      var b=document.createElement("i"); b.style.setProperty("--h",(v/2800*100)+"%"); b.title=v+" ms"; b.style.transitionDelay=(i*25)+"ms"; el.appendChild(b);
-    });
-  }
-  lat("latA",u1); lat("latB",u1m);
   // ---- reveal on scroll ----
   var secs=document.querySelectorAll("section");
   if("IntersectionObserver" in window){
-    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}});},{threshold:.18});
+    // A tall section (the 28-day calendar) may never reach an 18% intersection.
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}});},{threshold:0,rootMargin:"0px 0px -24px 0px"});
     secs.forEach(function(s){io.observe(s);});
   } else { secs.forEach(function(s){s.classList.add("in");}); }
   // timeline: stagger events
   document.querySelectorAll(".tl").forEach(function(tl){
     tl.querySelectorAll(".ev").forEach(function(ev,i){ev.style.transitionDelay=(i*300)+"ms";});
   });
+  document.querySelectorAll(".day").forEach(function(day,i){day.style.setProperty("--delay",(Math.min(i,8)*65)+"ms");});
 })();
 </script>
 </body>
