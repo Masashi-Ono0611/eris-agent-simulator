@@ -44,7 +44,19 @@ echo "Filesystem 1024-blocks Used Available Capacity Mounted"
 echo "ci-runner 99999999 0 13333888 0% /"
 DFEOF
 chmod +x "$TMP/shim/df"
-NODE_DIR="$(dirname "$(command -v node)")"; PY_DIR="$(dirname "$(command -v python3)")"
+# CI runs `pip install ./sdk-py -r sdk-py/requirements-dev.txt`; mirror it in a cached venv (never the global python).
+VENV="${ASCON_CI_VENV:-$HOME/.cache/ascon-ci-venv}"
+if [ "$MODE" = "full" ]; then
+  if [ ! -x "$VENV/bin/python" ]; then python3 -m venv "$VENV" || { echo "BLOCKED: venv create failed" >&2; exit 2; }; fi
+  "$VENV/bin/python" -m pip install -q "$CO/sdk-py" -r "$CO/sdk-py/requirements-dev.txt" || { echo "BLOCKED: pip install (sdk-py) failed" >&2; exit 2; }
+  PY_DIR="$VENV/bin"
+fi
+# CI runs `npm run build:contracts` (forge build) before the tests; do it in the export (real HOME: forge needs its solc cache).
+if [ "$MODE" = "full" ]; then
+  command -v forge >/dev/null 2>&1 || { echo "BLOCKED: forge not installed (CI builds contracts)" >&2; exit 2; }
+  ( cd "$CO" && forge build >/dev/null 2>&1 ) || { echo "BLOCKED: forge build failed in the export" >&2; exit 2; }
+fi
+NODE_DIR="$(dirname "$(command -v node)")"; PY_DIR="${PY_DIR:-$(dirname "$(command -v python3)")}"
 EXTRA=""; for t in anvil forge; do p="$(command -v $t 2>/dev/null)"; [ -n "$p" ] && EXTRA="$EXTRA:$(dirname "$p")"; done
 CI_PATH="$TMP/shim:$NODE_DIR:$PY_DIR$EXTRA:/usr/bin:/bin:/usr/sbin:/sbin"
 echo "ci-local: ref=$REF sha=${SHA:0:7} mode=$MODE checkout=$CO (clean export of tracked files; env -i; df shim 13 GB)"
