@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASCON 中間まとめ — 2026-10-03</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --accent:#0D73BD; --accent-tint:#EDF5FB;
+    --ink:#0F1115; --muted:#5B616E; --faint:#72767F;
+    --line:#E5E7EB; --bg:#FFFFFF; --surface:#F7F8FA;
+    --good:#0E7E56; --good-tint:#E9F5EF; --good-line:#C2E5D5;
+    --bad:#C0392B;  --bad-tint:#FBECEA;  --bad-line:#F0C9C3;
+    --warn:#92651E; --warn-tint:#FBF1DF; --warn-line:#EAD9AE;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{-webkit-font-smoothing:antialiased; scroll-behavior:smooth;}
+  body{background:var(--bg); color:var(--ink); font-family:"IBM Plex Sans","Noto Sans JP","Hiragino Sans",-apple-system,Arial,sans-serif; line-height:1.6; font-size:16px;}
+  .wrap{max-width:960px; margin:0 auto; padding:0 28px 90px;}
+  .mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;}
+  header{padding:80px 0 46px; border-bottom:1px solid var(--line);}
+  .kicker{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); font-weight:600; margin-bottom:18px;}
+  h1{font-size:56px; font-weight:700; letter-spacing:-.035em; line-height:1.06; margin-bottom:22px;}
+  .tagline{font-size:25px; font-weight:500; letter-spacing:-.015em; line-height:1.34; max-width:760px;}
+  .tagline strong{color:var(--accent); font-weight:700;}
+  .sub{font-size:15px; color:var(--muted); margin-top:16px; max-width:700px;}
+  section{padding:54px 0; border-bottom:1px solid var(--line);}
+  section:last-of-type{border-bottom:none;}
+  .label{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint); font-weight:600; margin-bottom:10px;}
+  .label .n{color:var(--accent);}
+  h2{font-size:30px; font-weight:700; letter-spacing:-.025em; line-height:1.2; margin-bottom:12px;}
+  .lead{font-size:16px; color:var(--muted); max-width:760px;}
+  .lead strong{color:var(--ink); font-weight:600;}
+  code{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:.85em; background:var(--surface); border:1px solid var(--line); border-radius:5px; padding:1px 5px;}
+  .fig{margin:28px 0 6px; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:26px 24px; break-inside:avoid;}
+  .fig-cap{font-size:12.5px; color:var(--faint); margin-top:14px; text-align:center; font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace;}
+  .stats{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:26px;}
+  .stat{border:1px solid var(--line); border-radius:12px; padding:16px; background:var(--bg);}
+  .stat .v{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:30px; font-weight:700; letter-spacing:-.02em;}
+  .stat .k{font-size:12.5px; color:var(--muted); margin-top:2px;}
+  .stat.good .v{color:var(--good);} .stat.bad .v{color:var(--bad);} .stat.warn .v{color:var(--warn);} .stat.acc .v{color:var(--accent);}
+  .tag{display:inline-block; font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:11.5px; font-weight:600; padding:2px 8px; border-radius:999px; border:1px solid var(--line);}
+  .tag.good{color:var(--good); background:var(--good-tint); border-color:var(--good-line);}
+  .tag.warn{color:var(--warn); background:var(--warn-tint); border-color:var(--warn-line);}
+  .tag.bad{color:var(--bad); background:var(--bad-tint); border-color:var(--bad-line);}
+
+  /* ---- timeline ---- */
+  .tl{position:relative; margin-top:6px; padding-left:26px;}
+  .tl::before{content:""; position:absolute; left:7px; top:6px; bottom:6px; width:2px; background:var(--line);}
+  .tl .fill{position:absolute; left:7px; top:6px; width:2px; height:0; background:var(--accent); transition:height 2.4s cubic-bezier(.4,0,.2,1);}
+  .in .tl .fill{height:calc(100% - 12px);}
+  .ev{position:relative; padding:0 0 18px 8px; opacity:0; transform:translateX(-8px); transition:opacity .5s ease, transform .5s ease;}
+  .ev::before{content:""; position:absolute; left:-24px; top:6px; width:12px; height:12px; border-radius:50%; background:var(--bg); border:2px solid var(--accent);}
+  .ev.bad::before{border-color:var(--bad);} .ev.good::before{border-color:var(--good);} .ev.warn::before{border-color:var(--warn);}
+  .in .ev{opacity:1; transform:none;}
+  .ev .t{font-weight:600; font-size:15px;}
+  .ev .d{font-size:13.5px; color:var(--muted);}
+
+  /* ---- flow ---- */
+  .flow{display:flex; align-items:stretch; gap:0; flex-wrap:wrap;}
+  .node{flex:1 1 150px; border:1px solid var(--line); background:var(--bg); border-radius:12px; padding:14px; text-align:center; opacity:0; transform:translateY(8px); transition:opacity .5s, transform .5s;}
+  .node .nt{font-weight:700; font-size:14.5px;} .node .nd{font-size:12.5px; color:var(--muted); margin-top:4px;}
+  .node.hi{border-color:var(--accent); background:var(--accent-tint);}
+  .node.bad{border-color:var(--bad-line); background:var(--bad-tint);}
+  .arrow{flex:0 0 34px; display:flex; align-items:center; justify-content:center; color:var(--faint); font-size:20px; opacity:0; transition:opacity .5s;}
+  .in .node,.in .arrow{opacity:1; transform:none;}
+  .in .node:nth-child(1){transition-delay:.1s} .in .arrow:nth-child(2){transition-delay:.3s}
+  .in .node:nth-child(3){transition-delay:.5s} .in .arrow:nth-child(4){transition-delay:.7s}
+  .in .node:nth-child(5){transition-delay:.9s} .in .arrow:nth-child(6){transition-delay:1.1s}
+  .in .node:nth-child(7){transition-delay:1.3s}
+
+  /* ---- bar charts ---- */
+  .bars{display:flex; flex-direction:column; gap:7px;}
+  .br{display:grid; grid-template-columns:110px minmax(0,1fr) 120px; align-items:center; gap:12px; font-size:13.5px;}
+  .br .nm{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-weight:500; text-align:right; color:var(--ink);}
+  .br .tr{position:relative; height:20px; background:var(--bg); border:1px solid var(--line); border-radius:6px; overflow:hidden;}
+  .br .b{position:absolute; left:0; top:0; bottom:0; width:0; background:var(--faint); transition:width 1.5s cubic-bezier(.2,.8,.2,1);}
+  .in .br .b{width:var(--w);}
+  .br .b.acc{background:var(--accent);} .br .b.bad{background:var(--bad);} .br .b.good{background:var(--good);}
+  .br .val{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:12.5px; color:var(--muted);}
+  .br .val b{color:var(--ink);}
+  .br .mark{position:absolute; top:-2px; bottom:-2px; width:2px; background:var(--ink); opacity:.55;}
+
+  /* ---- latency sparkbars ---- */
+  .lat{display:grid; grid-template-columns:repeat(36,minmax(0,1fr)); gap:3px; align-items:end; height:150px; position:relative; border-bottom:1px solid var(--line);}
+  .lat i{display:block; height:0; background:var(--bad); border-radius:2px 2px 0 0; transition:height 1.1s cubic-bezier(.2,.8,.2,1);}
+  .lat.g i{background:var(--good);}
+  .in .lat i{height:var(--h);}
+  .lat .thr{position:absolute; left:0; right:0; border-top:2px dashed var(--ink); opacity:.5;}
+  .lat .thr span{position:absolute; right:0; top:-20px; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted); background:var(--surface); padding:0 4px;}
+  .latlab{display:flex; justify-content:space-between; font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--faint); margin:6px 0 20px;}
+
+  .legend{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:22px;}
+  .card{border:1px solid var(--line); border-radius:12px; padding:16px; background:var(--bg);}
+  .card h3{font-size:15px; margin-bottom:6px;}
+  .card p,.card li{font-size:13.5px; color:var(--muted);} .card ul{padding-left:18px;}
+  .card.good{border-color:var(--good-line); background:var(--good-tint);}
+  .card.bad{border-color:var(--bad-line); background:var(--bad-tint);}
+  .card.warn{border-color:var(--warn-line); background:var(--warn-tint);}
+  @media (max-width:720px){
+    h1{font-size:38px;} .tagline{font-size:20px;}
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .legend{grid-template-columns:1fr;}
+    .br{grid-template-columns:78px minmax(0,1fr) 84px;}
+    .arrow{flex-basis:100%; transform:rotate(90deg); height:22px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important; animation:none!important;}
+    .ev,.node,.arrow{opacity:1; transform:none;}
+    .br .b{width:var(--w);} .lat i{height:var(--h);} .tl .fill{height:calc(100% - 12px);}
+  }
+  @media print{ .ev,.node,.arrow{opacity:1; transform:none;} .br .b{width:var(--w);} .lat i{height:var(--h);} .tl .fill{height:calc(100% - 12px);} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">ASCON · 2026-10-03 · 中間まとめ</div>
+  <h1>土台は整った。<br>本命の優位は、新しい世界で消えた。</h1>
+  <p class="tagline">CI の失敗を仕組みで止め、upstream の 40 commit を取り込み、<strong>新しい基準</strong>を作りました。その基準では、これまで本命だった戦略が上位の中に埋もれ、修正版の zeta-2 は大きく劣化しました。</p>
+  <p class="sub">数字はすべて、このセッションで実行した結果です。順位は 3 seed・自分たちの場（参照と派生が多い）での診断で、優勝確率の推定ではありません。</p>
+</header>
+
+<section id="s1">
+  <div class="label"><span class="n">01</span> · この一日の流れ</div>
+  <h2>8 つの出来事</h2>
+  <div class="fig">
+    <div class="tl">
+      <div class="fill"></div>
+      <div class="ev bad"><div class="t">CI が 4 回失敗</div><div class="d">commit 漏れ・CI 側の空きディスク 13GB・旧テストの回帰・全体テストの同時実行</div></div>
+      <div class="ev good"><div class="t">再発防止を導入</div><div class="d"><code>ci-local.sh</code> と pre-push フック。実際の失敗 commit で赤→緑を確認</div></div>
+      <div class="ev good"><div class="t">PR #3・#4 を merge</div><div class="d">レビューの Critical 2 件を修正してから。CI は全 job pass</div></div>
+      <div class="ev"><div class="t">upstream 40 commit を取り込み</div><div class="d">採点式の変更・launch の罠プール対策を含む。agent とテストを適合</div></div>
+      <div class="ev bad"><div class="t">U1（並列 5）の G0 が FAIL</div><div class="d">36 本中 21 本で環境の遅れ（p99 1.1〜2.7 秒）。順位には使わず</div></div>
+      <div class="ev good"><div class="t">u1m（並列 3）は健全</div><div class="d">36 本すべて処理回数 362、p99 最大 233ms</div></div>
+      <div class="ev warn"><div class="t">本命の優位が消えた</div><div class="d">旧世界 59.68 → 新世界 53.70。上位 5 体と区別できない</div></div>
+      <div class="ev bad"><div class="t">zeta-2 が大きく劣化</div><div class="d">本命との差 −13.28。原因は Codex が分析中</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="s2">
+  <div class="label"><span class="n">02</span> · CI の再発防止</div>
+  <h2>push する前に、CI と同じ形で動かす</h2>
+  <p class="lead">commit 済みの内容だけをクリーンに取り出し、環境を空にして、CI と同じ空きディスク（13GB）に見せて走らせます。検査できない時は <strong>PASS にせず BLOCKED</strong> にします。</p>
+  <div class="fig">
+    <div class="flow">
+      <div class="node"><div class="nt">git push</div><div class="nd">自分の作業ブランチへ</div></div>
+      <div class="arrow">→</div>
+      <div class="node hi"><div class="nt">pre-push フック</div><div class="nd"><code>ci-local --quick</code><br>326 件・約 20 秒</div></div>
+      <div class="arrow">→</div>
+      <div class="node hi"><div class="nt">クリーン環境</div><div class="nd">export・<code>env -i</code><br>df 13GB スタブ</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="nt">GitHub CI</div><div class="nd">全 job pass で merge</div></div>
+    </div>
+    <div class="fig-cap">提出する commit は <code>--full</code>（全体テスト 1674 件）を通す</div>
+  </div>
+  <div class="stats">
+    <div class="stat bad"><div class="v">4</div><div class="k">CI 失敗の回数</div></div>
+    <div class="stat good"><div class="v">赤→緑</div><div class="k">失敗 commit と修正後で実測</div></div>
+    <div class="stat acc"><div class="v">1665</div><div class="k">全体テスト pass（失敗 0・skip 9）</div></div>
+    <div class="stat warn"><div class="v">6</div><div class="k">BLOCKED にした条件</div></div>
+  </div>
+</section>
+
+<section id="s3">
+  <div class="label"><span class="n">03</span> · 並列度</div>
+  <h2>並列 5 は遅れ、並列 3 は健全</h2>
+  <p class="lead">各バーは 1 本の run の「環境処理の p99」です（短いほど良い）。破線は G0 の上限 1,000ms。12 体を同時に走らせた結果です。</p>
+  <div class="fig">
+    <div style="font-weight:700; font-size:14px; margin-bottom:10px;">U1 · 並列 5 <span class="tag bad">✕ 21 本が上限超え</span></div>
+    <div class="lat" id="latA"><div class="thr" style="bottom:calc(1000/2800*100%)"><span>1,000ms</span></div></div>
+    <div class="latlab"><span>calm</span><span>…（12 レジーム × 3 seed、左から順）…</span><span>launch</span></div>
+    <div style="font-weight:700; font-size:14px; margin-bottom:10px;">u1m · 並列 3 <span class="tag good">✓ 全 36 本が基準内</span></div>
+    <div class="lat g" id="latB"><div class="thr" style="bottom:calc(1000/2800*100%)"><span>1,000ms</span></div></div>
+    <div class="latlab"><span>calm</span><span>最大 233ms・処理回数は 36/36 が 362</span><span>launch</span></div>
+    <div class="fig-cap">縦軸 0〜2,800ms。並列 5 の測定中は私の別作業も重なっていたため、原因が並列度だけとは断定できない</div>
+  </div>
+</section>
+
+<section id="s4">
+  <div class="label"><span class="n">04</span> · 新しい基準での順位</div>
+  <h2>上位 5 体は、区別できない</h2>
+  <p class="lead">平均 T（12 レジームの等重み・36 本）。本命 inc-zeta との差は、上位 4 体とも 95% 区間が 0 を含みます。</p>
+  <div class="fig">
+    <div class="bars" id="rank"></div>
+    <div class="fig-cap">黒い縦線 = 本命 inc-zeta の 53.70 ／ 青 = 本命 ／ 赤 = 劣化 ／ 灰 = その他</div>
+  </div>
+  <div class="stats">
+    <div class="stat warn"><div class="v">59.68</div><div class="k">R1（旧世界）の本命</div></div>
+    <div class="stat acc"><div class="v">53.70</div><div class="k">u1m（新世界）の本命</div></div>
+    <div class="stat"><div class="v">+0.78</div><div class="k">venue-arb との差（区間は 0 を含む）</div></div>
+    <div class="stat bad"><div class="v">−13.28</div><div class="k">zeta-2 との差（区間 −17.81〜−8.80）</div></div>
+  </div>
+</section>
+
+<section id="s5">
+  <div class="label"><span class="n">05</span> · zeta-2 の劣化</div>
+  <h2>同じ設定なのに、損が 6 倍</h2>
+  <p class="lead">zeta-2 の既定値は、本命のパラメータと同一です（bidMode 2・利益の 30%・gas 140,000）。違いはレビューで入れた修正だけです。calm / seed 201 の損益（P、USDC）を見ます。</p>
+  <div class="fig">
+    <div class="bars" id="pl"></div>
+    <div class="fig-cap">何もしない noop が −53.89。短いバーほど損が小さい</div>
+  </div>
+  <div class="legend">
+    <div class="card bad"><h3>✕ 測れたこと</h3><ul><li>平均 T の差 −13.28</li><li>calm・cdp-incident の T が約 29</li></ul></div>
+    <div class="card warn"><h3>! まだ分からないこと</h3><ul><li>どの修正が損を出したか</li><li>他のレジームの内訳</li></ul></div>
+    <div class="card good"><h3>✓ 次にやること</h3><ul><li>Codex がログから原因を分析</li><li>修正を 1 つずつ外して隔離測定</li></ul></div>
+  </div>
+</section>
+
+<section id="s6">
+  <div class="label"><span class="n">06</span> · 判断の整理</div>
+  <h2>確かなこと・限界・次の一手</h2>
+  <div class="legend">
+    <div class="card good"><h3>✓ 確かなこと</h3><ul><li>CI の再現と BLOCKED の仕組み</li><li>新 upstream に適合・全体テスト pass</li><li>並列 3 の 12 体は健全</li><li>PR #3・#4 は merge 済み</li></ul></div>
+    <div class="card warn"><h3>! 限界</h3><ul><li>3 seed・身内の場</li><li>G0 は開始時マニフェストなしの診断</li><li>LLM 改訂は未測定（全員 FROZEN）</li><li>grok-1 は不正な注文を 1 件出した</li></ul></div>
+    <div class="card"><h3>→ 次の一手</h3><ul><li>zeta-2 の原因特定と ablation</li><li>並列 5 を静かな状態で再測定</li><li>新世界で本命を再評価</li><li>最後に Ollama 最終ゲート（10/28）</li></ul></div>
+  </div>
+  <div class="fig" style="margin-top:28px">
+    <div class="flow">
+      <div class="node bad"><div class="nt">10/3 いま</div><div class="nd">基準を作り直した</div></div>
+      <div class="arrow">→</div>
+      <div class="node hi"><div class="nt">10/8 目標</div><div class="nd">初回の提出・受理 1 件</div></div>
+      <div class="arrow">→</div>
+      <div class="node hi"><div class="nt">10/25</div><div class="nd">性能の変更を凍結</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="nt">10/31 23:59 JST</div><div class="nd">提出締切（最後の受理が評価）</div></div>
+    </div>
+    <div class="fig-cap">Ollama Cloud の上限・無料枠・鍵登録の最終確認は、提出の前に最後にやる（期日 10/28）</div>
+  </div>
+</section>
+
+</div>
+
+<script>
+(function(){
+  // ---- data (all measured in this session) ----
+  var rank=[["venue-arb",54.48,"gray"],["opus-1",54.33,"gray"],["sonnet-1",53.92,"gray"],["inc-zeta",53.70,"acc"],["grok-1",53.52,"gray"],["astra-1",51.23,"gray"],["astra-2",51.14,"gray"],["clean-arb",51.51,"gray"],["sonnet-2",46.30,"gray"],["zeta-2",40.42,"bad"],["multi-arb",39.45,"gray"]];
+  rank.sort(function(a,b){return b[1]-a[1];});
+  var pl=[["noop",-53.89,"gray"],["inc-zeta",-180.99,"acc"],["zeta-2",-1118.67,"bad"]];
+  var u1=[1478,1505,1125,1331,1243,1924,2120,2684,2332,1990,1652,1210,1735,1722,1384,1152,911,1334,1500,1153,2141,1684,2541,2423,2201,632,367,177,160,146,837,688,588,652,288,187];
+  var u1m=[210,207,204,198,197,173,174,212,178,193,202,176,192,194,181,204,189,160,99,88,99,187,198,209,203,186,188,122,99,94,180,192,175,233,184,173];
+  var order=["calm","cex-drift","informed-flow","whale","lending-incident","crash","depeg","vuln","spike","depeg-persist","cdp-incident","launch"];
+  // the matrix order printed by G0 is calm,cex-drift,informed-flow,whale,lending,depeg,crash,vuln,spike,depeg-persist,cdp,launch; keep the printed order
+  function bars(id,rows,max,fmt,markVal){
+    var el=document.getElementById(id);
+    rows.forEach(function(r){
+      var w=Math.max(1,Math.abs(r[1])/max*100);
+      var d=document.createElement("div"); d.className="br";
+      d.innerHTML='<div class="nm">'+r[0]+'</div><div class="tr"><div class="b '+(r[2]==="gray"?"":r[2])+'" style="--w:'+w+'%"></div>'+
+        (markVal!=null?'<div class="mark" style="left:'+(markVal/max*100)+'%"></div>':'')+'</div><div class="val">'+fmt(r[1])+'</div>';
+      el.appendChild(d);
+    });
+  }
+  bars("rank",rank,60,function(v){return v.toFixed(2);},53.70);
+  bars("pl",pl,1200,function(v){return v.toFixed(2);},null);
+  function lat(id,arr){
+    var el=document.getElementById(id);
+    arr.forEach(function(v,i){
+      var b=document.createElement("i"); b.style.setProperty("--h",(v/2800*100)+"%"); b.title=v+" ms"; b.style.transitionDelay=(i*25)+"ms"; el.appendChild(b);
+    });
+  }
+  lat("latA",u1); lat("latB",u1m);
+  // ---- reveal on scroll ----
+  var secs=document.querySelectorAll("section");
+  if("IntersectionObserver" in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}});},{threshold:.18});
+    secs.forEach(function(s){io.observe(s);});
+  } else { secs.forEach(function(s){s.classList.add("in");}); }
+  // timeline: stagger events
+  document.querySelectorAll(".tl").forEach(function(tl){
+    tl.querySelectorAll(".ev").forEach(function(ev,i){ev.style.transitionDelay=(i*300)+"ms";});
+  });
+})();
+</script>
+</body>
+</html>
