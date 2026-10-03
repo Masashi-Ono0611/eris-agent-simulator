@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, resolve, relative } from "node:path";
 import { test } from "node:test";
 
 const root = process.cwd();
@@ -17,12 +17,12 @@ function summary(loopIterations: number, pnl: number[]) {
   ] };
 }
 function reportFixture(loops: number[]) {
-  const dir = mkdtempSync(join(tmpdir(), "ascon-league-"));
+  const dir = mkdtempSync(join(root, "ascon-league-fixture-"));
   const rows = ["regime\tseed\trun_dir\texit_code"];
   loops.forEach((n, i) => {
     const run = join(dir, `run-${i}`); mkdirSync(run);
     writeFileSync(join(run, "summary.json"), JSON.stringify(summary(n, [10 + i, 0, -10])));
-    rows.push(`calm\t${i + 1}\t${run}\t0`);
+    rows.push(`calm\t${i + 1}\t${relative(root, run)}\t0`);
   });
   const index = join(dir, "index.tsv"); writeFileSync(index, rows.join("\n") + "\n");
   return { dir, index };
