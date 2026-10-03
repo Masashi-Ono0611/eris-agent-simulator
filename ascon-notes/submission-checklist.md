@@ -19,7 +19,8 @@
 
 ## C0b. CI の再現（提出する commit に対して必須・2026-10-03 の CI 失敗 4 回の再発防止）
 - [ ] **提出する commit を `bash ascon-notes/ci-local.sh --ref <commit> --full` で通す**（commit 済みの内容だけのクリーンな export・`env -i`・空き 13GB の `df` スタブ・他の全体テスト/anvil が居れば BLOCKED）。作業ツリーにだけあるファイル・ホスト環境（空きディスク・絶対パス・HOME・python 版）への依存・関連テストだけでは見えない回帰を、CI と同じ形で出す。push 前は `--quick`（pre-push フックが自動実行。入れ方: `bash ascon-notes/install-prepush.sh`）。
-- [ ] `prepare-release.py` の **READY は証跡つき**: `--backtest-evidence <G0 PASS の JSON>` と `--selftest-evidence <selftest の出力>` が ZIP の SHA-256・commit と一致すること。静的検査のみなら READY ではない（exit 3）。
+- `--full` は CI の準備手順も再現する（`sdk-py` の依存はキャッシュ済み venv `~/.cache/ascon-ci-venv`、`forge build` は export 内で実行）。**検査できない時は PASS にせず BLOCKED（exit 2）**: フックのチェッカー不在・`pgrep` 失敗・必須スイート欠落・lockfile 不一致・`core.hooksPath` 設定済み・forge 未導入。`.git/hooks/pre-push` を入れる前に `bash ascon-notes/install-prepush.sh`。
+- [ ] `prepare-release.py` の **READY は証跡つき**（G0 の証跡は public-60＝12 レジーム × seed 101/202/303/404/505 の完全一致が必要。定数は `config/scenarios/public.yaml` とテストで固定）: `--backtest-evidence <G0 PASS の JSON>` と `--selftest-evidence <selftest の出力>` が ZIP の SHA-256・commit と一致すること。静的検査のみなら READY ではない（exit 3）。
 
 ## C. 自己完結と提出形式
 - [ ] 提出ディレクトリが他のエージェントディレクトリへ相対 import していない（提出 ZIP には自分のディレクトリ + runtime + lib + sdk しか入らない）。`rg 'from "\.\./' <dir> | rg -v '\.\./(lib|runtime)/'` が 0 件。
