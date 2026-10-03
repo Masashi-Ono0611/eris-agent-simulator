@@ -13,7 +13,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-REFERENCES = {'noop', 'multi-arb', 'clean-arb', 'crowd', 'inc-zeta'}
+REFERENCES = {'noop', 'multi-arb', 'clean-arb', 'venue-arb', 'basis-arb', 'random', 'crowd', 'inc-zeta'}
 
 
 def number(x):
