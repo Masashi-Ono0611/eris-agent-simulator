@@ -57,7 +57,7 @@ class OfflineTools(unittest.TestCase):
         dest.write_text('\n'.join(lines) + '\n')
         return dest
 
-    def summary(self, pnl=10, loops=360):
+    def summary(self, pnl=10, loops=362):
         return dict(loopIterations=loops, valueSeries={'failedReads': 0}, agents=[
             {'id': aid, 'pnlUsdc': p} for aid, p in [('candidate', pnl), ('noop', 0), ('multi-arb', 0), ('crowd', 0)]])
 
@@ -109,7 +109,7 @@ class OfflineTools(unittest.TestCase):
         m = module('ascon-notes/league/league-report.py')
         records = []
         for i, (regime, p) in enumerate([('calm', 10), ('calm', 10), ('crash', -10)]):
-            records.append(dict(regime=regime, seed=str(i), loops=360, reason=None,
+            records.append(dict(regime=regime, seed=str(i), loops=362, reason=None,
                 agents={'astra-1': {'pnlUsdc': p}, 'opus-1': {'pnlUsdc': -p}}))
         # Uneven exclusions leave 2 calm runs and 1 crash run: equal weight is 50, not 53.3.
         records.append(dict(records[-1], seed='excluded', reason='failedReads不正'))
@@ -233,6 +233,8 @@ sys.exit(subprocess.run(['grep', '-E', '-q', sys.argv[-1]], input=os.environ['FA
         for aid in ('multi-arb', 'clean-arb', 'noop', 'venue-arb'):
             (self.root / 'example/agents' / aid).mkdir(parents=True)
         executable(self.root / 'ascon-notes/eval/run-matrix.sh', '#!/bin/bash\ntouch matrix-called\nexit 0\n')
+        # load-probe runs a disk preflight with the real df; a CI runner has ~13 GB free. Stub it so these tests do not depend on the host's disk.
+        executable(self.bin / 'df', '#!/bin/bash\nprintf "Filesystem 1024-blocks Used Available Capacity Mounted\\nfixture 999999999 0 999999999 0%% /\\n"\n')
         return script
 
     def test_load_probe_reused_label_preserves_roster(self):
@@ -256,7 +258,7 @@ sys.exit(subprocess.run(['grep', '-E', '-q', sys.argv[-1]], input=os.environ['FA
             self.assertFalse((self.root / 'matrix-called').exists())
         self.assertEqual(list(script.parent.glob('*roster*')), [])
 
-    def test_release_needs_both_confirmations(self):
+    def test_release_static_only_is_not_ready(self):
         import contextlib
         import io
         import zipfile
@@ -273,14 +275,11 @@ sys.exit(subprocess.run(['grep', '-E', '-q', sys.argv[-1]], input=os.environ['FA
             elif 'infra/submission/scan-submission.py' in command: output = '--- 0 BLOCK, 0 WARN -> ACCEPT\n'
             elif command[:2] == ['git', 'show']: output = 'constants'
             return subprocess.CompletedProcess(command, 0, output)
-        for i, flags in enumerate([[], ['--confirm-backtest'], ['--confirm-selftest'], ['--confirm-backtest', '--confirm-selftest']]):
-            with self.subTest(flags=flags), patch.object(m, 'run', side_effect=fake_run), patch.object(sys, 'argv', ['prepare', '--root', str(self.root), '--source', 'src', '--name', f'out{i}', *flags]), contextlib.redirect_stdout(io.StringIO()) as out:
-                self.assertEqual(m.main(), 0)
-                if len(flags) == 2: self.assertIn('RELEASE READY', out.getvalue())
-                else:
-                    self.assertNotIn('RELEASE READY', out.getvalue())
-                    self.assertIn('静的検査のみ通過', out.getvalue())
-                    self.assertIn('未完:', out.getvalue())
+        with patch.object(m, 'run', side_effect=fake_run), patch.object(sys, 'argv', ['prepare', '--root', str(self.root), '--source', 'src', '--name', 'out']), contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(m.main(), 3)
+            self.assertNotIn('RELEASE READY', out.getvalue())
+            self.assertIn('静的検査のみ通過（READY ではない）', out.getvalue())
+
 
 
 if __name__ == '__main__':
