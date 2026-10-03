@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Create an AUTO-wallet league roster."""
 import argparse
+import json
 import re
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,7 +14,7 @@ def make(players, refs=DEFAULTS):
         if not (ROOT / "example/agents" / aid).is_dir(): raise ValueError(f"agent directory missing: example/agents/{aid}")
     lines = ["agents:"]
     for aid in ids:
-        lines.extend([f"  - id: {aid}", "    wallet: AUTO", f"    dir: example/agents/{aid}"])
+        lines.extend([f"  - id: {json.dumps(aid)}", "    wallet: AUTO"])
         if aid == "noop": lines.append("    baseline: true")
     return "\n".join(lines) + "\n"
 def main():

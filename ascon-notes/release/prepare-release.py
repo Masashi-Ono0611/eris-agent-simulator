@@ -91,6 +91,8 @@ def main():
     p.add_argument('--root', default=str(Path(__file__).resolve().parents[2]))
     p.add_argument('--dry-run', action='store_true')
     p.add_argument('--skip-checks', action='store_true')
+    p.add_argument('--confirm-backtest', action='store_true', help='attest that public-60 backtest passed for this release')
+    p.add_argument('--confirm-selftest', action='store_true', help='attest that agent:selftest passed for this release')
     p.add_argument('--upstream-ref', default='HEAD')
     a = p.parse_args()
     root = Path(a.root).resolve()
@@ -169,7 +171,14 @@ def main():
     if failures:
         for x in failures: print(f'FAIL: {x}')
         print('NOT READY'); return 1
-    print('RELEASE READY'); return 0
+    pending = []
+    if not a.confirm_backtest: pending.append('public-60 backtest')
+    if not a.confirm_selftest: pending.append('agent:selftest')
+    if pending:
+        print(f'静的検査のみ通過（未完: {" / ".join(pending)}）')
+    else:
+        print('RELEASE READY')
+    return 0
 
 
 if __name__ == '__main__': sys.exit(main())

@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""Delete leaked anvil history directories (~/.foundry/anvil/tmp/anvil-state-*) that THIS matrix created.
+"""Delete leaked anvil history directories (~/.foundry/anvil/tmp/anvil-state-*) that appeared after a directory snapshot.
 
 Why: `npm run backtest` stops its anvil with SIGTERM and anvil leaves the per-block history it wrote while
 running (about 4-6.5 GB per 12-minute scenario). Fifty runs filled a 460 GB disk (2026-10-03).
 
 A live anvil does not keep its history directory open (checked with lsof), and "idle" does not prove
 "dead" (another project's dev chain can sit idle for minutes), so liveness cannot be inferred from the
-directory. Ownership is therefore established the other way round: the matrix records the directories
-that existed before it started (--exclude-file, one name per line) and cleans only what appeared after
-that, and only while NO anvil process is running at all (--require-no-anvil, the default). With that
-the worst case is a skipped cleanup, never a deleted live directory.
+directory. The matrix records directories that existed before it started (--exclude-file, one name
+per line) and cleans only what appeared after that, and only while NO anvil process is running at all
+(the default unless --allow-live-anvil is passed). Limitation: appearing after the snapshot is NOT proof of ownership;
+another project's stopped anvil may have created a directory in that interval. This heuristic requires
+exclusive use of the shared history location. The liveness check is also only a point-in-time check;
+it does not prevent another process starting after it. Prefer the per-run HOME isolation in run-matrix.
 
 Usage:
   clean-anvil-tmp.py --snapshot FILE            record the current directory names (call once at matrix start)
@@ -38,7 +40,7 @@ def anvil_running() -> bool:
         res = subprocess.run(["pgrep", "-x", "anvil"], capture_output=True, text=True, timeout=10)
     except (OSError, subprocess.SubprocessError):
         return True
-    return res.returncode == 0 or res.returncode > 1
+    return res.returncode != 1
 
 
 def scan(path: str):

@@ -24,8 +24,7 @@ def resolve_index(value):
 
 
 def candidate_name(value, index):
-    p = Path(value)
-    label = p.parent.name if p.name == "index.tsv" or p.is_dir() else str(value)
+    label = index.parent.name
     label = re.sub(r"-s\d+(?:_\d+)*$", "", label)
     return label[4:] if label.startswith("iso-") else label
 
@@ -46,11 +45,13 @@ def read_index(value):
         try:
             run_dir = Path(location) if Path(location).is_absolute() else index.parents[4] / location
             summary = json.loads((run_dir / "summary.json").read_text(encoding="utf-8"))
+            if not isinstance(summary, dict):
+                raise ValueError("summary root must be an object")
         except (OSError, ValueError, TypeError):
             summary = None
             reason = reason or "summary欠測/不正"
         if summary is not None and not reason:
-            if (summary.get("valueSeries") or {}).get("failedReads") != 0:
+            if not isinstance(summary.get("valueSeries"), dict) or summary["valueSeries"].get("failedReads") != 0:
                 reason = "failedReads不正/欠測"
             elif summary.get("violations"):
                 reason = "violationsあり"
@@ -77,21 +78,28 @@ def fmt(x):
     return "欠測" if x is None else f"{x:.1f}"
 
 
+def fmt_ci(ci):
+    return "比較不能" if ci is None else f"{fmt(ci[0])} – {fmt(ci[1])}"
+
+
 def stats(values, boot, seed):
     if not values:
-        return None, None, None
+        return None, None, 0
     lo, hi = bootstrap(values, boot, seed)
     return statistics.mean(values), (lo, hi), sum(x > 0 for x in values)
 
 
 def verdict(ci, n, minimum=1):
-    if ci is None or n < minimum:
-        return "対が少なく判定不能" if n < minimum else "判定不能"
+    if ci is None:
+        return "比較不能"
+    if n < minimum:
+        return "対が少なく判定不能"
     return "有意に正" if ci[0] > 0 else "有意に負" if ci[1] < 0 else "有意差なし"
 
 
 def render(inputs, ref, boot, seed, min_loop_iterations=360):
     candidates = {}
+    duplicate_keys = defaultdict(set)
     excluded = Counter()
     low_scenarios = {}
     missing_loop = set()
@@ -119,8 +127,9 @@ def render(inputs, ref, boot, seed, min_loop_iterations=360):
                 excluded[reason] += 1
                 continue
             key = (regime, scenario_seed)
-            if key in target:
-                excluded["候補内の対重複"] += 1
+            if key in target or key in duplicate_keys[name]:
+                duplicate_keys[name].add(key)
+                excluded["候補内の対重複"] += 1 + int(key in target)
                 target.pop(key, None)
                 continue
             if all(k in agents for k in (ref, "noop", "crowd")):
@@ -143,7 +152,7 @@ def render(inputs, ref, boot, seed, min_loop_iterations=360):
         for key, label in ((ref, "d_ref"), ("noop", "d_noop"), ("crowd", "d_crowd")):
             vals = [v["cand"] - v[key] for v in data.values()]
             mean, ci, pos = stats(vals, boot, seed)
-            out.append(f"| {label} | {fmt(mean)} | {fmt(ci[0])} – {fmt(ci[1])} | {pos}/{len(vals)} | {verdict(ci, len(vals))} |")
+            out.append(f"| {label} | {fmt(mean)} | {fmt_ci(ci)} | {pos}/{len(vals)} | {verdict(ci, len(vals))} |")
         out.extend(["", "レジーム別平均差（seed 平均）", "", "| レジーム | 件数 | d_ref | d_noop | d_crowd |", "|---|---:|---:|---:|---:|"])
         regimes = sorted({r for r, _ in data})
         for regime in regimes:
@@ -163,7 +172,7 @@ def render(inputs, ref, boot, seed, min_loop_iterations=360):
                 common = set(candidates[a]) & set(candidates[b])
                 vals = [(candidates[a][k]["cand"] - candidates[a][k][ref]) - (candidates[b][k]["cand"] - candidates[b][k][ref]) for k in common]
                 mean, ci, _ = stats(vals, boot, seed)
-                out.append(f"| {a} − {b} | {len(vals)} | {fmt(mean)} | {fmt(ci[0])} – {fmt(ci[1])} | {verdict(ci, len(vals), 12)} |")
+                out.append(f"| {a} − {b} | {len(vals)} | {fmt(mean)} | {fmt_ci(ci)} | {verdict(ci, len(vals), 12)} |")
     return "\n".join(out) + "\n"
 
 
@@ -176,6 +185,8 @@ def main():
     parser.add_argument("--min-loop-iterations", type=int, default=360)
     parser.add_argument("-o", "--output", type=Path)
     args = parser.parse_args()
+    if args.boot <= 0:
+        parser.error("--boot must be a positive integer")
     result = render(args.inputs, args.ref, args.boot, args.seed, args.min_loop_iterations)
     if args.output:
         args.output.write_text(result, encoding="utf-8")

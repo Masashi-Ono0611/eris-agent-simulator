@@ -5,6 +5,11 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { loadPracticeEnv } from './env.js';
 
 type Result = { name: string; status: 'PASS'|'FAIL'|'BLOCKED'; detail: string };
+export function resultsExitCode(results: readonly Result[]): number {
+  if (results.some(r => r.status === 'FAIL')) return 1;
+  if (results.some(r => r.status === 'BLOCKED')) return 2;
+  return 0;
+}
 export function headerStatus(headers: Record<string,string>): Result {
   return Object.keys(headers).length === 3 ? { name:'認証ヘッダ設定',status:'PASS',detail:'3項目あり' } : { name:'ヘッダ付き検査',status:'BLOCKED',detail:'必要な認証ヘッダを設定してください' };
 }
@@ -15,6 +20,7 @@ async function rpc(url: string, method: string, params: unknown[] = [], headers:
 const results: Result[] = [];
 function add(name:string,status:Result['status'],detail:string){results.push({name,status,detail});}
 export async function runChecks() {
+  results.length = 0;
   let env;
   try { env=await loadPracticeEnv(); }
   catch(e) { add('設定', 'BLOCKED', e instanceof Error ? e.message : '設定エラー'); print(); return results; }
@@ -47,8 +53,8 @@ export async function runChecks() {
       } catch { add(`${token.toUpperCase()}残高`,'FAIL','残高照会失敗'); }
     }
     try { await client.call({to:account.address,data:'0x'}); add('eth_call','PASS','応答あり'); } catch { add('eth_call','FAIL','eth_call 失敗'); }
-    const denied=await rpc(env.rpcUrl,'anvil_setBalance',[account.address,'0x0'],env.headers).catch(()=>null);
-    add('禁止メソッド403',denied?.status===403?'PASS':denied?'FAIL':'BLOCKED',denied?`HTTP ${denied.status}`:'ネットワーク接続不可');
+    // 禁止メソッド（anvil_* 等）は規約 §8 により、検査目的でも送らない。403 の確認は行わない。
+    add('禁止メソッド403','BLOCKED','規約 §8: 環境操作 API は検査でも呼ばないため未検査');
     try {
       const calls=await Promise.all(Array.from({length:20},()=>rpc(env.rpcUrl,'eth_blockNumber',[],env.headers)));
       const bad=calls.find(x=>x.status===429); add('20回バーストで429なし',bad?'FAIL':calls.every(x=>x.status===200)?'PASS':'FAIL',bad?'HTTP 429':`HTTP ${[...new Set(calls.map(x=>x.status))].join(',')}`);
@@ -58,4 +64,4 @@ export async function runChecks() {
   print(); return results;
 }
 function print(){ console.log('| 検査 | 結果 | 詳細 |\n|---|---|---|'); for(const r of results) console.log(`| ${r.name} | ${r.status} | ${r.detail} |`); }
-if(process.argv[1] && new URL(import.meta.url).pathname===process.argv[1]) await runChecks();
+if(process.argv[1] && new URL(import.meta.url).pathname===process.argv[1]) process.exitCode = resultsExitCode(await runChecks());

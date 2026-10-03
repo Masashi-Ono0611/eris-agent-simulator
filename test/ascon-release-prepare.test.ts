@@ -78,7 +78,8 @@ test("rewrites copied ascon-epsilon and embeds delta params without process.env"
   const code = readFileSync(join(out, "delta.ts"), "utf8");
   assert.doesNotMatch(code, /process\.env/);
   assert.match(code, /parseDeltaParams\("/);
-  const scan = py(`import importlib.util,sys; s=importlib.util.spec_from_file_location('prep',sys.argv[1]); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); print('\\n'.join(m.inspect_tree(${JSON.stringify(out)})))`);
+  const scan = py(`import importlib.util,sys; s=importlib.util.spec_from_file_location('prep',sys.argv[1]); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); print('\\n'.join(m.inspect_tree(m.Path(${JSON.stringify(out)}))))`);
+  assert.equal(scan.status, 0, scan.stderr);
   assert.equal(scan.stdout.trim(), "");
   const evalResult = spawnSync("node", ["--import", "tsx", "-e", `import { PARAMS } from ${JSON.stringify(join(out, "delta.ts"))}; console.log(JSON.stringify(PARAMS));`], { cwd: root, encoding: "utf8" });
   assert.equal(evalResult.status, 0, evalResult.stderr);

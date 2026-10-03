@@ -18,15 +18,23 @@ done
 [ -n "$ROSTER" ] || { echo "--roster is required" >&2; exit 2; }
 case "$ROSTER" in /*) RPATH=$ROSTER ;; *) RPATH="$ROOT/$ROSTER" ;; esac
 [ -f "$RPATH" ] || { echo "roster missing: $RPATH" >&2; exit 2; }
-python3 - "$RPATH" "$ROOT" <<'PY' || exit 2
-import re, sys
-from pathlib import Path
-text = Path(sys.argv[1]).read_text(encoding="utf-8")
-dirs = re.findall(r'^\s+dir:\s*["\']?([^"\'\s]+)', text, re.M)
-if not dirs: raise SystemExit("roster contains no dir entries")
-for d in dirs:
-    if not (Path(sys.argv[2]) / d).is_dir(): raise SystemExit(f"roster agent directory missing: {d}")
-PY
+(cd "$ROOT" && node -e '
+const fs = require("fs"), path = require("path"), yaml = require("yaml");
+const roster = yaml.parse(fs.readFileSync(process.argv[1], "utf8"));
+const agents = roster && roster.agents;
+if (!Array.isArray(agents) || agents.length === 0) { console.error("roster has no agents"); process.exit(2); }
+const seen = new Set();
+for (const a of agents) {
+  if (seen.has(String(a.id))) { console.error("duplicate agent id: " + a.id); process.exit(2); }
+  seen.add(String(a.id));
+  if (a.command) continue;
+  const d = String(a.dir || a.id);
+  if (!fs.existsSync(path.join("example/agents", d, "agent.ts")) && !fs.existsSync(path.join("example/agents", d, "strategy.py"))) {
+    console.error("roster agent directory missing: example/agents/" + d + " (id " + a.id + ")"); process.exit(2);
+  }
+}
+console.log("roster ok: " + agents.length + " agents");
+' "$RPATH") || exit 2
 if ! git -C "$ROOT" diff HEAD --quiet -- sdk/src/constants.local.ts; then
   echo "WARNING: sdk/src/constants.local.ts differs from git; backtest may rewrite it."
 else echo "sdk/src/constants.local.ts matches git version."; fi

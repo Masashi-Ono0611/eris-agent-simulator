@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -u
+set -f  # identifiers are word lists, never pathname globs
 BASE_PORT=8547
 PARALLEL=4
 LABEL=
@@ -23,6 +24,11 @@ done
 if [ -z "$LABEL" ] || [ -z "$ROSTER" ] || [ -z "$SEEDS" ]; then usage >&2; exit 2; fi
 case "$PARALLEL" in ''|*[!0-9]*) echo "--parallel must be a positive integer" >&2; exit 2;; esac
 if [ "$PARALLEL" -lt 1 ] || [ ! -f "$ROSTER" ]; then echo "invalid parallel count or missing roster" >&2; exit 2; fi
+for ident in $REGIMES $SEEDS; do
+  if ! [[ "$ident" =~ ^[A-Za-z0-9_-]+$ ]]; then
+    echo "invalid regime/seed identifier: $ident" >&2; exit 2
+  fi
+done
 for regime in $REGIMES; do
   if [ ! -f "config/regimes/$regime.yaml" ]; then echo "unknown regime: $regime" >&2; exit 2; fi
 done
@@ -40,7 +46,20 @@ if [ ! -x "$SHIM_DIR/anvil" ]; then echo "anvil shim missing or not executable: 
 HOMES_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/ascon-anvil-homes.XXXXXX") || exit 2
 # Delete a per-scenario anvil HOME. Only paths directly under HOMES_ROOT (created above) are ever removed.
 remove_anvil_home() {
-  case "$1" in "$HOMES_ROOT"/?*) python3 -c 'import shutil,sys; shutil.rmtree(sys.argv[1], ignore_errors=True)' "$1";; esac
+  python3 - "$HOMES_ROOT" "$1" <<'PYREMOVE'
+from pathlib import Path
+import shutil, sys
+root, path = Path(sys.argv[1]).resolve(), Path(sys.argv[2])
+try:
+    resolved = path.resolve()
+    if path.is_symlink() or resolved.parent != root:
+        raise ValueError("not a direct child of HOMES_ROOT")
+    if resolved.exists():
+        shutil.rmtree(resolved)
+except (OSError, ValueError, RuntimeError) as error:
+    print(f"warning: refusing/failed to remove anvil HOME {path}: {error}", file=sys.stderr)
+    sys.exit(1)
+PYREMOVE
 }
 cleanup_homes_root() {
   if [ -d "$HOMES_ROOT" ]; then
@@ -80,13 +99,27 @@ run_one() {
     npm run backtest -- --regime "$reg" --seed "$seed" --agents "$ROSTER" --agent-sandbox process --port "$port" --state backtest/state ${BACKTEST_EXTRA_ARGS:-} >"$logfile" 2>&1
   rc=$?
   # The backtest stops anvil with SIGTERM and returns; wait until that anvil is really gone before deleting its HOME.
+  # backtest spawns "anvil --port N ..."; the shell shim appears as
+  # /bin/bash .../anvil-shim/anvil until it execs the real anvil binary.
+  # Match the anvil basename and port as whole tokens, allowing intervening options.
+  pattern="(^|[[:space:]/])anvil[[:space:]]+([^[:space:]]+[[:space:]]+)*--port[[:space:]]+${port}([[:space:]]|$)"
   waited=0
-  while pgrep -f "anvil --port $port( |\$)" >/dev/null 2>&1 && [ "$waited" -lt 30 ]; do sleep 1; waited=$((waited + 1)); done
-  if pgrep -f "anvil --port $port( |\$)" >/dev/null 2>&1; then
-    echo "warning: anvil on port $port still running after 30s; its HOME $ahome is NOT deleted" >&2
-  else
-    remove_anvil_home "$ahome"
-  fi
+  while :; do
+    pgrep -f "$pattern" >/dev/null 2>&1
+    probe_rc=$?
+    case "$probe_rc" in
+      1) remove_anvil_home "$ahome"; break;;
+      0)
+        if [ "$waited" -ge 30 ]; then
+          echo "warning: anvil on port ${port} still running after 30s; its HOME ${ahome} is NOT deleted" >&2
+          break
+        fi
+        sleep 1; waited=$((waited + 1));;
+      *)
+        echo "warning: pgrep exit ${probe_rc}; anvil status unknown on port ${port}; HOME ${ahome} is NOT deleted" >&2
+        break;;
+    esac
+  done
 run_dir=$(python3 - "$logfile" <<'PY'
 import json, re, sys
 found = None
@@ -145,7 +178,14 @@ for regime in $REGIMES; do
     if [ -f "$rowfile" ]; then
       cat "$rowfile" >> "$TMP/index.tsv"
       rc=$(awk -F '\t' '{print $4}' "$rowfile")
-      if [ "$rc" -ne 0 ]; then failures=$((failures + 1)); fi
+      rd=$(awk -F '\t' '{print $3}' "$rowfile")
+      if [ "$rc" -ne 0 ]; then
+        failures=$((failures + 1))
+      elif [ -z "$rd" ]; then
+        # exit 0 but no run directory: the backtest reported FAILED without a non-zero status (observed: bad roster dir)
+        echo "ERROR: $regime-$seed exited 0 but produced no run directory (counted as failed)" >&2
+        failures=$((failures + 1))
+      fi
     else
       printf '%s\t%s\t\t127\n' "$regime" "$seed" >> "$TMP/index.tsv"
       failures=$((failures + 1))

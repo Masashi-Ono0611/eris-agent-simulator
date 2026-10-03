@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, chmodSync, copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { test } from "node:test";
@@ -30,7 +30,7 @@ function reportFixture(loops: number[]) {
 
 test("make-roster validates actual directories, duplicate ids and marks noop baseline", () => {
   const roster = execFileSync("python3", [maker, "--players", "basis-arb"], { encoding: "utf8" });
-  assert.match(roster, /id: basis-arb/); assert.match(roster, /wallet: AUTO/); assert.match(roster, /id: noop[\s\S]*baseline: true/);
+  assert.match(roster, /id: "basis-arb"/); assert.match(roster, /wallet: AUTO/); assert.match(roster, /id: "noop"[\s\S]*baseline: true/);
   assert.throws(() => execFileSync("python3", [maker, "--players", "multi-arb"], { encoding: "utf8" }));
   assert.throws(() => execFileSync("python3", [maker, "--players", "not-a-real-agent-932"], { encoding: "utf8" }));
 });
@@ -51,12 +51,29 @@ test("league-report excludes low-loop scenarios globally and aggregates family a
 test("run-league dry-run validates roster and makes no files or child backtest process", () => {
   const dir = mkdtempSync(join(tmpdir(), "ascon-league-dry-"));
   const roster = join(dir, "roster.yaml");
-  writeFileSync(roster, "agents:\n  - id: noop\n    wallet: AUTO\n    dir: example/agents/noop\n");
+  writeFileSync(roster, "agents:\n  - id: noop\n    wallet: AUTO\n    dir: noop\n");
   const before = readFileSync(roster, "utf8");
-  const result = spawnSync("bash", [resolve(root, "ascon-notes/league/run-league.sh"), "--dry-run", "--label", "dry-check", "--roster", roster, "--regimes", "calm", "--seeds", "1", "--parallel", "1"], { encoding: "utf8" });
+  // Copy the entry point and replace its actual matrix child: never run a real backtest.
+  const script=join(dir,"ascon-notes/league/run-league.sh");
+  mkdirSync(join(dir,"ascon-notes/league"),{recursive:true});
+  mkdirSync(join(dir,"ascon-notes/eval"),{recursive:true});
+  mkdirSync(join(dir,"example/agents/noop"),{recursive:true});
+  writeFileSync(join(dir,"example/agents/noop/agent.ts"),"export function decide() { return []; }");
+  symlinkSync(join(root,"node_modules"),join(dir,"node_modules"),"dir");
+  copyFileSync(resolve(root,"ascon-notes/league/run-league.sh"),script);
+  const marker=join(dir,"backtest-called");
+  writeFileSync(join(dir,"ascon-notes/eval/run-matrix.sh"),`#!/bin/bash\ntouch '${marker}'\nexit 91\n`);
+  const bin=join(dir,"bin"); mkdirSync(bin);
+  writeFileSync(join(bin,"git"),"#!/bin/bash\nexit 0\n"); chmodSync(join(bin,"git"),0o755);
+  const result = spawnSync("/bin/bash", [script, "--dry-run", "--label", "dry-check", "--roster", roster, "--regimes", "calm", "--seeds", "1", "--parallel", "1"], { encoding: "utf8",env:{...process.env,PATH:`${bin}:${process.env.PATH}`} });
   try {
+    assert.equal(existsSync(marker),false,"dry-run invoked matrix/backtest");
     assert.equal(result.status, 0, result.stderr); assert.match(result.stdout, /DRY RUN/);
     assert.equal(readFileSync(roster, "utf8"), before);
-    assert.equal(existsSync(join(root, "ascon-notes/eval/out/dry-check")), false);
+    assert.equal(existsSync(join(dir, "ascon-notes/eval/out/dry-check")), false);
+    // Positive control: dropping --dry-run must reach the stub and propagate its status.
+    const liveStub=spawnSync("/bin/bash",[script,"--label","dry-check","--roster",roster],{encoding:"utf8",env:{...process.env,PATH:`${bin}:${process.env.PATH}`}});
+    assert.equal(liveStub.status,91,liveStub.stderr);
+    assert.equal(existsSync(marker),true,"backtest stub was not connected");
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });

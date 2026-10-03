@@ -11,8 +11,9 @@ while [ "$#" -gt 0 ]; do
 done
 case "$N" in 8|12|16) ;; *) echo "--agents must be 8, 12, or 16" >&2; exit 2;; esac
 case "$P" in 1|2|3) ;; *) echo "--parallel must be 1, 2, or 3" >&2; exit 2;; esac
-ROSTER="$ROOT/ascon-notes/league/${LABEL}-roster.yaml"
-python3 - "$ROOT" "$ROSTER" "$N" <<'PY'
+ROSTER=$(mktemp "$ROOT/ascon-notes/league/load-probe-roster.XXXXXX") || exit 2
+trap 'rm -f "$ROSTER"' EXIT
+python3 - "$ROOT" "$ROSTER" "$N" <<'PY' || exit 2
 import sys
 from pathlib import Path
 root,out,n=Path(sys.argv[1]),Path(sys.argv[2]),int(sys.argv[3]); refs=["multi-arb","clean-arb","noop","venue-arb"]
@@ -21,12 +22,11 @@ for x in refs:
 lines=["agents:"]
 for i in range(n):
     aid=f"probe-{i+1}"; ref=refs[i%len(refs)]
-    lines += [f"  - id: {aid}","    wallet: AUTO",f"    dir: example/agents/{ref}"]
+    lines += [f"  - id: {aid}","    wallet: AUTO",f"    dir: {ref}"]
 out.write_text("\n".join(lines)+"\n",encoding="utf-8")
 PY
 if [ "$DRY" -eq 1 ]; then
   echo "DRY RUN: $ROOT/ascon-notes/eval/run-matrix.sh --label $LABEL --roster $ROSTER --regimes calm --seeds \"$(seq 101 $((100+P)) | tr '\n' ' ')\" --parallel $P"
-  rm -f "$ROSTER"
   exit 0
 fi
 cd "$ROOT" || exit 2

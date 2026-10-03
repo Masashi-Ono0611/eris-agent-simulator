@@ -13,6 +13,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 RM="ascon-notes/eval/run-matrix.sh"
+failures=0
 pair() {
   # $1,$2 = candidate names (roster-iso-<name>.yaml); labels iso-<name>-s<seeds-with-underscores>
   a=$1; b=$2
@@ -27,8 +28,13 @@ pair() {
   pb=$!
   wait "$pa"; ra=$?
   wait "$pb"; rb=$?
+  if [ "$ra" -ne 0 ]; then failures=$((failures + 1)); fi
+  if [ "$rb" -ne 0 ]; then failures=$((failures + 1)); fi
   echo "pair $a / $b finished: exit $ra / $rb"
 }
 pair delta-bid eps-bid5000
 pair zeta-a30 eps-bid10000
 echo "ISO SUITE DONE at $(date '+%H:%M')"
+echo "ISO SUITE: ${failures} failed matrix run(s)"
+if [ "$failures" -gt 0 ]; then exit 1; fi
+exit 0
