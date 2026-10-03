@@ -14,7 +14,7 @@
  * Everything about the token is read from the chain through `ctx.publicClient`; see
  * lib/launchSwap.ts for the reads and the two transactions.
  */
-import type { Address } from "viem";
+import type { Address, Hex } from "viem";
 import type { AgentAction, AgentContext, AgentObservation } from "@eris/sdk";
 import { TOKENS } from "@eris/sdk/constants.js";
 import {
@@ -22,6 +22,7 @@ import {
   bpsOf,
   launchPoolState,
   launchPools,
+  launchTokenCodehash,
   poolFee,
   poolFlow,
   quoteLaunch,
@@ -68,6 +69,7 @@ type Watch = {
   entered?: { block: number; exiting: boolean; reconcile?: boolean; exitAfterBlock?: number };
 };
 const watches = new Map<string, Watch>();
+let shapeOnlyNoted = false;
 let lastBlock: number | undefined;
 // PublicClient does not expose per-call cancellation here. Expired requests are
 // stale, not active slots; the underlying transport may still have work in flight.
@@ -123,6 +125,7 @@ export async function decide(obs: AgentObservation, ctx: AgentContext): Promise<
   const keyFor = (method: string, args: unknown) => `${method}:${JSON.stringify(args, (_, value) => typeof value === "bigint" ? value.toString() : value)}`;
   const wrapClient = (priority: boolean) => ({
     ...rawClient,
+    call: (args: Parameters<typeof rawClient.call>[0]) => timed(rawClient, keyFor("call", args), () => rawClient.call(args), deadline, priority),
     readContract: (args: Parameters<typeof rawClient.readContract>[0]) => timed(rawClient, keyFor("read", args), () => rawClient.readContract(args), deadline, priority),
     getLogs: (args: Parameters<typeof rawClient.getLogs>[0]) => timed(rawClient, keyFor("logs", args), () => rawClient.getLogs(args), deadline, priority),
     simulateContract: (args: Parameters<typeof rawClient.simulateContract>[0]) => timed(rawClient, keyFor("quote", args), () => rawClient.simulateContract(args), deadline, priority),
@@ -238,7 +241,17 @@ export async function decide(obs: AgentObservation, ctx: AgentContext): Promise<
   for (const [key, until] of retired) if (block >= until) retired.delete(key);
   // Fresh discoveries precede idle watches, after holdings have had first claim
   // on the existing four-second / four-pending-read budget.
-  for (const pool of launchPools(obs)) {
+  // Hash discovery is optional RPC work: holdings/exits above keep first claim
+  // on the budget. Match upstream launch-confirm's logged shape-only fallback.
+  let tokenCodehash: Hex | null = null;
+  if (!selectedExit && Date.now() < deadline) {
+    tokenCodehash = await launchTokenCodehash(client);
+    if (tokenCodehash === null && !shapeOnlyNoted) {
+      shapeOnlyNoted = true;
+      ctx.log({ round: obs.round, reason: "AgentERC20 artifact or node unavailable: launch pools are matched by listing shape only" });
+    }
+  }
+  for (const pool of launchPools(obs, { tokenCodehash })) {
     if (selectedExit || Date.now() >= deadline) break;
     const key = pool.pool.toLowerCase();
     if (pool.mine || watches.has(key) || retired.has(key)) continue;

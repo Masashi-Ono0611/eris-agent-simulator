@@ -17,7 +17,9 @@ sys.dont_write_bytecode = True
 def module(relative):
     spec = importlib.util.spec_from_file_location('subject', ROOT / relative)
     mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    # Match CLI execution: sibling imports resolve relative to the script.
+    with patch.object(sys, 'path', [str((ROOT / relative).parent), *sys.path]):
+        spec.loader.exec_module(mod)
     return mod
 
 
@@ -114,9 +116,9 @@ class OfflineTools(unittest.TestCase):
         # Uneven exclusions leave 2 calm runs and 1 crash run: equal weight is 50, not 53.3.
         records.append(dict(records[-1], seed='excluded', reason='failedReads不正'))
         output = m.render(records)
-        self.assertIn('| astra-1 | 50.0 | 40.0 |', output)
-        self.assertIn('| astra | 50.0 |', output)
-        self.assertIn('| opus | 50.0 |', output)
+        self.assertIn('| astra-1 | 50.00 | 40.00 |', output)
+        self.assertIn('| astra | 50.00 |', output)
+        self.assertIn('| opus | 50.00 |', output)
 
     def test_roster_ids_are_quoted(self):
         m = module('ascon-notes/league/make-roster.py')
@@ -228,6 +230,9 @@ sys.exit(subprocess.run(['grep', '-E', '-q', sys.argv[-1]], input=os.environ['FA
 
     def probe(self):
         script = self.copy('ascon-notes/league/load-probe.sh')
+        executable(self.bin / 'df', '#!/bin/bash\nprintf "Filesystem 1024-blocks Used Available Capacity Mounted on\\nfixture 999999999 0 999999999 0%% /\\n"\n')
+        for name in ('memory_pressure', 'vm_stat'):
+            executable(self.bin / name, '#!/bin/bash\nexit 1\n')
         for aid in ('multi-arb', 'clean-arb', 'noop', 'venue-arb'):
             (self.root / 'example/agents' / aid).mkdir(parents=True)
         executable(self.root / 'ascon-notes/eval/run-matrix.sh', '#!/bin/bash\ntouch matrix-called\nexit 0\n')
