@@ -20,8 +20,10 @@
 ## 練習 devnet（スコア対象外）
 - RPC `https://ascon-rpc.nyx.foundation/`（chainId 31337、2秒/ブロック）、ダッシュボード/エクスプローラは認証不要
 - RPC は HTTP ヘッダ3つ必須（値は contact@nyx.foundation からのメール。チーム専用キーは共有禁止）
-- 資金: Discord #faucet に `id: <英字・-_>` / `address: 0x...` を投稿（秘密鍵は絶対に貼らない）
+- 資金: Discord #faucet に `id: <英字・-_>` / `address: 0x...` を投稿（秘密鍵は絶対に貼らない）。**実測: 投稿（2026-10-03 朝・土曜）から着金まで約 3.5 時間**。着金額はマニフェストの `funding`（ETH 1 / WETH 8 / USDC 25,000 / WBTC 0.4）と一致
 - 使用不可: `anvil_*` / `evm_*` / `eth_sendTransaction` / `txpool_*` / `eth_subscribe`。100 req/秒（バースト300、call/estimateGas/getLogs は5回分）
+- **接続の実測（2026-10-03）**: 疎通チェック `ascon-notes/practice/check-practice.ts` は全 9 項目 PASS（ブロック速度 0.51 blocks/s）。実エージェント（`ascon-epsilon`・既定設定）を `ascon-notes/practice/run-agent.ts` で約 2 分走らせ、**約定 20 件が着地**。`approval_failed` 29 件（原因未特定）と `submit_failed` 2 件（`ERC20: transfer amount exceeds balance` / `BAL#507`）が残る。
+- **実行は必ずリリース用 worktree（バックテストを走らせない）で行う**: バックテストは追跡対象の `sdk/src/constants.local.ts`（運営環境の住所表）をローカル deployer の住所表に書き換えるため、書き換わったままでは「18 件すべてコードなし」で起動拒否される。詳細: `ascon-notes/submission-checklist.md` の C0。
 - 詳細: `docs/guide/practice-devnet.md`、接続テンプレ: `ascon-notes/practice.env.template`
 
 ## 競技の骨子
@@ -41,4 +43,4 @@
 ## 未確認（要対応）
 - 参加登録/チーム登録の完了状況、チームコード
 - 推論 API キー登録フォームの実施、本番で利用可能なモデル一覧（LLM 改訂を使う場合）
-- 練習 devnet のヘッダ 3 つ（メール）と faucet 投稿（本人作業）
+- 練習 devnet での `approval_failed` の原因（取引の着地は確認済みで、致命的かは未確認）
