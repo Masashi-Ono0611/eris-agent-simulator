@@ -5,7 +5,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
-from league_harness import ROOT, identifier, roster_agents, agent_path, tree_hash
+from league_harness import ROOT, REFERENCES, identifier, roster_agents, agent_path, tree_hash
 from g0_contract import THRESHOLDS
 
 MANIFESTS = Path(__file__).with_name('manifests')
@@ -26,7 +26,8 @@ def snapshot(roster, agent_root, zip_path=None):
         if a['command']: raise ValueError('command agent cannot be directory-hashed')
         path = agent_path(agent_root,a['dir'])
         version = tree_hash(path)
-        if 'prompt.md' not in version['files']: raise ValueError('missing prompt.md: '+a['id'])
+        # Upstream reference agents (noop, multi-arb, ...) ship without prompt.md; every other agent must have one.
+        if 'prompt.md' not in version['files'] and a['dir'] not in REFERENCES: raise ValueError('missing prompt.md: '+a['id'])
         agents[a['id']] = dict(directory=str(path), **version)
     result = dict(commit=git_sha(),roster=dict(path=str(roster),sha256=hashlib.sha256(roster.read_bytes()).hexdigest()),
                   agent_root=str(agent_root),agents=agents)
