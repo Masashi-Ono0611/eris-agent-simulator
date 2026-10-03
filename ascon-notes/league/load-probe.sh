@@ -44,6 +44,10 @@ if command -v vm_stat >/dev/null 2>&1; then
   vm_stat 2>/dev/null | awk '/Pages occupied by compressor|Swapins|Swapouts/ {print "memory snapshot: " $0}'
 fi
 SEEDS=$(seq 101 $((100+P)) | tr '\n' ' ')
+# Reference agents are checked before the dry-run exit: a dry run that cannot succeed for real must not report success.
+for REF in multi-arb clean-arb noop venue-arb; do
+  [ -d "$ROOT/example/agents/$REF" ] || { echo "missing reference: $REF" >&2; exit 2; }
+done
 if [ "$DRY" -eq 1 ]; then
   echo "DRY RUN: agents=$N parallel=$P; generated roster (no file created)"
   echo "DRY RUN: $ROOT/ascon-notes/eval/run-matrix.sh --label $LABEL --roster <generated> --regimes calm --seeds \"$SEEDS\" --parallel $P --base-port $BASE_PORT"

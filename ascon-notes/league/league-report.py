@@ -2,8 +2,10 @@
 """Summarize league results with paired inference and diversity recommendations."""
 import argparse
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling module also when this file is loaded by path (tests, importlib)
 from league_harness import (read, family, analyze, analysis_args, from_args, average, fmt, metric_text, ci_text, stability_text)
 
 

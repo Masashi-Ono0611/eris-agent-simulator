@@ -140,6 +140,8 @@ class ProbeTests(unittest.TestCase):
         # Copied minimal workspace makes every filesystem side effect observable.
         self.league=self.root/'ascon-notes/league'; self.league.mkdir(parents=True)
         (self.league/'load-probe.sh').write_text((LEAGUE/'load-probe.sh').read_text())
+        for ref in ('multi-arb', 'clean-arb', 'noop', 'venue-arb'):  # load-probe checks its reference agents before even a dry run
+            (self.root/'example/agents'/ref).mkdir(parents=True)
         self.stub('memory_pressure', 'echo "System-wide memory free percentage: 5%"')
         self.stub('vm_stat', 'echo "Swapouts: 1."')
         for name in ['npm','anvil','mktemp']:
@@ -181,7 +183,7 @@ class ProbeTests(unittest.TestCase):
         (self.bin/'mktemp').unlink()
         self.stub('df','printf "Filesystem 1024-blocks Used Available Capacity Mounted\\nfixture 999999999 0 999999999 0%% /\\n"')
         for ref in ['multi-arb','clean-arb','noop','venue-arb']:
-            (self.root/'example/agents'/ref).mkdir(parents=True)
+            (self.root/'example/agents'/ref).mkdir(parents=True, exist_ok=True)
         matrix=self.root/'ascon-notes/eval/run-matrix.sh'; matrix.parent.mkdir()
         matrix.write_text('#!/bin/bash\n'
             'printf "%s\\n" "$MIN_FREE_GB" "$@" > received.txt\n'

@@ -114,9 +114,11 @@ class OfflineTools(unittest.TestCase):
         # Uneven exclusions leave 2 calm runs and 1 crash run: equal weight is 50, not 53.3.
         records.append(dict(records[-1], seed='excluded', reason='failedReads不正'))
         output = m.render(records)
-        self.assertIn('| astra-1 | 50.0 | 40.0 |', output)
-        self.assertIn('| astra | 50.0 |', output)
-        self.assertIn('| opus | 50.0 |', output)
+        # report prints two decimals; the point is equal regime weight (50.00), not the per-run mean (53.33)
+        self.assertIn('| astra-1 | 50.00 | 40.00 |', output)
+        self.assertIn('| astra | 50.00 |', output)
+        self.assertIn('| opus | 50.00 |', output)
+        self.assertNotIn('53.33', output)
 
     def test_roster_ids_are_quoted(self):
         m = module('ascon-notes/league/make-roster.py')
