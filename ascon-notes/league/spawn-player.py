@@ -6,7 +6,7 @@ usage: spawn-player.py <family>-<n> <archetype> [--dry-run]
 The player writes only inside .claude/worktrees/league-<id>. Deliverables are collected with
 collect-player.sh. Logs: .codex-task/players/<id>.log
 """
-import argparse, os, re, subprocess, sys
+import argparse, os, re, shutil, subprocess, sys, shlex
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -33,20 +33,63 @@ ARCHETYPES = {
 def brief(player_id, arch):
     tpl = (HERE / "brief-template.md").read_text(encoding="utf-8")
     title, detail = ARCHETYPES[arch]
-    return (tpl.replace("{{PLAYER_ID}}", player_id).replace("{{ARCHETYPE}}", title).replace("{{ARCHETYPE_DETAIL}}", detail))
+    return (tpl.replace("{{PLAYER_ID}}", player_id).replace("{{ARCHETYPE}}", title).replace("{{ARCHETYPE_DETAIL}}", detail).replace("{{GENERATION_CONTEXT}}", ""))
+
+def copy_previous(source, destination):
+    if destination.exists():
+        raise ValueError(f"agent destination exists; refusing overwrite: {destination}")
+    if not (source / "agent.ts").is_file() or not (source / "prompt.md").is_file():
+        raise ValueError(f"previous agent.ts/prompt.md missing: {source}")
+    if source.is_symlink() or any(p.is_symlink() for p in source.rglob("*")):
+        raise ValueError("previous agent directory contains symlinks")
+    def ignore(_directory, names):
+        return [name for name in names if name.startswith('.') or name == 'node_modules' or name.endswith('.log')]
+    shutil.copytree(source, destination, ignore=ignore)
+
+
+def validate_worktree(path):
+    try:
+        subprocess.check_output(['git', '-C', str(path), 'rev-parse', '--git-dir'], stderr=subprocess.DEVNULL)
+        listed = subprocess.check_output(['git', '-C', str(MAIN), 'worktree', 'list', '--porcelain', '-z'])
+        paths = [Path(field[9:].decode()).resolve() for field in listed.split(b'\0') if field.startswith(b'worktree ')]
+        if path.resolve() not in paths: raise ValueError('not a registered worktree')
+    except (OSError, subprocess.CalledProcessError, ValueError) as e:
+        raise ValueError(f'--reuse requires a registered git worktree: {path}') from e
+
+
+def check_started(child, logpath):
+    try:
+        rc = child.wait(timeout=0.3)
+    except subprocess.TimeoutExpired:
+        return
+    raise ValueError(f'model exited immediately (exit {rc}); inspect log: {logpath}')
+
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("player_id"); ap.add_argument("archetype", choices=sorted(ARCHETYPES))
+    ap.add_argument("player_id"); ap.add_argument("archetype", nargs="?", default="blank", choices=sorted(ARCHETYPES))
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--reuse", action="store_true", help="re-run into an existing worktree (after a failed first attempt)")
+    ap.add_argument("--brief-file", type=Path)
+    ap.add_argument("--from-worktree", type=Path, help="copy example/agents/<player_id> from previous worktree")
+    ap.add_argument("--worktree", type=Path, help="new generation destination (default league-<id>)")
     a = ap.parse_args()
     m = re.fullmatch(r"(astra|sonnet|opus|grok)-(\d+)", a.player_id)
     if not m: sys.exit("player id must be <astra|sonnet|opus|grok>-<n>")
     family = m.group(1)
-    wt = MAIN / ".claude" / "worktrees" / f"league-{a.player_id}"
+    wt = a.worktree.resolve() if a.worktree else MAIN / ".claude" / "worktrees" / f"league-{a.player_id}"
     if wt.exists() and not a.reuse: sys.exit(f"worktree already exists: {wt} (use --reuse to re-run into it)")
-    text = brief(a.player_id, a.archetype)
+    if wt.exists():
+        try: validate_worktree(wt)
+        except ValueError as e: sys.exit(str(e))
+    text = a.brief_file.read_text(encoding="utf-8") if a.brief_file else brief(a.player_id, a.archetype)
+    source = a.from_worktree.resolve() / "example/agents" / a.player_id if a.from_worktree else None
+    destination = wt / "example/agents" / a.player_id
+    if source:
+        if not (source / "agent.ts").is_file() or not (source / "prompt.md").is_file():
+            sys.exit(f"previous agent.ts/prompt.md missing: {source}")
+        if destination.exists(): sys.exit(f"agent destination exists; refusing overwrite: {destination}")
+        text += "\n\n前世代のエージェントは自分のディレクトリにコピー済み。雛形で上書きせず、このコードから改良する。\n"
     if family in ("sonnet", "opus"):
         text += "\n\n## 読み方の注意\n大きなファイルは丸ごと読まず、`offset`/`limit` で必要な範囲だけ読む（文脈が溢れると作業が止まる）。参照エージェントは agent.ts の決定関数と定数部だけ読めば足りる。\n"
     logdir = SCAFFOLD / ".codex-task" / "players"
@@ -61,9 +104,19 @@ def main():
     cmd = cmds[family]
     if a.dry_run:
         print(f"worktree: {wt}\nbase: {BASE_BRANCH}\nfamily: {family}\nbrief chars: {len(text)}\ncmd: {cmd[0]} ... ({len(cmd)} args)")
+        if source: print(f"copy: {source} -> {destination}")
+        if a.brief_file: print(f"brief file: {a.brief_file}")
         return
-    if not wt.exists():
-        subprocess.check_call(["git", "-C", str(MAIN), "worktree", "add", str(wt), "-b", f"league/{a.player_id}", BASE_BRANCH])
+    created = not wt.exists()
+    if created:
+        subprocess.check_call(["git", "-C", str(MAIN), "worktree", "add", str(wt), "-b", f"league/{wt.name if a.worktree else a.player_id}", BASE_BRANCH])
+    if source:
+        try: copy_previous(source, destination)
+        except (OSError, ValueError) as e:
+            if created:
+                print(f'copy failed; newly created worktree remains at {wt}. No automatic deletion.', file=sys.stderr)
+                print('After inspecting its contents, clean up with: ' + shlex.join(['git', '-C', str(MAIN), 'worktree', 'remove', str(wt)]), file=sys.stderr)
+            sys.exit(str(e))
     # shared deps for typecheck (read-only use); players must not install
     for rel in ("node_modules", "dashboard/node_modules", "deployer/node_modules"):
         src = SCAFFOLD / rel
@@ -71,9 +124,12 @@ def main():
             (wt / rel).symlink_to(src)
     logdir.mkdir(parents=True, exist_ok=True)
     (wt / "BRIEF.md").write_text(text, encoding="utf-8")
-    log = open(logdir / f"{a.player_id}.log", "w")
-    subprocess.Popen(cmd, cwd=str(wt), stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-    print(f"started {a.player_id} ({family}) in {wt}; log: {logdir / (a.player_id + '.log')}")
+    logpath = logdir / f"{wt.name if a.worktree else a.player_id}.log"
+    with open(logpath, "w") as log:
+        child = subprocess.Popen(cmd, cwd=str(wt), stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+    try: check_started(child, logpath)
+    except ValueError as e: sys.exit(str(e))
+    print(f"started {a.player_id} ({family}) in {wt}; log: {logpath}")
 
 if __name__ == "__main__":
     main()

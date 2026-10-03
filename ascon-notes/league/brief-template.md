@@ -18,12 +18,14 @@
 ## 作業ルール
 - **バックテスト・devnet 接続・anvil の起動は禁止**（共有の計算資源と、`sdk/src/constants.local.ts` の住所表を壊すため）。対戦はリーグ運営側が回す。
 - 検証してよいもの: `npm run typecheck`、`npm run check:strategy`、単体テスト（`test/` に自分用のテストを足す）、`node --import tsx ascon-notes/release/check-prompts.ts`。
-- 秘密鍵・ヘッダ値・`.env` に触れない。git commit / push はしない（運営が取り込む）。他のプレイヤーのディレクトリを見ない（第 1 ラウンドは独立に作る）。
+- 秘密鍵・ヘッダ値・`.env` に触れない。git commit / push はしない（運営が取り込む）。第 1 ラウンドでは他のプレイヤーのディレクトリを見ない。第 2 世代以降は、この指示書で「読んでよい参考」と明示したコードだけを読める（編集禁止）。
 
 ## あなたの割り当て
 - **id**: `{{PLAYER_ID}}`
 - **型**: `{{ARCHETYPE}}`
 {{ARCHETYPE_DETAIL}}
+
+{{GENERATION_CONTEXT}}
 
 ## 納品物と最終報告
 - `example/agents/{{PLAYER_ID}}/`（`agent.ts`、`prompt.md`、必要なら補助ファイル）＋ `test/{{PLAYER_ID}}.test.ts`。

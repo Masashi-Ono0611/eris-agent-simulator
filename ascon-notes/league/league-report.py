@@ -1,67 +1,75 @@
 #!/usr/bin/env python3
-"""Summarize league results and consistently exclude overloaded scenarios."""
-import argparse, csv, json, math, re
-from collections import Counter, defaultdict
+"""Summarize league results with paired inference and diversity recommendations."""
+import argparse
+import json
+from collections import defaultdict
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[2]
-def read(index):
-    with index.open(newline="", encoding="utf-8") as f:
-        rows = list(csv.DictReader(f, delimiter="\t"))
-    counts = Counter(r.get("run_dir", "") for r in rows if r.get("run_dir")); result=[]
-    for row in rows:
-        loc=Path(row.get("run_dir", "")); loc=loc if loc.is_absolute() else ROOT/loc
-        reason="run_dir重複" if counts[row.get("run_dir", "")] > 1 else None
-        if row.get("exit_code") != "0": reason=reason or "exit_code不正"
-        try:
-            s=json.loads((loc/"summary.json").read_text(encoding="utf-8"))
-            if not isinstance(s, dict): raise ValueError("summary root must be an object")
-        except (OSError,ValueError,TypeError): s=None; reason=reason or "summary欠測/不正"
-        if s is not None and not reason:
-            if not isinstance(s.get("valueSeries"), dict) or s["valueSeries"].get("failedReads") != 0: reason="failedReads不正/欠測"
-            elif s.get("violations"): reason="violationsあり"
-        agents={}
-        if s is not None:
-            try: agents={a["id"]:a for a in s["agents"]}
-            except (KeyError,TypeError): reason=reason or "agents不正"
-        result.append({"regime":row.get("regime",""),"seed":row.get("seed",""),"agents":agents,"loops":s.get("loopIterations") if s else None,"reason":reason})
-    return result
-def family(aid):
-    m=re.match(r"^(.+)-\d+$",aid); return m.group(1) if m else aid
-def render(records, minimum=360):
-    low={(r["regime"],r["seed"]):r["loops"] for r in records if minimum>0 and isinstance(r["loops"],(int,float)) and r["loops"]<minimum}
-    out=[f"負荷ガード: loopIterations < {minimum} を除外",f"除外シナリオ: {len(low)}"]
-    out += [f"- {reg} / {seed}: loopIterations={loops}" for (reg,seed),loops in sorted(low.items())] or ["- なし"]
-    out += [f"警告: loopIterations 欠落 {sum(r['loops'] is None for r in records)} 件（除外せず）",""]
-    invalid=Counter(r["reason"] for r in records if r["reason"])
-    out += [f"不正 run: {sum(invalid.values())}"]
-    out += [f"- {reason}: {count}" for reason,count in sorted(invalid.items())]
-    out += ["全体・系統の平均 T はレジーム別平均の等重み平均（観測できたレジームのみ）", ""]
-    player=defaultdict(lambda:{"regime":defaultdict(list),"tx":[]})
-    for r in records:
-        if (r["regime"],r["seed"]) in low or r["reason"]: continue
-        agents=r["agents"]; values=[a.get("pnlUsdc") for a in agents.values() if not a.get("baseline") and isinstance(a.get("pnlUsdc"),(int,float))]
-        if not values: continue
-        mean=sum(values)/len(values); sd=math.sqrt(sum((x-mean)**2 for x in values)/len(values))
-        for aid,a in agents.items():
-            if a.get("baseline") or not isinstance(a.get("pnlUsdc"),(int,float)): continue
-            t=50 if sd==0 else 50+10*(a["pnlUsdc"]-mean)/sd; x=player[aid]
-            x["regime"][r["regime"]].append(t)
-            if isinstance(a.get("includedTxCount"),(int,float)): x["tx"].append(a["includedTxCount"])
-    def fmt(xs): return f"{sum(xs)/len(xs):.1f}" if xs else "欠測"
-    out += ["| プレイヤー | 平均 T | 最悪レジーム T | 取引数合計 | レジーム別平均 T |","|---|---:|---:|---:|---|"]
-    for aid,x in sorted(player.items()):
-        rt={k:sum(v)/len(v) for k,v in x["regime"].items()}
-        out.append(f"| {aid} | {fmt(list(rt.values()))} | {fmt([min(rt.values())] if rt else [])} | {sum(x['tx']) if x['tx'] else '欠測'} | "+", ".join(f"{k} {v:.1f}" for k,v in sorted(rt.items()))+" |")
-    groups=defaultdict(lambda:defaultdict(list))
-    for aid,x in player.items():
-        for regime,values in x["regime"].items():
-            groups[family(aid)][regime].extend(values)
-    out += ["","### 系統別平均","","| 系統 | 平均 T |","|---|---:|"]
-    out += [f"| {fam} | {fmt([sum(v)/len(v) for v in regimes.values()])} |" for fam,regimes in sorted(groups.items())]
-    return "\n".join(out)+"\n"
+from league_harness import (read, family, analyze, analysis_args, from_args, average, fmt, metric_text, ci_text, stability_text)
+
+
+def render_analysis(data):
+    out = [f"負荷ガード: loopIterations < {data['minimum']} を除外",
+           f"除外シナリオ: {len({(r['regime'],r['seed']) for r in data['low']})}"]
+    out += ['警告: ' + w for w in data['warnings']]
+    out += [f"- {r['regime']} / {r['seed']}: loopIterations={r['loops']}" for r in data['low']] or ['- なし']
+    out += [f"警告: loopIterations 欠落 {data['missing_loops']} 件（除外せず）",
+            f"全理由の除外シナリオ: {data['excluded_scenarios']}"]
+    out += [f"- {r['regime']} / {r['seed']}: {r['reason']}" for r in data['excluded']]
+    out += ['', '全体・系統の平均 T はレジーム別平均の等重み平均（観測できたレジームのみ）',
+            f"基準: {data['ref']}。区間推定: レジーム内シナリオ bootstrap {data['boot']} 回 / RNG seed {data['seed']}。",
+            '同一シナリオの全員を一緒に再標本化。順位は全競争者共通シナリオのみ。境界同点は確率を均等配分。',
+            'CI は観測済みレジーム・seed に条件付き。少数 seed / 未観測レジームへの一般化はできない。', '',
+            '| プレイヤー | 平均 T | 最悪レジーム T | レジーム別平均 T | 対数 | 基準との差 T [区間] |',
+            '|---|---:|---:|---|---:|---|']
+    for aid, x in data['players'].items():
+        ci = ci_text(x)
+        regimes = ', '.join(f'{r} {v:.2f}' for r,v in x['regimes'].items())
+        out.append(f"| {aid} | {fmt(x['mean_t'])} | {fmt(x['worst_t'])} | {regimes} | {x['paired_n']} | {fmt(x['delta_t'])} [{ci}] |")
+    out += ['', '### シナリオ対応差', '', '| プレイヤー | レジーム | seed | ΔT |', '|---|---|---|---:|']
+    for aid,x in data['players'].items():
+        out += [f"| {aid} | {v['regime']} | {v['seed']} | {fmt(v['delta_t'])} |" for v in x['paired']]
+    out += ['', f"### 順位安定性（共通 {data['rank_scenarios']} シナリオ / {len(data['rank_regimes'])} レジーム）", '',
+            f"| プレイヤー | 共通平均 T | 上位 {data['top_k']} 確率 | 1 位確率 |", '|---|---:|---:|---:|']
+    for aid in data['ranking']:
+        x = data['players'][aid]
+        out.append(f"| {aid} | {fmt(x['rank_mean_t'])} | {x['stability']['top_k']:.1%} | {x['stability']['first']:.1%} |")
+    out += ['', f"順位の安定性: 上位 {data['top_n']} 枠維持確率={stability_text(data)}。",
+            f"勝者の呪い（選抜バイアス）: 上位 {data['top_n']} 体の平均 T={fmt(data['top_mean_t'])}。順位の安定性は選抜バイアスの補正ではない。未使用 seed で要確認。",
+            '', '### 存続・脱落（機械的な推奨であり決定ではない）',
+            '既知の参照は選抜対象外（--players で明示可能）。下位半分を候補とし、各系統の最高位を最低 1 体残す。',
+            '存続推奨: ' + (', '.join(data['survivors']) or '取得不能'),
+            '脱落候補: ' + (', '.join(data['eliminate']) or '空（該当候補なし）'),
+            '', '### 行動指標（採用シナリオの合計）', '',
+            '| プレイヤー | 約定/包含数 | リバート数 | 送信失敗数 | 優先手数料 wei |', '|---|---:|---:|---:|---:|']
+    for aid,x in data['players'].items():
+        out.append('| ' + aid + ' | ' + ' | '.join(metric_text(x['behavior'][k]) for k in ('included','reverted','submit_failed','priority_fee_wei')) + ' |')
+    out += ['包含数は summary.includedTxCount（成功した売買だけの件数ではない）。リバートは summary.revertCount、送信失敗は runtime submit_failed。',
+            '優先手数料は local backtest の base fee=0 を前提に blocks.csv の gasUsed × min(tip, cap) を合計（リバート含む）。欠測時は取得不能。']
+    groups = defaultdict(lambda: defaultdict(list))
+    for aid,x in data['players'].items():
+        for regime,t in x['regimes'].items(): groups[family(aid)][regime].extend([t] * x['regime_counts'][regime])
+    out += ['', '### 系統別平均', '', '| 系統 | 平均 T |', '|---|---:|']
+    out += [f"| {f} | {fmt(average([average(v) for v in rs.values()]))} |" for f,rs in sorted(groups.items())]
+    return '\n'.join(out) + '\n'
+
+
+def render(records, minimum=360, **kwargs):
+    return render_analysis(analyze(records, minimum, **kwargs))
+
+
 def main():
-    p=argparse.ArgumentParser(description=__doc__); p.add_argument("index_tsv",type=Path); p.add_argument("--min-loop-iterations",type=int,default=360); p.add_argument("-o","--output",type=Path); a=p.parse_args()
-    result=render(read(a.index_tsv),a.min_loop_iterations)
-    if a.output: a.output.write_text(result,encoding="utf-8")
-    else: print(result,end="")
-if __name__=="__main__": main()
+    p = argparse.ArgumentParser(description=__doc__)
+    p.add_argument('round', help='index.tsv, out directory or round label')
+    analysis_args(p)
+    p.add_argument('--json', action='store_true')
+    p.add_argument('-o', '--output', type=Path)
+    a = p.parse_args()
+    try:
+        data = from_args(a)
+        result = json.dumps(data, ensure_ascii=False, indent=2) + '\n' if a.json else render_analysis(data)
+    except (OSError, ValueError) as e: p.error(str(e))
+    if a.output: a.output.write_text(result, encoding='utf-8')
+    else: print(result, end='')
+
+
+if __name__ == '__main__': main()
