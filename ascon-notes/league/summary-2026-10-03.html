@@ -101,6 +101,20 @@
   .card.good{border-color:var(--good-line); background:var(--good-tint);}
   .card.bad{border-color:var(--bad-line); background:var(--bad-tint);}
   .card.warn{border-color:var(--warn-line); background:var(--warn-tint);}
+
+  /* ---- strategy table ---- */
+  .tw{overflow-x:auto; margin-top:6px;}
+  table.st{border-collapse:collapse; width:100%; min-width:760px; font-size:13px;}
+  table.st th{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; font-size:11px; letter-spacing:.06em; color:var(--faint); text-align:left; padding:8px 10px; border-bottom:2px solid var(--line); font-weight:600; white-space:nowrap;}
+  table.st td{padding:10px; border-bottom:1px solid var(--line); vertical-align:top; color:var(--muted); line-height:1.45;}
+  table.st td.p{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; color:var(--ink); font-weight:600; white-space:nowrap;}
+  table.st td.p small{display:block; font-weight:400; color:var(--faint); font-size:11px;}
+  table.st td.t{white-space:nowrap; min-width:120px;}
+  table.st .tb{display:block; height:8px; border-radius:4px; background:var(--faint); width:0; transition:width 1.4s cubic-bezier(.2,.8,.2,1); margin-top:5px;}
+  .in table.st .tb{width:var(--w);}
+  table.st .tb.acc{background:var(--accent);} table.st .tb.bad{background:var(--bad);}
+  .tv{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace; color:var(--ink); font-weight:600;}
+  .chain{display:flex; gap:0; flex-wrap:wrap; align-items:stretch;}
   @media (max-width:720px){
     h1{font-size:38px;} .tagline{font-size:20px;}
     .stats{grid-template-columns:repeat(2,minmax(0,1fr));}
@@ -111,9 +125,9 @@
   @media (prefers-reduced-motion:reduce){
     *{transition:none!important; animation:none!important;}
     .ev,.node,.arrow{opacity:1; transform:none;}
-    .br .b{width:var(--w);} .lat i{height:var(--h);} .tl .fill{height:calc(100% - 12px);}
+    .br .b{width:var(--w);} .lat i{height:var(--h);} .tl .fill{height:calc(100% - 12px);} table.st .tb{width:var(--w);}
   }
-  @media print{ .ev,.node,.arrow{opacity:1; transform:none;} .br .b{width:var(--w);} .lat i{height:var(--h);} .tl .fill{height:calc(100% - 12px);} }
+  @media print{ table.st .tb{width:var(--w);} .ev,.node,.arrow{opacity:1; transform:none;} .br .b{width:var(--w);} .lat i{height:var(--h);} .tl .fill{height:calc(100% - 12px);} }
 </style>
 </head>
 <body>
@@ -199,8 +213,49 @@
   </div>
 </section>
 
+<section id="s4b">
+  <div class="label"><span class="n">05</span> · モデル → 戦略 → 結果</div>
+  <h2>どのモデルが、どんな戦略を書いたか</h2>
+  <p class="lead">どのプレイヤーも、<strong>WETH/WBTC の公正価格からの乖離を、3 つの AMM（Uniswap・Balancer・Curve）の間で裁定する</strong>核を持っています。違いは、動く閾値・サイズ・入札・専門モジュールです。構造の違う利益源を持つのは opus-1 と grok-1 だけです。</p>
+  <div class="fig">
+    <div class="chain">
+      <div class="flow" style="width:100%">
+        <div class="node"><div class="nt">モデル</div><div class="nd">Astra・Sonnet・Opus・Grok</div></div>
+        <div class="arrow">→</div>
+        <div class="node hi"><div class="nt">戦略</div><div class="nd">閾値・サイズ・入札・専門</div></div>
+        <div class="arrow">→</div>
+        <div class="node"><div class="nt">競争</div><div class="nd">同じ世界で 36 本（12 レジーム × 3 seed）</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="fig">
+    <div class="tw"><table class="st">
+      <thead><tr><th>プレイヤー</th><th>戦略の核</th><th>動く閾値</th><th>優先手数料の入札</th><th>専門モジュール</th><th>平均 T</th></tr></thead>
+      <tbody>
+        <tr class="ref"><td class="p">venue-arb<small>参照</small></td><td>最も乖離した池へ単発で回帰（手数料は引かない）</td><td>乖離 10bps 以上</td><td>固定</td><td>なし</td><td class="t"><span class="tv">54.48</span><span class="tb" style="--w:90.8%"></span></td></tr>
+        <tr><td class="p">opus-1<small>Opus 5</small></td><td>手持ち在庫を基準点へ戻す。エッジがある時だけ動く</td><td>グロス 35bps 以上（影響控除後も）</td><td>競合 ×1.2・利益の 12% まで</td><td>裁定・在庫統制・eUSD 償還・清算・ステーブル・launch</td><td class="t"><span class="tv">54.33</span><span class="tb" style="--w:90.5%"></span></td></tr>
+        <tr><td class="p">sonnet-1<small>Sonnet 5.5</small></td><td>公正価格ギャップ。最悪エポックを避ける設計</td><td>手数料込みで 60bps 超</td><td>利益の 10% を上乗せ</td><td>なし（新規トークンは触らない）</td><td class="t"><span class="tv">53.92</span><span class="tb" style="--w:89.9%"></span></td></tr>
+        <tr><td class="p">inc-zeta<small>Claude+Codex</small></td><td>multi-arb 派生に Liquity と launch を前段で被せる</td><td>手数料 + 50bps</td><td>競合 +0.1gwei・利益の 30% まで</td><td>清算・償還・SP・launch</td><td class="t"><span class="tv">53.70</span><span class="tb acc" style="--w:89.5%"></span></td></tr>
+        <tr><td class="p">grok-1<small>Grok</small></td><td>基礎在庫は売買せず、増えた分だけ GMX ショートでヘッジ</td><td>50bps（実行価格）</td><td>edge 80bps 超の時だけ競合 ×1.1</td><td>GMX ヘッジ・償還・LST</td><td class="t"><span class="tv">53.52</span><span class="tb" style="--w:89.2%"></span></td></tr>
+        <tr class="ref"><td class="p">clean-arb<small>参照</small></td><td>multi-arb の 2 レッグだけ。単発を削除</td><td>手数料 + 60bps</td><td>固定</td><td>なし</td><td class="t"><span class="tv">51.51</span><span class="tb" style="--w:85.8%"></span></td></tr>
+        <tr><td class="p">astra-1<small>Astra</small></td><td>在庫を保ちつつ単脚で回帰。特殊レジームは捨てた</td><td>18bps 前後 + 変動項</td><td>競合が強い時だけ +1</td><td>なし</td><td class="t"><span class="tv">51.23</span><span class="tb" style="--w:85.4%"></span></td></tr>
+        <tr><td class="p">astra-2<small>Astra</small></td><td>2 レッグ裁定に専門 4 系統を重ねる</td><td>145bps（2 レッグ）</td><td>固定</td><td>清算・償還・DAI・launch</td><td class="t"><span class="tv">51.14</span><span class="tb" style="--w:85.2%"></span></td></tr>
+        <tr><td class="p">sonnet-2<small>Sonnet 5.5</small></td><td>multi-arb と同じ入口に入札額の層を足す</td><td>手数料 + 50bps</td><td>利益の 20%（1 エポック 50 USDC まで）</td><td>なし</td><td class="t"><span class="tv">46.30</span><span class="tb" style="--w:77.2%"></span></td></tr>
+        <tr><td class="p">zeta-2<small>Claude+Codex</small></td><td>inc-zeta にレビュー修正を入れた版</td><td>inc-zeta と同じ</td><td>保守化の結果 40.81% が 0</td><td>inc-zeta と同じ</td><td class="t"><span class="tv">40.42</span><span class="tb bad" style="--w:67.4%"></span></td></tr>
+        <tr class="ref"><td class="p">multi-arb<small>参照</small></td><td>2 レッグ優先。無ければ単発（手数料で損しやすい）</td><td>手数料 + 50bps</td><td>固定</td><td>なし</td><td class="t"><span class="tv">39.45</span><span class="tb" style="--w:65.8%"></span></td></tr>
+      </tbody>
+    </table></div>
+    <div class="fig-cap">コードから読み取った値（サイズ・撤退の詳細は省略）。T は u1m の平均（12 レジーム等重み・36 本）</div>
+  </div>
+  <div class="legend">
+    <div class="card"><h3>強さを分けたもの</h3><p>閾値と在庫の扱いです。専門モジュールの数は順位と相関しませんでした。最小構成の venue-arb が首位、専門が最多の astra-2 は astra-1 と ±1T。</p></div>
+    <div class="card"><h3>入札の効き方</h3><p>利益に連動して入札する inc-zeta と opus-1 は上位、入札なしの multi-arb と clean-arb は下位。ただし入札なしの venue-arb が首位で、入札だけでは説明できません。</p></div>
+    <div class="card warn"><h3>未検証</h3><p>inc-zeta と multi-arb の差（約 +14T）が入札か専門モジュールかは、このレポートでは切り分けられません。F_ref の隔離測定で確かめます。</p></div>
+  </div>
+</section>
+
 <section id="s5">
-  <div class="label"><span class="n">05</span> · zeta-2 の劣化</div>
+  <div class="label"><span class="n">06</span> · zeta-2 の劣化</div>
   <h2>同じ設定なのに、損が 6 倍</h2>
   <p class="lead">zeta-2 の既定値は、本命のパラメータと同一です（bidMode 2・利益の 30%・gas 140,000）。違いはレビューで入れた修正だけです。calm / seed 201 の損益（P、USDC）を見ます。</p>
   <div class="fig">
@@ -215,7 +270,7 @@
 </section>
 
 <section id="s6">
-  <div class="label"><span class="n">06</span> · 判断の整理</div>
+  <div class="label"><span class="n">07</span> · 判断の整理</div>
   <h2>確かなこと・限界・次の一手</h2>
   <div class="legend">
     <div class="card good"><h3>✓ 確かなこと</h3><ul><li>CI の再現と BLOCKED の仕組み</li><li>新 upstream に適合・全体テスト pass</li><li>並列 3 の 12 体は健全</li><li>PR #3・#4 は merge 済み</li></ul></div>
