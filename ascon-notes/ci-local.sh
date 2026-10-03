@@ -22,6 +22,9 @@ unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_OBJECT_DIRECTORY GIT_C
 # Fixed-port collisions come from anvil and from a second full `npm test` (upstream tests bind fixed ports and then hang).
 # Match real processes only: `pgrep -x anvil` and a command line that STARTS with "npm test" (a `codex exec` prompt that merely
 # mentions "npm test" must not count). The quick suite binds no fixed ports, so it only warns.
+# pgrep exits 0 (matches) or 1 (none); anything else means process inspection itself failed -> BLOCKED, never "idle".
+pgrep -x anvil >/dev/null 2>&1; RC1=$?; pgrep -f '^npm test' >/dev/null 2>&1; RC2=$?
+if [ "$RC1" -gt 1 ] || [ "$RC2" -gt 1 ]; then echo "BLOCKED: pgrep failed (rc=$RC1/$RC2); cannot tell whether another suite is running" >&2; exit 2; fi
 BUSY="$(( $(pgrep -x anvil | wc -l) + $(pgrep -f '^npm test' | wc -l) ))"
 if [ "$BUSY" != "0" ]; then
   if [ "$MODE" = "full" ]; then echo "BLOCKED: $BUSY anvil / npm-test process(es) running (fixed-port collisions hang the full suite). Wait for them or stop them yourself." >&2; exit 2; fi
@@ -34,6 +37,11 @@ CO="$TMP/checkout"; mkdir -p "$CO" "$TMP/home" "$TMP/tmp" "$TMP/shim"
 git -C "$ROOT" archive "$SHA" | tar -x -C "$CO" || { echo "BLOCKED: export failed" >&2; exit 2; }
 ( cd "$CO" && git init -q && git add -A >/dev/null 2>&1 && git -c user.name=ci -c user.email=ci@local commit -q -m "export $SHA" ) || { echo "BLOCKED: temp repo init failed" >&2; exit 2; }
 # Dependencies: same lockfile as CI's `npm ci`; reuse the installed trees instead of installing (read-only use).
+# The reused trees must match the export's lockfiles, otherwise a different --ref could PASS with deps CI would not install.
+for lock in package-lock.json dashboard/package-lock.json deployer/package-lock.json; do
+  if [ -e "$CO/$lock" ] && ! git -C "$ROOT" diff --quiet HEAD -- "$lock" 2>/dev/null; then echo "BLOCKED: $lock in the working tree differs from HEAD; reused node_modules may not match the ref" >&2; exit 2; fi
+  if [ -e "$CO/$lock" ] && [ -e "$ROOT/$lock" ] && ! cmp -s "$CO/$lock" "$ROOT/$lock"; then echo "BLOCKED: $lock at $REF differs from the working tree's; reused node_modules may not match" >&2; exit 2; fi
+done
 for rel in node_modules dashboard/node_modules deployer/node_modules; do
   if [ -e "$ROOT/$rel" ] && [ ! -e "$CO/$rel" ]; then ln -s "$ROOT/$rel" "$CO/$rel"; fi
 done
@@ -66,6 +74,9 @@ if [ "$MODE" = "full" ]; then
   run npm test; RC=$?
 else
   # every test file of ours: league/harness/gate/tools, zeta-2 and the six league players, plus the python suites they wrap
+  for req in test/zeta-2.test.ts test/astra-1.test.ts test/astra-2.test.ts test/sonnet-1.test.ts test/sonnet-2.test.ts test/opus-1.test.ts test/grok-1.test.ts; do
+    [ -f "$req" ] || { echo "BLOCKED: required suite missing at $REF: $req" >&2; exit 2; }
+  done
   FILES="$(ls test/ascon-*.test.ts test/zeta-2.test.ts test/astra-1.test.ts test/astra-2.test.ts test/sonnet-1.test.ts test/sonnet-2.test.ts test/opus-1.test.ts test/grok-1.test.ts 2>/dev/null | tr '\n' ' ')"
   [ -n "$FILES" ] || { echo "BLOCKED: no test files found at $REF" >&2; exit 2; }
   # shellcheck disable=SC2086

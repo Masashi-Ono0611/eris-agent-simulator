@@ -17,7 +17,9 @@ fi
 if [ -f "$HOOK" ] && ! grep -q "$MARK" "$HOOK"; then
   echo "refusing to overwrite an existing, unmanaged pre-push hook: $HOOK" >&2; exit 2
 fi
-mkdir -p "$GITDIR/hooks"
+HP="$(git config --get core.hooksPath 2>/dev/null || true)"
+if [ -n "$HP" ]; then echo "core.hooksPath is set ($HP): git would not run $HOOK. Unset it or install there." >&2; exit 2; fi
+mkdir -p "$GITDIR/hooks" || { echo "cannot create hooks dir" >&2; exit 2; }
 cat > "$HOOK" <<EOF
 #!/bin/bash
 $MARK
@@ -34,7 +36,7 @@ while read -r LREF LSHA RREF RSHA; do
   case " \$CHECKED " in *" \$LSHA "*) continue;; esac
   CHECKED="\$CHECKED \$LSHA"
   SCRIPT="\$(git rev-parse --show-toplevel)/ascon-notes/ci-local.sh"
-  [ -x "\$SCRIPT" ] || { echo "pre-push: \$SCRIPT missing (not executable); skipping the check" >&2; continue; }
+  [ -x "\$SCRIPT" ] || { echo "pre-push: BLOCKED. \$SCRIPT is missing or not executable, so CI cannot be reproduced (ASCON_SKIP_PREPUSH=1 to override, logged)." >&2; exit 1; }
   echo "pre-push: reproducing CI for \${LSHA:0:7} (clean export, env -i, small-disk df)..." >&2
   if ! "\$SCRIPT" --ref "\$LSHA" --quick; then
     echo "pre-push: BLOCKED. Fix the failure above (or ASCON_SKIP_PREPUSH=1 git push ... to override, logged to \$LOG)." >&2
@@ -43,5 +45,5 @@ while read -r LREF LSHA RREF RSHA; do
 done
 exit 0
 EOF
-chmod +x "$HOOK"
+chmod +x "$HOOK" && [ -x "$HOOK" ] && grep -q "$MARK" "$HOOK" || { echo "install failed: $HOOK" >&2; exit 2; }
 echo "installed: $HOOK"
