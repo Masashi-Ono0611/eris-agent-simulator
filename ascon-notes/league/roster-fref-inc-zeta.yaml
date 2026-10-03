@@ -1,0 +1,15 @@
+# F_ref world: candidate + noop + multi-arb + clean-arb (isolated single-candidate world, diagnostic round)
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: clean-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: cand
+    dir: ascon-zeta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidMode":2,"bidProfitShareBps":3000,"gasPerSwap":140000}' }
