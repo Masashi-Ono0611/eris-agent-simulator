@@ -10,6 +10,8 @@ import time
 from pathlib import Path
 from league_harness import ROOT, index_path, number, read_rows, analyze
 
+from league_timing import timing_maxima
+
 HEADER = ['regime', 'seed', 'run_dir', 'exit_code']
 
 
@@ -30,7 +32,8 @@ def status(out, total=None, minimum=360, started=None):
             except (OSError, ValueError, csv.Error): malformed += 1
     elif (out / 'index.tsv').is_file():
         with (out / 'index.tsv').open(newline='', encoding='utf-8') as f: rows = list(csv.DictReader(f, delimiter='\t'))
-    if not rows and not malformed: raise ValueError('有効シナリオ 0: 空 index / 完了成果物なし')
+    if not rows and not malformed and not (stages and any(out.glob('*.log'))):
+        raise ValueError('有効シナリオ 0: 空 index / 完了成果物なし')
     if total is None and not stages and (out / 'index.tsv').is_file(): total = len(rows) + malformed
     if total is not None and total < len(rows) + malformed: raise ValueError('total below completed count')
     artifacts = stages or list(out.glob('*.log')) or [out / 'index.tsv']
@@ -40,6 +43,17 @@ def status(out, total=None, minimum=360, started=None):
     if not stages and (out / 'index.tsv').exists(): end = (out / 'index.tsv').stat().st_mtime
     elapsed = max(0, end-start)
     records = read_rows(rows)
+    run_dirs = {r['run_dir'] for r in records if r['run_dir'] is not None}
+    # Current jobs have no .row yet. Read only this round's logs for their run IDs.
+    for log in out.glob('*.log'):
+        try:
+            with log.open(encoding='utf-8', errors='replace') as stream:
+                for line in stream:
+                    match = re.search(r'"runId"\s*:\s*"([A-Za-z0-9_-]+)"', line)
+                    if match:
+                        run_dirs.add(ROOT / 'runs' / match.group(1)); break
+        except OSError: pass
+    timing = timing_maxima(run_dirs)
     loops = [dict(regime=r['regime'], seed=r['seed'],
                   loopIterations=r['loops'] if number(r['loops']) else None, reason=r['reason']) for r in records]
     execution_failed = sum(r.get('exit_code') != '0' or not r.get('run_dir') for r in rows)
@@ -54,7 +68,7 @@ def status(out, total=None, minimum=360, started=None):
     try: load = list(os.getloadavg())
     except OSError: load = None
     done = len(rows) + malformed
-    return dict(round=out.name, completed=done, total=total, failed=failures, execution_failed=execution_failed, invalid_runs=invalid, malformed_rows=malformed,
+    return dict(**timing, round=out.name, completed=done, total=total, failed=failures, execution_failed=execution_failed, invalid_runs=invalid, malformed_rows=malformed,
                 scored_scenarios=analysis['rank_scenarios'], warnings=[w for w in analysis['warnings'] if '被覆不足' in w],
                 error='有効に採点できた共通シナリオが 0' if not analysis['rank_scenarios'] else None, elapsed_seconds=round(elapsed),
                 eta_seconds=round(elapsed*(total-done)/done) if total is not None and done else None,
@@ -91,6 +105,7 @@ def main():
     print(f"Round {s['round']} | 完了 {s['completed']}/{show(s['total'])} | 失敗 {s['failed']} | 不正 run {s['invalid_runs']} | 壊れた行 {s['malformed_rows']}")
     print(f"経過 {s['elapsed_seconds']}s | ETA {show(s['eta_seconds'])}s ({s['time_source']})")
     print(f"完了 run loopIterations 最小 {show(s['min_loop_iterations'])} | <{s['threshold']}: {s['below_threshold']} | 欠測 {s['missing_loops']}")
+    print(f"round_timing blocksCaughtUp 最大 {show(s['max_blocks_caught_up'])} | 環境 totalMs 最大 {show(s['max_environment_total_ms'])} ms | 欠測 {s['timing_missing']}")
     # Compact one-screen display: individual runs remain fully available via --json.
     values = [f"{r['regime']}/{r['seed']}={show(r['loopIterations'])}" for r in s['loops']]
     print('runs: ' + (', '.join(values[:8]) or 'なし') + (f" … 他 {len(values)-8} 件 (--json)" if len(values)>8 else ''))
