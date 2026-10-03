@@ -1,0 +1,577 @@
+import type { Address } from "viem";
+import type {
+  AgentAction,
+  AgentObservation,
+  BalanceSnapshot,
+  BundleActionItem,
+  LeafAction,
+  ProtocolId,
+  RawTx,
+} from "./types.js";
+import {
+  adapterForAction,
+  enabledAdapters,
+  getAdapter,
+} from "./protocols/registry.js";
+import { kindOf, tokenInfo } from "./markets.js";
+import { TOKENS } from "./constants.js";
+import { marketPricedStables } from "./stables.js";
+
+// Both dollars, so converting between two stables' units is the decimal difference and nothing else.
+function rescaleDecimals(amount: bigint, from: number, to: number): bigint {
+  if (from === to) return amount;
+  return to > from
+    ? amount * 10n ** BigInt(to - from)
+    : amount / 10n ** BigInt(from - to);
+}
+
+function stableMarketBySymbol(symbol: string) {
+  return marketPricedStables().find((m) => m.symbol === symbol);
+}
+
+// The action vocabulary, by owning protocol. Adapters recognize their own types through `parse()`,
+// which answers "is this mine" but cannot answer "what is available" -- and something has to,
+// because a strategy author (or the model rewriting one, ADR 0018) can only use an action it knows
+// exists. A shipped strategy that never swaps is otherwise the model's only evidence about what a
+// swap is called, so the vocabulary has to be stated rather than inferred from the code in hand.
+//
+// `bundle` and `noop` are not listed: they belong to no protocol and every strategy already has them.
+// **Adding an action type means adding it here too**; test/actionVocabulary.test.ts checks that every
+// name listed is still owned by an adapter, so renames and removals break, but an omitted addition
+// only shows up as an action the model never learns about.
+export const ACTION_TYPES_BY_PROTOCOL: Record<ProtocolId, readonly string[]> = {
+  uniswap: [
+    "swap",
+    "mintLiquidity",
+    "removeLiquidity",
+    "collectFees",
+    // Issue #40: create a market the environment did not deploy. The pool is `verified` in the
+    // registry because its implementation is the factory's, which says nothing about its contents.
+    "createPool",
+  ],
+  balancer: ["balancerSwap"],
+  curve: ["curveSwap", "stableSwap"],
+  gmx: ["gmxIncrease", "gmxDecrease"],
+  aave: ["aaveSupply", "aaveWithdraw", "aaveBorrow", "aaveRepay"],
+  lst: ["lstDeposit", "lstSwap", "lstRequestWithdraw", "lstClaimWithdraw"],
+  liquity: [
+    "liquityOpenTrove",
+    "liquityAdjustTrove",
+    "liquityCloseTrove",
+    "liquityRedeem",
+    "liquityProvideToSP",
+    "liquityWithdrawFromSP",
+    "liquityLiquidate",
+    "liquitySwapEusd",
+  ],
+  // Issue #40. `createPool` is Uniswap's (it goes through that factory) and lives under `uniswap`;
+  // everything here is the permissionless lending singleton's. Deploying an arbitrary contract is
+  // not in this table at all — it is a runtime capability rather than a venue action, and it is
+  // named separately in the revision prompt for the same reason `bundle` and `noop` are.
+  lending: [
+    "createLendingMarket",
+    "lendingSupply",
+    "lendingWithdraw",
+    "lendingSupplyCollateral",
+    "lendingWithdrawCollateral",
+    "lendingBorrow",
+    "lendingRepay",
+    "lendingLiquidate",
+  ],
+};
+
+export type ValidatedIntent = {
+  action: LeafAction;
+  protocol: ProtocolId;
+  priorityFeeWei: bigint;
+  bundleId?: string;
+  bundleIndex?: number;
+};
+export type ValidatedRawIntent = {
+  tx: RawTx;
+  priorityFeeWei: bigint;
+  bundleId?: string;
+  bundleIndex?: number;
+};
+
+export type ActionValidation =
+  | {
+      ok: true;
+      action: { type: "noop"; reason?: string };
+      intents: [];
+      rawIntents: [];
+      priorityFeeWei: 0n;
+      slippageBps: 0;
+    }
+  | {
+      ok: true;
+      action: AgentAction;
+      intents: ValidatedIntent[];
+      rawIntents: ValidatedRawIntent[];
+    }
+  | { ok: false; reason: string };
+
+const DECIMAL_INTEGER = /^[0-9]+$/;
+const HEX_PATTERN = /^0x[0-9a-fA-F]*$/;
+
+// ---------------------------------------------------------------------------
+// parse
+// ---------------------------------------------------------------------------
+
+export function parseAction(raw: unknown): AgentAction {
+  if (!raw || typeof raw !== "object")
+    throw new Error("action must be an object");
+  const obj = raw as Record<string, unknown>;
+  if (obj.type === "noop") {
+    return {
+      type: "noop",
+      reason: typeof obj.reason === "string" ? obj.reason : undefined,
+    };
+  }
+  if (obj.type === "bundle") return parseBundleAction(obj);
+  if (obj.type === "rawTx") return parseRawTxAction(obj);
+  if (obj.type === "rawBundle") return parseRawBundleAction(obj);
+  return parseLeafAction(obj);
+}
+
+// Try each adapter's parse in order and take the first non-null result.
+function parseLeafAction(obj: Record<string, unknown>): LeafAction {
+  for (const adapter of enabledAdapters()) {
+    const parsed = adapter.parse(obj);
+    if (parsed) return parsed;
+  }
+  throw new Error(`unknown or disabled action type: ${String(obj.type)}`);
+}
+
+function parseBundleAction(obj: Record<string, unknown>): AgentAction {
+  if (!Array.isArray(obj.actions))
+    throw new Error("bundle actions must be an array");
+  const action: Extract<AgentAction, { type: "bundle" }> = {
+    type: "bundle",
+    actions: obj.actions.map((item) => {
+      if (!item || typeof item !== "object")
+        throw new Error("bundle action must be an object");
+      const itemType = (item as Record<string, unknown>).type;
+      if (itemType === "noop") throw new Error("bundle cannot contain noop");
+      if (itemType === "bundle")
+        throw new Error("bundle cannot contain nested bundle");
+      const parsed = parseLeafAction(item as Record<string, unknown>);
+      const adapter = adapterForAction(parsed);
+      if (!adapter.bundleable(parsed))
+        throw new Error(`action type ${itemType} cannot be bundled`);
+      return parsed as BundleActionItem;
+    }),
+  };
+  addPriorityFee(action, obj);
+  return action;
+}
+
+function parseRawTxAction(obj: Record<string, unknown>): AgentAction {
+  if (!obj.tx || typeof obj.tx !== "object")
+    throw new Error("rawTx must have a tx object");
+  const tx = parseRawTx(obj.tx as Record<string, unknown>);
+  const action: Extract<AgentAction, { type: "rawTx" }> = { type: "rawTx", tx };
+  addPriorityFee(action, obj);
+  return action;
+}
+
+function parseRawBundleAction(obj: Record<string, unknown>): AgentAction {
+  if (!Array.isArray(obj.txs))
+    throw new Error("rawBundle txs must be an array");
+  if (obj.txs.length === 0) throw new Error("rawBundle txs must not be empty");
+  const txs = obj.txs.map((item: unknown, i: number) => {
+    if (!item || typeof item !== "object")
+      throw new Error(`rawBundle txs[${i}] must be an object`);
+    return parseRawTx(item as Record<string, unknown>);
+  });
+  const action: Extract<AgentAction, { type: "rawBundle" }> = {
+    type: "rawBundle",
+    txs,
+  };
+  addPriorityFee(action, obj);
+  return action;
+}
+
+function parseRawTx(obj: Record<string, unknown>): RawTx {
+  // `to` omitted (or explicitly null) is a contract deployment (issue #40 T5). Deployment is
+  // permitted in the competition; what bounds it is the gas budget, and what makes it safe for
+  // everyone else is that whatever lands is unverified and carries no safety claim to anybody who
+  // decides to touch it.
+  const isDeploy = obj.to === undefined || obj.to === null;
+  if (!isDeploy && (typeof obj.to !== "string" || !HEX_PATTERN.test(obj.to)))
+    throw new Error("raw tx to must be a hex string (omit it to deploy)");
+  if (typeof obj.data !== "string" || !HEX_PATTERN.test(obj.data))
+    throw new Error("raw tx data must be a hex string");
+  if (isDeploy && obj.data.length <= 2)
+    throw new Error("a deployment needs creation bytecode in data");
+  const tx: RawTx = {
+    ...(isDeploy ? {} : { to: obj.to as string }),
+    data: obj.data,
+  };
+  if (obj.value !== undefined) {
+    requireDecimalString(obj.value, "raw tx value");
+    tx.value = obj.value;
+  }
+  return tx;
+}
+
+// ---------------------------------------------------------------------------
+// validate
+// ---------------------------------------------------------------------------
+
+export function validateAction(
+  action: AgentAction,
+  observation: AgentObservation,
+  balances: BalanceSnapshot,
+): ActionValidation {
+  if (action.type === "noop")
+    return {
+      ok: true,
+      action,
+      intents: [],
+      rawIntents: [],
+      priorityFeeWei: 0n,
+      slippageBps: 0,
+    };
+  if (action.type === "rawTx") return validateRawTxAction(action, observation);
+  if (action.type === "rawBundle")
+    return validateRawBundleAction(action, observation);
+  if (action.type === "bundle") {
+    if (action.actions.length === 0)
+      return { ok: false, reason: "bundle actions must not be empty" };
+    const bundlePriority = action.maxPriorityFeePerGasWei;
+    const bundleId = `${observation.runId}:${observation.round}:${hashAction(action)}`;
+    return validateLeafItems(
+      action,
+      action.actions,
+      observation,
+      balances,
+      bundlePriority === undefined ? undefined : BigInt(bundlePriority),
+      bundleId,
+    );
+  }
+  return validateLeafItems(
+    action,
+    [action as LeafAction],
+    observation,
+    balances,
+  );
+}
+
+function validateLeafItems(
+  original: AgentAction,
+  actions: LeafAction[],
+  observation: AgentObservation,
+  balances: BalanceSnapshot,
+  bundlePriorityFeeWei?: bigint,
+  bundleId?: string,
+): ActionValidation {
+  if (
+    bundlePriorityFeeWei !== undefined &&
+    bundlePriorityFeeWei > BigInt(observation.limits.maxPriorityFeePerGasWei)
+  ) {
+    return { ok: false, reason: "priority fee exceeds configured max" };
+  }
+
+  // Enforce cumulative balances across the bundle. Validate each leaf against "the balance minus
+  // what earlier leaves already consumed", preventing multiple leaves from collectively exceeding
+  // the wallet balance (no effect on single actions). The balance is now the only bound: the
+  // order-size and position-count caps were removed with the rest of the limits.
+  const work: BalanceSnapshot = {
+    ethWei: balances.ethWei,
+    wethWei: balances.wethWei,
+    usdcUnits: balances.usdcUnits,
+    stables: { ...(balances.stables ?? {}) },
+    // ADR 0013: accumulate base balances (WETH/WBTC…) across the bundle too. Without this the
+    // base-balance check in adapter.validate falls back to work.wethWei and misjudges a WBTC swap
+    // against the WETH balance. Even in a WETH-only run bases={WETH:wethWei}, so spendBase keeps
+    // it in sync with wethWei and stays byte-compatible.
+    ...(balances.bases ? { bases: { ...balances.bases } } : {}),
+  };
+  const intents: ValidatedIntent[] = [];
+  for (let i = 0; i < actions.length; i++) {
+    const item = actions[i];
+    const priorityFeeWei =
+      bundlePriorityFeeWei ??
+      BigInt(
+        item.maxPriorityFeePerGasWei ??
+          observation.limits.defaultPriorityFeePerGasWei,
+      );
+    if (priorityFeeWei > BigInt(observation.limits.maxPriorityFeePerGasWei)) {
+      return { ok: false, reason: "priority fee exceeds configured max" };
+    }
+
+    const adapter = adapterForAction(item);
+    const result = adapter.validate(item, observation, work);
+    if (!result.ok) return result;
+
+    applyLeafSpend(work, item, observation, adapter.stableToken);
+
+    intents.push({
+      action: item,
+      protocol: adapter.id,
+      priorityFeeWei,
+      bundleId,
+      bundleIndex: bundleId === undefined ? undefined : i,
+    });
+  }
+  return { ok: true, action: original, intents, rawIntents: [] };
+}
+
+// Price (USDC per base) of the venue where the swap leg executes. Used to estimate swap output
+// inside a bundle. ADR 0013: when base!=="WETH", read that base/USDC market price rather than the
+// WETH pool price (the WETH path keeps using the pool price → byte-compatible). If the market is
+// not present, degrade to fairPricesUsd → fair.
+function swapVenuePrice(obs: AgentObservation, item: LeafAction): number {
+  const base = (item as { base?: string }).base ?? "WETH";
+  const fallback = obs.fairPricesUsd?.[base] ?? obs.fairPriceUsdcPerWeth;
+  const pick = (
+    top: number | undefined,
+    markets: Record<string, { priceUsdcPerWeth: number }> | undefined,
+  ): number =>
+    (base === "WETH" ? top : markets?.[`${base}/USDC`]?.priceUsdcPerWeth) ??
+    fallback;
+  if (item.type === "swap")
+    return pick(
+      obs.protocols.uniswap?.pool.priceUsdcPerWeth,
+      obs.protocols.uniswap?.markets,
+    );
+  if (item.type === "balancerSwap")
+    return pick(
+      obs.protocols.balancer?.priceUsdcPerWeth,
+      obs.protocols.balancer?.markets,
+    );
+  if (item.type === "curveSwap")
+    return pick(
+      obs.protocols.curve?.priceUsdcPerWeth,
+      obs.protocols.curve?.markets,
+    );
+  return fallback;
+}
+
+// Deduct the WETH / stable a leaf consumes from the working balance, and for swaps credit back the
+// estimated output token (for cumulative bundle validation). Without the output credit, a 2-leg
+// "buy USDC→WETH → sell WETH→USDC" arbitrage would be judged to have 0 WETH balance on the sell leg
+// and get rejected (breaking the premise of measuring pure alpha under USDC-only funding).
+// Estimates are venue-price based; actual slippage is checked on-chain (the validator only prevents
+// coarse over-spend).
+function applyLeafSpend(
+  work: BalanceSnapshot,
+  item: LeafAction,
+  observation: AgentObservation,
+  stableToken?: Address,
+): void {
+  const stableKey = (stableToken ?? "").toLowerCase();
+  // ADR 0013: adjust base balances per base symbol. For WETH, move wethWei and bases["WETH"]
+  // together to stay in sync (adapter.validate reads bases["WETH"] while the legacy path reads wethWei).
+  const spendBase = (base: string, amount: bigint) => {
+    if (base === "WETH")
+      work.wethWei = work.wethWei > amount ? work.wethWei - amount : 0n;
+    if (work.bases && base in work.bases) {
+      const cur = work.bases[base];
+      work.bases[base] = cur > amount ? cur - amount : 0n;
+    }
+  };
+  const creditBase = (base: string, amount: bigint) => {
+    if (base === "WETH") work.wethWei += amount;
+    if (work.bases) work.bases[base] = (work.bases[base] ?? 0n) + amount;
+  };
+  // usdcUnits is native USDC since issue #27, so it only moves when the venue's stable *is* native
+  // USDC. Decrementing it for a USDC.e leg would have a bundle refuse its own second leg over a
+  // balance that leg never touched.
+  const isNativeStable = stableKey === TOKENS.USDC.address.toLowerCase();
+  const spendStable = (amount: bigint) => {
+    if (isNativeStable)
+      work.usdcUnits = work.usdcUnits > amount ? work.usdcUnits - amount : 0n;
+    if (work.stables && stableKey in work.stables) {
+      const cur = work.stables[stableKey];
+      work.stables[stableKey] = cur > amount ? cur - amount : 0n;
+    }
+  };
+  const creditStable = (amount: bigint) => {
+    if (isNativeStable) work.usdcUnits += amount;
+    if (work.stables && stableKey in work.stables)
+      work.stables[stableKey] += amount;
+  };
+  const currentStable = (): bigint =>
+    work.stables?.[stableKey] ?? work.usdcUnits;
+  // Move a named stable by a signed amount, keeping usdcUnits in step when it is the numéraire.
+  // Used by stableSwap, whose two legs are the action's own pair rather than the adapter's.
+  const moveStable = (key: string, delta: bigint) => {
+    if (key === TOKENS.USDC.address.toLowerCase()) {
+      work.usdcUnits =
+        work.usdcUnits + delta > 0n ? work.usdcUnits + delta : 0n;
+    }
+    if (work.stables && key in work.stables) {
+      const next = work.stables[key] + delta;
+      work.stables[key] = next > 0n ? next : 0n;
+    }
+  };
+
+  switch (item.type) {
+    case "swap":
+    case "balancerSwap":
+    case "curveSwap": {
+      const amt = BigInt(item.amountIn);
+      const base = item.base ?? "WETH";
+      const baseScale = 10 ** tokenInfo(base).decimals; // WETH=1e18 / WBTC=1e8
+      const price = swapVenuePrice(observation, item); // quote(USDC) per base
+      if (item.tokenIn === base) {
+        spendBase(base, amt);
+        // base→stable: output stable ≈ amountBase × price
+        if (price > 0)
+          creditStable(
+            BigInt(Math.floor((Number(amt) / baseScale) * price * 1e6)),
+          );
+      } else {
+        spendStable(amt);
+        // stable→base: output base ≈ amountStable / price
+        if (price > 0)
+          creditBase(
+            base,
+            BigInt(Math.floor((Number(amt) / 1e6 / price) * baseScale)),
+          );
+      }
+      break;
+    }
+    case "mintLiquidity":
+      spendBase(
+        item.base ?? "WETH",
+        BigInt(item.amountBaseDesired ?? item.amountWethDesired),
+      );
+      spendStable(BigInt(item.amountQuoteDesired ?? item.amountUsdcDesired));
+      break;
+    // Issue #27 (c): a stableSwap is bundleable too, and its two legs are named by the action
+    // rather than by the adapter's stableToken -- so it moves its own pair instead of going through
+    // spendStable/creditStable. Without this, both leaves of a
+    // {stableSwap USDC->DAI 5k, stableSwap USDC->DAI 5k} bundle validated against the same
+    // untouched 5k and the second reverted on chain at the agent's expense (the same hole the lst
+    // cases below were added for).
+    case "stableSwap": {
+      const amt = BigInt(item.amountIn);
+      const market = stableMarketBySymbol(item.stable);
+      if (!market) break;
+      const inKey = (
+        item.tokenIn === market.symbol ? market.token : TOKENS.USDC.address
+      ).toLowerCase();
+      const outKey = (
+        item.tokenIn === market.symbol ? TOKENS.USDC.address : market.token
+      ).toLowerCase();
+      moveStable(inKey, -amt);
+      // Both legs are dollars, so the output is the input rescaled by the decimal difference. It
+      // ignores the discount and the pool fee, which only ever credits slightly too much -- the
+      // conservative direction is the *spend*, and that is exact.
+      const inDecimals =
+        inKey === TOKENS.USDC.address.toLowerCase() ? 6 : market.decimals;
+      const outDecimals =
+        outKey === TOKENS.USDC.address.toLowerCase() ? 6 : market.decimals;
+      moveStable(outKey, rescaleDecimals(amt, inDecimals, outDecimals));
+      break;
+    }
+    // Issue #38: an lst leg is bundleable, so cumulative validation has to see what it consumes.
+    // Without these two cases both leaves of a {lstDeposit 10 WETH, lstSwap 10 WETH} bundle
+    // validated against the same untouched balance, the bundle was accepted, and the second leg
+    // reverted on chain at the agent's expense.
+    case "lstDeposit":
+      spendBase("WETH", BigInt(item.amountWethWei));
+      break;
+    case "lstSwap":
+      if (item.tokenIn === "WETH") spendBase("WETH", BigInt(item.amountIn));
+      // Selling LST credits WETH, but the LST side is not in the bases map (it is the venue's own
+      // accounting), so there is nothing to deduct and the credit is left to the on-chain result.
+      break;
+    case "aaveSupply":
+      // Anything that is not the settlement stable is deducted from the base side. An LST is
+      // neither (issue #38 phase 3) and is not in the bases map, so spendBase is a no-op for it --
+      // correct, since its balance is tracked by its own venue rather than here.
+      if (kindOf(item.asset) === "stable") spendStable(BigInt(item.amount));
+      else spendBase(item.asset, BigInt(item.amount));
+      break;
+    case "aaveRepay": {
+      const isBase = kindOf(item.asset) !== "stable";
+      const amt =
+        item.amount === "max"
+          ? isBase
+            ? (work.bases?.[item.asset] ?? work.wethWei)
+            : currentStable()
+          : BigInt(item.amount);
+      if (isBase) spendBase(item.asset, amt);
+      else spendStable(amt);
+      break;
+    }
+    default:
+      break; // borrow/withdraw/collectFees/removeLiquidity/gmx do not consume input
+  }
+}
+
+function validateRawTxAction(
+  action: Extract<AgentAction, { type: "rawTx" }>,
+  observation: AgentObservation,
+): ActionValidation {
+  const priorityFeeWei = BigInt(
+    action.maxPriorityFeePerGasWei ??
+      observation.limits.defaultPriorityFeePerGasWei,
+  );
+  if (priorityFeeWei > BigInt(observation.limits.maxPriorityFeePerGasWei)) {
+    return { ok: false, reason: "priority fee exceeds configured max" };
+  }
+  return {
+    ok: true,
+    action,
+    intents: [],
+    rawIntents: [{ tx: action.tx, priorityFeeWei }],
+  };
+}
+
+function validateRawBundleAction(
+  action: Extract<AgentAction, { type: "rawBundle" }>,
+  observation: AgentObservation,
+): ActionValidation {
+  const priorityFeeWei = BigInt(
+    action.maxPriorityFeePerGasWei ??
+      observation.limits.defaultPriorityFeePerGasWei,
+  );
+  if (priorityFeeWei > BigInt(observation.limits.maxPriorityFeePerGasWei)) {
+    return { ok: false, reason: "priority fee exceeds configured max" };
+  }
+  const bundleId = `${observation.runId}:${observation.round}:${hashAction(action)}`;
+  const rawIntents = action.txs.map((tx, i) => ({
+    tx,
+    priorityFeeWei,
+    bundleId,
+    bundleIndex: i,
+  }));
+  return { ok: true, action, intents: [], rawIntents };
+}
+
+// ---------------------------------------------------------------------------
+// helpers
+// ---------------------------------------------------------------------------
+
+function addPriorityFee(
+  action: { maxPriorityFeePerGasWei?: string },
+  obj: Record<string, unknown>,
+): void {
+  if (obj.maxPriorityFeePerGasWei === undefined) return;
+  requireDecimalString(obj.maxPriorityFeePerGasWei, "maxPriorityFeePerGasWei");
+  action.maxPriorityFeePerGasWei = obj.maxPriorityFeePerGasWei;
+}
+
+function requireDecimalString(
+  value: unknown,
+  name: string,
+): asserts value is string {
+  if (typeof value !== "string" || !DECIMAL_INTEGER.test(value))
+    throw new Error(`${name} must be a decimal integer string`);
+}
+
+function hashAction(action: AgentAction): string {
+  const json = JSON.stringify(action);
+  let hash = 0;
+  for (let i = 0; i < json.length; i++)
+    hash = (hash * 31 + json.charCodeAt(i)) >>> 0;
+  return hash.toString(16);
+}
+
+// getAdapter re-export (in case the coordinator needs it for buildTxs)
+export { getAdapter };

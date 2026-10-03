@@ -1,0 +1,167 @@
+# eris-dashboard
+
+A dashboard built with Vite + React 19 + TypeScript + Tailwind CSS v4.
+
+Lives as the `dashboard/` npm workspace of this repository (imported from the
+standalone `eris-dashboard` repo — see issue #63). Install from the repository
+root with `npm install`; there is no per-package install step.
+
+## Commands
+
+From the repository root:
+
+| Command | Description |
+| --- | --- |
+| `npm run dashboard` | Start the dev server (http://localhost:5173) |
+| `npm run build -w dashboard` | Type-check, then build for production (`dist/`) |
+| `npm run preview -w dashboard` | Serve the production build locally |
+| `npm run typecheck -w dashboard` | Run the type check only |
+
+## Layout
+
+```
+index.html          HTML entry point
+vite.config.ts      Vite config (React / Tailwind plugins, @ alias, the /runs dev-server plugin)
+tsconfig.json       TypeScript config (strict)
+src/
+  main.tsx          React mount
+  App.tsx           Root component + route table
+  navigation.ts     pushState helper
+  pages/            OverviewPage (/) / StandingsPage / ScenarioPage / MarketPage / ExplorerPage / AgentDetailPage
+  components/       Shared UI (SiteHeader / SiteFooter, CompetitionPicker, WorldSwitcher, the two interval bars RoundCursorBar / RoundsBar, competitionUi)
+  data/             Providers, run artifact readers, live-run polling, per-page snapshot hooks
+  design-system/    Primitives the pages are composed from
+  lib/              Formatting and small shared helpers
+  styles/           Tailwind entry point + tokens/
+public/             Static assets, served as-is
+```
+
+`@/` is an alias for `src/`, defined in both `vite.config.ts` and `tsconfig.json`.
+
+## Selection
+
+Everything on screen belongs to one hierarchy, normalized at the data layer's
+entry point (`src/data/competition.ts`):
+
+```
+competition  ⊃  scenario (= one run, "regime#seed")  ⊃  interval (= one evaluation interval)
+```
+
+The UI says Interval / 評価区間 (Round / ラウンド until issue #140). The code
+keeps its `round` identifiers (`roundCursor`, `RoundsBar`, …): inside
+`dashboard/` they only ever meant the interval.
+
+A competition is a scenario matrix written by `backtest --scenarios`
+(`runs/<id>/matrix.json`); a standalone `sim:realtime` run is wrapped into the
+same shape as a competition of one scenario (`competitionFromRun`), so every
+page processes exactly one kind of object. `/` is the overview (schedule,
+submission steps, the rules in brief, the top 5); `/standings` is the
+competition's table under the rules' deviation-score formula (rules §4.4,
+imported from `core/src/scoring/deviationScore.ts`). There is no sidebar: the
+competition picker sits beside the competition's name on those two pages
+(locally, when there is more than one to choose; never in the public view), and
+the world switcher sits in the interval bar of the scenario-level pages. A
+standings row opens the agent's page, whose Standing tab explains the place.
+
+Everything on screen is a display name, never a storage id: a competition is
+its scenario set and date ("full-8h · 8/29", derived in
+`src/data/competition.ts`), a scenario is `regime#seed`, and the raw directory
+id stays one hover away. There is no serial "Run N" anywhere.
+
+## Language
+
+Every user-visible string lives in `src/i18n/messages.ts`, in English and
+Japanese; the header's toggle switches the language (persisted per browser,
+defaulting to the browser language). Data-layer builders call `t()` too, so
+snapshots are keyed by locale and rebuild on switch.
+
+## Data
+
+All pages consume snapshots through `src/data/provider.ts` — an explicit
+indirection point. The default provider (`runsProvider.ts`, issue #63 Phase 1)
+builds every snapshot from run artifacts under `runs/<id>/`, served by a small
+Vite dev-server plugin (`/runs/index.json` + `/runs/<id>/<file>`, see
+`vite.config.ts`).
+
+- `summary.json` — standings (score = M9, shown ×10⁴; PnL%, Sharpe, max DD)
+- `events.jsonl` — price/portfolio series (reconstructed observations), event tape
+- `blocks.csv` — explorer blocks/transactions (methods joined from agent logs)
+- `agents/<id>.jsonl` — decision logs and submitted-tx self-reports
+- `market.json` — post-run reconstruction extension (#63 Phase 2, written by
+  `core/src/realtime/marketSeries.ts`): per-block per-venue executable quotes +
+  pool depth, GMX OI/funding, Aave reserve totals, market-priced stable quotes,
+  multi-asset fair prices, end-of-run GMX positions / Aave accounts per agent,
+  and decoded per-tx USD notionals. Powers the venue panels, the cross-venue arb
+  chart, tx amounts, and volume aggregates. Runs recorded before the artifact
+  existed degrade to the Phase 1 rendering (`—`/`n/a`/empty).
+
+The LST vault's and the Liquity system's *market-wide* state is not in
+`market.json`: the coordinator already writes it to `events.jsonl` every block
+(`lst_block` / `liquity_block`), so those panels read it from there. Their
+*per-agent* positions are in `market.json` (`lstPositionsAtEnd` /
+`liquityPositionsAtEnd`), alongside `gmxPositionsAtEnd` and
+`aaveAccountsAtEnd` — together they are what an agent page's positions table
+shows.
+
+## Intervals
+
+An interval is the rules' **evaluation interval** (§0.1), not a run: values are
+recorded at each boundary as interim progress, and the score (one P per epoch,
+ADR 0023) reads only the first and last boundary. The bar at the top of every
+page is the selected run's interval series (`summary.json` →
+`valueSeries.intervalSeries.boundaryBlocks`, or `epochSeries` on a run from
+before issue #140 — `intervalSeriesOf` in `core/src/intervalSeries.ts` reads
+either); clicking a segment opens that interval's per-agent result, and scopes
+`/explorer` to its block window. A live run has no scored series yet, so the
+bar lays the intervals out from the `intervalBlocks` (or older `epochBlocks`)
+the coordinator records at run start and fills in the results when the run
+completes. The live tail reads `intervals.jsonl`, or `epochs.jsonl` from a
+coordinator started before the rename.
+
+Selecting an interval also scopes `/markets` (every series, stat and table) and
+`/explorer` (blocks and transactions) to that interval's block window; the
+end-of-run position tables stay the run's final cross-section and say so.
+
+`src/data/` is split three ways: `runsProvider.ts` builds the page snapshots,
+`venuePanels.ts` builds the per-application panels `/markets` renders, and
+`artifactHelpers.ts` holds the readers and formatters both share.
+
+## Live mode (issue #63 Phase 3)
+
+A run in progress (no `summary.json` yet, `events.jsonl` still moving) appears
+in the run picker as `● <id> (live)` and every view refreshes in place every
+few seconds. Live data comes from three places, none of them the coordinator:
+
+- **file tails** — the dev server's `/runs/<id>/tail/<file>?offset=N` endpoint
+  streams appended bytes of `events.jsonl` (run meta, event tape, tx
+  attribution) and `agents/<id>.jsonl` (live decision log)
+- **JSON-RPC** — the anvil endpoint is discovered from the agents' own
+  `runtime_start` log lines; the browser reads the chain height, recent blocks,
+  and the on-chain PriceFeed directly (a live fair ticker accumulates while the
+  page watches)
+- **Blockscout** (optional) — when `npm run explorer` is up, its indexed height
+  is shown next to the RPC height so the indexer lag stays visible, and deep
+  links work during the run
+
+Scores, portfolio curves, per-venue series, and tx notionals are post-run
+artifacts by design (ADR 0006 §4) and appear the moment the run completes — the
+picker drops the live marker and the views switch to the archived rendering on
+the next poll, no reload needed.
+
+Lifecycle note: the Blockscout explorer indexes the same anvil, so its own
+lifecycle applies alongside live mode — `npm run explorer:reset` after a chain
+reset (the indexer cannot follow a rollback), `npm run explorer:tag` per run
+for agent name tags. The dashboard never depends on the explorer; it only adds
+links and the indexed-height stat.
+
+When the local Blockscout explorer is running (`npm run explorer`, :3100),
+tx/block/address deep links appear automatically (availability is probed once
+through the Vite proxy at `/blockscout`); when it is down the links vanish and
+nothing else changes.
+
+Start with `VITE_DATA_PROVIDER=seed` to fall back to the IndexedDB seed provider
+(`localProvider.ts` over `seed.ts`) for UI development.
+
+For the operator-facing view of all this — including the explorer's
+reset-per-chain-reset lifecycle — see
+[docs/guide/dashboard.md](../docs/guide/dashboard.md).

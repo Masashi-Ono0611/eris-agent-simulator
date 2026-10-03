@@ -1,0 +1,831 @@
+import {
+  encodeFunctionData,
+  maxUint256,
+  parseAbi,
+  type Address,
+  type PublicClient,
+} from "viem";
+import { AAVE, LST, TOKENS, stableBalanceOf } from "../constants.js";
+import { marketsFor, tokenInfo, tokenRegistry } from "../markets.js";
+import {
+  accountAddress,
+  fundWallet,
+  increaseTime,
+  mine,
+  sendAndMine,
+  sendAsPrivileged,
+} from "../chain.js";
+import { curveStableSwapNgAbi, erc20Abi, lstVaultAbi } from "../abis.js";
+import type {
+  AaveObservation,
+  AgentObservation,
+  BalanceSnapshot,
+  LeafAction,
+  TokenSymbol,
+} from "../types.js";
+import type {
+  AgentProtocolValue,
+  BuiltTx,
+  ProtocolAdapter,
+  SimContext,
+  UnpricedHoldingDetail,
+  ValidationResult,
+} from "./types.js";
+import { approveTx } from "./uniswap.js";
+import { medianQuotes, readAcrossWindow } from "./medianWindow.js";
+import { deployContract } from "./deploy.js";
+import { enabledProtocolIds } from "./enabled.js";
+
+const DECIMAL_INTEGER = /^[0-9]+$/;
+const VARIABLE_RATE = 2n;
+const AAVE_PRICE_UNIT = 10n ** 8n; // $1 = 1e8
+
+export function toAavePrice(usd: number): bigint {
+  const P = 1_000_000n;
+  return (BigInt(Math.round(usd * Number(P))) * AAVE_PRICE_UNIT) / P;
+}
+
+const poolDataProviderAbi = parseAbi([
+  "function getReserveTokensAddresses(address asset) view returns (address aTokenAddress, address stableDebtTokenAddress, address variableDebtTokenAddress)",
+]);
+
+let reserveTokenCache: Address[] | undefined;
+
+export const aavePoolAbi = parseAbi([
+  "function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode)",
+  "function withdraw(address asset, uint256 amount, address to) returns (uint256)",
+  "function borrow(address asset, uint256 amount, uint256 interestRateMode, uint16 referralCode, address onBehalfOf)",
+  "function repay(address asset, uint256 amount, uint256 interestRateMode, address onBehalfOf) returns (uint256)",
+  "function getUserAccountData(address user) view returns (uint256 totalCollateralBase, uint256 totalDebtBase, uint256 availableBorrowsBase, uint256 currentLiquidationThreshold, uint256 ltv, uint256 healthFactor)",
+]);
+
+export const aaveAddressesProviderAbi = parseAbi([
+  "function getPoolConfigurator() view returns (address)",
+]);
+
+export const aavePoolConfiguratorAbi = parseAbi([
+  "function setReserveFlashLoaning(address asset, bool enabled)",
+]);
+
+export const aaveDataProviderAbi = parseAbi([
+  "function getUserReserveData(address asset, address user) view returns (uint256 currentATokenBalance, uint256 currentStableDebt, uint256 currentVariableDebt, uint256 principalStableDebt, uint256 scaledVariableDebt, uint256 stableBorrowRate, uint256 liquidityRate, uint40 stableRateLastUpdated, bool usageAsCollateralEnabled)",
+]);
+
+// Pool.getReserveData returns the "raw" stored values (index/rate/lastUpdate). It does not
+// compute interest, so it does not revert even when lastUpdateTimestamp (below) is in the future
+// relative to block.timestamp.
+// (getUserAccountData / PoolDataProvider.getReserveData compute interest and therefore revert.)
+export const aaveReserveDataAbi = parseAbi([
+  "function getReserveData(address asset) view returns ((uint256 configuration, uint128 liquidityIndex, uint128 currentLiquidityRate, uint128 variableBorrowIndex, uint128 currentVariableBorrowRate, uint128 currentStableBorrowRate, uint40 lastUpdateTimestamp, uint16 id, address aTokenAddress, address stableDebtTokenAddress, address variableDebtTokenAddress, address interestRateStrategyAddress, uint128 accruedToTreasury, uint128 unbacked, uint128 isolationModeTotalDebt))",
+]);
+
+export const aaveOracleAbi = parseAbi([
+  "function getAssetPrice(address asset) view returns (uint256)",
+  "function setAssetSources(address[] assets, address[] sources)",
+  "function getSourceOfAsset(address asset) view returns (address)",
+]);
+
+export const aclManagerAbi = parseAbi([
+  "function addPoolAdmin(address admin)",
+  "function isPoolAdmin(address admin) view returns (bool)",
+]);
+
+export const mockAggregatorAbi = parseAbi([
+  "function setAnswer(int256 answer)",
+  "function latestAnswer() view returns (int256)",
+]);
+
+// Aave uses native USDC as the reserve (settlement stable).
+const AAVE_STABLE = TOKENS.USDC.address;
+const AAVE_STABLE_SYMBOL: TokenSymbol = "USDC";
+// The LST venue's share token, when it is listed as collateral (issue #38 phase 3).
+const LST_SYMBOL: TokenSymbol = "LST";
+
+// Base symbols enabled for aave (from MARKET_LEGS.aave; WETH only on the default fork).
+function aaveBaseSymbols(): TokenSymbol[] {
+  return marketsFor("aave").map((m) => m.base);
+}
+
+// Symbols of the reserves we read/write (enabled bases + settlement stable + the LST when it is
+// listed). [WETH, USDC] on the default fork (matches prior behavior).
+//
+// The LST is collateral only (issue #38 phase 3): it is listed so ETH can be borrowed *against* it,
+// which is the leveraged-staking loop, and the reserve is deliberately not borrow-enabled. Supply
+// and withdraw are the operations that make sense; a borrow of it is rejected on chain.
+function aaveReserveSymbols(): TokenSymbol[] {
+  const symbols = [...aaveBaseSymbols(), AAVE_STABLE_SYMBOL];
+  // Gated on the run enabling lst, not merely on the deployment having listed it. Keying off the
+  // deployment alone meant a `protocols: [uniswap, aave]` run against the new state dump deployed
+  // an extra aggregator, sent an extra setAssetSources and setReserveFlashLoaning, added a reserve
+  // read per agent per block and an admin tx per block -- changing the nonce and tx ordering of
+  // every pre-existing local aave run, against this file's own "byte-identical when disabled" rule.
+  if (LST?.aaveAToken && enabledProtocolIds().includes("lst"))
+    symbols.push(LST_SYMBOL);
+  return symbols;
+}
+
+// Symbol -> reserve address. The stable is native USDC; the LST is the vault's own share token
+// (it is not in the base registry, by design); everything else uses the registry address.
+function aaveAsset(symbol: TokenSymbol): Address {
+  if (symbol === AAVE_STABLE_SYMBOL) return AAVE_STABLE;
+  if (symbol === LST_SYMBOL && LST) return LST.lstToken;
+  return tokenInfo(symbol).address;
+}
+
+type AaveActionType =
+  "aaveSupply" | "aaveWithdraw" | "aaveBorrow" | "aaveRepay";
+const AAVE_TYPES: AaveActionType[] = [
+  "aaveSupply",
+  "aaveWithdraw",
+  "aaveBorrow",
+  "aaveRepay",
+];
+
+function requireAmount(
+  value: unknown,
+  name: string,
+  allowMax: boolean,
+): string {
+  if (allowMax && value === "max") return "max";
+  if (typeof value !== "string" || !DECIMAL_INTEGER.test(value))
+    throw new Error(
+      `${name} must be a decimal integer string${allowMax ? ' or "max"' : ""}`,
+    );
+  return value;
+}
+
+// Accept asset as an enabled base / settlement stable symbol. Only WETH/USDC on the default fork.
+function parseAsset(value: unknown): TokenSymbol {
+  if (typeof value !== "string")
+    throw new Error("asset must be a token symbol string");
+  const allowed = new Set(aaveReserveSymbols());
+  if (!allowed.has(value))
+    throw new Error(`asset must be one of ${[...allowed].join(", ")}`);
+  return value;
+}
+
+function parse(obj: Record<string, unknown>): LeafAction | null {
+  const type = obj.type;
+  if (typeof type !== "string" || !AAVE_TYPES.includes(type as AaveActionType))
+    return null;
+  const asset = parseAsset(obj.asset);
+  const allowMax = type === "aaveWithdraw" || type === "aaveRepay";
+  const amount = requireAmount(obj.amount, "amount", allowMax);
+  const action = { type, asset, amount } as unknown as LeafAction;
+  if (obj.maxPriorityFeePerGasWei !== undefined) {
+    if (
+      typeof obj.maxPriorityFeePerGasWei !== "string" ||
+      !DECIMAL_INTEGER.test(obj.maxPriorityFeePerGasWei)
+    ) {
+      throw new Error(
+        "maxPriorityFeePerGasWei must be a decimal integer string",
+      );
+    }
+    (action as { maxPriorityFeePerGasWei?: string }).maxPriorityFeePerGasWei =
+      obj.maxPriorityFeePerGasWei;
+  }
+  return action;
+}
+
+function validate(
+  action: LeafAction,
+  obs: AgentObservation,
+  balances: BalanceSnapshot,
+): ValidationResult {
+  if (!AAVE_TYPES.includes(action.type as AaveActionType))
+    return { ok: false, reason: "not an aave action" };
+  const a = action as {
+    type: AaveActionType;
+    asset: TokenSymbol;
+    amount: string;
+  };
+  // The stable uses the aggregated USDC-equivalent balance; bases use the bases map (WETH equals
+  // wethWei for compatibility). The LST is in neither: it is not a registry base, so its balance
+  // comes from its own venue's observation -- falling through to wethWei would compare an LST
+  // amount against a WETH balance and wave through a supply that reverts on chain.
+  const assetBalance = (): bigint => {
+    if (a.asset === AAVE_STABLE_SYMBOL)
+      return stableBalanceOf(balances, AAVE_STABLE);
+    if (a.asset === LST_SYMBOL)
+      return BigInt(obs.protocols.lst?.lstBalanceWei ?? "0");
+    return balances.bases?.[a.asset] ?? balances.wethWei;
+  };
+  if (a.amount !== "max") {
+    const amount = BigInt(a.amount);
+    if (amount <= 0n) return { ok: false, reason: "amount must be positive" };
+    // Balance for what you put in; the reserve's own collateral rules for what you take out. There
+    // is no configured supply or borrow cap any more -- an over-borrow is answered by the health
+    // factor and a liquidator, not by a validation error.
+    if (a.type === "aaveSupply" && amount > assetBalance())
+      return { ok: false, reason: "supply amount exceeds balance" };
+    if (a.type === "aaveRepay" && amount > assetBalance())
+      return { ok: false, reason: "repay amount exceeds balance" };
+  }
+  return { ok: true };
+}
+
+function buildTx(owner: Address, action: LeafAction): BuiltTx {
+  const a = action as {
+    type: AaveActionType;
+    asset: TokenSymbol;
+    amount: string;
+  };
+  const asset = aaveAsset(a.asset);
+  const amount = a.amount === "max" ? maxUint256 : BigInt(a.amount);
+  if (a.type === "aaveSupply") {
+    return {
+      to: AAVE.Pool,
+      data: encodeFunctionData({
+        abi: aavePoolAbi,
+        functionName: "supply",
+        args: [asset, amount, owner, 0],
+      }),
+    };
+  }
+  if (a.type === "aaveWithdraw") {
+    return {
+      to: AAVE.Pool,
+      data: encodeFunctionData({
+        abi: aavePoolAbi,
+        functionName: "withdraw",
+        args: [asset, amount, owner],
+      }),
+    };
+  }
+  if (a.type === "aaveBorrow") {
+    return {
+      to: AAVE.Pool,
+      data: encodeFunctionData({
+        abi: aavePoolAbi,
+        functionName: "borrow",
+        args: [asset, amount, VARIABLE_RATE, 0, owner],
+      }),
+    };
+  }
+  return {
+    to: AAVE.Pool,
+    data: encodeFunctionData({
+      abi: aavePoolAbi,
+      functionName: "repay",
+      args: [asset, amount, VARIABLE_RATE, owner],
+    }),
+  };
+}
+
+async function userReserve(
+  publicClient: PublicClient,
+  asset: Address,
+  user: Address,
+): Promise<{ supplied: bigint; borrowed: bigint }> {
+  const r = (await publicClient.readContract({
+    address: AAVE.PoolDataProvider,
+    abi: aaveDataProviderAbi,
+    functionName: "getUserReserveData",
+    args: [asset, user],
+  })) as readonly bigint[];
+  return { supplied: r[0], borrowed: r[2] };
+}
+
+// Read the reserves the orderflow bot's Aave state machine needs.
+// Flow generation itself lives in the bot process, but the RPC reads are done by the coordinator and passed via FlowContext.
+export async function readAaveFlowReserves(
+  publicClient: PublicClient,
+  wallet: Address,
+): Promise<{ wethSupplied: bigint; usdcBorrowed: bigint }> {
+  // Two independent reads, so parallelize to reduce RPC latency.
+  const [weth, usdc] = await Promise.all([
+    userReserve(publicClient, TOKENS.WETH.address, wallet),
+    userReserve(publicClient, AAVE_STABLE, wallet),
+  ]);
+  return { wethSupplied: weth.supplied, usdcBorrowed: usdc.borrowed };
+}
+
+// The reserve's last-update timestamp (raw stored value; no interest computation, so it does not revert even if in the future).
+async function reserveLastUpdate(
+  publicClient: PublicClient,
+  asset: Address,
+): Promise<bigint> {
+  const r = (await publicClient.readContract({
+    address: AAVE.Pool,
+    abi: aaveReserveDataAbi,
+    functionName: "getReserveData",
+    args: [asset],
+  })) as { lastUpdateTimestamp: number | bigint };
+  return BigInt(r.lastUpdateTimestamp);
+}
+
+// Align time on the Aave fork. When Arbitrum is forked with anvil, a block's
+// block.timestamp can end up earlier than a reserve's lastUpdateTimestamp
+// (a mismatch between the fork block's timestamp and the state snapshot; happens intermittently).
+// In that state Aave's interest computation `dt = block.timestamp - lastUpdateTimestamp`
+// underflows the uint (panic 0x11), so getUserAccountData / getReserveData revert
+// and the whole sim crashes on the first observe.
+// Fix: read the lastUpdateTimestamp of the WETH/USDC reserves we use, and if block.timestamp is
+// at or below it (dt<=0), advance EVM time until it exceeds it. This keeps Aave reads during the
+// round loop always at dt>0, so aave strategies can be evaluated over long runs (without intermittent crashes).
+// If resetFork does a re-fork with forking, block.timestamp is normally after lastUpdate so this
+// does not fire, but depending on the fork block the order can rarely invert, so we keep it as a guard.
+const AAVE_WARP_BUFFER_SECONDS = 3600n; // 1h. Margin to keep dt>0 stable when it fires.
+// Borrowable USDC seeded into the pool at startup under local deploy. Named for flash loans, which
+// is what it was first for, but it is also the only stable liquidity anyone can borrow: the deployer
+// seeds Aave with a sanity-check amount and nothing else supplies USDC during a run.
+//
+// Raised from 100,000 (2026-08-16). At that level two leveraged agents plus the four Aave flow
+// actors emptied it, and every borrow after that reverted with `panic 0x11` -- an arithmetic
+// underflow that names nothing, so the agent's log showed 483 failures with no usable reason
+// (docs/scoring-metric-measurements.md §9.4). Note the panic has a second known cause in this file
+// (a reserve whose lastUpdateTimestamp is ahead of block.timestamp, guarded by
+// warpPastReserveLastUpdate below), so exhaustion is the hypothesis this raise tests rather than an
+// established fact.
+//
+// 2,000,000 is enough for two agents to loop to Aave's own LTV ceiling (~5x on a 163k endowment)
+// with room for the flow actors. It also lowers utilisation, and with it the borrow rate: at 100,000
+// against ~60,000 of debt the pool sat near full utilisation, so leverage was being charged a
+// crisis-level rate on top of failing. That is a change to the environment's economics, not just to
+// its capacity.
+const LOCAL_FLASH_LIQUIDITY_USDC_UNITS = 2_000_000n * 10n ** 6n;
+async function warpPastReserveLastUpdate(ctx: SimContext): Promise<void> {
+  // Issue #33 (4): the warp is a fork artifact. A reserve's lastUpdateTimestamp can only sit ahead
+  // of block.timestamp because anvil pinned a fork block whose clock predates the state it copied;
+  // on a chain that produced the reserve itself, the two advance together and there is nothing to
+  // correct. Skipping it is not an optimisation -- evm_increaseTime does not exist there, and
+  // reaching for it would abort a setup that had no problem to solve.
+  if (ctx.config.chainMode === "external") return;
+  // Read the lastUpdate of the enabled reserves ([WETH, USDC] on the default fork) and go past their max.
+  const updates = await Promise.all(
+    aaveReserveSymbols().map((sym) =>
+      reserveLastUpdate(ctx.publicClient, aaveAsset(sym)),
+    ),
+  );
+  const maxUpdate = updates.reduce((m, u) => (u > m ? u : m), 0n);
+  const now = (await ctx.publicClient.getBlock()).timestamp;
+  if (now > maxUpdate) return; // dt>0 already (healthy fork block) -> nothing to do
+  await increaseTime(
+    ctx.publicClient,
+    Number(maxUpdate - now + AAVE_WARP_BUFFER_SECONDS),
+  );
+  await mine(ctx.publicClient);
+}
+
+async function enableLocalFlashLoaning(ctx: SimContext): Promise<void> {
+  if (!ctx.config.localDeploy) return;
+  const configurator = (await ctx.publicClient.readContract({
+    address: AAVE.PoolAddressesProvider,
+    abi: aaveAddressesProviderAbi,
+    functionName: "getPoolConfigurator",
+  })) as Address;
+  // Enable the flashloan flag on the enabled reserves ([WETH, USDC] on the default fork).
+  for (const sym of aaveReserveSymbols()) {
+    await sendAndMine(
+      ctx.publicClient,
+      ctx.walletClient,
+      ctx.chain,
+      ctx.adminPk,
+      {
+        to: configurator,
+        data: encodeFunctionData({
+          abi: aavePoolConfiguratorAbi,
+          functionName: "setReserveFlashLoaning",
+          args: [aaveAsset(sym), true],
+        }),
+      },
+    );
+  }
+}
+
+// What a flash loan of `asset` can draw on: the underlying held by the reserve's aToken. In Aave V3
+// the Pool contract itself holds nothing -- `supply` moves the tokens to the aToken -- so reading
+// the Pool's balance answers 0 whatever was supplied. That is what this used to read, and it kept
+// `flash-arb` out of every epoch ("flash liquidity too low: 0.00 USDC" while 2,009,000 USDC sat in
+// the reserve) and had setup re-seed the local flash liquidity on every run (issue #101, #93 F-E).
+// The aToken of each reserve is immutable for a deployment, so it is read once per process rather
+// than once per agent per block (observe runs for every agent on every block).
+const aTokenCache = new Map<string, Address>();
+export async function reserveAvailableLiquidity(
+  publicClient: PublicClient,
+  asset: Address,
+): Promise<bigint> {
+  let aToken = aTokenCache.get(asset.toLowerCase());
+  if (!aToken) {
+    [aToken] = (await publicClient.readContract({
+      address: AAVE.PoolDataProvider,
+      abi: poolDataProviderAbi,
+      functionName: "getReserveTokensAddresses",
+      args: [asset],
+    })) as readonly [Address, Address, Address];
+    aTokenCache.set(asset.toLowerCase(), aToken);
+  }
+  return (await publicClient.readContract({
+    address: asset,
+    abi: erc20Abi,
+    functionName: "balanceOf",
+    args: [aToken],
+  })) as bigint;
+}
+
+async function seedLocalFlashLoanLiquidity(ctx: SimContext): Promise<void> {
+  if (!ctx.config.localDeploy) return;
+  const current = await reserveAvailableLiquidity(
+    ctx.publicClient,
+    AAVE_STABLE,
+  );
+  if (current >= LOCAL_FLASH_LIQUIDITY_USDC_UNITS) return;
+  const missing = LOCAL_FLASH_LIQUIDITY_USDC_UNITS - current;
+
+  await fundWallet(
+    ctx.publicClient,
+    ctx.walletClient,
+    ctx.chain,
+    ctx.adminPk,
+    0n,
+    0n,
+    missing,
+  );
+  await sendAndMine(
+    ctx.publicClient,
+    ctx.walletClient,
+    ctx.chain,
+    ctx.adminPk,
+    {
+      to: AAVE_STABLE,
+      data: encodeFunctionData({
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [AAVE.Pool, missing],
+      }),
+    },
+  );
+  await sendAndMine(
+    ctx.publicClient,
+    ctx.walletClient,
+    ctx.chain,
+    ctx.adminPk,
+    {
+      to: AAVE.Pool,
+      data: encodeFunctionData({
+        abi: aavePoolAbi,
+        functionName: "supply",
+        args: [AAVE_STABLE, missing, accountAddress(ctx.adminPk), 0],
+      }),
+    },
+  );
+}
+
+export const aaveAdapter: ProtocolAdapter = {
+  id: "aave",
+  stableToken: AAVE_STABLE,
+  parse,
+  bundleable: () => true,
+  validate,
+
+  async readState() {
+    return {};
+  },
+
+  async observe(ctx, _state, agent): Promise<AaveObservation> {
+    // Read supplied/borrowed for each enabled reserve ([WETH, USDC] on the default fork).
+    const reserveSymbols = aaveReserveSymbols();
+    const [account, reserves, poolUsdc] = await Promise.all([
+      ctx.publicClient.readContract({
+        address: AAVE.Pool,
+        abi: aavePoolAbi,
+        functionName: "getUserAccountData",
+        args: [agent],
+      }) as Promise<readonly bigint[]>,
+      Promise.all(
+        reserveSymbols.map((sym) =>
+          userReserve(ctx.publicClient, aaveAsset(sym), agent),
+        ),
+      ),
+      reserveAvailableLiquidity(ctx.publicClient, AAVE_STABLE),
+    ]);
+    const supplied: Partial<Record<TokenSymbol, string>> = {};
+    const borrowed: Partial<Record<TokenSymbol, string>> = {};
+    reserveSymbols.forEach((sym, i) => {
+      supplied[sym] = reserves[i].supplied.toString();
+      borrowed[sym] = reserves[i].borrowed.toString();
+    });
+    return {
+      healthFactor: account[5].toString(),
+      totalCollateralBase: account[0].toString(),
+      totalDebtBase: account[1].toString(),
+      availableBorrowsBase: account[2].toString(),
+      supplied,
+      borrowed,
+      poolLiquidity: {
+        USDC: poolUsdc.toString(),
+      },
+    };
+  },
+
+  async buildTxs(_ctx, owner, action): Promise<BuiltTx[]> {
+    return [buildTx(owner, action)];
+  },
+
+  async valueUsdc(ctx, agent): Promise<number> {
+    const account = (await ctx.publicClient.readContract({
+      address: AAVE.Pool,
+      abi: aavePoolAbi,
+      functionName: "getUserAccountData",
+      args: [agent],
+    })) as readonly bigint[];
+    // The base currency is USD with 8 decimals. net = collateral - debt converted to dollars (USDC-equivalent).
+    // Collateral (aToken) is outside the wallet and borrows (USDC) are already counted inside it, so net cancels double-counting.
+    const net = account[0] - account[1];
+    return Number(net) / 1e8;
+  },
+
+  // Aave needs no per-venue wiring in the scorer: getUserAccountData is an aggregate that already
+  // covers every supplied asset, which is why this venue never had the #41 hole.
+  //
+  // It does have a different one once an LST is listed (issue #38 phase 3). Aave marks that
+  // collateral at its oracle price, which is the vault's *par* redemption rate — correct for
+  // deciding liquidations, and wrong for deciding what an agent could walk away with. Left alone,
+  // supplying LST to Aave launders a position the LST venue would have haircut into a par mark:
+  // in the last blocks of a run, ten shares in a wallet score the pool's discounted quote while
+  // the same ten shares posted here score par. That is free score for turning leverage on. So the
+  // LST leg of the collateral is re-marked in liquidatableValueUsdc, using the same realizable
+  // rule the venue itself applies.
+  async *valueAtBlock(ctx) {
+    const lstListed = Boolean(LST?.aaveAToken);
+    const results = yield [
+      ...ctx.agents.map((a) => ({
+        address: AAVE.Pool,
+        abi: aavePoolAbi,
+        functionName: "getUserAccountData",
+        args: [a.address],
+      })),
+      ...(lstListed
+        ? ctx.agents.map((a) => ({
+            address: LST!.aaveAToken as Address,
+            abi: erc20Abi,
+            functionName: "balanceOf",
+            args: [a.address],
+          }))
+        : []),
+    ];
+    // Second stage only for agents actually holding LST collateral: what that many shares would
+    // fetch on the secondary market right now, and what the queue would charge in time.
+    const lstCollateral = new Map<number, bigint>();
+    if (lstListed) {
+      ctx.agents.forEach((_a, i) => {
+        const bal = results[ctx.agents.length + i];
+        if (typeof bal === "bigint" && bal > 0n) lstCollateral.set(i, bal);
+      });
+    }
+    const haircutTargets = [...lstCollateral.entries()];
+    let haircutReads: unknown[] = [];
+    if (haircutTargets.length > 0 && LST) {
+      const lst = LST;
+      haircutReads = yield haircutTargets.flatMap(([, shares]) => [
+        {
+          address: lst.pool,
+          abi: curveStableSwapNgAbi,
+          functionName: "get_dy",
+          args: [BigInt(lst.poolLstIndex), BigInt(lst.poolWethIndex), shares],
+        },
+        {
+          address: lst.vault,
+          abi: lstVaultAbi,
+          functionName: "convertToAssets",
+          args: [shares],
+        },
+        {
+          address: lst.vault,
+          abi: lstVaultAbi,
+          functionName: "estimateDelayBlocks",
+          args: [shares],
+        },
+      ]);
+    }
+    // Rules §4.1: the pool sale is the one market-derived price here (the rest of the account is
+    // marked at the environment's oracles). At a scoring boundary it is the median of the same
+    // quote -- the boundary's collateral size -- over the window.
+    const exits =
+      haircutTargets.length > 0 && LST
+        ? medianQuotes(
+            haircutTargets.map((_, k) => haircutReads[k * 3]),
+            await readAcrossWindow(
+              ctx,
+              haircutTargets.map(([, shares]) => ({
+                address: LST!.pool,
+                abi: curveStableSwapNgAbi,
+                functionName: "get_dy",
+                args: [
+                  BigInt(LST!.poolLstIndex),
+                  BigInt(LST!.poolWethIndex),
+                  shares,
+                ],
+              })),
+            ),
+          )
+        : [];
+    // agent -> WETH of par value that an exit could not actually recover.
+    const shortfallWei = new Map<number, bigint>();
+    haircutTargets.forEach(([agentIndex], k) => {
+      const exit = exits[k];
+      const par = haircutReads[k * 3 + 1];
+      const delay = haircutReads[k * 3 + 2];
+      if (typeof par !== "bigint" || par === 0n) return;
+      const queueFits =
+        typeof delay === "bigint" &&
+        ctx.blockNumber + Number(delay) <= ctx.horizonBlock;
+      if (queueFits) return; // par is reachable through the queue: no haircut
+      if (typeof exit !== "bigint") return; // cannot price the exit; leave the par mark alone
+      if (exit < par) shortfallWei.set(agentIndex, par - exit);
+    });
+
+    const out: Record<string, AgentProtocolValue> = {};
+    ctx.agents.forEach((agent, i) => {
+      const account = results[i] as readonly bigint[] | undefined;
+      // USD with 8 decimals. Collateral sits outside the wallet and borrows are already counted
+      // inside it, so the net cancels the double count.
+      // A failed read is the whole position going missing, and a zero there is indistinguishable
+      // from having been liquidated — report it instead (issue #44).
+      const usd = account ? Number(account[0] - account[1]) / 1e8 : 0;
+      const unpriced: UnpricedHoldingDetail[] = account
+        ? []
+        : [
+            {
+              source: "aave-account",
+              amountRaw: "",
+              reason: "read-failed" as const,
+              read: "AavePool.getUserAccountData",
+            },
+          ];
+      let liquidatableUsdc = usd;
+      const shortfall = shortfallWei.get(i);
+      const shares = lstCollateral.get(i);
+      if (account && shortfall !== undefined && shares !== undefined && LST) {
+        const shortfallUsd =
+          (Number(shortfall) / 1e18) * (ctx.fairByBase().WETH ?? 0);
+        liquidatableUsdc = usd - shortfallUsd;
+        unpriced.push({
+          token: LST.lstToken,
+          amountRaw: shares.toString(),
+          source: "aave-lst-collateral",
+          reason: "unrealizable",
+          read: "MockLSTVault.estimateDelayBlocks",
+        });
+      }
+      // **Not floored at zero, deliberately** -- unlike Liquity below 100% ICR and unlike
+      // SimpleLending's own borrowers (issue #40 axiom 3).
+      //
+      // The walk-away floor is only sound as one half of a pair. It says a borrower keeps the
+      // borrowed asset and abandons collateral worth less than the debt; the other half is that
+      // somebody eats that shortfall, and in Liquity and in SimpleLending somebody does -- the
+      // Stability Pool absorbs it, and SimpleLending socializes bad debt onto its suppliers, so the
+      // adapters see the loss on the other side and the books balance.
+      //
+      // Aave has no such mechanism here and this adapter models none: a supplier's aTokens stay 1:1
+      // whatever happens to a borrower. Flooring the borrower alone would create score out of
+      // nothing -- the field's total would rise by the shortfall -- which is precisely the failure
+      // axiom 3 exists to prevent, arrived at from the opposite direction. So the position stays at
+      // collateral minus debt, which is negative while under water and exactly offsets the borrowed
+      // asset sitting in the wallet.
+      //
+      // What this leaves unmodelled is Aave bad debt, and that is stated rather than hidden: see
+      // docs/adr/0022 and the note in the rules. Closing it means marking the supplier side down by
+      // the unbacked share, which needs per-reserve backing that getUserAccountData does not carry.
+      out[agent.id] = {
+        valueUsdc: usd,
+        liquidatableValueUsdc: liquidatableUsdc,
+        unpriced,
+      };
+    });
+    return out;
+  },
+
+  // a/stableDebt/variableDebt tokens are minted to the agent on supply/borrow, but their value
+  // already arrives through getUserAccountData's aggregate -- reporting them would be a false
+  // positive. Immutable for a deployment, so resolved once.
+  // Only the LST collateral haircut reads a market, and only where the LST is listed; the account
+  // itself is marked at the environment's oracles, which are reference prices.
+  get medianSurfaces(): readonly string[] {
+    return LST?.aaveAToken ? ["aave-lst-collateral"] : [];
+  },
+
+  async accountedTokens(publicClient): Promise<Address[]> {
+    if (reserveTokenCache) return reserveTokenCache;
+    // Every reserve this venue trades, not just the ones in the token registry: the LST is listed
+    // as collateral but deliberately kept out of the registry (issue #38), so registry-only lookup
+    // left its aToken looking like an unaccounted holding in every levered run.
+    const assets = [
+      ...new Set([
+        ...Object.values(tokenRegistry()).map((t) => t.address),
+        ...aaveReserveSymbols().map(aaveAsset),
+      ]),
+    ];
+    const results = (await publicClient.multicall({
+      contracts: assets.map((asset) => ({
+        address: AAVE.PoolDataProvider,
+        abi: poolDataProviderAbi,
+        functionName: "getReserveTokensAddresses",
+        args: [asset],
+      })) as never,
+      allowFailure: true,
+    })) as Array<{ status: "success" | "failure"; result?: unknown }>;
+    const out: Address[] = [];
+    for (const r of results) {
+      if (r.status !== "success") continue; // unlisted reserve
+      for (const token of r.result as readonly Address[]) out.push(token);
+    }
+    reserveTokenCache = out;
+    return out;
+  },
+
+  async setupWallet(): Promise<BuiltTx[]> {
+    // Approve the enabled reserves ([WETH, USDC] on the default fork) to the Pool. Dedup.
+    const seen = new Set<string>();
+    const txs: BuiltTx[] = [];
+    for (const sym of aaveReserveSymbols()) {
+      const token = aaveAsset(sym);
+      const key = token.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      txs.push(approveTx(token, AAVE.Pool));
+    }
+    return txs;
+  },
+
+  async setupGlobal(ctx: SimContext): Promise<void> {
+    const admin = accountAddress(ctx.adminPk);
+    // Correct the fork's time skew (prevents interest-computation underflow from negative dt).
+    // Keeps subsequent Aave reads during setup / the round loop always valid.
+    await warpPastReserveLastUpdate(ctx);
+    // For each enabled reserve ([WETH, USDC] on the default fork), inject a mock aggregator
+    // seeded with the current Aave oracle price (for continuity). Order follows aaveReserveSymbols().
+    const reserveSymbols = aaveReserveSymbols();
+    const reserveAssets = reserveSymbols.map(aaveAsset);
+    const currentPrices = (await Promise.all(
+      reserveAssets.map((asset) =>
+        ctx.publicClient.readContract({
+          address: AAVE.AaveOracle,
+          abi: aaveOracleAbi,
+          functionName: "getAssetPrice",
+          args: [asset],
+        }),
+      ),
+    )) as bigint[];
+    // deployContract auto-assigns the admin nonce, so deploying aggregators for multiple bases (WBTC etc.)
+    // in parallel with Promise.all causes a same-nonce collision (replacement transaction underpriced).
+    // Deploy serially to stay safe regardless of the number of bases (ADR 0013).
+    const aggregators: Address[] = [];
+    for (const price of currentPrices) {
+      aggregators.push(await deployContract(ctx, "MockAggregator", [price]));
+    }
+
+    // Grant POOL_ADMIN (when needed)
+    const isAdmin = (await ctx.publicClient.readContract({
+      address: AAVE.AclManager,
+      abi: aclManagerAbi,
+      functionName: "isPoolAdmin",
+      args: [admin],
+    })) as boolean;
+    if (!isAdmin) {
+      await sendAsPrivileged(
+        ctx.publicClient,
+        ctx.walletClient,
+        ctx.chain,
+        AAVE.AclAdmin,
+        {
+          to: AAVE.AclManager,
+          data: encodeFunctionData({
+            abi: aclManagerAbi,
+            functionName: "addPoolAdmin",
+            args: [admin],
+          }),
+        },
+        "granting the environment POOL_ADMIN",
+      );
+    }
+
+    // Swap to the mocks via setAssetSources (replace all enabled reserves at once)
+    await sendAndMine(
+      ctx.publicClient,
+      ctx.walletClient,
+      ctx.chain,
+      ctx.adminPk,
+      {
+        to: AAVE.AaveOracle,
+        data: encodeFunctionData({
+          abi: aaveOracleAbi,
+          functionName: "setAssetSources",
+          args: [reserveAssets, aggregators],
+        }),
+      },
+    );
+
+    reserveAssets.forEach((asset, i) => {
+      ctx.oracle.aaveAggregators[asset.toLowerCase()] = aggregators[i];
+    });
+
+    // The bundled deployer/'s shared WETH/USDC reserve has supply/borrow enabled, but the
+    // flashloan flag defaults to false, so FlashArb stalls with Aave error 91.
+    await enableLocalFlashLoaning(ctx);
+    // Local realtime setup reverts to the snapshot on every run, so re-seed the pool liquidity for
+    // flashloans in setupGlobal too. Without this, a profitable signal hits the Pool's insufficient
+    // ERC20 balance and fails with `MockERC20: insufficient balance`.
+    await seedLocalFlashLoanLiquidity(ctx);
+  },
+};

@@ -1,0 +1,42 @@
+# sweep5: 適応型入札（ascon-zeta, bidMode=2）の水準を、固定比率の入札（sweep3/4 の勝者 delta-bid5000）と比較する。
+# bidMode=2: 入札 = max(default, 競合最大手数料 + bump)。ただし (手数料コスト <= 期待利益 × share) と上限で頭打ち。
+# gasPerSwap は実測 96〜144k（Grok 調査）に対し既定 200k は保守的。140k の版でコスト見積もりの影響を見る。
+# 注意: バリアントは同じ世界で干渉する。T は matrix 内でのみ比較し、P・alpha も併記して読む。
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    description: does nothing (baseline)
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: upstream reference
+  - id: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: identical-clone control (no bid)
+  - id: delta-bid5000
+    dir: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidExtraBps":5000}' }
+    description: fixed-ratio bid reference
+  - id: zeta-a30
+    dir: ascon-zeta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidMode":2,"bidProfitShareBps":3000,"gasPerSwap":140000}' }
+    description: adaptive bid, up to 30% of expected profit
+  - id: zeta-a60
+    dir: ascon-zeta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidMode":2,"bidProfitShareBps":6000,"gasPerSwap":140000}' }
+    description: adaptive bid, up to 60% of expected profit
+  - id: zeta-a30-bump3
+    dir: ascon-zeta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidMode":2,"bidProfitShareBps":3000,"gasPerSwap":140000,"bidBumpWei":300000000}' }
+    description: adaptive 30% with a larger outbid step (0.3 gwei)
+  - id: zeta-a30-gas200
+    dir: ascon-zeta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidMode":2,"bidProfitShareBps":3000}' }
+    description: adaptive 30% with the conservative default gas estimate (200k)

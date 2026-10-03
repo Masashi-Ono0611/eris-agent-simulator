@@ -1,0 +1,13 @@
+#!/bin/bash
+# anvil shim (put its directory first in PATH). anvil writes its per-block history under $HOME/.foundry/anvil/tmp
+# and does not delete it when stopped with SIGTERM (4-6.5 GB per 12-minute scenario; 50 runs filled a 460 GB
+# disk on 2026-10-03). FOUNDRY_DIR is not honored by anvil (measured), HOME is. This shim runs the real anvil
+# with HOME pointing at a directory that belongs to ONE scenario, so run-matrix.sh can delete that whole
+# directory when the scenario ends. Nothing else is changed (args, stdio and signals pass through via exec).
+# Required env: ASCON_ANVIL_HOME (per-scenario dir), ASCON_REAL_ANVIL (absolute path of the real anvil).
+if [ -z "${ASCON_ANVIL_HOME:-}" ] || [ -z "${ASCON_REAL_ANVIL:-}" ] || [ ! -x "${ASCON_REAL_ANVIL}" ]; then
+  echo "anvil-shim: ASCON_ANVIL_HOME / ASCON_REAL_ANVIL not set or not executable" >&2
+  exit 127
+fi
+mkdir -p "$ASCON_ANVIL_HOME" || exit 127
+exec env HOME="$ASCON_ANVIL_HOME" "$ASCON_REAL_ANVIL" "$@"

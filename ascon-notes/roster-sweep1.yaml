@@ -1,0 +1,34 @@
+# sweep1: ascon-beta のパラメータ感度（コードは同一・env だけ違う）を上位の参照 2 体と比較する。
+# 注意: バリアントは同じ世界で同じ信号に反応するため互いに干渉する。結果は「方向」を見るもので、
+# 最終候補は単独（参照のみとの対戦）の別 run で検証し直す。
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    description: does nothing (baseline)
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: upstream reference (strongest on calm#101)
+  - id: clean-arb
+    wallet: AUTO
+    description: upstream reference (two-leg round trip, best alpha per trade)
+  - id: ascon-beta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: ASCON v1 default params
+  - id: beta-m20
+    dir: ascon-beta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_BETA_PARAMS: '{"marginBps":20}' }
+    description: ascon-beta with a smaller margin (20 bps)
+  - id: beta-m0
+    dir: ascon-beta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_BETA_PARAMS: '{"marginBps":0}' }
+    description: ascon-beta with no extra margin (executable edge must still be positive)
+  - id: beta-tol50
+    dir: ascon-beta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_BETA_PARAMS: '{"inventoryToleranceBps":5000}' }
+    description: ascon-beta with a wider inventory band (±50%)

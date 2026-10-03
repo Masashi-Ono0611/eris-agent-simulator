@@ -1,0 +1,33 @@
+{
+  "name": "eris-app-deployer",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Orchestrator that deploys Uniswap V3 / Balancer V2 / Aave V3 / Curve / GMX V2 from scratch onto an empty anvil chain",
+  "scripts": {
+    "anvil": "tsx src/anvil-cli.ts",
+    "build:contracts": "forge build",
+    "clean:vendors": "./scripts/clean-vendors.sh",
+    "close:aave-vendor": "tsx src/close-aave-vendor-market.ts",
+    "deploy": "tsx src/index.ts",
+    "test:e2e": "vitest run",
+    "test:unit": "vitest run test/unit",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@scure/bip39": "^1.6.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "@balancer-labs/v2-deployments": "^3.2.0",
+    "@types/node": "^22.7.0",
+    "@uniswap/v3-core": "^1.0.1",
+    "@uniswap/v3-periphery": "^1.4.4",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.4"
+  }
+}

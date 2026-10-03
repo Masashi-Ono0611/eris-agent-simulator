@@ -1,0 +1,1520 @@
+// Market stress event overlay (ADR 0009 §1-3).
+//
+// Pure functions that advance the OU price path (base) as-is and derive the effective price by layering a
+// SEED-randomized deterministic event overlay on top. Outside the window it keeps β≈0 as before
+// (not polluting base); only inside the window does a sharp deviation (spike/crash) arise. The effective
+// price propagates consistently to the PriceFeed, the Aave WETH oracle, GMX, and scoring (base/effective
+// separation; does not compromise ADR 0007).
+//
+// Design (the central argument of ADR 0009):
+//   - Events are trapezoids (ramp->hold->decay) expressed as a WETH multiplier (wethMult). Because an
+//     instantaneous jump interacts poorly with the 1-block delay of oracle updates, we leave room for
+//     everyone to react equally with a 1-block lag (fairness).
+//   - config gives ranges rather than fixed values, and the actual timing/magnitude are deterministically
+//     derived from SEED (prevents memorizing constants and measures generalization; ADR 0004). It uses an
+//     Rng independent of the price main path and flow, so the price RNG consumption sequence is not
+//     disturbed (reproducibility is maintained via SEED).
+//   - It also keeps usdcPx returnable for depeg (v1 is always 1; made variable in phase 2).
+import { Rng } from "@eris/sdk/rng.js";
+import type { TokenSymbol } from "@eris/sdk/types.js";
+
+// spike / crash distort a base's price through the overlay. The others are different in kind:
+//   lstSlash       a one-shot staking penalty applied to the LST vault (issue #38 phase 2); the
+//                  exchange rate is permanently lower afterwards
+//   whale          a single large market order that moves the mid (ADR 0017 regime 3). Unlike crash,
+//                  the fair price does not move at all -- the pool is knocked away from an unchanged
+//                  fair, which is the opposite direction of dislocation and a different trade to find
+//   liquidityPull  seeded pool depth is withdrawn for the length of a window and put back afterwards
+//                  (issue #52). Neither a price multiplier nor a one-shot: it is a *state* the
+//                  coordinator holds for the window, so it has a trapezoid like spike/crash but the
+//                  envelope drives a target depth instead of a price. Composed with crash on the
+//                  same window it is what makes regime 6 a crash rather than a larger opportunity --
+//                  the gap says what is on offer, the depth says how much of it anyone can take.
+//   eusdDepeg      eUSD is sold into its own market for the length of a window and bought back
+//                  afterwards (issue #39). Also a state: the envelope drives how much of the pool's
+//                  seeded eUSD depth the environment has dumped, and the resulting discount is
+//                  whatever the stableswap curve gives. It is what puts the CDP venue's redemption
+//                  arb on the table -- at par there is nothing there to trade, by construction.
+//   depeg          the same mechanism for any other market-priced registry stable, named by
+//                  `stable:` (issue #27 (c)). It is a separate type only because eusdDepeg needs no
+//                  `stable` and predates it; the runtime is shared. The trade it opens is a
+//                  different one: eUSD has a redemption floor a CDP enforces, and a plain stable
+//                  has only the belief that it is a dollar, so closing the gap is an opinion rather
+//                  than a claim on collateral.
+// They share this config section because from a run's point of view they are the same thing: a
+// seed-placed shock the agents have to survive.
+export type StressEventType =
+  | "spike"
+  | "crash"
+  | "lstSlash"
+  | "whale"
+  | "liquidityPull"
+  | "eusdDepeg"
+  | "depeg"
+  // The two below exist because a continuous economy has no other way to hold these regimes
+  // (issue #56). `cex-drift` and `informed-flow` were run-wide settings -- a whole run either had a
+  // drifting reference price or it did not -- which is expressible when a run is one scenario and
+  // meaningless when a run is a week that has to contain several episodes on an undisclosed
+  // schedule. As windowed events they compose with the rest, and a week can hold a drift episode,
+  // a flow episode and a depeg without being three separate runs.
+  //
+  // They also fix a measurement problem: a week built only from depeg windows gives a cross-venue
+  // arbitrageur nothing to do, so calibrating the scoring metric on it measures one kind of skill
+  // (docs/scoring-metric-measurements.md §10).
+  | "cexDrift"
+  | "flowTrend"
+  // A new token and its market appear mid-run (issue #29). The environment lists 2-3 tokens through
+  // its own Uniswap V3 factory at the window's start, so they surface through the #40 registry like
+  // any agent-made market; then, per token, a demand wave drawn from a range whose lower bound is
+  // zero (a dud) buys it over the ramp, holds, and sells a fraction back during the decay. The
+  // holdings are worth nothing at the bell (ADR 0022 axiom 2), so the only way to score is to buy
+  // before the wave, sell before the sell-back, and to have picked a token that got a wave.
+  | "tokenLaunch";
+
+// How the run consumes each type:
+//   overlay  a multiplier layered on the fair price every block of its window (`at()`)
+//   point    executed once, on the block it lands on (`pointEventsAt()`)
+//   state    a target the coordinator holds the venue at for the window (`depthMultiplierAt()`)
+//   process  a parameter the generator itself reads for the window, rather than a correction applied
+//            afterwards (`ouOverrideAt()` / `flowTrendAt()`). An overlay leaves the base path intact
+//            and multiplies the result, which is right for a gap that heals; a drift episode has to
+//            change the walk itself, or mean reversion pulls the price back to a path the drift
+//            never touched.
+//
+// A total Record rather than one opt-in Set per consumer: with separate Sets, adding a sixth type
+// and forgetting one of them compiles, typechecks, and produces a schedule that logs itself and then
+// does nothing. That is not hypothetical -- `pointEventsAt` shipped once with exactly that shape of
+// hole (see the note on the caught-up range below). Here the compiler demands the decision.
+const EVENT_KIND: Record<
+  StressEventType,
+  "overlay" | "point" | "state" | "process"
+> = {
+  spike: "overlay",
+  crash: "overlay",
+  lstSlash: "point",
+  whale: "point",
+  liquidityPull: "state",
+  eusdDepeg: "state",
+  depeg: "state",
+  cexDrift: "process",
+  flowTrend: "process",
+  // The coordinator drives transactions from it every block of the window (list, buy, sell back),
+  // the way depeg / liquidityPull do -- but nothing in the existing venues changes, so it is not a
+  // `state` either. It is its own process: the schedule says what the wave wallets should have done
+  // by this block and the driver reconciles toward it.
+  tokenLaunch: "process",
+};
+
+const isPointEvent = (type: StressEventType): boolean =>
+  EVENT_KIND[type] === "point";
+const isPriceOverlay = (type: StressEventType): boolean =>
+  EVENT_KIND[type] === "overlay";
+
+// Which way a whale trades. "random" (the default) lets the seed pick, which is what keeps the
+// direction from being memorizable across a published regime's seeds.
+export type WhaleSide = "buy" | "sell" | "random";
+
+// Event spec given via env (ERIS_STRESS_EVENTS). Ranges are given, not values.
+export type StressEventConfig = {
+  type: StressEventType;
+  // ADR 0013: the base the event targets (default WETH). Lets crash/spike apply to WBTC etc.
+  base?: TokenSymbol;
+  // Deviation width of the price multiplier. spike acts as +, crash as −. The seed picks from [min,max].
+  // For lstSlash this is the fraction of the staking pool burnt (0.02 = a 2% slash).
+  // For liquidityPull this is the fraction of the seeded pool depth withdrawn at the top of the
+  // trapezoid (0.5 = half the book gone while the window holds).
+  // For eusdDepeg this is the fraction of the eUSD/USDC pool's seeded eUSD depth the environment has
+  // sold into it at the top of the trapezoid (0.3 = 30k eUSD dumped into a 100k pool). The discount
+  // that produces is a property of the curve, not of this number.
+  // For whale this is the order size in whole base units (30 = a 30 WETH market order). Absolute
+  // rather than a fraction because what matters is the size against pool depth, and depth is a
+  // property of the deployed venue, not of this config.
+  magnitudeRange: [number, number];
+  // depeg only: which registry stable is pushed off par. Must be one the deployment gave a market
+  // (constants' STABLE_MARKET_LEGS), or the coordinator has no pool to sell into.
+  stable?: TokenSymbol;
+  // whale: which way it trades. cexDrift: which way the reference price is pulled ("buy" = up).
+  // Default "random" = the seed decides, which is what keeps the direction from being memorizable
+  // across a published regime's seeds.
+  side?: WhaleSide;
+  // cexDrift only: what mean reversion is multiplied by while the window is open. A drift the OU
+  // pulls straight back out is not a drift, so the episode has to weaken kappa as well as add a
+  // pull -- the `cex-drift` regime did it with a run-wide kappa of 0.004 against the 0.02 default,
+  // i.e. a multiplier of 0.2. Omit to leave mean reversion alone.
+  kappaMultRange?: [number, number];
+  // depeg / eusdDepeg only: the dislocation does not close (issue #56). The design calls regime 5 a
+  // *non-mean-reverting* deviation, and a window that always ends with the environment buying the
+  // stable back is the opposite: par is then guaranteed to return, so "buy the discount and wait"
+  // is not a judgement, it is a free option bounded only by size. With this set the level holds to
+  // the end of the run, and holding through it is a real loss.
+  //
+  // The teardown still buys back after the last competition block -- the startup check refuses to
+  // begin on a depegged pool, so leaving it dislocated would stop the *next* run from starting.
+  // That restore happens outside every scored cross-section.
+  persist?: boolean;
+  // cexDrift only: the market repriced rather than wandered. The OU pulls back to the run's anchor,
+  // so without this a drift episode is erased by mean reversion once the window closes and no event
+  // in the system can express "the price moved and stayed there" -- which is the case that decides
+  // whether betting on a return is skill or habit.
+  repriceAnchor?: boolean;
+  // cexDrift only: repriceAnchor decided per window by the seed, with this probability. A regime
+  // whose second episode always reprices and the others never do answers "does this one stay?" by
+  // counting. Exclusive with repriceAnchor.
+  repriceAnchorProb?: number;
+  // crash / spike only: probability that the seed turns the shock the other way (a crash that
+  // resolves to a spike, and vice versa). The regime keeps its lean -- a crash regime still mostly
+  // falls -- but the name no longer tells an agent which side to stand on. A regime that liquidates
+  // victims must leave it unset: a crash that went up breaches nobody.
+  flipProb?: number;
+  // crash / spike only: share of the gap the decay closes, drawn per window [min, max]. 1 (the
+  // default, and the only behaviour before this existed) returns the price to its base path; below
+  // 1 the rest of the gap stays to the end of the run. Without it every shock heals on a fixed
+  // clock, and "fade any move and close it 17 blocks later" is right by construction -- the same
+  // hole issue #106 closed for depeg. Not for a continuous economy: a residual there stays for weeks
+  // and compounds with the next one (the reason persist and repriceAnchor stay out of practice.yaml).
+  recoverFrac?: [number, number];
+  // flowTrend only: how the uninformed flow leans while the window is open. `magnitudeRange` is the
+  // multiplier on its size (the `informed-flow` regime used 3x), and these two are the shape of the
+  // lean the multiplier is applied to. Omitted values leave the run's own setting in place.
+  trendCorrelation?: number;
+  persistBlocks?: number;
+  // whale: the venue it prints on. Default "uniswap" (the deepest pool, so the size has to be real
+  // to move it). "random" lets the seed pick one of the three per window.
+  // liquidityPull: the venue whose book thins. **Default is every enabled venue** -- thinning one
+  // while the others keep block-0 depth just moves execution elsewhere, so narrowing is opt-in.
+  venue?: WhaleVenue | "random";
+  // tokenLaunch only (issue #29). Every range is sampled by the seed; the wave is drawn *per token*,
+  // the window once per event. `magnitudeRange` does not apply (there is no single magnitude: each
+  // token has its own wave) and is rejected if present.
+  //   tokenCount      how many tokens list on this window (integer range, inclusive)
+  //   liquidityUsdc   USDC seeded per pool, whole dollars; the token side is priced at 1.00 USDC
+  //   waveUsdcMult    the wave's total buying as a multiple of the pool's USDC side
+  //   dudProb         probability that a token's wave is zero. A continuous draw on a range whose
+  //                   lower bound is 0 never actually lands on 0, so the dud needs a mass of its own
+  //   sellBackFrac    share of the tokens the wave bought that it sells back during the decay
+  tokenCount?: [number, number];
+  liquidityUsdc?: [number, number];
+  waveUsdcMult?: [number, number];
+  dudProb?: [number, number];
+  sellBackFrac?: [number, number];
+  // Fraction of run length for the event start position [min,max]. The seed picks.
+  windowFrac: [number, number];
+  // Start where the first event of this type starts, instead of drawing an independent position.
+  // windowFrac is still required and still drawn (so the schedule stays a pure function of the
+  // event list) -- the draw is simply not used for the start.
+  //
+  // This exists because "same range" is not "same window": two events sampling [0.25, 0.7] of a
+  // 360-block run land ~160 blocks apart on average, so a liquidityPull configured alongside a crash
+  // would almost never thin the book while the price is gapping. Issue #52's composition is a
+  // property of the pair, not of either event, and it has to be stated rather than hoped for.
+  alignWith?: StressEventType;
+  // How many windows this entry opens, drawn [min, max] (inclusive integers; 0 allowed, so an entry
+  // can be "maybe"). Omitted = exactly one, placed as before. The windows share windowFrac as the
+  // range their *starts* fall in (pulled in, as a single window is, when the last one would run past
+  // the end of the run), never overlap, and are spread uniformly over the placements that fit -- so a regime no longer says how many episodes it has, or that the third follows the second
+  // by a fixed band. A follower (alignWith) takes its anchor's count and pairs window by window, so
+  // it must not set its own.
+  count?: [number, number];
+  // With count: the fewest blocks between one window's end and the next one's start (default 0).
+  minGapBlocks?: number;
+  // Length of each trapezoid segment (block count). A number is fixed; [min, max] is drawn per
+  // window (inclusive integers), so the start of a shock no longer gives away the block it ends on.
+  // Not applicable to lstSlash, which is instantaneous, so they default to 0 there.
+  rampBlocks: BlockCount;
+  holdBlocks: BlockCount;
+  decayBlocks: BlockCount;
+};
+
+// A trapezoid segment: fixed, or an inclusive integer range the seed draws from per window.
+export type BlockCount = number | [number, number];
+
+type WhaleVenue = "uniswap" | "balancer" | "curve";
+const WHALE_VENUES: readonly WhaleVenue[] = ["uniswap", "balancer", "curve"];
+
+// A slash is instantaneous, so its window is the single block it lands on.
+const POINT_EVENT_SPAN = 1;
+// A tokenLaunch window opens with the listing, and the listing is not tradable the block it is
+// sent: the five transactions land the next block, and the registry publishes the pool the block
+// after that (1-block distribution lag, ADR 0022). Measured on launch#101 (issue #29 acceptance,
+// 2026-09-13): with the ramp counted from the window's first block, the wave's first buy landed
+// in the same block the pool went live -- two ramp steps at once, +32% on the pool -- one block
+// before any agent could see the pool. The ramp therefore starts this many blocks after the
+// window opens, so the first visible block of the pool is also the first block of the tape.
+export const TOKEN_LAUNCH_LEAD_BLOCKS = 2;
+
+// Event resolved by the seed (blockIndex is 0-based from runStart).
+export type ResolvedStressEvent = {
+  type: StressEventType;
+  base: string; // target base (default WETH)
+  // depeg only: the stable being pushed off par.
+  stable?: string;
+  magnitude: number;
+  // whale / cexDrift: resolved from config.side, with "random" collapsed to a concrete side by the
+  // seed ("buy" = a drift upwards).
+  side?: "buy" | "sell";
+  // cexDrift: the mean-reversion multiplier the seed drew. flowTrend: the lean it holds.
+  kappaMult?: number;
+  // depeg: the dislocation holds to the end of the run. cexDrift: the anchor moves with it.
+  persist?: boolean;
+  repriceAnchor?: boolean;
+  trendCorrelation?: number;
+  persistBlocks?: number;
+  venue?: "uniswap" | "balancer" | "curve";
+  // tokenLaunch: one entry per token the window lists, each with its own wave.
+  launches?: ResolvedTokenLaunch[];
+  startBlock: number;
+  rampBlocks: number;
+  holdBlocks: number;
+  decayBlocks: number;
+  endBlock: number; // startBlock + ramp + hold + decay (this value is not included in the window)
+  // crash / spike: the configured type when flipProb turned the shock the other way. `type` is what
+  // the price did; this is what the regime asked for, kept so the audit can tell the two apart.
+  flippedFrom?: "crash" | "spike";
+  // crash / spike: share of the gap the decay closed. Absent = all of it.
+  recoverFrac?: number;
+};
+
+// One token of a tokenLaunch window (issue #29). `dud` is the seed's answer to "does demand arrive":
+// when it is true the wave never buys, whatever `waveUsdcMult` says (it is drawn regardless so the
+// RNG consumption per token is constant).
+export type ResolvedTokenLaunch = {
+  index: number;
+  // Whole USDC seeded on the pool's USDC side; the token side is the same number of tokens.
+  liquidityUsdc: number;
+  // Total USDC the wave wallet spends over the ramp, as a multiple of liquidityUsdc. 0 for a dud.
+  waveUsdcMult: number;
+  dud: boolean;
+  // Share of the tokens the wave bought that it sells back during the decay.
+  sellBackFrac: number;
+};
+
+// What the launch driver should have done by a given block, per token (issue #29). Both are
+// cumulative targets so a dropped block costs a block of lag rather than a missed step -- the same
+// reconcile-to-target discipline as depeg / liquidityPull.
+export type TokenLaunchTarget = {
+  eventIndex: number;
+  launch: ResolvedTokenLaunch;
+  // The window has opened (the token should be listed).
+  listed: boolean;
+  // Fraction of the wave's total USDC that should have been spent by now: rises over the ramp,
+  // then 1 for the rest of the run (a wave does not un-buy; the decay is the sell-back).
+  buyFrac: number;
+  // Fraction of the tokens bought that should have been sold back by now: 0 until the decay
+  // starts, rising to sellBackFrac at its end and holding there.
+  sellBackFrac: number;
+  // The window has closed, this block being the first one past it.
+  justClosed: boolean;
+};
+
+// The overlay returned by at(blockIndex). effective[base] = baseFair[base] * baseMults[base].
+// wethMult is for backward compatibility (= baseMults["WETH"]). usdcPx is unused in v1.
+export type OverlayState = {
+  wethMult: number;
+  usdcPx: number;
+  baseMults: Record<string, number>;
+};
+
+// What a cexDrift episode does to the price walk this block (identity outside every window).
+export type OuOverride = {
+  // Added to the OU's per-block drift. Signed: negative is a downward episode.
+  driftAdd: number;
+  // Multiplies mean reversion. 1 leaves it alone.
+  kappaMult: number;
+};
+
+// What a flowTrend episode does to uninformed order flow this block (identity outside every window).
+export type FlowTrendOverride = {
+  sizeMult: number;
+  // Absent = keep the run's own setting.
+  trendCorrelation?: number;
+  persistBlocks?: number;
+};
+
+// Salt for a derived seed that does not collide with the price main-path Rng (seed) or flow Rng (flowSeed).
+const STRESS_SEED_SALT = 0x53_54_52_53; // "STRS"
+
+// Trapezoid envelope e(blockIndex) ∈ [0,1]:
+//   ramp:  0 → 1 (rises over rampBlocks)
+//   hold:  1 (holdBlocks)
+//   decay: 1 → 1 − recoverFrac (returns over decayBlocks; to 0 when recoverFrac is absent)
+//   outside window: 0 before it; 1 − recoverFrac from endBlock on (the part of the gap that stays)
+// spike is wethMult = 1 + m·e, crash is 1 − m·e. At e=1 the deviation is at most ±m.
+export function stressEnvelope(ev: ResolvedStressEvent, blockIndex: number): number {
+  const t = blockIndex - ev.startBlock;
+  if (t < 0) return 0;
+  const { rampBlocks: r, holdBlocks: h, decayBlocks: d } = ev;
+  if (t < r) return r === 0 ? 1 : (t + 1) / r; // rise (takes effect from the first window block)
+  if (t < r + h) return 1; // hold
+  // A dislocation that does not close: the level it reached is where the run leaves it (issue #56).
+  if (ev.persist) return 1;
+  const residual = ev.recoverFrac === undefined ? 0 : 1 - ev.recoverFrac;
+  if (t < r + h + d)
+    return d === 0 ? 1 : 1 - ((1 - residual) * (t - (r + h) + 1)) / d; // decay
+  return residual; // from endBlock onward
+}
+
+// Pure-function deterministic schedule (config + seed + runBlocks → at(blockIndex)).
+// Unit-tested. Never touches the chain or I/O.
+export class EventSchedule {
+  readonly events: ResolvedStressEvent[];
+
+  constructor(configs: StressEventConfig[], seed: number, runBlocks: number) {
+    if (configs.length > 0 && runBlocks <= 0) {
+      // The window is determined by a fraction of run length, so a fixed-length run (ERIS_RUN_BLOCKS>0) is required.
+      throw new Error(
+        "ERIS_STRESS_EVENTS requires a fixed-length run: set ERIS_RUN_BLOCKS > 0 (ADR 0009)",
+      );
+    }
+    // Which entry each follower pairs with, resolved before any draw: a follower draws once per
+    // window its anchor can open, so the anchor's count range has to be known first.
+    const anchorOf = configs.map((c, i) => resolveAnchor(configs, i));
+    // An Rng independent of the price main path and flow. The same SEED deterministically yields the same schedule.
+    //
+    //
+    // A keyed stream (ADR 0027): the scenario key decides the draws, and (seed, salt) only names
+    // the stream. A schedule that uses any of the variation keys (count, drawn trapezoids,
+    // flipProb, recoverFrac, venue: random, repriceAnchorProb) also takes the event list into the
+    // salt. With the seed alone, two regimes whose lists differ only in a type or a flag drew the
+    // same numbers for the same seed: crash#s and spike#s opened on the same block with the same
+    // size and recovery and flipped together, and depeg / depeg-persist and lending-incident /
+    // cdp-incident paired the same way. The hidden set gives every regime the same seed list, so an
+    // agent carrying state across epochs could match a shock's first block against one it had
+    // already watched play out. Mixing the list in makes each regime's draws its own; the price of
+    // it is that editing any value in a regime reshuffles all of its draws, which a changed regime
+    // does anyway. Every official regime with stress events uses a variation key. A list without
+    // them keeps the stream of the seed alone, so its entries draw the same whatever else the list
+    // holds (before ADR 0027 that was to keep the practice period's windows byte for byte; the key
+    // moves every realization now).
+    const rng = Rng.fromSeed(
+      seed,
+      configs.some(usesVariation)
+        ? (STRESS_SEED_SALT ^ configDigest(configs)) >>> 0
+        : STRESS_SEED_SALT,
+    );
+    // First pass: every draw, in list order. How many draws an entry makes is a function of the
+    // config alone -- a count draws its maximum number of windows, not the number it landed on -- so
+    // one entry's outcome never shifts the schedule of the entries after it.
+    const drawn = configs.map((c, i) => {
+      const count = c.count === undefined ? undefined : drawInt(rng, c.count);
+      const lead = anchorOf[i] < 0 ? c : configs[anchorOf[i]];
+      const slots = lead.count === undefined ? 1 : lead.count[1];
+      const windows: DrawnWindow[] = [];
+      for (let k = 0; k < slots; k++) windows.push(drawWindow(c, rng));
+      return { count, windows };
+    });
+    // A follower opens exactly as many windows as its anchor drew.
+    const counts = configs.map(
+      (_, i) => drawn[anchorOf[i] < 0 ? i : anchorOf[i]].count ?? 1,
+    );
+
+    // Second pass: place every entry that follows nothing.
+    const starts: number[][] = configs.map((c, i) => {
+      if (anchorOf[i] >= 0) return [];
+      const windows = drawn[i].windows.slice(0, counts[i]);
+      if (c.count === undefined) {
+        // One window, placed the way it always was. Clamp startBlock so the window fits inside the
+        // run window (scoring history depth; event window ⊂ run window).
+        const w = windows[0];
+        const maxStart = Math.max(0, runBlocks - w.span);
+        const startFrac = lerp(c.windowFrac[0], c.windowFrac[1], w.startU);
+        return [
+          Math.max(0, Math.min(Math.round(startFrac * runBlocks), maxStart)),
+        ];
+      }
+      const followers = configs
+        .map((_, j) => j)
+        .filter((j) => anchorOf[j] === i);
+      return placeWindows(
+        i,
+        c,
+        followers.map((j) => configs[j]),
+        // Each window claims the blocks of its longest member, so a pull that outlasts its crash
+        // still ends before the next crash begins.
+        windows.map((w, k) =>
+          Math.max(w.span, ...followers.map((j) => drawn[j].windows[k].span)),
+        ),
+        windows.map((w) => w.startU),
+        runBlocks,
+      );
+    });
+
+    // Third pass: move the events that follow another one onto its starts, window by window. Done
+    // after every draw so the RNG consumption stays a pure function of the event list -- an alignment
+    // must not shift the schedule of the events around it.
+    configs.forEach((c, i) => {
+      const anchorIndex = anchorOf[i];
+      if (anchorIndex < 0) return;
+      starts[i] = starts[anchorIndex].map((start, k) => {
+        const span = drawn[i].windows[k].span;
+        // A follower with a longer trapezoid than its anchor cannot start where the anchor does when
+        // the anchor sits near the end of the run. Silently sliding it earlier would un-align the
+        // pair -- which is the single thing alignWith exists to guarantee -- so this is a config error.
+        if (start + span > runBlocks) {
+          throw new Error(
+            `stress event[${i}] aligns with a ${c.alignWith} at block ${start}, but its own ` +
+              `window is ${span} blocks and the run is ${runBlocks}: shorten it, or lower windowFrac's ` +
+              "upper bound (a heavily shortened run, e.g. --blocks on a smoke test, can hit this on " +
+              "some seeds where the regime's own length does not)",
+          );
+        }
+        return start;
+      });
+    });
+
+    // One resolved event per window, in list order and, within an entry, in time order. An entry
+    // without `count` is exactly one event, so event indexes match the list whenever nobody asks
+    // for more.
+    this.events = configs.flatMap((c, i) =>
+      starts[i].map((startBlock, k) =>
+        resolveWindow(c, drawn[i].windows[k], startBlock),
+      ),
+    );
+  }
+
+  hasEvents(): boolean {
+    return this.events.length > 0;
+  }
+
+  // Whether the run needs the depth-withdrawal machinery at all (issue #52). The coordinator only
+  // discovers and tracks the seeded LP positions when this is true, so an ordinary run pays nothing.
+  hasLiquidityPull(): boolean {
+    return this.events.some((ev) => ev.type === "liquidityPull");
+  }
+
+  // Whether the run needs the eUSD depeg machinery at all (issue #39). Like the liquidity pull, the
+  // coordinator only stages the actor and tracks its inventory when this is true.
+  hasEusdDepeg(): boolean {
+    return this.events.some((ev) => ev.type === "eusdDepeg");
+  }
+
+  // The registry stables a `depeg` event targets (issue #27 (c)). The coordinator needs them at
+  // setup, before any window opens, to fail fast on a stable it has no market for. eUSD is not
+  // here: it has its own type and its own actor.
+  depegStables(): string[] {
+    const seen = new Set<string>();
+    for (const ev of this.events) {
+      if (ev.type !== "depeg" || !ev.stable) continue;
+      seen.add(ev.stable);
+    }
+    return [...seen];
+  }
+
+  // Fraction of a stable's seeded pool depth the environment should have sold by this block. Same
+  // shape and same reasoning as eusdDepegFractionAt; separate only because it is per-stable.
+  depegFractionAt(stable: string, blockIndex: number): number {
+    let sold = 0;
+    for (const ev of this.events) {
+      if (ev.type !== "depeg" || ev.stable !== stable) continue;
+      const e = stressEnvelope(ev, blockIndex);
+      if (e === 0) continue;
+      sold += ev.magnitude * e;
+    }
+    return sold;
+  }
+
+  // Fraction of the eUSD/USDC pool's seeded eUSD depth the environment should have sold by this
+  // block (0 = none). Reconciled against rather than applied once, for the same reason as the depth
+  // multiplier: the target is a pure function of the block index, so a dropped block notification
+  // costs a block of lag instead of leaving the peg stuck wherever it happened to be.
+  eusdDepegFractionAt(blockIndex: number): number {
+    let sold = 0;
+    for (const ev of this.events) {
+      if (ev.type !== "eusdDepeg") continue;
+      const e = stressEnvelope(ev, blockIndex);
+      if (e === 0) continue;
+      // Additive rather than multiplicative: two overlapping dumps sell two amounts of eUSD.
+      sold += ev.magnitude * e;
+    }
+    return sold;
+  }
+
+  // The bases a liquidityPull targets. The coordinator needs them at setup, before any window opens,
+  // to fail fast on a venue it cannot withdraw from.
+  liquidityPullBases(): string[] {
+    return [
+      ...new Set(
+        this.events
+          .filter((ev) => ev.type === "liquidityPull")
+          .map((ev) => ev.base),
+      ),
+    ];
+  }
+
+  // The venues a liquidityPull withdraws from, intersected with the ones this run enabled. An event
+  // without `venue` means every venue that has a proportional exit path: thinning one book while the
+  // others keep their block-0 depth only moves execution elsewhere, which is not the regime.
+  liquidityPullVenues<T extends string>(enabled: T[]): T[] {
+    const asked = new Set(
+      this.events
+        .filter((ev) => ev.type === "liquidityPull")
+        .map((ev) => ev.venue),
+    );
+    if (asked.has(undefined)) return [...enabled];
+    return enabled.filter((v) => asked.has(v as never));
+  }
+
+  // The in-window event at this blockIndex, of any kind (if several overlap, the first one). For
+  // visualization/logging. Callers that mean "is the price dislocated right now" want
+  // activePriceEventAt: since issue #52 a window can be open with the price untouched.
+  activeEventAt(blockIndex: number): ResolvedStressEvent | null {
+    return this.activeIn(blockIndex, () => true);
+  }
+
+  // The in-window *price* event at this blockIndex. A liquidityPull window does not count: it moves
+  // depth, not price, so treating it as an active event makes consumers gated on dislocation (the
+  // victim health-factor reads) fire on blocks where nothing has moved -- and its trapezoid is
+  // deliberately longer than the crash's, so those blocks exist by design.
+  activePriceEventAt(blockIndex: number): ResolvedStressEvent | null {
+    return this.activeIn(blockIndex, isPriceOverlay);
+  }
+
+  private activeIn(
+    blockIndex: number,
+    accept: (type: StressEventType) => boolean,
+  ): ResolvedStressEvent | null {
+    for (const ev of this.events) {
+      if (!accept(ev.type)) continue;
+      if (blockIndex >= ev.startBlock && blockIndex < ev.endBlock) return ev;
+    }
+    return null;
+  }
+
+  // The overlay at this blockIndex. Overlapping events compose their multipliers multiplicatively
+  // (if non-overlapping, each event appears as-is).
+  // Events applied once rather than as an overlay (currently the LST slash), for every index in
+  // the caught-up range fromIndex..toIndex.
+  //
+  // A range rather than a single index because the coordinator skips block notifications while it
+  // is still processing the previous one (`if (processing) return`), and every other consumer here
+  // already compensates the same way (keeperTask, vulnTask, logBlock all take fromBlock..toBlock).
+  // Matching one index exactly meant a dropped block silently swallowed the whole stress axis: the
+  // run logged its schedule and then never slashed.
+  pointEventsAt(fromIndex: number, toIndex = fromIndex): ResolvedStressEvent[] {
+    return this.events.filter(
+      (ev) =>
+        isPointEvent(ev.type) &&
+        ev.startBlock >= fromIndex &&
+        ev.startBlock <= toIndex,
+    );
+  }
+
+  // Fraction of the seeded pool depth that should still be in the pool at this block, per base
+  // (1 = untouched). The coordinator reconciles the venue against this every block rather than
+  // removing once and restoring once: the target is a pure function of blockIndex, so a dropped
+  // block notification costs one block of lag instead of stranding the pool at the wrong depth.
+  // Overlapping pulls compose multiplicatively, the same way overlapping price events do.
+  depthMultiplierAt(blockIndex: number): Record<string, number> {
+    const byBase: Record<string, number> = {};
+    for (const ev of this.events) {
+      if (ev.type !== "liquidityPull") continue;
+      const e = stressEnvelope(ev, blockIndex);
+      if (e === 0) continue;
+      const cur = byBase[ev.base] ?? 1;
+      byBase[ev.base] = cur * (1 - ev.magnitude * e);
+    }
+    return byBase;
+  }
+
+  // What the price process itself should use this block, for the bases a cexDrift episode targets
+  // (ADR 0009's overlay stays for gaps; this is the walk changing). `driftAdd` is added to the OU's
+  // per-block drift and `kappaMult` scales its mean reversion, both faded by the trapezoid so an
+  // episode starts and ends gradually rather than switching the market's character on one block.
+  //
+  // Returns the identity (0 / 1) outside every window, so a run with no such event steps exactly as
+  // it did before this existed.
+  ouOverrideAt(blockIndex: number, base = "WETH"): OuOverride {
+    let driftAdd = 0;
+    let kappaMult = 1;
+    for (const ev of this.events) {
+      if (ev.type !== "cexDrift" || ev.base !== base) continue;
+      const e = stressEnvelope(ev, blockIndex);
+      if (e === 0) continue;
+      driftAdd += (ev.side === "sell" ? -1 : 1) * ev.magnitude * e;
+      // Interpolated from 1, so the pull weakens as the episode ramps in.
+      if (ev.kappaMult !== undefined) kappaMult *= 1 + (ev.kappaMult - 1) * e;
+    }
+    return { driftAdd, kappaMult };
+  }
+
+  // Where the price process should mean-revert to this block, as a multiple of the run's anchor.
+  //
+  // Only `repriceAnchor` episodes move it, and they move it by exactly the drift they have applied
+  // so far -- the same multiplicative step the OU takes -- so mean reversion has nothing to fight
+  // during the episode and the level it reached is still there afterwards. 1 for every run without
+  // one, which is every run that existed before this.
+  anchorMultiplierAt(blockIndex: number, base = "WETH"): number {
+    let mult = 1;
+    for (const ev of this.events) {
+      if (ev.type !== "cexDrift" || ev.repriceAnchor !== true) continue;
+      if (ev.base !== base) continue;
+      const sign = ev.side === "sell" ? -1 : 1;
+      const last = Math.min(blockIndex, ev.endBlock - 1);
+      for (let t = ev.startBlock; t <= last; t++) {
+        mult *= 1 + sign * ev.magnitude * stressEnvelope(ev, t);
+      }
+    }
+    return mult;
+  }
+
+  // How the uninformed order flow should lean this block. `sizeMult` fades with the trapezoid; the
+  // shape knobs do not, because "half a correlation" during the ramp is not a weaker version of the
+  // regime, it is a different one -- they apply as long as the window is open.
+  flowTrendAt(blockIndex: number): FlowTrendOverride {
+    let sizeMult = 1;
+    let trendCorrelation: number | undefined;
+    let persistBlocks: number | undefined;
+    for (const ev of this.events) {
+      if (ev.type !== "flowTrend") continue;
+      const e = stressEnvelope(ev, blockIndex);
+      if (e === 0) continue;
+      sizeMult *= 1 + (ev.magnitude - 1) * e;
+      if (ev.trendCorrelation !== undefined)
+        trendCorrelation = Math.max(trendCorrelation ?? 0, ev.trendCorrelation);
+      if (ev.persistBlocks !== undefined)
+        persistBlocks = Math.max(persistBlocks ?? 0, ev.persistBlocks);
+    }
+    return {
+      sizeMult,
+      ...(trendCorrelation !== undefined ? { trendCorrelation } : {}),
+      ...(persistBlocks !== undefined ? { persistBlocks } : {}),
+    };
+  }
+
+  // Whether the run needs the token-launch machinery at all (issue #29). Like the pull and the
+  // depeg, the coordinator only stages the launch wallets and their inventory when this is true.
+  hasTokenLaunch(): boolean {
+    return this.events.some((ev) => ev.type === "tokenLaunch");
+  }
+
+  // Every token the run lists, with the window it lists on. The coordinator needs this at setup to
+  // size the launch and wave wallets' endowments before any window opens.
+  tokenLaunches(): Array<{
+    eventIndex: number;
+    event: ResolvedStressEvent;
+    launch: ResolvedTokenLaunch;
+  }> {
+    const out: Array<{
+      eventIndex: number;
+      event: ResolvedStressEvent;
+      launch: ResolvedTokenLaunch;
+    }> = [];
+    this.events.forEach((event, eventIndex) => {
+      if (event.type !== "tokenLaunch") return;
+      for (const launch of event.launches ?? [])
+        out.push({ eventIndex, event, launch });
+    });
+    return out;
+  }
+
+  // What the launch driver should have done by this block, per token. Cumulative targets, for the
+  // same reason the depeg fraction is: a dropped block must not leave the wave behind.
+  tokenLaunchTargetsAt(blockIndex: number): TokenLaunchTarget[] {
+    const out: TokenLaunchTarget[] = [];
+    this.events.forEach((ev, eventIndex) => {
+      if (ev.type !== "tokenLaunch") return;
+      const { rampBlocks: r, holdBlocks: h, decayBlocks: d } = ev;
+      const listed = blockIndex >= ev.startBlock;
+      // The ramp is counted from the block the pool is visible, not from the listing (see
+      // TOKEN_LAUNCH_LEAD_BLOCKS): before that the wave has nothing to buy and nobody to show.
+      const t = blockIndex - ev.startBlock - TOKEN_LAUNCH_LEAD_BLOCKS;
+      // The buy side is the rising half of the trapezoid and then stays up: the wave's USDC is
+      // spent by the end of the ramp and never comes back (the decay is a token sale, not a refund).
+      const buyFrac = t < 0 ? 0 : t < r ? (r === 0 ? 1 : (t + 1) / r) : 1;
+      const decayT = t - (r + h);
+      const decayFrac =
+        decayT < 0 ? 0 : d === 0 ? 1 : Math.min(1, (decayT + 1) / d);
+      for (const launch of ev.launches ?? []) {
+        out.push({
+          eventIndex,
+          launch,
+          listed,
+          buyFrac: launch.dud ? 0 : buyFrac,
+          sellBackFrac: launch.dud ? 0 : launch.sellBackFrac * decayFrac,
+          justClosed: blockIndex === ev.endBlock,
+        });
+      }
+    });
+    return out;
+  }
+
+  at(blockIndex: number): OverlayState {
+    const baseMults: Record<string, number> = {};
+    for (const ev of this.events) {
+      if (!isPriceOverlay(ev.type)) continue; // executed, not a price distortion
+      const e = stressEnvelope(ev, blockIndex);
+      if (e === 0) continue;
+      const sign = ev.type === "crash" ? -1 : 1;
+      const cur = baseMults[ev.base] ?? 1;
+      baseMults[ev.base] = cur * (1 + sign * ev.magnitude * e);
+    }
+    const wethMult = baseMults.WETH ?? 1;
+    return { wethMult, usdcPx: 1, baseMults };
+  }
+}
+
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t;
+}
+
+// Whether an entry asks the seed for anything beyond magnitude, start and side.
+function usesVariation(c: StressEventConfig): boolean {
+  return (
+    c.count !== undefined ||
+    Array.isArray(c.rampBlocks) ||
+    Array.isArray(c.holdBlocks) ||
+    Array.isArray(c.decayBlocks) ||
+    c.flipProb !== undefined ||
+    c.recoverFrac !== undefined ||
+    c.venue === "random" ||
+    c.repriceAnchorProb !== undefined
+  );
+}
+
+// FNV-1a over the event list written with sorted keys, so the digest is a property of what the
+// list says rather than of the order its fields happened to be written in.
+function configDigest(configs: StressEventConfig[]): number {
+  const canonical = (v: unknown): unknown =>
+    Array.isArray(v)
+      ? v.map(canonical)
+      : v !== null && typeof v === "object"
+        ? Object.fromEntries(
+            Object.keys(v as Record<string, unknown>)
+              .filter((k) => (v as Record<string, unknown>)[k] !== undefined)
+              .sort()
+              .map((k) => [k, canonical((v as Record<string, unknown>)[k])]),
+          )
+        : v;
+  const text = JSON.stringify(canonical(configs));
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+// Integer-uniform on the inclusive range: floor over [lo, hi + 1), clamped so a draw of exactly
+// 1.0 (which Rng never returns, but the clamp costs nothing) cannot overshoot.
+function drawInt(rng: Rng, [lo, hi]: [number, number]): number {
+  return Math.min(hi, Math.max(lo, Math.floor(lerp(lo, hi + 1, rng.next()))));
+}
+
+// A trapezoid segment's length: fixed, or drawn from its range. A fixed length draws nothing.
+function drawBlockCount(value: BlockCount, rng: Rng): number {
+  return Array.isArray(value) ? drawInt(rng, value) : value;
+}
+
+const blockCountMax = (value: BlockCount): number =>
+  Array.isArray(value) ? value[1] : value;
+
+// The longest window an entry can draw -- what placement has to leave room for whatever the seed.
+function maxSpan(c: StressEventConfig): number {
+  if (isPointEvent(c.type)) return POINT_EVENT_SPAN;
+  return (
+    (c.type === "tokenLaunch" ? TOKEN_LAUNCH_LEAD_BLOCKS : 0) +
+    blockCountMax(c.rampBlocks) +
+    blockCountMax(c.holdBlocks) +
+    blockCountMax(c.decayBlocks)
+  );
+}
+
+// The entry a follower pairs with, or -1 for an entry that follows nothing. The nearest entry of
+// that type *above* this one in the list, else the first below it. With one anchor in the list that
+// is the same event either way; with several (a practice period that schedules a crash every week,
+// each with its own pull) each follower pairs with the anchor written just before it. Taking the
+// first match instead put every pull of the period on week one's crash.
+//
+// Matched on the configured type, not the resolved one: a crash that flipProb turned upwards is
+// still the crash its pull was written against.
+export function resolveAnchor(
+  configs: StressEventConfig[],
+  i: number,
+): number {
+  const c = configs[i];
+  if (c.alignWith === undefined) return -1;
+  let anchorIndex = -1;
+  for (let j = i - 1; j >= 0; j--)
+    if (configs[j].type === c.alignWith) {
+      anchorIndex = j;
+      break;
+    }
+  if (anchorIndex < 0)
+    anchorIndex = configs.findIndex(
+      (other, j) => j > i && other.type === c.alignWith,
+    );
+  if (anchorIndex < 0) {
+    throw new Error(
+      `stress event[${i}] has alignWith: "${c.alignWith}", but no event of that type is configured`,
+    );
+  }
+  // Chains would depend on the order the alignment pass happens to visit the events (following an
+  // anchor that is itself moved later reads its pre-alignment start), so they are refused rather
+  // than resolved half the time.
+  if (configs[anchorIndex].alignWith !== undefined) {
+    throw new Error(
+      `stress event[${i}] aligns with event[${anchorIndex}], which is itself aligned; chained alignWith is not supported`,
+    );
+  }
+  // A follower opens one window per window of its anchor; a count of its own would say a second,
+  // different number of times the pair happened.
+  if (c.count !== undefined) {
+    throw new Error(
+      `stress event[${i}] sets both count and alignWith: a follower takes its anchor's count`,
+    );
+  }
+  return anchorIndex;
+}
+
+// Everything the seed decides about one window, before it is placed.
+type DrawnWindow = {
+  magnitude: number;
+  startU: number;
+  side?: "buy" | "sell";
+  kappaMult?: number;
+  launches?: ResolvedTokenLaunch[];
+  flipped: boolean;
+  recoverFrac?: number;
+  venue?: WhaleVenue;
+  repriceAnchor: boolean;
+  rampBlocks: number;
+  holdBlocks: number;
+  decayBlocks: number;
+  span: number;
+};
+
+function drawWindow(c: StressEventConfig, rng: Rng): DrawnWindow {
+  const magnitude = lerp(c.magnitudeRange[0], c.magnitudeRange[1], rng.next());
+  const startU = rng.next();
+  // Draw the side for every whale regardless of config so the RNG consumption stays a pure
+  // function of the event list -- making it conditional would let one event's `side: buy` shift
+  // the schedule of every event after it.
+  const sideDraw =
+    c.type === "whale" || c.type === "cexDrift" ? rng.next() : undefined;
+  const side =
+    c.type === "whale" || c.type === "cexDrift"
+      ? c.side === undefined || c.side === "random"
+        ? sideDraw! < 0.5
+          ? ("buy" as const)
+          : ("sell" as const)
+        : c.side
+      : undefined;
+  // Drawn for every cexDrift whether or not the range is set, for the same reason as the side:
+  // the RNG consumption has to stay a pure function of the event list.
+  const kappaDraw = c.type === "cexDrift" ? rng.next() : undefined;
+  const kappaMult =
+    c.type === "cexDrift" && c.kappaMultRange !== undefined
+      ? lerp(c.kappaMultRange[0], c.kappaMultRange[1], kappaDraw as number)
+      : undefined;
+  // tokenLaunch (issue #29): the count once, then a fixed four draws per token whatever the
+  // outcome -- the wave multiplier is drawn even for a dud -- so the RNG consumption is a pure
+  // function of the event list and the count, not of which tokens happened to get demand.
+  const launches =
+    c.type === "tokenLaunch" ? drawTokenLaunches(c, rng) : undefined;
+  // Draws that exist only when their key is written, after every draw above, so a config that
+  // writes none of them consumes exactly the sequence it did before they existed -- the practice
+  // period's schedule is a function of its secret seed, and an upgrade must not move it.
+  const flipDraw = c.flipProb !== undefined ? rng.next() : undefined;
+  const recoverFrac =
+    c.recoverFrac !== undefined
+      ? lerp(c.recoverFrac[0], c.recoverFrac[1], rng.next())
+      : undefined;
+  const venueDraw = c.venue === "random" ? rng.next() : undefined;
+  const repriceDraw =
+    c.repriceAnchorProb !== undefined ? rng.next() : undefined;
+  const rampBlocks = drawBlockCount(c.rampBlocks, rng);
+  const holdBlocks = drawBlockCount(c.holdBlocks, rng);
+  const decayBlocks = drawBlockCount(c.decayBlocks, rng);
+  const span = isPointEvent(c.type)
+    ? POINT_EVENT_SPAN
+    : (c.type === "tokenLaunch" ? TOKEN_LAUNCH_LEAD_BLOCKS : 0) +
+      rampBlocks +
+      holdBlocks +
+      decayBlocks;
+  return {
+    magnitude,
+    startU,
+    ...(side !== undefined ? { side } : {}),
+    ...(kappaMult !== undefined ? { kappaMult } : {}),
+    ...(launches !== undefined ? { launches } : {}),
+    flipped: flipDraw !== undefined && flipDraw < (c.flipProb as number),
+    ...(recoverFrac !== undefined ? { recoverFrac } : {}),
+    ...(venueDraw !== undefined
+      ? {
+          venue:
+            WHALE_VENUES[
+              Math.min(
+                WHALE_VENUES.length - 1,
+                Math.floor(venueDraw * WHALE_VENUES.length),
+              )
+            ],
+        }
+      : {}),
+    repriceAnchor:
+      c.repriceAnchor === true ||
+      (repriceDraw !== undefined &&
+        repriceDraw < (c.repriceAnchorProb as number)),
+    rampBlocks,
+    holdBlocks,
+    decayBlocks,
+    span,
+  };
+}
+
+// Starts for an entry with `count`: the windows never overlap (each one's blocks, plus the gap,
+// before the next one's start), every start falls inside windowFrac, and the placement is uniform
+// over all the ways that fits -- sorted uniform draws spread over the slack that is left once the
+// windows themselves are laid end to end. Checked against the longest windows the entry can draw,
+// so a regime that fits on one seed fits on all of them.
+function placeWindows(
+  index: number,
+  c: StressEventConfig,
+  followers: StressEventConfig[],
+  reach: number[],
+  startUs: number[],
+  runBlocks: number,
+): number[] {
+  const gap = c.minGapBlocks ?? 0;
+  const most = (c.count as [number, number])[1];
+  const longest = Math.max(maxSpan(c), ...followers.map(maxSpan));
+  const lo = c.windowFrac[0] * runBlocks;
+  const hi = c.windowFrac[1] * runBlocks;
+  if ((most - 1) * (longest + gap) > hi - lo) {
+    throw new Error(
+      `stress event[${index}]: ${most} windows of up to ${longest} blocks (+${gap} gap) do not fit ` +
+        `between the starts windowFrac allows (blocks ${Math.round(lo)}-${Math.round(hi)}): widen ` +
+        "windowFrac, or lower the count's maximum or the window lengths (a heavily shortened run, " +
+        "e.g. --blocks on a smoke test, hits this where the regime's own length does not)",
+    );
+  }
+  if (most * longest + (most - 1) * gap > runBlocks) {
+    throw new Error(
+      `stress event[${index}]: ${most} windows of up to ${longest} blocks (+${gap} gap) do not fit ` +
+        `in a ${runBlocks}-block run (a shortened run, e.g. --blocks on a smoke test?)`,
+    );
+  }
+  const n = reach.length;
+  if (n === 0) return [];
+  // What each window occupies before the next may start.
+  const step = reach.map((r, k) => (k < n - 1 ? r + gap : r));
+  const slack = hi - lo - step.slice(0, n - 1).reduce((a, b) => a + b, 0);
+  const u = [...startUs].sort((a, b) => a - b);
+  const starts: number[] = [];
+  let laid = 0;
+  for (let k = 0; k < n; k++) {
+    starts.push(Math.round(lo + u[k] * slack + laid));
+    laid += step[k];
+  }
+  // A window near the end of windowFrac can run past the run. Pull the last one in and the rest
+  // with it, keeping their spacing, rather than cutting a window short.
+  let limit = runBlocks - reach[n - 1];
+  for (let k = n - 1; k >= 0; k--) {
+    starts[k] = Math.min(starts[k], limit);
+    if (k > 0) limit = starts[k] - step[k - 1];
+  }
+  return starts;
+}
+
+function resolveWindow(
+  c: StressEventConfig,
+  w: DrawnWindow,
+  startBlock: number,
+): ResolvedStressEvent {
+  const type: StressEventType = w.flipped
+    ? c.type === "crash"
+      ? "spike"
+      : "crash"
+    : c.type;
+  return {
+    type,
+    base: c.base ?? "WETH",
+    ...(c.stable !== undefined ? { stable: c.stable } : {}),
+    magnitude: w.magnitude,
+    ...(w.side !== undefined ? { side: w.side } : {}),
+    ...(w.kappaMult !== undefined ? { kappaMult: w.kappaMult } : {}),
+    ...(c.persist === true ? { persist: true } : {}),
+    ...(w.repriceAnchor ? { repriceAnchor: true } : {}),
+    ...(c.type === "flowTrend" && c.trendCorrelation !== undefined
+      ? { trendCorrelation: c.trendCorrelation }
+      : {}),
+    ...(c.type === "flowTrend" && c.persistBlocks !== undefined
+      ? { persistBlocks: c.persistBlocks }
+      : {}),
+    ...(c.type === "whale"
+      ? { venue: w.venue ?? (c.venue as WhaleVenue | undefined) ?? "uniswap" }
+      : {}),
+    // liquidityPull keeps `venue` undefined when unset: that means "all enabled", which the
+    // schedule cannot resolve on its own (it does not know which protocols the run turned on).
+    ...(c.type === "liquidityPull" && c.venue !== undefined
+      ? { venue: c.venue as WhaleVenue }
+      : {}),
+    ...(w.launches !== undefined ? { launches: w.launches } : {}),
+    startBlock,
+    rampBlocks: w.rampBlocks,
+    holdBlocks: w.holdBlocks,
+    decayBlocks: w.decayBlocks,
+    endBlock: startBlock + w.span,
+    ...(w.flipped ? { flippedFrom: c.type as "crash" | "spike" } : {}),
+    ...(w.recoverFrac !== undefined ? { recoverFrac: w.recoverFrac } : {}),
+  };
+}
+
+// The per-token draws of a tokenLaunch window (issue #29). Exactly one draw for the count and four
+// per token, in a fixed order, so the schedule of every event after this one does not depend on
+// how many tokens got demand.
+function drawTokenLaunches(
+  c: StressEventConfig,
+  rng: Rng,
+): ResolvedTokenLaunch[] {
+  const count = drawInt(rng, c.tokenCount ?? [1, 1]);
+  const launches: ResolvedTokenLaunch[] = [];
+  for (let i = 0; i < count; i++) {
+    const liquidity = c.liquidityUsdc ?? [0, 0];
+    const wave = c.waveUsdcMult ?? [0, 0];
+    const dudP = c.dudProb ?? [0, 0];
+    const sellBack = c.sellBackFrac ?? [0, 0];
+    const liquidityUsdc = Math.round(
+      lerp(liquidity[0], liquidity[1], rng.next()),
+    );
+    const dudProb = lerp(dudP[0], dudP[1], rng.next());
+    const dudDraw = rng.next();
+    const waveUsdcMult = lerp(wave[0], wave[1], rng.next());
+    const sellBackFrac = lerp(sellBack[0], sellBack[1], rng.next());
+    // A dud is a mass at zero, not the bottom of the range: `dudDraw < dudProb` is the coin, and
+    // a wave multiplier that came out at exactly 0 is a dud as well (nothing would be bought).
+    const dud = dudDraw < dudProb || waveUsdcMult <= 0;
+    launches.push({
+      index: i,
+      liquidityUsdc,
+      waveUsdcMult: dud ? 0 : waveUsdcMult,
+      dud,
+      sellBackFrac,
+    });
+  }
+  return launches;
+}
+
+// Apply a cexDrift episode to one base's OU parameters. Kept here next to the envelope rather than
+// in the coordinator so that "what an episode does to the walk" has one definition, and so a unit
+// test can pin it without a chain.
+export function withOuOverride<T extends { kappa: number; drift: number }>(
+  params: T,
+  override: OuOverride,
+): T {
+  if (override.driftAdd === 0 && override.kappaMult === 1) return params;
+  return {
+    ...params,
+    kappa: params.kappa * override.kappaMult,
+    drift: params.drift + override.driftAdd,
+  };
+}
+
+// Parse and validate ERIS_STRESS_EVENTS (a JSON array). Empty/unset yields [].
+// Strictly checks the "give ranges, not values" spec, and misconfiguration fails fast before the run starts.
+export function parseStressEvents(
+  json: string | undefined,
+): StressEventConfig[] {
+  if (json === undefined || json.trim() === "") return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch (error) {
+    throw new Error(
+      `ERIS_STRESS_EVENTS must be valid JSON: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  if (!Array.isArray(parsed)) {
+    throw new Error("ERIS_STRESS_EVENTS must be a JSON array");
+  }
+  return parsed.map((raw, i) => parseOne(raw, i));
+}
+
+function parseOne(raw: unknown, i: number): StressEventConfig {
+  const label = `ERIS_STRESS_EVENTS[${i}]`;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+    throw new Error(`${label} must be an object`);
+  }
+  const o = raw as Record<string, unknown>;
+  if (
+    o.type !== "spike" &&
+    o.type !== "crash" &&
+    o.type !== "lstSlash" &&
+    o.type !== "whale" &&
+    o.type !== "liquidityPull" &&
+    o.type !== "eusdDepeg" &&
+    o.type !== "depeg" &&
+    o.type !== "cexDrift" &&
+    o.type !== "flowTrend" &&
+    o.type !== "tokenLaunch"
+  ) {
+    throw new Error(
+      `${label}.type must be "spike", "crash", "lstSlash", "whale", "liquidityPull", "eusdDepeg", "depeg", "cexDrift", "flowTrend" or "tokenLaunch"`,
+    );
+  }
+  // tokenLaunch (issue #29) carries its own ranges and no magnitude: each token draws its own wave,
+  // so a single magnitudeRange would either be ignored or mean something nobody wrote down.
+  const LAUNCH_RANGES = [
+    "tokenCount",
+    "liquidityUsdc",
+    "waveUsdcMult",
+    "dudProb",
+    "sellBackFrac",
+  ] as const;
+  if (o.type === "tokenLaunch") {
+    if (o.magnitudeRange !== undefined)
+      throw new Error(
+        `${label}.magnitudeRange does not apply to type "tokenLaunch": the wave is drawn per token from waveUsdcMult`,
+      );
+    for (const key of LAUNCH_RANGES)
+      if (o[key] === undefined)
+        throw new Error(`${label}.${key} is required for type "tokenLaunch"`);
+  } else {
+    for (const key of LAUNCH_RANGES)
+      if (o[key] !== undefined)
+        throw new Error(`${label}.${key} only applies to type "tokenLaunch"`);
+  }
+  const launchRanges =
+    o.type === "tokenLaunch"
+      ? {
+          tokenCount: parseRange(o.tokenCount, `${label}.tokenCount`, {
+            min: 1,
+          }),
+          liquidityUsdc: parseRange(o.liquidityUsdc, `${label}.liquidityUsdc`, {
+            min: 0,
+            exclusiveMin: true,
+          }),
+          // 0 is allowed on purpose: a range whose lower bound is 0 is how "some launches are duds"
+          // is written, on top of the explicit dud probability.
+          waveUsdcMult: parseRange(o.waveUsdcMult, `${label}.waveUsdcMult`, {
+            min: 0,
+          }),
+          dudProb: parseRange(o.dudProb, `${label}.dudProb`, {
+            min: 0,
+            max: 1,
+          }),
+          sellBackFrac: parseRange(o.sellBackFrac, `${label}.sellBackFrac`, {
+            min: 0,
+            max: 1,
+          }),
+        }
+      : undefined;
+  if (launchRanges !== undefined) {
+    const [lo, hi] = launchRanges.tokenCount;
+    if (!Number.isInteger(lo) || !Number.isInteger(hi))
+      throw new Error(`${label}.tokenCount must be an integer range`);
+  }
+  if (o.type === "depeg") {
+    // Which stable is not a default anyone could guess: a run can have several, and picking one
+    // silently would make the regime depend on registry order.
+    if (typeof o.stable !== "string" || o.stable.length === 0)
+      throw new Error(
+        `${label}.stable is required for type "depeg" (the registry stable to push off par)`,
+      );
+  } else if (o.stable !== undefined) {
+    throw new Error(`${label}.stable only applies to type "depeg"`);
+  }
+  if (o.alignWith !== undefined) {
+    if (
+      o.alignWith !== "spike" &&
+      o.alignWith !== "crash" &&
+      o.alignWith !== "lstSlash" &&
+      o.alignWith !== "whale" &&
+      o.alignWith !== "liquidityPull" &&
+      o.alignWith !== "eusdDepeg" &&
+      o.alignWith !== "depeg" &&
+      o.alignWith !== "cexDrift" &&
+      o.alignWith !== "flowTrend" &&
+      o.alignWith !== "tokenLaunch"
+    ) {
+      throw new Error(`${label}.alignWith must be a stress event type`);
+    }
+    // Following your own type is ambiguous the moment there are two of them, and it says nothing:
+    // the point of alignWith is to tie two *different* shocks to one moment.
+    if (o.alignWith === o.type)
+      throw new Error(`${label}.alignWith must name a different event type`);
+  }
+  if (o.side !== undefined) {
+    if (o.type !== "whale" && o.type !== "cexDrift")
+      throw new Error(
+        `${label}.side only applies to types "whale" and "cexDrift"`,
+      );
+    if (o.side !== "buy" && o.side !== "sell" && o.side !== "random")
+      throw new Error(`${label}.side must be "buy", "sell" or "random"`);
+  }
+  if (o.persist !== undefined) {
+    if (o.type !== "depeg" && o.type !== "eusdDepeg")
+      throw new Error(
+        `${label}.persist only applies to types "depeg" and "eusdDepeg"`,
+      );
+    if (typeof o.persist !== "boolean")
+      throw new Error(`${label}.persist must be a boolean`);
+    // Rejected rather than ignored: a decay that never runs would read as a window that closes.
+    if (o.persist === true && o.decayBlocks !== 0)
+      throw new Error(
+        `${label}.persist requires decayBlocks: 0 (a dislocation that does not close has no decay)`,
+      );
+  }
+  if (o.repriceAnchor !== undefined) {
+    if (o.type !== "cexDrift")
+      throw new Error(`${label}.repriceAnchor only applies to type "cexDrift"`);
+    if (typeof o.repriceAnchor !== "boolean")
+      throw new Error(`${label}.repriceAnchor must be a boolean`);
+  }
+  if (o.repriceAnchorProb !== undefined) {
+    if (o.type !== "cexDrift")
+      throw new Error(
+        `${label}.repriceAnchorProb only applies to type "cexDrift"`,
+      );
+    if (o.repriceAnchor !== undefined)
+      throw new Error(
+        `${label} sets both repriceAnchor and repriceAnchorProb: pick one`,
+      );
+    parseProbability(o.repriceAnchorProb, `${label}.repriceAnchorProb`);
+  }
+  if (o.flipProb !== undefined) {
+    if (o.type !== "crash" && o.type !== "spike")
+      throw new Error(
+        `${label}.flipProb only applies to types "crash" and "spike"`,
+      );
+    parseProbability(o.flipProb, `${label}.flipProb`);
+  }
+  if (o.recoverFrac !== undefined) {
+    if (o.type !== "crash" && o.type !== "spike")
+      throw new Error(
+        `${label}.recoverFrac only applies to types "crash" and "spike"`,
+      );
+    parseRange(o.recoverFrac, `${label}.recoverFrac`, { min: 0, max: 1 });
+  }
+  if (o.count !== undefined) {
+    const [lo, hi] = parseRange(o.count, `${label}.count`, { min: 0 });
+    if (!Number.isInteger(lo) || !Number.isInteger(hi))
+      throw new Error(`${label}.count must be an integer range`);
+    if (o.alignWith !== undefined)
+      throw new Error(
+        `${label} sets both count and alignWith: a follower takes its anchor's count`,
+      );
+  }
+  if (o.minGapBlocks !== undefined) {
+    if (o.count === undefined)
+      throw new Error(
+        `${label}.minGapBlocks only applies with count (it is the spacing between its windows)`,
+      );
+    parseNonNegInt(o.minGapBlocks, `${label}.minGapBlocks`);
+  }
+  if (o.kappaMultRange !== undefined) {
+    if (o.type !== "cexDrift")
+      throw new Error(
+        `${label}.kappaMultRange only applies to type "cexDrift"`,
+      );
+    const r = o.kappaMultRange;
+    if (
+      !Array.isArray(r) ||
+      r.length !== 2 ||
+      typeof r[0] !== "number" ||
+      typeof r[1] !== "number" ||
+      r[0] < 0 ||
+      r[1] < r[0]
+    )
+      throw new Error(
+        `${label}.kappaMultRange must be [min, max] with 0 <= min <= max`,
+      );
+  }
+  if (o.trendCorrelation !== undefined) {
+    if (o.type !== "flowTrend")
+      throw new Error(
+        `${label}.trendCorrelation only applies to type "flowTrend"`,
+      );
+    if (
+      typeof o.trendCorrelation !== "number" ||
+      o.trendCorrelation < 0 ||
+      o.trendCorrelation > 1
+    )
+      throw new Error(`${label}.trendCorrelation must be between 0 and 1`);
+  }
+  if (o.persistBlocks !== undefined) {
+    if (o.type !== "flowTrend")
+      throw new Error(
+        `${label}.persistBlocks only applies to type "flowTrend"`,
+      );
+    if (
+      typeof o.persistBlocks !== "number" ||
+      !Number.isInteger(o.persistBlocks) ||
+      o.persistBlocks < 1
+    )
+      throw new Error(`${label}.persistBlocks must be an integer >= 1`);
+  }
+  if (o.venue !== undefined) {
+    // whale picks the venue it prints on; liquidityPull narrows which books thin (omit it to thin
+    // every enabled venue, which is the default because thinning one only moves execution elsewhere).
+    if (o.type !== "whale" && o.type !== "liquidityPull")
+      throw new Error(
+        `${label}.venue only applies to types "whale" and "liquidityPull"`,
+      );
+    // "random" is a whale's: which book a pull thins is a question of which venues the run has,
+    // and the schedule does not know that.
+    if (o.venue === "random" && o.type !== "whale")
+      throw new Error(`${label}.venue "random" only applies to type "whale"`);
+    if (
+      o.venue !== "uniswap" &&
+      o.venue !== "balancer" &&
+      o.venue !== "curve" &&
+      o.venue !== "random"
+    )
+      throw new Error(
+        `${label}.venue must be "uniswap", "balancer", "curve" or "random"`,
+      );
+  }
+  if (o.base !== undefined && typeof o.base !== "string") {
+    throw new Error(`${label}.base must be a token symbol string`);
+  }
+  // A launch has no magnitude of its own (see above); the resolved event carries 0 so the shared
+  // schedule shape stays total.
+  const magnitudeRange: [number, number] =
+    o.type === "tokenLaunch"
+      ? [0, 0]
+      : parseRange(o.magnitudeRange, `${label}.magnitudeRange`, {
+          min: 0,
+          exclusiveMin: true,
+          // A slash is a fraction of the pool, and wiping it out entirely is not a stress event: at
+          // 100% totalPooledWeth hits zero, convertToAssets falls back to its 1:1 branch, the pool's
+          // rate oracle snaps back to par, and every staker is silently erased while the discount
+          // reads 0. Exclusive, matching the sentence above it.
+          //
+          // A liquidityPull is bounded the same way and for the same reason: at 100% the pool has no
+          // depth at all, every swap reverts, and the venue stops existing for the window. That is not
+          // a thin book an agent has to size against -- it is an outage, and the regime is about the
+          // former (issue #52: "how much of the gap can I actually take").
+          //
+          // An eusdDepeg is bounded the same way once more: selling the pool's entire eUSD side leaves
+          // nothing to buy, so the discount stops being a price and becomes an outage.
+          ...(o.type === "lstSlash" ||
+          o.type === "liquidityPull" ||
+          o.type === "eusdDepeg" ||
+          o.type === "depeg"
+            ? { max: 1, exclusiveMax: true }
+            : {}),
+        });
+  const windowFrac = parseRange(o.windowFrac, `${label}.windowFrac`, {
+    min: 0,
+    max: 1,
+  });
+  // A point event lands on one block, so the trapezoid fields do not apply and are optional there.
+  const isPoint = isPointEvent(o.type);
+  const rampBlocks = parseBlockCount(
+    isPoint ? (o.rampBlocks ?? 0) : o.rampBlocks,
+    `${label}.rampBlocks`,
+  );
+  const holdBlocks = parseBlockCount(
+    isPoint ? (o.holdBlocks ?? 0) : o.holdBlocks,
+    `${label}.holdBlocks`,
+  );
+  const decayBlocks = parseBlockCount(
+    isPoint ? (o.decayBlocks ?? 0) : o.decayBlocks,
+    `${label}.decayBlocks`,
+  );
+  // The shortest window the seed can draw has to exist, not just the longest.
+  const shortest = (v: BlockCount) => (Array.isArray(v) ? v[0] : v);
+  if (
+    !isPoint &&
+    shortest(rampBlocks) + shortest(holdBlocks) + shortest(decayBlocks) <= 0
+  ) {
+    throw new Error(
+      `${label} must have a positive total window (ramp+hold+decay)`,
+    );
+  }
+  return {
+    type: o.type,
+    base: typeof o.base === "string" ? o.base : undefined,
+    ...(typeof o.stable === "string" ? { stable: o.stable } : {}),
+    ...(o.side !== undefined ? { side: o.side as WhaleSide } : {}),
+    ...(o.venue !== undefined
+      ? { venue: o.venue as StressEventConfig["venue"] }
+      : {}),
+    ...(o.repriceAnchorProb !== undefined
+      ? { repriceAnchorProb: o.repriceAnchorProb as number }
+      : {}),
+    ...(o.flipProb !== undefined ? { flipProb: o.flipProb as number } : {}),
+    ...(o.recoverFrac !== undefined
+      ? { recoverFrac: o.recoverFrac as [number, number] }
+      : {}),
+    ...(o.count !== undefined ? { count: o.count as [number, number] } : {}),
+    ...(o.minGapBlocks !== undefined
+      ? { minGapBlocks: o.minGapBlocks as number }
+      : {}),
+    ...(o.alignWith !== undefined
+      ? { alignWith: o.alignWith as StressEventType }
+      : {}),
+    ...(o.kappaMultRange !== undefined
+      ? { kappaMultRange: o.kappaMultRange as [number, number] }
+      : {}),
+    ...(o.persist === true ? { persist: true } : {}),
+    ...(o.repriceAnchor === true ? { repriceAnchor: true } : {}),
+    ...(o.trendCorrelation !== undefined
+      ? { trendCorrelation: o.trendCorrelation as number }
+      : {}),
+    ...(o.persistBlocks !== undefined
+      ? { persistBlocks: o.persistBlocks as number }
+      : {}),
+    ...(launchRanges ?? {}),
+    magnitudeRange,
+    windowFrac,
+    rampBlocks,
+    holdBlocks,
+    decayBlocks,
+  };
+}
+
+function parseRange(
+  value: unknown,
+  label: string,
+  bounds: {
+    min?: number;
+    max?: number;
+    exclusiveMin?: boolean;
+    exclusiveMax?: boolean;
+  },
+): [number, number] {
+  if (
+    !Array.isArray(value) ||
+    value.length !== 2 ||
+    !value.every((v) => typeof v === "number" && Number.isFinite(v))
+  ) {
+    throw new Error(`${label} must be a [min, max] pair of finite numbers`);
+  }
+  const [lo, hi] = value as [number, number];
+  if (lo > hi) throw new Error(`${label} must have min <= max`);
+  if (bounds.min !== undefined) {
+    if (bounds.exclusiveMin ? lo <= bounds.min : lo < bounds.min)
+      throw new Error(`${label} min must be >= ${bounds.min}`);
+  }
+  if (bounds.max !== undefined) {
+    if (bounds.exclusiveMax ? hi >= bounds.max : hi > bounds.max)
+      throw new Error(
+        `${label} max must be ${bounds.exclusiveMax ? "<" : "<="} ${bounds.max}`,
+      );
+  }
+  return [lo, hi];
+}
+
+// A trapezoid segment: a non-negative integer, or an inclusive [min, max] range of them.
+function parseBlockCount(value: unknown, label: string): BlockCount {
+  if (!Array.isArray(value)) return parseNonNegInt(value, label);
+  const [lo, hi] = parseRange(value, label, { min: 0 });
+  if (!Number.isInteger(lo) || !Number.isInteger(hi))
+    throw new Error(
+      `${label} must be a non-negative integer or an integer [min, max] range`,
+    );
+  return [lo, hi];
+}
+
+function parseProbability(value: unknown, label: string): number {
+  if (typeof value !== "number" || !(value >= 0 && value <= 1))
+    throw new Error(`${label} must be a probability between 0 and 1`);
+  return value;
+}
+
+function parseNonNegInt(value: unknown, label: string): number {
+  if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
+    throw new Error(`${label} must be a non-negative integer`);
+  }
+  return value;
+}

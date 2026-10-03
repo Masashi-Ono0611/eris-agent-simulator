@@ -1,0 +1,349 @@
+# ASCON infra monitoring — reuse the standard stack instead of a bespoke script.
+#   cAdvisor + node_exporter  -> container + host metrics
+#   Prometheus                -> scrape + store + alert rules
+#   Grafana (+ image-renderer)-> dashboards + alerting -> Slack (chart images inline)
+#   Loki + Promtail           -> logs (crash context in alerts)
+#   eris-exporter             -> ASCON domain metrics (interval/tx/unique-users/crashes/chain)
+# Start:  cd infra/monitoring && docker compose up -d
+name: ascon-monitoring
+
+# NOTE: every published port is bound to 127.0.0.1 on purpose. gohanserver sat behind NAT with no
+# port forwarding, so 0.0.0.0 was harmless there; a box with a public IP and no firewall publishes
+# Grafana, Prometheus, cAdvisor and Loki to the internet the moment this stack starts -- Prometheus
+# and cAdvisor have no auth at all, and Loki holds the per-team RPC call log. Reach them through the
+# Cloudflare tunnel (ASCON docs/20 §3) or an ssh -L forward, never by opening a port.
+
+services:
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: ascon-node-exporter
+    command:
+      - --path.rootfs=/host
+      - --collector.textfile.directory=/textfile
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - /:/host:ro,rslave
+      - ascon-textfile:/textfile:ro
+    ports: ["127.0.0.1:9100:9100"]
+
+  # Blind on the practice box (issue #157): under Docker's containerd image store it cannot identify
+  # a container -- it looks for the read-write layer under image/<driver>/layerdb, which that store
+  # does not write -- so it exports no per-container series at all. Nothing reads its container series
+  # any more; the container memory/CPU that the alerts and the fleet panels use comes from
+  # eris-exporter, which reads the cgroup tree directly.
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: ascon-cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices: ["/dev/kmsg"]
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports: ["127.0.0.1:8081:8080"]          # 8080 is taken on the host
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: ascon-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ascon-prom-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    ports: ["127.0.0.1:9090:9090"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+
+  renderer:
+    # v5+ required for Grafana 13 (Go renderer; no pinned semver tag is published)
+    image: grafana/grafana-image-renderer:latest
+    container_name: ascon-renderer
+    restart: unless-stopped
+    env_file: [./grafana/secret.env]
+    environment: [TZ=Asia/Tokyo, BROWSER_TZ=Asia/Tokyo]
+
+  grafana:
+    image: grafana/grafana:13.2.1
+    container_name: ascon-grafana
+    restart: unless-stopped
+    env_file: [./grafana/grafana.env, ./grafana/secret.env]
+    environment:
+      - GF_SERVER_ROOT_URL=https://ascon-monitor.nyx.foundation
+      - GF_RENDERING_SERVER_URL=http://renderer:8081/render
+      - GF_RENDERING_CALLBACK_URL=http://grafana:3000/
+      - GF_UNIFIED_ALERTING_SCREENSHOTS_CAPTURE=true
+      - GF_DATE_FORMATS_DEFAULT_TIMEZONE=Asia/Tokyo
+      - TZ=Asia/Tokyo
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ascon-grafana-data:/var/lib/grafana
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on: [prometheus, renderer]
+
+  loki:
+    image: grafana/loki:3.1.1
+    container_name: ascon-loki
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    ports: ["127.0.0.1:3100:3100"]
+
+  promtail:
+    image: grafana/promtail:3.1.1
+    container_name: ascon-promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/config.yml
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml:ro
+      - ${ASCON_LOGS:?set ASCON_LOGS in infra/monitoring/.env}:/logs:ro
+      - ${ERIS_ROOT:?set ERIS_ROOT in infra/monitoring/.env}/runs:/runs:ro
+    depends_on: [loki]
+
+  eris-exporter:
+    image: python:3.12-slim
+    container_name: ascon-eris-exporter
+    restart: unless-stopped
+    network_mode: host          # reach anvil on 127.0.0.1:8545 (it binds loopback only)
+    command: python /app/exporter.py
+    environment:
+      - ASCON_RPC=http://127.0.0.1:8545
+      - ASCON_ENV=live
+      - ASCON_TEXTFILE=/textfile/ascon.prom
+      # The canary's agent id(s), whose silence pages after an hour (issue #159). A canary that is not
+      # registered in the running period has no series, so a box without one does not page about it.
+      - ASCON_CANARY_IDS=${ASCON_CANARY_IDS:-ops-canary}
+      - ASCON_DASHBOARD_URL=http://127.0.0.1:5174/healthz
+      # The same dashboard through the tunnel, as participants reach it. Unset = not probed.
+      - ASCON_DASHBOARD_PUBLIC_URL=${ASCON_DASHBOARD_PUBLIC_URL:-}
+      - ASCON_CGROUP_ROOT=/host/cgroup
+      - ASCON_DOCKER_CONTAINERS=/host/docker-containers
+    volumes:
+      - ./exporter:/app:ro
+      - ${ERIS_ROOT:?set ERIS_ROOT in infra/monitoring/.env}/runs:/runs:ro
+      - ascon-textfile:/textfile
+      # Container memory and CPU without cAdvisor (issue #157): the cgroup v2 tree for the numbers,
+      # Docker's per-container config.v2.json for the name and the eris.role label. Read-only, and
+      # not the Docker socket -- that would hand this process the daemon.
+      - /sys/fs/cgroup:/host/cgroup:ro
+      - /var/lib/docker/containers:/host/docker-containers:ro
+
+  # One-shot. Two jobs, both of which anvil cannot do for itself because it runs as uid 1000:
+  #   1. a named volume is created root-owned, so anvil could not write its dump into it;
+  #   2. seed the live chain from the venues snapshot, once.
+  # PINNED, not :stable. An anvil state dump is version-coupled: `npm run gen:state-dump` runs with
+  # whatever foundryup put on the HOST, and :stable lagged it (1.5.1 vs the host's 1.8.3), so the
+  # container rejected the dump it was handed -- "data did not match any variant of untagged enum
+  # SerializableTransactionType". Keep this tag and the host's foundry on the same version; ASCON
+  # docs/18 says to pin foundry to stable but only means the host, which is not sufficient.
+  anvil-state-init:
+    image: ghcr.io/foundry-rs/foundry:v1.8.3
+    container_name: ascon-anvil-state-init
+    user: "0:0"
+    restart: "no"
+    volumes:
+      - type: bind
+        source: ${ERIS_ROOT:?set ERIS_ROOT in infra/monitoring/.env}/backtest/state/venues-state.json
+        target: /seed.json
+        read_only: true
+        bind:
+          # Do NOT let compose invent the path. Without this it creates an empty DIRECTORY when the
+          # snapshot has not been generated yet, and the chain then starts with no venues at all and
+          # no error anywhere. Run `npm run gen:state-dump` first.
+          create_host_path: false
+      - ascon-chain-state:/chainstate
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -e
+        if [ -d /seed.json ]; then
+          echo "FATAL: backtest/state/venues-state.json is a directory, not a state dump." >&2
+          echo "       Run 'npm run gen:state-dump' on this box before starting the stack." >&2
+          exit 1
+        fi
+        chown -R 1000:1000 /chainstate
+        if [ ! -f /chainstate/state.json ]; then
+          cp /seed.json /chainstate/state.json
+          chown 1000:1000 /chainstate/state.json
+          echo "seeded /chainstate/state.json from the venues snapshot"
+        else
+          echo "existing chain kept: $$(wc -c < /chainstate/state.json) bytes"
+        fi
+
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:v1.8.3
+    container_name: ascon-anvil
+    restart: unless-stopped
+    networks: [ascon-chain]
+    ports: ["127.0.0.1:8545:8545"]
+    depends_on:
+      anvil-state-init:
+        condition: service_completed_successfully
+    volumes:
+      # The live chain. Survives `docker compose restart`, a crash, and a reboot.
+      - ascon-chain-state:/chainstate
+    # anvil's dump can take a while once the practice chain has grown; do not SIGKILL through it.
+    stop_grace_period: 120s
+    # The mnemonic the dev accounts come from (see the command below). From infra/monitoring/.env,
+    # which is gitignored; keep it 0600.
+    environment:
+      - ANVIL_MNEMONIC=${ANVIL_MNEMONIC:-}
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        # /chainstate/state.json IS the chain (anvil-state-init seeded it). Restarting must not
+        # rewind the practice period to day one (docs/20 §1 runs it with resetUnit: continuous for
+        # 39 days). To start the period over on purpose, drop the volume:
+        #   docker compose down && docker volume rm ascon-monitoring_ascon-chain-state
+        # --load-state + --dump-state on the same path, NOT --state. They are documented as the
+        # same thing, but --state parses far more strictly and rejects what `npm run gen:state-dump`
+        # writes: "data did not match any variant of untagged enum SerializableTransactionType".
+        # --load-state accepts it (it is what this service always used) and --dump-state then writes
+        # anvil's own format, which --load-state reads back. Verified on the 32.8 MB venues dump:
+        # load -> block 522 with GMX code present -> mine -> dump 34.4 MB -> reload -> block 525.
+        # --state-interval also flushes periodically, so an unclean kill loses minutes, not the period.
+        #
+        # History bounds (issue #135). Unbounded, anvil keeps every mined transaction -- receipt,
+        # logs and call trace, ~37 KB each -- in memory and writes all of them into every dump. On
+        # the practice load (a 4-hour soak of config/practice.yaml, anvil 1.8.1, 16 vCPU) that grew
+        # the dump ~0.9 MB and memory ~1.7 MB a block, and mining stops while the dump is written:
+        # 9 s every 5 minutes after an hour, 18 s after two, and a month (~1.5M blocks) is a TB-sized
+        # dump written back to back. --transaction-block-keeper keeps the last 300 blocks (10 min)
+        # of transactions, --prune-history the last 300 states in memory and none on disk; both
+        # levelled the dump off in the soak (at 1,800 blocks it plateaued at 1.7 GB with a 13 s stall,
+        # which is why the window is 300). Every reader is well inside it: live scoring reads a
+        # boundary and the 5 blocks before it as they pass, the blocks.csv flush reads the block
+        # behind the head, runtimes read receipts of their own recent transactions. An explorer
+        # indexer that falls more than 10 minutes behind loses the transactions it has not read.
+        # Not bounded by any flag: block headers, which anvil keeps for every block. The
+        # ascon_anvil_mem_growth alert watches the slope that leaves (infra/devnet/README.md).
+        #
+        # The dev accounts come from a mnemonic. Unset, that is anvil's public test mnemonic, whose
+        # keys anyone can read off anvil's banner: fine for a chain nobody else can send to, not for
+        # one behind the gateway, which relays eth_sendRawTransaction (docs/guide/practice-devnet.md,
+        # "The chain's own keys"). It has to be the mnemonic the state dump was deployed with -- the
+        # dump fixes which addresses hold the venues' roles. Passed through the positional
+        # parameters so a phrase with spaces stays one argument; like any argument it is visible in
+        # the host's process list, i.e. to whoever has a shell on the box.
+        set --
+        if [ -n "$${ANVIL_MNEMONIC:-}" ]; then
+          set -- --mnemonic "$$ANVIL_MNEMONIC"
+        else
+          echo "WARNING: ANVIL_MNEMONIC is unset: the dev accounts are anvil's PUBLIC test mnemonic"
+        fi
+        anvil --host 0.0.0.0 --port 8545 --code-size-limit 50000 --base-fee 0 \
+              --gas-limit 320000000 --accounts 10 --balance 1000000 \
+              --load-state /chainstate/state.json --dump-state /chainstate/state.json \
+              --state-interval 300 \
+              --transaction-block-keeper 300 --prune-history 300 "$$@" &
+        ANVILPID=$$!
+        # PID 1 here is this shell. Without the trap, SIGTERM stops the shell, anvil is orphaned and
+        # then SIGKILLed, and the dump is never written (verified A/B: no trap -> 0 bytes + orphan;
+        # trap -> dump written, clean exit).
+        trap 'kill -TERM $$ANVILPID 2>/dev/null; wait $$ANVILPID' TERM INT
+        sleep 4
+        # --load-state restores the block environment, gas limit included, so --gas-limit above does
+        # not stick (ASCON docs/18 §1). 0x1312D000 = 320,000,000 = the decided limit (docs/18 §12).
+        cast rpc --rpc-url http://127.0.0.1:8545 anvil_setBlockGasLimit 0x1312D000 || true
+        wait $$ANVILPID
+
+  rpc-gateway-live:
+    image: node:24-bookworm-slim
+    container_name: ascon-rpc-gateway-live
+    restart: unless-stopped
+    networks: [ascon-chain]
+    ports: ["127.0.0.1:8546:8546"]
+    depends_on: [anvil]
+    command: node /app/gateway.mjs
+    environment:
+      - PORT=8546
+      - UPSTREAM=http://ascon-anvil:8545
+      - ENV_NAME=live
+      - LOG_FILE=/var/log/ascon/rpc/rpc-gateway-live.log
+      - METRICS_FILE=/textfile/rpc-gateway-live.prom
+      # Per-participant keys, issued by infra/access/issue-key.sh. Setting this makes X-ASCON-Key
+      # mandatory: Cloudflare Access service tokens cap at 50 per account (measured), so the
+      # credential a 100+ field is gated on cannot be one of them. The file holds sha256 digests
+      # only -- no key material ever reaches this container.
+      - RPC_KEYS_FILE=/keys/rpc-keys.json
+    volumes:
+      - ../rpc-gateway:/app:ro
+      # The DIRECTORY, not the file. A single-file bind mount pins the inode it was created with,
+      # so replacing rpc-keys.json on the host (scp, install, mv -- anything that writes a new
+      # file rather than truncating in place) leaves the container reading the old one forever.
+      # Measured 2026-09-21: host inode 3145990 / 501 keys, container inode 47697 / 121 keys, with
+      # no error anywhere. For a credential file that failure mode is revocation silently not
+      # working, which is worse than it not being implemented. Mounting the directory makes the
+      # replacement visible, which is what the 15 s mtime reload is for.
+      - ${ASCON_KEYS_DIR:?set ASCON_KEYS_DIR in infra/monitoring/.env}:/keys:ro
+      - ${ASCON_LOGS:?set ASCON_LOGS in infra/monitoring/.env}:/var/log/ascon
+      - ascon-textfile:/textfile
+
+  rpc-gateway-test:
+    image: node:24-bookworm-slim
+    container_name: ascon-rpc-gateway-test
+    restart: unless-stopped
+    network_mode: host
+    profiles: [test]            # starts only with: docker compose --profile test up -d
+    command: node /app/gateway.mjs
+    environment:
+      - PORT=8556
+      - UPSTREAM=http://127.0.0.1:8555
+      - ENV_NAME=test
+      - LOG_FILE=/var/log/ascon/rpc/rpc-gateway-test.log
+      - METRICS_FILE=/textfile/rpc-gateway-test.prom
+    volumes:
+      - ../rpc-gateway:/app:ro
+      - ${ASCON_LOGS:?set ASCON_LOGS in infra/monitoring/.env}:/var/log/ascon
+      - ascon-textfile:/textfile
+
+  dashboard:
+    image: node:24-bookworm-slim
+    container_name: ascon-dashboard
+    restart: unless-stopped
+    working_dir: /eris
+    command: node_modules/.bin/tsx dashboard/server/serve.ts
+    environment:
+      - PORT=5174
+      - ERIS_RUNS_DIR=/eris/runs
+      - ERIS_DASHBOARD_DIST=/eris/dashboard/dist
+      # Where the server's /blockscout forwarder reads the explorer's API (the browser probes it
+      # same-origin; dashboard/server/explorerProxy.ts passes only GET /api/v2/* to this origin).
+      # Blockscout's backend sits on the chain network (infra/blockscout), so the dashboard joins it
+      # below. host.docker.internal:4000 never answered: the explorer publishes on the host's
+      # loopback only. The links themselves point at VITE_BLOCKSCOUT_URL, fixed at build time
+      # (infra/dashboard/README.md, "Explorer links").
+      - ERIS_BLOCKSCOUT_URL=${ERIS_BLOCKSCOUT_URL:-http://eris-explorer-backend:4000}
+      # Everyone who opens this is a participant (rules §2.7), not the operator. Without it the runs
+      # API serves the operator's view: the resolved stress schedule of the period that is running
+      # (every window still to come), agent decision logs and stderr. Standings stay on -- the
+      # practice period posts them (docs/guide/practice-devnet.md "Standings").
+      - ERIS_DASHBOARD_AUDIENCE=1
+      # The competitions the picker offers (issue #84 K). runs/ on this box also holds every smoke
+      # and test run, and without a list the public picker shows them under their internal names.
+      # Set it in infra/monitoring/.env to the period's directory once the coordinator has created
+      # it; unset serves everything, as before (infra/devnet/CHECKLIST.md, the production check).
+      - ERIS_DASHBOARD_COMPETITIONS=${ERIS_DASHBOARD_COMPETITIONS:-}
+      - HOME=/tmp
+    ports: ["127.0.0.1:5174:5174"]
+    networks: [default, ascon-chain]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    tmpfs:
+      - /tmp
+    volumes:
+      - ${ERIS_ROOT:?set ERIS_ROOT in infra/monitoring/.env}:/eris:ro
+
+networks:
+  ascon-chain:
+    driver: bridge
+
+volumes:
+  ascon-chain-state:
+  ascon-prom-data:
+  ascon-grafana-data:
+  ascon-textfile:

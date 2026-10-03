@@ -1,0 +1,59 @@
+{
+  "name": "eris-competition",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "sdk",
+    "core",
+    "example",
+    "dashboard"
+  ],
+  "scripts": {
+    "anvil": "tsx core/src/cli/anvil.ts",
+    "sim:realtime": "tsx core/src/cli/sim-realtime.ts",
+    "backtest": "tsx core/src/cli/backtest.ts",
+    "competition": "tsx core/src/cli/competition.ts",
+    "inference-proxy": "tsx core/src/cli/inferenceProxy.ts",
+    "agent-state": "tsx core/src/cli/agentState.ts",
+    "gen:local-constants": "tsx scripts/genLocalConstants.ts",
+    "gen:method-selectors": "tsx scripts/genMethodSelectors.ts",
+    "gen:state-dump": "tsx scripts/genStateDump.ts",
+    "gen:practice-episodes": "tsx scripts/genPracticeEpisodes.ts",
+    "flow:market-maker": "tsx core/src/flow/market-maker.ts",
+    "check:ordering": "tsx core/src/cli/checkOrdering.ts",
+    "stress:rpc": "tsx core/src/cli/rpcStress.ts",
+    "manifest": "tsx core/src/cli/manifest.ts",
+    "check:strategy": "tsx scripts/checkStrategyCode.ts",
+    "check:boundaries": "tsx scripts/checkImportBoundaries.ts",
+    "bundle:agent": "tsx scripts/bundleAgent.ts",
+    "agent:build": "infra/docker-agent/build.sh",
+    "agent:selftest": "infra/docker-agent/self-test.sh",
+    "agent:reap": "infra/docker-agent/reap.sh",
+    "dashboard": "npm run dev -w dashboard",
+    "dashboard:build": "npm run build -w dashboard",
+    "dashboard:serve": "tsx dashboard/server/serve.ts",
+    "explorer": "infra/blockscout/explorer.sh up",
+    "explorer:down": "infra/blockscout/explorer.sh down",
+    "explorer:reset": "infra/blockscout/explorer.sh reset",
+    "explorer:tag": "infra/blockscout/explorer.sh tag",
+    "build:contracts": "forge build",
+    "gen:python-sdk": "tsx scripts/genPythonSdk.ts",
+    "test:python-sdk": "node scripts/testPythonSdk.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test --test-concurrency=4 test/*.test.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
+    "viem": "^2.39.3",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "ts-json-schema-generator": "2.9.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

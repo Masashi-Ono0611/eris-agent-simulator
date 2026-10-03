@@ -1,0 +1,233 @@
+// bundleAgent: generate the submission zip (ADR 0015 §7).
+//   npm run bundle:agent <id> [-- --out <path>]
+// Packs the runtime (generic scripts) + sdk + shared lib + target agent directory into a self-contained zip.
+// At the destination it runs via `npm install` -> `node --import tsx agents/runtime/bot.ts` (the environment passes the env).
+// The exact zip contents (how much of the sdk to bundle, etc.) await the production competition's submission spec (ADR 0015 "open questions").
+// For now it is the "minimal self-contained, directly runnable" set = the entire sdk + runtime + lib + one agent.
+import { execFileSync } from "node:child_process";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { basename, join, resolve } from "node:path";
+import { loadImproveAgent } from "../example/agents/runtime/improve.js";
+
+const AGENTS_DIR = "example/agents";
+
+// Contracts an agent deploys (issue #40 T6).
+//
+// A strategy may ship its own contracts, and the bundle has to carry the forge artifacts or the
+// deployment throws at the first block with `forge artifact missing` -- on the operator's machine,
+// mid-run, where nobody can fix it. Which artifacts is decided from the source rather than by
+// copying `out/` wholesale: the whole of `out/` is every venue mock in the repository, and a
+// submission is not entitled to ship those.
+//
+// The names are the string literals handed to the sdk's artifact reader, in any of its spellings.
+// A scan cannot see through an alias, a variable or a template, and pretending otherwise would be
+// worse than admitting it — so `artifacts.json` in the agent's own directory is the declaration
+// that always wins, and the guide tells participants to use it when the scan cannot see the name.
+const ARTIFACT_REFERENCE =
+  /\b(?:deployAction|readForgeArtifact|artifactAbi)\(\s*["'`]([A-Za-z_][A-Za-z0-9_]*)["'`]/g;
+// The explicit list, when the scan is not enough. `["MyContract", ...]`.
+const ARTIFACT_MANIFEST = "artifacts.json";
+
+// `.ts` only. Scanning documentation too would ship an artifact for every contract a comment or a
+// README happens to name as an example, which is a submission carrying code it does not use.
+function collectSources(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    if (["node_modules", ".venv", "__pycache__"].includes(name)) continue;
+    const p = join(dir, name);
+    if (statSync(p).isDirectory()) collectSources(p, out);
+    else if (/\.(ts|py)$/.test(p)) out.push(p);
+  }
+  return out;
+}
+
+function artifactNamesFor(dirs: string[]): string[] {
+  const names = new Set<string>();
+  for (const dir of dirs) {
+    if (!existsSync(dir)) continue;
+    const manifest = join(dir, ARTIFACT_MANIFEST);
+    if (existsSync(manifest)) {
+      try {
+        const declared = JSON.parse(readFileSync(manifest, "utf8"));
+        if (Array.isArray(declared))
+          for (const n of declared) if (typeof n === "string") names.add(n);
+      } catch {
+        // Refused rather than ignored: a malformed declaration is a bundle that silently ships
+        // fewer contracts than the participant asked for.
+        throw new Error(`${manifest} is not a JSON array of contract names`);
+      }
+    }
+    for (const file of collectSources(dir)) {
+      const source = readFileSync(file, "utf8");
+      for (const m of source.matchAll(ARTIFACT_REFERENCE)) names.add(m[1]);
+    }
+  }
+  return [...names].sort();
+}
+
+function main(): void {
+  const args = process.argv.slice(2).filter((a) => a !== "--");
+  const id = args[0];
+  if (!id || id.startsWith("--")) {
+    console.error("usage: npm run bundle:agent <agent-id> [-- --out <path>]");
+    process.exitCode = 1;
+    return;
+  }
+  const outIdx = args.indexOf("--out");
+  const outPath = resolve(
+    outIdx >= 0 && args[outIdx + 1] ? args[outIdx + 1] : `bundle-${id}.zip`,
+  );
+  const agentDir = join(AGENTS_DIR, id);
+  const python = existsSync(join(agentDir, "strategy.py"));
+  if (!existsSync(agentDir)) {
+    console.error(`agent directory not found: ${agentDir}`);
+    process.exitCode = 1;
+    return;
+  }
+  // Rules §2.5 (participation terms art. 8): every submitted agent revises its strategy with a
+  // model, so a directory without an improvement policy is not a submission. The runtime would run
+  // it as a rule-only strategy without complaint -- 17 of the example agents are exactly that, and
+  // they are the teaching steps -- which is why the gate is here, on the artifact that gets
+  // submitted, and not at start-up. loadImproveAgent is the same check bot.ts applies when it
+  // starts, so a bundle that passes here is one that will start.
+  try {
+    if (python === existsSync(join(agentDir, "agent.ts")))
+      throw new Error("ship exactly one entry point: agent.ts or strategy.py");
+    loadImproveAgent(agentDir);
+  } catch (error) {
+    console.error(
+      `[bundle] refused: ${agentDir} is not a submittable agent — ` +
+        `${error instanceof Error ? error.message : String(error)}\n` +
+        "[bundle] the rules require every submitted agent to carry a prompt.md (frontmatter kind: improve / " +
+        "name / description) next to agent.ts (rules §2.5); see docs/competition-start.md",
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  const stage = mkdtempSync(join(tmpdir(), `eris-bundle-${id}-`));
+  try {
+    // Bundle agents/ (runtime + lib + target agent) and sdk/.
+    cpSync(join(AGENTS_DIR, "runtime"), join(stage, "agents", "runtime"), {
+      recursive: true,
+    });
+    if (existsSync(join(AGENTS_DIR, "lib")))
+      cpSync(join(AGENTS_DIR, "lib"), join(stage, "agents", "lib"), {
+        recursive: true,
+      });
+    const cleanCopy = {
+      recursive: true,
+      filter: (src: string) => !["node_modules", ".venv", "__pycache__"].includes(basename(src)) && !src.endsWith(".pyc") && !src.endsWith(".egg-info"),
+    };
+    cpSync(agentDir, join(stage, "agents", id), cleanCopy);
+    if (python) cpSync("sdk-py", join(stage, "sdk-py"), {
+      ...cleanCopy,
+      filter: src => cleanCopy.filter(src) && basename(src) !== "build",
+    });
+    cpSync("sdk", join(stage, "sdk"), { recursive: true });
+    rmSync(join(stage, "sdk", "node_modules"), {
+      recursive: true,
+      force: true,
+    });
+
+    // Forge artifacts for the contracts this agent deploys. They land in `out/`, which is exactly
+    // where the sdk's reader looks by default (`../../out` from the bundled sdk), so nothing in the
+    // runtime has to know the bundle exists.
+    const wanted = artifactNamesFor([agentDir, join(AGENTS_DIR, "lib")]);
+    const shipped: string[] = [];
+    const missing: string[] = [];
+    for (const name of wanted) {
+      const src = join("out", `${name}.sol`, `${name}.json`);
+      if (!existsSync(src)) {
+        missing.push(name);
+        continue;
+      }
+      mkdirSync(join(stage, "out", `${name}.sol`), { recursive: true });
+      cpSync(src, join(stage, "out", `${name}.sol`, `${name}.json`));
+      shipped.push(name);
+    }
+    // Named, not silent. A bundle that quietly lacks an artifact fails on the operator's machine at
+    // the first block the strategy tries to deploy, and the message there says nothing about here.
+    if (shipped.length > 0)
+      console.error(`[bundle] artifacts: ${shipped.join(", ")}`);
+    if (missing.length > 0)
+      console.error(
+        `[bundle] WARNING: no forge artifact for ${missing.join(", ")} — run \`npm run build:contracts\` ` +
+          "first, or this bundle will fail at the first deployment it attempts",
+      );
+
+    // Self-contained package.json (@eris/sdk references the bundled directory via file:).
+    writeFileSync(
+      join(stage, "package.json"),
+      `${JSON.stringify(
+        {
+          name: `eris-agent-${id}`,
+          private: true,
+          type: "module",
+          description: `eris-competition submission bundle: ${id} (ADR 0015 §7)`,
+          dependencies: {
+            "@anthropic-ai/sdk": "^0.98.0",
+            "@eris/sdk": "file:./sdk",
+            viem: "^2.39.3",
+            yaml: "^2.9.0",
+            zod: "^4.4.3",
+          },
+          devDependencies: {
+            tsx: "^4.20.6",
+            typescript: "^5.9.3",
+            "@types/node": "^24.0.0",
+          },
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    writeFileSync(
+      join(stage, "README.md"),
+      [
+        `# eris agent bundle: ${id}`,
+        "",
+        "How to run (the environment passes the env — ERIS_RPC_URL / ERIS_AGENT_PRIVATE_KEY / ERIS_PRICE_FEED_ADDRESS, etc.):",
+        "",
+        "```sh",
+        "npm install",
+        ...(python ? [
+          "python3 -m venv .venv",
+          ".venv/bin/python -m pip install ./sdk-py",
+          ...(existsSync(join(agentDir, "requirements.txt")) ? [`.venv/bin/python -m pip install -r agents/${id}/requirements.txt`] : []),
+          "export ERIS_PYTHON=\"$PWD/.venv/bin/python\"",
+        ] : []),
+        `ERIS_AGENT_DIR=agents/${id} node --import tsx agents/runtime/bot.ts`,
+        "```",
+        "",
+        "`out/` carries the forge artifacts for the contracts this agent deploys, if any. That is",
+        "where the sdk's artifact reader looks; `ERIS_FORGE_OUT` overrides it.",
+        "",
+      ].join("\n"),
+    );
+
+    mkdirSync(resolve(outPath, ".."), { recursive: true });
+    rmSync(outPath, { force: true });
+    execFileSync("zip", ["-qr", outPath, "."], { cwd: stage });
+    console.error(`[bundle] wrote ${outPath}`);
+  } finally {
+    rmSync(stage, { recursive: true, force: true });
+  }
+}
+
+try {
+  main();
+} catch (error) {
+  console.error(error);
+  process.exitCode = 1;
+}

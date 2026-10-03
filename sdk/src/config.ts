@@ -1,0 +1,896 @@
+// Contract layer for run config (ADR 0015). Placing the SimConfig type and the env→SimConfig
+// loadConfig in the sdk lets both the environment (core) and the agent runtime
+// (example/agents/runtime) rebuild identical config from the same YAML (ERIS_CONFIG).
+//
+// Environment-only config (stress/vuln event schedule definitions, the agent roster) is extended on
+// the core side (RealtimeConfig / validateAgentsFile in core/src/config.ts).
+import { keccak256, stringToBytes, type Hex } from "viem";
+import { CHAIN_ID, DEFAULT_ANVIL_PRIVATE_KEYS } from "./constants.js";
+import type { ProtocolId } from "./types.js";
+import type { OuParams } from "./rng.js";
+import { baseTokens } from "./markets.js";
+
+// The lst and liquity venues are deliberately not in the default set: they exist only under local
+// deploy (issues #38 / #39), so defaulting either on would break every fork run. Enable them
+// explicitly via run.protocols.
+const ALL_PROTOCOLS: ProtocolId[] = [
+  "uniswap",
+  "balancer",
+  "curve",
+  "gmx",
+  "aave",
+];
+
+// Protocols that can be named in run.protocols but are not in the default set.
+// Venues a run only gets when it names them. `lending` joins lst/liquity for the same reason -- the
+// singleton is ours, so there is nothing to point at on a fork -- and for one more: it only exists
+// at all when `agentMarkets.enabled` is on, which the coordinator checks and fails fast on.
+const OPT_IN_PROTOCOLS: ProtocolId[] = ["lst", "liquity", "lending"];
+
+export type OuConfig = {
+  global: OuParams;
+  perBase: Record<string, OuParams>;
+};
+
+// ADR 0020 §1. The two shapes a competition can have: one economy run end to end, or a matrix of
+// (regime, seed) worlds each started from a clean slate.
+export type ResetUnit = "continuous" | "scenario";
+
+// Parsed rather than coerced: a typo silently falling back to "continuous" would label a scenario
+// run as a continuous one, and the two are not comparable (ADR 0020 Negative "どちらの数字か分からない").
+function resetUnitEnv(value: string | undefined): ResetUnit {
+  if (value === undefined || value === "") return "continuous";
+  if (value === "continuous" || value === "scenario") return value;
+  throw new Error(
+    `run.resetUnit must be "continuous" or "scenario" (got "${value}") — ADR 0020 §1`,
+  );
+}
+
+// Who owns the node the run talks to (issue #33 / ADR 0021 §7). `anvil` is a dev node the
+// environment drives with cheatcodes; `external` is a real client (the OP Stack devnet of #35),
+// where the sequencer produces blocks and nothing can be conjured.
+export type ChainMode = "anvil" | "external";
+
+function chainModeEnv(value: string | undefined): ChainMode {
+  if (value === undefined || value === "") return "anvil";
+  if (value === "anvil" || value === "external") return value;
+  throw new Error(
+    `run.chainMode must be "anvil" or "external" (got "${value}") — issue #33`,
+  );
+}
+
+export type SimConfig = {
+  rpcUrl: string;
+  // Where reads go. Same as rpcUrl unless the chain is served by a sequencer plus a read replica,
+  // which is the architecture decision #36 measures: Eris's load is read-heavy (every agent rebuilds
+  // its observation each block), and a sequencer that also answers those reads is the thing that
+  // jitters block production. Splitting the two is a config change here and a deployment change
+  // there, so the seam exists before the measurement rather than after it.
+  readRpcUrl: string;
+  // The URL a participant dials, when it is not the one the coordinator dials (issue #156). On the
+  // box that hosts a period, rpcUrl is the raw anvil on loopback -- right for the coordinator, and
+  // the worst thing to publish: in a participant's hands it names their own machine. The coordinator
+  // writes this into the run directory's manifest.json (which the dashboard serves) in place of
+  // rpcUrl / readRpcUrl, and uses it for nothing else. Undefined = publish rpcUrl as it is.
+  publicRpcUrl?: string;
+  chainId: number;
+  // issue #33 / ADR 0021 §7. Set from `run.chainMode`; the coordinator installs it into the sdk's
+  // chain module (setChainMode) so every cheatcode entry point can refuse rather than fail silently.
+  chainMode: ChainMode;
+  // The account that funds everything on an external chain (issue #33 (1)): genesis prefunds it, and
+  // it sends ETH and mints/transfers tokens to the agent, flow and admin wallets. Unused in anvil
+  // mode, where balances are assigned with a cheatcode.
+  treasuryPrivateKey?: Hex;
+  // Native balance the treasury tops the admin and keeper wallets up to on an external chain
+  // (ERIS_EXTERNAL_ROLE_ETH_WEI). In anvil mode they are simply assigned 2,000,000 ETH, which is not
+  // a number a genesis alloc can hand out over and over; on a chain that runs for a week this is a
+  // real budget and the top-up is incremental.
+  externalRoleEthWei: bigint;
+  // Upstream RPC to fork from (ARB_RPC_URL). When set, resetFork calls anvil_reset with a forking
+  // config to rebuild the fork state clean each time (avoiding the anvil_reset [] problem where
+  // positions such as Aave persist across runs/seeds). If unset, falls back to the legacy
+  // anvil_reset [].
+  forkUrl?: string;
+  // Re-fork target block (FORK_BLOCK_NUMBER). Pinning it makes reruns fully reproducible.
+  // If unset, the first resetFork captures latest and reuses it for subsequent resets.
+  forkBlockNumber?: number;
+  // Seed-derived victim cohort that makes liquidations possible (WETH supply + USDC borrow, HF≈H0). Not scored.
+  // count=0 (default) disables it. When >0, aave enabled + full re-fork (ARB_RPC_URL required) is a precondition (ADR 0009 §4).
+  stressVictimCount: number; // ERIS_STRESS_VICTIM_COUNT
+  stressVictimHf0: number; // ERIS_STRESS_VICTIM_HF0 (target initial HF. default 1.10. must exceed LT/(0.97·LTV)≈1.08)
+  stressVictimSupplyWethWei: bigint; // ERIS_STRESS_VICTIM_WETH_WEI (supply per victim. default 5)
+  // Issue #107: the CDP counterpart -- seed-derived Liquity Troves opened near MCR so a crash
+  // liquidates them (Stability Pool work) and a depeg redeems against them (redemption work).
+  // Count (ERIS_STRESS_LIQUITY_VICTIM_COUNT, default 0 = off), the ICR each Trove is opened at
+  // (ERIS_STRESS_LIQUITY_VICTIM_ICR, default 1.20: MCR is 1.10, so a 12-16 % crash breaks it) and
+  // the collateral per Trove (ERIS_STRESS_LIQUITY_VICTIM_COLL_WETH_WEI, default 5 WETH). Not scored.
+  stressLiquityVictimCount: number;
+  stressLiquityVictimIcr: number;
+  stressLiquityVictimCollWethWei: bigint;
+  // Issue #59: a regime declares the system TCR it wants at the bottom of its crash
+  // (ERIS_STRESS_LIQUITY_RECOVERY_TCR, 0 = off). The coordinator then sizes each victim's
+  // collateral from the drawn crash magnitude so the cohort drags TCR under that value -- under
+  // CCR (1.5) is Recovery Mode -- and fails fast at setup if no cohort can. Overrides
+  // stressLiquityVictimCollWethWei.
+  stressLiquityRecoveryTcr: number;
+  // Issue #59: eUSD the environment (the deployer, holder of the genesis Trove's surplus) puts
+  // into the Stability Pool at setup (ERIS_STRESS_LIQUITY_SP_SEED_EUSD_WEI, 0 = none). Recovery
+  // Mode liquidates a Trove between MCR and TCR only when the pool can absorb its whole debt.
+  stressLiquitySpSeedEusdWei: bigint;
+  // Approximate one-sided liquidity to seed each vuln pool with (in USDC-denominated units). The deeper it is,
+  // the less an agent's trade moves the price, so the bait becomes realized profit. ERIS_VULN_POOL_LIQUIDITY_USDC_UNITS (default 2,000,000 USDC).
+  vulnPoolLiquidityUsdcUnits: bigint;
+  // Trading fee of the vuln pool (bps). Small enough that fees do not cancel out an honest pool's bait.
+  // ERIS_VULN_POOL_FEE_BPS (default 30 = 0.3%).
+  vulnPoolFeeBps: number;
+  // Enables the pre-trade LLM source audit (ADR 0014 §4-2). "0" (default off) / "1" (real LLM) / "mock"
+  // (a stub that scans source for keywords). The coordinator distributes it to discovery-arb-verify via ERIS_VULN_LLM.
+  // Scoring uses the environment's ground truth, so the LLM is auxiliary (its verdict is a reference log). The dry-run is the primary check.
+  vulnLlm: string;
+  // ---- agent-created markets (issue #40) ----
+  // Whether the environment deploys the MarketRegistry + the permissionless lending singleton and
+  // sweeps for agent-deployed contracts. Off by default: it adds a per-block getLogs and a block
+  // fetch, and a run that nobody deploys into should not pay for them.
+  agentMarkets: boolean;
+  // How many discoveries the environment publishes per block. The deploy is paid by the agent
+  // (ADR 0011) but the registry write is paid by the environment, so without a cap a deploy-spam
+  // agent inflates that cost without bound. The overflow carries into the next block rather than
+  // being dropped, factory-made kinds first.
+  agentMarketsPerBlockCap: number;
+  // Gas ceiling on a single agent transaction, and on one agent's transactions within one block
+  // (issue #40 T0). Rules section 5 caps the *number* of transactions per block, not their gas, so a
+  // contract that eats the block gas limit can starve other participants and the environment's own
+  // oracle update. 0 disables the check. Detection is post-run over blocks.csv, the same mechanical
+  // shape as the priority-fee cap; the RPC gateway refuses over-cap transactions up front.
+  maxTxGas: bigint;
+  maxAgentBlockGas: bigint;
+  // Flash arb demo (GitHub #3). With ERIS_FLASH_ARB=1 the coordinator deploys the FlashArb contract
+  // and makes it available to the flash-arb agent. Requires uniswap+balancer+aave enabled. Default off.
+  flashArbDemo: boolean;
+  // Real-time mode (core/src/realtime/coordinator.ts). The interval-mining block interval (seconds)
+  // and the run's stop condition (wall-clock time or block count).
+  blockTimeSec: number;
+  runSeconds: number;
+  runBlocks: number;
+  // The date the run ends, when it was stated as one (`run.endsAt`, issue #136). runBlocks is then
+  // derived from it at load time; this keeps the stated end so run_started_realtime can record both.
+  // null when the run was stated in blocks.
+  runEndsAt: string | null;
+  // Skip the resetFork at run start (default false). Preserves anvil's fork fetch cache from the
+  // previous run for diagnostics that isolate cold-fetch latency (upstream fetches during mining).
+  // State persists from the previous run, so do not use for evaluation (ERIS_SKIP_RESET=1).
+  skipReset: boolean;
+  // Mode that uses a locally (non-fork) deployed anvil (ERIS_LOCAL_DEPLOY=1). With no fork, inter-run
+  // reset uses evm_snapshot/evm_revert instead of anvil_reset. Addresses overlay
+  // constants.local.ts (generated by gen:local-constants). With no fork upstream, pinning
+  // FORK_BLOCK_NUMBER, whales, etc. are unnecessary.
+  localDeploy: boolean;
+  // Persistence file for the local-mode snapshot ID (shares the clean cross-section cross-process).
+  localSnapshotFile: string;
+  // The run's execution mode (a label stamped into summary.json's mode. ADR 0016 §6). The backtest CLI
+  // injects ERIS_RUN_MODE=backtest. Does not affect scoring or behavior.
+  runMode: "realtime" | "backtest";
+  // How the coordinator launches an agent it runs itself (ERIS_AGENT_SANDBOX). `process` spawns
+  // bot.ts directly; `docker` goes through infra/docker-agent/run-agent.sh, which is the only path
+  // that applies the 2 vCPU / 4 GiB caps of rules §2.3 and can be given a network without egress.
+  // The official regimes say `docker`; a local run without docker passes --agent-sandbox process.
+  agentSandbox: "process" | "docker";
+  // The world's reset unit (ERIS_RESET_UNIT / `run.resetUnit`. ADR 0020 §1). `continuous` is one world
+  // for the whole run (what sim:realtime does); `scenario` is a fresh world per (regime, seed), which
+  // only the scenario-matrix runner can produce -- the competition itself runs in `scenario` (ADR 0020 §2).
+  // It is a label, not a switch: nothing here resets anything. It exists so a stored run says which
+  // mode produced it, because the two are not comparable (the epoch count per world differs, and
+  // lambda is calibrated per mode -- ADR 0020 Negative).
+  resetUnit: ResetUnit;
+  // Before the competition starts, run a market loop of N blocks with only the flow bot to warm the
+  // protocols' working set (ADR 0006 Risks anvil cold-fetch mitigation). The competition-phase mine
+  // then avoids hitting upstream fetches. 0 disables it (ERIS_PREWARM_BLOCKS).
+  prewarmBlocks: number;
+  // Fair-price OU parameters (market.* in YAML). `global` is the default and the WETH path; `perBase`
+  // resolves each registered base, falling back to the global value. A regime sets these to be a
+  // regime -- e.g. cex-drift is a nonzero `drift` with a weak `kappa` (ADR 0017 regime 1).
+  ou: OuConfig;
+  // Reconstruct the value cross-section only every Nth block instead of every block (ERIS_SCORE_EVERY).
+  // The final score reads only the first and last cross-sections (alphaByAgent = alphaLast - alphaFirst),
+  // so thinning does not change any agent's score -- it only coarsens the equity curve written to
+  // events.jsonl. The first and last blocks are always read. 1 (default) = every block.
+  // Used to cut reconstruction cost when replaying a whole scenario matrix (ADR 0017 §3).
+  scoreEvery: number;
+  // Length of an evaluation interval in blocks (`run.intervalBlocks` / ERIS_INTERVAL_BLOCKS; 0
+  // disables the series): the rules' §0.1, recorded for interim progress. Not the scoring unit --
+  // the score takes P from the series' first and last boundary (ADR 0023) -- although ADR 0019,
+  // which introduced it as `epochBlocks`, scored a log-return series sampled at these boundaries
+  // (the name changed in issue #140). An anvil run has no simulated clock, so the calibration
+  // harness counts blocks: 12/interval, which leaves room for G7's per-boundary median window and
+  // keeps a 42-interval week (504 blocks) inside anvil's ~1,050 block history retention (ADR 0019 §8).
+  intervalBlocks: number;
+  // Note: `run.intervalSeconds` has no field of its own. It is consumed where it is resolved, by
+  // resolveIntervalBlocks below, and reaching this object as a second unread copy only invited a
+  // reader to use the wrong one.
+  //
+  // Wall-clock hours per output segment (ERIS_SEGMENT_HOURS; 0 = one directory for the whole run,
+  // which is every run today). ADR 0021 §6: the chain stays continuous and only the artifacts are
+  // cut, because a week of events.jsonl is a file nobody can open and a viewer should not have to
+  // read Monday to see Friday.
+  segmentHours: number;
+  // Display name for the segmented period ("practice week 1"). Falls back to the run id.
+  segmentName: string;
+  // G7 window (ERIS_MARK_MEDIAN_BLOCKS): how many blocks, the boundary included, the manipulable
+  // marks are medianed over when an interval boundary is valued. <= 1 marks boundaries live.
+  // 5 of a 12-block interval is provisional -- the ADR leaves N to be set against the interval
+  // length once the harness has run (ADR 0019 "not yet decided"). Longer resists a held push better
+  // but drags legitimate late-interval moves into the mark.
+  markMedianBlocks: number;
+  // Block gas limit the coordinator applies once setup is done and before interval mining starts
+  // (ERIS_BLOCK_GAS_LIMIT; the rules publish 30,000,000 in §2.6). Setup runs at whatever the node
+  // was started with -- the deployer's anvil needs 3,000,000,000 to deploy GMX and a state dump
+  // carries that forward -- and the competition phase runs at the published block size, which is
+  // what makes the priority-fee auction of §2.6 exist. 0 leaves the node's limit alone.
+  blockGasLimit: number;
+  // How long the coordinator holds the epoch clock for the field (ERIS_AGENTS_READY_TIMEOUT_SEC /
+  // `run.agentsReadyTimeoutSec`; issue #94). Interval mining starts once every agent the
+  // coordinator launched has written `runtime_start`, or after this many seconds, whichever is
+  // first; who was still booting at the bound is recorded in `agents_ready`. 60 is the decided
+  // bound (2026-09-07). Measured on an 8-core Mac with 32 docker agents the field takes 86-99 s,
+  // so a local check of that size raises it; the production box is faster. 0 disables the wait.
+  agentsReadyTimeoutSec: number;
+  seed: number;
+  runDirRoot: string;
+  agentTimeoutMs: number;
+  agentsConfigPath: string;
+  // ADR 0021 §2 / rules §2.7: a file of external registrations the coordinator re-reads while the
+  // run is going (ERIS_REGISTRATIONS_FILE / `run.registrationsFile`; undefined = the roster is the
+  // whole field). The trial devnet runs for weeks and participants register throughout; restarting
+  // the coordinator to pick one up opens a new competition directory, which splits the standings.
+  // Same entry shape as an `external: true` + `address` roster entry.
+  registrationsFile?: string;
+  // Root of the agent directory convention (ADR 0015 §2/§6). A roster id corresponds to a directory
+  // name directly under this, and spawn is always <agentsDir>/runtime/bot.ts (explicit command overrides).
+  agentsDir: string;
+  initialEthWei: bigint;
+  flowEthWei: bigint;
+  // Initial base inventory for the flow wallet (non-spread). Lets flow post "sells" (price down)
+  // even under USDC-only = enables two-way drift. Not granted to agents (agents stay USDC-only/no-beta).
+  // Default 0 = as before (flow also has no base).
+  flowWethWei: bigint;
+  flowBaseAmounts: Record<string, bigint>;
+  // The flow wallets' USDC. Used to be the agents' `initialUsdcUnits` with no knob of its own,
+  // which capped the buy side of a flowTrend hold the same way a missing WETH balance capped the
+  // sell side (issue #112: 25k USDC is ~8 WETH at $3,000, and a x3 hold buys ~50 WETH per venue).
+  // Default = initialUsdcUnits, so a config that does not set it funds the flow as before.
+  flowUsdcUnits: bigint;
+  // Issue #130: every N blocks, refill any flow-wallet balance that has fallen below half its funded
+  // amount back to that amount. 0 (default) = funded once, as the official regimes are calibrated.
+  // A month-long period needs it: ~12 flow txs a block, every one a taker, and any net lean drains
+  // one side until the balance guards turn the flow one-directional.
+  flowTopUpEveryBlocks: number;
+  initialWethWei: bigint;
+  // ADR 0013: base symbol -> initial distribution amount (token units). WETH equals initialWethWei
+  // for compatibility. Additional bases are read from INITIAL_<SYM>_<UNIT> (e.g. INITIAL_WBTC_SATS),
+  // defaulting to 0 (USDC-only policy = additional bases granted none by default). Under the fork default (WETH only) it is the single entry {WETH:...}.
+  initialBaseAmounts: Record<string, bigint>;
+  initialUsdcUnits: bigint;
+  defaultPriorityFeeWei: bigint;
+  maxPriorityFeeWei: bigint;
+  // Turn gas into an economic cost (ADR 0011, supersedes ADR 0010). When true, retire priority-fee
+  // cap enforcement and move the environment's price finalization from mempool txs (cap+premium
+  // ordering) to a direct storage write of the PriceFeed/Aave oracles (cheatcode), making it
+  // cap-independent. Agents freely stack priority fee per their opportunity assessment, and whoever
+  // values it highest fills first (realistic priority gas auction). Default false fully reproduces
+  // the ADR 0010 profile (the rollback target). Per-run switch (ERIS_ECONOMIC_GAS).
+  economicGas: boolean;
+  uninformedFlowMaxWethWei: bigint;
+  // Uninformed flow count per block per venue (default 1). >1 gives hybrid alpha.
+  uninformedFlowCount: number;
+  // How many blocks the uninformed direction persists (default 1). >1 mimics order-flow imbalance and naturally produces a spread.
+  uninformedFlowPersistBlocks: number;
+  // Probability [0,1] that a venue's persisted uninformed direction follows the market-wide one
+  // instead of its own (UNINFORMED_FLOW_TREND_CORRELATION). 0 (default) = independent per venue,
+  // which manufactures a cross-venue spread; 1 = the whole market leans the same way, which is what
+  // the informed-flow regime is (ADR 0017 regime 2). Only bites when uninformedPersistBlocks > 1.
+  uninformedFlowTrendCorrelation: number;
+  informedFlowMaxWethWei: bigint;
+  enabledProtocols: ProtocolId[];
+  // Size of the Aave borrower pool's target debt (USDC units). Environment machinery, not an agent
+  // rule: the flow actors size their positions off it. It used to be `limits.aaveBorrowUsdcUnits`,
+  // doing double duty as the agent cap; when the agent caps went away it moved into `flow` so that
+  // removing a rule did not silently re-calibrate the background market.
+  aaveFlowBorrowUsdcUnits: bigint;
+  balancerFlowMaxWethWei: bigint;
+  curveFlowMaxWethWei: bigint;
+  gmxFlowMaxSizeUsd: bigint;
+  // Per-block probability of emitting gmx flow (0..1, default 0.5). Sent sporadically.
+  gmxFlowActivityProb: number;
+  // Max number of gmx orders emitted on a firing block (>=1, default 2). >1 bursts 1..N randomly.
+  gmxFlowMaxBurst: number;
+  aaveFlowMaxWethWei: bigint;
+  // Per-block probability each aave flow actor acts (0..1, default 0.5). <1 makes it intermittent.
+  aaveFlowActivityProb: number;
+  // Number of independent actors in the aave borrower pool (>=1, default 4). Max simultaneous borrows per block = this value.
+  // Each actor keeps a persistent position at its own address, and debt remains into subsequent blocks.
+  aaveFlowActorCount: number;
+  // ADR 0015 Notes / amm-challenge: threshold (bps) that makes informed (arbitrage) flow fee-aware.
+  // Default 30bps = on (emit informed flow only when the gap exceeds the fee band, and only for the
+  // excess. Inventory, order-size limits and venue depth determine how much gap actually closes).
+  // 0 reverts to the legacy gap-linear informed flow.
+  informedArbFeeBps: number;
+  // ADR 0015 Notes / amm-challenge retail: Poisson(λ) uninformed arrivals with lognormal sizes.
+  // Default λ=0.45 = on (count per block is Poisson(λ), each size is lognormal (mean = uninformedMax×0.5,
+  // σ=uninformedFlowSizeSigma) = bursty, heavy-tailed realistic flow). 0 reverts to the legacy fixed count + uniform.
+  // Issue #79 anchored the defaults to measured venues (2026-09-07): Base's two main WETH/USDC pools
+  // see 0.41-0.44 swaps per 2 s block, and the swap-size distribution has mean ÷ median of 3-11
+  // (σ = 1.5 gives 3.1; the old 1.0 gave 1.65). `Rng.lognormal` is mean-preserving, so the mean
+  // order stays 0.5 × uninformedMax and only the tail moves.
+  // Note: variance rises, so read run comparisons as an aggregate over multiple seeds.
+  uninformedFlowArrivalRate: number;
+  uninformedFlowSizeSigma: number;
+  // Upper clamp on a lognormal uninformed size, as a multiple of uninformedMax (issue #79). 3 is
+  // what the clamp was as a constant; the regimes set 10 so the tail exists.
+  uninformedFlowSizeClampMult: number;
+  // Extends amm-challenge retail to GMX/Aave.
+  // gmxFlowArrivalRate: >0 makes GMX open counts Poisson(λ) and sizes lognormal (default 0.75=on). 0 = legacy.
+  // gmxFlowSizeSigma: σ of the GMX lognormal size (default 1.0).
+  // aaveFlowActorSizeSigma: >0 makes each Aave actor's target collateral lognormal-heterogeneous (whale/minnow. default 1.0).
+  gmxFlowArrivalRate: number;
+  gmxFlowSizeSigma: number;
+  aaveFlowActorSizeSigma: number;
+  // ADR 0013: per-leg AMM flow cap for non-WETH bases (base units). Empty/0 default = WBTC flow off.
+  baseFlowMax: Record<string, bigint>;
+  // Optional non-WETH Uniswap informed cap; absent per-base values inherit baseFlowMax.
+  // Balancer/Curve retain the shared base cap, matching their WETH leg semantics.
+  baseInformedFlowMax: Record<string, bigint>;
+  // ---- LST venue (issue #38) ----
+  // Yield runs on a compressed *economic* clock rather than EVM time: one block stands for this
+  // many seconds of staking. EVM time is deliberately not warped for it (that would also move
+  // Aave's accrual and GMX funding).
+  lstSimulatedSecondsPerBlock: number;
+  // Target APY in bps on that clock. Kept the same order as the Aave WETH supply rate on purpose:
+  // a 1000x-speed LST would make every other venue irrelevant.
+  lstApyBps: number;
+  // Issue #38 phase 2: when set to a [min,max] bps pair, the APY is resampled from it every
+  // lstApyStepBlocks using a seed-derived Rng, instead of holding lstApyBps for the whole run.
+  // Without variation the optimum is "stake everything at block 0" and the venue has no decision
+  // in it. Empty (the default) keeps the fixed rate.
+  lstApyRangeBps: [number, number] | null;
+  lstApyStepBlocks: number;
+  // Queued WETH the vault can finalize per block. 0 leaves whatever the deploy baked in, and a
+  // deploy default of 0 means no limit -- every request waits exactly the delay. With a limit, the
+  // wait grows with your own size and with whatever is queued ahead of you.
+  lstQueueThroughputWeiPerBlock: bigint;
+  // Blocks between requesting a redemption and being able to claim it (the queue's time cost).
+  // 0 leaves whatever the deploy baked in.
+  lstWithdrawalDelayBlocks: number;
+  // Launch command and deterministic seed for the orderflow bot (a separate process).
+  flowBotCommand: string;
+  flowBotArgs: string[];
+  flowSeed: number;
+  privateKeys: {
+    agent0: Hex;
+    agent1: Hex;
+    agent2: Hex;
+    agent3: Hex;
+    agent4: Hex;
+    agent5: Hex;
+    agent6: Hex;
+    uninformedFlow: Hex;
+    informedFlow: Hex;
+    setup: Hex;
+    admin: Hex;
+    keeper: Hex;
+    // The account that deployed the venues, which is also the one that owns the seeded LP
+    // positions, the environment's eUSD float and every venue's admin role. Only the stress
+    // events that trade *as the environment* need it. It defaults to anvil account 0 because
+    // that is index 0 of the deployer's default mnemonic (ADR 0016 §4); a chain deployed under a
+    // secret mnemonic (issue #74) has to name the key here, or those events find nothing to pull.
+    deployer: Hex;
+  };
+};
+
+export function loadConfig(env = process.env): SimConfig {
+  const anvilPort = env.ANVIL_PORT ?? "8545";
+  // Gas ETH: 1 ETH, in every mode (rules §4.2 grant it on top of the basket and count it in asset
+  // value). It used to be 100 ETH unless economicGas was on -- four times the basket, so the price of
+  // gas money nobody trades was most of every agent's P, and it was spendable capital the published
+  // initial capital does not mention. Measured spend is <= 0.005 ETH per agent per 360-block epoch
+  // (0.1 gwei tips, <= 434 txs); a longer run refills from its own WETH through the runtime's gas
+  // manager (example/agents/runtime/send.ts), which is what a run that outlasts 1 ETH relies on.
+  const economicGas = env.ERIS_ECONOMIC_GAS === "1";
+  const initialEthWeiDefault = 1_000_000_000_000_000_000n;
+  // Existing WETH env value (read once here for compatibility and reused for the per-base map's WETH entry).
+  const initialWethWei = bigintEnv(
+    env.INITIAL_WETH_WEI,
+    10_000_000_000_000_000_000n,
+  );
+  const rpcUrl = env.ANVIL_RPC_URL ?? `http://127.0.0.1:${anvilPort}`;
+  const blockTimeSec = intEnv(env.ERIS_BLOCK_TIME_SEC, 2);
+  return {
+    rpcUrl,
+    readRpcUrl:
+      env.ERIS_READ_RPC_URL && env.ERIS_READ_RPC_URL.trim() !== ""
+        ? env.ERIS_READ_RPC_URL.trim()
+        : rpcUrl,
+    publicRpcUrl:
+      env.ERIS_PUBLIC_RPC_URL && env.ERIS_PUBLIC_RPC_URL.trim() !== ""
+        ? env.ERIS_PUBLIC_RPC_URL.trim()
+        : undefined,
+    chainId: intEnv(env.CHAIN_ID, CHAIN_ID),
+    chainMode: chainModeEnv(env.ERIS_CHAIN_MODE),
+    treasuryPrivateKey:
+      env.TREASURY_PRIVATE_KEY && env.TREASURY_PRIVATE_KEY.trim() !== ""
+        ? hexEnv(env.TREASURY_PRIVATE_KEY, "")
+        : undefined,
+    externalRoleEthWei: bigintEnv(
+      env.ERIS_EXTERNAL_ROLE_ETH_WEI,
+      50_000_000_000_000_000_000n,
+    ),
+    forkUrl:
+      env.ARB_RPC_URL && env.ARB_RPC_URL.trim() !== ""
+        ? env.ARB_RPC_URL.trim()
+        : undefined,
+    forkBlockNumber:
+      env.FORK_BLOCK_NUMBER && env.FORK_BLOCK_NUMBER.trim() !== ""
+        ? intEnv(env.FORK_BLOCK_NUMBER, 0)
+        : undefined,
+    stressVictimCount: intEnv(env.ERIS_STRESS_VICTIM_COUNT, 0),
+    stressVictimHf0: floatEnv(env.ERIS_STRESS_VICTIM_HF0, 1.1),
+    stressVictimSupplyWethWei: bigintEnv(
+      env.ERIS_STRESS_VICTIM_WETH_WEI,
+      5_000_000_000_000_000_000n,
+    ),
+    stressLiquityVictimCount: Math.max(0, intEnv(env.ERIS_STRESS_LIQUITY_VICTIM_COUNT, 0)),
+    stressLiquityVictimIcr: floatEnv(env.ERIS_STRESS_LIQUITY_VICTIM_ICR, 1.2),
+    stressLiquityVictimCollWethWei: bigintEnv(
+      env.ERIS_STRESS_LIQUITY_VICTIM_COLL_WETH_WEI,
+      5_000_000_000_000_000_000n,
+    ),
+    stressLiquityRecoveryTcr: floatEnv(env.ERIS_STRESS_LIQUITY_RECOVERY_TCR, 0),
+    stressLiquitySpSeedEusdWei: bigintEnv(
+      env.ERIS_STRESS_LIQUITY_SP_SEED_EUSD_WEI,
+      0n,
+    ),
+    vulnPoolLiquidityUsdcUnits: bigintEnv(
+      env.ERIS_VULN_POOL_LIQUIDITY_USDC_UNITS,
+      2_000_000_000_000n,
+    ),
+    vulnPoolFeeBps: intEnv(env.ERIS_VULN_POOL_FEE_BPS, 30),
+    vulnLlm: env.ERIS_VULN_LLM ?? "0",
+    agentMarkets: env.ERIS_AGENT_MARKETS === "1",
+    agentMarketsPerBlockCap: intEnv(env.ERIS_AGENT_MARKETS_CAP, 8),
+    // 30,000,000: the number the agent runtime has always self-limited to (send.ts), promoted to
+    // the config so the runtime, the RPC gateway and the post-run check all read one value instead
+    // of three that can drift apart. It is ~10x the heaviest real operation and well under the
+    // 320,000,000 block gas limit the rules fix.
+    maxTxGas: bigintEnv(env.ERIS_MAX_TX_GAS, 30_000_000n),
+    // One block's worth (rules §2.6: a 30M block, no per-agent tx count). There is no count cap since
+    // 2026-09-06 -- inclusion is the priority-fee auction -- so the gas budget is what stops one agent
+    // from starving the block.
+    maxAgentBlockGas: bigintEnv(env.ERIS_MAX_AGENT_BLOCK_GAS, 30_000_000n),
+    flashArbDemo: env.ERIS_FLASH_ARB === "1",
+    // Real-time mode settings.
+    blockTimeSec,
+    runSeconds: intEnv(env.ERIS_RUN_SECONDS, 20),
+    ...resolveRunLength(env, blockTimeSec),
+    skipReset: env.ERIS_SKIP_RESET === "1",
+    localDeploy: env.ERIS_LOCAL_DEPLOY === "1",
+    localSnapshotFile: env.ERIS_LOCAL_SNAPSHOT_FILE ?? ".local-snapshot",
+    runMode: env.ERIS_RUN_MODE === "backtest" ? "backtest" : "realtime",
+    agentSandbox: agentSandboxEnv(env.ERIS_AGENT_SANDBOX),
+    resetUnit: resetUnitEnv(env.ERIS_RESET_UNIT),
+    prewarmBlocks: intEnv(env.ERIS_PREWARM_BLOCKS, 0),
+    ou: readOuParams(env),
+    scoreEvery: Math.max(1, intEnv(env.ERIS_SCORE_EVERY, 1)),
+    intervalBlocks: resolveIntervalBlocks(env, blockTimeSec),
+    segmentHours: Math.max(0, floatEnv(env.ERIS_SEGMENT_HOURS, 0)),
+    segmentName: env.ERIS_SEGMENT_NAME ?? "",
+    markMedianBlocks: Math.max(0, intEnv(env.ERIS_MARK_MEDIAN_BLOCKS, 5)),
+    blockGasLimit: Math.max(0, intEnv(env.ERIS_BLOCK_GAS_LIMIT, 30_000_000)),
+    agentsReadyTimeoutSec: Math.max(
+      0,
+      intEnv(env.ERIS_AGENTS_READY_TIMEOUT_SEC, 60),
+    ),
+    seed: intEnv(env.SEED, 1),
+    runDirRoot: env.REPORT_DIR ?? "./runs",
+    agentTimeoutMs: intEnv(env.AGENT_TIMEOUT_MS, 5000),
+    agentsConfigPath: env.AGENTS_CONFIG ?? "config/example.yaml",
+    registrationsFile:
+      env.ERIS_REGISTRATIONS_FILE && env.ERIS_REGISTRATIONS_FILE.trim() !== ""
+        ? env.ERIS_REGISTRATIONS_FILE.trim()
+        : undefined,
+    agentsDir: env.ERIS_AGENTS_DIR ?? "example/agents",
+    initialEthWei: bigintEnv(env.INITIAL_ETH_WEI, initialEthWeiDefault),
+    // Background orderflow is environment machinery, not a competitor. Give it
+    // ample gas so long runs do not silently lose market flow as wallets run dry.
+    flowEthWei: bigintEnv(
+      env.ERIS_FLOW_ETH_WEI,
+      1_000_000_000_000_000_000_000n,
+    ),
+    flowWethWei: bigintEnv(env.FLOW_WETH_WEI, 0n),
+    flowBaseAmounts: readBaseAmounts(env, "FLOW_BASE", {}),
+    initialWethWei,
+    initialBaseAmounts: readBaseAmounts(env, "INITIAL", {
+      WETH: initialWethWei,
+    }),
+    initialUsdcUnits: bigintEnv(env.INITIAL_USDC_UNITS, 25_000_000_000n),
+    flowUsdcUnits: bigintEnv(
+      env.FLOW_USDC_UNITS,
+      bigintEnv(env.INITIAL_USDC_UNITS, 25_000_000_000n),
+    ),
+    flowTopUpEveryBlocks: Math.max(0, intEnv(env.ERIS_FLOW_TOPUP_EVERY_BLOCKS, 0)),
+    defaultPriorityFeeWei: bigintEnv(
+      env.DEFAULT_PRIORITY_FEE_WEI,
+      100_000_000n,
+    ),
+    maxPriorityFeeWei: bigintEnv(env.MAX_PRIORITY_FEE_WEI, 5_000_000_000n),
+    economicGas,
+    uninformedFlowMaxWethWei: bigintEnv(
+      env.UNINFORMED_FLOW_MAX_WETH_WEI,
+      1_000_000_000_000_000_000n,
+    ),
+    uninformedFlowCount: intEnv(env.UNINFORMED_FLOW_COUNT, 1),
+    uninformedFlowPersistBlocks: intEnv(env.UNINFORMED_FLOW_PERSIST_BLOCKS, 1),
+    uninformedFlowTrendCorrelation: Math.min(
+      1,
+      Math.max(0, floatEnv(env.UNINFORMED_FLOW_TREND_CORRELATION, 0)),
+    ),
+    informedFlowMaxWethWei: bigintEnv(
+      env.INFORMED_FLOW_MAX_WETH_WEI,
+      2_000_000_000_000_000_000n,
+    ),
+    enabledProtocols: parseEnabledProtocols(env.ENABLED_PROTOCOLS),
+    aaveFlowBorrowUsdcUnits: bigintEnv(
+      env.AAVE_FLOW_BORROW_USDC_UNITS,
+      5_000_000_000n,
+    ),
+    balancerFlowMaxWethWei: bigintEnv(
+      env.BALANCER_FLOW_MAX_WETH_WEI,
+      1_000_000_000_000_000_000n,
+    ),
+    curveFlowMaxWethWei: bigintEnv(
+      env.CURVE_FLOW_MAX_WETH_WEI,
+      1_000_000_000_000_000_000n,
+    ),
+    // Issue #79: $100,000 (was $20,000). The lognormal size is 2.5% of max, clamped to [0.5%, 10%],
+    // so orders run $500 / $2,500 mean / $10,000 max -- an order of magnitude above spot swaps,
+    // which is what every perp venue measured shows.
+    gmxFlowMaxSizeUsd: bigintEnv(
+      env.GMX_FLOW_MAX_SIZE_USD,
+      100_000n * 10n ** 30n,
+    ),
+    // Per-block probability of emitting gmx flow (default 0.5). Decided each block via rng, sent sporadically.
+    gmxFlowActivityProb: floatEnv(env.GMX_FLOW_ACTIVITY_PROB, 0.5),
+    // Max number of gmx orders emitted on a firing block (default 2). Bursts 1..N randomly.
+    gmxFlowMaxBurst: intEnv(env.GMX_FLOW_MAX_BURST, 2),
+    aaveFlowMaxWethWei: bigintEnv(
+      env.AAVE_FLOW_MAX_WETH_WEI,
+      2_000_000_000_000_000_000n,
+    ),
+    // Per-block probability each aave flow actor acts (default 0.5). <1 makes it intermittent.
+    aaveFlowActivityProb: floatEnv(env.AAVE_FLOW_ACTIVITY_PROB, 0.5),
+    // Number of independent actors in the aave borrower pool (default 4). Max simultaneous borrows per block = this value.
+    aaveFlowActorCount: Math.max(1, intEnv(env.AAVE_FLOW_ACTOR_COUNT, 4)),
+    // amm-challenge arbitrage fee boundary (default 30bps = on. Real arbitrage does not take a gap
+    // below the fee; matched to the venue fee ~30bps). 0 disables it = revert to the legacy gap-linear informed flow.
+    informedArbFeeBps: Math.max(0, intEnv(env.ERIS_INFORMED_ARB_FEE_BPS, 30)),
+    // amm-challenge retail arrivals (default λ=0.45 = on. Poisson arrivals + lognormal sizes = bursty,
+    // heavy-tailed realistic flow; issue #79 anchored λ and σ to Base). 0 disables it = revert to fixed count + uniform.
+    uninformedFlowArrivalRate: Math.max(
+      0,
+      floatEnv(env.ERIS_UNINFORMED_ARRIVAL_RATE, 0.45),
+    ),
+    uninformedFlowSizeSigma: Math.max(
+      0,
+      floatEnv(env.ERIS_UNINFORMED_SIZE_SIGMA, 1.5),
+    ),
+    // Default 3 = the constant the clamp used to be; the regime YAMLs set 10.
+    uninformedFlowSizeClampMult: Math.max(
+      0.02,
+      floatEnv(env.ERIS_UNINFORMED_SIZE_CLAMP_MULT, 3),
+    ),
+    // Extends amm-challenge retail to GMX/Aave (default on. 0 reverts to legacy behavior).
+    gmxFlowArrivalRate: Math.max(0, floatEnv(env.ERIS_GMX_ARRIVAL_RATE, 0.75)),
+    gmxFlowSizeSigma: Math.max(0, floatEnv(env.ERIS_GMX_SIZE_SIGMA, 1)),
+    aaveFlowActorSizeSigma: Math.max(
+      0,
+      floatEnv(env.ERIS_AAVE_ACTOR_SIZE_SIGMA, 1),
+    ),
+    // ADR 0013: per-leg AMM flow cap for non-WETH bases (base units). env FLOW_MAX_<SYM>_<UNIT>
+    // (e.g. FLOW_MAX_WBTC_SATS). Default 0 = flow off for WBTC etc. → extraBases do not consume RNG = byte-compatible.
+    // WETH flow keeps using uninformed/balancer/curve FlowMaxWethWei (not listed here).
+    baseFlowMax: readBaseAmounts(env, "FLOW_MAX", { WETH: 0n }),
+    baseInformedFlowMax: readBaseAmounts(env, "FLOW_INFORMED_MAX", {}, undefined, "omit"),
+    // LST venue (issue #38). The defaults mirror what the deployer bakes into the state dump, so a
+    // run that says nothing about lst behaves exactly as deployed.
+    lstSimulatedSecondsPerBlock: Math.max(
+      0,
+      intEnv(env.ERIS_LST_SIMULATED_SECONDS_PER_BLOCK, 3600),
+    ),
+    lstApyBps: Math.max(0, intEnv(env.ERIS_LST_APY_BPS, 300)),
+    lstApyRangeBps: parseBpsRange(
+      env.ERIS_LST_APY_RANGE_BPS,
+      "ERIS_LST_APY_RANGE_BPS",
+    ),
+    lstApyStepBlocks: Math.max(1, intEnv(env.ERIS_LST_APY_STEP_BLOCKS, 10)),
+    lstQueueThroughputWeiPerBlock: bigintEnv(
+      env.ERIS_LST_QUEUE_THROUGHPUT_WEI_PER_BLOCK,
+      0n,
+    ),
+    lstWithdrawalDelayBlocks: Math.max(
+      0,
+      intEnv(env.ERIS_LST_WITHDRAWAL_DELAY_BLOCKS, 0),
+    ),
+    flowBotCommand: env.FLOW_BOT_COMMAND ?? "node",
+    flowBotArgs:
+      env.FLOW_BOT_ARGS && env.FLOW_BOT_ARGS.trim() !== ""
+        ? env.FLOW_BOT_ARGS.trim().split(/\s+/)
+        : ["--import", "tsx", "core/src/flow/market-maker.ts"],
+    // Seed for the flow bot. If unset, use the same as SEED so a single SEED determines the whole run.
+    flowSeed: intEnv(env.FLOW_SEED, intEnv(env.SEED, 1)),
+    privateKeys: {
+      agent0: hexEnv(env.AGENT0_PRIVATE_KEY, DEFAULT_ANVIL_PRIVATE_KEYS[0]),
+      agent1: hexEnv(env.AGENT1_PRIVATE_KEY, DEFAULT_ANVIL_PRIVATE_KEYS[1]),
+      agent2: hexEnv(env.AGENT2_PRIVATE_KEY, DEFAULT_ANVIL_PRIVATE_KEYS[2]),
+      agent3: hexEnv(env.AGENT3_PRIVATE_KEY, DEFAULT_ANVIL_PRIVATE_KEYS[3]),
+      agent4: hexEnv(env.AGENT4_PRIVATE_KEY, DEFAULT_ANVIL_PRIVATE_KEYS[4]),
+      agent5: hexEnv(env.AGENT5_PRIVATE_KEY, DEFAULT_ANVIL_PRIVATE_KEYS[5]),
+      agent6: hexEnv(env.AGENT6_PRIVATE_KEY, DEFAULT_ANVIL_PRIVATE_KEYS[6]),
+      uninformedFlow: hexEnv(
+        env.FLOW_UNINFORMED_PRIVATE_KEY,
+        DEFAULT_ANVIL_PRIVATE_KEYS[7],
+      ),
+      informedFlow: hexEnv(
+        env.FLOW_INFORMED_PRIVATE_KEY,
+        DEFAULT_ANVIL_PRIVATE_KEYS[8],
+      ),
+      setup: hexEnv(env.SETUP_PRIVATE_KEY, DEFAULT_ANVIL_PRIVATE_KEYS[9]),
+      deployer: hexEnv(
+        env.DEPLOYER_PRIVATE_KEY,
+        DEFAULT_ANVIL_PRIVATE_KEYS[0],
+      ),
+      admin: hexEnv(env.ADMIN_PRIVATE_KEY, deriveRoleKey("admin")),
+      keeper: hexEnv(env.KEEPER_PRIVATE_KEY, deriveRoleKey("keeper")),
+    },
+  };
+}
+
+// Blocks per evaluation interval (rules §0.1). Stated in real time when `run.intervalSeconds` is
+// set (ADR 0021 §3), in blocks otherwise -- and refusing to accept both, because two answers to "how
+// long is an interval" is exactly the ambiguity the axis was introduced to remove.
+//
+// ADR 0021 §3 settles the *unit*: an interval on a chain that runs for a week is 30 minutes to an
+// hour, so that standings move several times a day. Blocks are then whatever that comes to at this
+// chain's cadence, which is the right dependency direction -- an operator who changes the block time
+// should not silently change how long an interval is.
+//
+// `run.epochBlocks` / `run.epochSeconds` are the names from before issue #140 and are still read
+// (runConfig.ts warns), because a coordinator that is running reads its config file on the next
+// restart and the practice period's file said `epochSeconds`. One length under two names is the same
+// ambiguity as seconds beside blocks, so the old and the new name of one key cannot both be set.
+function resolveIntervalBlocks(
+  env: NodeJS.ProcessEnv,
+  blockTimeSec: number,
+): number {
+  const set = (name: string) => env[name] !== undefined && env[name] !== "";
+  for (const [current, legacy] of [
+    ["intervalBlocks", "epochBlocks"],
+    ["intervalSeconds", "epochSeconds"],
+  ] as const) {
+    if (set(INTERVAL_ENV[current]) && set(INTERVAL_ENV[legacy]))
+      throw new Error(
+        `run.${current} and run.${legacy} both set. run.${legacy} is the old name of ` +
+          `run.${current} (issue #140): keep run.${current} and delete the other`,
+      );
+  }
+  const secondsName = set(INTERVAL_ENV.intervalSeconds)
+    ? "intervalSeconds"
+    : "epochSeconds";
+  const blocksName = set(INTERVAL_ENV.intervalBlocks)
+    ? "intervalBlocks"
+    : "epochBlocks";
+  const seconds = Math.max(0, intEnv(env[INTERVAL_ENV[secondsName]], 0));
+  const blocks = Math.max(0, intEnv(env[INTERVAL_ENV[blocksName]], 12));
+  if (seconds === 0) return blocks;
+  if (set(INTERVAL_ENV[blocksName]))
+    throw new Error(
+      `run.${secondsName} and run.${blocksName} both set. An interval has one length: state it in ` +
+        "seconds (which converts at run.blockTimeSec) or in blocks, not both (ADR 0021 §3)",
+    );
+  if (!(blockTimeSec > 0))
+    throw new Error(
+      `run.${secondsName} needs a positive run.blockTimeSec to convert into blocks`,
+    );
+  return Math.max(1, Math.round(seconds / blockTimeSec));
+}
+
+// The env names the interval length is read from, under its name and under the one it had before
+// issue #140 (runConfig.ts maps `run.<key>` onto these).
+export const INTERVAL_ENV = {
+  intervalBlocks: "ERIS_INTERVAL_BLOCKS",
+  intervalSeconds: "ERIS_INTERVAL_SECONDS",
+  epochBlocks: "ERIS_EPOCH_BLOCKS",
+  epochSeconds: "ERIS_EPOCH_SECONDS",
+} as const;
+
+// The run's length. Stated in blocks (`run.blocks`) or as the date it ends (`run.endsAt`, issue #136),
+// never both -- the `intervalSeconds` / `intervalBlocks` precedent.
+//
+// A practice period is a run whose end is a date on the calendar (rules §2.7: the trial ends on
+// 10/31), not a number of blocks. Stated in blocks, it ended N blocks after whenever the coordinator
+// happened to start: a period started on 9/23 ran into the live week, and every restart (a restart is
+// a new competition) got a fresh full length. Stated as a date, the block count is whatever remains
+// at this chain's cadence when the process starts, so a restart ends on the same day and the episode
+// windows (fractions of the run's length) spread over the time that actually remains.
+//
+// The run still stops on its block count, so a chain running behind its cadence ends a little after
+// the date -- and the last segment still gets its summary.json, which a stop by hand does not.
+export function resolveRunLength(
+  env: NodeJS.ProcessEnv,
+  blockTimeSec: number,
+  nowMs: number = Date.now(),
+): { runBlocks: number; runEndsAt: string | null } {
+  const endsAt = env.ERIS_RUN_ENDS_AT?.trim() ?? "";
+  if (endsAt === "") return { runBlocks: intEnv(env.ERIS_RUN_BLOCKS, 0), runEndsAt: null };
+  if (env.ERIS_RUN_BLOCKS !== undefined && env.ERIS_RUN_BLOCKS.trim() !== "")
+    throw new Error(
+      "run.endsAt and run.blocks both set. A run has one end: state it as a date (which converts at " +
+        "run.blockTimeSec when the run starts) or in blocks, not both (issue #136)",
+    );
+  // A date without a zone is read in whatever zone the box is in, which is a period that ends at a
+  // different hour on a different machine.
+  if (!/(Z|[+-]\d{2}:?\d{2})$/i.test(endsAt))
+    throw new Error(
+      `run.endsAt must carry a time zone (e.g. 2026-10-31T23:59:59+09:00), got ${JSON.stringify(endsAt)}`,
+    );
+  const endMs = Date.parse(endsAt);
+  if (!Number.isFinite(endMs))
+    throw new Error(`run.endsAt is not an ISO 8601 date: ${JSON.stringify(endsAt)}`);
+  if (!(blockTimeSec > 0))
+    throw new Error("run.endsAt needs a positive run.blockTimeSec to convert into blocks");
+  const runBlocks = Math.floor((endMs - nowMs) / 1000 / blockTimeSec);
+  if (runBlocks <= 0)
+    throw new Error(
+      `run.endsAt (${new Date(endMs).toISOString()}) leaves no blocks to run at ${blockTimeSec}s a block: ` +
+        "the period is over, or the date is wrong",
+    );
+  return { runBlocks, runEndsAt: new Date(endMs).toISOString() };
+}
+
+function parseEnabledProtocols(value: string | undefined): ProtocolId[] {
+  if (!value || value.trim() === "") return [...ALL_PROTOCOLS];
+  const ids = value
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean) as ProtocolId[];
+  const known = [...ALL_PROTOCOLS, ...OPT_IN_PROTOCOLS];
+  const invalid = ids.filter((id) => !known.includes(id));
+  if (invalid.length > 0)
+    throw new Error(
+      `unknown protocol in ENABLED_PROTOCOLS: ${invalid.join(", ")}`,
+    );
+  return ids;
+}
+
+function deriveRoleKey(role: string): Hex {
+  return keccak256(stringToBytes(`eris-role:${role}`));
+}
+
+// A misspelt sandbox must not fall back to `process`: the official regimes rely on `docker` for the
+// caps, and a silent fallback would run the whole field uncapped while every log looked normal.
+function agentSandboxEnv(value: string | undefined): "process" | "docker" {
+  if (value === undefined || value === "" || value === "process")
+    return "process";
+  if (value === "docker") return "docker";
+  throw new Error(
+    `run.agentSandbox must be "process" or "docker" (got ${JSON.stringify(value)})`,
+  );
+}
+
+function intEnv(value: string | undefined, fallback: number): number {
+  if (value === undefined || value === "") return fallback;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed))
+    throw new Error(`Expected integer env value, got ${value}`);
+  return parsed;
+}
+
+function floatEnv(value: string | undefined, fallback: number): number {
+  if (value === undefined || value === "") return fallback;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed))
+    throw new Error(`Expected numeric env value, got ${value}`);
+  return parsed;
+}
+
+function bigintEnv(value: string | undefined, fallback: bigint): bigint {
+  if (value === undefined || value === "") return fallback;
+  return BigInt(value);
+}
+
+// A "[min, max]" bps pair, accepted as JSON or as a bare CSV so it survives the YAML→env encoding
+// (an array of numbers becomes "200,600"). Null when unset, which means "no variation".
+function parseBpsRange(
+  value: string | undefined,
+  label: string,
+): [number, number] | null {
+  if (value === undefined || value.trim() === "") return null;
+  const parts = value
+    .trim()
+    .replace(/^\[|\]$/g, "")
+    .split(",")
+    .map((s) => Number(s.trim()));
+  if (parts.length !== 2 || parts.some((n) => !Number.isFinite(n) || n < 0))
+    throw new Error(`${label} must be a [min, max] pair of non-negative bps`);
+  const [lo, hi] = parts;
+  if (lo > hi) throw new Error(`${label} must have min <= max`);
+  return [lo, hi];
+}
+
+// ADR 0013: unit suffix (derived from decimals) for a base symbol's "amount env".
+// WETH(18)=WEI / WBTC(8)=SATS / otherwise=UNITS. New tokens are determined automatically by their decimals.
+export function unitSuffixFor(decimals: number): string {
+  if (decimals === 18) return "WEI";
+  if (decimals === 8) return "SATS";
+  return "UNITS";
+}
+
+// ADR 0013: build a base symbol -> amount Record from env (for per-base distribution / per-base limits).
+// WETH uses wethSeed's value directly and does not read env (the existing WETH env is already read once
+// on the caller side = keeps byte compatibility). Additional bases are read from the env key
+//   <prefix>[_<SYM>]<_INFIX?>_<UNIT>   e.g. INITIAL_WBTC_SATS / MAX_AGENT_WBTC_IN_SATS
+// defaulting to 0n (USDC-only policy = additional bases granted none / capped none by default).
+// Under the fork default (WETH only) it is the single entry {WETH: wethSeed.WETH}, matching the old behavior exactly.
+function readBaseAmounts(
+  env: NodeJS.ProcessEnv,
+  prefix: string,
+  wethSeed: Record<string, bigint>,
+  infix?: string,
+  unset: "zero" | "omit" = "zero",
+): Record<string, bigint> {
+  const out: Record<string, bigint> = {};
+  for (const t of baseTokens()) {
+    if (t.symbol === "WETH") {
+      if (unset === "zero") out.WETH = wethSeed.WETH ?? 0n;
+      continue;
+    }
+    const unit = unitSuffixFor(t.decimals);
+    const key = [prefix, t.symbol, infix, unit].filter(Boolean).join("_");
+    // Optional overrides must distinguish absent (inherit the shared cap) from explicit zero (off).
+    if (unset === "omit" && !env[key]?.trim()) continue;
+    out[t.symbol] = bigintEnv(env[key], 0n);
+  }
+  return out;
+}
+
+// OU parameters for the fair-price process, per base (ADR 0017 regime 1).
+//
+// These used to live only in sdk/src/rng.ts as module-level constants read straight from
+// process.env, which meant a regime YAML could not set them: the YAML loader builds a source map, it
+// does not mutate process.env. Reading them here puts them on the same footing as every other run
+// knob -- YAML sets them, and the coordinator passes them explicitly rather than the price model
+// reaching for globals.
+function readOuParams(env: NodeJS.ProcessEnv): OuConfig {
+  const global = {
+    volatility: floatEnv(env.ERIS_PRICE_VOLATILITY, 0.004),
+    kappa: floatEnv(env.ERIS_PRICE_REVERT_KAPPA, 0.02),
+    drift: floatEnv(env.ERIS_PRICE_DRIFT, 0),
+  };
+  const perBase: Record<string, OuParams> = {};
+  for (const t of baseTokens()) {
+    const sfx = t.symbol.toUpperCase();
+    perBase[t.symbol] = {
+      volatility: floatEnv(
+        env[`ERIS_PRICE_VOLATILITY_${sfx}`],
+        global.volatility,
+      ),
+      kappa: floatEnv(env[`ERIS_PRICE_REVERT_KAPPA_${sfx}`], global.kappa),
+      drift: floatEnv(env[`ERIS_PRICE_DRIFT_${sfx}`], global.drift),
+    };
+  }
+  return { global, perBase };
+}
+
+function hexEnv(value: string | undefined, fallback: string): Hex {
+  const result = value && value.length > 0 ? value : fallback;
+  if (!/^0x[0-9a-fA-F]{64}$/.test(result))
+    throw new Error("Private key must be a 0x-prefixed 32-byte hex string");
+  return result as Hex;
+}

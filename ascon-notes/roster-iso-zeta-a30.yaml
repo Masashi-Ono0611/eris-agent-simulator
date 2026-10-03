@@ -1,0 +1,23 @@
+# 分離評価: 候補 1 体 + 基準（roster-iso-delta-bid.yaml と同じ構成。候補だけ違う）。
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    description: does nothing (baseline)
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: upstream reference (first mover among the clones)
+  - id: crowd
+    dir: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: no-bid clone of multi-arb (stands for the crowd)
+  - id: clean-arb
+    wallet: AUTO
+    description: upstream reference (two-leg)
+  - id: cand
+    dir: ascon-zeta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidMode":2,"bidProfitShareBps":3000,"gasPerSwap":140000}' }
+    description: CANDIDATE zeta (specialists on) with an adaptive bid (up to 30% of expected profit)

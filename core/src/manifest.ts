@@ -1,0 +1,342 @@
+// The environment manifest (ADR 0021 §2).
+//
+// A participant on the practice devnet runs their agent on their own machine. Nothing hands them a
+// coordinator's env any more -- no ERIS_RUN_DIR, no injected PriceFeed address, no roster spawn. So
+// everything the runtime used to receive over that channel has to be publishable instead, and this
+// is that document: where the chain is, what is deployed on it, what a round is, how long the run
+// is, what the limits are, and which addresses are competing.
+//
+// Two rules shape what goes in it.
+//
+//   Nothing secret. The coordinator writes this into the run directory, and the dashboard serves
+//   that directory over HTTP. A private key in here is a published private key. Keys are handed out
+//   one participant at a time, on stdout, by `npm run manifest -- --participant <id>`.
+//
+//   No stress timings. ADR 0021 §1 publishes the *kinds* of episode a period contains and how many,
+//   and withholds when they open. The schedule object the coordinator holds has resolved windows in
+//   it, so this file takes the type and the count and never the blocks -- the disclosure is built
+//   from the config's event list rather than from the resolved schedule, so a future field on the
+//   schedule cannot leak into it by accident.
+import {
+  AAVE,
+  BALANCER,
+  CURVE,
+  GMX,
+  GMX_MARKETS,
+  LIQUITY,
+  LST,
+  MULTICALL3,
+  STABLE_MARKET_LEGS,
+  TOKENS,
+  UNISWAP,
+} from "@eris/sdk/constants.js";
+import { ACTION_TYPES_BY_PROTOCOL } from "@eris/sdk/action.js";
+import { baseTokens, stableTokens } from "@eris/sdk/markets.js";
+import { type ManifestPeriod, scoredDayHours } from "@eris/sdk/periodClock.js";
+import type { ProtocolId } from "@eris/sdk/types.js";
+import type { RealtimeConfig } from "./config.js";
+import { resolveAnchor } from "./realtime/events.js";
+
+export const MANIFEST_SCHEMA = "eris-environment-manifest/1";
+export const MANIFEST_FILENAME = "manifest.json";
+
+export type ManifestParticipant = {
+  id: string;
+  address: string;
+  /** True when the participant runs the agent themselves (ADR 0021 §2). */
+  external: boolean;
+  /** ADR 0019 §2's benchmark entry, whose returns every score is measured as excess over. */
+  baseline: boolean;
+  description?: string;
+  /**
+   * Rules §2.2: the participant unit. Two agents with the same value are the same unit's two
+   * submissions, of which only the higher-scoring counts. Absent = the agent is its own unit.
+   */
+  participant?: string;
+};
+
+export type EnvironmentManifest = {
+  schema: typeof MANIFEST_SCHEMA;
+  generatedAt: string;
+  /**
+   * ADR 0021 §1. Stated in the document itself rather than only on the standings page, because the
+   * manifest is what gets copied into READMEs and chat messages, and a ranking whose provenance
+   * travels separately from the ranking is a ranking that will be misread.
+   */
+  status: {
+    scored: false;
+    label: "practice";
+    note: string;
+  };
+  chain: {
+    rpcUrl: string;
+    readRpcUrl: string;
+    chainId: number;
+    chainMode: string;
+    /**
+     * Whether the venues are the bundled deployer's (the address overlay in
+     * sdk/src/constants.local.ts) rather than a fork of Arbitrum. The runtime reads this and
+     * chainId at start-up, before its first import of the sdk, so a self-hosted agent started with
+     * ERIS_MANIFEST alone targets the right chain and the right address table (issue #84 X3).
+     */
+    localDeploy: boolean;
+    blockTimeSec: number;
+    // Rules §2.6. 0 = the node's own limit.
+    blockGasLimit: number;
+  };
+  // The evaluation interval (rules §0.1). The section keeps its name: runtimes read it.
+  round: {
+    intervalBlocks: number;
+    // The same number under its name from before issue #140, kept for a runtime that reads it.
+    // Removed once the results are published.
+    epochBlocks: number;
+    approxSeconds: number;
+    markMedianBlocks: number;
+    scoreEvery: number;
+    note: string;
+  };
+  /**
+   * How long the run is, and where each scored day ends -- for a runtime nobody spawned. Without it
+   * a self-hosted agent took the run's length from whatever config it loaded, which with none was
+   * a 20-second run: `blocksRemaining` read 0 for the rest of the period. The arithmetic is
+   * sdk/src/periodClock.ts.
+   */
+  period: ManifestPeriod;
+  protocols: ProtocolId[];
+  actions: Partial<Record<ProtocolId, readonly string[]>>;
+  contracts: Record<string, unknown>;
+  tokens: Record<string, { address: string; decimals: number; kind: string }>;
+  limits: Record<string, string | number>;
+  funding: Record<string, string>;
+  /**
+   * Types and counts only -- never windows. See the header. `maxCount` is present when the seed
+   * decides how many (a `count` range): `count` is then the fewest the period can hold.
+   */
+  episodes: {
+    kinds: Array<{ type: string; count: number; maxCount?: number }>;
+    note: string;
+  };
+  participants: ManifestParticipant[];
+};
+
+/** A URL only reachable from the machine that is serving it. */
+export function isLoopbackUrl(url: string): boolean {
+  try {
+    const h = new URL(url).hostname;
+    return h === "localhost" || h === "127.0.0.1" || h === "::1" || h === "[::1]";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The chain endpoints a manifest publishes (issue #156). A manifest is by definition read on someone
+ * else's machine, so it names `run.publicRpcUrl` when the run has one -- the coordinator's own
+ * rpcUrl on the box that hosts a period is its loopback anvil, which in a participant's hands names
+ * their machine and bypasses the gateway that refuses cheatcodes.
+ */
+export function publishedRpc(config: {
+  rpcUrl: string;
+  readRpcUrl: string;
+  publicRpcUrl?: string;
+}): { rpcUrl: string; readRpcUrl: string } {
+  return config.publicRpcUrl
+    ? { rpcUrl: config.publicRpcUrl, readRpcUrl: config.publicRpcUrl }
+    : { rpcUrl: config.rpcUrl, readRpcUrl: config.readRpcUrl };
+}
+
+// Only the venues this run turned on. A participant reading an address for a venue that is not
+// enabled would build against something the environment will not price or accept actions for.
+function contractsFor(protocols: ProtocolId[]): Record<string, unknown> {
+  const out: Record<string, unknown> = { multicall3: MULTICALL3 };
+  if (protocols.includes("uniswap")) out.uniswap = UNISWAP;
+  if (protocols.includes("balancer")) out.balancer = BALANCER;
+  if (protocols.includes("curve")) out.curve = CURVE;
+  if (protocols.includes("gmx")) out.gmx = { ...GMX, markets: GMX_MARKETS };
+  if (protocols.includes("aave")) out.aave = AAVE;
+  if (protocols.includes("lst") && LST) out.lst = LST;
+  if (protocols.includes("liquity") && LIQUITY) out.liquity = LIQUITY;
+  // Which pool quotes each market-priced stable. Without it a participant can see that a stable is
+  // off par and have nowhere to act on it -- the same gap `stableSwap` was added to close (#27).
+  const legs = Object.entries(STABLE_MARKET_LEGS).filter(([, leg]) =>
+    protocols.includes(leg.venue as ProtocolId),
+  );
+  if (legs.length > 0) out.stableMarkets = Object.fromEntries(legs);
+  return out;
+}
+
+export function buildManifest(opts: {
+  config: RealtimeConfig;
+  participants: ManifestParticipant[];
+  /** Deployed at setup, so it is only known once a run has started. */
+  priceFeed?: string;
+  /**
+   * Issue #40: the discovery registry and the permissionless lending singleton, also per-run
+   * deploys. A self-hosted participant has no other way to learn either address, and without the
+   * registry address their agent sees no agent-created markets at all -- which would look exactly
+   * like a field where nobody deployed anything.
+   */
+  marketRegistry?: string;
+  lending?: string;
+  marketRegistryFromBlock?: number;
+  /**
+   * The run's first block and the instant its clock started, once the coordinator has declared
+   * them. Absent from a manifest built from the config alone (`npm run manifest` before the period
+   * has started), which can then state the end date but not where the block count or the day grid
+   * begins.
+   */
+  periodStart?: { block: number; startedAtMs: number };
+}): EnvironmentManifest {
+  const { config, participants } = opts;
+  const protocols = config.enabledProtocols;
+  const contracts = contractsFor(protocols);
+  if (opts.priceFeed) contracts.priceFeed = opts.priceFeed;
+  if (opts.marketRegistry) contracts.marketRegistry = opts.marketRegistry;
+  if (opts.lending) contracts.lending = opts.lending;
+  if (opts.marketRegistryFromBlock !== undefined)
+    contracts.marketRegistryFromBlock = opts.marketRegistryFromBlock;
+
+  const tokens: EnvironmentManifest["tokens"] = {};
+  for (const t of baseTokens())
+    tokens[t.symbol] = {
+      address: t.address,
+      decimals: t.decimals,
+      kind: "base",
+    };
+  for (const t of stableTokens())
+    tokens[t.symbol] = {
+      address: t.address,
+      decimals: t.decimals,
+      kind: "stable",
+    };
+
+  // Counted by type. A period that contains four crashes says so; when the four open is the thing
+  // being withheld (ADR 0021 §1).
+  // A follower opens as many windows as its anchor, and an entry with `count` as many as the seed
+  // draws, so a range is the honest answer. A flipProb can turn a crash into a spike; the kind here
+  // is the configured one.
+  const kinds = new Map<string, { count: number; maxCount: number }>();
+  for (const [i, ev] of config.stressEvents.entries()) {
+    const anchor = resolveAnchor(config.stressEvents, i);
+    const lead = anchor < 0 ? ev : config.stressEvents[anchor];
+    const [lo, hi] = lead.count ?? [1, 1];
+    const cur = kinds.get(ev.type) ?? { count: 0, maxCount: 0 };
+    kinds.set(ev.type, { count: cur.count + lo, maxCount: cur.maxCount + hi });
+  }
+
+  return {
+    schema: MANIFEST_SCHEMA,
+    generatedAt: new Date().toISOString(),
+    status: {
+      scored: false,
+      label: "practice",
+      note:
+        "Standings on this chain are practice standings. The competition is scored separately, " +
+        "from submitted bundles replayed over a scenario matrix (ADR 0017 / ADR 0020), and " +
+        "nothing here feeds into it.",
+    },
+    chain: {
+      ...publishedRpc(config),
+      chainId: config.chainId,
+      chainMode: config.chainMode,
+      localDeploy: config.localDeploy,
+      blockTimeSec: config.blockTimeSec,
+      blockGasLimit: config.blockGasLimit,
+    },
+    round: {
+      intervalBlocks: config.intervalBlocks,
+      epochBlocks: config.intervalBlocks,
+      // Real time is the unit ADR 0021 §3 states an interval in; blocks are what that comes to at
+      // this chain's cadence. Both are published, because a participant sizing an exit against
+      // `blocksRemaining` needs the blocks and a participant deciding when to check the standings
+      // needs the minutes.
+      approxSeconds: config.intervalBlocks * config.blockTimeSec,
+      markMedianBlocks: config.markMedianBlocks,
+      scoreEvery: config.scoreEvery,
+      note:
+        "This is the evaluation interval (rules §0.1): every agent's value is recorded at each " +
+        "boundary and shown as interim progress. It is not what the score is computed over -- that " +
+        "is the epoch, whose first and last boundary give P (in the practice period, one day; see " +
+        "docs/guide/practice-devnet.md, Standings). A run's last boundary is its final block, the " +
+        "one where `blocksRemaining` reads 0 (in the practice period, the period's end rather than " +
+        "each day's); when the run is not a multiple of the interval, the final interval is the " +
+        "remainder. `epochBlocks` is `intervalBlocks` under its " +
+        "old name, kept until the results are published.",
+    },
+    period: {
+      endsAt: config.runEndsAt,
+      // A date converts to blocks when the run starts. Before that the only honest block count is
+      // none: config.runBlocks here is the date converted at whenever this file was written, which
+      // is not what the environment will stop on.
+      ...(config.runEndsAt === null || opts.periodStart
+        ? { blocks: config.runBlocks }
+        : {}),
+      seconds: config.runSeconds,
+      ...(opts.periodStart
+        ? {
+            startBlock: opts.periodStart.block,
+            startedAt: new Date(opts.periodStart.startedAtMs).toISOString(),
+          }
+        : {}),
+      dayHours: scoredDayHours(config),
+      note:
+        "The run ends after `blocks` blocks counted from `startBlock`; `endsAt` is the date that " +
+        "count was converted from, and the fallback while the run has not started. `seconds` is a " +
+        "ceiling: a run with episodes stops on its block count. When `dayHours` > 0 the standings " +
+        "score each day as one epoch, and day k ends at `startedAt` + (k + 1) x `dayHours` on the " +
+        "wall clock. The runtime turns these into `blocksRemaining` and `dayBlocksRemaining`.",
+    },
+    protocols,
+    actions: Object.fromEntries(
+      protocols.map((id) => [id, ACTION_TYPES_BY_PROTOCOL[id]]),
+    ),
+    contracts,
+    tokens,
+    // Order size is not among them. The competition has no per-order cap on any venue -- not a
+    // raised one, none -- so a trade is bounded by the wallet behind it and by what the pool will
+    // give up. Stated rather than omitted: a participant who finds no cap in the manifest should
+    // not have to guess whether that means "unlimited" or "not published".
+    limits: {
+      orderSize: "none",
+      note:
+        "No per-order size cap, no bundle-length cap and no open-position cap on any venue. A " +
+        "trade is bounded by your balance and by the depth you are trading into.",
+      defaultPriorityFeeWei: config.defaultPriorityFeeWei.toString(),
+      maxPriorityFeeWei: config.maxPriorityFeeWei.toString(),
+      // For whoever signs their own transactions (sdk/src/feeRule.ts). The node orders the block on
+      // maxFeePerGas while a tx pays min(maxFeePerGas, tip) at base fee 0, so this is the one rule a
+      // self-signer can break without noticing -- stated here, where the cap it goes with is.
+      feeRule:
+        "Sign maxFeePerGas equal to maxPriorityFeePerGas (never above it), and at most " +
+        (config.economicGas ? "your balance allows" : "maxPriorityFeeWei") +
+        "; a legacy gasPrice counts as both. Blocks are ordered by maxFeePerGas and a transaction " +
+        "pays min(maxFeePerGas, tip), so a maxFeePerGas above the tip would buy position without " +
+        "paying for it. The RPC gateway refuses such a transaction; one sent another way is flagged " +
+        "as a violation after the run.",
+    },
+    funding: {
+      ethWei: config.initialEthWei.toString(),
+      wethWei: config.initialWethWei.toString(),
+      usdcUnits: config.initialUsdcUnits.toString(),
+      // The rest of the basket (`funding.base`), in the token's own units like usdcUnits -- decimals
+      // are in `tokens`. Without it a participant reading this for "what will I receive" was told
+      // WETH and USDC and then found 0.4 WBTC in the wallet.
+      ...Object.fromEntries(
+        Object.entries(config.initialBaseAmounts)
+          .filter(([symbol, amount]) => symbol !== "WETH" && amount > 0n)
+          .map(([symbol, amount]) => [`${symbol.toLowerCase()}Units`, amount.toString()]),
+      ),
+    },
+    episodes: {
+      kinds: [...kinds].map(([type, { count, maxCount }]) => ({
+        type,
+        count,
+        ...(maxCount !== count ? { maxCount } : {}),
+      })),
+      note:
+        "Kinds and counts are published; when each window opens is not (ADR 0021 §1). Read the " +
+        "chain, not this list, to know whether one is open now.",
+    },
+    participants,
+  };
+}

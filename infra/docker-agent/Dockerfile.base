@@ -1,0 +1,35 @@
+# Shared base image: the eris agent runtime, WITHOUT any team/reference agent code.
+#
+# Every per-team image is `FROM` this (see Dockerfile.team), so the runtime + node_modules are one
+# shared layer on disk while each team's image carries only its own agent. Crucially, the base holds
+# NO team strategy code (enforced by Dockerfile.base.dockerignore, which keeps team agents out of the
+# build CONTEXT -- COPY layers are additive, so excluding them from the final filesystem alone would
+# still leave them in an earlier layer, extractable via `docker save`).
+FROM python:3.11.16-slim-bookworm AS python
+FROM node:24-bookworm-slim
+COPY --from=python /usr/local /usr/local
+# Shared libraries needed by CPython's standard library on the same Debian release.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libbz2-1.0 libexpat1 libffi8 libgdbm6 liblzma5 libncursesw6 libreadline8 \
+    libsqlite3-0 libssl3 libuuid1 zlib1g && rm -rf /var/lib/apt/lists/*
+WORKDIR /eris
+
+# Dependency layer (caches unless a manifest changes).
+COPY package.json package-lock.json ./
+COPY sdk/package.json sdk/
+COPY core/package.json core/
+COPY example/package.json example/
+COPY dashboard/package.json dashboard/
+RUN npm ci
+COPY sdk-py /eris/sdk-py
+RUN python3 -m pip install --no-cache-dir --require-hashes -r /eris/sdk-py/requirements.lock \
+    && python3 -m pip install --no-cache-dir --no-deps /eris/sdk-py
+
+# Runtime source. Dockerfile.base.dockerignore has already stripped team agents from the context;
+# this find is a belt-and-braces safety net in case that file is ever removed.
+COPY . .
+RUN find example/agents -mindepth 1 -maxdepth 1 -type d ! -name runtime ! -name lib -exec rm -rf {} +
+
+ENV NODE_ENV=production
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ENTRYPOINT ["node", "--import", "tsx", "example/agents/runtime/bot.ts"]

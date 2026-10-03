@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# ASCON load-test bench — single monorepo entrypoint.
+# Reset chain -> generate an N-agent roster -> run the realtime sim with each agent in a memory/CPU
+# capped container (infra/docker-agent) -> sample host+container resources -> aggregate -> write a
+# Markdown summary (consumed by CI to comment on the PR).
+#
+#   bench/run.sh [--agents N] [--blocks B] [--block-time S] [--mode frozen|llm] [--mem 1g] [--out DIR]
+#   bench/run.sh --clones bench-max --agents N ...   # docs/18 §12's saturating roster: every agent
+#                                  # spends its three-tx allowance every block (the measurement the
+#                                  # 2s block time was decided on). Plain --agents N is venue-arb
+#                                  # clones, which mostly noop.
+#   bench/run.sh --markets N ...   # issue #40: load-test the agent-created-market path instead of
+#                                  # the AMM path -- registry sweep, lending singleton, N creators
+#
+# Env: ANVIL_PORT (default 8545). For CI on a shared host, set a dedicated port so it won't touch a
+# running monitoring/production anvil.
+set -euo pipefail
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$REPO"
+
+AGENTS=12; BLOCKS=200; BT=2; MODE=frozen; MEM="${ERIS_DOCKER_MEM:-1g}"; OUT=""; ROSTER=""; CLONES=""; NORESET=0
+while [ $# -gt 0 ]; do case "$1" in
+  --agents) AGENTS=$2; shift 2;; --blocks) BLOCKS=$2; shift 2;; --block-time) BT=$2; shift 2;;
+  --mode) MODE=$2; shift 2;; --mem) MEM=$2; shift 2;; --out) OUT=$2; shift 2;;
+  --each) ROSTER=each; shift;;                 # one container per example agent (per-agent compare)
+  --markets) ROSTER="markets:$2"; AGENTS=$2; shift 2;;   # issue #40: N agent-created-market participants
+  --agent) ROSTER="agent:$2"; shift 2;;        # just this agent + a venue-arb reference
+  --clones) CLONES=$2; shift 2;;               # N copies of ONE agent: --clones bench-max --agents 100
+  --no-reset) NORESET=1; shift;;               # bench an ALREADY-RUNNING chain (the live stack), do
+                                               # not stop it and reload the venues snapshot
+  *) echo "unknown arg: $1" >&2; exit 1;; esac; done
+[ -n "$CLONES" ] && ROSTER="clones:$CLONES:$AGENTS"   # --clones bench-max = the docs/18 §12 roster
+ROSTER="${ROSTER:-$AGENTS}"                     # default: N venue-arb clones (load test)
+OUT="${OUT:-$REPO/bench/results/$(date +%Y%m%d-%H%M%S)-${AGENTS}${MODE}}"
+mkdir -p "$OUT"
+CFG="$REPO/config/_bench.yaml"
+
+# Point the whole run at ANVIL_PORT so the chain, coordinator and agents all agree (this is what lets
+# a bench on a dedicated port stay isolated from a monitoring/production anvil on 8545).
+export ANVIL_PORT="${ANVIL_PORT:-8545}"
+export ANVIL_RPC_URL="http://127.0.0.1:${ANVIL_PORT}"
+export ERIS_RPC_URL="$ANVIL_RPC_URL"
+
+# --no-reset is what lets this measure the LIVE topology: agents reaching a containerised anvil only
+# through the rpc-gateway (ERIS_AGENT_ISOLATE=1). reset-chain.sh kills whatever holds ANVIL_PORT and
+# starts a host anvil, which on a box running the monitoring stack would take down production.
+if [ "$NORESET" = 1 ]; then
+  echo "[1/5] reset chain: SKIPPED (--no-reset); using the chain already on :$ANVIL_PORT"
+  cast block-number --rpc-url "$ANVIL_RPC_URL" >/dev/null 2>&1 || { echo "no chain on $ANVIL_RPC_URL" >&2; exit 1; }
+else
+  echo "[1/5] reset chain";  bash "$REPO/bench/lib/reset-chain.sh"
+fi
+echo "[2/5] config ($ROSTER)"; python3 "$REPO/bench/lib/mkconfig.py" "$BLOCKS" "$BT" "$MODE" "$CFG" "$ROSTER"
+echo "[3/5] sampler";      setsid python3 "$REPO/bench/lib/sampler.py" "$OUT/stats.csv" 1800 >"$OUT/sampler.log" 2>&1 & SAMP=$!
+echo "[4/5] sim ($AGENTS agents, $BLOCKS blocks, ${BT}s block, mem $MEM)"
+# bind-mount mode: stock node:24 + this checkout mounted (no per-team image build needed for a bench).
+export ERIS_AGENT_BINDMOUNT="${ERIS_AGENT_BINDMOUNT:-1}"
+# Bounded, because the coordinator does not always exit after it finishes. Measured 2026-09-05:
+# `realtime simulation completed` is printed, the summary is written, and the process then sits at
+# 0% CPU holding something open -- reproduced with the stock `--agents 4` roster, so it is not the
+# agent-created-market path. Without a bound the bench never reaches its own aggregate step and CI
+# never gets to grep the log it is waiting for. The budget is generous (1.5x the run plus ten
+# minutes), and tripping it is announced rather than swallowed.
+SIM_BUDGET=$(( BLOCKS * BT * 3 / 2 + 600 ))
+ERIS_LOCAL_DEPLOY=1 ERIS_DOCKER_MEM="$MEM" timeout "$SIM_BUDGET" npm run sim:realtime -- --config "$CFG" >"$OUT/run.log" 2>&1 || {
+  code=$?
+  [ "$code" = 124 ] && echo "[bench] sim did not exit within ${SIM_BUDGET}s; killed. The run itself may still have completed -- check run.log" | tee -a "$OUT/run.log"
+}
+bash "$REPO/infra/docker-agent/reap.sh" >/dev/null 2>&1 || true      # sweep any orphaned containers
+kill "$SAMP" 2>/dev/null || true
+echo "[5/5] aggregate"
+LABEL="$AGENTS agents / $MODE / ${BT}s block"
+python3 "$REPO/bench/lib/agg.py" "$OUT/stats.csv" "$LABEL" | tee "$OUT/summary.txt"
+python3 "$REPO/bench/lib/agg.py" "$OUT/stats.csv" "$LABEL" --md > "$OUT/summary.md"
+grep -q "simulation completed" "$OUT/run.log" && echo "run: completed" || echo "run: DID NOT COMPLETE (see run.log)"
+echo "summary -> $OUT/summary.md"

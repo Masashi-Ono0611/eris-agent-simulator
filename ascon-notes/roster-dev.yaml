@@ -1,0 +1,23 @@
+# ASCON 開発用ロスター（自チームの比較用。公式の母集団ではない）
+# 使い方: npm run backtest -- --regime calm --seed 101 --agents ascon-notes/roster-dev.yaml --agent-sandbox process
+# ローカル順位は「自分の版どうし」を比べるためのもの。本番順位の予測ではない（docs/competition-start.md §1）。
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    description: does nothing (baseline). Its score is the hurdle every other agent has to clear
+  - id: ascon-alpha
+    wallet: AUTO
+    description: ASCON v0 conservative cross-venue arb
+  - id: ascon-beta
+    wallet: AUTO
+    description: ASCON v1 fair-price reversion with inventory control
+  - id: venue-arb
+    wallet: AUTO
+    description: upstream reference (cross-venue arbitrage)
+  - id: multi-arb
+    wallet: AUTO
+    description: upstream reference (multi-venue arbitrage)
+  - id: clean-arb
+    wallet: AUTO
+    description: upstream reference (two-leg AMM round trip)

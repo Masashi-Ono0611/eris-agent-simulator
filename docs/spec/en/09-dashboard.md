@@ -1,0 +1,272 @@
+[← Index](README.md) | [← 08 Artifacts](08-artifacts.md) | [10 Operations →](10-operations.md)
+
+# 09. Dashboard
+
+The `dashboard/` workspace (Vite + React). A viewer and analysis UI that **nothing in a run or its scoring depends on**: it reads `runs/<id>/` off disk, and the anvil over JSON-RPC when it needs to.
+
+Sources: `dashboard/src/{App.tsx,navigation.ts}`, `dashboard/src/data/*`, `dashboard/server/runsApi.ts`.
+
+## 9.1 The information hierarchy
+
+```
+competition  ⊃  scenario (one world = one epoch of the rules, "regime#seed")  ⊃  interval (one evaluation interval: interim progress, not the scoring unit)
+```
+
+Defined once, in `dashboard/src/data/competition.ts:1-8`.
+
+The UI calls the evaluation interval "Interval" / 「評価区間」 ("Round" / 「ラウンド」 until issue #140). The dashboard's own identifiers (`roundCursor`, `RoundsBar`, `round`, …) keep the name: inside `dashboard/` they only ever meant the interval.
+
+- A competition is normally the `matrix.json` written by `npm run backtest -- --scenarios`. A segmented period has the same shape
+- **There is no second model for "a run outside a competition".** One `sim:realtime` run is "a competition of one scenario", and `competitionFromRun` wraps it into the identical shape. **Normalizing at one point in the data layer means every page downstream sees exactly one kind of object**
+- The word "matrix" is gone from the UI (the on-disk `matrix.json` is core's output and keeps its name)
+
+### Routes
+
+| Path | Page |
+|---|---|
+| `/` | Overview (the schedule, the rules in brief, the top 5, the links) — **the default landing** (issue #183) |
+| `/standings` | Standings (the competition's table and its scenario list) |
+| `/scenario` | One scenario in detail |
+| `/agent/<id>` | Agent detail |
+| `/markets` | Venue state (scenario level) |
+| `/explorer` | Blocks and transactions (scenario level) |
+
+**Why the landing is not one scenario**: one scenario is a single draw from a distribution, not a result (`config/scenarios/public.yaml`: "the published seeds are five draws from it, **not the target**"). Landing there would show the unit you must not read first. The landing is what a participant needs to know about the competition first (the Overview); the ranking is its top 5 there, and `/standings` one click away.
+
+### Header, Overview and the "?" (issue #183)
+
+- **Header** (`components/SiteHeader.tsx`, on every page, sticky): the ASCON logo (→ `/`), the nav (Overview / Standings / Scenario / Markets / Explorer), **Register** (straight to the Google Form, with a "?" saying to join Discord #ascon first; **not shown from 10/25 00:00 JST**), **Submit** right of it (straight to the agent submission form; **shown only in the submission period, 9/23–10/31**; outlined, so the two read as different forms) and the language toggle. At 430px and below the logo drops its wordmark so both buttons fit. At 860px and below the nav folds into a menu; Register and the toggle stay on the bar. Sticky bars inside a page sit at `top: var(--header-h)`
+- **There is no sidebar** (full width on every page, in every mode). A one-line footer says read-only / no sign-in (plus "public view" with its "?" in the public view). **The competition picker** (`components/CompetitionPicker.tsx`) sits in the Overview's top-5 heading and beside the title on `/standings`, **only locally and only when there is a choice** (two or more competitions, or one plus runs outside it = "— single run —"). **The public view never shows it, and ignores a choice stored in the browser, showing the newest competition** (`effectiveSelectedCompetitionId`; otherwise a visitor who once picked another competition would be pinned there with no control to move). **The world switcher** (`components/WorldSwitcher.tsx`, "change ▾") sits beside the world's name in the interval bar of the scenario-level pages (scenario, markets, explorer, agent), and also keeps the selected run inside the competition in view
+- **Overview** (`pages/OverviewPage.tsx`): the schedule ("now" and the JST calendar days to the next deadline, by the browser's clock) / **how to submit** (register → API key → build → try locally → (optional) practice environment → ZIP → submit → freeze; one line and a guide link per step, only `bundle:agent` as a command; "open · N days left" / "closed" / "from 9/23" on steps with a window — the page cannot know a participant's progress, so it never points at "your" step; the submission form is linked directly while it is open (`SUBMISSION_FORM_URL`), the API-key form is left to Discord; folded to one line after 10/31) / three cards for scoring, prizes, and submission & limits (the gist always shown, the full statement behind a "?", a link to the section of the rules on ascon.dev) / the top 5 (rank, agent, average score, days or epochs scored, and a caption line saying what the number is, how much it covers and when it changed; not shown when `standings: false`; practice standings during the practice period, "Standings" for a finished competition before the results date, "Final" after it) / the links
+- **Japanese wording**: an epoch's (a practice day's) deviation score is **得点**, and the weighted average that ranks is **平均得点**; the rules' 「スコア」 is 平均得点, which the scoring card says in one line. English keeps "score"
+- **The rules' values live in one file, `data/competitionInfo.ts`**, each citing its section of ascon-web `content/legal/rules.md`. When the rules change, this is the file to change; the wording is `overview.*` in `i18n/messages.ts`
+- **The "?"** (`design-system/InfoTip.tsx`): explanations go here, and only headings and numbers stay on screen. It opens on click, tap or the keyboard (Enter / Space toggle; Esc closes and returns focus to the button), a press outside closes it, and one is open at a time. The panel is `position: fixed`, so a table that scrolls sideways does not clip it. `Panel`'s `info` prop is the entry point. **A native `title=` is not used for explanation** (it never shows on a phone and cannot be reached from the keyboard) — it remains only for what is not an explanation, such as the full text of a truncated name or a data readout
+- The old InfoTabs (Overview / Environment / Scoring / Data) are dismantled: Scoring → the Overview's scoring card; Overview and Environment → the "?" where they apply (the Overview heading, the scenario list); Data (`npm run explorer` and other operator material) → a "?" on `/explorer` that the public view does not show
+
+`/markets` and `/explorer` stay at the scenario level because venue state and a block range only mean anything inside one world.
+
+**Removed routes**: `/leaderboard` (duplicated the in-scenario ranking), `/archive` (a relic that was never reached), `/run` (an alias). `/standings` was removed once and came back in issue #183, as the table's own page when `/` became the Overview.
+
+## 9.2 The interval cursor (the UI's clock)
+
+`dashboard/src/data/roundCursor.ts`. **The position exists exactly once.**
+
+Interim values, rank changes and environment events are all measured in intervals, so every view reads against this axis. **The axis used to be reimplemented three times** (interval selection, replay head, live head) — three stores, one concept.
+
+| Property | Contents |
+|---|---|
+| `round` | **1-based and competition-relative.** `null` means the end, i.e. the finished result |
+| Meaning | **At interval k, all 35 scenarios are at their own interval k** — which is what makes 35 independent worlds watchable as one competition |
+| Playback | Advancing the cursor (not a separate "replay mode"). 1x/2x/4x, one tick every 700ms |
+| The end | **Parks rather than looping** (a cursor that silently restarts reads as a competition that rewound) |
+| Range changes | A position still inside the new range is kept. **A position past the end parks at the end** (interval 20 of a nine-interval scenario is not interval 9) |
+
+Block-level movement inside one scenario stays in `replay.ts`. It is a **refinement** of this position, not a competing notion of it, and exists only while a single scenario is open. When armed, replay drives the cursor; the cursor never drives it back.
+
+## 9.3 Standings
+
+### The rule is fixed (for participants)
+
+The metric × aggregator controls, the λ/ρ sliders, the disagreement panel and the #55 exposure were removed on 2026-08-31, and on 2026-09-06 the rule itself was fixed as the deviation score of rules §4.4 (ADR 0023). There is no metric to vary.
+
+```
+per scenario (= epoch)   P = V_K − V_0 → T = 50 + 10 (P − μ) / σ over the field
+  → Score = Σ w·T / Σ w (w linear 1 → 1.5 on the ordinal)
+  → mean with equal weight per regime
+```
+
+**The scoring is imported by the dashboard from `core/src/scoring/deviationScore.ts`** (through the `@core/*` alias). Two implementations of one ranking leave no way to tell which is real when the CLI and the screen disagree.
+
+### Display
+
+| Column | Contents |
+|---|---|
+| Score | **Score at two decimals.** The tooltip carries the number of scored epochs and the §4.6 tie-breaks (std of T, worst epoch) |
+| net PnL (final marks) | A reference column: the quantity where β cancels and `noop` is exactly 0 |
+
+The z is kept out of the table because **a unitless z cannot answer "by how much"**. **The displayed value and the rank can occasionally disagree**, which is the difference between the aggregators, and the caption says so.
+
+### The `practice` badge
+
+Shown permanently when `competition.file.resetUnit === "continuous"` (`StandingsPage.tsx`). ADR 0020 §2 puts the official competition in `scenario` mode, so **a continuous competition is by construction not the official scoring**.
+
+**The test is "is it continuous", not "is it not scenario"** — `matrix.json` files written before ADR 0020 have no such field, and those were the official shape. Getting it wrong in that direction is the same kind of error.
+
+A ranking whose provenance travels separately from the ranking will be misread, so it is stated **on the standings itself**.
+
+### "Through interval k"
+
+The ranking is **recomputed over the first k intervals** (it never reads the finished result), and the move from interval k−1 is shown alongside.
+
+"Through interval k" re-reads P = V_k − V_0 from the boundary series and recomputes T and Score — **exactly** the rule, not an approximation (`scenarioPnl` in `dashboard/src/data/standings.ts`).
+
+### When scenarios have different lengths
+
+In full-8h (recorded while the last interval went unscored), depeg runs 9 intervals and the others 29. **A scenario past its last interval is treated as a world that ended and stays in the ranking** (removing it would move the field for a reason that is not a result). The band says `30 of 35 still running · 5 ended earlier`.
+
+### net PnL cannot be scoped to an interval
+
+Both ends are priced at the run's final marks, so there is no value for interval k. It appears only as a reference column, and **while scrubbing it is greyed out so a finished value is never labelled with an interval**.
+
+### Two cases with no ranking
+
+Both land on the scenario view and say so.
+
+1. **A live run** — `summary.json` is written at the end, so the result does not exist yet
+2. **The seed provider** (fixtures)
+
+## 9.4 The scenario page
+
+One world as **a board you can walk block by block** (`dashboard/src/pages/ScenarioPage.tsx`). Every other page answers "what happened"; this one answers "what does it look like while it happens".
+
+```
+RoundsBar      the interval axis (the competition cursor; no replay transport here)
+header         the scenario's name (regime#seed, with the `full-` prefix stripped) + seed + intervals/blocks + agents, venues and the block window on screen
+WorldTimeline  the block axis: click, drag or ← → to move, 0.5x–4x to play; interval boundaries are ticked
+WorldMap       wallets on the left, the chain in the middle, contracts on the right; one frame per block (past 900 frames a frame is a labelled group of blocks)
+This block     transactions / reverts / agents trading / what the environment did there
+3 panels       the ranking within this scenario (a row picks that wallet on the board) / Agent Log (the picked wallet's decisions, up to the head) / venue price against fair and account value at each scored boundary
+```
+
+**It used to be a landing page of three previews (Markets / Standings / Explorer) with the board on a separate `/world` tab** (merged 2026-09-07). The previews were the board's numbers without the time axis, so the board became the page. A link to `/world` lands on `/scenario`.
+
+**Two clocks meet here; one is the page's.** The interval bar is the competition cursor (interval k of every world) and the selected interval is the block axis's window. The block axis's head is local state, not the replay head: the replay head is in every fetch key, so moving it refetches every snapshot per step, whereas the board only walks frames its snapshot already holds. **Leaving the page mid-walk hands the head to the replay store once** (arming replay on an archived run, seeking if one is already armed), so `/markets` and `/explorer` open at the block the board was on. A walk that reached the end hands over nothing: the other pages default to the whole run, and a replay parked at the last block would only label the same view "replay". The other way round, opening the page with a replay armed for this run starts the walk at the head. **The board's frames are never clamped by replay** (they always span the run; cutting them at the head would show the blocks past it as a future with no transactions). Keeping the future out is the walk's own head: the log, the charts and the ranking beside the board read up to it. The ranking is **the standings through the intervals closed at that block** (`standingsThroughRound` — `buildStandings` called once per closed-interval count, so there is still one scoring path), and says "not scored yet" while no interval has closed.
+
+**The header names the scenario itself.** It used to be the ERIS wordmark, which made every scenario look like the application's front page and said nothing about which of the 35 worlds was on screen.
+
+**Implementation vocabulary (file names, ADR numbers) may appear only in the operator's "?"** (§9.10).
+
+### Putting environment events on the interval axis (`dashboard/src/data/schedule.ts`)
+
+`stress_schedule` is **the plan drawn from the seed**, in run-relative blocks. It is converted **onto the interval axis** (`fromRound` / `toRound` = `ceil(block / intervalBlocks)`), because the interval is the axis everything else is on.
+
+- The schedule is written before the first block, so **reading the first 128KB of events.jsonl is enough**: 4MB across 35 scenarios, against 102MB for the whole files
+- `windowsAtRound(schedules, round)` collects every window covering that interval across the competition and **puts the ones that just opened first** (a window open for three intervals is context; one that just opened is the news)
+- The standings' interval note prints that in one line
+
+**`crash` / `spike` / `cexDrift` / `flowTrend` leave no per-block record** (they change the price walk itself), so this is **the plan and is labelled as such**. It never says "never fired"; it says "look at the price chart".
+
+**The seed is recorded in `run_started_realtime`.** For older runs without it, the stat is simply not shown.
+
+### Panel scoping
+
+Panels are scoped to the selected interval. **`scopeRunToBlocks` (`runsProvider.ts:1358`) narrows the run object itself by a block window**, so no builder grows a second code path. The header states the window and offers a link back to the whole run.
+
+**The exception is the end-of-run cross-section tables** (GMX positions / Aave accounts / reserves), which are a single snapshot at the end and say "at the run's final block" in the title. When an agent genuinely ended flat, the panel says so in prose — "no venue position open at the final block; this agent ended flat, or the run predates per-venue position tracking".
+
+**Per-interval volumes differ from the whole run only by its first block**: an interval is `(fromBlock, toBlock]` and the last boundary is the run's final block (where `blocksRemaining` reads 0; `core/src/epochExtent.ts`), so every block after boundary 0 (the run's first block, the state V_0 is read at) belongs to exactly one interval. The scorer used to drop a trailing partial interval, which left the blocks after the last boundary in none.
+
+### The interval bar (`RoundsBar`)
+
+The bar is the selected run's own interval series (`valueSeries.intervalSeries.boundaryBlocks`; `epochSeries` on a run from before issue #140, and either is read). Clicking a segment opens that interval's per-agent result.
+
+- **`Δ value` and `log return` are different quantities**: the first is the raw change including β (so even `noop` moves), the second is the same change as a log growth rate, ln(after / before). **Neither is the score** (the score is one P per epoch)
+- A live run has no scored series, so the frame is drawn from `run_started_realtime.intervalBlocks` (`epochBlocks` on an older run) to show progress, and the results arrive on completion
+
+## 9.5 `/markets`
+
+Shows **venue state, not prices**. One tab per enabled protocol (AMM / Perp / Lending / Stablecoin / LST).
+
+| Source | Covers |
+|---|---|
+| `market.json` | AMM, perp, lending, stable prices |
+| **`lst_block` / `liquity_block` in `events.jsonl`** | The market-wide state of the LST and Liquity venues |
+
+Reading those two from events avoids reconstructing what the coordinator already emits every block — and means older runs still render. The builders live in `dashboard/src/data/venuePanels.ts`.
+
+### Agent positions
+
+**Every venue is covered** (`gmxPositionsAtEnd` / `aaveAccountsAtEnd` / `lstPositionsAtEnd` / `liquityPositionsAtEnd`).
+
+Only GMX used to be, so an agent that spent the run staking or borrowing produced an empty table indistinguishable from a broken one. The table is not perp-shaped: it is **venue / kind / size / what it is marked against (entry price, redemption rate, ICR, HF) / detail**.
+
+## 9.6 The agent page
+
+The default tab is **Standing (why this rank)** — but only when the agent ranks in a competition; otherwise (seed mode, live runs) it lands on Overview (`AgentDetailPage.tsx:516`).
+
+It lists every epoch the agent was scored in (s / scenario / P / T / w), the mean, std and worst of T (the §4.6 tie-breaks), the distribution and a per-regime breakdown. The rank is decided by Score, so this is **an explanation, not a second ranking**.
+
+Measured: `clean-arb` ranks first on +0.32bp per interval with a std of 1.78bp; `levered-long-max` ranks last on **+4.90bp** with a std of **78.60bp**. **The agent earning fifteen times as much is last**, and the whole difference is std. Split by regime, it is +48.3bp in `cex-drift` and negative in the other six — i.e. a story about regime fit.
+
+**The decision-log tab is hidden for external agents** ([05 §5.9](05-agent-contract.md)); an empty panel is a different claim. The submission feed states how many agents will not appear there.
+
+## 9.7 Live and replay
+
+### Live
+
+A run in progress appears as `● (live)`.
+
+| Test | No `summary.json`, and **the newer of** `events.jsonl` / `blocks.csv` was touched within 120 s (`runsApi.ts:23`) |
+|---|---|
+| Sources | Tailing the events and agent jsonl, plus reading the head block from `run_started_realtime.rpcUrl` |
+| Transition | Scores and venue series switch to the archived rendering when the run completes |
+
+**Why the newer of the two**: during teardown (the bulk blocks.csv scan, then the reconstruction sweeps) events.jsonl can be silent for tens of seconds. A run that briefly drops out of the index sends the dashboard to a neighbouring run and strands it there — the live refresh loop stops with the run it lost.
+
+### Replay
+
+Walk a finished run forward as "at block B" (`▶ replay` on the interval bar). The scenario page alone shows no transport: it has a block axis of its own (§9.4), and leaving it mid-walk hands the head to replay.
+
+**Live mode only works on the machine that ran the run** (the tail is the dev server's filesystem and the chain reads go to the agents' anvil), so **replay is the only way to watch a finished run, or one collected from a spot box**.
+
+Archived carries *more* information than live (`market.json`, the scored interval series, a complete `blocks.csv`), so it is a superset rather than a degraded mode.
+
+**Not showing the future is a requirement**:
+
+- An interval that has not closed has no result
+- The ranking is **recomputed from P = V_k − V_0 over closed intervals only** (reading the finished figure would print the answer on every frame)
+- The end-of-run position tables are withheld until the head reaches the end
+
+## 9.8 Finding runs (the `/runs` API)
+
+`dashboard/server/runsApi.ts`. **The dev server and the hosted server share the handler.**
+
+| Endpoint | Contents |
+|---|---|
+| `/runs/index.json` | Run directories, newest first, tagged `live: true` / `kind: "matrix"` |
+| `/runs/<id>/<artifact>` | The artifact itself |
+| `/runs/<id>/tail/<file>?offset=N&limit=M` | An incremental tail of a jsonl/csv artifact |
+
+- **It walks two levels deep** (`MAX_RUN_DEPTH = 2`), because a run collected from a spot box unpacks to `runs/<collection>/runs/<runId>/`. The picker shows it as `<runId> ← <collection>`
+- An id is a path relative to `runs/` and can contain slashes, so a tail request splits on **the last `/tail/`**
+- **A competition directory is not a leaf**: a directory holding `matrix.json` has segments inside it, and those are runs
+- A tail returns at most 4MB. An explicit `limit` reads only the head — `run_started_realtime` and `stress_schedule` sit in the first few KB
+- Paths are resolved with a prefix check **and `realpath`** (a symlink under `runs/` could otherwise point anywhere on disk)
+
+**`npm run dashboard:serve` is read-only but is not an access boundary** — everything under `runs/` becomes public ([10](10-operations.md)).
+
+## 9.9 Naming
+
+**Internal ids do not appear in the UI.**
+
+| Subject | Displayed as |
+|---|---|
+| Competition | Derived from the scenario set and the date (`full-8h` in the h1, `full-8h · 8/29` in the picker, the raw id in a tooltip). **The `full-8h` here is a name a stored run recorded**; the set file itself was folded into `public.yaml` when the regimes were consolidated. The display name comes from `matrix.json`'s `scenarioSet`, so a retired set name keeps appearing on the runs that used it |
+| Scenario | Always `regime#seed` (with the `full-` prefix stripped). Segments use a date label |
+| Run | `2026-08-29 16:03` (the directory's timestamp, formatted) |
+| **"Run N" sequence numbers** | **Gone** — a coordinate on the developer's machine that means nothing to a participant |
+
+**Identity and display are separate**: a scenario is keyed by `runDir`, the only field guaranteed unique (a matrix can repeat (regime, seed) under `--repeat`, and segments can share a label). Keying on the label collapsed six segments into one and pooled their intervals.
+
+## 9.10 i18n
+
+`dashboard/src/i18n/` (a locale store and a full message dictionary, `messages.ts`). Toggled in the header, persisted in localStorage, defaulting to the browser language. `<html lang>` follows it.
+
+**The data-layer builders call `t()` too** (`venuePanels`, and the tape and position tables in `runsProvider`), so `useSnapshot` includes the locale in its key and rebuilds the snapshot on a language change.
+
+Wording rules:
+
+- Implementation vocabulary (file names, ADR numbers) appears **only in the operator's "?"** (where `/explorer`'s data comes from; not shown in the public view)
+- Units are always attached (bps, USDC)
+- The state words are **live and finished**, and only those two
+- `npm run` commands appear only in a local-operations context, such as starting the explorer
+
+## 9.11 Blockscout integration
+
+When it is up, transactions, blocks and addresses become deep links and the indexer's height is shown next to the RPC height. **When it is down the links simply disappear** (nothing else degrades).
+
+`/explorer` states the connection (indexed height, or the command to start it) and resolves searches for transaction hashes, blocks, addresses and **agent names** (→ wallet address; Blockscout does not know names). Without Blockscout it still works as a filter over the local listing.
+
+## 9.12 Development
+
+`VITE_DATA_PROVIDER=seed` switches to fixtures (`dashboard/src/data/seed.ts`). The seed provider has no ranking, and the UI says so.

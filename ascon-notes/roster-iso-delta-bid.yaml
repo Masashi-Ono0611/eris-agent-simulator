@@ -1,0 +1,25 @@
+# 分離評価: 候補 1 体 + 基準。バリアント同士の干渉と先着順の運を排除するため、候補は世界に 1 体だけ置く。
+# 'crowd' は入札なしの multi-arb 同一コード（多数の参加者が同じ戦略を使う状況の代役。同額タイでは後着になる）。
+# 評価は P と alpha で読む（T は同じ matrix 内でのみ比較）。
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    description: does nothing (baseline)
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: upstream reference (first mover among the clones)
+  - id: crowd
+    dir: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: no-bid clone of multi-arb (stands for the crowd)
+  - id: clean-arb
+    wallet: AUTO
+    description: upstream reference (two-leg)
+  - id: cand
+    dir: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidExtraBps":5000}' }
+    description: CANDIDATE delta with a fixed-ratio bid (5000)

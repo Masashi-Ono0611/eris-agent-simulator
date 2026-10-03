@@ -1,0 +1,41 @@
+# sweep4: sweep3 で分かった「同一コードのコピーは先着順で負ける（P が約 1,560 USDC 違う）／priority fee の入札で順序を取ると勝つ」
+# を踏まえ、ascon-epsilon（multi-arb 土台 + launch / 償還 / Stability Pool）に入札の水準を当てて比較する。
+# bidExtraBps: edge 100bps で上限（maxPriorityFeePerGasWei）まで入札する比率。epsilon の delta 部は ASCON_DELTA_PARAMS を読む。
+# 注意: バリアントは同じ世界で干渉する。T は matrix 内でしか比べられない（P・alpha も併記して読む）。
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    description: does nothing (baseline)
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: upstream reference (first in the roster = first mover among identical clones)
+  - id: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: copy of multi-arb, no bid (identical-clone control)
+  - id: delta-bid5000
+    dir: ascon-delta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidExtraBps":5000}' }
+    description: sweep3 winner reference (delta with bid 5000)
+  - id: ascon-epsilon
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+    description: epsilon, specialists on, no bid
+  - id: eps-bid2000
+    dir: ascon-epsilon
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidExtraBps":2000}' }
+    description: epsilon with a mild bid
+  - id: eps-bid5000
+    dir: ascon-epsilon
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidExtraBps":5000}' }
+    description: epsilon with the sweep3 bid level
+  - id: eps-bid10000
+    dir: ascon-epsilon
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1", ASCON_DELTA_PARAMS: '{"bidExtraBps":10000}' }
+    description: epsilon with the maximum bid

@@ -1,0 +1,274 @@
+[← README](../../README.md)
+
+# Backtest (scenario replay, ADR 0016 / ADR 0017)
+
+A mode for participants to validate their own strategy "cheaply and repeatedly, under conditions equivalent to historical market data." On top of a **dedicated local anvil** loaded with the distributed venue state dump, the existing coordinator replays a scenario as-is. Fills are computed by the real contracts (no fill model), and scoring is fully identical to realtime (the `summary.json` format is the same except for `mode: "backtest"`). No fork and no external RPC required.
+
+A **scenario is `(regime, seed)`**, written `<regime>#<seed>`. The regime YAML holds the market conditions; the seed picks which realization out of that family you get. Both have to be supplied — a regime alone is not runnable (ADR 0017 §1).
+
+```bash
+npm run backtest -- --regime calm --seed 101                    # one scenario: calm#101
+npm run backtest -- --regime lending-incident --seed 202        # collateral crash + Aave liquidations
+npm run backtest -- --regime calm --seed 101 --repeat 5         # same scenario 5x (see the spread)
+npm run backtest -- --regime calm --seed 101 --agents my-roster.yaml   # swap the roster
+
+npm run backtest -- --scenarios config/scenarios/public.yaml    # the whole public set + standings
+```
+
+```mermaid
+flowchart LR
+  DEP["deployer anvil :8545<br/>all venues deployed"] -->|"npm run gen:state-dump<br/>(revert to the .local-snapshot clean cross-section)"| STATE["backtest/state/<br/>venues-state.json + manifest<br/>(source commit · genesis hash · deployments · fingerprint)"]
+  REGIME["config/regimes/&lt;name&gt;.yaml<br/>+ seed (per scenario)"] --> RUN
+  STATE -->|"npm run backtest -- --regime &lt;name&gt; --seed &lt;N&gt;"| BT[("dedicated anvil :8547<br/>--load-state")]
+  BT --> RUN["coordinator replays the scenario<br/>(scoring identical to realtime)"]
+  RUN -->|"evm_snapshot / evm_revert between scenarios"| BT
+  RUN --> OUT["runs/&lt;id&gt;/ summary.json<br/>runs/matrix-&lt;id&gt;/ matrix.json + standings.json"]
+```
+
+## Prerequisites
+
+| thing | how to get it |
+|---|---|
+| anvil binary | one-shot `foundryup` |
+| state dump (`backtest/state/`) | drop in the operators' distribution. To build your own, run `npm run gen:state-dump` against an anvil already deployed by the deployer (see below) |
+
+`gen:state-dump` reverts a running deployer anvil ([local deploy](local-deploy.md)) to the clean cross-section at `.local-snapshot`, dumps state, and writes out a `venues-state.json` that can be passed straight to `--load-state` plus a manifest (source commit, anvil version, genesis hash, the entire deployments.json bundled + a fingerprint). `sdk/src/constants.local.ts` is also regenerated from the same deployments.
+
+## Regime = a label for market conditions
+
+A regime is **a YAML in the existing config schema** (same format as [Configuration](configuration.md)) describing a family of market conditions: the fair-price OU parameters, flow intensity, and the stress event ranges. It carries no seed. Given one, the fair-price path, flow orders, and stress event schedule all replay deterministically.
+
+The **twelve official regimes** are the competition set (ADR 0017 §1, completed by issue #27; `vuln` by ADR 0014, `spike` by issue #105, `depeg-persist` by issue #106, `cdp-incident` by issue #107, `launch` by issue #29):
+
+| regime | market condition |
+|---|---|
+| `calm` | normal market, no stress |
+| `cex-drift` | the reference price drifts away from the on-chain price (drift added, mean reversion weakened) |
+| `informed-flow` | correlated directional order flow |
+| `whale` | single large orders that move the mid while the fair price stays put |
+| `lending-incident` | collateral crash + victims + liquidations + books thinned on the same window |
+| `crash` | a price gap plus a `liquidityPull` on the same window, so uniswap, balancer and curve all thin exactly while the price moves ([#52](https://github.com/NyxFoundation/eris-agent-simulator/issues/52)). At a 50% pull the cost of taking 10 WETH roughly doubles (uniswap/balancer) to quadruples (curve), while the price a small trade sees is unchanged |
+| `depeg` | a registry stable stops being a dollar ([#27](https://github.com/NyxFoundation/eris-agent-simulator/issues/27)) |
+| `vuln` | pools appear mid-run, most of them rigged (ADR 0014) |
+| `spike` | crash's mirror: the fair price gaps 15–22% *up* with the same aligned pull ([#105](https://github.com/NyxFoundation/eris-agent-simulator/issues/105)) |
+| `depeg-persist` | the same depeg with `persist: true`: the discount never closes inside the epoch, so holding for par is a bet rather than a wait ([#106](https://github.com/NyxFoundation/eris-agent-simulator/issues/106)) |
+| `cdp-incident` | Liquity victim Troves at ICR 1.20, a 12–16% crash with the pull, and an eUSD depeg on the same window ([#107](https://github.com/NyxFoundation/eris-agent-simulator/issues/107)) |
+| `launch` | 2–3 new tokens list mid-run in thin USDC pools through the environment's Uniswap V3 factory; per token a demand wave follows or does not (a dud), and holdings at the bell are worth zero ([#29](https://github.com/NyxFoundation/eris-agent-simulator/issues/29)) |
+
+Also in `config/regimes/`, outside the competition set: `lst` and `liquity` / `liquity-crash` (single
+venues, for verifying them on their own), and the `b-harness` / `metric-*` / `ruin-test` /
+`lucky-drift` harnesses issue #56 used to calibrate the scoring metric.
+
+For what each regime's events actually do, see [Market Stress Events](stress-events.md).
+
+`blockTimeSec` and `blocks` are part of the regime (fixed to the same values as production). Short-circuit overrides like `--blocks` / `--seconds` are for behavior checks and smoke tests only; **runs whose scores you read should use the regime defaults** (ADR 0016 §3).
+
+## Scenario sets and standings
+
+`--scenarios <path>` replays a whole set on one anvil and ranks the roster.
+
+```yaml
+# config/scenarios/public.yaml — the cartesian product of the two lists
+regimes: [calm, cex-drift, informed-flow, whale, lending-incident, crash, depeg, vuln, spike, depeg-persist, cdp-incident, launch]
+seeds: [101, 202, 303, 404, 505]
+```
+
+The published (public) set exists for tuning. The competition's private set is the same regimes with a disjoint, unpublished seed list — same distribution family, different realizations. **Because the generator is open source, sample your own seeds rather than overfitting to the published five**: generalizing across the distribution is what is being measured.
+
+<details>
+<summary>Operators: building the private set</summary>
+
+`config/scenarios/private.yaml` is deliberately not in the repository — the regimes are public and
+only the realized seeds are withheld, so the file *is* the secret. Build it the same shape as
+`public.yaml`, and keep it out of the working tree (it is covered by the same ignore rules as any
+untracked file; do not `git add` it).
+
+1. Draw the seeds from a wide range with a source the repository does not contain, and check them
+   against `public.yaml` — the two sets must not intersect, or a participant has already tuned on
+   part of the private set.
+2. Use the same `regimes:` list as the public set. Different regimes would compare participants on
+   conditions they were never told to prepare for.
+3. Keep 20 seeds per regime as the baseline; expand only after the heat count is known, since heats
+   multiply the run count (ADR 0017 §3).
+4. Publish the seed list after the competition so participants can reproduce their own results.
+
+Nothing else needs to be secret. The stress ranges, the OU parameters and the flow calibration are
+all published on purpose — withholding them would measure who guessed the environment rather than
+who traded it well.
+
+</details>
+
+Two artifacts land in `runs/matrix-<id>/`:
+
+| file | what it is |
+|---|---|
+| `matrix.json` | raw per-scenario, per-agent results — P (`pnlUsdc`, with `pnlSource`), `netPnlUsdc` / `alphaUsdc`, the endpoints, `baseline`, `participant` (the rules §2.2 unit, when the roster states one), `flags` — plus the ordinal `s`, `k`, `resetUnit`, `rosterFingerprint` (the field, for `--resume`), run directories and, when the plan carried a timetable (`npm run competition -- plan … --starts-at --every-minutes`), a `schedule` of planned ordinals with their `startsAt` — the dashboard's "next epoch starts at" (schema 2). A scenario record carries its own `flags` when the epoch as a whole needs saying: `uncontested: every non-baseline agent (N) exited early` when nobody was left to trade, or `n of N non-baseline agents exited early` |
+| `standings.json` | the ranking derived from them |
+
+The ranking is a derived view on purpose: `standings.json` recomputes from `matrix.json` alone, so a finished matrix can be re-read without re-running anything (ADR 0017 §4). The rule itself is the competition's (rules §4.4, ADR 0023).
+
+Ranking: each scenario is one epoch. An agent's P = V_K − V_0 becomes a deviation score T = 50 + 10 (P − μ) / σ **over the agents in that scenario** — they all ran in the same world, so that is the one comparison the design guarantees is fair — and the score is the average of T over the scenarios, weighted linearly from 1 to 1.5 on the scenario's position (its ordinal `s`). The benchmark is valued but not in the population.
+
+> **A matrix run is `scenario` mode** (ADR 0020): the world is rebuilt per (regime, seed), and `matrix.json` records `resetUnit: "scenario"` to say so. That is the competition's shape, and the matrix runner is the only thing allowed to declare it — a `sim:realtime` config that writes `resetUnit: scenario` fails fast at startup. Do not read a continuous run and a scenario run into one standing.
+
+> **`--scenarios` takes two shapes.** `{regimes, seeds}` is the cartesian product, run and numbered in that order; `{k, epochs: [{s, regime, seed}]}` is an ordered plan as `npm run competition -- plan` writes it from the lottery seed (rules §3.3), with `k` the schedule length the weights are taken over.
+
+Nothing disqualifies. An agent whose process died is scored on what it left behind (rules §2.3, §4.4.2), a fee-cap violation is a §8 matter for the operator, and both appear as `flags` beside the number. An agent absent from a scenario's summary was not placed in it and is simply not in that population. A scenario that produced no summary at all is an invalid epoch for everyone (§4.4.2). An epoch in which **every** non-baseline agent exited early is still scored — the arithmetic does not change — but the scenario record and its `standings.json` epoch carry an `uncontested` flag, because the P of such an epoch are the endowment's drift and re-execution (§4.4.2) is the operator's call to make, not the scorer's.
+
+### One competition across several invocations (`--resume`)
+
+The live week is k epochs (rules §4.7.1), and nothing says they run in one process: an anvil dies,
+a machine is rebooted, the mornings and the evenings run separately. Each `--scenarios` invocation
+opens a fresh `runs/matrix-<timestamp>/`, so left alone the week's standings would be spread over as
+many directories as there were invocations. `--resume` continues one instead:
+
+```bash
+npm run backtest -- --scenarios plan.yaml --agents field.yaml                      # day 1: writes runs/matrix-<id>/
+npm run backtest -- --scenarios plan.yaml --agents field.yaml --resume runs/matrix-<id>   # day 2 onward
+```
+
+- Scenarios whose stored record has agents are **complete and skipped** (`skipping s=…, already
+  complete`). The missing ones run, and so do the ones stored with an `error` and no agents — a lost
+  epoch's remedy is re-execution (§4.4.2), not carrying it as invalid.
+- `matrix.json` and `standings.json` are rewritten in place, in ordinal order, keeping the original
+  `createdAt` and stamping `resumedAt` — only when at least one epoch actually ran. A resume with
+  nothing left to run leaves the stamp alone.
+- It is **refused** when the stored matrix is a different competition: another `scenarioSet`, `k`
+  (the weights are a function of it), `resetUnit`, `repeat`, `--agent-state-root` or **roster**
+  (`rosterFingerprint`, the sha256 of the field the matrix was run with — two fields across one
+  matrix would average two competitions); and when the set's content changed under the same path
+  (a stored ordinal that is not the plan's `(regime, seed)`). A different source commit is a
+  warning, not a refusal; so is a stored matrix written before the roster was recorded.
+- With `--agent-state-root` (issue #77), **each re-run starts from the state the plan says it
+  starts from**: the root is put back to the checkpoint of the latest complete ordinal below it
+  (`<root>/.snapshots/end-s<N>`, written after every completed scenario; `initial` before the
+  first), not left as whatever ran last. Re-running s=3 does not re-run the s=4 and s=5 that already
+  completed on the state the first attempt of s=3 left behind — rules §4.4.2 re-runs the voided
+  epoch, and whether the ones after it stand is the organizer's call. A matrix run before these
+  checkpoints existed cannot be resumed under a state root; it says so and stops.
+
+### Following the plan's timetable (`--follow-schedule`)
+
+A plan can say when each epoch starts (`npm run competition -- plan … --starts-at <ISO 8601>` with
+`--every-minutes <N>`, or `--ends-at <ISO 8601>` to spread the k epochs evenly over a window). By
+default the runner only records those times — `matrix.json`'s `schedule`, the dashboard's "next
+epoch starts at" — and runs the epochs back to back. `--follow-schedule` waits for each start
+instead, so one unattended process runs the live week (ADR 0026):
+
+```bash
+npm run competition -- plan --hidden hidden.yaml --lottery lottery.yaml --k 60 \
+  --starts-at 2026-11-01T00:00:00+09:00 --ends-at 2026-11-08T00:00:00+09:00 --out plan.yaml   # one every 168 min
+npm run backtest -- --scenarios plan.yaml --agents field.yaml --follow-schedule \
+  --scenario-key <secret-dir>/scenario-key.yaml   # ADR 0027: a plan refuses to start without a key
+```
+
+- Before each epoch it runs, the runner prints what it is waiting for (`s=5 crash#…: waiting 2h 31m
+  for its planned start …`). A start that has already passed is not waited for: the epoch starts at
+  once and the line says how late. Nothing is re-flowed — a late epoch does not push the ones after
+  it, each still waits for its own time.
+- **It composes with `--resume`.** Complete epochs are skipped before the clock is looked at, so a
+  restart after a stop runs the missed and failed epochs at once and then waits for the next one.
+  That is also how an epoch voided mid-week (§4.4.2) is re-run inside the idle part of a slot:
+  stop the waiting process and start it again with `--resume`.
+- It is refused before anvil starts when the set has no timetable, when some epoch has no
+  `startsAt`, or when the starts are not in list order (the runner takes epochs in list order). Only
+  with `--scenarios`.
+- **A plan under a key file is the live week, and its posture is refused rather than warned about**
+  (`core/src/realtime/liveWeek.ts`): public environment keys (admin / keeper / setup / deployer, or a
+  state dump whose Aave admin is an anvil test account), `agentSandbox: process`, `command`/`args`
+  roster entries, and docker agents without `ERIS_AGENT_ISOLATE=1` + `ERIS_AGENT_INTERNAL=1` or in
+  bind-mount mode. Checked once per regime before the first wait, and again by each epoch; a refusal
+  stops the week instead of becoming an excluded epoch. `ERIS_ALLOW_PUBLIC_ROLE_KEYS` does not apply.
+  Rehearse the plan with `--scenario-key public`, which is not the live week.
+- A slot shorter than an epoch's wall time (360 blocks = 12 min of block time plus setup and
+  reconstruction) makes every epoch after it late. The runner reports it; the plan is where it is
+  fixed.
+
+## Repetition and reproducibility
+
+- **The environment (initial state + market conditions) is perfectly identical every time**: each launch builds a fresh anvil from the same state dump, and between scenarios (and between the runs of `--repeat N`) it returns to the clean cross-section via `evm_snapshot`/`evm_revert` (no victim leftovers).
+- **The only thing that varies is tx ordering** (same property as production realtime, ADR 0005). Results converge into a narrow band but are not bit-identical.
+- **`--repeat` is a diagnostic, not part of scoring.** Repeating a scenario reduces the tx-timing noise but does nothing about the variation between market conditions, and since the wall-clock budget is `scenarios x repeats`, spending it on repeats is the same as halving the number of scenarios. The competition runs each scenario once and buys precision with more seeds instead (ADR 0017 §3). Use `--repeat` when you want to *measure* how much a scenario moves run to run; standings fold the repeats with a median.
+- Bit-identical regression comparison (diff-checking a single line of code) is planned but unimplemented as B2 synchronous-step replay (ADR 0016 §3).
+
+## What the competition actually scores (ADR 0017 §6)
+
+Every participant runs in the **same world at the same time** — one scenario is one run with the
+whole field co-located on one chain. That is not a convenience: the score is a deviation score computed
+across the agents *within a scenario*, so "who did better" only means anything because everybody met
+the same market on the same blocks. It also means three things are part of the competition whether
+you engage with them or not:
+
+- **Opportunities are finite and shared.** A liquidation or an arbitrage gap is taken by whoever
+  gets there first; it does not exist separately for each participant. In pilot runs, arbitrage
+  profit per agent fell by roughly 30x going from 4 co-located agents to 16.
+- **In-block ordering is bought with gas.** anvil orders the block by priority fee (`--order fees`),
+  so when two agents chase the same gap in the same block, the higher bid executes first
+  (ADR 0011). Bidding is a real lever, and over-bidding is a real cost.
+- **Speed counts.** Blocks are mined every `blockTimeSec` seconds regardless of whether your agent
+  has finished thinking. `decide()` runs once per block and a round it spends computing is a round
+  it does not trade. This is why no LLM sits in the trade path any more: measured at production
+  settings, an agent that waited for a model on every action managed one decision every 8–28 blocks
+  and 1/64 the actions of the same strategy in rule mode (ADR 0018). A self-improving agent trades
+  at full rule speed and is revised out of band ([Self-improving agents](llm-agents.md)).
+
+Scoring itself is unaffected by any of this: it reads the same value cross-sections for everyone at
+the same blocks.
+
+## Sparring (compete against other agents)
+
+Line up multiple agents in the roster and they compete in the same run, on the same mempool. `--agents` swaps the regime's default roster (YAML/JSON; the content is baked into the effective regime):
+
+```yaml
+# my-roster.yaml
+agents:
+  - id: noop
+    wallet: AGENT1_PRIVATE_KEY
+    baseline: true
+  - id: my-strategy          # your strategy (example/agents/my-strategy/)
+    wallet: AGENT2_PRIVATE_KEY
+  - id: multi-arb            # rival: bundled strategy
+    wallet: AGENT3_PRIVATE_KEY
+  - id: multi-arb-2          # multiple instances of the same strategy (see them eat each other's opportunities)
+    dir: multi-arb
+    wallet: AUTO
+```
+
+## What you can / cannot measure (ADR 0016 §8)
+
+| measurable | not measurable (realtime / production only) |
+|---|---|
+| Correctness and regression of strategy logic (crashes / validate violations / repeated noop) | Competition against real production participants (roster only goes as far as sparring against known strategies) |
+| Per-regime α tendency including your own fills' market impact | Behavior at production roster density |
+| How your `prompt.md` revision policy behaves, and the full tx path (signing, revert) | Score at the production seed (same regime, but a different seed sample) |
+
+## CLI reference
+
+| flag | description |
+|---|---|
+| `--regime <name\|path>` | `config/regimes/<name>.yaml` (or a YAML path). Requires `--seed` |
+| `--seed <N>` | The scenario's seed. Regimes carry none, so this is not optional |
+| `--scenarios <path>` | Replay a whole set (regimes x seeds) and write `matrix.json` + `standings.json`. Mutually exclusive with `--regime` |
+| `--scenarios <path>` (plan form) | `{k, epochs: [{s, regime, seed}]}` from `npm run competition -- plan`; replayed in order with those ordinals |
+| `--agents <roster>` | Swap the regime's default agents with a roster file (YAML/JSON) |
+| `--resume <matrix-dir>` | Continue a stored `runs/matrix-<id>/` instead of opening a new one: complete scenarios are skipped, missing and failed ones run, the artifacts are rewritten in place. Refused when `scenarioSet` / `k` / `resetUnit` / `repeat` / `--agent-state-root` / the scenario key differ. `--scenarios` only |
+| `--scenario-key <file\|public>` | The key every scenario is realized under (ADR 0027): a key file from `npm run competition -- keygen`, or `public`. Default `ERIS_SCENARIO_KEY_FILE`, else the public key `SHA-256("eris-public-v1")`. **Required for a plan (`epochs:`)**, the live-week form. `matrix.json` records `scenarioKey: {source, commitment}` |
+| `--follow-schedule` | Wait for each epoch's planned `startsAt` before running it instead of running the epochs back to back (ADR 0026). A start already past runs at once and reports how late. Composes with `--resume`. Refused when the plan has no timetable, an epoch lacks one, or the starts are out of list order. `--scenarios` only |
+| `--agent-state-root <dir>` | Carry each agent's persistent state across the scenarios, in list order (issue #77). Off by default. Checkpoints the root after every completed scenario so a resume can restore the right starting point |
+| `--repeat <N>` | Repeat each scenario N times (default 1). A calibration diagnostic; standings take the median |
+| `--port <N>` | Port for the backtest-dedicated anvil (default 8547; use a different port for parallel runs) |
+| `--state <dir>` | State dump directory (default `backtest/state`) |
+| `--keep-anvil` | Keep anvil alive after exit (for reading receipts in post-hoc analysis / debugging) |
+| `--score-every <N>` | Reconstruct the value cross-section every Nth block instead of every block. Score-neutral (only the first and last cross-sections reach `summary.json`); it just coarsens the equity curve in `events.jsonl` |
+| `--blocks` / `--seconds` / `--protocols` / `--economic-gas` | One-shot override of regime values (for smoke tests) |
+
+> Run overrides are written out as an "effective regime YAML" that the coordinator runs from. The agents it launches do not read that file: each gets its own config, `runs/<id>/agent-view/<agentId>/config.yaml`, which the coordinator writes from the values it resolved — the fields the agent runtime reads (run length, block time, venues, fees, …), overrides included, and no seed (`core/src/realtime/agentView.ts`). So an override still reaches the agents (applying it only to the coordinator would kill them on observation).
+
+## Troubleshooting
+
+- **`state manifest not found`** — Drop the distribution into `backtest/state/`, or generate it with `npm run gen:state-dump`.
+- **`state dump is missing a venue: gmx`** — The deployment used to generate the dump had no GMX. Re-bake from a full deploy (`cd deployer && npm run deploy -- --keep-fresh`), or narrow it down with `--protocols uniswap,balancer,curve,aave`.
+- **`GMX funding is not modeled on this deployment`** — The state dump was baked before GMX funding was added to the deployer (`deployer/vendor/gmx-localhost.patch`, a35cf3e): every market has `FUNDING_INCREASE_FACTOR_PER_SECOND = 0`, so funding would read 0 on every block. Redeploy with the current deployer on a fresh anvil (`cd deployer && npm run clean:vendors && ./scripts/setup-vendors.sh && npm run deploy -- --keep-fresh`), then re-bake with `npm run gen:state-dump`. The run stops at setup rather than scoring a different economy (`gmx_funding_check` in events.jsonl).
+- **`port 8547 is in use`** — Another backtest / anvil is present. Change it with `--port` (do not use the deployer anvil's 8545).
+- **Fingerprint mismatch log** — It auto-regenerates `constants.local.ts` from the deployments bundled in the manifest and continues (normal behavior). It fails fast only if regeneration still does not match (a wrong combination of state dump and repo version).
+- **Warning that the source commit differs from HEAD** — Harmless if you have not changed the deployer / constants. If you have, re-bake with `npm run gen:state-dump`.

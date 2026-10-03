@@ -1,0 +1,26 @@
+# Only files needed by the shared runtime enter any base layer. Team code stays out.
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!sdk/
+!sdk/**
+!sdk-py/
+!sdk-py/**
+!core/
+!core/package.json
+!example/
+!example/package.json
+!example/agents/
+!example/agents/runtime/
+!example/agents/runtime/**
+!example/agents/lib/
+!example/agents/lib/**
+!dashboard/
+!dashboard/package.json
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.egg-info
+sdk-py/tests
+sdk-py/build
