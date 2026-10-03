@@ -17,6 +17,10 @@
 - **バンドル・練習 devnet 実行・selftest は、バックテストを一切走らせない専用のリリース用 worktree で行う**（`git worktree add` でコミット済みの状態から作る）。リリース用 worktree で `git diff --quiet upstream/main -- sdk/src/constants.local.ts`（または `git status --short sdk/src/constants.local.ts` が空）を確認する。
 - [ ] 提出 ZIP の `sdk/src/constants.local.ts` が upstream の commit 版と**バイト一致**（`unzip -p bundle-<dir>.zip sdk/src/constants.local.ts | shasum -a 256` と `git show <upstream commit>:sdk/src/constants.local.ts | shasum -a 256` が一致）。
 
+## C0b. CI の再現（提出する commit に対して必須・2026-10-03 の CI 失敗 4 回の再発防止）
+- [ ] **提出する commit を `bash ascon-notes/ci-local.sh --ref <commit> --full` で通す**（commit 済みの内容だけのクリーンな export・`env -i`・空き 13GB の `df` スタブ・他の全体テスト/anvil が居れば BLOCKED）。作業ツリーにだけあるファイル・ホスト環境（空きディスク・絶対パス・HOME・python 版）への依存・関連テストだけでは見えない回帰を、CI と同じ形で出す。push 前は `--quick`（pre-push フックが自動実行。入れ方: `bash ascon-notes/install-prepush.sh`）。
+- [ ] `prepare-release.py` の **READY は証跡つき**: `--backtest-evidence <G0 PASS の JSON>` と `--selftest-evidence <selftest の出力>` が ZIP の SHA-256・commit と一致すること。静的検査のみなら READY ではない（exit 3）。
+
 ## C. 自己完結と提出形式
 - [ ] 提出ディレクトリが他のエージェントディレクトリへ相対 import していない（提出 ZIP には自分のディレクトリ + runtime + lib + sdk しか入らない）。`rg 'from "\.\./' <dir> | rg -v '\.\./(lib|runtime)/'` が 0 件。
 - [ ] `agent.ts` は `decide()` 形式（`run(ctx)` 形式は prompt.md と共存できず提出不可）。`prompt.md` の frontmatter に `kind: improve` / `name` / `description`。

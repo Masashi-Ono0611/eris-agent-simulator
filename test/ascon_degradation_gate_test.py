@@ -30,7 +30,8 @@ class GateTests(unittest.TestCase):
         p.mkdir(exist_ok=True)
         (p / 'agents').mkdir(exist_ok=True)
         self.write(p / 'summary.json', dict(runId=name, blocksProcessed=360, loopIterations=loops,
-                    runStartBlock=100, finalBlock=460, blockTimeSec=2, agents=[dict(id='a')]))
+                    runStartBlock=100, finalBlock=460, blockTimeSec=2, valueSeries={'failedReads':0},
+                    violations=[], agents=[dict(id='a',pnlUsdc=1)]))
         logs = [dict(type='run_started_realtime', runId=name, runBlocks=360),
                 dict(type='agents_registered', agents=[dict(id='a')]),
                 dict(type='agents_ready', ready=[dict(id='a')], launched=1, timedOut=False, late=[], exited=[])]
@@ -87,6 +88,9 @@ class GateTests(unittest.TestCase):
     def test_partial_timing_blocked(self):
         p=self.candidate/'events.jsonl'; lines=p.read_text().splitlines(); del lines[4]; p.write_text('\n'.join(lines)+'\n'); self.gate(2)
     def test_missing_agent_log_blocked(self): (self.candidate/'agents/a.jsonl').unlink(); self.gate(2)
+    def test_valid_but_unterminated_log_blocked(self):
+        p=self.candidate/'agents/a.jsonl'; p.write_text(p.read_text().rstrip('\n'))
+        self.gate(2)
     def test_truncated_log_blocked(self):
         with (self.candidate/'agents/a.jsonl').open('a') as f: f.write('{broken');
         self.gate(2)
@@ -140,7 +144,7 @@ class ProbeTests(unittest.TestCase):
         # Copied minimal workspace makes every filesystem side effect observable.
         self.league=self.root/'ascon-notes/league'; self.league.mkdir(parents=True)
         (self.league/'load-probe.sh').write_text((LEAGUE/'load-probe.sh').read_text())
-        for ref in ['multi-arb','clean-arb','noop','venue-arb']:
+        for ref in ('multi-arb', 'clean-arb', 'noop', 'venue-arb'):  # load-probe checks its reference agents before even a dry run
             (self.root/'example/agents'/ref).mkdir(parents=True)
         self.stub('memory_pressure', 'echo "System-wide memory free percentage: 5%"')
         self.stub('vm_stat', 'echo "Swapouts: 1."')
@@ -182,6 +186,8 @@ class ProbeTests(unittest.TestCase):
     def test_execution_forwards_port_parallel_and_disk_threshold_with_stub(self):
         (self.bin/'mktemp').unlink()
         self.stub('df','printf "Filesystem 1024-blocks Used Available Capacity Mounted\\nfixture 999999999 0 999999999 0%% /\\n"')
+        for ref in ['multi-arb','clean-arb','noop','venue-arb']:
+            (self.root/'example/agents'/ref).mkdir(parents=True, exist_ok=True)
         matrix=self.root/'ascon-notes/eval/run-matrix.sh'; matrix.parent.mkdir()
         matrix.write_text('#!/bin/bash\n'
             'printf "%s\\n" "$MIN_FREE_GB" "$@" > received.txt\n'

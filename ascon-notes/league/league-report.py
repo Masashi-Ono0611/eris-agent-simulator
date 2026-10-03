@@ -2,17 +2,21 @@
 """Summarize league results with paired inference and diversity recommendations."""
 import argparse
 import json
+import sys
 from collections import defaultdict
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling module also when this file is loaded by path (tests, importlib)
+import g0
 from league_harness import (read, family, analyze, analysis_args, from_args, average, fmt, metric_text, ci_text, stability_text)
 
 
 def render_analysis(data):
-    out = [f"負荷ガード: loopIterations < {data['minimum']} を除外",
+    out = ["採点契約: 全員有限P・同一ロスター・loopIterations=362。シナリオ全体を採用/除外。",
+           f"追加の負荷ガード: loopIterations < {data['minimum']} を除外",
            f"除外シナリオ: {len({(r['regime'],r['seed']) for r in data['low']})}"]
     out += ['警告: ' + w for w in data['warnings']]
     out += [f"- {r['regime']} / {r['seed']}: loopIterations={r['loops']}" for r in data['low']] or ['- なし']
-    out += [f"警告: loopIterations 欠落 {data['missing_loops']} 件（除外せず）",
+    out += [f"警告: loopIterations 欠落 {data['missing_loops']} 件（シナリオ全体を除外）",
             f"全理由の除外シナリオ: {data['excluded_scenarios']}"]
     out += [f"- {r['regime']} / {r['seed']}: {r['reason']}" for r in data['excluded']]
     out += ['', '全体・系統の平均 T はレジーム別平均の等重み平均（観測できたレジームのみ）',
@@ -61,15 +65,28 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('round', help='index.tsv, out directory or round label')
     analysis_args(p)
+    g0.add_args(p)
+    p.add_argument('--allow-unverified', action='store_true')
     p.add_argument('--json', action='store_true')
     p.add_argument('-o', '--output', type=Path)
     a = p.parse_args()
+    gate = None
     try:
-        data = from_args(a)
-        result = json.dumps(data, ensure_ascii=False, indent=2) + '\n' if a.json else render_analysis(data)
-    except (OSError, ValueError) as e: p.error(str(e))
+        gate = g0.from_args(a)
+        warning = '未検証（G0 '+gate['status']+'）' if gate['status'] != 'PASS' else 'G0 PASS'
+        if gate['status'] != 'PASS' and not a.allow_unverified:
+            result = json.dumps(dict(warning=warning,g0=gate),ensure_ascii=False,indent=2) if a.json else warning+'\n'+g0.render(gate)
+            if a.output: a.output.write_text(result,encoding='utf-8')
+            else: print(result)
+            return {'FAIL':1,'BLOCKED':2}[gate['status']]
+        data = from_args(a, expected_ids=gate.get('expected',{}).get('agents'))
+        data.update(g0=gate, verification=warning, allow_unverified=a.allow_unverified)
+        result = json.dumps(data, ensure_ascii=False, indent=2) + '\n' if a.json else warning + '\n\n' + render_analysis(data)
+    except (OSError, ValueError) as e:
+        if gate and gate['status'] != 'PASS': print('未検証（G0 '+gate['status']+'）')
+        p.error(str(e))
     if a.output: a.output.write_text(result, encoding='utf-8')
     else: print(result, end='')
 
 
-if __name__ == '__main__': main()
+if __name__ == '__main__': raise SystemExit(main())

@@ -12,6 +12,8 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 
+from g0_contract import score_record_errors, summary_errors
+
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCES = {'noop', 'multi-arb', 'clean-arb', 'venue-arb', 'basis-arb', 'random', 'crowd', 'inc-zeta'}
 
@@ -57,15 +59,17 @@ def agent_path(root, value):
     return path
 
 
-def read(index):
+def read(index, allow_absolute=False):
     with Path(index).open(newline='', encoding='utf-8') as f:
-        return read_rows(list(csv.DictReader(f, delimiter='\t')))
+        return read_rows(list(csv.DictReader(f, delimiter='\t')), allow_absolute)
 
 
-def read_rows(rows):
+def read_rows(rows, allow_absolute=False):
     locations = []
     for row in rows:
-        try: locations.append(contained_path(ROOT, row.get('run_dir', '')).resolve())
+        try:
+            value = row.get('run_dir', '')
+            locations.append(Path(value).resolve() if allow_absolute and Path(value).is_absolute() else contained_path(ROOT, value).resolve())
         except (ValueError, TypeError, OSError, RuntimeError): locations.append(None)
     counts = Counter(loc for loc in locations if loc is not None)
     keys = Counter((r.get('regime'), r.get('seed')) for r in rows)
@@ -82,15 +86,13 @@ def read_rows(rows):
         if loc is not None:
             try:
                 summary = loc / 'summary.json'
-                if not summary.resolve().is_relative_to(ROOT.resolve()): raise ValueError('summary escapes repo')
+                if not allow_absolute and not summary.resolve().is_relative_to(ROOT.resolve()): raise ValueError('summary escapes repo')
                 s = json.loads(summary.read_text(encoding='utf-8'))
                 if not isinstance(s, dict): raise ValueError('summary object required')
             except (OSError, ValueError):
                 s = {}; reason = reason or 'summary欠測/不正'
-        series = s.get('valueSeries')
-        if not isinstance(series, dict) or not number(series.get('failedReads')) or series['failedReads'] != 0:
-            reason = reason or 'failedReads不正/欠測'
-        if s.get('violations'): reason = reason or 'violationsあり'
+        contract_errors = summary_errors(s)
+        if contract_errors: reason = reason or '; '.join(contract_errors)
         agents = {}
         try:
             if not isinstance(s.get('agents'), list): raise ValueError('agents list required')
@@ -201,15 +203,17 @@ def credit(scores, aid, k):
     return max(0, min(1, (k - above) / tied))
 
 
-def analyze(records, minimum=360, ref='inc-zeta', boot=2000, seed=1, top_k=3, top_n=3, players=None, collect_behavior=True):
+def analyze(records, minimum=360, ref='inc-zeta', boot=2000, seed=1, top_k=3, top_n=3, players=None, collect_behavior=True, expected_ids=None):
     if boot < 1 or top_k < 1 or top_n < 1: raise ValueError('boot, top-k, top-n must be positive')
     low = {(r['regime'], r['seed']) for r in records if minimum > 0 and number(r['loops']) and r['loops'] < minimum}
     excluded = []
+    expected_ids = set(expected_ids) if expected_ids is not None else {aid for r in records for aid in r['agents']}
     scores = defaultdict(dict)
     metrics = defaultdict(list)
     for r in records:
         key = (r['regime'], r['seed'])
-        reason = r['reason'] or (f"loopIterations={r['loops']}" if key in low else None)
+        errors = score_record_errors(r['agents'], r['loops'], expected_ids)
+        reason = r['reason'] or ('; '.join(errors) if errors else None) or (f"loopIterations={r['loops']}" if key in low else None)
         if reason:
             excluded.append(dict(regime=key[0], seed=key[1], reason=reason)); continue
         valid = {aid: a['pnlUsdc'] for aid, a in r['agents'].items()
@@ -292,15 +296,15 @@ def analysis_args(p):
     p.add_argument('--min-loop-iterations', type=int, default=360)
 
 
-def from_args(a):
-    return require_scored(analyze(read(index_path(a.round)), a.min_loop_iterations, a.ref, a.boot, a.seed,
-                   a.top_k, a.top_n, a.players.split(',') if a.players else None))
+def from_args(a, expected_ids=None):
+    return require_scored(analyze(read(index_path(a.round), allow_absolute=True), a.min_loop_iterations, a.ref, a.boot, a.seed,
+                   a.top_k, a.top_n, a.players.split(',') if a.players else None, expected_ids=expected_ids))
 
 
 def roster_agents(path):
     # Reuse the repository's existing YAML dependency, no Python dependency added.
     raw = subprocess.check_output(['node', '-e',
-        'const fs=require("fs"),y=require("yaml"); const r=y.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(JSON.stringify(r.agents.map(a=>({id:a.id,dir:a.dir||a.id,command:!!a.command}))));', str(Path(path).resolve())], cwd=ROOT, text=True)
+        'const fs=require("fs"),y=require("yaml"); const r=y.parse(fs.readFileSync(process.argv[1],"utf8")); console.log(JSON.stringify(r.agents.map(a=>({id:a.id,dir:a.dir||a.id,command:!!a.command,baseline:a.baseline===true}))));', str(Path(path).resolve())], cwd=ROOT, text=True)
     agents = json.loads(raw)
     if not agents or len({a['id'] for a in agents}) != len(agents): raise ValueError('invalid roster ids')
     for a in agents: identifier(a['id'])

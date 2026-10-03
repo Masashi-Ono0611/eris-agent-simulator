@@ -17,7 +17,7 @@ function summary(loopIterations: number, pnl: number[]) {
   ] };
 }
 function reportFixture(loops: number[]) {
-  const dir = mkdtempSync(join(root, "ascon-league-fixture-"));
+  const dir = mkdtempSync(join(root, "test/ascon-league-fixture-"));
   const rows = ["regime\tseed\trun_dir\texit_code"];
   loops.forEach((n, i) => {
     const run = join(dir, `run-${i}`); mkdirSync(run);
@@ -38,11 +38,12 @@ test("make-roster validates actual directories, duplicate ids and marks noop bas
 test("league-report excludes low-loop scenarios globally and aggregates family and regime", () => {
   const f = reportFixture([359, 362]);
   try {
-    const excluded = execFileSync("python3", [report, f.index], { encoding: "utf8" });
+    const excluded = execFileSync("python3", [report, f.index, "--allow-unverified"], { encoding: "utf8" });
     assert.match(excluded, /除外シナリオ: 1/); assert.match(excluded, /calm \/ 1: loopIterations=359/);
     assert.match(excluded, /astra \|/); assert.match(excluded, /系統別平均/);
-    const normal = execFileSync("python3", [report, f.index, "--min-loop-iterations", "0"], { encoding: "utf8" });
-    assert.match(normal, /除外シナリオ: 0/);
+    const normal = execFileSync("python3", [report, f.index, "--allow-unverified", "--min-loop-iterations", "0"], { encoding: "utf8" });
+    assert.match(normal, /全理由の除外シナリオ: 1/);
+    assert.match(normal, /未検証（G0 BLOCKED）/);
     assert.match(normal, /astra-1/); assert.match(normal, /astra-2/); assert.doesNotMatch(normal, /\| noop \|/);
     assert.match(normal, /レジーム別平均 T/);
   } finally { rmSync(f.dir, { recursive: true, force: true }); }

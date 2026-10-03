@@ -1,7 +1,8 @@
+import { practiceTransport } from './transport.js';
 import { access } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { resolve } from 'node:path';
-import { createPublicClient, http } from 'viem';
+import { createPublicClient } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { loadPracticeEnv, type PracticeEnv } from './env.js';
 
@@ -64,7 +65,7 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
   try { practiceEnv = await loadPracticeEnv(); }
   catch (error) { console.error(error instanceof Error ? error.message : 'Practice 環境を読み込めません。'); return 1; }
 
-  const client = createPublicClient({ transport: http(practiceEnv.rpcUrl, { fetchOptions: { headers: practiceEnv.headers } }) });
+  const client = createPublicClient({ transport: practiceTransport(practiceEnv.rpcUrl, practiceEnv.headers) });
   try {
     const account = privateKeyToAccount(practiceEnv.privateKey);
     const balance = await client.getBalance({ address: account.address });
@@ -80,7 +81,7 @@ export async function main(args = process.argv.slice(2)): Promise<number> {
   const env = buildAgentEnv(practiceEnv, { agentDir, agentId, runDir });
   if (dryRun) { console.log(formatDryRun(env)); return 0; }
 
-  const child = spawn(process.execPath, ['--import', 'tsx', 'example/agents/runtime/bot.ts'], { cwd: base, env, stdio: 'inherit' });
+  const child = spawn(process.execPath, ['--import', 'tsx', '--import', './ascon-notes/practice/rpc-guard.ts', 'example/agents/runtime/bot.ts'], { cwd: base, env, stdio: 'inherit' });
   let signalSent = false;
   const forward = (signal: NodeJS.Signals) => { if (!signalSent) { signalSent = true; child.kill(signal); } };
   const onInt = () => forward('SIGINT');

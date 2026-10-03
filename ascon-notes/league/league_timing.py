@@ -7,6 +7,7 @@ from league_harness import number
 def events(path):
     with Path(path).open(encoding='utf-8') as stream:
         for line in stream:
+            if not line.endswith('\n'): raise ValueError('incomplete JSONL line')
             event = json.loads(line)
             if not isinstance(event, dict):
                 raise ValueError('JSONL object required')

@@ -1,5 +1,7 @@
 """Offline regression checks: all shell runners use isolated roots and fake executables."""
 import importlib.util
+import contextlib
+import io
 import json
 import os
 from pathlib import Path
@@ -17,9 +19,7 @@ sys.dont_write_bytecode = True
 def module(relative):
     spec = importlib.util.spec_from_file_location('subject', ROOT / relative)
     mod = importlib.util.module_from_spec(spec)
-    # Match CLI execution: sibling imports resolve relative to the script.
-    with patch.object(sys, 'path', [str((ROOT / relative).parent), *sys.path]):
-        spec.loader.exec_module(mod)
+    spec.loader.exec_module(mod)
     return mod
 
 
@@ -27,6 +27,86 @@ def executable(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
     path.chmod(0o755)
+
+
+class PlayerVerification(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(prefix='ascon-verify-')
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.agent = self.root/'league-fixture/example/agents/fixture'
+        self.agent.mkdir(parents=True)
+        (self.agent/'agent.ts').write_text('export const decide = () => null;')
+        (self.agent/'prompt.md').write_text('---\nkind: improve\nname: fixture\ndescription: test\n---\n')
+        self.test = self.root/'league-fixture/test/fixture.test.ts'
+        self.test.parent.mkdir()
+        self.verify = module('ascon-notes/league/verify-player.py')
+        self.verify.__file__ = str(self.root/'scaffold/ascon-notes/league/verify-player.py')
+
+    def verify_tests(self, source, output, exit_code=0):
+        self.test.write_text(source)
+        def run(command, **kwargs):
+            return subprocess.CompletedProcess(command, exit_code if '--test' in command else 0,
+                                               output if '--test' in command else 'PASS')
+        # Never start Node/npm: only their captured output is under test.
+        with patch.object(self.verify.subprocess, 'run', side_effect=run), \
+                patch.object(sys, 'argv', ['verify-player', 'fixture', '--json']), \
+                contextlib.redirect_stdout(io.StringIO()) as stdout:
+            code = self.verify.main()
+        return code, json.loads(stdout.getvalue())['checks']['tests']
+
+    def test_empty_and_all_skipped_suite_fail(self):
+        for prefix in ('#', 'ℹ'):
+            for source, count in [('// empty file', 0),
+                                  ("import { test } from 'node:test'; test.skip('skipped', () => {});", 1)]:
+                with self.subTest(prefix=prefix, source=source):
+                    output = f'{prefix} tests {count}\n{prefix} pass 0\n{prefix} fail 0\n{prefix} skipped {count}\n'
+                    code, check = self.verify_tests(source, output)
+                    self.assertEqual(code, 1)
+                    self.assertEqual(check, {'status':'FAIL', 'exit_code':0})
+
+    def test_executed_test_required_with_no_failures(self):
+        for prefix in ('#', 'ℹ'):
+            for output, exit_code, expected in [
+                (f'{prefix} pass 1\n{prefix} fail 0\n', 0, 'PASS'),
+                (f'{prefix} pass 1\n{prefix} fail 1\n', 0, 'FAIL'),
+                (f'{prefix} pass 1\n{prefix} fail 0\n', 7, 'FAIL'),
+                (f'{prefix} pass 1\n', 0, 'FAIL'), ('PASS\n', 0, 'FAIL'), ('', 0, 'FAIL')]:
+                with self.subTest(output=output, exit_code=exit_code):
+                    _, check = self.verify_tests('// output fixture', output, exit_code)
+                    self.assertEqual(check['status'], expected)
+
+    def test_imported_lib_forbidden_rpc(self):
+        lib = self.agent.parent/'lib'
+        lib.mkdir()
+        (lib/'helper.ts').write_text("client.request({ method: 'anvil_setBalance' });")
+        for statement in ["import { helper } from '../lib/helper.js';",
+                          "export * from '../lib/helper.js';", "import '../lib/helper.js';",
+                          "require('../lib/helper.js');", "import('../lib/helper.js');"]:
+            with self.subTest(statement=statement):
+                (self.agent/'agent.ts').write_text(statement)
+                self.assertIn('forbidden RPC: ../lib/helper.ts', self.verify.scan(self.agent))
+
+    def test_transitive_runtime_dependency_and_cycle(self):
+        lib = self.agent.parent/'lib'; lib.mkdir()
+        runtime = self.agent.parent/'runtime'; runtime.mkdir()
+        (runtime/'nested').mkdir()
+        (self.agent/'agent.ts').write_text("import '../lib/helper.js';")
+        (lib/'helper.ts').write_text("export * from '../runtime/nested';")
+        helper = runtime/'nested/index.ts'
+        helper.write_text("import '../../lib/helper.js';")
+        self.assertEqual(self.verify.scan(self.agent), [])
+        helper.write_text("import '../../lib/helper.js'; client.request({ method: 'evm_mine' });")
+        self.assertEqual(self.verify.scan(self.agent), ['forbidden RPC: ../runtime/nested/index.ts'])
+
+    def test_shared_dependency_escape_and_missing_import_fail(self):
+        lib = self.agent.parent/'lib'; lib.mkdir()
+        (self.agent/'agent.ts').write_text("import '../lib/helper.js';")
+        for source, error in [("import '../other/agent.js';", 'cross-agent import:'),
+                              ("import './missing.js';", 'unresolved local import:')]:
+            with self.subTest(source=source):
+                (lib/'helper.ts').write_text(source)
+                self.assertTrue(any(e.startswith(error) for e in self.verify.scan(self.agent)))
 
 
 class OfflineTools(unittest.TestCase):
@@ -59,7 +139,7 @@ class OfflineTools(unittest.TestCase):
         dest.write_text('\n'.join(lines) + '\n')
         return dest
 
-    def summary(self, pnl=10, loops=360):
+    def summary(self, pnl=10, loops=362):
         return dict(loopIterations=loops, valueSeries={'failedReads': 0}, agents=[
             {'id': aid, 'pnlUsdc': p} for aid, p in [('candidate', pnl), ('noop', 0), ('multi-arb', 0), ('crowd', 0)]])
 
@@ -111,14 +191,16 @@ class OfflineTools(unittest.TestCase):
         m = module('ascon-notes/league/league-report.py')
         records = []
         for i, (regime, p) in enumerate([('calm', 10), ('calm', 10), ('crash', -10)]):
-            records.append(dict(regime=regime, seed=str(i), loops=360, reason=None,
+            records.append(dict(regime=regime, seed=str(i), loops=362, reason=None,
                 agents={'astra-1': {'pnlUsdc': p}, 'opus-1': {'pnlUsdc': -p}}))
         # Uneven exclusions leave 2 calm runs and 1 crash run: equal weight is 50, not 53.3.
         records.append(dict(records[-1], seed='excluded', reason='failedReads不正'))
         output = m.render(records)
+        # report prints two decimals; the point is equal regime weight (50.00), not the per-run mean (53.33)
         self.assertIn('| astra-1 | 50.00 | 40.00 |', output)
         self.assertIn('| astra | 50.00 |', output)
         self.assertIn('| opus | 50.00 |', output)
+        self.assertNotIn('53.33', output)
 
     def test_roster_ids_are_quoted(self):
         m = module('ascon-notes/league/make-roster.py')
@@ -230,12 +312,11 @@ sys.exit(subprocess.run(['grep', '-E', '-q', sys.argv[-1]], input=os.environ['FA
 
     def probe(self):
         script = self.copy('ascon-notes/league/load-probe.sh')
-        executable(self.bin / 'df', '#!/bin/bash\nprintf "Filesystem 1024-blocks Used Available Capacity Mounted on\\nfixture 999999999 0 999999999 0%% /\\n"\n')
-        for name in ('memory_pressure', 'vm_stat'):
-            executable(self.bin / name, '#!/bin/bash\nexit 1\n')
         for aid in ('multi-arb', 'clean-arb', 'noop', 'venue-arb'):
             (self.root / 'example/agents' / aid).mkdir(parents=True)
         executable(self.root / 'ascon-notes/eval/run-matrix.sh', '#!/bin/bash\ntouch matrix-called\nexit 0\n')
+        # load-probe runs a disk preflight with the real df; a CI runner has ~13 GB free. Stub it so these tests do not depend on the host's disk.
+        executable(self.bin / 'df', '#!/bin/bash\nprintf "Filesystem 1024-blocks Used Available Capacity Mounted\\nfixture 999999999 0 999999999 0%% /\\n"\n')
         return script
 
     def test_load_probe_reused_label_preserves_roster(self):
@@ -259,7 +340,7 @@ sys.exit(subprocess.run(['grep', '-E', '-q', sys.argv[-1]], input=os.environ['FA
             self.assertFalse((self.root / 'matrix-called').exists())
         self.assertEqual(list(script.parent.glob('*roster*')), [])
 
-    def test_release_needs_both_confirmations(self):
+    def test_release_static_only_is_not_ready(self):
         import contextlib
         import io
         import zipfile
@@ -276,14 +357,11 @@ sys.exit(subprocess.run(['grep', '-E', '-q', sys.argv[-1]], input=os.environ['FA
             elif 'infra/submission/scan-submission.py' in command: output = '--- 0 BLOCK, 0 WARN -> ACCEPT\n'
             elif command[:2] == ['git', 'show']: output = 'constants'
             return subprocess.CompletedProcess(command, 0, output)
-        for i, flags in enumerate([[], ['--confirm-backtest'], ['--confirm-selftest'], ['--confirm-backtest', '--confirm-selftest']]):
-            with self.subTest(flags=flags), patch.object(m, 'run', side_effect=fake_run), patch.object(sys, 'argv', ['prepare', '--root', str(self.root), '--source', 'src', '--name', f'out{i}', *flags]), contextlib.redirect_stdout(io.StringIO()) as out:
-                self.assertEqual(m.main(), 0)
-                if len(flags) == 2: self.assertIn('RELEASE READY', out.getvalue())
-                else:
-                    self.assertNotIn('RELEASE READY', out.getvalue())
-                    self.assertIn('静的検査のみ通過', out.getvalue())
-                    self.assertIn('未完:', out.getvalue())
+        with patch.object(m, 'run', side_effect=fake_run), patch.object(sys, 'argv', ['prepare', '--root', str(self.root), '--source', 'src', '--name', 'out']), contextlib.redirect_stdout(io.StringIO()) as out:
+            self.assertEqual(m.main(), 3)
+            self.assertNotIn('RELEASE READY', out.getvalue())
+            self.assertIn('静的検査のみ通過（READY ではない）', out.getvalue())
+
 
 
 if __name__ == '__main__':

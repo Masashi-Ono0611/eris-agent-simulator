@@ -2,7 +2,24 @@
 
 すべて依存追加なし。集計・記録・指示書生成・進捗表示はローカル成果物を読む。
 `confirm-candidate.sh` と `spawn-player.py` は `--dry-run` を外すと実行するので、運営が行う。
-既存の `eval/*` と `run-league.sh` は変更しない。
+集計は共通の G0 採点契約を使う。実行用スクリプトが exit 0 でも選抜許可にはしない。
+
+## ラウンド開始前
+
+予定を観測結果から作らず、開始前に固定する。次の begin は既存 manifest と
+同名の出力ディレクトリがある場合に拒否する。ディレクトリ内全ファイルと prompt の個別 hash、
+roster hash、simulator git SHA、regime / seed、並列度、閾値を保存する。
+
+```bash
+python3 -B ascon-notes/league/round-manifest.py begin round-1 \
+  --roster ascon-notes/league/roster-round-1.yaml \
+  --regimes 'calm cdp-incident launch' --seeds '201 202 203' --parallel 3
+```
+
+`--agent-root` は実際に評価するコード、`--zip` は提出検証時に事前固定する ZIP を指定する。
+`manifests/<label>.json` は作成専用で上書きしない。終了後 `verify <label>` で現在の
+SHA・ファイル集合・内容・ロスター・ZIP・閾値を比較し、不一致なら FAIL。verify は元ファイルを更新しない。
+これは事前記録が存在するラウンドに限る。旧 R1 の開始時同一性は遡及保証しない。
 
 ## ラウンド終了後
 
@@ -11,15 +28,23 @@
 ```bash
 ROUND=round-1
 ROSTER=ascon-notes/league/roster-round-1.yaml
-python3 ascon-notes/league/league-report.py "$ROUND" --ref inc-zeta --top-k 3 --boot 10000 \
+python3 -B ascon-notes/league/round-manifest.py verify "$ROUND"
+python3 -B ascon-notes/league/g0.py "$ROUND" --roster "$ROSTER" \
+  --regimes 'calm cdp-incident launch' --seeds '201 202 203' --manifest "$ROUND" --json > g0.json
+python3 ascon-notes/league/league-report.py "$ROUND" --roster "$ROSTER" \
+  --regimes 'calm cdp-incident launch' --seeds '201 202 203' --manifest "$ROUND" --ref inc-zeta --top-k 3 --boot 10000 \
   -o ascon-notes/league/report-round-1.md
-python3 ascon-notes/league/ledger.py "$ROUND" --roster "$ROSTER" --parallel 2 \
-  --boot 10000 --notes 'round 1; code hashes captured after completion'
+python3 ascon-notes/league/ledger.py "$ROUND" --roster "$ROSTER" --parallel 3 --regimes 'calm cdp-incident launch' --seeds '201 202 203' --manifest "$ROUND" \
+  --boot 10000 --notes 'round 1; begin manifest verified'
 python3 ascon-notes/league/next-gen-brief.py "$ROUND" --generation 2 \
   --survivors astra-1,opus-1 --fresh 'grok-3:在庫中立の新しい収益源' --roster "$ROSTER"
 ```
 
-`league-report.py --json` は全統計を JSON に出す。レポート・ledger・brief は共通の統計コードを使う。
+`league-report.py --json` は G0 と統計を JSON に出す。G0 が FAIL/BLOCKED なら冒頭に
+「未検証」を表示し、既定では順位・脱落推奨を出さず非0で終了する。`--allow-unverified` は
+診断用で表示を残す。ledger は同じ条件で追記を拒否し、override時は行とMarkdownに明記する。
+全員有限P/362loopsを満たさないシナリオの部分採点はoverrideでも行わない。
+G0 の詳細は [DEGRADATION-GATE.md](DEGRADATION-GATE.md)。レポート・ledger・brief は共通の統計コードを使う。
 デフォルト bootstrap は 2000 回、乱数 seed=1、上位 k=3 / N=3。
 レジームごとに元と同数のシナリオを復元抽出し、レジーム等重みで評価する。
 レポートの基準差は各プレイヤーと基準の共通シナリオ、順位は全競争者の共通シナリオで計算する。
@@ -53,6 +78,7 @@ summary の包含数と CSV 行数が一致しない場合は取得不能。ロ�
 Markdown 生成・一時保存は JSONL 追記前。追記後の Markdown 置換失敗は非 0 終了し、JSONL は保持する。
 台帳には top_n / top_k / bootstrap seed / 共通シナリオ数も保存する。
 `--ledger /path/to/ledger.jsonl` で出力先変更、`--name` で記録名変更。
+台帳の `manifest_sha256` は検査した開始時 manifest のハッシュ（無い場合は「未記録」）。
 コードハッシュは **記録時点** のディレクトリ内全ファイル（パスと内容）の SHA256。
 記録後のコード変更で過去行は変えない。実走開始時の版を遡って証明するものではない。
 `--agent-root` とロスターの `dir` を合わせ、実際に評価したコードの保全済みコピーを指定すること。
@@ -121,7 +147,8 @@ run-matrix 成功後に既存 `compare.py --ref multi-arb` を実行し、out �
 
 ```bash
 npm run typecheck
-node --import tsx --test test/ascon-league.test.ts test/ascon-league-harness.test.ts
+python3 -B -m unittest discover -s test -p 'ascon*_test.py'
+node --import tsx --test test/ascon-league.test.ts test/ascon-eval-aggregate.test.ts test/ascon-release-prepare.test.ts test/ascon-practice-transport.test.ts
 ```
 
 新規テストは合成 summary/index/log、モデル・matrix 呼び出しのスタブのみ。

@@ -17,6 +17,13 @@ ENV_RE = re.compile(r'process\.env')
 NUMBER_RE = re.compile(r'numberEnv\(\s*(["\'])ERIS_LAUNCH_[A-Z0-9_]+\1\s*,\s*((?:\d+(?:\.\d+)?|\.\d+)(?:n)?)\s*\)')
 NUMBER_ANY_RE = re.compile(r'numberEnv\s*\(')
 IMPORT_RE = re.compile(r'(?:from\s*|import\s*\(|require\s*\()(["\'])(\.{1,2}/[^"\']+)\1')
+# docs/competition-start.md identifies config/scenarios/public.yaml as the public
+# set. schedule.ts uses (regime, seed) identities; the published Cartesian product
+# is these 12 regimes x 5 seeds (not the league pilot's consecutive seeds).
+PUBLIC_REGIMES = frozenset(('calm', 'cex-drift', 'informed-flow', 'whale',
+                           'lending-incident', 'crash', 'depeg', 'vuln', 'spike',
+                           'depeg-persist', 'cdp-incident', 'launch'))
+PUBLIC_SEEDS = frozenset(('101', '202', '303', '404', '505'))
 
 
 def json_literal(raw):
@@ -82,6 +89,63 @@ def run(root, command):
     return subprocess.run(command, cwd=root, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
+def validate_public_coverage(back):
+    expected = back.get('expected')
+    if not isinstance(expected, dict):
+        raise ValueError('backtest evidence lacks public-60 expectations')
+    axes = {}
+    for name in ('regimes', 'seeds'):
+        values = expected.get(name)
+        allowed_types = (str,) if name == 'regimes' else (str, int)
+        if (not isinstance(values, list) or not values
+                or any(type(value) not in allowed_types for value in values)):
+            raise ValueError('backtest evidence lacks public-60 ' + name)
+        axes[name] = {str(value) for value in values}
+        if len(axes[name]) != len(values):
+            raise ValueError('backtest evidence has duplicate ' + name)
+    if not PUBLIC_REGIMES <= axes['regimes'] or not PUBLIC_SEEDS <= axes['seeds']:
+        raise ValueError('backtest evidence does not cover public-60 scenarios')
+    planned = {(r, s) for r in axes['regimes'] for s in axes['seeds']}
+    runs = back.get('runs')
+    if not isinstance(runs, list):
+        raise ValueError('backtest evidence lacks public-60 runs')
+    seen = set()
+    for run in runs:
+        if (not isinstance(run, dict) or not isinstance(run.get('regime'), str)
+                or type(run.get('seed')) not in (str, int) or run.get('status') != 'PASS'
+                or run.get('failed') != [] or run.get('blocked') != []):
+            raise ValueError('backtest run missing/failed')
+        pair = (run['regime'], str(run['seed']))
+        if pair in seen:
+            raise ValueError('backtest evidence has duplicate scenario runs')
+        seen.add(pair)
+    if seen != planned:
+        raise ValueError('backtest runs do not cover the planned public-60 matrix')
+
+
+def validate_evidence(backtest_path, selftest_path, commit, digest, agent_id):
+    back = json.loads(Path(backtest_path).read_text())
+    test = json.loads(Path(selftest_path).read_text())
+    if not re.fullmatch(r'[0-9a-f]{40,64}', commit) or not re.fullmatch(r'[0-9a-f]{64}', digest):
+        raise ValueError('actual commit/ZIP hash missing')
+    for evidence in (back, test):
+        if not isinstance(evidence, dict) or evidence.get('status') != 'PASS': raise ValueError('evidence not PASS')
+        if evidence.get('commit') != commit or evidence.get('zip_sha256') != digest:
+            raise ValueError('evidence commit/ZIP SHA-256 mismatch')
+    validate_public_coverage(back)
+    if (back.get('schema') != 'ascon-g0-v1' or back.get('failed') != [] or back.get('blocked') != []
+            or back.get('manifest_verified') is not True or not re.fullmatch(r'[0-9a-f]{64}', back.get('manifest_sha256',''))
+            or agent_id not in back.get('expected',{}).get('agents',[])):
+        raise ValueError('backtest evidence lacks verified G0 provenance/agent')
+    if (test.get('schema') != 'ascon-selftest-v1' or type(test.get('exit_code')) is not int or test['exit_code'] != 0
+            or test.get('command') != 'agent:selftest' or test.get('agent_id') != agent_id
+            or not isinstance(test.get('stdout'), str) or not test['stdout'].strip()):
+        raise ValueError('selftest output missing/failed')
+    if (not re.search(r'^\[3/3\] PASS ' + re.escape(agent_id) + r': completed the self-test at memory cap ', test['stdout'], re.M)
+            or not re.search(r'^Report: .+[/\\]summary\.json\s*$', test['stdout'], re.M)):
+        raise ValueError('selftest completion/report output missing')
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument('--source', required=True)
@@ -90,23 +154,26 @@ def main():
     p.add_argument('--epsilon-params')
     p.add_argument('--root', default=str(Path(__file__).resolve().parents[2]))
     p.add_argument('--dry-run', action='store_true')
+    p.add_argument('--verify-existing', action='store_true', help='check the previously prepared directory/ZIP without copying or rebundling')
     p.add_argument('--skip-checks', action='store_true')
-    p.add_argument('--confirm-backtest', action='store_true', help='attest that public-60 backtest passed for this release')
-    p.add_argument('--confirm-selftest', action='store_true', help='attest that agent:selftest passed for this release')
+    p.add_argument('--backtest-evidence', type=Path, help='G0 PASS JSON bound to a pre-run manifest and this ZIP')
+    p.add_argument('--selftest-evidence', type=Path, help='ascon-selftest-v1 JSON output envelope')
     p.add_argument('--upstream-ref', default='HEAD')
     a = p.parse_args()
     root = Path(a.root).resolve()
     src, dst = root/'example/agents'/a.source, root/'example/agents'/a.name
     failures = []
     if not src.is_dir(): failures.append(f'ソースがありません: {src}')
-    if dst.exists(): failures.append(f'出力先が既に存在します: {dst}')
+    if dst.exists() and not a.verify_existing: failures.append(f'出力先が既に存在します: {dst}')
+    if a.verify_existing and not dst.is_dir(): failures.append('prepared output missing')
     for raw, label in ((a.delta_params, 'delta'), (a.epsilon_params, 'epsilon')):
         if raw is not None:
             try: json.loads(raw)
             except Exception as e: failures.append(f'{label} JSON 不正: {e}')
     if failures:
         print('\n'.join(failures)); print('NOT READY'); return 1
-    tmp = shutil.copytree(src, dst) if not a.dry_run else None
+    tmp = shutil.copytree(src, dst) if not a.dry_run and not a.verify_existing else None
+    if a.verify_existing: failures.extend(inspect_tree(dst))
     try:
         if tmp:
             for f in tmp.rglob('*'):
@@ -138,6 +205,7 @@ def main():
             ('bundle', ['node','--import','tsx','scripts/bundleAgent.ts',a.name]),
         ]
         for label, cmd in commands:
+            if a.verify_existing and label == 'bundle': continue
             res = run(root, cmd); checks.append((label, res.returncode == 0, res.stdout[-1200:]))
         if zip_path.exists():
             res = run(root, ['python3','infra/submission/scan-submission.py',str(zip_path)])
@@ -171,14 +239,16 @@ def main():
     if failures:
         for x in failures: print(f'FAIL: {x}')
         print('NOT READY'); return 1
-    pending = []
-    if not a.confirm_backtest: pending.append('public-60 backtest')
-    if not a.confirm_selftest: pending.append('agent:selftest')
-    if pending:
-        print(f'静的検査のみ通過（未完: {" / ".join(pending)}）')
-    else:
-        print('RELEASE READY')
+    if not a.backtest_evidence or not a.selftest_evidence:
+        print('静的検査のみ通過（READY ではない）: backtest/selftest evidence required')
+        return 3
+    try:
+        validate_evidence(a.backtest_evidence, a.selftest_evidence, commit, digest, a.name)
+    except (OSError, ValueError, TypeError, KeyError) as e:
+        print('NOT READY: ' + str(e)); return 1
+    print('RELEASE READY')
     return 0
+
 
 
 if __name__ == '__main__': sys.exit(main())
