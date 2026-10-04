@@ -19,8 +19,7 @@ SIGNER = "本人委任のAstra決定"
 FINDINGS = ([f"C{i}" for i in range(1, 6)] + [f"W{i}" for i in range(6, 14)] +
             [f"S{i}" for i in range(14, 19)])
 
-PRIOR_LOG_DIGEST = "adfdd960ecaa49c7fa63ae656ab22e01df9e4be3ea39e9f52aa1e3e699105d61"
-HUMAN_DECISION_DIGEST = "322893cdbe2bff6e30d688d9eb7787090243d13d1fcbd4db8ba2be1df992da71"
+PRIOR_LOG_DIGEST = "2d41bce950f66f7b06c2e2a567a84d019d05f0201cb529b31f1691b9eb4c19e2"
 
 
 def digest(value):
@@ -68,12 +67,12 @@ _RESULT_LINES = [
     "PASS Q0b: old 60-world result, G0 2-world FAIL and mean-T FAIL retained; no rescue rerun",
     "PASS budget: KEEP 100 h (G3 17.2, deep 9.7); archived unsigned AMEND 100 h; Q0 priority 5 h",
     "PASS queue: repair/rediagnosis -> Q0 -> acceptance; AI execution blocked by full-cost/evidence gates",
-    "PASS decisions: 6 delegated Astra decisions with origin/signer/JST; human-only accounts/money remain pending",
+    "PASS decisions: 6 delegated Astra decisions with origin/signer/JST; Ollama registration/settings are user-reported; prepayment deferred",
     "PASS Q0: A unchanged; 1 new 60-world attempt; extra P/u1m conditions rejected; revert cap prospective only",
     "PASS AI: ENTRY_BPS 20-60, max step 5; R* ON3/OFF1 + S full = 216 worlds / 17.2 h; no epoch learning carryover",
     "PASS cutover: Oct 17 evidence gates select H480 / S240 / no campaign; no fresh deep exploration",
     "PASS schedule/review: 28 JST dates, 18 findings, five roadmap steps match dashboard",
-    "PASS preservation: prior 52 logs and dec-007/008 unchanged; old safety nulls retained",
+    "PASS preservation: prior 60 logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
     "LIMIT: static consistency only; raw runs, actual hours, strategy safety, browser layout and acceptance unverified",
     "PASS check-plan-consistency",
 ]
@@ -146,11 +145,11 @@ def check_documents(document, html, morning, m1, ai):
     require([int(r["順序"]) for r in queue] == list(range(1, len(QUEUE)+1)), "queue numbers")
     require([r["実験ID"] for r in queue] == QUEUE, "queue priority")
     require(all(r["状態"] and r["窓"] and r["依存・停止"] for r in queue), "queue gates missing")
-    expected_queue = [("0", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
+    expected_queue = [("12", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
                       ("60", "143/30"), ("60", "13/3"), ("36", "13/5"),
                       ("0", "未見積"), ("48", "52/15"), ("48", "52/15"), ("60", "13/3")]
     require([(r["世界数"], r["全量見積h"]) for r in queue] == expected_queue, "queue worlds/hours")
-    require(queue[0]["状態"] == "修理・再診断待ち" and queue[1]["状態"] == "証跡精算のみ・再走なし" and
+    require(queue[0]["状態"] == "dev2再診断中・結果待ち" and queue[1]["状態"] == "証跡精算のみ・再走なし" and
             queue[2]["状態"] == "条件付き決定・実行停止" and queue[5]["状態"] == "不採用・旧未署名記録", "repair/requalification/archive state")
     require(all(queue[i]["状態"] == "停止" for i in (4, 6, 7)), "qualification queue needs Q0 evidence")
     require(queue[11]["状態"] == "不採用・0h配分", "M2 must remain zero allocation")
@@ -214,13 +213,15 @@ def check_documents(document, html, morning, m1, ai):
         require((q["priority"], q["state"], q["worlds"], q["hours"], q["window"], q["dependency"]) ==
                 (int(r["順序"]), r["状態"], int(r["世界数"]), None if r["全量見積h"] == "未見積" else r["全量見積h"], r["窓"], r["依存・停止"]),
                 "dashboard queue row differs: "+r["実験ID"])
-    require(all(not q["active"] for q in dq), "post-failure experiments cannot be active")
+    require(dq[0]["active"] is True and all(not q["active"] for q in dq[1:]),
+            "only existing dev2 diagnosis may be active; Q0 and downstream remain blocked")
     milestones = data["milestones"]["items"]
     require([(m["date"], m["title"], m["dependency"], m["stop"]) for m in milestones] ==
             [(r["日付"], r["主な出口"], r["依存"], r["停止・反転条件"]) for r in schedule], "dashboard schedule differs")
     decisions = {d["id"]: d for d in data["decisions"]["items"]}
-    for identity, due in (("dec-008", "2026-10-07"), ("dec-007", "2026-10-28")):
-        require(decisions[identity]["status"] == "open" and decisions[identity]["due_date"] == due,
+    for identity, due, state in (("dec-008", "2026-10-07", "resolved"), ("dec-007", "2026-10-28", "open")):
+        require(decisions[identity]["status"] == state and decisions[identity]["due_date"] == due and
+                decisions[identity]["date"] == "2026-10-03",
                 "existing human operation changed: "+identity)
     require(decisions["dec-amend"]["status"] == "unsigned", "no automatic amendment signature")
     # Revision 6 records explicit delegated decisions, never a forged Masashi signature.
@@ -242,15 +243,15 @@ def check_documents(document, html, morning, m1, ai):
                 "human-only scope disclosure")
         require("凍結性能は改訂ON性能の代用にならない" in doc, "ON evidence boundary")
         require("17.2h" in doc and "9.7h" in doc and "10/17" in doc, "allocation and cutover prose")
-    require(data["decisions"]["human_only"]["status"] == "本人の承認・確認待ち" and
-            data["decisions"]["human_only"]["items"] == ["Ollama鍵登録", "API金銭上限", "自動チャージ", "残高"],
-            "human-only operations must stay pending")
+    require(data["decisions"]["human_only"]["status"] == "現在の本人作業なし" and
+            data["decisions"]["human_only"]["items"] == ["10/28 dec-007再確認", "無料枠不足時の前払い判断（G3見積もり後）"],
+            "no current human task; final recheck and conditional prepayment remain future work")
     require(all(decisions[i]["status"] == "decided" for i in ("dec-step1-policy", "dec-q0-keep", "dec-original", "dec-forward")),
             "prior settled decisions must stay decided")
     ac = data["plan"]["ai_contract"]
     require(ac["status"] == "decided" and ac["name"] == "AI-G3-01" and ac["origin"] == ORIGIN and
             ac["signer"] == SIGNER and ac["signed_at"] == decisions["dec-ai-contract"]["signed_at"], "AI delegated signature")
-    require(ac["execution_status"] == "blocked-evidence-and-costs" and ac["api_budget_status"] == "本人の承認待ち",
+    require(ac["execution_status"] == "blocked-evidence-and-costs" and ac["api_budget_status"] == "無料枠不足時の前払い判断はG3見積もり後",
             "decision is not execution/money approval")
     require((ac["on_repeats"], ac["off_repeats"], ac["market_cells"]) == (3, 1, 36), "AI repetition contract")
     worlds = ac["market_cells"] * (ac["on_repeats"] + ac["off_repeats"])
@@ -312,9 +313,33 @@ def check_documents(document, html, morning, m1, ai):
     require("現状Q0資格不可" in document and "現状Q0資格不可" in ai and "延期済み" in data["status"]["notice"],
             "current state not success")
     # Immutable historical entries: corrections are new logs, never edits of prior events.
-    prior = [log for log in data["log"]["items"] if log["id"] in {f"log-{i:03}" for i in range(1, 53)}]
-    require(len(prior) == 52 and digest(prior) == PRIOR_LOG_DIGEST, "prior 52 log entries changed")
-    require(digest([decisions[i] for i in ("dec-007", "dec-008")]) == HUMAN_DECISION_DIGEST, "human operation entries changed")
+    prior = [log for log in data["log"]["items"] if log["id"] in {f"log-{i:03}" for i in range(1, 61)}]
+    require(len(prior) == 60 and digest(prior) == PRIOR_LOG_DIGEST, "prior 60 log entries changed")
+    dev2 = data["status"]["dev2"]
+    require((dev2["state"], dev2["verified"], dev2["field"], dev2["worlds"], dev2["regimes"], dev2["seeds"], dev2["fix_commit"]) ==
+            ("running-results-pending", False, "F_ref", 12, 6, "31001/31002", "2ae0d59"), "dev2 diagnostic handoff")
+    require(dev2["result"] is None and dev2["completed_at"] is None and
+            dev2["expected_end"] == "2026-10-04T15:50:00+09:00" and "結果待ち" in dev2["note"],
+            "dev2 forecast is not a measured result/completion")
+    report = data["decisions"]["ollama_report"]
+    require(report["evidence_kind"] == "本人報告" and report["registration"] == "accepted-display-reported" and
+            report["cloud_key_and_email_match"] == "confirmed-by-user", "Ollama report provenance")
+    require((report["plan"], report["free_usage"], report["balance_usd"], report["auto_reload"]) ==
+            ("Free", "0%", "0", "Off"), "reported Ollama account settings")
+    require(report["free_models"] == ["gemma4:31b", "gpt-oss:120b", "gpt-oss:20b", "nemotron-3-nano:30b", "nemotron-3-super", "nemotron-3-ultra"] and
+            report["assumed_model"] == "gpt-oss:120b" and report["assumption_approved_by_user"] is True,
+            "reported models and approved assumption")
+    require(all(report[k] is False for k in ("official_model_list_verified", "free_quota_sufficiency_verified", "key_connectivity_verified")),
+            "unverified provider checks cannot become confirmed")
+    require(report["clipboard_cleared"] == "reported-by-user" and report["attentionctl_status"] == "resolved-reported",
+            "clipboard/attentionctl are user reports")
+    require(data["blockers"]["items"][0]["title"] == "第1ブロッカー=Q0契約クリア: xb-r再診断中",
+            "Q0 contract is first blocker")
+    progress = {i["id"]: i for i in data["progress"]["items"]}
+    require(progress["progress-dev2"]["state"] == "running" and progress["progress-xbr-requal"]["state"] == "blocked" and
+            progress["progress-ollama"]["state"] == "done", "diagnosis/qualification/registration states are separate")
+    require([i["id"] for i in data["log"]["items"][:-60]] == [f"log-{i:03}" for i in range(len(data["log"]["items"]), 60, -1)],
+            "logs must be consecutive and prepended")
     roadmap = table(document, "ai-roadmap")
     protocols = {p["id"]: p for p in data["plan"]["protocol"]}
     step_ids = ["protocol-first", "protocol-ai-min", "protocol-ai-eval", "protocol-sealed", "protocol-ai-release"]
@@ -369,6 +394,16 @@ def self_check(documents):
         mutate("decisions", lambda d: next(x for x in d["items"] if x["id"] == "dec-ai-scope").update(signed_at="")),
         mutate("decisions", lambda d: next(x for x in d["items"] if x["id"] == "dec-008").update(status="closed")),
         mutate("decisions", lambda d: d["human_only"].update(status="approved")),
+        mutate("decisions", lambda d: next(x for x in d["items"] if x["id"] == "dec-008").update(status="open")),
+        mutate("decisions", lambda d: d["ollama_report"].update(evidence_kind="measured")),
+        mutate("decisions", lambda d: d["ollama_report"].update(official_model_list_verified=True)),
+        mutate("decisions", lambda d: d["ollama_report"].update(free_quota_sufficiency_verified=True)),
+        mutate("decisions", lambda d: d["ollama_report"].update(key_connectivity_verified=True)),
+        mutate("decisions", lambda d: d["ollama_report"].update(auto_reload="On")),
+        mutate("status", lambda d: d["dev2"].update(result="PASS")),
+        mutate("status", lambda d: d["dev2"].update(completed_at="2026-10-04T15:50:00+09:00")),
+        mutate("status", lambda d: d["dev2"].update(verified=True)),
+        mutate("log", lambda d: d["items"][0].update(id="log-999")),
         mutate("budget", lambda d: d["rows"][6].update(keep_hours="14.9")),
         mutate("results", lambda d: d["q0b_summary"].update(reverts=0)),
         mutate("queue", lambda d: d["items"][2].update(active=True)),

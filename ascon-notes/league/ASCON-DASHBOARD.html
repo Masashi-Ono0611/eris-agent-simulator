@@ -159,6 +159,18 @@
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
       "title": "dev1-xb-r measured引継ぎ",
       "locator": "§1.5。本人提示の12世界診断結果、原ログ再監査なし"
+    },
+    {
+      "id": "src-xbr-debug",
+      "path": "ascon-notes/league/XB-R-DEV1-DEBUG-2026-10-04.md",
+      "title": "Astra dev1診断・修正検証記録",
+      "locator": "§1/4/5。calm/31001の原ログ診断とfixture、修正後チェーン性能は未検証"
+    },
+    {
+      "id": "src-ollama-report",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "Ollama本人報告・残る確認",
+      "locator": "§10。2026-10-04 15:07頃 JSTの受理表示提示、秘密値なし・本更新の画面/API監査なし"
     }
   ]
 }
@@ -169,14 +181,16 @@
 {
   "sources": [
     "src-master",
-    "src-ai"
+    "src-ai",
+    "src-xbr-debug",
+    "src-ollama-report"
   ],
-  "as_of": "2026-10-04T15:00:11+09:00",
+  "as_of": "2026-10-04T16:10:48+09:00",
   "measurement_as_of": null,
-  "last_update": "rev 6: 本人委任でAstraが6論点を決定。xb-r診断は全世界P−noop=0.0・取引0、修理/再診断を最優先。G3 17.2hへ振替、技術実行条件と本人金銭/鍵操作は未成立。",
+  "last_update": "rev 6維持。dev1の無取引原因と修正2ae0d59を反映。dev2は結果待ち。Ollama登録受理は本人報告、dec-008 resolved・現在の本人作業なし。league/v2未push・PR未作成。",
   "phase_id": "phase-first",
-  "headline": "xb-rは取引なし。修理・再診断から現Q0へ。",
-  "subhead": "6論点はAstra決定済み。dev1はG0 PASSの診断だがQ0資格不可。受理Sを先に確保する。",
+  "headline": "Q0契約クリアが第1ブロッカー。xb-r再診断中。",
+  "subhead": "dev1は全世界P−noop=0.0・取引0。修正後dev2は結果待ちで、性能・資格は未確認。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -195,11 +209,12 @@
     {
       "id": "metric-xbr",
       "label": "現在の優先経路",
-      "value": "修理・再診断",
-      "note": "dev1全12世界P−noop=0.0・取引0、現状Q0資格不可",
-      "tone": "bad",
+      "value": "dev2 結果待ち",
+      "note": "Q0契約クリア: xb-r再診断中。修正後の性能・取引成立は未確認",
+      "tone": "warn",
       "sources": [
-        "src-dev1"
+        "src-dev1",
+        "src-xbr-debug"
       ]
     },
     {
@@ -244,8 +259,8 @@
       ]
     }
   ],
-  "notice": "10/8延期済み。Q0維持・forward100h・独自戦略のみは既決。AI契約は決定済み、実装/全費用/資格は未成立。Ollama鍵・API上限・自動チャージ・残高は本人確認待ち。",
-  "measurement_note": "dev1-xb-r: measured引継ぎ、G0 PASS・362ループ・12世界、全世界P−noop=0.0。cand取引0、361回の見送り理由。正確な完了時刻/hash/占有費は未提示、原ログ再監査なし。",
+  "notice": "10/8延期済み。rev 6のQ0維持・forward100h・AI契約は既決。Ollama鍵登録受理と設定は本人報告。現在の本人作業なし、10/28 dec-007。無料枠不足時の前払い判断はG3見積もり後。",
+  "measurement_note": "dev1-xb-r: measured引継ぎ、G0 PASS・362ループ・12世界、全世界P−noop=0.0。cand取引0、361回の見送り理由。正確な完了時刻/hash/占有費は未提示、原ログ再監査なし。 dev2-xb-rは修正後・同条件の再診断が走行中との引継ぎ。完了見込み15:50 JST頃は経過したが、結果未確認のため結果待ち。",
   "dev1": {
     "name": "dev1-xb-r",
     "state": "measured-diagnostic-complete",
@@ -264,9 +279,50 @@
     "skip_count_scope": "提示ログの回数。全12世界合計への外挿なし",
     "multi_arb_p_approx": "1300",
     "q0_eligible": false,
-    "cause": "調査中（別ジョブ）",
+    "cause": "オラクルの優先手数料6gweiを競合入札と誤認し、R4要求6.1gweiが実行上限5gweiを超えて全候補落ち",
     "sources": [
-      "src-dev1"
+      "src-dev1",
+      "src-xbr-debug"
+    ],
+    "field": "F_ref"
+  },
+  "dev2": {
+    "name": "dev2-xb-r",
+    "state": "running-results-pending",
+    "evidence_basis": "今回の進行中引継ぎ。live再監査なし",
+    "verified": false,
+    "field": "F_ref",
+    "worlds": 12,
+    "regimes": 6,
+    "seeds": "31001/31002",
+    "fix_commit": "2ae0d59",
+    "expected_end": "2026-10-04T15:50:00+09:00",
+    "expected_end_basis": "本人提示の概算見込み（頃）。完了確認ではない",
+    "completed_at": null,
+    "result": null,
+    "note": "dev2-xb-rは修正後・同条件の再診断が走行中との引継ぎ。完了見込み15:50 JST頃は経過したが、結果未確認のため結果待ち",
+    "sources": [
+      "src-master",
+      "src-xbr-debug"
+    ]
+  },
+  "commits": {
+    "plan": [
+      "f5e8e6a",
+      "c2aeb72",
+      "0c910c1"
+    ],
+    "xbr": [
+      "ad04879",
+      "a042a70",
+      "2ae0d59"
+    ],
+    "branch": "league/v2",
+    "pushed": false,
+    "pr_created": false,
+    "evidence_basis": "今回引継ぎ。リモート再照会なし",
+    "sources": [
+      "src-master"
     ]
   }
 }
@@ -291,7 +347,7 @@
     "p=3・等速・CPU排他・入力固定。Q0b全60世界とG0/平均Tの旧FAIL保持、資格救済再走なし。",
     "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。",
     "AI権限はENTRY_BPSだけ。20–60bps・初期60・刻み5・最大±5/60block。固定テンプレート、return/submit外側ゲート、安全state保持。",
-    "dev1診断完了・取引0。別ジョブで修理中のxb-r/テストへ介入せず、修理hash/再診断/費用を待つ。"
+    "dev1診断は取引0。修正2ae0d59後のdev2結果待ち。計測/戦略/テストへ介入せず、取引成立/G0/安全/hash/費用の照合後にQ0再資格。"
   ],
   "protocol": [
     {
@@ -304,7 +360,7 @@
       "id": "protocol-ai-min",
       "title": "Step2 限定AI最小版",
       "body": "S受理後〜10/12目安。入口: S・cal・受付境界/許可model/全費用",
-      "exit": "ENTRY_BPSのみ・適用/拒否/復帰・epoch間学習なし。権限はAstra決定済み。実装費未見積、金銭上限/鍵は本人確認待ち"
+      "exit": "ENTRY_BPSのみ・適用/拒否/復帰・epoch間学習なし。権限はAstra決定済み。実装費未見積、鍵登録受理は本人報告。無料枠不足時の前払いはG3見積もり後"
     },
     {
       "id": "protocol-ai-eval",
@@ -346,7 +402,7 @@
       "id": "gate-q",
       "title": "現G2-Q / 初回資格",
       "state": "xb-r現状資格不可",
-      "resolve": "A現行維持。dev1は全世界P−noop=0.0・取引0。修理/再診断→hash/新seed/5h枠成立→追加1候補1回。P/F_u1m追加は不採用、revert上限は新資格だけ採用。",
+      "resolve": "A現行維持。dev1は全世界P−noop=0.0・取引0。修正後dev2結果待ち。xb-r取引成立→hash/新seed/5h枠成立→追加1候補1回。P/F_u1m追加は不採用、revert上限は新資格だけ採用。",
       "sources": [
         "src-dev1",
         "src-delegation"
@@ -384,7 +440,7 @@
       "id": "gate-g4",
       "title": "G4 / 提出適合・受理",
       "state": "未実施",
-      "resolve": "clean release、型/関連検査・strategy・P60・bundle scan・selftest・住所bytes・同一commit/ZIP・ci-local full。本人の鍵登録と受理メール。",
+      "resolve": "clean release、型/関連検査・strategy・P60・bundle scan・selftest・住所bytes・同一commit/ZIP・ci-local full。鍵登録受理は本人報告済み。ZIPの受理メールは未確認。",
       "sources": [
         "src-master",
         "src-checklist"
@@ -419,7 +475,7 @@
     "d_control_worlds": 48,
     "d_control_base_hours": "52/15",
     "d_control_cost_status": "unreserved",
-    "api_budget_status": "本人の承認待ち",
+    "api_budget_status": "無料枠不足時の前払い判断はG3見積もり後",
     "sources": [
       "src-ai",
       "src-delegation"
@@ -461,7 +517,7 @@
     "field": "F_ref",
     "hours_cap": "5",
     "within_deep": true,
-    "hash_status": "修理中・未確定",
+    "hash_status": "Q0用固定hashはdev2結果・担当照合待ちで未確定",
     "seed_audit_status": "担当証跡待ち",
     "execution_status": "blocked-repair-rediagnosis-hash-cost",
     "extra_p_vs_multi": false,
@@ -558,9 +614,9 @@
     {
       "id": "day-2026-10-04",
       "date": "2026-10-04",
-      "title": "rev 6・6論点を本人委任でAstra決定、dev1診断結果反映",
-      "dependency": "本人の明示委任・measured引継ぎ",
-      "stop": "xb-r資格不可。別ジョブ・計測worktree/鍵へ介入なし",
+      "title": "rev 6維持・dev1原因/修正反映、dev2結果待ち、dec-008 resolved",
+      "dependency": "measured診断と本人報告を区別",
+      "stop": "xb-r資格不可。見込み15:50 JST頃経過後も結果未確認。計測/鍵へ介入なし",
       "state": "running",
       "highlight": true,
       "decision_refs": [
@@ -575,9 +631,9 @@
     {
       "id": "day-2026-10-05",
       "date": "2026-10-05",
-      "title": "xb-r原因調査・修理・再診断の担当証跡",
-      "dependency": "全世界取引0の原因・修理hash/G0/安全/費用",
-      "stop": "診断をQ0認定にしない。原因不明/取引なしならQ0開始なし",
+      "title": "xb-r dev2再診断の担当証跡を照合",
+      "dependency": "修正2ae0d59後の取引成立・hash/G0/安全/費用",
+      "stop": "診断をQ0認定にしない。結果未確認/取引なしならQ0開始なし",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
@@ -605,10 +661,10 @@
     {
       "id": "day-2026-10-07",
       "date": "2026-10-07",
-      "title": "dec-008: 最小Ollama確認と本人鍵登録",
-      "dependency": "service/model/枠/料金・登録の確認",
-      "stop": "鍵登録と受理は別。初ZIP時にも対応関係を照合",
-      "state": "blocked",
+      "title": "dec-008: 10/4本人報告でresolved（旧期日）",
+      "dependency": "受理表示・Cloud鍵/代表者メール一致・無料枠画面の本人確認",
+      "stop": "現在の本人作業なし。未確認のモデル照合/無料枠量/鍵疎通は10/28 dec-007へ",
+      "state": "done",
       "highlight": true,
       "decision_refs": [
         "dec-008"
@@ -1058,11 +1114,11 @@
     {
       "id": "progress-g4",
       "workstream": "初回受理",
-      "title": "G4・鍵登録・受理",
+      "title": "G4・ZIP送信・受理",
       "state": "blocked",
-      "evidence": "dec-008はopen。送信と受理を分け、受理済み版をまだ指名しない。",
+      "evidence": "dec-008は本人報告でresolved。鍵登録受理とZIP受理を分け、G4/受理済み版は未確認。",
       "sources": [
-        "src-handoff",
+        "src-ollama-report",
         "src-master"
       ]
     },
@@ -1146,7 +1202,7 @@
       "workstream": "探索",
       "title": "限定AI受付・ON反復",
       "state": "blocked",
-      "evidence": "ENTRY_BPSだけ・epoch reset・R*三反復＋S fullを決定。機械的境界/実装/全費用は未成立、本人API承認待ち。",
+      "evidence": "ENTRY_BPSだけ・epoch reset・R*三反復＋S fullを決定。機械的境界/実装/全費用は未成立、無料枠不足時の前払い判断はG3見積もり後。",
       "sources": [
         "src-ai",
         "src-delegation"
@@ -1155,12 +1211,44 @@
     {
       "id": "progress-xbr-requal",
       "workstream": "初回受理",
-      "title": "xb-r修理・再診断とQ0資格",
+      "title": "Q0契約クリア（xb-r再診断中）",
       "state": "blocked",
-      "evidence": "現状資格不可。取引なしの原因は別ジョブで調査中。修理後のhash/再診断・seed監査・5h枠成立が先。",
+      "evidence": "修正2ae0d59後のdev2結果待ち。xb-r取引成立・G0/安全・hash/seed監査・5h枠成立がQ0再資格の前提。",
       "sources": [
         "src-dev1",
+        "src-xbr-debug",
         "src-delegation"
+      ]
+    },
+    {
+      "id": "progress-xbr-fix",
+      "workstream": "基盤",
+      "title": "xb-r 無取引原因の修正",
+      "state": "done",
+      "evidence": "[measured・Astra診断] オラクルの優先手数料6gweiを競合入札と誤認し、R4要求6.1gweiが実行上限5gweiを超えて全候補落ち。2ae0d59で公開ブロックから実行先ごとの競合入札を取得するよう修正。112テスト・赤対照19・回帰3件が旧コードで赤。本人独立再実行の引継ぎあり。本更新で再実行なし、修正後チェーン性能は未測定。",
+      "sources": [
+        "src-xbr-debug",
+        "src-master"
+      ]
+    },
+    {
+      "id": "progress-dev2",
+      "workstream": "計測",
+      "title": "dev2-xb-r 再診断・結果待ち",
+      "state": "running",
+      "evidence": "dev2-xb-rは修正後・同条件の再診断が走行中との引継ぎ。完了見込み15:50 JST頃は経過したが、結果未確認のため結果待ち。F_ref・seed31001/31002・6レジーム12世界、修正2ae0d59後。",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "progress-ollama",
+      "workstream": "初回受理",
+      "title": "Ollama鍵登録受理（本人報告）",
+      "state": "done",
+      "evidence": "[本人報告] 2026-10-04 15:07頃 JST、運営フォームの鍵登録受理表示を本人が提示。Ollama Cloud鍵・代表者メール一致は本人確認。画面はFree・無料枠0%・残高$0・Auto-reload Off。無料枠モデル一覧はgemma4:31b、gpt-oss:120b、gpt-oss:20b、nemotron-3-nano:30b、nemotron-3-super、nemotron-3-ultra。許可モデルは既定例gpt-oss:120bを前提に進める（本人了承）。dec-008=resolved、attentionctl記録済み。クリップボードの鍵は本人が消去済み（本人報告）。 運営公表モデル一覧との照合・無料枠の量の十分性・鍵の疎通は未確認で、10/28 dec-007で再確認。本人のやることは現在なし。無料枠不足時の前払い判断は将来のG3見積もり後で、支払承認ではない。",
+      "sources": [
+        "src-ollama-report"
       ]
     }
   ]
@@ -1191,16 +1279,17 @@
     {
       "id": "B01",
       "rank": 1,
-      "title": "第1ブロッカー: xb-r取引なし、修理・再診断からQ0へ",
+      "title": "第1ブロッカー=Q0契約クリア: xb-r再診断中",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "dev1 measured: G0 PASS・362loops・12世界だが全世界P−noop=0.0、cand取引0、multi-arb同世界P約1300。原因は別ジョブで調査中。",
-      "mitigation": "修理/再診断→A現Q0（追加1候補1回）→最小改訂適合/G3/G4→受理S。hash/seed/費用証跡が先。",
-      "status": "open",
+      "evidence": "[measured] dev1は全12世界P−noop=0.0・取引0。オラクルの優先手数料6gweiを競合入札と誤認し、R4要求6.1gweiが実行上限5gweiを超えて全候補落ち。2ae0d59で公開ブロックから実行先ごとの競合入札を取得するよう修正。dev2結果待ち。",
+      "mitigation": "dev2で取引成立/G0/安全/hash/費用を照合→A現Q0（追加1候補1回）→最小改訂適合/G3/G4→受理S。修正だけで性能を認定しない。",
+      "status": "mitigating",
       "sources": [
         "src-dev1",
+        "src-xbr-debug",
         "src-delegation"
       ]
     },
@@ -1240,17 +1329,16 @@
     {
       "id": "B04",
       "rank": 4,
-      "title": "Ollama・鍵登録・受理の依存",
+      "title": "Ollamaモデル照合・無料枠量・鍵疎通の未確認",
       "severity": "Critical",
       "likelihood": "中",
       "impact": "致命",
       "owner": "human",
-      "evidence": "dec-008 10/7・dec-007 10/28はopen。鍵登録/API上限/自動チャージ/残高は本人確認待ち。",
-      "mitigation": "本人が確認し秘密なしの結果だけ記録。Astra委任を金銭/鍵操作の承認としない。",
-      "status": "open",
+      "evidence": "[本人報告] dec-008 resolved、登録受理表示・Cloud鍵/代表者メール一致を確認。Free・無料枠0%・残高$0・Auto-reload Off。gpt-oss:120b前提を本人了承。",
+      "mitigation": "運営公表モデル一覧との照合・無料枠の量の十分性・鍵の疎通は未確認で、10/28 dec-007で再確認。本人のやることは現在なし。無料枠不足時の前払い判断は将来のG3見積もり後で、支払承認ではない。",
+      "status": "mitigating",
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-ollama-report"
       ]
     },
     {
@@ -1342,11 +1430,12 @@
       "likelihood": "高",
       "impact": "中",
       "owner": "Claude",
-      "evidence": "rev 5のコード記録にはclosure/clock期限分岐。dev1は完了診断だがhash/費用は未提示、別ジョブが修理中。",
+      "evidence": "修正2ae0d59・112テスト/赤対照19/旧コード回帰3件赤の記録。dev2は結果待ち、実行hash/G0/費用/取引成立は未照合。",
       "mitigation": "別ジョブのhash/clock固定再生/取引成立の再診断証跡を受領。編集中コードへ資格認定を移さない。",
       "status": "mitigating",
       "sources": [
-        "src-ai"
+        "src-xbr-debug",
+        "src-master"
       ]
     },
     {
@@ -1423,7 +1512,7 @@
       "impact": "中",
       "owner": "Astra",
       "evidence": "revision 6で6論点を本人委任に基づきAstraが決定し、dev1 measured結果と正本データを同期。",
-      "mitigation": "未実装/全費用/資格/受理の証跡を後続で更新。本人金銭/鍵は未確認のまま。",
+      "mitigation": "未実装/全費用/資格/受理の証跡を後続で更新。登録受理と設定は本人報告済み、前払い判断はG3見積もり後。",
       "status": "resolved",
       "sources": [
         "src-master",
@@ -1444,20 +1533,20 @@
   "items": [
     {
       "id": "queue-dev1-evidence",
-      "title": "xb-r修理・再診断と担当証跡",
+      "title": "xb-r dev2再診断・結果待ち",
       "owner": "Claude",
-      "active": false,
+      "active": true,
       "sources": [
         "src-master",
-        "src-ai"
+        "src-xbr-debug"
       ],
       "experiment": "dev1-evidence",
       "priority": 1,
-      "state": "修理・再診断待ち",
-      "worlds": 0,
+      "state": "dev2再診断中・結果待ち",
+      "worlds": 12,
       "hours": null,
-      "window": "別ジョブの診断修理後",
-      "dependency": "dev1全世界P−noop=0.0・取引0。原因/hash/費用を照合、取引成立とG0/安全の再診断が先"
+      "window": "引継ぎ見込み10/4 15:50 JST頃（結果未確認）",
+      "dependency": "2ae0d59修正後、F_ref・6レジーム×31001/31002。取引成立/G0/安全/hash/費用を照合してからQ0。dev1の取引0と旧FAILは保持"
     },
     {
       "id": "queue-q0b-evidence",
@@ -1489,7 +1578,7 @@
       "worlds": 60,
       "hours": "5",
       "window": "修理再診断・hash/seed/費用成立後",
-      "dependency": "A維持、新41301–41305の未使用性監査、1候補1回。deep内5h留保、超過/不足は開始しない",
+      "dependency": "A維持、dev2でxb-rの取引成立を確認後、新41301–41305の未使用性監査、1候補1回。deep内5h留保、超過/不足は開始しない",
       "active": false,
       "title": "A現Q0・追加1候補1回"
     },
@@ -1570,7 +1659,7 @@
       "worlds": 36,
       "hours": "13/5",
       "window": "P60/資格・最小改訂policy後",
-      "dependency": "ON/OFF最小校正・実適用/復帰・機械的境界。本人モデル/鍵準備、金銭費は本人承認待ち",
+      "dependency": "ON/OFF最小校正・実適用/復帰・機械的境界。gpt-oss:120b前提を本人了承・鍵登録受理は本人報告。無料枠不足時の前払い判断はG3見積もり後",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1647,7 +1736,7 @@
       ]
     }
   ],
-  "note": "6論点は決定済み。dev1は完了診断だが取引0のため修理/再診断が最優先。新規計測は本更新から起動しない。",
+  "note": "第1ブロッカー=Q0契約クリア: xb-r再診断中。修正後dev2結果待ちで、Q0以降は停止中。本人の現在作業なし。本更新で新規計測は起動しない。",
   "day_limit_hours": 6,
   "bundle": "Q0再資格5hをdeep内優先留保。AI G3は17.2hへ振替済み、追加実装/D/下流費は全量成立まで未解放。"
 }
@@ -1666,7 +1755,7 @@
   "start_at": "2026-10-04T01:00:00+09:00",
   "consumed_lower_bound_hours": "18.6",
   "consumed_exact_hours": null,
-  "note": "確認済み過去実測下限18.6hは据置。Q0b概算とdev1未精算を実測残枠にしない。KEEPはG3へ5.2h振替済み、AMENDは旧未署名比較の履歴。Q0/受理優先、API金銭/鍵は本人確認待ち。",
+  "note": "確認済み過去実測下限18.6hは据置。Q0b概算とdev1未精算を実測残枠にしない。KEEPはG3へ5.2h振替済み、AMENDは旧未署名比較の履歴。Q0/受理優先。鍵登録受理は本人報告済み、無料枠不足時の前払い判断はG3見積もり後。",
   "columns": [
     {
       "id": "budget-keep",
@@ -2533,10 +2622,11 @@
   "research": [
     {
       "id": "research-dev1",
-      "title": "dev1-xb-r: 修理・再診断が先",
-      "text": "G0 PASS・362ループ・12世界（6レジーム×31001/31002）。全世界P−noop=0.0、cand取引0、361回 no funded positive net edge at an affordable bid。同世界multi-arb P約1300。原因調査中、現状Q0資格不可。",
+      "title": "dev1無取引の原因修正・dev2結果待ち",
+      "text": "[measured] dev1: F_ref・G0 PASS・362ループ・12世界（6レジーム×31001/31002）、全世界P−noop=0.0、取引0、361回 no funded positive net edge at an affordable bid。同世界multi-arb P約1300。オラクルの優先手数料6gweiを競合入札と誤認し、R4要求6.1gweiが実行上限5gweiを超えて全候補落ち。2ae0d59で公開ブロックから実行先ごとの競合入札を取得するよう修正。dev2-xb-rは修正後・同条件の再診断が走行中との引継ぎ。完了見込み15:50 JST頃は経過したが、結果未確認のため結果待ち。修正後チェーン性能は未測定。",
       "sources": [
-        "src-dev1"
+        "src-dev1",
+        "src-xbr-debug"
       ]
     },
     {
@@ -2693,7 +2783,7 @@
       ],
       [
         "母集団",
-        "12世界（6レジーム×seed31001/31002）",
+        "F_ref・12世界（6レジーム×seed31001/31002）",
         "既見の開発集合。Q0・E3・Hへ転用しない"
       ],
       [
@@ -2713,8 +2803,8 @@
       ],
       [
         "原因",
-        "調査中（別ジョブ）",
-        "原因を断定せず、修理・再診断が先"
+        "オラクルの優先手数料6gweiを競合入札と誤認し、R4要求6.1gweiが実行上限5gweiを超えて全候補落ち",
+        "Astra診断のmeasured記録。calm/31001と再構成fixtureの診断で、他11世界は再集計なし"
       ]
     ],
     "note": "本人提示measured。原ログ再監査なし、完了時刻未提示。",
@@ -2736,7 +2826,7 @@
     "src-master",
     "src-handoff"
   ],
-  "date_note": "6論点は2026-10-04の本人明示委任に基づくAstra決定。signed_atは今回の決定記録時刻で本人委任の発言時刻ではない。dec-008/007は従来ID/期日/openを維持。鍵登録/API金銭上限/自動チャージ/残高は本人の承認・確認待ち。",
+  "date_note": "6論点の本人委任によるAstra決定・署名は維持。dec-008は今回の本人報告でresolved（旧期日10/7）、dec-007は10/28 open。現在の本人作業なし。本人報告は本更新の画面/API監査ではない。",
   "items": [
     {
       "id": "dec-original",
@@ -2778,11 +2868,10 @@
       "date": "2026-10-03",
       "due_date": "2026-10-07",
       "title": "初回前Ollama最小確認＋本人鍵登録",
-      "status": "open",
-      "note": "方針は決定済み、実行完了はopen。本人が専用フォームに鍵を貼り付ける。",
+      "status": "resolved",
+      "note": "[本人報告] 2026-10-04 15:07頃 JST、運営フォームの鍵登録受理表示を本人が提示。Ollama Cloud鍵・代表者メール一致は本人確認。画面はFree・無料枠0%・残高$0・Auto-reload Off。無料枠モデル一覧はgemma4:31b、gpt-oss:120b、gpt-oss:20b、nemotron-3-nano:30b、nemotron-3-super、nemotron-3-ultra。許可モデルは既定例gpt-oss:120bを前提に進める（本人了承）。dec-008=resolved、attentionctl記録済み。クリップボードの鍵は本人が消去済み（本人報告）。 運営公表モデル一覧との照合・無料枠の量の十分性・鍵の疎通は未確認で、10/28 dec-007で再確認。本人のやることは現在なし。無料枠不足時の前払い判断は将来のG3見積もり後で、支払承認ではない。",
       "sources": [
-        "src-prior",
-        "src-handoff"
+        "src-ollama-report"
       ]
     },
     {
@@ -2791,7 +2880,7 @@
       "due_date": "2026-10-28",
       "title": "最後にOllama・ZIP・枠・鍵を再確認",
       "status": "open",
-      "note": "初回確認では代替しない。最終G4の後、送信前に本人が確認。原決定日は未記録、日付は資料記録日。",
+      "note": "初回確認では代替しない。最終G4の後、送信前に本人が確認。原決定日は未記録、日付は資料記録日。 運営公表モデル一覧との照合・無料枠の量の十分性・鍵の疎通も再確認。初回はgpt-oss:120b前提を本人了承。",
       "sources": [
         "src-master",
         "src-handoff"
@@ -2967,19 +3056,46 @@
     }
   ],
   "human_only": {
-    "status": "本人の承認・確認待ち",
+    "status": "現在の本人作業なし",
     "items": [
-      "Ollama鍵登録",
-      "API金銭上限",
-      "自動チャージ",
-      "残高"
+      "10/28 dec-007再確認",
+      "無料枠不足時の前払い判断（G3見積もり後）"
     ],
     "decision_refs": [
       "dec-008",
       "dec-007"
     ],
     "sources": [
-      "src-delegation"
+      "src-ollama-report"
+    ],
+    "note": "運営公表モデル一覧との照合・無料枠の量の十分性・鍵の疎通は未確認で、10/28 dec-007で再確認。本人のやることは現在なし。無料枠不足時の前払い判断は将来のG3見積もり後で、支払承認ではない。"
+  },
+  "ollama_report": {
+    "evidence_kind": "本人報告",
+    "reported_at_note": "2026-10-04 15:07頃 JST",
+    "registration": "accepted-display-reported",
+    "cloud_key_and_email_match": "confirmed-by-user",
+    "plan": "Free",
+    "free_usage": "0%",
+    "balance_usd": "0",
+    "auto_reload": "Off",
+    "free_models": [
+      "gemma4:31b",
+      "gpt-oss:120b",
+      "gpt-oss:20b",
+      "nemotron-3-nano:30b",
+      "nemotron-3-super",
+      "nemotron-3-ultra"
+    ],
+    "assumed_model": "gpt-oss:120b",
+    "assumption_approved_by_user": true,
+    "official_model_list_verified": false,
+    "free_quota_sufficiency_verified": false,
+    "key_connectivity_verified": false,
+    "clipboard_cleared": "reported-by-user",
+    "attentionctl_status": "resolved-reported",
+    "sources": [
+      "src-ollama-report"
     ]
   }
 }
@@ -3001,6 +3117,63 @@
   ],
   "note": "追記専用・記録時刻の降順。同時刻は許可。正確な出来事時刻がない履歴は移行時刻で追記し、対象日と時刻根拠を併記。既存entryは訂正せず[誤り]を追加。",
   "items": [
+    {
+      "id": "log-065",
+      "timestamp": "2026-10-04T16:10:48+09:00",
+      "type": "計画変更",
+      "summary": "rev 6の決定を維持: ENTRY_BPSのみ20–60bps/初期60/±5bps、G3 17.2h、deep 9.7h、Q0=A、vuln G0 FAIL保持・再走なし、新資格revert≤1件/60世界かつ≤0.1%（遡及なし）。計画f5e8e6a/c2aeb72/0c910c1、xb-r ad04879/a042a70/2ae0d59。league/v2未push・PR未作成。",
+      "sources": [
+        "src-master",
+        "src-delegation"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる追記時刻。出来事の正確な時刻未記録。Ollama約15:07・dev2見込み約15:50は本人引継ぎであり完了時刻ではない。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-064",
+      "timestamp": "2026-10-04T16:10:48+09:00",
+      "type": "決定",
+      "summary": "[本人報告] 2026-10-04 15:07頃 JST、運営フォームの鍵登録受理表示を本人が提示。Ollama Cloud鍵・代表者メール一致は本人確認。画面はFree・無料枠0%・残高$0・Auto-reload Off。無料枠モデル一覧はgemma4:31b、gpt-oss:120b、gpt-oss:20b、nemotron-3-nano:30b、nemotron-3-super、nemotron-3-ultra。許可モデルは既定例gpt-oss:120bを前提に進める（本人了承）。dec-008=resolved、attentionctl記録済み。クリップボードの鍵は本人が消去済み（本人報告）。 運営公表モデル一覧との照合・無料枠の量の十分性・鍵の疎通は未確認で、10/28 dec-007で再確認。本人のやることは現在なし。無料枠不足時の前払い判断は将来のG3見積もり後で、支払承認ではない。",
+      "sources": [
+        "src-ollama-report"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる追記時刻。出来事の正確な時刻未記録。Ollama約15:07・dev2見込み約15:50は本人引継ぎであり完了時刻ではない。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-063",
+      "timestamp": "2026-10-04T16:10:48+09:00",
+      "type": "計画変更",
+      "summary": "[進行中] dev2-xb-rは修正後・同条件の再診断が走行中との引継ぎ。完了見込み15:50 JST頃は経過したが、結果未確認のため結果待ち。第1ブロッカー=Q0契約クリア: xb-r再診断中。取引成立を前提に修理後Q0再資格へ。",
+      "sources": [
+        "src-master"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる追記時刻。出来事の正確な時刻未記録。Ollama約15:07・dev2見込み約15:50は本人引継ぎであり完了時刻ではない。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-062",
+      "timestamp": "2026-10-04T16:10:48+09:00",
+      "type": "実装",
+      "summary": "[measured・Astra診断] オラクルの優先手数料6gweiを競合入札と誤認し、R4要求6.1gweiが実行上限5gweiを超えて全候補落ち。2ae0d59で公開ブロックから実行先ごとの競合入札を取得するよう修正。112テスト・赤対照19・旧コードで回帰3件赤。本人独立再実行の引継ぎあり、本更新では再実行なし。修正後チェーン性能は未測定。",
+      "sources": [
+        "src-xbr-debug",
+        "src-master"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる追記時刻。出来事の正確な時刻未記録。Ollama約15:07・dev2見込み約15:50は本人引継ぎであり完了時刻ではない。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-061",
+      "timestamp": "2026-10-04T16:10:48+09:00",
+      "type": "実測",
+      "summary": "[measured] dev1-xb-r: F_ref・31001/31002・6レジーム12世界・G0 PASS・362ループ。全世界P−noop=0.0、取引0、361回の見送り理由。同世界multi-arb P約1300。",
+      "sources": [
+        "src-dev1"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる追記時刻。出来事の正確な時刻未記録。Ollama約15:07・dev2見込み約15:50は本人引継ぎであり完了時刻ではない。",
+      "event_date": "2026-10-04"
+    },
     {
       "id": "log-060",
       "timestamp": "2026-10-04T15:00:11+09:00",
