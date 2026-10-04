@@ -1,55 +1,118 @@
 # ASCON ダッシュボードの更新手順
 
-正本は [ASCON-DASHBOARD.html](ASCON-DASHBOARD.html)。計画・結果・判断・履歴を表示する**唯一の要約HTML**とし、他の summary HTML は退役する。旧 `summary-2026-10-03.html` は削除し、過去版はgit履歴で参照する。upstream製品の `dashboard/index.html` は対象外。
+[ASCON-DASHBOARD.html](ASCON-DASHBOARD.html) は外部リソース不要の単一HTMLアプリです。ダッシュボードの正本データはHTML内の `application/json` ブロックだけです。画面・比較値・件数・進捗はそのデータから描画します。MASTERは計画の契約・根拠資料として照合し、HTMLの外から自動取得しません。
 
-## 更新場所
+ブラウザでファイルを開くと概要が表示されます。`#results`、`#decisions`、`#log` などで直接ページを指定でき、戻る・進むにも対応します。保存後の更新はファイルの再読み込みで反映します。実行中プロセスやサービスをポーリングする機能はありません。
 
-HTML冒頭の `<!-- BEGIN data-… -->` と `<!-- END data-… -->` の間にある `<script type="application/json" id="data-…">` だけを編集する。図・表・件数・バーはインラインJSが生成する。表示用JS/CSSに事実や測定値を足さない。
+## 画面構成
 
-Q0b完了への移行では、終了見込みの固定表示を `status.measurement_note` の表示へ置き換え、`results.q0b` の表を描画する汎用処理だけを追加した。以後の更新は上記データブロック内で完結する。完了/集計時刻が未提示なら `measurement_as_of` / `q0b.completed_at` は `null`、終了済みなら `q0b.expected_end` は `null` とし、記録時刻を実測時刻へ代入しない。
-
-| ブロック | 編集する内容 |
+| ページ | 表示する内容 |
 |---|---|
-| `data-sources` | `sources` 配列。出典ID、repo root相対の `path`、資料名、節/表の位置 |
-| `data-status` | `as_of`、測定資料の時点、`last_update`、現在phase、Q0bなどの状態 |
-| `data-plan` / `data-phases` | 目標・制約・競技手順・ゲート / 各phaseの期間と状態 |
-| `data-milestones` | 日程・依存・停止条件・既決判断への参照。翌週表示もここから生成 |
-| `data-progress` | workstream別の項目と状態、証拠。完了数は登録項目数に対する比率 |
-| `data-blockers` | 順位、重要度、可能性、影響、owner、根拠、対策、状態。定性判断を実測確率と呼ばない |
-| `data-queue` | 優先順、owner、条件、全量見積h、active。`null` は未見積で0hではない |
-| `data-budget` | 消費実測下限、解釈、KEEP/AMEND配分と会計区分。分数文字列で保持 |
-| `data-results` | 生成表のheader/rows、比較条件、単位、診断/資格の別。`source_table` は転記元との照合指定 |
-| `data-decisions` | 本人判断日/資料記録日、期日、状態。方針決定と実行完了を分ける |
-| `data-log` | JST時刻・種類・一行要約・出典・時刻根拠・出来事の対象日 |
+| 概要 | 現在地の一文、最優先ブロッカーと確認項目、本人が今やること、重要イベント3件、次のマイルストーン |
+| 全体計画 | 日付付き5 Stepロードマップ、締切、ゲート、重要日程、全28日の詳細 |
+| 進捗・結果 | 診断／資格試験の切替、候補比較、run・母集団・出所、原表、進捗台帳と過去の記録 |
+| ブロッカー・リスク | 優先順位、原因、影響、対応、担当。未解消／解消済み／全件の切替 |
+| 判断 | 本人の予定、登録報告、委任決定、署名・原判断・旧案の詳細 |
+| 実行キュー・予算 | 開始・完了見込み・結果確認状態、依存付きキュー、100h枠の予約と実消化の区別 |
+| 更新ログ | 既存65件すべて。全文検索＋種類＋記録日（JST）の絞り込み。IDは小さな注記だけ |
+| 用語集 | 49語。名前・略語・説明検索、分類フィルタ、参照資料 |
 
-## 時刻の規則（2026-10-04 追加）
-- すべて JST（+09:00）で記録する。この Mac のタイムゾーンは Asia/Kuala_Lumpur（UTC+8）で JST と 1 時間ずれるため、現在時刻は必ず `TZ=Asia/Tokyo date` で取る。commit 時刻は `git log --format=%cI` のオフセット付き表記から換算する。
-- 出来事の正確な時刻が不明なものは「移行時刻」で追記し、`time_basis` に根拠を書く（Astra が初回に作った移行時刻 09:15:12 JST は実際の作成時刻で正しい）。
+本文の専門語はページ内の初出に `ⓘ` を付け、クリック／キーボードで説明を開きます。Escapeで閉じ、元のボタンへフォーカスを戻します。図表の原語・署名のAstra表記は保存し、現担当はCodexで統一しています。
 
-## 更新の約束
+システムフォント、明示したライト背景、青1色＋状態色を使用。状態には記号と文字を併記します。スマホは16pxの左右余白、表はラベル付き縦並びに切り替えます。動きを減らすOS設定に対応し、印刷用CSSはありません。
 
-- IDはASCII英数字とハイフン、全ブロックで一意。既存IDは再利用しない。例：`progress-q0b`、`B15`、`log-040`。既存の `dec-007` / `dec-008` は維持する。
-- 日付は `YYYY-MM-DD`、時刻は秒付き `YYYY-MM-DDTHH:mm:ss+09:00`。画面はJST。毎回 `as_of` と `last_update` を更新する。測定時点を更新時刻で上書きしない。
-- 数字は**生成済みの表からそのまま転記し、手計算で導出しない**。原表の桁・単位・母集団・seed・G0状態を保持。チャート幅や件数の表示計算だけをJSに任せる。出典が不明なら `null` / 未確認とする。
-- 数値/判断を持つ行・表には `sources: ["src-…"]` を付ける（同じブロックの共通出典を継承可）。リンクは `data-sources.sources[].path` に集約し、repo root相対・実在ファイルにする。外部URL・絶対path・`..`・symlinkを使わない。今回保護された測定出力にはリンクせず、生成表を保存したMarkdownを出典にする。
-- progressは `done/running/pending/failed/blocked`。FAILの測定が終了しても合格やREADYにしない。blockerのseverity/likelihood/impactとownerは明示し、解消には証拠を付ける。
-- queueは依存ゲートを先に更新し、priorityを連続番号にする。現優先は修正後dev2再診断（結果待ち）→現Q0→受理S。dev2だけactive、Q0以降は停止。dev1は本人提示のmeasured診断完了・取引なし。原ログ/live監査とは分け、診断完了を資格PASSへ遷移させない。
-- budgetは実測・推定・全量予約・枠外履歴を分ける。各列の合計を `total_hours` に一致させる。実消費は担当者が生成した開始/終了区間の和集合から転記。夜間/日境界や失敗を消さず、未署名案を現行配分へ混ぜない。
-- **ログは追記のみ、歴史を書き換えない。訂正は `[誤り]` の新entryを追加する。** JSON配列の先頭に新しい記録を追加し、時刻は非増加（同時刻可）にする。typeは `実測/決定/実装/レビュー/計画変更/誤り` のいずれか。古い出来事を今追記する場合、timestampは記録時刻、event_dateは対象日、time_basisに「時刻未記録」と明記。架空の分単位時刻は作らない。
+## 編集するデータ
 
-## revision 6の保守契約
+`<!-- BEGIN data-… -->` と `<!-- END data-… -->` の間だけを更新します。`ui.schema_version` は `"2"`。既存12ブロックを保持し、`ui` と `glossary` を追加した14ブロック構成です。
 
-- 正本は[MASTER rev 6](MASTER-PLAN-2026-10-04.md)、AI契約詳細は[AI設計](DESIGN-AI-LAYER-01-astra.md)。決定出所は「本人が 2026-10-04 に Astra へ判断を委任。Astra が決定」。署名者は「本人委任のAstra決定」、署名日時は今回のJST決定記録時刻。本人の署名や過去の発言時刻を偽装しない。hash/未使用性/全費用の未確認を署名空欄や本人再承認待ちへ戻さない。
-- `decisions`の6件は`decided`で、`origin`/`signer`/`signed_at`を持ち、rendererが表示する`note`にも出所・署名を含める。dec-007/008のID・元の日付/期日は保持。本人報告に基づきdec-008はresolved、dec-007は10/28 open。登録受理・設定は本人報告と明記し、モデル公式一覧照合/無料枠量/鍵疎通は未確認。現在の本人作業なし、無料枠不足時の前払い判断はG3見積もり後。
-- `plan.protocol`はMASTERの`ai-roadmap`と一致。`ai_parameters`はENTRY_BPSだけ、20–60/初期60/刻み5/最大±5bps/60block。`ai_contract`はR* ON3/OFF1＋S full=216世界・17.2h、epoch間学習持越しなし。決定と実装/資格/受理を混同しない。
-- KEEP予算はG3へ5.2hを振替済み（17.2h）、deepは9.7h（うち新Q0 5hを優先留保）。M2=0h。両列合計100hを維持し、AMEND列は旧未署名比較の履歴として選択不可。AI専用E3/Q1・D・実装・追加修理の全費用は未確保。API金銭費/将来の条件付き前払い判断/未精算dev1・dev2をAir空き枠や0hへ変えない。
-- `q0_requalification`はA現行維持、修理済み1候補1回/60世界。追加P条件・全世界P−noop≥0・F_u1m等の採否はMASTER §4.1に明記。`revert_contract`は新資格各60世界で≤1件かつ≤0.1%、旧結果へ遡及しない。`cutover`は10/17 18:00 JSTのH480/S240/未実施条件。6件の判断を未決表示へ戻さない。
-- `status.dev1.state=measured-diagnostic-complete`は本人が今回提示したmeasured結果。`verified=false`は原ログ/live再監査をしていない意味で、提示された実測を未測定へ戻すものではない。G0 PASS/362loops/12世界でも全世界P−noop=0.0・取引0で`q0_eligible=false`。`progress-dev1=done`は診断の終了だけ、資格は別のblocked項目。正確な完了時刻/hash/占有費は未提示のまま。
-- Q0bの旧60世界表/安全nullスナップショット/2世界G0 FAIL/平均T FAILは保存し、救済再走なし。DESIGN-REPAIR-01は変更せず、未署名案の追加条件/費用を現在の採用条件にしない。
-- HTMLはJSONブロックだけ変更し、renderer/CSSは維持。既存60ログは完全保存、今回log-061〜065を先頭へ連番追加（配列順は065→061）。新診断の原表はMASTER §1.5に保存し、データ表と汎用researchカード/現在地へ反映する。
-- 規約/Ollamaページ取得はrev 5の記録であり今回再取得なし。未来日付表示と適用確認を区別。秘密/認証画面/計測領域を読む同期経路を作らない。
+| ブロック | 更新する内容 |
+|---|---|
+| `data-sources` | 出典ID・repo root相対 `path`・資料名・節。生ログや秘密へのリンクは禁止 |
+| `data-status` | 更新時刻、概要、本人作業、最優先項目、dev1/dev2/dev3、修理記録、重要イベント、次の目標 |
+| `data-plan` | rev・締切、ルール、Stepの期間／状態／平易なラベル、各ゲート、AI・資格・失敗上限の契約 |
+| `data-phases` | 工程の期間・状態・停止条件。既存の工程IDを保持 |
+| `data-milestones` | 28日分の予定・依存・停止条件。MASTERのschedule表と一致させる |
+| `data-progress` | 作業単位の状態・根拠。最優先バーは `priority.progress_refs` の完了数だけを数える |
+| `data-blockers` | 順位、重要度、可能性、影響、`impact_note`（何が困るか）、根拠、対応、担当、状態 |
+| `data-queue` | 優先順、現在の実行、依存、全量見積もり。MASTERのnext-24h表と一致させる |
+| `data-budget` | 100hの予約配分、枠内消化、過去の実測下限、推定、旧未採用列。分数を保持 |
+| `data-results` | 原表、診断／資格別の比較定義、数値への参照、runラベル、母集団、出典 |
+| `data-decisions` | 決定・元の日付・期日・担当・委任出所・署名、Ollama本人報告 |
+| `data-log` | 全履歴。JST時刻、種類、要約、出所、時刻根拠、対象日 |
+| `data-glossary` | 用語ID、名称、別名、分類、平易な定義。初出説明と用語集で共用 |
+| `data-ui` | ページ定義、KPIの参照、表示文、ロードマップ目盛り、省いた重複。事実をJSに直接追加しない |
 
-**checker変更理由**: rev 6の契約は維持し、今回の本人指示に合わせてdev2結果待ち/dec-008 resolved/現在の本人作業なしを検証する。旧「全キュー停止」「dec-007/008 open固定・オブジェクト不変」は現在事実と衝突するため、dev2だけactive、dec-008 resolved・元の日付/期日保持、dec-007 openに置換した。既存60ログはdigestで保存を確認。本人報告をmeasuredへ変える、未確認のモデル/枠/鍵疎通を確認済みにする、dev2に結果/完了時刻を入れる反例など計39件を拒否する。旧結果・予算・表・6決定・ゲート検査は維持し、合否閾値は緩和しない。
+KPIの `ref`、比較表の `scope_ref` / `run_ref` / `candidate_ref` / `baseline_ref` は `status.dev2.result.p_candidate` のようなJSON参照です。同じ値をrendererへ転記しません。`ui.copy` は概要や判定の表示文です。数値を更新したら、文の判定・状態も根拠に合わせます。`source_table` のある原表は指定Markdownの桁・列・母集団をそのまま保持します。
+
+`null` は未確認／未見積です。0に置換しません。現在の `consumed_forward_hours=null` と `consumed_exact_hours=null` は未精算の意味です。過去の実測下限18.6hを100hから引いた残量や、経過時間からの計測進行率は表示しません。予算の棒は予約配分、最優先の進捗は確認項目数であり、実消化率・合格率ではありません。
+
+## 更新手順
+
+1. 秘密値を含まない担当者の引継ぎ／生成表で事実を確認する。本人が確認した設定は「本人報告」、提示計測値は「measured引継ぎ」、推定と未確認は別にする。
+2. 該当するJSONを更新し、数値・run・seed・レジーム・場・G0・時刻根拠・出所をそろえる。要約、比較判定、進捗、ブロッカー、キュー、重要イベントに旧状態が残っていないか確認する。
+3. 計画や新しい引継ぎの原表をMASTERへ反映する。今回の最新値はMASTER §1.6、用語はAppendix B。契約はrevision 6を維持する。ロードマップの期間は開始を許可するものではない。
+4. `status.as_of` と `last_update` を更新する。時刻はJSTで取得する。測定開始／完了時刻へ更新時刻を代入しない。
+5. 下記の軽量検査を実行し、未検証の境界を引き継ぐ。commitは今回の依頼では行わない。
+
+JSTは `TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z'`、またはPython `ZoneInfo('Asia/Tokyo')` で取得します。保存形式は秒付き `YYYY-MM-DDTHH:mm:ss+09:00`。日付は `YYYY-MM-DD`。Macの現地時刻（UTC+8）をJSTとして保存しません。
+
+IDは全ブロックで一意。progressは `done/running/pending/failed/blocked`、担当は `human/Claude/Codex`。署名の原記録にあるAstraは改名しません。出所は既存ファイルに限り、絶対path・`..`・外部URL・symlink・`upstream-eval`・生の測定出力・秘密への参照を入れません。
+
+ログは追記のみ。訂正は新しい `誤り` エントリにし、時刻を降順に保ちます。今回の再構成では65件を全件・全フィールドそのまま維持し、新しい引継ぎは `status.recent` の3件とMASTER §1.6へ表示しました。今後ログを追加する際も既存65件のdigestを変更しません。既存の原時刻が不明なら、記録時刻と `time_basis` を明示し、出来事の分単位の時刻を作らないでください。
+
+## 現在の証拠・計画境界
+
+- dev2-xb-rはmeasured引継ぎ。F_ref、31001/31002、6レジーム12世界、G0 PASS。平均P 149.0/1352.2、平均取引数44.8/300.9、診断平均T44.36/56.84。全世界P−noop正・最小+147.7、noop割れ／違反／revertは0。原表の細かい桁は `DEV2-XB-R-REPAIR.md` の別表を維持。資格合格にはしない。
+- a646e9bの123テスト・赤対照25件は既存の検査記録の引継ぎ。今回の再実行結果ではない。
+- dev3a-xb-rはF_ref、35001/35002、9レジーム18世界、10/4 16:24 JST開始、17:40頃完了見込み。結果・G0・完了数・完了時刻はnull。残り3レジームは第2チャンク。見込み時刻が過ぎても自動で完了にしない。旧AI D対照案の同seedは再利用せず、将来実行前に未使用集合の登録が必要。
+- Q0/Q0bの旧不合格・Q0bの2世界G0 FAIL・安全nullスナップショットを保持。救済再走なし。新Q0は1候補1回60世界・41301–41305・5h上限。ゲートやrevert上限の緩和なし。
+- 委任済み6決定は確定状態・出所・署名日時を保持。KEY/金銭を委任へ拡張しない。Ollamaの登録・Free・残高$0・Auto-reload Off・クリップボード消去は本人報告。dec-008 resolved、dec-007は10/28 open、現在の本人作業はなし。モデルの運営一覧・無料枠量・疎通は未確認。
+- KEEP配分は100h、G3 17.2h・deep 9.7h（Q0 5h優先）・M2 0h。旧AMENDも100hの履歴として保存。全費用未確保を実行許可や残り時間へ読み替えない。10/17 18:00の分岐、10/31 23:59 JST締切を保持。
+
+## 検査
+
+repo rootから、依存のインストールなしで実行します。Python標準ライブラリとNode組込み機能のみです。
+
+```sh
+python3 -B ascon-notes/league/check-plan-consistency.py --self-check
+node ascon-notes/league/dashboard-ui-check.mjs --dump /tmp/ascon-rendered-pages.json
+python3 -B ascon-notes/league/dashboard-check.py --self-check --rendered /tmp/ascon-rendered-pages.json
+git diff --check
+```
+
+`dashboard-check.py` はJSON重複キー・有限数・一意ID・JST・日付・ログ降順・出所の実在と安全・元表一致・正確な分数和・担当／状態／依存・HTML構造を検査します。追加で8ページ、KPI／比較の参照、49語と必須語、外部CSS／ネットワーク呼出しの禁止を確認します。`--rendered` はNodeで生成した各画面のタグ、ID、出典リンクとID露出を検査します。
+
+`check-plan-consistency.py` は旧表、全28日、18件のレビュー判断、予算・署名・Q0・AI反復・切替条件の照合を維持し、65ログの完全保持、最新dev2値とdev3の未確認状態、実消化のnull、表示比較の母集団と数値参照も検査します。
+
+`dashboard-ui-check.mjs` は実際のインラインJSを小さなDOMアダプターで実行します。8ページ＋資格ビューの生成、検索／複合フィルタ、空結果、ハッシュ遷移、用語の開閉とEscape、エスケープ、JSON変更の表示反映、主要文字色のAA比とレスポンシブ指定を検査します。DOMアダプターはブラウザではなく、レイアウトの検証にはなりません。
+
+**チェッカー変更理由**: JSON正本のまま8ページと用語説明へ再構成したため、従来のデータ・計画・予算・署名・原表の検査を全て保持した上で、ページ／参照／用語／描画出力の検査を追加した。旧dev2結果待ちという固定条件は最新のmeasured引継ぎと衝突するため、提示された数値・母集団・資格不可を厳密一致で検査し、未確認状態の検査はdev3へ移した。dev3の架空完了・結果・進行率、本人報告の監査済み化、予算消化の捏造、数値参照の取り違えを新たな反例として拒否する。旧60ログのdigest検査を残し、全65件のdigestも追加した。合否閾値・費用・反復回数は緩めていない。
+
+## 省いた表示と保存先
+
+削除した事実・ログ・測定表はありません。以下の表示上の重複を整理しました。
+
+- 同じ結果の繰り返し図表：MASTER §1に保持し、進捗・結果の比較と原表に集約。
+- 予算配分・AI契約の重複説明：MASTER §5–7に保持し、判断・予算の詳細へ集約。
+- トップにあった内部手順・過去の細かな経緯：MASTER §8–11と全ログを保持し、原表・履歴の折りたたみへ移動。
+
+## 今回の検証範囲
+
+静的検査・Nodeの画面ロジック検査は実行済み。ブラウザ／ヘッドレスChrome／描画エンジンは起動していません。実際の見た目、スマホ幅での横スクロール、支援技術の読み上げ、実ブラウザでの操作は未検証で、Claudeのブラウザペインで確認する引継ぎです。
+
+`node_modules` 自体のリンク属性だけを確認し、`../upstream-eval/node_modules` を指すため辿っていません。依存を読む `npm run typecheck`、戦略テスト、Docker、backtestは今回未実行です。保護領域・鍵・`.env`・実行中計測へアクセスせず、型検査済みとは報告しません。新規計測・外部サービス照会・commitも行っていません。
+
+最終確認結果（ブラウザ未起動）:
+
+```text
+PASS dashboard-check: 14 blocks / 65 logs / 10 source tables / 49 terms
+PASS checker controls: 23 invalid cases rejected
+PASS check-plan-consistency: rev 6 contracts + latest handoff + all 65 logs
+PASS plan controls: 57 unsafe/stale mutations rejected
+PASS dashboard UI: 21 checks / 8 pages + qualification view
+PASS rendered HTML: 9 views / balanced tags / safe links / unique IDs
+PASS git diff --check
+```
 
 ## 初回の当日引継ぎ・移行証拠
 
@@ -72,48 +135,3 @@ Q0b完了への移行では、終了見込みの固定表示を `status.measurem
 | s13 | U1は21 FAIL / 1 BLOCKED / 14 PASS、p99 1.1–2.7秒。u1mは負荷36/36・362loops・最大233ms、全体G0 BLOCKED |
 
 履歴のcommit時刻は、このworktreeのローカルgit履歴のISO日時をJSTへ変換した。ログ要約にSHAと「commit記録時刻」を併記し、計測開始/終了時刻とは区別している。PR #4など時刻の根拠がない事象は移行時刻で追記した。資料本文に引用される保護パスは開いていない。
-
-## 検査
-
-repo rootから（別cwdでもスクリプトは自身の場所からrootを決定）:
-
-```sh
-python3 -B ascon-notes/league/check-plan-consistency.py
-python3 -B ascon-notes/league/check-plan-consistency.py --self-check
-python3 -B ascon-notes/league/dashboard-check.py --self-check
-git diff --check
-```
-
-標準ライブラリのみ。JSON、ID、JST/日付、ログ降順、予算の正確和、全出典ファイル、blocker必須欄、元の生成表との一致、HTMLタグを検査する。`--self-check` は不正入力の反例をメモリ上で検査する。欠落パスは一覧でFAIL。保護領域は存在確認より前に拒否し、symlinkも辿らない。`check-plan-consistency.py` はrevision 6の本文とデータの旧Q0b保存値/予算/queue/日程/委任決定/AI契約を照合する。`--self-check`は署名捏造・費用欠落・反復削減・旧状態への逆戻り等をメモリ内で拒否する。退役HTMLや「Q0b実行中」の固定条件は使わない。
-
-PASSは静的整合性のみ。ブラウザ描画・モバイル/印刷の実見、dev1/dev2/Q0b原ログ、実消費時間、規約の適用版、戦略の型/性能/提出適合は未検証。今回のnode_modulesはupstream-evalへのsymlinkであり、測定領域を開かない境界のためnpm typecheckを実行しない。npm test・backtest・Anvil・ブラウザは実行しない。公開規約/Ollama公式ページ取得はrev 5記録を継承しただけで今回は再取得なし。認証付きサービスへの操作はない。IBM Plexはローカルのインストールがあれば使用し、未導入ならフォールバックする。外部フォントの取得はしない。
-
-最終checker出力（今回の静的検査。戦略テスト/ブラウザ描画は未実行）:
-
-<!-- self-check-output:start -->
-```text
-PASS sources: D0/Q0/M1/Q0b tables retained; dev1 handoff matches plan/dashboard
-PASS Q0b: old 60-world result, G0 2-world FAIL and mean-T FAIL retained; no rescue rerun
-PASS budget: KEEP 100 h (G3 17.2, deep 9.7); archived unsigned AMEND 100 h; Q0 priority 5 h
-PASS queue: repair/rediagnosis -> Q0 -> acceptance; AI execution blocked by full-cost/evidence gates
-PASS decisions: 6 delegated Astra decisions with origin/signer/JST; Ollama registration/settings are user-reported; prepayment deferred
-PASS Q0: A unchanged; 1 new 60-world attempt; extra P/u1m conditions rejected; revert cap prospective only
-PASS AI: ENTRY_BPS 20-60, max step 5; R* ON3/OFF1 + S full = 216 worlds / 17.2 h; no epoch learning carryover
-PASS cutover: Oct 17 evidence gates select H480 / S240 / no campaign; no fresh deep exploration
-PASS schedule/review: 28 JST dates, 18 findings, five roadmap steps match dashboard
-PASS preservation: prior 60 logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained
-LIMIT: static consistency only; raw runs, actual hours, strategy safety, browser layout and acceptance unverified
-PASS check-plan-consistency
-PASS plan controls: 39 unsafe/stale mutations rejected in memory
-PASS JSON: 12 blocks; 267 unique HTML/data ids
-PASS log: 65 entries; JST descending (ties allowed); allowed types; valid dates
-PASS budget: KEEP = 100 h; archived unsigned AMEND = 100 h (exact fractions)
-PASS sources: 22 repo files exist; 0 missing; 8 copied tables match
-PASS blockers: 15 complete ranked rows; queue / phase / decision references valid
-PASS HTML: balanced tags; unique ids; no external resources
-PASS checker controls: 13 invalid cases rejected in memory
-LIMIT: static consistency only; live runs / browser layout / submission / actual hours unverified
-PASS dashboard-check
-PASS preservation: previous 60 logs, six delegated decisions, budget rows and Q0b unchanged; HTML edits only within JSON; MASTER rev 6 sections/line count unchanged
-```
-<!-- self-check-output:end -->

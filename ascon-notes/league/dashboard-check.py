@@ -17,7 +17,7 @@ from pathlib import Path, PurePosixPath
 ROOT = Path(__file__).absolute().parents[2]
 HTML = ROOT / 'ascon-notes/league/ASCON-DASHBOARD.html'
 REQUIRED = {'sources', 'status', 'plan', 'phases', 'milestones', 'progress',
-            'blockers', 'queue', 'budget', 'results', 'decisions', 'log'}
+            'blockers', 'queue', 'budget', 'results', 'decisions', 'log', 'ui', 'glossary'}
 TYPES = {'実測', '決定', '実装', 'レビュー', '計画変更', '誤り'}
 VOID = {'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link',
         'meta', 'param', 'source', 'track', 'wbr'}
@@ -94,6 +94,7 @@ def safe_path(raw):
             p.as_posix() != raw.split('#', 1)[0]):
         raise ValueError('path escapes/is not canonical: '+raw)
     if ('runs' in p.parts or 'upstream-eval' in p.parts or
+            any(part.startswith('.env') or part in {'.aws', '.ssh', 'credentials', 'keys'} for part in p.parts) or
             p.parts[:3] == ('ascon-notes', 'eval', 'out') or
             p.parts[:2] == ('example', 'agents') or
             p.parts[0] in {'.git', 'node_modules', 'test'}):
@@ -143,7 +144,7 @@ def validate(doc, data):
     source_map = {s.get('id'):s for s in sources if isinstance(s, dict)}
     seen, paths = set(doc.ids), set()
     date_keys = {'date', 'due_date', 'event_date', 'start_date', 'end_date'}
-    time_keys = {'timestamp', 'as_of', 'measurement_as_of', 'started_at', 'expected_end', 'start_at', 'signed_at', 'completed_at'}
+    time_keys = {'timestamp', 'as_of', 'measurement_as_of', 'started_at', 'expected_end', 'start_at', 'signed_at', 'completed_at', 'deadline_at', 'at'}
 
     def walk(value, location, inherited_sources=None):
         if isinstance(value, dict):
@@ -226,15 +227,20 @@ def validate(doc, data):
     fields = {'id','rank','title','severity','likelihood','impact','owner','evidence','mitigation','status','sources'}
     for b in data['blockers']['items']:
         check(all(k in b and b[k] not in ('',None,[]) for k in fields), 'incomplete blocker: '+b.get('id','?'))
-        check(b.get('owner') in {'human','Claude','Astra'}, 'invalid blocker owner: '+b.get('id','?'))
+        check(b.get('owner') in {'human','Claude','Codex'}, 'invalid blocker owner: '+b.get('id','?'))
         check(b.get('likelihood') in data['blockers']['likelihood_axis'], 'invalid likelihood: '+b.get('id','?'))
         check(b.get('impact') in data['blockers']['impact_axis'], 'invalid impact: '+b.get('id','?'))
         check(b.get('severity') in {'Critical','Warning','Suggestion'}, 'invalid severity: '+b.get('id','?'))
     stats['blockers'] = len(data['blockers']['items'])
+    for b in data['blockers']['items']:
+        check(bool(b.get('impact_note')), 'blocker must explain impact: '+b['id'])
     check([b['rank'] for b in data['blockers']['items']] == list(range(1,stats['blockers']+1)), 'blocker ranks must be unique and ordered')
     queue = data['queue']['items']
     check([q['priority'] for q in queue] == list(range(1,len(queue)+1)), 'queue priorities must be unique and ordered')
     for q in queue:
+        check(q.get('owner') in {'human', 'Claude', 'Codex'}, 'invalid queue owner: '+q['id'])
+        check(isinstance(q.get('active'), bool), 'queue active must be boolean: '+q['id'])
+        check(bool(q.get('dependency')) and bool(q.get('state')), 'queue state/dependency missing: '+q['id'])
         if q['hours'] is not None:
             try:
                 check(Fraction(str(q['hours'])) >= 0, 'negative queue hours: '+q['id'])
@@ -258,6 +264,64 @@ def validate(doc, data):
             check(href[1:] in seen, 'missing static fragment: '+href)
         else:
             errors.append('static links must use sources data or local fragments: '+href)
+    # The app is a projection of JSON: every screen, KPI and comparison must have a valid reference.
+    def resolve(ref):
+        value = data
+        for key in ref.split('.'):
+            value = value[key]
+        return value
+    ui = data['ui']
+    expected_pages = ['overview','plan','results','blockers','decisions','operations','log','glossary']
+    check(ui.get('schema_version') == '2', 'unsupported app data schema')
+    check([p['key'] for p in ui['pages']] == expected_pages, 'eight required app pages and order')
+    for p in ui['pages']:
+        check(all(p.get(k) for k in ('label','description','eyebrow','icon')), 'incomplete page: '+p['key'])
+    for kpi in ui['kpis']:
+        try:
+            check(resolve(kpi['ref']) is not None, 'KPI must reference a known value')
+        except (KeyError, TypeError, AttributeError):
+            errors.append('invalid KPI reference: '+str(kpi.get('ref')))
+        check(kpi['route'] in expected_pages, 'KPI route does not exist')
+    progress = {p['id']:p for p in data['progress']['items']}
+    for p in progress.values():
+        check(p['state'] in {'done','running','pending','failed','blocked'}, 'invalid progress state: '+p['id'])
+        check(bool(p.get('evidence')) and bool(p.get('sources')), 'progress evidence missing: '+p['id'])
+    priority = data['status']['priority']
+    check(priority['blocker_ref'] == data['blockers']['items'][0]['id'], 'priority must point to the first blocker')
+    check(len(priority['progress_refs']) == len(set(priority['progress_refs'])) and
+          all(ref in progress for ref in priority['progress_refs']), 'priority progress refs invalid/duplicated')
+    for mode, rows in data['results']['comparison'].items():
+        if mode == 'sources':
+            continue
+        check(mode in {'diagnostic','qualification'} and bool(rows), 'comparison category missing/invalid')
+        for row in rows:
+            for key in ('run_ref','scope_ref'):
+                try:
+                    check(resolve(row[key]) is not None, 'comparison reference is empty')
+                except (KeyError, TypeError, AttributeError):
+                    errors.append('invalid comparison reference: '+str(row.get(key)))
+            for metric in row.get('metrics', []):
+                for key in ('candidate_ref','baseline_ref'):
+                    if key not in metric:
+                        continue
+                    try:
+                        check(resolve(metric[key]) is not None, 'comparison metric is unknown')
+                    except (KeyError, TypeError, AttributeError):
+                        errors.append('invalid comparison metric reference: '+str(metric.get(key)))
+            check(bool(row.get('sources')), 'comparison row without sources')
+    glossary = data['glossary']['items']
+    required_terms = {'ascon','score-t','profit-p','noop','multi-arb','clean-arb','regime','epoch','seed',
+                      'world','f-ref','f-mix','q0','q0b','q0m','g0','g3','g4','p60','dev','xb-r','factors',
+                      'r1','r2','r3','r4','r5','r6','r7','bundle','single','revert','frozen','revision',
+                      'ollama','forward','dec-007','dec-008','deterministic'}
+    check({'term-'+t for t in required_terms} <= {g['id'] for g in glossary}, 'required glossary entry missing')
+    aliases = []
+    for g in glossary:
+        check(all(g.get(k) for k in ('term','aliases','category','definition')), 'incomplete glossary: '+g['id'])
+        check(len(g['definition']) >= 20, 'glossary explanation too short: '+g['id'])
+        aliases.extend(g['aliases'])
+    check(len(aliases) == len(set(aliases)), 'ambiguous glossary aliases')
+    stats['terms'] = len(glossary)
     return errors, stats
 
 
@@ -265,6 +329,16 @@ def parse(text):
     doc = Document()
     doc.feed(text)
     doc.close()
+    styles = '\n'.join(re.findall(r'<style>(.*?)</style>', text, re.S))
+    if re.search(r'@import|url\s*\(', styles, re.I):
+        doc.errors.append('CSS must not load external resources')
+    if '@media print' in styles or 'beforeprint' in text:
+        doc.errors.append('print-only behavior is retired')
+    app = re.search(r'<script id="dashboard-app">(.*?)</script>', text, re.S)
+    if not app:
+        doc.errors.append('missing app renderer')
+    elif re.search(r'\b(?:fetch|XMLHttpRequest|WebSocket|EventSource|eval)\s*\(', app[1]):
+        doc.errors.append('app must stay offline and data-only')
     data = {}
     for name, raw in doc.blocks.items():
         try:
@@ -291,6 +365,15 @@ def self_check(text):
         lambda d: d['blockers']['items'][0].pop('mitigation'),
         lambda d: d['results']['q0']['rows'][0].__setitem__(2, '999999'),
         lambda d: d['queue']['items'][0].update(hours='not-a-fraction'),
+        lambda d: d['glossary']['items'].pop(0),
+        lambda d: d['glossary']['items'][0].update(definition=''),
+        lambda d: d['ui']['kpis'][0].update(ref='status.missing'),
+        lambda d: d['ui']['pages'].pop(),
+        lambda d: d['status']['priority']['progress_refs'].append('progress-not-found'),
+        lambda d: d['results']['comparison']['diagnostic'][1]['metrics'][0].update(candidate_ref='results.missing'),
+        lambda d: d['blockers']['items'][0].pop('impact_note'),
+        lambda d: d['progress']['items'][0].update(state='PASS'),
+        lambda d: d['sources']['sources'][0].update(path='.env.secret'),
     ]
     for n, mutate in enumerate(mutations,1):
         changed = copy.deepcopy(original)
@@ -301,7 +384,8 @@ def self_check(text):
     # Malformed JSON, duplicate JSON keys, and unbalanced tags are checked by the parser.
     bad_documents = [text.replace('"as_of":', '"as_of"',1),
                      text.replace('"as_of":', '"as_of":"duplicate","as_of":',1),
-                     text.replace('</main>', '</aside>',1)]
+                     text.replace('</main>', '</aside>',1),
+                     text.replace('<style>', '<style>@import "https://invalid.example/font.css";',1)]
     for broken in bad_documents:
         parsed, _ = parse(broken)
         if not parsed.errors:
@@ -309,9 +393,48 @@ def self_check(text):
     return len(mutations)+len(bad_documents)
 
 
+def check_rendered(path, data):
+    """Inspect output from the Node DOM adapter, never starting a browser/process.
+
+    This is tag/link/accessibility-markup validation, not a layout claim.
+    """
+    raw = str(path)
+    if not (raw.startswith('/tmp/') or raw.startswith('/private/tmp/')) or '..' in Path(raw).parts:
+        raise ValueError('rendered output must be an explicit temporary file')
+    current = Path('/')
+    for part in Path(raw).parts[1:]:
+        current = current / part
+        # macOS /tmp itself is the allowed system alias to /private/tmp.
+        if current.is_symlink() and str(current) != '/tmp':
+            raise ValueError('rendered output symlink rejected')
+    pages = json.loads(Path(path).read_text())
+    required = {p['key'] for p in data['ui']['pages']} | {'qualification'}
+    if set(pages) != required:
+        raise ValueError('rendered output must contain all eight pages and qualification view')
+    for name, html in pages.items():
+        doc = Document()
+        doc.feed(html)
+        doc.close()
+        if doc.errors or doc.stack or len(doc.ids) != len(set(doc.ids)):
+            raise ValueError('rendered HTML malformed: '+name+' '+str(doc.errors))
+        if len(re.findall(r'<h1\b', html)) != 1:
+            raise ValueError('rendered page must have one h1: '+name)
+        for href in doc.links:
+            if href.startswith('#'):
+                if href[1:].split('/')[0] not in {p['key'] for p in data['ui']['pages']}:
+                    raise ValueError('invalid rendered route: '+href)
+            elif not href.startswith('../../') or not safe_path(href[6:]).is_file():
+                raise ValueError('invalid rendered source link: '+href)
+        without_ids = re.sub(r'<small class="mono">log-\d+</small>', '', html)
+        if re.search(r'log-\d+', without_ids):
+            raise ValueError('internal log ID escaped its small note: '+name)
+    return len(pages)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--self-check', action='store_true', help='also reject in-memory negative controls')
+    parser.add_argument('--rendered', help='also inspect Node-rendered pages from an explicit /tmp JSON file')
     args = parser.parse_args()
     try:
         text = HTML.read_text()
@@ -330,8 +453,11 @@ def main():
         print(f"PASS sources: {stats['paths']} repo files exist; 0 missing; {stats['tables']} copied tables match")
         print(f"PASS blockers: {stats['blockers']} complete ranked rows; queue / phase / decision references valid")
         print('PASS HTML: balanced tags; unique ids; no external resources')
+        print(f"PASS app: 8 pages; valid KPI/comparison references; {stats['terms']} glossary entries; all required terms")
         if args.self_check:
             print(f'PASS checker controls: {self_check(text)} invalid cases rejected in memory')
+        if args.rendered:
+            print(f'PASS rendered HTML: {check_rendered(args.rendered, data)} views; balanced tags, unique ids, safe links, no inline log ids')
         print('LIMIT: static consistency only; live runs / browser layout / submission / actual hours unverified')
         print('PASS dashboard-check')
         return 0

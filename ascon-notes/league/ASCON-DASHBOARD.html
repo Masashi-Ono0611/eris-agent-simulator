@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
-<meta name="description" content="ASCONの全体計画・進捗・結果・決定・履歴をまとめた更新可能なダッシュボード">
-<title>ASCON · Living Dashboard</title>
+<meta name="description" content="ASCON参戦の現在地、次の行動、計測結果、判断を確認するワークスペース">
+<title>ASCON · Competition workspace</title>
 <!-- BEGIN data-sources : editable facts -->
 <script type="application/json" id="data-sources">
 {
@@ -171,6 +171,36 @@
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
       "title": "Ollama本人報告・残る確認",
       "locator": "§10。2026-10-04 15:07頃 JSTの受理表示提示、秘密値なし・本更新の画面/API監査なし"
+    },
+    {
+      "id": "src-dev2",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "dev2-xb-r / 実測引継ぎ",
+      "locator": "§1.6。今回の本人提示measured。原ログの再監査なし"
+    },
+    {
+      "id": "src-dev3",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "dev3a-xb-r / 進行状況の引継ぎ",
+      "locator": "§1.6。開始・完了見込みは今回提示。結果未確認"
+    },
+    {
+      "id": "src-v2-repair",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "xb-r v2 / 修理・検査記録",
+      "locator": "§1.6。a646e9b、検査結果は引継ぎ。今回再実行なし"
+    },
+    {
+      "id": "src-glossary",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "用語と因子の定義",
+      "locator": "Appendix B。ローカル仕様・設計・修理記録に基づく平易な説明"
+    },
+    {
+      "id": "src-dev2-repair",
+      "path": "ascon-notes/league/DEV2-XB-R-REPAIR.md",
+      "title": "dev2-xb-r / 詳細診断と修理",
+      "locator": "原ログで確認できた事実・実装と回帰証拠。今回原ログにはアクセスしない"
     }
   ]
 }
@@ -185,12 +215,12 @@
     "src-xbr-debug",
     "src-ollama-report"
   ],
-  "as_of": "2026-10-04T16:10:48+09:00",
+  "as_of": "2026-10-04T17:14:01+09:00",
   "measurement_as_of": null,
-  "last_update": "rev 6維持。dev1の無取引原因と修正2ae0d59を反映。dev2は結果待ち。Ollama登録受理は本人報告、dec-008 resolved・現在の本人作業なし。league/v2未push・PR未作成。",
+  "last_update": "dev2実測、xb-r v2修理、dev3a開始の引継ぎを反映。画面を8ページに再構成。",
   "phase_id": "phase-first",
-  "headline": "Q0契約クリアが第1ブロッカー。xb-r再診断中。",
-  "subhead": "dev1は全世界P−noop=0.0・取引0。修正後dev2は結果待ちで、性能・資格は未確認。",
+  "headline": "取引は成立。収益は比較対象に届かず、修正版を再診断中。",
+  "subhead": "最優先は、独自エージェントを資格試験に進める状態へ改善すること。提出版の受理は未確認です。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -203,64 +233,13 @@
     "note": "旧60世界のG0 FAIL 2世界と平均T FAILを保持。救済再走なし。安全nullはrev 4引継ぎスナップショット、後続診断と資格認定は別。",
     "completed_at": null,
     "g0": "A=PASS / B=FAIL / C=PASS",
-    "safety": null
+    "safety": null,
+    "field": "F_ref",
+    "regimes": 12,
+    "name": "Q0b"
   },
-  "metrics": [
-    {
-      "id": "metric-xbr",
-      "label": "現在の優先経路",
-      "value": "dev2 結果待ち",
-      "note": "Q0契約クリア: xb-r再診断中。修正後の性能・取引成立は未確認",
-      "tone": "warn",
-      "sources": [
-        "src-dev1",
-        "src-xbr-debug"
-      ]
-    },
-    {
-      "id": "metric-q0",
-      "label": "sonnet-1 Q0",
-      "value": "FAIL",
-      "note": "平均T 44.56対56.50。現F_ref契約FAILを保持",
-      "tone": "bad",
-      "sources": [
-        "src-morning"
-      ]
-    },
-    {
-      "id": "metric-q0b",
-      "label": "opus-1 Q0b",
-      "value": "FAIL",
-      "note": "全60完了、平均T 48.07対56.43 / G0 2世界FAIL",
-      "tone": "bad",
-      "sources": [
-        "src-q0b",
-        "src-master"
-      ]
-    },
-    {
-      "id": "metric-accept",
-      "label": "受理済みの独自版",
-      "value": "未確認",
-      "note": "鍵登録・ZIP送信・受理は別状態",
-      "tone": "muted",
-      "sources": [
-        "src-master"
-      ]
-    },
-    {
-      "id": "metric-budget",
-      "label": "累積Air消費・実測下限",
-      "value": "≥18.6 h",
-      "note": "Q0b概算4.3333–4.7667hは別。実区間未提示で下限は据置",
-      "tone": "accent",
-      "sources": [
-        "src-budget-update"
-      ]
-    }
-  ],
-  "notice": "10/8延期済み。rev 6のQ0維持・forward100h・AI契約は既決。Ollama鍵登録受理と設定は本人報告。現在の本人作業なし、10/28 dec-007。無料枠不足時の前払い判断はG3見積もり後。",
-  "measurement_note": "dev1-xb-r: measured引継ぎ、G0 PASS・362ループ・12世界、全世界P−noop=0.0。cand取引0、361回の見送り理由。正確な完了時刻/hash/占有費は未提示、原ログ再監査なし。 dev2-xb-rは修正後・同条件の再診断が走行中との引継ぎ。完了見込み15:50 JST頃は経過したが、結果未確認のため結果待ち。",
+  "notice": "10/8の初回受理目標は延期済み。資格条件とMASTER rev 6の決定は維持。現在の本人作業なし。",
+  "measurement_note": "dev2は提示された実測集計。dev3aは開始の引継ぎのみで、結果・正確な完了時刻は未確認。今回、原ログや実行中プロセスは再監査していません。",
   "dev1": {
     "name": "dev1-xb-r",
     "state": "measured-diagnostic-complete",
@@ -288,23 +267,37 @@
   },
   "dev2": {
     "name": "dev2-xb-r",
-    "state": "running-results-pending",
-    "evidence_basis": "今回の進行中引継ぎ。live再監査なし",
+    "state": "measured-diagnostic-complete",
+    "evidence_basis": "本人提示のmeasured集計。原ログ/live再監査なし",
     "verified": false,
     "field": "F_ref",
     "worlds": 12,
     "regimes": 6,
     "seeds": "31001/31002",
     "fix_commit": "2ae0d59",
-    "expected_end": "2026-10-04T15:50:00+09:00",
-    "expected_end_basis": "本人提示の概算見込み（頃）。完了確認ではない",
+    "expected_end": null,
+    "expected_end_basis": "旧15:50頃の見込みは完了時刻に転用しない",
     "completed_at": null,
-    "result": null,
-    "note": "dev2-xb-rは修正後・同条件の再診断が走行中との引継ぎ。完了見込み15:50 JST頃は経過したが、結果未確認のため結果待ち",
+    "result": {
+      "p_candidate": "149.0",
+      "p_multi": "1352.2",
+      "trades_candidate": "44.8",
+      "trades_multi": "300.9",
+      "t_candidate": "44.36",
+      "t_multi": "56.84",
+      "min_p_minus_noop": "+147.7",
+      "positive_worlds": 12,
+      "noop_below": 0,
+      "violations": 0,
+      "reverts": 0
+    },
+    "note": "取引成立、全12世界でP−noopが正。診断6レジーム平均Tは比較対象未満。全12レジームの資格試験は未実施。",
     "sources": [
-      "src-master",
-      "src-xbr-debug"
-    ]
+      "src-dev2",
+      "src-dev2-repair"
+    ],
+    "g0": "PASS",
+    "q0_eligible": false
   },
   "commits": {
     "plan": [
@@ -315,7 +308,8 @@
     "xbr": [
       "ad04879",
       "a042a70",
-      "2ae0d59"
+      "2ae0d59",
+      "a646e9b"
     ],
     "branch": "league/v2",
     "pushed": false,
@@ -324,6 +318,106 @@
     "sources": [
       "src-master"
     ]
+  },
+  "dev3": {
+    "name": "dev3a-xb-r",
+    "state": "running-results-pending",
+    "evidence_basis": "今回の開始引継ぎ。live再監査なし",
+    "verified": false,
+    "field": "F_ref",
+    "seeds": "35001/35002",
+    "regimes": 9,
+    "worlds": 18,
+    "started_at": "2026-10-04T16:24:00+09:00",
+    "expected_end": "2026-10-04T17:40:00+09:00",
+    "expected_end_basis": "本人提示の概算見込み（頃）。完了確認ではない",
+    "completed_at": null,
+    "completed_worlds": null,
+    "result": null,
+    "g0": null,
+    "fix_commit": "a646e9b",
+    "next_chunk_regimes": 3,
+    "note": "第1チャンクを計測中との引継ぎ。残る3レジームは第2チャンクで後から追加。結果は未確認。",
+    "sources": [
+      "src-dev3"
+    ]
+  },
+  "repair_v2": {
+    "commit": "a646e9b",
+    "tests": 123,
+    "red_controls": 25,
+    "state": "implemented-reported",
+    "verified": false,
+    "evidence_kind": "measured引継ぎ",
+    "title": "売買を止める2つの条件を、別々に検証できるよう修正",
+    "note": "単脚の追加100bpsゲートと初期在庫での停止を独立スイッチ化。R6/R7で検証する。テスト123件・赤対照25件は提示された検査記録。新版の実走性能は未確認。",
+    "sources": [
+      "src-v2-repair",
+      "src-dev2-repair"
+    ]
+  },
+  "human_action": "なし",
+  "priority": {
+    "title": "資格試験に進める収益性を確認する",
+    "blocker_ref": "B01",
+    "note": "何もしない場合より利益は増えましたが、参照エージェントの収益には届いていません。修正版の診断結果を確認し、資格試験の開始条件をそろえます。",
+    "progress_refs": [
+      "progress-xbr-fix",
+      "progress-dev2",
+      "progress-xbr-v2",
+      "progress-dev3",
+      "progress-xbr-requal"
+    ],
+    "sources": [
+      "src-dev2",
+      "src-dev3",
+      "src-master"
+    ],
+    "state": "blocked",
+    "state_label": "資格試験はブロック"
+  },
+  "recent": [
+    {
+      "kind": "running",
+      "title": "修正版の再診断を開始",
+      "text": "第1チャンクの結果待ち。残る市場条件は第2チャンクへ。",
+      "run_ref": "dev3",
+      "sources": [
+        "src-dev3"
+      ]
+    },
+    {
+      "kind": "done",
+      "title": "売買を止める条件を独立して検証可能に",
+      "text": "単脚の追加ゲートと初期在庫での停止を分離。新版の性能は未確認。",
+      "repair_ref": "repair_v2",
+      "date": "2026-10-04",
+      "time_note": "正確な実装時刻は未提示",
+      "sources": [
+        "src-v2-repair"
+      ]
+    },
+    {
+      "kind": "done",
+      "title": "取引成立と、利益の不足を確認",
+      "text": "全世界で何もしない場合を上回る一方、比較対象の収益には未達。",
+      "run_ref": "dev2",
+      "date": "2026-10-04",
+      "time_note": "正確な完了時刻は未提示",
+      "sources": [
+        "src-dev2"
+      ]
+    }
+  ],
+  "next_milestone": {
+    "title": "修正版の診断をそろえ、資格試験の開始可否を判定",
+    "note": "第1チャンクの結果確認 → 残る3レジーム → 固定コード・未使用seed・費用を照合。次の資格試験の開始日は未定。",
+    "sources": [
+      "src-dev3",
+      "src-master"
+    ],
+    "state": "running",
+    "state_label": "結果待ち"
   }
 }
 </script>
@@ -337,7 +431,7 @@
     "src-rules",
     "src-ai"
   ],
-  "goal": "ASCONで優勝する。決定論コアでQ0をクリアし受理Sを確保してから、AI改訂の増分を検証する。",
+  "goal": "ASCONで優勝する。独自戦略の資格試験と初回受理を優先し、その後にAI改訂の効果を検証する。",
   "win": "エポック終了時のPを参加者間でTへ標準化し、後半ほど重く集計。対noop・最悪レジーム・混成場・改訂ONの尾部を同時に守る。",
   "rules": [
     "独自戦略のみ・提出は1体。参照の改名や設定移植だけへ戻さない。",
@@ -347,38 +441,63 @@
     "p=3・等速・CPU排他・入力固定。Q0b全60世界とG0/平均Tの旧FAIL保持、資格救済再走なし。",
     "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。",
     "AI権限はENTRY_BPSだけ。20–60bps・初期60・刻み5・最大±5/60block。固定テンプレート、return/submit外側ゲート、安全state保持。",
-    "dev1診断は取引0。修正2ae0d59後のdev2結果待ち。計測/戦略/テストへ介入せず、取引成立/G0/安全/hash/費用の照合後にQ0再資格。"
+    "dev1は取引0。dev2で取引成立を確認したが収益は比較対象未満。xb-r v2をdev3で再診断し、G0/安全/hash/費用を照合後にQ0再資格。"
   ],
   "protocol": [
     {
       "id": "protocol-first",
       "title": "Step1 決定論Q0・受理",
       "body": "10/4以降、受理日未定。入口: xb-r修理/再診断・現Q0・hash/G0/新seed/費用",
-      "exit": "凍結Q0→mix/P60→最小改訂適合/G3/G4→本人受理S。Q0追加1回5hはdeep内優先留保。first-next35/3h、旧FAIL保持・延期は既決"
+      "exit": "凍結Q0→mix/P60→最小改訂適合/G3/G4→本人受理S。Q0追加1回5hはdeep内優先留保。first-next35/3h、旧FAIL保持・延期は既決",
+      "label": "まず提出できる独自版を作る",
+      "period": "10/4〜・受理日未定",
+      "state": "blocked",
+      "start_date": "2026-10-04",
+      "end_date": "2026-10-17"
     },
     {
       "id": "protocol-ai-min",
       "title": "Step2 限定AI最小版",
       "body": "S受理後〜10/12目安。入口: S・cal・受付境界/許可model/全費用",
-      "exit": "ENTRY_BPSのみ・適用/拒否/復帰・epoch間学習なし。権限はAstra決定済み。実装費未見積、鍵登録受理は本人報告。無料枠不足時の前払いはG3見積もり後"
+      "exit": "ENTRY_BPSのみ・適用/拒否/復帰・epoch間学習なし。権限はAstra決定済み。実装費未見積、鍵登録受理は本人報告。無料枠不足時の前払いはG3見積もり後",
+      "label": "AIによる調整を小さく導入",
+      "period": "初回受理後〜10/12目安",
+      "state": "blocked",
+      "start_date": "2026-10-09",
+      "end_date": "2026-10-12"
     },
     {
       "id": "protocol-ai-eval",
       "title": "Step3 AI価値検証",
       "body": "10/13〜17。入口: 固定R*・未使用集合・D/反復/下流費",
-      "exit": "Dへの増分・AI専用ON E3/Q1・R* G3三反復PASS。G3はR*12h＋S5.2h=17.2h。全工程未確保なら実走なし、10/17条件分岐"
+      "exit": "Dへの増分・AI専用ON E3/Q1・R* G3三反復PASS。G3はR*12h＋S5.2h=17.2h。全工程未確保なら実走なし、10/17条件分岐",
+      "label": "AIで利益が増えるか検証",
+      "period": "10/13〜10/17",
+      "state": "blocked",
+      "start_date": "2026-10-13",
+      "end_date": "2026-10-17"
     },
     {
       "id": "protocol-sealed",
       "title": "Step4 封印・一回採用",
       "body": "10/18〜25。入口: 二場/10seed・model/reset/判定固定・残費",
-      "exit": "H480又は事前指定S240、一回判定・性能凍結。final-g2 35hはON校正前。不足ならS240、S/費用不足ならH未実施"
+      "exit": "H480又は事前指定S240、一回判定・性能凍結。final-g2 35hはON校正前。不足ならS240、S/費用不足ならH未実施",
+      "label": "条件を固定して最終比較",
+      "period": "10/18〜10/25",
+      "state": "pending",
+      "start_date": "2026-10-18",
+      "end_date": "2026-10-25"
     },
     {
       "id": "protocol-ai-release",
       "title": "Step5 最終受理",
       "body": "10/26〜31 23:59。入口: 選定版・G4・本人確認",
-      "exit": "10/28 dec-007→10/29送信/受理目標→10/30予備→締切照合。final-g4 9h＋予備3h。探索再開なし、受理メール/hashで閉じる"
+      "exit": "10/28 dec-007→10/29送信/受理目標→10/30予備→締切照合。final-g4 9h＋予備3h。探索再開なし、受理メール/hashで閉じる",
+      "label": "提出と受理を最終確認",
+      "period": "10/26〜10/31",
+      "state": "pending",
+      "start_date": "2026-10-26",
+      "end_date": "2026-10-31"
     },
     {
       "id": "protocol-deep",
@@ -391,10 +510,11 @@
     {
       "id": "gate-g0",
       "title": "G0 / 計測",
-      "state": "dev1 PASS / 旧Q0b B FAIL保持",
-      "resolve": "dev1は診断G0 PASS・362loops。旧Q0b全60世界のうちvuln 2世界FAILは保存し、救済再走しない。G0成立と利益資格を分ける。",
+      "state": "dev2 PASS / 旧Q0b B FAIL保持",
+      "resolve": "dev2は計測成立のG0 PASS。dev3aは結果未確認。旧Q0bの2世界FAILは保存。計測成立と利益の資格を分ける。",
       "sources": [
-        "src-dev1",
+        "src-dev2",
+        "src-dev3",
         "src-delegation"
       ]
     },
@@ -402,9 +522,10 @@
       "id": "gate-q",
       "title": "現G2-Q / 初回資格",
       "state": "xb-r現状資格不可",
-      "resolve": "A現行維持。dev1は全世界P−noop=0.0・取引0。修正後dev2結果待ち。xb-r取引成立→hash/新seed/5h枠成立→追加1候補1回。P/F_u1m追加は不採用、revert上限は新資格だけ採用。",
+      "resolve": "A現行維持。dev2は取引成立・対noop正だが診断平均T未達。dev3全条件確認→hash/新seed/5h枠→追加1候補1回。P/F_u1m追加は不採用、revert上限は新資格だけ採用。",
       "sources": [
-        "src-dev1",
+        "src-dev2",
+        "src-dev3",
         "src-delegation"
       ]
     },
@@ -517,7 +638,7 @@
     "field": "F_ref",
     "hours_cap": "5",
     "within_deep": true,
-    "hash_status": "Q0用固定hashはdev2結果・担当照合待ちで未確定",
+    "hash_status": "Q0用固定hashはdev3結果・担当照合待ちで未確定",
     "seed_audit_status": "担当証跡待ち",
     "execution_status": "blocked-repair-rediagnosis-hash-cost",
     "extra_p_vs_multi": false,
@@ -527,7 +648,8 @@
     "extra_submit_failure_noninferiority": false,
     "sources": [
       "src-delegation"
-    ]
+    ],
+    "regimes": 12
   },
   "revert_contract": {
     "status": "decided",
@@ -556,7 +678,9 @@
     "sources": [
       "src-delegation"
     ]
-  }
+  },
+  "revision": 6,
+  "deadline_at": "2026-10-31T23:59:00+09:00"
 }
 </script>
 <!-- END data-plan -->
@@ -573,7 +697,7 @@
       "start_date": "2026-10-04",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "xb-r取引0で資格不可。修理/再診断→A現Q0→受理S、10/8延期済み"
+      "gate": "修理後dev2で取引成立、診断平均T未達。dev3再診断→現Q0→受理S。10/8延期済み"
     },
     {
       "id": "phase-deep",
@@ -614,9 +738,9 @@
     {
       "id": "day-2026-10-04",
       "date": "2026-10-04",
-      "title": "rev 6維持・dev1原因/修正反映、dev2結果待ち、dec-008 resolved",
-      "dependency": "measured診断と本人報告を区別",
-      "stop": "xb-r資格不可。見込み15:50 JST頃経過後も結果未確認。計測/鍵へ介入なし",
+      "title": "dev2取引成立・収益不足、v2修理後のdev3a開始",
+      "dependency": "measured診断と進行中引継ぎ・本人報告を区別",
+      "stop": "dev3結果未確認。診断をQ0資格に転用しない。計測/鍵へ介入なし",
       "state": "running",
       "highlight": true,
       "decision_refs": [
@@ -631,9 +755,9 @@
     {
       "id": "day-2026-10-05",
       "date": "2026-10-05",
-      "title": "xb-r dev2再診断の担当証跡を照合",
-      "dependency": "修正2ae0d59後の取引成立・hash/G0/安全/費用",
-      "stop": "診断をQ0認定にしない。結果未確認/取引なしならQ0開始なし",
+      "title": "dev3の担当証跡と残る3レジームを照合",
+      "dependency": "a646e9b・35001/35002・取引成立/hash/G0/安全/費用",
+      "stop": "結果と全条件がそろうまでQ0開始なし",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
@@ -1211,21 +1335,20 @@
     {
       "id": "progress-xbr-requal",
       "workstream": "初回受理",
-      "title": "Q0契約クリア（xb-r再診断中）",
+      "title": "資格試験の開始条件をそろえる",
       "state": "blocked",
-      "evidence": "修正2ae0d59後のdev2結果待ち。xb-r取引成立・G0/安全・hash/seed監査・5h枠成立がQ0再資格の前提。",
+      "evidence": "dev3結果・G0/安全・固定hash/未使用seed・5h枠の成立待ち。診断を合格に読み替えない。",
       "sources": [
-        "src-dev1",
-        "src-xbr-debug",
+        "src-dev3",
         "src-delegation"
       ]
     },
     {
       "id": "progress-xbr-fix",
       "workstream": "基盤",
-      "title": "xb-r 無取引原因の修正",
+      "title": "無取引の原因を修正",
       "state": "done",
-      "evidence": "[measured・Astra診断] オラクルの優先手数料6gweiを競合入札と誤認し、R4要求6.1gweiが実行上限5gweiを超えて全候補落ち。2ae0d59で公開ブロックから実行先ごとの競合入札を取得するよう修正。112テスト・赤対照19・回帰3件が旧コードで赤。本人独立再実行の引継ぎあり。本更新で再実行なし、修正後チェーン性能は未測定。",
+      "evidence": "[measured・Astra診断] オラクルの優先手数料6gweiを競合入札と誤認し、R4要求6.1gweiが実行上限5gweiを超えて全候補落ち。2ae0d59で公開ブロックから実行先ごとの競合入札を取得するよう修正。112テスト・赤対照19・回帰3件が旧コードで赤。本人独立再実行の引継ぎあり。本更新で再実行なし、この修正後の実測はdev2に記録。",
       "sources": [
         "src-xbr-debug",
         "src-master"
@@ -1234,11 +1357,11 @@
     {
       "id": "progress-dev2",
       "workstream": "計測",
-      "title": "dev2-xb-r 再診断・結果待ち",
-      "state": "running",
-      "evidence": "dev2-xb-rは修正後・同条件の再診断が走行中との引継ぎ。完了見込み15:50 JST頃は経過したが、結果未確認のため結果待ち。F_ref・seed31001/31002・6レジーム12世界、修正2ae0d59後。",
+      "title": "取引成立を確認する診断",
+      "state": "done",
+      "evidence": "取引成立、全12世界でP−noopが正。診断6レジーム平均Tは比較対象未満。全12レジームの資格試験は未実施。",
       "sources": [
-        "src-master"
+        "src-dev2"
       ]
     },
     {
@@ -1249,6 +1372,26 @@
       "evidence": "[本人報告] 2026-10-04 15:07頃 JST、運営フォームの鍵登録受理表示を本人が提示。Ollama Cloud鍵・代表者メール一致は本人確認。画面はFree・無料枠0%・残高$0・Auto-reload Off。無料枠モデル一覧はgemma4:31b、gpt-oss:120b、gpt-oss:20b、nemotron-3-nano:30b、nemotron-3-super、nemotron-3-ultra。許可モデルは既定例gpt-oss:120bを前提に進める（本人了承）。dec-008=resolved、attentionctl記録済み。クリップボードの鍵は本人が消去済み（本人報告）。 運営公表モデル一覧との照合・無料枠の量の十分性・鍵の疎通は未確認で、10/28 dec-007で再確認。本人のやることは現在なし。無料枠不足時の前払い判断は将来のG3見積もり後で、支払承認ではない。",
       "sources": [
         "src-ollama-report"
+      ]
+    },
+    {
+      "id": "progress-xbr-v2",
+      "workstream": "基盤",
+      "title": "売買の追加制限を切り分ける",
+      "state": "done",
+      "evidence": "単脚の追加100bpsゲートと初期在庫での停止を独立スイッチ化。R6/R7で検証する。テスト123件・赤対照25件は提示された検査記録。新版の実走性能は未確認。",
+      "sources": [
+        "src-v2-repair"
+      ]
+    },
+    {
+      "id": "progress-dev3",
+      "workstream": "計測",
+      "title": "修正版を再診断する",
+      "state": "running",
+      "evidence": "第1チャンクを計測中との引継ぎ。残る3レジームは第2チャンクで後から追加。結果は未確認。",
+      "sources": [
+        "src-dev3"
       ]
     }
   ]
@@ -1279,19 +1422,20 @@
     {
       "id": "B01",
       "rank": 1,
-      "title": "第1ブロッカー=Q0契約クリア: xb-r再診断中",
+      "title": "資格試験に必要な収益性が不足",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "[measured] dev1は全12世界P−noop=0.0・取引0。オラクルの優先手数料6gweiを競合入札と誤認し、R4要求6.1gweiが実行上限5gweiを超えて全候補落ち。2ae0d59で公開ブロックから実行先ごとの競合入札を取得するよう修正。dev2結果待ち。",
-      "mitigation": "dev2で取引成立/G0/安全/hash/費用を照合→A現Q0（追加1候補1回）→最小改訂適合/G3/G4→受理S。修正だけで性能を認定しない。",
+      "evidence": "[measured] dev2は全12世界でP−noop正、診断平均Tは44.36対56.84。資格判定に必要な全12レジームは未測定。",
+      "mitigation": "v2のdev3診断を確認し、残る3レジームを追加。G0/安全/hash/費用を照合してから現Q0へ進む。",
       "status": "mitigating",
       "sources": [
-        "src-dev1",
-        "src-xbr-debug",
+        "src-dev2",
+        "src-dev3",
         "src-delegation"
-      ]
+      ],
+      "impact_note": "初回提出の受理まで進めない"
     },
     {
       "id": "B10",
@@ -1307,7 +1451,8 @@
       "sources": [
         "src-repair",
         "src-master"
-      ]
+      ],
+      "impact_note": "過去の安全を確認済みと誤認するおそれ"
     },
     {
       "id": "B03",
@@ -1317,14 +1462,15 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "G3 17.2h、deep9.7hへ決定済み。Q0再資格5h優先、dev1/修理費未精算。",
+      "evidence": "G3 17.2h、deep9.7hへ決定済み。Q0再資格5h優先、dev1/dev2/dev3・修理費未精算。",
       "mitigation": "AI専用E3/Q1約9.5333hにD48世界52/15h＋実装/支援が別。全工程不足なので実走未解放、cal後再予算。10/17不成立ならS240又はHなし。",
       "status": "open",
       "sources": [
         "src-master",
         "src-ai",
         "src-delegation"
-      ]
+      ],
+      "impact_note": "後工程を時間枠内で完了できないおそれ"
     },
     {
       "id": "B04",
@@ -1339,7 +1485,8 @@
       "status": "mitigating",
       "sources": [
         "src-ollama-report"
-      ]
+      ],
+      "impact_note": "最終提出時にAIを利用できないおそれ"
     },
     {
       "id": "B05",
@@ -1356,7 +1503,8 @@
         "src-retro-u1",
         "src-morning",
         "src-master"
-      ]
+      ],
+      "impact_note": "結果を資格証拠に使えなくなる"
     },
     {
       "id": "B06",
@@ -1365,7 +1513,7 @@
       "severity": "Critical",
       "likelihood": "高",
       "impact": "大",
-      "owner": "Astra",
+      "owner": "Codex",
       "evidence": "F_refで両候補はmulti-arb未満、u1m診断ではsonnetが上。場/seed/指標が異なり、u1mはG0 BLOCKED。",
       "mitigation": "論点4のA現行維持。追加P/F_u1mは不採用、最終二場ゲート保持。将来再検討は対応比較の新証拠がある時だけ。",
       "status": "mitigating",
@@ -1373,7 +1521,8 @@
         "src-q0b",
         "src-master",
         "src-morning"
-      ]
+      ],
+      "impact_note": "相手が変わると成績の結論が変わる"
     },
     {
       "id": "B07",
@@ -1388,7 +1537,8 @@
       "status": "open",
       "sources": [
         "src-master"
-      ]
+      ],
+      "impact_note": "異なる対戦構成での確認を始められない"
     },
     {
       "id": "B08",
@@ -1397,7 +1547,7 @@
       "severity": "Warning",
       "likelihood": "高",
       "impact": "大",
-      "owner": "Astra",
+      "owner": "Codex",
       "evidence": "上位差CIは0を含む。固定相手・少数クラスタでは小差を識別しにくい。",
       "mitigation": "E3/Q/H分離、一回開封、保守下限・切替費用・ES5。差不明なら適合S。",
       "status": "mitigating",
@@ -1405,7 +1555,8 @@
         "src-retro-u1",
         "src-grok-plan",
         "src-master"
-      ]
+      ],
+      "impact_note": "偶然の小差を改善と誤認するおそれ"
     },
     {
       "id": "B09",
@@ -1420,7 +1571,8 @@
       "status": "open",
       "sources": [
         "src-ai"
-      ]
+      ],
+      "impact_note": "AIが安全条件を壊す、または利益に寄与しないおそれ"
     },
     {
       "id": "B11",
@@ -1430,13 +1582,14 @@
       "likelihood": "高",
       "impact": "中",
       "owner": "Claude",
-      "evidence": "修正2ae0d59・112テスト/赤対照19/旧コード回帰3件赤の記録。dev2は結果待ち、実行hash/G0/費用/取引成立は未照合。",
+      "evidence": "a646e9b・テスト123件/赤対照25件の引継ぎ。dev3結果・実行hash/G0/費用は未照合。",
       "mitigation": "別ジョブのhash/clock固定再生/取引成立の再診断証跡を受領。編集中コードへ資格認定を移さない。",
       "status": "mitigating",
       "sources": [
-        "src-xbr-debug",
-        "src-master"
-      ]
+        "src-v2-repair",
+        "src-dev3"
+      ],
+      "impact_note": "測定した版と採用する版が一致しないおそれ"
     },
     {
       "id": "B12",
@@ -1445,7 +1598,7 @@
       "severity": "Warning",
       "likelihood": "中",
       "impact": "大",
-      "owner": "Astra",
+      "owner": "Codex",
       "evidence": "zeta-2の選択/bid不整合。CのD0回復は資格でも安全同等でもない。",
       "mitigation": "由来と実質差を監査。D/E/Aを分離し、修正済みだけで本命を入替えない。",
       "status": "open",
@@ -1453,7 +1606,8 @@
         "src-retro-u1",
         "src-master",
         "src-zeta"
-      ]
+      ],
+      "impact_note": "独自性や修正効果を説明できない"
     },
     {
       "id": "B13",
@@ -1469,7 +1623,8 @@
       "sources": [
         "src-ai",
         "src-master"
-      ]
+      ],
+      "impact_note": "提出仕様の不一致で受理されないおそれ"
     },
     {
       "id": "B14",
@@ -1478,7 +1633,7 @@
       "severity": "Warning",
       "likelihood": "高",
       "impact": "中",
-      "owner": "Astra",
+      "owner": "Codex",
       "evidence": "M1の14/16が重複、新利益源0。M2の全実施は予約されていない。",
       "mitigation": "M2既定省略、D/Eと因子は代替棚。最大2世代・下流資格費を先に予約。",
       "status": "mitigating",
@@ -1486,7 +1641,8 @@
         "src-m1",
         "src-grok-plan",
         "src-master"
-      ]
+      ],
+      "impact_note": "新案の生成が優先工程の時間を使う"
     },
     {
       "id": "B15",
@@ -1495,13 +1651,14 @@
       "severity": "Suggestion",
       "likelihood": "低",
       "impact": "中",
-      "owner": "Astra",
+      "owner": "Codex",
       "evidence": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。全60世界/2世界G0 FAIL/平均T FAILを保存。",
       "mitigation": "救済再走なし。不可欠な原因診断だけ別契約。旧FAILは置換しない。",
       "status": "resolved",
       "sources": [
         "src-delegation"
-      ]
+      ],
+      "impact_note": "旧結果の扱いは決定済み"
     },
     {
       "id": "B02",
@@ -1510,14 +1667,15 @@
       "severity": "Suggestion",
       "likelihood": "低",
       "impact": "中",
-      "owner": "Astra",
+      "owner": "Codex",
       "evidence": "revision 6で6論点を本人委任に基づきAstraが決定し、dev1 measured結果と正本データを同期。",
       "mitigation": "未実装/全費用/資格/受理の証跡を後続で更新。登録受理と設定は本人報告済み、前払い判断はG3見積もり後。",
       "status": "resolved",
       "sources": [
         "src-master",
         "src-ai"
-      ]
+      ],
+      "impact_note": "計画更新は完了。実装と実測の証拠は別"
     }
   ]
 }
@@ -1533,20 +1691,20 @@
   "items": [
     {
       "id": "queue-dev1-evidence",
-      "title": "xb-r dev2再診断・結果待ち",
+      "title": "修正版の再診断",
       "owner": "Claude",
       "active": true,
       "sources": [
-        "src-master",
-        "src-xbr-debug"
+        "src-dev3",
+        "src-master"
       ],
       "experiment": "dev1-evidence",
       "priority": 1,
-      "state": "dev2再診断中・結果待ち",
-      "worlds": 12,
+      "state": "dev3a再診断中・結果待ち",
+      "worlds": 18,
       "hours": null,
-      "window": "引継ぎ見込み10/4 15:50 JST頃（結果未確認）",
-      "dependency": "2ae0d59修正後、F_ref・6レジーム×31001/31002。取引成立/G0/安全/hash/費用を照合してからQ0。dev1の取引0と旧FAILは保持"
+      "window": "10/4 16:24開始、17:40頃完了見込み（JST）",
+      "dependency": "a646e9b、F_ref・9レジーム×35001/35002。第2チャンク3レジームを後で追加。結果/G0/安全/hash/費用確認後にQ0。"
     },
     {
       "id": "queue-q0b-evidence",
@@ -1578,7 +1736,7 @@
       "worlds": 60,
       "hours": "5",
       "window": "修理再診断・hash/seed/費用成立後",
-      "dependency": "A維持、dev2でxb-rの取引成立を確認後、新41301–41305の未使用性監査、1候補1回。deep内5h留保、超過/不足は開始しない",
+      "dependency": "A維持、dev3再診断の全条件確認後、新41301–41305の未使用性監査、1候補1回。deep内5h留保、超過/不足は開始しない",
       "active": false,
       "title": "A現Q0・追加1候補1回"
     },
@@ -1603,7 +1761,7 @@
       "id": "queue-first-mix",
       "experiment": "first-mix",
       "priority": 5,
-      "title": "first-mix",
+      "title": "混成の対戦相手で動作を確認",
       "state": "停止",
       "worlds": 12,
       "hours": "13/15",
@@ -1620,7 +1778,7 @@
       "id": "queue-q0m",
       "experiment": "q0m",
       "priority": 6,
-      "title": "q0m",
+      "title": "混成場での資格試験案（不採用）",
       "state": "不採用・旧未署名記録",
       "worlds": 60,
       "hours": "143/30",
@@ -1637,7 +1795,7 @@
       "id": "queue-first-p60",
       "experiment": "first-p60",
       "priority": 7,
-      "title": "first-p60",
+      "title": "公開60シナリオで回帰確認",
       "state": "停止",
       "worlds": 60,
       "hours": "13/3",
@@ -1654,7 +1812,7 @@
       "id": "queue-first-g3",
       "experiment": "first-g3",
       "priority": 8,
-      "title": "first-g3",
+      "title": "AI改訂の最小動作確認",
       "state": "停止",
       "worlds": 36,
       "hours": "13/5",
@@ -1697,7 +1855,7 @@
       "worlds": 48,
       "hours": "52/15",
       "window": "S受理後、AI下流全費用確保時のみ",
-      "dependency": "全12×新35001/35002×A/D、費用は基本単価で支援別。決定論適応への増分screen",
+      "dependency": "全12×新seed×A/D、48世界。旧案35001/35002はdev3診断に使用中のため再利用不可。実行前に未使用の全seed集合を再登録。費用は基本単価で支援別。",
       "active": false,
       "title": "AI対決定論適応の開発screen"
     },
@@ -1705,7 +1863,7 @@
       "id": "queue-factor-ab",
       "experiment": "factor-ab",
       "priority": 11,
-      "title": "factor-ab",
+      "title": "機能を切り替えて効果を比較",
       "state": "保留",
       "worlds": 48,
       "hours": "52/15",
@@ -1722,7 +1880,7 @@
       "id": "queue-m2",
       "experiment": "m2",
       "priority": 12,
-      "title": "m2",
+      "title": "新案の再生成（不採用）",
       "state": "不採用・0h配分",
       "worlds": 60,
       "hours": "13/3",
@@ -1736,7 +1894,7 @@
       ]
     }
   ],
-  "note": "第1ブロッカー=Q0契約クリア: xb-r再診断中。修正後dev2結果待ちで、Q0以降は停止中。本人の現在作業なし。本更新で新規計測は起動しない。",
+  "note": "修正版のdev3a診断が進行中との引継ぎ。Q0以降は停止中。開始や完了はこの画面から操作しません。",
   "day_limit_hours": 6,
   "bundle": "Q0再資格5hをdeep内優先留保。AI G3は17.2hへ振替済み、追加実装/D/下流費は全量成立まで未解放。"
 }
@@ -1755,7 +1913,7 @@
   "start_at": "2026-10-04T01:00:00+09:00",
   "consumed_lower_bound_hours": "18.6",
   "consumed_exact_hours": null,
-  "note": "確認済み過去実測下限18.6hは据置。Q0b概算とdev1未精算を実測残枠にしない。KEEPはG3へ5.2h振替済み、AMENDは旧未署名比較の履歴。Q0/受理優先。鍵登録受理は本人報告済み、無料枠不足時の前払い判断はG3見積もり後。",
+  "note": "確認済み過去実測下限18.6hは据置。Q0b概算とdev1/dev2/dev3未精算を実測残枠にしない。KEEPはG3へ5.2h振替済み、AMENDは旧未署名比較の履歴。Q0/受理優先。鍵登録受理は本人報告済み、無料枠不足時の前払い判断はG3見積もり後。",
   "columns": [
     {
       "id": "budget-keep",
@@ -1943,7 +2101,9 @@
     "baseline_plus_q0b_min": "344/15",
     "baseline_plus_q0b_max": "701/30",
     "basis": "60世界/3chunk完了×既存13分/p3。開始/終了区間の実測ではない。追加占有・重複を精算するまで参考概算。"
-  }
+  },
+  "consumed_forward_hours": null,
+  "consumption_status": "未精算"
 }
 </script>
 <!-- END data-budget -->
@@ -2053,7 +2213,9 @@
     "source_table": {
       "source": "src-morning",
       "header_key": "候補"
-    }
+    },
+    "run_label": "D0 / F_ref / seed201–202",
+    "category": "diagnostic"
   },
   "q0": {
     "id": "result-q0",
@@ -2197,6 +2359,18 @@
     "source_table": {
       "source": "src-morning",
       "header_key": "レジーム"
+    },
+    "run_label": "Q0 / sonnet-1 / seed41001–41005",
+    "category": "qualification",
+    "scope": {
+      "name": "Q0",
+      "field": "F_ref",
+      "worlds": 60,
+      "regimes": 12,
+      "seeds": "41001–41005",
+      "sources": [
+        "src-morning"
+      ]
     }
   },
   "m1": {
@@ -2253,7 +2427,9 @@
     "source_table": {
       "source": "src-m1",
       "header_key": "クラスタ"
-    }
+    },
+    "run_label": "M1 / 仕様分類・性能未測定",
+    "category": "design"
   },
   "strategies": {
     "id": "result-strategies",
@@ -2399,7 +2575,9 @@
     "source_table": {
       "source": "src-cards",
       "header_key": "プレイヤー"
-    }
+    },
+    "run_label": "u1m / G0 BLOCKED",
+    "category": "diagnostic"
   },
   "ranking": {
     "id": "result-ranking",
@@ -2509,7 +2687,9 @@
     "source_table": {
       "source": "src-u1m",
       "header_key": "プレイヤー"
-    }
+    },
+    "run_label": "u1m / G0 BLOCKED",
+    "category": "diagnostic"
   },
   "zeta": {
     "id": "result-zeta",
@@ -2565,7 +2745,9 @@
     "source_table": {
       "source": "src-zeta",
       "header_key": "Scenario | zeta-2"
-    }
+    },
+    "run_label": "zeta-2 regression / 個別世界",
+    "category": "diagnostic"
   },
   "fields": {
     "id": "result-fields",
@@ -2622,11 +2804,12 @@
   "research": [
     {
       "id": "research-dev1",
-      "title": "dev1無取引の原因修正・dev2結果待ち",
-      "text": "[measured] dev1: F_ref・G0 PASS・362ループ・12世界（6レジーム×31001/31002）、全世界P−noop=0.0、取引0、361回 no funded positive net edge at an affordable bid。同世界multi-arb P約1300。オラクルの優先手数料6gweiを競合入札と誤認し、R4要求6.1gweiが実行上限5gweiを超えて全候補落ち。2ae0d59で公開ブロックから実行先ごとの競合入札を取得するよう修正。dev2-xb-rは修正後・同条件の再診断が走行中との引継ぎ。完了見込み15:50 JST頃は経過したが、結果未確認のため結果待ち。修正後チェーン性能は未測定。",
+      "title": "無取引の修正から、収益性の再診断へ",
+      "text": "dev1は取引0。2ae0d59で競合入札の誤認を修正し、dev2で取引成立を確認。収益の不足を受け、a646e9bで追加の売買制限を切り分け、dev3を開始。資格は未確認。",
       "sources": [
         "src-dev1",
-        "src-xbr-debug"
+        "src-dev2",
+        "src-dev3"
       ]
     },
     {
@@ -2748,7 +2931,9 @@
     "sources": [
       "src-q0b",
       "src-master"
-    ]
+    ],
+    "run_label": "Q0b / opus-1 / seed41101–41105",
+    "category": "qualification"
   },
   "q0b_summary": {
     "sources": [
@@ -2814,7 +2999,233 @@
     "source_table": {
       "source": "src-dev1",
       "header_key": "dev1-xb-r項目"
-    }
+    },
+    "run_label": "dev1-xb-r / seed31001/31002",
+    "category": "diagnostic"
+  },
+  "dev2": {
+    "id": "result-dev2",
+    "title": "dev2-xb-r / 診断結果",
+    "run_label": "dev2-xb-r",
+    "category": "diagnostic",
+    "header": [
+      "dev2-xb-r項目",
+      "提示された結果",
+      "判定・範囲"
+    ],
+    "rows": [
+      [
+        "母集団・G0",
+        "F_ref・seed31001/31002・6レジーム12世界 / G0 PASS",
+        "提示されたmeasured集計。原ログ再監査なし"
+      ],
+      [
+        "P−noop",
+        "全12世界で正、最小+147.7、noop割れ0",
+        "取引成立を確認。全12レジームの資格ではない"
+      ],
+      [
+        "1世界平均P",
+        "cand 149.0 / multi-arb 1352.2",
+        "同じ12世界。提示値の桁を保持"
+      ],
+      [
+        "1世界平均取引数",
+        "cand 44.8 / multi-arb 300.9",
+        "同じ12世界。提示値の桁を保持"
+      ],
+      [
+        "診断6レジーム平均T",
+        "cand 44.36 / multi-arb 56.84",
+        "Q0平均T基準未達。Q0資格判定ではない"
+      ],
+      [
+        "違反 / revert",
+        "0 / 0",
+        "診断の安全集計。新版・資格の安全保証ではない"
+      ]
+    ],
+    "sources": [
+      "src-dev2"
+    ],
+    "source_table": {
+      "source": "src-dev2",
+      "header_key": "dev2-xb-r項目"
+    },
+    "note": "診断は原因と改善を調べる測定。資格試験の代わりにはなりません。"
+  },
+  "dev2_detail": {
+    "id": "result-dev2-detail",
+    "title": "dev2-xb-r / 詳細な原表",
+    "run_label": "dev2-xb-r",
+    "category": "diagnostic",
+    "header": [
+      "項目",
+      "観測"
+    ],
+    "rows": [
+      [
+        "1世界平均P cand / multi / clean",
+        "148.96 / 1352.20 / 406.50"
+      ],
+      [
+        "includedTx 1世界平均 cand / multi / clean",
+        "44.83 / 300.92 / 70.33"
+      ],
+      [
+        "cand P−noop 最小 / 負の世界数",
+        "+147.66 / 0"
+      ],
+      [
+        "violations / valueSeries.failedReads / cand mined revert",
+        "0 / 0 / 0"
+      ],
+      [
+        "multi / clean mined revert 全世界計",
+        "9 / 2"
+      ],
+      [
+        "cand submitted / submit_failed（レッグ数）",
+        "538 / 23"
+      ],
+      [
+        "noop 共通理由 / 期限到達理由",
+        "3,924 / 9"
+      ]
+    ],
+    "sources": [
+      "src-dev2-repair"
+    ],
+    "source_table": {
+      "source": "src-dev2-repair",
+      "header_key": "項目"
+    },
+    "note": "詳細診断資料の桁をそのまま保持。送信前の拒否とチェーン上のrevertは別。"
+  },
+  "comparison": {
+    "sources": [
+      "src-master",
+      "src-dev2",
+      "src-dev3"
+    ],
+    "diagnostic": [
+      {
+        "candidate": "xb-r 修正版",
+        "scope_ref": "status.dev3",
+        "run_ref": "status.dev3.name",
+        "value_note": "結果は未確認",
+        "detail_ref": "status.dev3.note",
+        "state": "running",
+        "verdict": "資格判定には使わない",
+        "sources": [
+          "src-dev3"
+        ]
+      },
+      {
+        "candidate": "xb-r",
+        "scope_ref": "status.dev2",
+        "run_ref": "status.dev2.name",
+        "metrics": [
+          {
+            "label": "平均P",
+            "candidate_ref": "status.dev2.result.p_candidate",
+            "baseline_ref": "status.dev2.result.p_multi"
+          },
+          {
+            "label": "平均取引数",
+            "candidate_ref": "status.dev2.result.trades_candidate",
+            "baseline_ref": "status.dev2.result.trades_multi"
+          },
+          {
+            "label": "平均T",
+            "candidate_ref": "status.dev2.result.t_candidate",
+            "baseline_ref": "status.dev2.result.t_multi"
+          }
+        ],
+        "metric_note": "候補 / multi-arb（同じ母集団）",
+        "state": "warning",
+        "state_label": "比較対象に未達",
+        "safety_ref": "status.dev2",
+        "verdict": "診断平均TはQ0基準未達。正式な資格試験ではない。",
+        "sources": [
+          "src-dev2",
+          "src-dev2-repair"
+        ]
+      },
+      {
+        "candidate": "xb-r 初版",
+        "scope_ref": "status.dev1",
+        "run_ref": "status.dev1.name",
+        "metrics": [
+          {
+            "label": "取引",
+            "candidate_ref": "status.dev1.trades"
+          },
+          {
+            "label": "全世界P−noop",
+            "candidate_ref": "status.dev1.p_minus_noop_all_worlds"
+          }
+        ],
+        "state": "warning",
+        "state_label": "無取引を検出",
+        "verdict": "G0 PASS。原因修正後はdev2で再診断。",
+        "sources": [
+          "src-dev1"
+        ]
+      }
+    ],
+    "qualification": [
+      {
+        "candidate": "xb-r",
+        "scope_ref": "plan.q0_requalification",
+        "run_ref": "plan.q0_requalification.contract",
+        "value_note": "未実施",
+        "detail": "診断結果・固定コード・未使用seed・費用の条件待ち。",
+        "state": "blocked",
+        "verdict": "追加1候補・1回、5h上限。条件は維持。",
+        "sources": [
+          "src-delegation"
+        ]
+      },
+      {
+        "candidate": "sonnet-1",
+        "scope_ref": "results.q0.scope",
+        "run_ref": "results.q0.scope.name",
+        "metrics": [
+          {
+            "label": "平均T",
+            "candidate_ref": "results.q0_summary.candidate_t",
+            "baseline_ref": "results.q0_summary.multi_t"
+          }
+        ],
+        "metric_note": "候補 / multi-arb",
+        "safety_ref": "results.q0_summary",
+        "state": "failed",
+        "verdict": "平均T条件を満たさず。G0は全チャンクPASS。安全の報告と資格は別。",
+        "sources": [
+          "src-morning"
+        ]
+      },
+      {
+        "candidate": "opus-1",
+        "scope_ref": "status.q0b",
+        "run_ref": "status.q0b.name",
+        "metrics": [
+          {
+            "label": "平均T",
+            "candidate_ref": "results.q0b_summary.candidate_t",
+            "baseline_ref": "results.q0b_summary.multi_t"
+          }
+        ],
+        "metric_note": "候補 / multi-arb。G0不合格を含む提示集計",
+        "safety_ref": "results.q0b_summary",
+        "state": "failed",
+        "verdict": "平均T条件を満たさず。G0不合格は別に保持。救済再走なし。",
+        "sources": [
+          "src-q0b"
+        ]
+      }
+    ]
   }
 }
 </script>
@@ -2838,7 +3249,9 @@
       "sources": [
         "src-prior",
         "src-master"
-      ]
+      ],
+      "owner": "本人",
+      "group": "human"
     },
     {
       "id": "dec-deep",
@@ -2849,7 +3262,9 @@
       "note": "既決の承認上限。実解放は現残枠と初回/cal条件による。原判断時刻は資料未記載。",
       "sources": [
         "src-master"
-      ]
+      ],
+      "owner": "本人",
+      "group": "human"
     },
     {
       "id": "dec-no-contact",
@@ -2861,7 +3276,9 @@
       "sources": [
         "src-prior",
         "src-master"
-      ]
+      ],
+      "owner": "本人",
+      "group": "human"
     },
     {
       "id": "dec-008",
@@ -2872,7 +3289,9 @@
       "note": "[本人報告] 2026-10-04 15:07頃 JST、運営フォームの鍵登録受理表示を本人が提示。Ollama Cloud鍵・代表者メール一致は本人確認。画面はFree・無料枠0%・残高$0・Auto-reload Off。無料枠モデル一覧はgemma4:31b、gpt-oss:120b、gpt-oss:20b、nemotron-3-nano:30b、nemotron-3-super、nemotron-3-ultra。許可モデルは既定例gpt-oss:120bを前提に進める（本人了承）。dec-008=resolved、attentionctl記録済み。クリップボードの鍵は本人が消去済み（本人報告）。 運営公表モデル一覧との照合・無料枠の量の十分性・鍵の疎通は未確認で、10/28 dec-007で再確認。本人のやることは現在なし。無料枠不足時の前払い判断は将来のG3見積もり後で、支払承認ではない。",
       "sources": [
         "src-ollama-report"
-      ]
+      ],
+      "owner": "本人",
+      "group": "human"
     },
     {
       "id": "dec-007",
@@ -2884,7 +3303,9 @@
       "sources": [
         "src-master",
         "src-handoff"
-      ]
+      ],
+      "owner": "本人",
+      "group": "human"
     },
     {
       "id": "dec-q0-keep",
@@ -2897,7 +3318,9 @@
         "src-q0b",
         "src-master",
         "src-handoff"
-      ]
+      ],
+      "owner": "本人",
+      "group": "human"
     },
     {
       "id": "dec-astra-update",
@@ -2909,7 +3332,9 @@
       "sources": [
         "src-q0b",
         "src-master"
-      ]
+      ],
+      "owner": "Codex",
+      "group": "human"
     },
     {
       "id": "dec-forward",
@@ -2921,7 +3346,9 @@
       "sources": [
         "src-handoff",
         "src-master"
-      ]
+      ],
+      "owner": "本人",
+      "group": "human"
     },
     {
       "id": "dec-amend",
@@ -2933,7 +3360,9 @@
       "sources": [
         "src-master",
         "src-handoff"
-      ]
+      ],
+      "owner": "本人",
+      "group": "human"
     },
     {
       "id": "dec-overnight",
@@ -2944,7 +3373,9 @@
       "note": "約8hの過去の許可。M1/Q0が進んだ事実を遡及承認や追加許可へ変えない。",
       "sources": [
         "src-master"
-      ]
+      ],
+      "owner": "本人",
+      "group": "human"
     },
     {
       "id": "dec-q0-failure-branch",
@@ -2960,7 +3391,9 @@
       "issue": 4,
       "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
       "signer": "本人委任のAstra決定",
-      "signed_at": "2026-10-04T15:00:11+09:00"
+      "signed_at": "2026-10-04T15:00:11+09:00",
+      "owner": "Codex",
+      "group": "delegated"
     },
     {
       "id": "dec-q0b-g0",
@@ -2976,7 +3409,9 @@
       "issue": 5,
       "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
       "signer": "本人委任のAstra決定",
-      "signed_at": "2026-10-04T15:00:11+09:00"
+      "signed_at": "2026-10-04T15:00:11+09:00",
+      "owner": "Codex",
+      "group": "delegated"
     },
     {
       "id": "dec-step1-policy",
@@ -2988,7 +3423,9 @@
       "sources": [
         "src-ai",
         "src-master"
-      ]
+      ],
+      "owner": "本人",
+      "group": "human"
     },
     {
       "id": "dec-ai-scope",
@@ -3004,7 +3441,9 @@
       "issue": 1,
       "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
       "signer": "本人委任のAstra決定",
-      "signed_at": "2026-10-04T15:00:11+09:00"
+      "signed_at": "2026-10-04T15:00:11+09:00",
+      "owner": "Codex",
+      "group": "delegated"
     },
     {
       "id": "dec-ai-contract",
@@ -3020,7 +3459,9 @@
       "issue": 2,
       "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
       "signer": "本人委任のAstra決定",
-      "signed_at": "2026-10-04T15:00:11+09:00"
+      "signed_at": "2026-10-04T15:00:11+09:00",
+      "owner": "Codex",
+      "group": "delegated"
     },
     {
       "id": "dec-ai-budget",
@@ -3036,7 +3477,9 @@
       "issue": 3,
       "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
       "signer": "本人委任のAstra決定",
-      "signed_at": "2026-10-04T15:00:11+09:00"
+      "signed_at": "2026-10-04T15:00:11+09:00",
+      "owner": "Codex",
+      "group": "delegated"
     },
     {
       "id": "dec-revert-limit",
@@ -3052,7 +3495,9 @@
       "sources": [
         "src-delegation",
         "src-master"
-      ]
+      ],
+      "owner": "Codex",
+      "group": "delegated"
     }
   ],
   "human_only": {
@@ -3872,116 +4317,780 @@
 }
 </script>
 <!-- END data-log -->
+<!-- BEGIN data-glossary : editable facts -->
+<script type="application/json" id="data-glossary">
+{
+  "sources": [
+    "src-glossary"
+  ],
+  "items": [
+    {
+      "id": "term-ascon",
+      "term": "ASCON",
+      "aliases": [
+        "ASCON"
+      ],
+      "category": "競技",
+      "definition": "Nyx Foundation主催の、自動売買エージェントが仮想の金融市場で資産を増やす競技。"
+    },
+    {
+      "id": "term-agent",
+      "term": "エージェント",
+      "aliases": [
+        "エージェント",
+        "cand"
+      ],
+      "category": "競技",
+      "definition": "市場を観測して売買を決めるプログラム。candは測定対象の候補を指す。"
+    },
+    {
+      "id": "term-score-t",
+      "term": "T（相対スコア）",
+      "aliases": [
+        "平均T",
+        "平均 T",
+        "相対スコア",
+        "T"
+      ],
+      "category": "指標",
+      "definition": "同じエポックの参加者の損益Pを基に標準化した点数。相手の構成が変わると値も変わるため、別の場のTを直接比べない。"
+    },
+    {
+      "id": "term-profit-p",
+      "term": "P（損益）",
+      "aliases": [
+        "P−noop",
+        "平均P",
+        "平均 P",
+        "損益",
+        "P"
+      ],
+      "category": "指標",
+      "definition": "エポック終了時の資産価値から開始時を引いた損益。P−noopは何もしない場合からどれだけ増やせたか。途中の含み益だけでは決まらない。"
+    },
+    {
+      "id": "term-noop",
+      "term": "noop（何もしない比較対象）",
+      "aliases": [
+        "noop"
+      ],
+      "category": "指標",
+      "definition": "取引せず初期資産を保有する参照エージェント。資産価格が動くので、何もしなくても損益は変わる。"
+    },
+    {
+      "id": "term-multi-arb",
+      "term": "multi-arb",
+      "aliases": [
+        "multi-arb"
+      ],
+      "category": "比較対象",
+      "definition": "複数市場の価格差を使う参照エージェント。2脚を優先し、条件がなければ単脚も使う。現Q0ではこの相対スコア以上が必要。"
+    },
+    {
+      "id": "term-clean-arb",
+      "term": "clean-arb",
+      "aliases": [
+        "clean-arb"
+      ],
+      "category": "比較対象",
+      "definition": "multi-arbの2脚裁定部分を使う参照エージェント。独自の提出候補ではない。"
+    },
+    {
+      "id": "term-regime",
+      "term": "レジーム（市場の状況）",
+      "aliases": [
+        "レジーム",
+        "regime"
+      ],
+      "category": "計測",
+      "definition": "平穏、急落などの市場条件。競技では12種類をほぼ等しい重みで評価する。"
+    },
+    {
+      "id": "term-epoch",
+      "term": "エポック（採点区間）",
+      "aliases": [
+        "エポック",
+        "epoch"
+      ],
+      "category": "競技",
+      "definition": "区切られた採点期間。終了時に資産価値を評価し、後半の区間ほど重く集計する。"
+    },
+    {
+      "id": "term-seed",
+      "term": "seed（再現用の番号）",
+      "aliases": [
+        "seed",
+        "シード"
+      ],
+      "category": "計測",
+      "definition": "乱数の流れを固定する番号。同じ条件の再現や、開発で見ていない試験集合の管理に使う。"
+    },
+    {
+      "id": "term-world",
+      "term": "世界（1回の市場シミュレーション）",
+      "aliases": [
+        "世界"
+      ],
+      "category": "計測",
+      "definition": "レジーム・seed・対戦構成などを組み合わせた1回の測定単位。エージェントの人数とは別。"
+    },
+    {
+      "id": "term-f-ref",
+      "term": "F_ref（固定の参照相手）",
+      "aliases": [
+        "F_ref"
+      ],
+      "category": "計測",
+      "definition": "標準の参照エージェントと対戦する評価構成。現在の初回資格試験で使う。"
+    },
+    {
+      "id": "term-f-mix",
+      "term": "F_mix（混成の対戦相手）",
+      "aliases": [
+        "F_mix"
+      ],
+      "category": "計測",
+      "definition": "複数の性質を持つ相手を混ぜた評価構成。相手・順番・コードを測定前に固定する。"
+    },
+    {
+      "id": "term-q0",
+      "term": "Q0（初回の資格試験）",
+      "aliases": [
+        "Q0"
+      ],
+      "category": "試験",
+      "definition": "固定した候補を未使用seedの全12レジームで検査する60世界の試験。平均Tがmulti-arb以上、各レジームでnoop以上、安全条件などが必要。診断の好成績だけでは合格しない。"
+    },
+    {
+      "id": "term-q0b",
+      "term": "Q0b（2候補目の資格試験）",
+      "aliases": [
+        "Q0b"
+      ],
+      "category": "試験",
+      "definition": "opus-1に実施した初回資格試験。平均T条件不合格と、2世界の計測不成立を別々に保存している。"
+    },
+    {
+      "id": "term-q0m",
+      "term": "Q0m（混成場の資格試験案）",
+      "aliases": [
+        "Q0m",
+        "q0m"
+      ],
+      "category": "試験",
+      "definition": "F_mixを使う別の資格契約案。未署名で不採用。実行待ちの試験ではない。"
+    },
+    {
+      "id": "term-g0",
+      "term": "G0（計測成立の確認）",
+      "aliases": [
+        "G0"
+      ],
+      "category": "試験",
+      "definition": "入力が固定され、必要な処理が欠けず、負荷条件を満たしたかを確認する入口。利益の合格を意味しない。"
+    },
+    {
+      "id": "term-g3",
+      "term": "G3（AI改訂の動作・安全確認）",
+      "aliases": [
+        "G3"
+      ],
+      "category": "試験",
+      "definition": "AIによる改訂を動かした状態で、適用・拒否・復帰・反復・安全を確認する。改訂停止中の性能では代替できない。"
+    },
+    {
+      "id": "term-g4",
+      "term": "G4（提出適合の確認）",
+      "aliases": [
+        "G4"
+      ],
+      "category": "試験",
+      "definition": "提出ファイル・設定・型・検査・起動・受付条件などを照合する最終確認。鍵登録だけで提出版の受理にはならない。"
+    },
+    {
+      "id": "term-p60",
+      "term": "P60（公開60シナリオ）",
+      "aliases": [
+        "P60"
+      ],
+      "category": "試験",
+      "definition": "公開されている60シナリオで既存の動作が壊れていないか確認する。未使用の資格試験とは別。"
+    },
+    {
+      "id": "term-dev",
+      "term": "診断計測 dev1 / dev2 / dev3",
+      "aliases": [
+        "dev3a-xb-r",
+        "dev2-xb-r",
+        "dev1-xb-r",
+        "dev3a",
+        "dev1",
+        "dev2",
+        "dev3"
+      ],
+      "category": "計測",
+      "definition": "原因や改善点を調べる開発用測定。dev1は無取引、dev2は取引成立後の収益不足、dev3は修正版を確認する。いずれも資格試験の合格を表さない。"
+    },
+    {
+      "id": "term-xb-r",
+      "term": "xb-r（独自戦略の修理候補）",
+      "aliases": [
+        "xb-r"
+      ],
+      "category": "戦略",
+      "definition": "sonnet由来のxb-coreを土台に、実費後の利益・在庫・払える入札額で売買を選ぶ候補。R1–R7は個別に切り分ける機能スイッチ。"
+    },
+    {
+      "id": "term-factors",
+      "term": "R1–R7（機能を分けて調べる因子）",
+      "aliases": [
+        "R1–R7",
+        "R6/R7"
+      ],
+      "category": "戦略",
+      "definition": "同じ戦略の機能を一つずつ有効・無効にして影響を調べる番号。モデル名や競技の順位ではない。"
+    },
+    {
+      "id": "term-r1",
+      "term": "R1：2脚取引を先に選ぶ",
+      "aliases": [
+        "R1_BUNDLE_PRIORITY",
+        "R1"
+      ],
+      "category": "戦略",
+      "definition": "条件を満たすbundleを単脚より先に選ぶ。古いログのR1（第1ラウンド）とは別の番号。"
+    },
+    {
+      "id": "term-r2",
+      "term": "R2：残高も使って売買量を決める",
+      "aliases": [
+        "R2_BALANCE_FLOOR",
+        "R2"
+      ],
+      "category": "戦略",
+      "definition": "市場の厚みだけでなく残高からの目標量も使う。資金・在庫の上限を外す機能ではない。"
+    },
+    {
+      "id": "term-r3",
+      "term": "R3：入口の安全幅を二重に引かない",
+      "aliases": [
+        "R3_ENTRY_ONLY",
+        "R3"
+      ],
+      "category": "戦略",
+      "definition": "取引を始める閾値と利益計算を分け、入口で使った安全幅をサイズ・利益から再び引かない。"
+    },
+    {
+      "id": "term-r4",
+      "term": "R4：払える競合入札だけ送る",
+      "aliases": [
+        "R4_COMPETITOR_BID",
+        "R4"
+      ],
+      "category": "戦略",
+      "definition": "実行先の競合より優先される手数料を予算内で払える場合だけ送る。dev1では競合手数料の誤認を修正した。"
+    },
+    {
+      "id": "term-r5",
+      "term": "R5：終盤も利益が残る在庫復元",
+      "aliases": [
+        "R5_PROFITABLE_RESTORE",
+        "R5"
+      ],
+      "category": "戦略",
+      "definition": "終了直前は新規リスクを抑え、利益条件を満たす場合だけ初期在庫へ戻す。損失を出す強制売却は導入しない。"
+    },
+    {
+      "id": "term-r6",
+      "term": "R6：初期在庫の地点を通過できる",
+      "aliases": [
+        "R6_ANCHOR_CROSS",
+        "R6"
+      ],
+      "category": "戦略",
+      "definition": "十分な新規利益が見込める通常時は、初期在庫の量で売買を止めず反対側へ進める。在庫帯と終盤制限は維持。"
+    },
+    {
+      "id": "term-r7",
+      "term": "R7：単脚の入口を共通化",
+      "aliases": [
+        "R7_SINGLE_ENTRY",
+        "R7"
+      ],
+      "category": "戦略",
+      "definition": "単脚にもENTRY_BPSを使い、追加100bpsの拒否だけを外す。R6と独立して切り替える。"
+    },
+    {
+      "id": "term-bundle",
+      "term": "bundle（複数の脚をまとめて送る）",
+      "aliases": [
+        "bundle",
+        "2脚"
+      ],
+      "category": "戦略",
+      "definition": "買いと売りなどをまとめた取引。必ず全部同時に成功する仕組みではなく、片方だけ成功する場合がある。提出bundleはエージェントを配布用にまとめたファイルを指す。"
+    },
+    {
+      "id": "term-single",
+      "term": "単脚（1方向だけの売買）",
+      "aliases": [
+        "単脚",
+        "単腿"
+      ],
+      "category": "戦略",
+      "definition": "片方の売買だけを実行する取引。買いと売りを組み合わせる2脚と区別する。"
+    },
+    {
+      "id": "term-revert",
+      "term": "revert（チェーン上の実行失敗）",
+      "aliases": [
+        "revert"
+      ],
+      "category": "指標",
+      "definition": "チェーンに取り込まれたが処理が取り消された取引。送信前の拒否や読取失敗とは別に数える。"
+    },
+    {
+      "id": "term-frozen",
+      "term": "凍結 / FROZEN",
+      "aliases": [
+        "FROZEN",
+        "凍結"
+      ],
+      "category": "計測",
+      "definition": "試験中のコードや条件を固定し、AIの改訂を止めた状態。提出時の改訂ONでの検証は別に必要。"
+    },
+    {
+      "id": "term-revision",
+      "term": "改訂 / revision",
+      "aliases": [
+        "revision",
+        "改訂",
+        "ON",
+        "OFF"
+      ],
+      "category": "競技",
+      "definition": "エージェントをAIが更新すること。ONは更新あり、OFFは停止。MASTER rev 6のような文書の版番号とは文脈が異なる。"
+    },
+    {
+      "id": "term-ollama",
+      "term": "Ollama（AIモデルの実行サービス）",
+      "aliases": [
+        "Ollama"
+      ],
+      "category": "提出",
+      "definition": "gpt-oss:120bなどのモデルを利用するサービス。鍵の登録受理、モデルの許可、無料枠、疎通、ZIP受理は別の確認。"
+    },
+    {
+      "id": "term-forward",
+      "term": "forward100h（今後の計算時間枠）",
+      "aliases": [
+        "forward100h",
+        "forward-100h"
+      ],
+      "category": "予算",
+      "definition": "10/4以降に使う計算時間の100時間枠。過去消費は別記し、予約と実消化を混同しない。今回、正確な実消化は未精算。"
+    },
+    {
+      "id": "term-dec-007",
+      "term": "dec-007：提出前の本人確認",
+      "aliases": [
+        "dec-007"
+      ],
+      "category": "判断",
+      "definition": "10/28にOllamaの運営モデル一覧・無料枠量・鍵の疎通・提出ZIPなどを再確認する判断記録。現在も未完了。"
+    },
+    {
+      "id": "term-dec-008",
+      "term": "dec-008：初回の鍵登録確認",
+      "aliases": [
+        "dec-008"
+      ],
+      "category": "判断",
+      "definition": "本人報告により初回確認は解決済み。元の期日は10/7。最終確認や提出ZIPの受理とは別。"
+    },
+    {
+      "id": "term-deterministic",
+      "term": "deterministic（決定論）",
+      "aliases": [
+        "deterministic",
+        "決定論"
+      ],
+      "category": "戦略",
+      "definition": "同じ入力と状態なら同じ判断を返すこと。AIによる調整を加える前の比較の基準になる。"
+    },
+    {
+      "id": "term-basis",
+      "term": "measured / 本人報告 / 未確認",
+      "aliases": [
+        "measured",
+        "本人報告"
+      ],
+      "category": "証拠",
+      "definition": "measuredは提示された計測集計。本人報告は本人が確認した画面や操作の報告。どちらも、このダッシュボード担当が原ログ・サービスを再監査した意味ではない。"
+    },
+    {
+      "id": "term-bps",
+      "term": "bps（ベーシスポイント）",
+      "aliases": [
+        "bps",
+        "ENTRY_BPS"
+      ],
+      "category": "指標",
+      "definition": "割合の単位。100bpsが1%。ENTRY_BPSは取引を始めるために必要な価格差の設定。"
+    },
+    {
+      "id": "term-s",
+      "term": "S（受理済みの基準版）",
+      "aliases": [
+        "受理S",
+        "適合S",
+        "S240"
+      ],
+      "category": "計画",
+      "definition": "資格・適合を満たし受理された独自版。上積み候補を採用できない場合の基準。S240はこの版だけを最終240世界で確認する計画。"
+    },
+    {
+      "id": "term-r-star",
+      "term": "R*（上積みを狙う候補）",
+      "aliases": [
+        "R*"
+      ],
+      "category": "計画",
+      "definition": "基準版Sからの改善を検証する固定候補。採用にはAI専用試験や反復の証拠が必要。"
+    },
+    {
+      "id": "term-e3-q1",
+      "term": "E3 / Q1（開発比較と次段階の資格）",
+      "aliases": [
+        "E3",
+        "Q1"
+      ],
+      "category": "試験",
+      "definition": "E3は候補の改善を調べる独立の比較、Q1はその後の資格確認。AIでは改訂ON専用の試験を別途確保する。"
+    },
+    {
+      "id": "term-h",
+      "term": "H / H480（封印した最終試験）",
+      "aliases": [
+        "H480"
+      ],
+      "category": "試験",
+      "definition": "調整に使わない条件を事前固定し、最後に一度だけ開く比較。2候補なら480世界、基準版だけなら240世界。"
+    },
+    {
+      "id": "term-hash",
+      "term": "hash（版を識別する指紋）",
+      "aliases": [
+        "hash"
+      ],
+      "category": "証拠",
+      "definition": "コードや設定が測定時と同じか確認する識別値。未提示の値は推測で埋めない。"
+    },
+    {
+      "id": "term-red",
+      "term": "赤対照（壊れた実装を検出する検査）",
+      "aliases": [
+        "赤対照"
+      ],
+      "category": "証拠",
+      "definition": "意図的に欠陥を入れた実装をテストが正しく失敗させるかを確認する。戦略の利益を示す検査ではない。"
+    },
+    {
+      "id": "term-astra",
+      "term": "Astra（過去の記録上の担当名）",
+      "aliases": [
+        "Astra"
+      ],
+      "category": "判断",
+      "definition": "過去の計画・判断で使われるCodex側の担当名。現在の担当欄はCodexに統一し、判断者・署名の原記録は保持する。"
+    }
+  ]
+}
+</script>
+<!-- END data-glossary -->
+<!-- BEGIN data-ui : editable facts -->
+<script type="application/json" id="data-ui">
+{
+  "sources": [
+    "src-master"
+  ],
+  "schema_version": "2",
+  "brand": "ASCON",
+  "tagline": "Competition workspace",
+  "pages": [
+    {
+      "key": "overview",
+      "label": "概要",
+      "eyebrow": "WORKSPACE OVERVIEW",
+      "description": "ASCON（自動売買AIの競技）への参戦状況。いま起きていることと、次に進むための条件。",
+      "icon": "overview"
+    },
+    {
+      "key": "plan",
+      "label": "全体計画",
+      "eyebrow": "ROADMAP",
+      "description": "初回受理から最終提出まで。日付は予定、進行には条件があります。",
+      "icon": "plan"
+    },
+    {
+      "key": "results",
+      "label": "進捗・結果",
+      "eyebrow": "PERFORMANCE",
+      "description": "診断で分かったことと、資格試験の判定を分けて確認。",
+      "icon": "results"
+    },
+    {
+      "key": "blockers",
+      "label": "ブロッカー・リスク",
+      "eyebrow": "ISSUES",
+      "description": "止まっている理由、影響、次の対応と担当。",
+      "icon": "blockers"
+    },
+    {
+      "key": "decisions",
+      "label": "判断",
+      "eyebrow": "DECISIONS",
+      "description": "本人の確認予定と、委任により確定した決定。",
+      "icon": "decisions"
+    },
+    {
+      "key": "operations",
+      "label": "実行キュー・予算",
+      "eyebrow": "OPERATIONS",
+      "description": "実行状況の引継ぎと、計算時間の予約・実消化。",
+      "icon": "operations"
+    },
+    {
+      "key": "log",
+      "label": "更新ログ",
+      "eyebrow": "ACTIVITY",
+      "description": "過去の記録を新しい順に。記録当時の状態を保持しています。",
+      "icon": "log"
+    },
+    {
+      "key": "glossary",
+      "label": "用語集",
+      "eyebrow": "GLOSSARY",
+      "description": "競技・計測・戦略の用語を、日常の言葉で。",
+      "icon": "glossary"
+    }
+  ],
+  "kpis": [
+    {
+      "label": "最優先の診断",
+      "ref": "status.dev3.name",
+      "note": "結果未確認",
+      "route": "operations"
+    },
+    {
+      "label": "診断の対noop最小損益",
+      "ref": "status.dev2.result.min_p_minus_noop",
+      "note": "dev2-xb-r / 全12世界で正",
+      "route": "results"
+    },
+    {
+      "label": "本人が今やること",
+      "ref": "status.human_action",
+      "note": "登録済み・最終確認は10/28",
+      "route": "decisions"
+    },
+    {
+      "label": "提出締切 · JST",
+      "ref": "plan.deadline_at",
+      "format": "deadline",
+      "note": "初回受理日は再見積もり",
+      "route": "plan"
+    }
+  ],
+  "omitted": [
+    {
+      "title": "同じ結果を複数の図表で繰り返す表示",
+      "retained": "MASTER §1と進捗・結果の原表に集約。数値の削除なし。"
+    },
+    {
+      "title": "予算配分・AI契約の繰り返し説明",
+      "retained": "MASTER §5–7。判断・予算の詳細に一度だけ表示。"
+    },
+    {
+      "title": "トップに並んでいた内部の実行手順・古い経緯",
+      "retained": "MASTER §8–11。原表・履歴・ログの折りたたみへ移動。"
+    }
+  ],
+  "copy": {
+    "action_note": "鍵の登録は本人報告で確認済み。クリップボードの鍵も消去済みです。",
+    "action_next": "運営のモデル一覧・無料枠の量・鍵の疎通を再確認します。無料枠が不足する場合の前払い判断は、AI改訂の費用見積もり後です。",
+    "diagnostic_notice": "診断が終わっても資格合格にはなりません。市場の条件や対戦相手が異なる数値をまとめて順位にしません。",
+    "qualification_notice": "資格条件は維持しています。旧2候補は不合格、xb-rの新しい資格試験は未実施です。",
+    "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
+    "diagnostic_criteria": "Pは損益、Tは同じ相手の中での相対スコア。取引が増えることと、資格を満たすことは別です。",
+    "plan_state": "Step 1 の資格待ち",
+    "plan_note": "初回受理の旧目標は延期済み",
+    "registration": "受理表示を本人が確認済み",
+    "provider_remaining": "運営モデル一覧・無料枠量・鍵の疎通",
+    "decisions_note": "契約の決定と、実装・資格・受理の完了は別です。金銭・自動チャージの承認は含みません。"
+  },
+  "roadmap_axis": [
+    "10/4",
+    "10/12",
+    "10/20",
+    "10/31"
+  ],
+  "roadmap_start_date": "2026-10-04",
+  "roadmap_end_date": "2026-10-31"
+}
+</script>
+<!-- END data-ui -->
 <style>
-@font-face{font-family:"IBM Plex Sans";src:local("IBM Plex Sans");font-display:swap}
-@font-face{font-family:"IBM Plex Mono";src:local("IBM Plex Mono");font-display:swap}
-:root{color-scheme:light;--accent:#0d73bd;--accent-tint:#edf5fb;--ink:#0f1115;--muted:#5b616e;--faint:#72767f;--line:#e5e7eb;--bg:#fff;--surface:#f7f8fa;--good:#0e7e56;--good-tint:#e9f5ef;--bad:#b53a2e;--bad-tint:#fbecea;--warn:#876019;--warn-tint:#fbf1df;--radius:14px;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;--sans:"IBM Plex Sans","Noto Sans JP","Hiragino Sans",-apple-system,Arial,sans-serif;--cluster-d:#0d73bd;--cluster-e:#0e7e56;--cluster-a:#68549c;--cluster-b:#92651e;--cluster-f:#a33f69;--cluster-g:#3a6c77}
-*{box-sizing:border-box}html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;scroll-padding-top:30px}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 var(--sans);overflow-wrap:anywhere}a{color:var(--accent);text-underline-offset:3px}button,select{font:inherit}a:focus-visible,summary:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:4px}h1,h2,h3,p{margin:0}h1{font-size:clamp(34px,5.5vw,62px);line-height:1.12;letter-spacing:-.04em;max-width:950px}h2{font-size:clamp(26px,3vw,36px);line-height:1.3;letter-spacing:-.025em}h3{font-size:17px;line-height:1.45;margin-bottom:12px}p+p{margin-top:10px}.wrap{max-width:1180px;margin:auto;padding:0 30px 70px}.mono,time,.value{font-family:var(--mono);font-variant-numeric:tabular-nums}.kicker,.eyebrow{font:600 12px/1.5 var(--mono);letter-spacing:.12em;color:var(--accent)}header{padding:62px 0 30px}.header-meta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:20px 0}.tagline{font-size:21px;max-width:850px;margin-top:20px}.note,.source-links,.small{font-size:12px;color:var(--muted)}.note{margin-top:14px}.source-links{display:flex;gap:7px 12px;flex-wrap:wrap;margin-top:10px}.source-links a{font-size:11px}.last-update{padding:12px 16px;border-left:3px solid var(--accent);background:var(--accent-tint);margin:20px 0;font-size:13px}.badge{display:inline-block;padding:3px 9px;border:1px solid var(--line);border-radius:99px;font:600 11px/1.5 var(--mono);white-space:normal;background:var(--surface)}.badge.good{color:var(--good);background:var(--good-tint)}.badge.bad{color:var(--bad);background:var(--bad-tint)}.badge.warn{color:var(--warn);background:var(--warn-tint)}.badge.accent{color:var(--accent);background:var(--accent-tint)}nav{display:flex;flex-wrap:wrap;gap:8px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:15px 0;font-size:13px}nav a{text-decoration:none}section{padding:48px 0;border-bottom:1px solid var(--line)}.section-heading{margin-bottom:24px}.section-heading .eyebrow{margin-bottom:8px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:26px 0}.stat,.card,.figure{border:1px solid var(--line);border-radius:var(--radius);padding:20px;background:var(--bg);min-width:0}.stat .value{font-size:clamp(20px,2.3vw,29px);font-weight:600;margin:8px 0;line-height:1.25}.stat.good .value{color:var(--good)}.stat.bad .value{color:var(--bad)}.stat.warn .value{color:var(--warn)}.stat.accent .value{color:var(--accent)}.figure{background:var(--surface);margin:24px 0}.figure>.grid{margin-top:14px}.card p,.card li{font-size:13px;color:var(--muted)}.card ul{padding-left:20px;margin-bottom:0}.card.accent{border-color:var(--accent);background:var(--accent-tint)}.card.warn{background:var(--warn-tint)}.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.flow .card{position:relative}.flow .card:not(:last-child)::after{content:"→";position:absolute;right:-20px;top:20px;font-size:20px;color:var(--accent)}.phase-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:24px 0}.phase{padding:14px;border-top:4px solid var(--line);background:var(--surface);font-size:12px}.phase.current{border-color:var(--accent);background:var(--accent-tint)}.phase b{display:block;font-size:14px}.phase p{font-size:11px;color:var(--muted);margin-top:5px}.timeline{position:relative;padding-left:28px;display:grid;gap:12px;margin-top:20px}.timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--line)}.timeline::after{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--accent);transform:scaleY(0);transform-origin:top;transition:transform 1.4s}.in .timeline::after{transform:scaleY(1)}.day{position:relative;padding:14px 16px;background:var(--bg);border:1px solid var(--line);border-radius:10px}.day::before{content:"";position:absolute;left:-28px;top:19px;width:11px;height:11px;border:2px solid var(--accent);border-radius:50%;background:var(--bg);z-index:1}.day.human{border-color:var(--warn);background:var(--warn-tint)}.day time{font-size:12px;color:var(--accent)}.day h3{margin:5px 0;font-size:14px}.day p{font-size:12px;color:var(--muted)}.timeline-details{margin-top:18px}.milestone-top{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.bars{display:grid;gap:10px}.bar{display:grid;grid-template-columns:125px minmax(0,1fr) 82px;gap:10px;align-items:center;font:12px/1.45 var(--mono)}.bar-label{overflow-wrap:anywhere}.track{position:relative;height:18px;border:1px solid var(--line);background:var(--bg);border-radius:4px;overflow:hidden}.fill{position:absolute;top:0;bottom:0;left:var(--left,0%);width:var(--w);background:var(--c,var(--accent));transform:scaleX(0);transform-origin:left;transition:transform 1.1s cubic-bezier(.2,.8,.2,1)}.in .fill{transform:scaleX(1)}.track.signed::after{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:1px solid var(--ink)}.bar-value{text-align:right}.scale{display:flex;justify-content:space-between;color:var(--muted);font:11px var(--mono);margin:9px 0 16px}.swatch{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);margin-right:6px}.stack{display:flex;height:30px;width:100%;border-radius:6px;overflow:hidden;background:var(--line);transform:scaleX(0);transform-origin:left;transition:transform 1.2s}.in .stack{transform:scaleX(1)}.stack i{flex:var(--hours) 1 0;min-width:0;background:var(--c)}.budget-key{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin-top:14px;font-size:12px}.budget-key b{font-family:var(--mono)}.workstream{padding:14px 0;border-bottom:1px solid var(--line)}.workstream:last-child{border:0}.workstream-head{display:flex;justify-content:space-between;gap:15px;font-size:13px;margin-bottom:6px}.workstream .track{height:9px}.table-wrap{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;margin-top:14px}table{border-collapse:collapse;width:100%;font-size:12px;line-height:1.55;text-align:left}th{font-weight:600;color:var(--muted);font-size:11px;border-bottom:2px solid var(--line);padding:10px 8px;vertical-align:bottom}td{padding:12px 8px;vertical-align:top;border-bottom:1px solid var(--line)}td:first-child{font-weight:600;color:var(--ink)}.blocker-table{min-width:1050px}.blocker-table td{min-width:65px}.blocker-table td:nth-child(2){min-width:120px}.blocker-table td:nth-child(8),.blocker-table td:nth-child(9){min-width:180px}.result-table{min-width:720px}.matrix{display:grid;grid-template-columns:45px repeat(3,minmax(0,1fr));gap:5px;font-size:11px;margin:18px 0 8px}.matrix-label{display:flex;align-items:center;justify-content:center;color:var(--muted)}.cell{min-height:54px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;gap:4px;flex-wrap:wrap;align-content:center}.cell.high{background:var(--bad-tint)}.cell a{font:11px var(--mono)}.queue{list-style:none;padding:0;margin:20px 0;display:grid;gap:12px}.queue li{display:grid;grid-template-columns:35px minmax(0,1fr) 85px;gap:12px;border-bottom:1px solid var(--line);padding:14px 0}.queue .number{font:600 18px var(--mono);color:var(--accent)}.queue h3{margin:0 0 6px}.queue p{font-size:13px;color:var(--muted)}.queue .hours{font:13px var(--mono);text-align:right}.queue .inactive{opacity:.78;background:var(--surface)}details{margin-top:18px}summary{cursor:pointer;font-size:13px;color:var(--accent);padding:8px 0}.legend{display:flex;gap:8px 16px;flex-wrap:wrap;font-size:12px;margin:16px 0}.model-row{display:grid;grid-template-columns:70px minmax(0,1fr) 90px;gap:10px;align-items:center;margin:14px 0;font:12px var(--mono)}.model-track{display:flex;gap:3px}.model-cell{flex:var(--count) 1 0;background:var(--c);color:#fff;text-align:center;padding:12px 4px;border-radius:4px;transform:scaleY(0);transform-origin:bottom;transition:transform .8s}.in .model-cell{transform:scaleY(1)}.player-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:22px}.player-card h3{margin-bottom:3px}.player-metrics{display:flex;justify-content:space-between;gap:12px;margin:14px 0;font-size:12px}.player-metrics strong{font:600 23px var(--mono)}.player-card dl{font-size:12px;margin:12px 0 0}.player-card dt{color:var(--muted);float:left;clear:left;width:35px}.player-card dd{margin:0 0 6px 40px}.log-tools{display:flex;gap:10px;align-items:center;margin:22px 0}.log-tools select{border:1px solid var(--line);padding:5px 8px;border-radius:5px;background:white;color:var(--ink);max-width:100%}.log-list{list-style:none;margin:0;padding:0}.log-list li{display:grid;grid-template-columns:178px minmax(0,1fr);gap:18px;border-top:1px solid var(--line);padding:16px 0}.log-list time{font-size:11px;color:var(--muted)}.log-list p{font-size:13px}.log-list .source-links{margin-top:5px}.log-list small{font-size:11px;color:var(--muted);display:block;margin-top:6px}.source-catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0;list-style:none}.source-catalog li{border-bottom:1px solid var(--line);padding:10px 0;font-size:13px}.source-catalog small{display:block;font-size:11px;color:var(--muted)}footer{padding-top:30px;font-size:12px;color:var(--muted)}.skip{position:absolute;top:-100px;left:20px;background:var(--bg);padding:12px;z-index:10}.skip:focus{top:10px}.error{padding:25px;border:2px solid var(--bad);margin-top:20px}.reveal{opacity:1;transform:none}.motion .reveal{opacity:0;transform:translateY(12px);transition:opacity .55s,transform .55s}.motion .reveal.in{opacity:1;transform:none}section:target,.card:target,tr:target{outline:2px solid var(--accent);outline-offset:5px}.wrap,main,section,.grid,.flow,.phase-strip,.card,.figure,.bars,.bar,.track,details{min-width:0;max-width:100%}[hidden]{display:none!important}
-@media(max-width:850px){.grid.three,.player-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.flow{grid-template-columns:1fr}.flow .card:not(:last-child)::after{content:"↓";top:auto;bottom:-24px;right:50%}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.bar{grid-template-columns:110px minmax(0,1fr) 70px}.phase-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}}
-@media(max-width:600px){.wrap{padding:0 16px 45px}header{padding-top:36px}.tagline{font-size:17px}section{padding:35px 0}.figure,.card,.stat{padding:16px}.grid.three,.player-grid,.source-catalog{grid-template-columns:1fr}.budget-key{grid-template-columns:1fr}.bar{grid-template-columns:92px minmax(0,1fr) 65px;gap:6px;font-size:11px}.model-row{grid-template-columns:58px minmax(0,1fr);font-size:11px}.model-row>span:last-child{grid-column:2}.log-list li{grid-template-columns:1fr;gap:8px}.queue li{grid-template-columns:26px minmax(0,1fr)}.queue .hours{grid-column:2;text-align:left}.table-wrap{overflow:visible}table,.result-table,.blocker-table{display:block;min-width:0;width:100%}thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}tbody,tr{display:block;width:100%}tr{border:1px solid var(--line);border-radius:8px;margin:10px 0;padding:8px;background:var(--bg)}td,.blocker-table td,.blocker-table td:nth-child(2),.blocker-table td:nth-child(8),.blocker-table td:nth-child(9){display:grid;grid-template-columns:95px minmax(0,1fr);gap:10px;padding:6px;min-width:0}td::before{content:attr(data-label);font-weight:400;font-size:10px;color:var(--muted)}td:last-child{border:0}.phase{padding:10px}}
-@media(max-width:340px){.stats,.phase-strip{grid-template-columns:1fr}.bar{grid-template-columns:75px minmax(0,1fr) 58px}.figure{padding:12px}.matrix{grid-template-columns:30px repeat(3,minmax(0,1fr))}.cell{padding:5px}}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.motion .reveal{opacity:1;transform:none}.fill,.stack,.model-cell,.timeline::after{transform:none!important}}
-@media print{@page{size:A4;margin:14mm}body{font-size:10px}.wrap{padding:0;max-width:none}header{padding:10px 0}h1{font-size:30px}h2{font-size:22px}nav,.skip,.log-tools{display:none}section{padding:22px 0}.motion .reveal{opacity:1;transform:none}.fill,.stack,.model-cell,.timeline::after{transform:none!important}*{animation:none!important;transition:none!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.table-wrap{overflow:visible}table,.result-table,.blocker-table{min-width:0;width:100%;table-layout:fixed;font-size:8px}.blocker-table td,.blocker-table td:nth-child(2),.blocker-table td:nth-child(8),.blocker-table td:nth-child(9){min-width:0}th{font-size:7px}td,th{padding:5px 3px}.card,.day,.stat,.log-list li,tr{break-inside:avoid}.figure{padding:14px;margin:15px 0}.player-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.stat .value{font-size:17px}.log-list li{grid-template-columns:135px minmax(0,1fr)}details>summary{display:none}details>*:not(summary){display:block!important}details::details-content{content-visibility:visible}.log-list li[hidden]{display:grid!important}a{color:var(--ink)}.source-links a{font-size:8px}}
+:root{color-scheme:light;--bg:#f5f7fa;--surface:#fff;--ink:#172b46;--muted:#53637a;--line:#dce3ec;--accent:#2457d6;--accent-soft:#edf2ff;--good:#176345;--good-bg:#e9f5ee;--warn:#805209;--warn-bg:#fff4da;--bad:#ad3434;--bad-bg:#fceeee;--radius:14px;--shadow:0 2px 6px #172b4605;--font:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN",Meiryo,sans-serif}
+*{box-sizing:border-box}html{background:var(--bg);scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.65 var(--font);-webkit-font-smoothing:antialiased}button,input,select{font:inherit;color:inherit}button,a,input,select,summary{-webkit-tap-highlight-color:transparent}button{cursor:pointer}a{color:var(--accent);text-underline-offset:3px}a:hover{text-decoration-thickness:2px}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,[tabindex="-1"]:focus-visible{outline:3px solid var(--accent);outline-offset:4px}button:disabled{cursor:default}h1,h2,h3,p{margin:0}h1{font-size:28px;line-height:1.4;letter-spacing:-.04em;font-weight:750}h2{font-size:18px;line-height:1.5;letter-spacing:-.02em}h3{font-size:15px;line-height:1.6}small,.small{font-size:12px}strong{font-weight:650}ul,ol{margin:0;padding:0;list-style:none}svg{display:block;flex:none} [hidden]{display:none!important}.muted{color:var(--muted)}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em}.eyebrow{font-size:10px;font-weight:750;letter-spacing:.14em;color:var(--muted);margin-bottom:8px}.skip{position:fixed;top:-100px;left:16px;z-index:30;background:white;padding:12px}.skip:focus{top:12px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.sidebar{position:fixed;inset:0 auto 0 0;width:228px;background:var(--surface);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:28px 18px;z-index:10}.brand{display:flex;align-items:center;gap:10px;padding:0 12px}.brand-mark{display:grid;place-items:center;width:34px;height:34px;color:white;background:var(--accent);border-radius:9px}.brand-name{font-size:19px;font-weight:780;letter-spacing:.015em}.brand-sub{font-size:10px;letter-spacing:.03em;color:var(--muted)}.nav-caption{margin:36px 12px 10px;font-size:10px;color:var(--muted);letter-spacing:.14em;font-weight:700}.nav-list{display:grid;gap:5px}.nav-link{display:flex;gap:11px;align-items:center;min-height:44px;padding:10px 12px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:13px;font-weight:550}.nav-link:hover{background:#f2f5fa}.nav-link[aria-current=page]{color:var(--accent);background:var(--accent-soft);font-weight:700}.nav-count{margin-left:auto;font-size:11px;font-variant-numeric:tabular-nums}.sidebar-foot{margin-top:auto;padding:20px 12px 0;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}.sidebar-foot strong{display:block;color:var(--ink);margin-bottom:4px}.workspace{margin-left:228px;min-width:0}.topbar{height:62px;border-bottom:1px solid var(--line);padding:0 36px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface)}.breadcrumb{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px}.breadcrumb strong{color:var(--ink)}.top-meta{font-size:11px;color:var(--muted);display:flex;gap:12px;align-items:center}.snapshot-label{display:flex;gap:6px;align-items:center}.snapshot-label:before{content:"";width:6px;height:6px;border:1.5px solid var(--muted);border-radius:50%}main{max-width:1512px;padding:32px 36px 48px;margin:auto;min-width:0}.page-heading{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:25px}.page-description{color:var(--muted);margin-top:8px;max-width:66ch}.heading-aside{color:var(--muted);font-size:12px;white-space:nowrap}.page-body{animation:enter .2s ease-out}.section{margin-top:24px}.section-title{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 13px}.section-title small{color:var(--muted)}.section-title a{font-size:12px;font-weight:600;text-decoration:none}.grid-2{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:20px}.grid-equal{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.stack{display:grid;gap:16px}.card{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:23px}.card p+p{margin-top:10px}.card-title{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:14px}.card-title h2{font-size:17px}.card-sub{font-size:12px;color:var(--muted);margin-top:6px}.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:24px}.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:19px 20px;text-decoration:none;color:var(--ink);box-shadow:var(--shadow);min-width:0;transition:border-color .15s,transform .15s}.kpi:focus-within{border-color:#9bafd9}.kpi-heading{display:flex;align-items:center;justify-content:space-between;gap:5px}.kpi-jump{display:grid;place-items:center;min-width:24px;min-height:24px;color:var(--muted);text-decoration:none;font-size:15px;margin:-6px -4px -6px 0}.kpi-label{font-size:11px;color:var(--muted);font-weight:600}.kpi-value{font-size:25px;font-weight:720;line-height:1.4;letter-spacing:-.04em;margin:10px 0 6px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}.kpi-value.compact{font-size:21px}.kpi-note{color:var(--muted);font-size:11px}.summary-strip{border-left:3px solid var(--accent);padding:1px 0 1px 15px;margin-bottom:23px}.summary-strip h2{font-size:19px;line-height:1.6}.summary-strip p{font-size:13px;color:var(--muted);margin-top:5px}.chip{display:inline-flex;align-items:center;gap:5px;vertical-align:middle;max-width:100%;padding:3px 8px;border-radius:5px;font-size:11px;font-weight:650;line-height:1.6;background:#edf0f5;color:var(--muted);white-space:normal}.chip.running{background:var(--accent-soft);color:var(--accent)}.chip.done{background:var(--good-bg);color:var(--good)}.chip.blocked,.chip.failed{background:var(--bad-bg);color:var(--bad)}.chip.decision,.chip.warning{background:var(--warn-bg);color:var(--warn)}.chip-symbol{font-size:12px}.chips{display:flex;gap:8px;flex-wrap:wrap}.evidence{display:inline-flex;gap:5px;align-items:center;font-size:10px;letter-spacing:.02em;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:2px 6px}.priority-title{font-size:21px;max-width:24ch;margin:12px 0;letter-spacing:-.035em;line-height:1.55}.priority-card>p{font-size:13px;color:var(--muted)}.mini-label{font-size:11px;color:var(--muted);font-weight:650}.progress-head{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:11px;color:var(--muted);margin-top:22px;margin-bottom:8px}progress{display:block;appearance:none;-webkit-appearance:none;border:0;width:100%;height:6px;border-radius:8px;background:#e8edf5;color:var(--accent);overflow:hidden}progress::-webkit-progress-bar{background:#e8edf5;border-radius:8px}progress::-webkit-progress-value{background:var(--accent);border-radius:8px;transition:width .3s ease}progress::-moz-progress-bar{background:var(--accent);border-radius:8px}.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-top:22px;gap:12px}.step{position:relative;min-width:0}.step:not(:last-child):after{content:"";height:1px;background:var(--line);position:absolute;top:13px;left:35px;right:0}.step-dot{position:relative;z-index:1;display:grid;place-items:center;width:27px;height:27px;border:1px solid #bbc7d8;border-radius:50%;background:var(--surface);color:var(--muted);font-size:12px;margin-bottom:10px}.step-dot.done{background:var(--good-bg);color:var(--good);border-color:#b7d7c4}.step-dot.running{border:2px solid var(--accent);color:var(--accent);background:var(--accent-soft)}.step-dot.blocked{color:var(--bad);border-color:#deb5b5}.step-label{font-size:11px;line-height:1.65}.step-state{font-size:10px;color:var(--muted);margin-top:4px}.action-value{font-size:30px;letter-spacing:-.04em;margin:12px 0 5px}.action-box{background:#fbfcfe}.action-box p{font-size:12px;color:var(--muted)}.action-box .next-action{padding-top:16px;margin-top:16px;border-top:1px solid var(--line)}.next-action strong{display:block;color:var(--ink);margin-bottom:5px}.text-link{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;text-decoration:none;margin-top:17px}.timeline li{position:relative;padding:0 0 21px 25px}.timeline li:before{content:"";position:absolute;left:4px;top:6px;bottom:-6px;width:1px;background:var(--line)}.timeline li:last-child:before{display:none}.timeline li:after{content:"";position:absolute;left:0;top:6px;width:9px;height:9px;border:2px solid var(--accent);border-radius:50%;background:var(--surface)}.timeline li:last-child{padding-bottom:0}.timeline-title{font-size:13px;font-weight:650;margin:4px 0}.timeline p{font-size:12px;color:var(--muted)}.timeline time,.timeline .time-note{font-size:11px;color:var(--muted)}.run-label{font:11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;color:var(--muted);overflow-wrap:anywhere}.refs{display:flex;gap:6px 14px;flex-wrap:wrap;margin-top:12px;font-size:10px}.refs a{color:var(--muted);text-decoration:none;border-bottom:1px solid #cad4e3}.refs a:hover{color:var(--accent)}.refs-label{color:var(--muted)}.notice{border:1px solid var(--line);background:#eef3fa;padding:13px 16px;border-radius:9px;color:#354c69;font-size:12px}.notice.warning{color:var(--warn);background:var(--warn-bg);border-color:#ead8ab}.subnav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}.subnav button,.filter-button{border:1px solid var(--line);background:var(--surface);border-radius:7px;padding:8px 12px;min-height:40px;font-size:12px}.subnav button[aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:650}.toolbar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:20px}.field{display:flex;flex-direction:column;gap:6px;min-width:0}.field label{font-size:11px;font-weight:600;color:var(--muted)}.field.search{flex:1;min-width:180px}.field input,.field select{width:100%;min-height:42px;padding:9px 12px;border:1px solid #b9c6d8;border-radius:8px;background:white;font-size:13px}.result-count{margin-left:auto;font-size:12px;color:var(--muted);align-self:center}.empty{padding:40px 20px;text-align:center;color:var(--muted);border:1px dashed #bcc9d9;border-radius:12px;background:var(--surface)}.empty strong{display:block;color:var(--ink);margin-bottom:6px}
+table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:12px}caption{text-align:left;color:var(--muted);font-size:11px;padding:0 0 12px}th{text-align:left;background:#f5f7fb;color:var(--muted);font-size:11px;font-weight:600;border-bottom:1px solid var(--line);padding:11px 13px}td{vertical-align:top;padding:15px 13px;border-bottom:1px solid #e8edf4;overflow-wrap:anywhere}td p+p{margin-top:7px}td .refs{margin-top:7px}tbody tr:last-child td{border-bottom:0}.table-card{padding:0;overflow:hidden}.table-card>.table-intro{padding:22px 23px 16px}.table-card>table{margin:0}.table-card .table-foot{padding:14px 23px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}.comparison th:first-child{width:16%}.comparison th:nth-child(2){width:25%}.comparison th:nth-child(3){width:34%}.comparison th:nth-child(4){width:25%}.comparison strong{display:block;margin-bottom:5px}.metric-pair{font-variant-numeric:tabular-nums}.metric-pair b{color:var(--ink);font-size:15px;font-weight:700}.scope-note{font-size:11px;color:var(--muted);margin-top:8px}.details-card{background:white;border:1px solid var(--line);border-radius:11px;min-width:0;overflow:clip}.details-card>summary{padding:16px 19px;cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:14px;font-weight:600;font-size:13px}.details-card>summary::-webkit-details-marker{display:none}.details-card>summary:after{content:"+";font-size:18px;line-height:1;color:var(--muted);font-weight:400}.details-card[open]>summary:after{content:"−"}.details-card[open]>summary{border-bottom:1px solid var(--line)}.details-body{padding:20px;animation:enter .15s ease-out}.details-body>.refs:last-child{margin-bottom:0}.details-body>p{color:var(--muted);font-size:12px;margin-bottom:14px}.data-list{display:grid;gap:10px}.data-list>div{display:grid;grid-template-columns:minmax(130px,.38fr) minmax(0,1fr);gap:14px;padding:8px 0;border-bottom:1px solid #e8edf4}.data-list>div:last-child{border:0}.data-list dt{font-size:12px;color:var(--muted)}.data-list dd{margin:0;font-size:12px;overflow-wrap:anywhere}.raw-table{font-size:11px}.raw-table th,.raw-table td{padding:9px 8px}.wide-table{display:block}.wide-table thead{display:none}.wide-table tbody{display:grid;gap:14px}.wide-table tr{display:block;border:1px solid var(--line);border-radius:9px;padding:8px 13px}.wide-table td{display:grid;grid-template-columns:minmax(130px,.4fr) minmax(0,1fr);gap:16px;padding:8px 0}.wide-table td:before{content:attr(data-label);color:var(--muted);font-size:11px}.wide-table td:first-child{font-weight:650}.wide-table td:last-child{border:0}.roadmap-axis{display:grid;grid-template-columns:200px repeat(4,1fr);font-size:10px;color:var(--muted);margin:18px 0 10px}.roadmap-axis span:not(:first-child){text-align:right}.roadmap-row{display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px;padding:18px 0;border-top:1px solid var(--line);align-items:center}.roadmap-meta strong{display:block;font-size:12px}.roadmap-meta small{display:block;margin:3px 0 7px;color:var(--muted)}.roadmap-track{display:grid;grid-template-columns:repeat(28,minmax(0,1fr));gap:0;min-height:42px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(25% - 1px),#e8edf4 calc(25% - 1px),#e8edf4 25%);align-items:center}.roadmap-bar{min-width:0;min-height:20px;background:#e8edf5;border-radius:5px;border:1px solid #bdcce3;display:flex;align-items:center;padding:4px 9px;font-size:10px;color:#354c69;overflow-wrap:anywhere}.roadmap-bar.current{background:var(--accent-soft);border-color:#95b2f0;color:var(--accent)}.roadmap-state{display:none}.roadmap-caption{font-size:11px;color:var(--muted);margin-top:16px}.milestone-list li{display:grid;grid-template-columns:85px minmax(0,1fr);gap:20px;padding:16px 0;border-bottom:1px solid var(--line)}.milestone-list li:last-child{border:0}.milestone-list time{font-size:13px;font-weight:650;font-variant-numeric:tabular-nums}.milestone-list p{font-size:12px;color:var(--muted);margin-top:6px}.risk-list{display:grid;gap:14px}.risk-card{display:grid;grid-template-columns:35px minmax(0,1fr);gap:17px}.rank{display:grid;place-items:center;width:32px;height:32px;background:#f0f3f8;border:1px solid var(--line);border-radius:8px;font-size:13px;font-variant-numeric:tabular-nums;font-weight:650}.risk-first{border-left:3px solid var(--bad)}.risk-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:12px}.risk-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:11px;margin-top:7px}.risk-content{display:grid;grid-template-columns:1fr 1fr;gap:18px}.risk-content dt{font-size:10px;font-weight:650;color:var(--muted);margin-bottom:5px}.risk-content dd{margin:0;font-size:12px}.risk-action{background:#f6f8fc;border-radius:8px;padding:12px 14px;margin-top:14px;font-size:12px}.risk-action strong{display:block;font-size:10px;color:var(--muted);margin-bottom:4px}.owner{display:inline-flex;align-items:center;gap:6px;font-size:11px;white-space:nowrap}.owner:before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}.decision-card h3{font-size:14px}.decision-card>p{font-size:12px;color:var(--muted)}.decision-card .date-line{display:flex;gap:18px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin:12px 0}.decision-card details{margin-top:12px}.decision-card summary{font-size:11px;color:var(--accent);cursor:pointer}.decision-card details p{margin-top:8px;font-size:11px;color:var(--muted)}.running-card{border-top:3px solid var(--accent)}.run-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:20px 0}.run-metrics small{display:block;color:var(--muted);font-size:10px}.run-metrics strong{display:block;font-size:16px;font-variant-numeric:tabular-nums;margin-top:6px}.budget-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:20px 0}.budget-values strong{display:block;font-size:27px;font-variant-numeric:tabular-nums;letter-spacing:-.04em}.budget-values small{color:var(--muted);font-size:11px}.budget-allocation{display:grid;gap:15px}.budget-row{display:grid;grid-template-columns:minmax(0,1fr) 80px;gap:5px 18px;align-items:start}.budget-row-title{font-size:12px}.budget-row-value{text-align:right;font-size:13px;font-variant-numeric:tabular-nums;font-weight:650}.budget-row-track{grid-column:1/-1;height:4px;border-radius:8px;background:#ecf0f6}.budget-row-fill{height:100%;background:var(--accent);border-radius:8px}.budget-row-note{grid-column:1/-1;color:var(--muted);font-size:10px}.log-entry{display:grid;grid-template-columns:126px minmax(0,1fr);gap:24px;border-bottom:1px solid var(--line);padding:20px 0}.log-entry:first-child{padding-top:0}.log-entry:last-child{border:0;padding-bottom:0}.log-date{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}.log-date small{display:block;color:var(--muted);font-weight:400;margin-top:5px;font-size:10px}.log-summary{font-size:13px;margin-top:9px;overflow-wrap:anywhere}.log-entry details{margin-top:10px;font-size:10px;color:var(--muted)}.log-entry summary{cursor:pointer}.glossary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.term-card{padding:21px;scroll-margin-top:24px}.term-card:target{border-color:var(--accent);background:#f9fbff}.term-card h2{font-size:14px;margin:8px 0}.term-card p{font-size:12px;color:var(--muted)}.term-category{font-size:10px;color:var(--accent);font-weight:650}.term{display:inline;padding:0;border:0;background:transparent;color:inherit;text-align:inherit;line-height:inherit;font:inherit;border-bottom:1px dotted #8699b5;border-radius:0}.term:hover{color:var(--accent)}.term sup{font-size:9px;color:var(--accent);padding-left:2px;vertical-align:super}.popover{position:fixed;right:24px;bottom:24px;width:min(390px,calc(100vw - 32px));max-height:65vh;overflow:auto;background:var(--surface);border:1px solid #9dafcc;border-radius:12px;padding:20px;box-shadow:0 10px 44px #172b4626;z-index:25}.popover h2{font-size:15px;padding-right:28px}.popover p{font-size:13px;color:var(--muted);margin-top:12px}.close{position:absolute;right:10px;top:10px;border:0;background:transparent;font-size:21px;width:32px;height:32px;color:var(--muted)}.popover a{font-size:12px;display:inline-block;margin-top:12px}.footer{margin-top:30px;padding-top:17px;border-top:1px solid var(--line);display:flex;gap:12px;justify-content:space-between;font-size:10px;color:var(--muted)}.error-box{margin:24px;padding:24px;color:var(--bad);background:var(--bad-bg);border:1px solid #e3b8b8;border-radius:12px}.button-secondary{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:7px;background:var(--surface);text-decoration:none;font-size:12px;min-height:40px}
+@keyframes enter{from{opacity:.65;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+@media(min-width:1500px){main{padding-top:38px}.priority-title{max-width:none}}
+@media(max-width:1180px){.sidebar{width:204px;padding-inline:12px}.workspace{margin-left:204px}.topbar{padding-inline:24px}main{padding:28px 24px}.kpis{gap:10px}.kpi{padding:17px 15px}.kpi-value{font-size:23px}.kpi-value.compact{font-size:18px}.grid-2{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}.roadmap-row{grid-template-columns:165px minmax(0,1fr)}.roadmap-axis{grid-template-columns:165px repeat(4,1fr)}}
+@media(max-width:960px){.sidebar{position:static;width:auto;padding:16px 24px 12px;border-right:0;border-bottom:1px solid var(--line)}.brand{padding:0}.brand-mark{width:30px;height:30px}.brand-sub{display:none}.nav-caption,.sidebar-foot{display:none}.nav-list{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin-top:15px}.nav-link{justify-content:flex-start;min-width:0;font-size:11px;padding:8px}.nav-count{display:none}.workspace{margin-left:0}.topbar{height:auto;min-height:48px;padding-block:10px}.breadcrumb{font-size:11px}.top-meta{font-size:10px}.grid-2{grid-template-columns:1fr}.priority-title{max-width:none}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi-value.compact{font-size:23px}.grid-equal{gap:14px}.heading-aside{white-space:normal;text-align:right}}
+@media(max-width:640px){body{font-size:13px}.sidebar{padding:16px}.nav-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}.nav-link{font-size:12px;padding:8px 10px;min-height:40px}.nav-link svg{width:16px;height:16px}.topbar{padding:10px 16px;align-items:flex-start;flex-wrap:wrap;gap:5px}.top-meta{gap:8px;flex-wrap:wrap}.snapshot-label{display:none}main{padding:23px 16px 32px}.page-heading{align-items:flex-start;gap:8px;margin-bottom:20px}.heading-aside{display:none}h1{font-size:25px}.page-description{font-size:12px}.kpis{gap:10px;margin-bottom:20px}.kpi{padding:14px 12px}.kpi-label{font-size:10px}.kpi-value,.kpi-value.compact{font-size:20px}.kpi-note{font-size:10px}.summary-strip h2{font-size:17px}.summary-strip p{font-size:12px}.grid-equal,.glossary-grid{grid-template-columns:1fr}.card{padding:19px 17px}.table-card{padding:0}.table-card>.table-intro{padding:19px 17px}.table-card .table-foot{padding:13px 17px}.section{margin-top:21px}.section-title h2{font-size:16px}.card-title h2{font-size:16px}.priority-title{font-size:19px}.steps{grid-template-columns:1fr;margin-top:18px;gap:0}.step{display:grid;grid-template-columns:27px minmax(0,1fr) auto;gap:11px;align-items:start;padding-bottom:17px}.step:last-child{padding-bottom:0}.step:not(:last-child):after{width:1px;height:auto;top:27px;bottom:0;left:13px;right:auto}.step-dot{margin:0}.step-label{font-size:12px;padding-top:3px}.step-state{font-size:10px;padding-top:3px;margin:0}.roadmap-axis{display:none}.roadmap-row{grid-template-columns:1fr;gap:9px}.roadmap-track{min-height:30px}.roadmap-bar{font-size:9px;padding:4px 5px;min-height:25px}.roadmap-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.roadmap-meta strong{flex:1 1 60%;font-size:13px}.roadmap-meta small{margin:0;flex:1 1 50%}.risk-card{grid-template-columns:27px minmax(0,1fr);gap:11px}.rank{width:26px;height:26px;font-size:11px}.risk-head{flex-wrap:wrap}.risk-content{grid-template-columns:1fr;gap:12px}.risk-action{padding:11px}.run-metrics{gap:10px}.run-metrics strong{font-size:14px}.budget-values{gap:10px}.budget-values strong{font-size:22px}.budget-values small{font-size:10px}.budget-row{grid-template-columns:minmax(0,1fr) 65px}.log-entry{grid-template-columns:1fr;gap:8px;padding:20px 0}.log-date small{display:inline;margin-left:8px}.log-summary{font-size:12px}.field.search{min-width:100%;flex-basis:100%}.toolbar{gap:10px}.toolbar>.field{flex:1}.result-count{font-size:11px}.details-body{padding:16px}.data-list>div{grid-template-columns:1fr;gap:5px}.milestone-list li{grid-template-columns:61px minmax(0,1fr);gap:14px}.milestone-list time{font-size:12px}.footer{flex-direction:column;gap:5px}.popover{right:16px;bottom:16px}.raw-table,.comparison,.queue-table{display:block}.raw-table thead,.comparison thead,.queue-table thead{display:none}.raw-table tbody,.comparison tbody,.queue-table tbody{display:block}.raw-table tr,.comparison tr,.queue-table tr{display:block;padding:12px 17px;border-bottom:1px solid var(--line)}.raw-table tr:last-child,.comparison tr:last-child,.queue-table tr:last-child{border-bottom:0}.raw-table td,.comparison td,.queue-table td{display:grid;grid-template-columns:minmax(82px,.4fr) minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid #edf1f6;min-width:0}.raw-table td:before,.comparison td:before,.queue-table td:before{content:attr(data-label);font-size:10px;color:var(--muted);font-weight:500}.raw-table td:last-child,.comparison td:last-child,.queue-table td:last-child{border:0}.wide-table tr{padding:10px 13px}.wide-table td{grid-template-columns:minmax(83px,.4fr) minmax(0,1fr);padding:8px 0}.chip{font-size:10px}.section-title{align-items:baseline}.card-title{gap:10px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
-<a href="#plan" class="skip">全体計画へ</a>
-<div class="wrap">
-<header id="overview"></header>
-<nav aria-label="ダッシュボード内の移動"><a href="#plan">全体計画</a><a href="#progress">進捗</a><a href="#blockers">ブロッカー候補</a><a href="#next">今後の計画</a><a href="#results">結果の要約</a><a href="#decisions">決定の台帳</a><a href="#log">ログ</a><a href="#sources">出典</a></nav>
-<noscript><p class="error">表示にはJavaScriptが必要です。事実はファイル冒頭の data-* JSON に保存されています。計画と生成表は同じフォルダのMarkdownを参照してください。</p></noscript>
-<div id="render-error" role="alert" hidden></div>
-<main>
-<section id="plan"><div class="section-heading"><p class="eyebrow">01 · PLAN</p><h2>全体計画</h2></div><div id="plan-body"></div></section>
-<section id="progress"><div class="section-heading"><p class="eyebrow">02 · PROGRESS</p><h2>進捗</h2></div><div id="progress-body"></div><div id="budget-body"></div></section>
-<section id="blockers"><div class="section-heading"><p class="eyebrow">03 · BLOCKERS</p><h2>ブロッカー（候補）</h2></div><div id="blockers-body"></div></section>
-<section id="next"><div class="section-heading"><p class="eyebrow">04 · NEXT</p><h2>今後の計画</h2></div><div id="next-body"></div></section>
-<section id="results"><div class="section-heading"><p class="eyebrow">05 · EVIDENCE</p><h2>結果の要約</h2></div><div id="results-body"></div></section>
-<section id="decisions"><div class="section-heading"><p class="eyebrow">06 · DECISIONS</p><h2>決定の台帳</h2></div><div id="decisions-body"></div></section>
-<section id="log"><div class="section-heading"><p class="eyebrow">07 · CHANGELOG</p><h2>ログ</h2></div><div id="log-body"></div></section>
-<section id="sources"><div class="section-heading"><p class="eyebrow">08 · SOURCES</p><h2>出典と更新方法</h2></div><div id="sources-body"></div></section>
-</main>
-<footer>ASCON · Living dashboard · Light / local / data-driven</footer>
+<a class="skip" href="#main">本文へ移動</a>
+<aside class="sidebar" aria-label="ワークスペース">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 18 10 5h4l6 13M7 13h10M3 20h18"></path></svg></span><div><div class="brand-name" id="brand-name"></div><div class="brand-sub" id="brand-sub"></div></div></div>
+  <p class="nav-caption">WORKSPACE</p><nav id="navigation" aria-label="メインナビゲーション"></nav>
+  <div class="sidebar-foot" id="sidebar-foot"></div>
+</aside>
+<div class="workspace">
+  <header class="topbar"><div class="breadcrumb"><span>ワークスペース</span><span aria-hidden="true">/</span><strong id="breadcrumb-current"></strong></div><div class="top-meta"><span class="snapshot-label">記録時点の状態</span><time id="updated-at"></time></div></header>
+  <main id="main" tabindex="-1"><div id="page"></div><div id="render-error" role="alert" hidden></div><footer id="footer" class="footer"></footer></main>
 </div>
-<script>
+<aside id="term-popover" class="popover" role="dialog" aria-modal="false" aria-labelledby="term-popover-title" hidden></aside>
+<noscript><p class="error-box">表示にはJavaScriptが必要です。すべての記録はこのHTML内に保存されています。</p></noscript>
+<script id="dashboard-app">
+'use strict';
 (() => {
-  'use strict';
-  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  try {
-    const D = Object.fromEntries([...document.querySelectorAll('script[type="application/json"][id^="data-"]')].map(el => [el.id.slice(5), JSON.parse(el.textContent)]));
-    const {status:S, plan:P, results:R, budget:B} = D;
-    const sourceMap = Object.fromEntries(D.sources.sources.map(s => [s.id,s]));
-    // Source links resolve against the page URL; a data:/about: origin (previews, embedded viewers) cannot, so fall back to the plain relative path instead of failing the whole page.
-    const hrefFor = path => { try { return new URL(path, new URL('../../', location.href)).href; } catch (_) { return '../../' + path; } };
-    const refs = ids => `<div class="source-links">${(ids||[]).map(id => {const s=sourceMap[id];return `<a href="${esc(hrefFor(s.path))}" title="${esc(s.locator)}">${esc(s.title)}</a>`;}).join('')}</div>`;
-    const stateNames = {done:'完了',running:'進行中',pending:'未実施',blocked:'BLOCKED',failed:'FAIL',open:'open',waiting:'証拠待ち',mitigating:'対策中',decided:'決定済み',closed:'終了',unsigned:'未署名','confirmation-pending':'本人確認待ち'};
-    const tone = v => ({done:'good',decided:'good',failed:'bad',blocked:'warn',running:'accent',open:'warn',waiting:'warn',unsigned:'warn','confirmation-pending':'warn'}[v]||'');
-    const badge = v => `<span class="badge ${tone(v)}">${esc(stateNames[v]||v)}</span>`;
-    const date = v => v.slice(5).replace('-','/');
-    const jst = v => v.slice(0,19).replace('T',' ')+' JST';
-    const num = v => Number(String(v).replaceAll(',',''));
-    const frac = v => {if(v===null)return null;const p=String(v).split('/').map(Number);return p.length===2?p[0]/p[1]:p[0];};
-    const hours = v => v===null?'未見積':`${frac(v).toFixed(2)} h`;
-    const put = (id, html) => {document.getElementById(id).innerHTML=html;};
-    const detail = (label,html) => `<details><summary>${esc(label)}</summary>${html}</details>`;
-    const table = (heads,rows,klass='') => `<div class="table-wrap"><table class="${klass}"><thead><tr>${heads.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td data-label="${esc(heads[i])}"><div>${c}</div></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
-    const rawTable = t => table(t.header,t.rows.map(r=>r.map(esc)),'result-table');
-    const card = (title,content,cls='') => `<article class="card ${cls}"><h3>${esc(title)}</h3>${content}</article>`;
-    const figure = (title,content,note='',src=[]) => `<div class="figure reveal"><h3>${esc(title)}</h3>${content}${note?`<p class="note">${esc(note)}</p>`:''}${refs(src)}</div>`;
-    const barChart = (rows,unit='',signed=false) => {
-      const max=Math.max(...rows.map(r=>Math.abs(num(r.value))),1);
-      return `<div class="scale"><span>${signed?esc((-max).toFixed(2)):'0'} ${esc(unit)}</span>${signed?'<span>0</span>':''}<span>${esc(max.toFixed(2))} ${esc(unit)}</span></div><div class="bars">${rows.map(r=>{const v=num(r.value),w=Math.abs(v)/max*(signed?50:100),left=signed?(v<0?50-w:50):0;return `<div class="bar"><span class="bar-label">${esc(r.label)}</span><span class="track ${signed?'signed':''}" aria-hidden="true"><i class="fill" style="--w:${w}%;--left:${left}%;--c:var(--${r.color||(v<0?'bad':'accent')})"></i></span><span class="bar-value">${esc(r.value)}</span></div>`;}).join('')}</div>`;
-    };
-    const dayCard = m => `<article class="day ${m.decision_refs.length?'human':''}"><div class="milestone-top"><time datetime="${esc(m.date)}">${date(m.date)}</time>${badge(m.state)}</div><h3>${esc(m.title)}</h3><p>入口：${esc(m.dependency)}</p><p>停止：${esc(m.stop)}</p>${m.decision_refs.map(id=>`<a class="small" href="#${id}">${id}</a>`).join(' · ')}${refs(m.sources)}</article>`;
-    const phase=D.phases.items.find(p=>p.id===S.phase_id);
-    put('overview',`<p class="kicker">ASCON / LIVING DASHBOARD</p><div class="header-meta"><span class="badge accent">${esc(phase.title)} · ${esc(phase.gate)}</span><time datetime="${esc(S.as_of)}">As of ${esc(jst(S.as_of))}</time></div><h1>${esc(S.headline)}</h1><p class="tagline">${esc(S.subhead)}</p><div class="stats">${S.metrics.map(m=>`<article class="stat ${m.tone}"><p class="small">${esc(m.label)}</p><div class="value">${esc(m.value)}</div><p class="small">${esc(m.note)}</p>${refs(m.sources)}</article>`).join('')}</div><p class="small">${esc(S.measurement_note)}</p><p class="note">${esc(S.q0b.note)}</p><div class="last-update"><b>最終更新</b> ${esc(S.last_update)}${refs(S.sources)}</div><p class="note">${esc(S.notice)}</p>`);
-    put('plan-body',`<p class="tagline">${esc(P.goal)}</p><div class="phase-strip">${D.phases.items.map(p=>`<div class="phase ${p.id===S.phase_id?'current':''}"><span class="mono">${date(p.start_date)}–${date(p.end_date)}</span><b>${esc(p.title)}</b>${badge(p.state)}<p>${esc(p.gate)}</p></div>`).join('')}</div><div class="flow reveal">${P.protocol.map(p=>card(p.title,`<p>${esc(p.body)}</p><p><b>出口</b> ${esc(p.exit)}</p>`)).join('')}</div>${refs(P.sources)}<div class="grid" style="margin-top:24px">${card('勝つために守る指標',`<p>${esc(P.win)}</p><p>${esc(P.caution)}</p>`)}${card('ルールと制約',`<ul>${P.rules.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`)}</div>${figure('ロードマップ / 日付は実行許可ではない',`<div class="timeline">${D.milestones.items.filter(m=>m.highlight).map(dayCard).join('')}</div>${detail('全日程を開く',`<div class="timeline">${D.milestones.items.map(dayCard).join('')}</div>`)}`,'既決の判断は決定台帳へリンク。予定は条件付きで、実績と区別する。',D.milestones.sources)}`);
-    put('progress-body',figure('ワークストリーム別',D.progress.workstreams.map(w=>{const rows=D.progress.items.filter(i=>i.workstream===w),done=rows.filter(i=>i.state==='done').length;return `<div class="workstream"><div class="workstream-head"><b>${esc(w)}</b><span class="mono">${done} / ${rows.length} 完了</span></div><div class="track" aria-hidden="true"><i class="fill" style="--w:${done/rows.length*100}%;--c:var(--good)"></i></div><p class="small">${rows.filter(i=>i.state!=='done').map(i=>`${esc(i.title)} ${badge(i.state)}`).join(' / ')||'登録済みの作業は完了'}</p></div>`;}).join(''),D.progress.note,D.progress.sources)+table(['状態','作業','証拠と残る条件'],D.progress.items.map(i=>[badge(i.state),esc(i.title),esc(i.evidence)+refs(i.sources)])));
-    const colors=['faint','good','accent','warn','cluster-g','cluster-a','cluster-b','cluster-e','cluster-d','cluster-f','faint'];
-    const budgetColumn = column => `<h3>${esc(column.title)} · ${esc(column.state)} · ${esc(B.total_hours)} h</h3><div class="stack" aria-hidden="true">${B.rows.map((r,i)=>frac(r[column.key])>0?`<i style="--hours:${frac(r[column.key])};--c:var(--${colors[i%colors.length]})"></i>`:'').join('')}</div><div class="budget-key">${B.rows.filter(r=>frac(r[column.key])>0).map(r=>`<div><span class="swatch" style="--c:var(--${colors[B.rows.indexOf(r)%colors.length]})"></span>${esc(r.title)} <b>${hours(r[column.key])}</b><div class="small">${esc(r.accounting)}</div></div>`).join('')}</div>`;
-    put('budget-body',figure('計算予算 / 実測下限・推定・予約を分ける',`<p><b>${esc(B.interpretation)}</b></p><p class="small">起点 ${esc(jst(B.start_at))}</p><div class="bars" style="margin:20px 0"><div class="bar"><span>履歴の下限</span><span class="track" aria-hidden="true"><i class="fill" style="--w:${Math.min(100,frac(B.consumed_lower_bound_hours)/frac(B.total_hours)*100)}%;--c:var(--good)"></i></span><span>≥${esc(B.consumed_lower_bound_hours)} h</span></div></div><p class="small">${esc(B.historic_bar_note)}</p><p class="note">${esc(B.note)}</p><div style="margin-top:24px">${budgetColumn(B.columns[0])}</div>${detail('未署名AMENDとの配分比較',budgetColumn(B.columns[1]))}${detail('正確な分数・会計区分・根拠を見る',table(['用途','KEEP h','AMEND h','会計','根拠/注記'],B.rows.map(r=>[esc(r.title),esc(r.keep_hours),esc(r.amend_hours),esc(r.accounting),esc(r.note)+refs(r.sources)])))}${detail('ON速度が変わった場合',rawTable(B.on_sensitivity)+`<p class="note">${esc(B.on_note)}</p>`)}`,'予約の100h一致は、実消費が100h以内に収まる保証ではない。',B.sources));
-    const BI=D.blockers;
-    const matrix=`<div class="matrix" role="group" aria-label="影響（横軸）と可能性（縦軸）の定性マトリクス"><div></div>${BI.impact_axis.map(a=>`<div class="matrix-label">影響 ${esc(a)}</div>`).join('')}${[...BI.likelihood_axis].reverse().map(l=>`<div class="matrix-label">${esc(l)}</div>${BI.impact_axis.map(impact=>`<div class="cell ${l==='高'&&impact!=='中'?'high':''}">${BI.items.filter(b=>b.likelihood===l&&b.impact===impact).map(b=>`<a href="#${b.id}" title="${esc(b.title)}">${b.id}</a>`).join(' ')||'—'}</div>`).join('')}`).join('')}</div>`;
-    put('blockers-body',`<div class="grid">${figure('可能性 × 影響',matrix,'縦軸：可能性。定性的な分類で、確率ではない。')}${card('優先する不確実性',`<p>${esc(BI.method)}</p><p>${BI.items.slice(0,3).map(b=>`<a href="#${b.id}">${b.id} ${esc(b.title)}</a>`).join('<br>')}</p>${refs(BI.sources)}`)}</div>`+table(['順位 / ID','候補','severity','likelihood','impact','owner','status','evidence','mitigation / next action'],BI.items.map(b=>[`<span id="${b.id}">${b.rank} / ${b.id}</span>`,esc(b.title),badge(b.severity),esc(b.likelihood),esc(b.impact),esc(b.owner),badge(b.status),esc(b.evidence)+refs(b.sources),esc(b.mitigation)]),'blocker-table'));
-    const q = D.queue;
-    const today=S.as_of.slice(0,10),cutoff=new Date(today+'T00:00:00+09:00');cutoff.setUTCDate(cutoff.getUTCDate()+7);
-    put('next-body',`<p>${esc(q.note)}</p><ol class="queue">${q.items.map(i=>`<li class="${i.active?'':'inactive'}"><span class="number">${i.priority.toString().padStart(2,'0')}</span><div><h3>${esc(i.title)} ${badge(i.state)}</h3><p>${esc(i.dependency)}</p><p class="small">${esc(i.window)} · owner ${esc(i.owner)} · ${i.worlds} 世界</p>${refs(i.sources)}</div><div class="hours">${hours(i.hours)}<div class="small">${i.hours===null?'割当未確定':'全量見積'}</div></div></li>`).join('')}</ol><div class="last-update">${esc(q.bundle)}${refs(q.sources)}</div>${figure('次の7日間',`<div class="grid">${D.milestones.items.filter(m=>m.date>=today&&new Date(m.date+'T00:00:00+09:00')<cutoff).map(dayCard).join('')}</div>`)}<h3>何を見ればゲートが閉じるか</h3><div class="grid">${P.gates.map(g=>card(g.title,`${badge(g.state)}<p>${esc(g.resolve)}</p>${refs(g.sources)}`)).join('')}</div>`);
-    let resultsHtml='';
-    if(R.q0b) resultsHtml+=figure(R.q0b.title,rawTable(R.q0b),R.q0b.note,R.q0b.sources);
-    resultsHtml+=figure(R.d0.title,`<div class="grid"><div><h3>P−noop / USDC</h3>${barChart(R.d0.rows.map(r=>({label:r[0],value:r[2]})),'USDC',true)}</div><div><h3>優先手数料0の送信割合</h3>${barChart(R.d0.rows.map(r=>({label:r[0],value:r[6].match(/\(([\d.]+)%\)/)[1],color:'bad'})),'%')}</div></div>${detail('生成表を開く',rawTable(R.d0))}`,R.d0.note,R.d0.sources);
-    resultsHtml+=figure(R.fields.title,`<div class="grid">${[...new Set(R.fields.rows.map(r=>r[0]))].map(field=>`<div><h3>${esc(field)} · ${esc(R.fields.rows.find(r=>r[0]===field)[1])}</h3>${barChart(R.fields.rows.filter(r=>r[0]===field).map(r=>({label:r[2],value:r[3],color:r[2]==='sonnet-1'?'accent':'faint'})),field==='F_ref'?'USDC':'T')}</div>`).join('')}</div>`,R.fields.note,R.fields.sources);
-    const QS=R.q0_summary;
-    resultsHtml+=figure(R.q0.title,`<div class="grid"><div><h3>対noop / レジーム平均ΔT</h3>${barChart(R.q0.rows.map(r=>({label:r[0],value:r[5]})),'ΔT')}</div><div><h3>平均T / sonnet・multi-arb</h3><div class="legend"><span><i class="swatch" style="--c:var(--accent)"></i>sonnet</span><span><i class="swatch" style="--c:var(--faint)"></i>multi-arb</span></div>${barChart(R.q0.rows.flatMap(r=>[{label:r[0]+' / S',value:r[6]},{label:r[0]+' / M',value:r[7],color:'faint'}]))}</div></div><div class="stats"><div class="stat bad"><p class="small">等重み平均T / 候補</p><div class="value">${QS.candidate_t}</div></div><div class="stat"><p class="small">等重み平均T / multi-arb</p><div class="value">${QS.multi_t}</div></div><div class="stat warn"><p class="small">noop割れ世界</p><div class="value">${QS.noop_below}</div></div><div class="stat"><p class="small">送信失敗 / mined revert</p><div class="value">${QS.submit_failed} / ${QS.mined_reverts}</div></div></div><p class="note">${esc(QS.safety)}</p>${detail('全レジームの生成表を開く',rawTable(R.q0))}`,R.q0.note,R.q0.sources);
-    const clusterColor = c => 'cluster-'+c.toLowerCase();
-    const models=R.model_order.map(model=>{const counts=R.m1.rows.map(row=>{const match=row[3].match(new RegExp(model+'(?:×(\\d+))?'));return {cluster:row[0],count:match?Number(match[1]||1):0};}).filter(c=>c.count);const total=counts.reduce((a,c)=>a+c.count,0);return `<div class="model-row"><b>${esc(model)}</b><div class="model-track">${counts.map(c=>`<span class="model-cell" style="--count:${c.count};--c:var(--${clusterColor(c.cluster)})">${esc(c.cluster)} ×${c.count}</span>`).join('')}</div><span>${counts.length}機構 / ${total}仕様</span></div>`;}).join('');
-    resultsHtml+=figure(R.m1.title,models+`<div class="legend">${R.m1.rows.map(r=>`<span><i class="swatch" style="--c:var(--${clusterColor(r[0])})"></i>${esc(r[0])} ${esc(r[1])}</span>`).join('')}</div>${detail('仕様ID・作者の生成表を開く',rawTable(R.m1))}`,R.m1.note,R.m1.sources);
-    resultsHtml+=`<div class="grid three">${R.research.map(r=>card(r.title,`<p>${esc(r.text)}</p>${refs(r.sources)}`)).join('')}</div>`;
-    resultsHtml+=figure(R.strategies.title,`<div class="player-grid">${R.strategies.rows.map(r=>`<article class="card player-card"><h3>${esc(r[0])}</h3><p class="small">${esc(r[1])}</p><div class="player-metrics"><div>平均T<br><strong>${esc(r[7])}</strong></div><div>最悪<br><b class="mono">${esc(r[8])}</b></div></div><div class="track" aria-hidden="true"><i class="fill" style="--w:${num(r[7])/Math.max(...R.strategies.rows.map(s=>num(s[7])))*100}%"></i></div><p style="margin-top:12px">${esc(r[2])}</p><dl>${['入口','size','bid','専門'].map((label,i)=>`<dt>${label}</dt><dd>${esc(r[i+3])}</dd>`).join('')}</dl></article>`).join('')}</div>${detail('元の比較表を開く',rawTable(R.strategies))}`,R.strategies.note,R.strategies.sources);
-    resultsHtml+=figure(R.ranking.title,barChart([...R.ranking.rows].sort((a,b)=>num(b[1])-num(a[1])).map(r=>({label:r[0],value:r[1],color:r[0]==='inc-zeta'?'accent':r[0]==='zeta-2'?'bad':'faint'})),'T')+detail('条件付き区間・レジーム内訳',rawTable(R.ranking)),R.ranking.note,R.ranking.sources);
-    const zr=R.zeta.rows[0];
-    resultsHtml+=figure(R.zeta.title,barChart([{label:'noop / '+zr[0],value:zr[3],color:'faint'},{label:'inc-zeta',value:zr[2],color:'accent'},{label:'zeta-2',value:zr[1],color:'bad'}],'USDC',true)+detail('診断ケースの生成表',rawTable(R.zeta)),R.zeta.note,R.zeta.sources);
-    resultsHtml+=`<h3>過去の実装・測定から残すこと</h3><div class="grid three">${R.archive.map(r=>card(r.title,`<p>${esc(r.text)}</p>${refs(r.sources)}`)).join('')}</div>`;
-    put('results-body',resultsHtml);
-    put('decisions-body',`<p class="note">${esc(D.decisions.date_note)}</p>`+table(['ID / 日付','本人判断','状態 / 期日','運用と証拠'],D.decisions.items.map(d=>[`<span id="${d.id}">${esc(d.id)}</span><br><time datetime="${d.date}">${esc(d.date)}</time>`,esc(d.title),badge(d.status)+(d.due_date?`<br><time datetime="${d.due_date}">${esc(d.due_date)}</time>`:''),esc(d.note)+refs(d.sources)])));
-    put('log-body',`<p class="note">${esc(D.log.note)}</p><div class="log-tools"><label for="log-filter">種類</label><select id="log-filter"><option value="all">すべて</option>${D.log.allowed_types.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select><span id="log-count" class="small"></span></div><ol class="log-list">${D.log.items.map(l=>`<li data-type="${esc(l.type)}" id="${l.id}"><div><time datetime="${esc(l.timestamp)}">${esc(jst(l.timestamp))}</time><small>対象 ${esc(l.event_date)}<br>${esc(l.time_basis)}</small></div><div><p>${badge('['+l.type+']')} ${esc(l.summary)}</p>${refs(l.sources)}</div></li>`).join('')}</ol>`);
-    const filter=document.getElementById('log-filter');
-    function filterLogs(){let count=0;document.querySelectorAll('.log-list li').forEach(el=>{el.hidden=filter.value!=='all'&&el.dataset.type!==filter.value;if(!el.hidden)count++;});document.getElementById('log-count').textContent=`${count} / ${D.log.items.length} 件`;}
-    filter.addEventListener('change',filterLogs);filterLogs();
-    put('sources-body',`<p>更新はファイル冒頭の <span class="mono">data-*</span> JSON。数字は生成済みの表から転記し、訂正はログに追記します。</p>${refs(['src-handoff'])}<ul class="source-catalog">${D.sources.sources.map(s=>`<li><a href="${esc(hrefFor(s.path))}">${esc(s.title)}</a><small>${esc(s.path)} · ${esc(s.locator)}</small></li>`).join('')}</ul>`);
-    const reveals=[...document.querySelectorAll('.reveal')];
-    if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      document.documentElement.classList.add('motion');
-      const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0,rootMargin:'0px 0px -16px 0px'});
-      reveals.forEach(el=>io.observe(el));
-    } else reveals.forEach(el=>el.classList.add('in'));
-    // Contents inside closed details become visible when opened, including animated charts.
-    document.querySelectorAll('details').forEach(el=>el.addEventListener('toggle',()=>{if(el.open)el.classList.add('in');}));
-    let opened=[];
-    window.addEventListener('beforeprint',()=>{opened=[...document.querySelectorAll('details:not([open])')];opened.forEach(el=>{el.open=true;});});
-    window.addEventListener('afterprint',()=>opened.forEach(el=>{el.open=false;}));
-  } catch (error) {
-    const el=document.getElementById('render-error');el.hidden=false;el.className='error';el.textContent='データを表示できません。dashboard-check.pyでJSONを確認してください。 '+error.message;
+  const D = Object.fromEntries([...document.querySelectorAll('script[type="application/json"]')].map(el => [el.id.slice(5), JSON.parse(el.textContent)]));
+  const sourceMap = new Map(D.sources.sources.map(s => [s.id,s]));
+  const terms = new Map(D.glossary.items.map(t => [t.id,t]));
+  const state = {page:'overview',results:'diagnostic',risk:'active',logQuery:'',logType:'all',logDate:'all',termQuery:'',termCategory:'all'};
+  const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const read = path => path.split('.').reduce((value,key) => value?.[key],D);
+  const nice = value => String(value ?? '').replace(/dec-007/g,'提出前の本人確認').replace(/dec-008/g,'初回の鍵登録確認').replace(/log-\d+/g,'過去の記録');
+  const dateOnly = date => date ? date.slice(5,10).replace('-','/') : '未定';
+  const time = value => value ? `${dateOnly(value)} ${value.slice(11,16)} JST` : '未確認';
+  const fraction = value => {const [a,b='1']=String(value).split('/'); return Number(a)/Number(b);};
+  const hours = value => value == null ? '未見積' : `${Number(fraction(value).toFixed(2))} h`;
+  const lookupProgress = id => D.progress.items.find(p => p.id===id);
+  const fmtState = {done:['完了','✓'],running:['進行中','◌'],blocked:['ブロック','!'],failed:['不合格','×'],pending:['未着手','—'],decision:['要判断','?'],warning:['確認待ち','!'],decided:['決定済み','✓'],resolved:['解決済み','✓'],closed:['完了','✓'],unsigned:['不採用・履歴','—'],open:['未完了','!'],mitigating:['対応中','◌']};
+  const chip = (kind,label) => {const [text,symbol]=fmtState[kind]||[kind,'—'];const tone={decided:'done',resolved:'done',closed:'done',open:'warning',mitigating:'running'}[kind]||kind;return `<span class="chip ${esc(tone)}"><span class="chip-symbol" aria-hidden="true">${symbol}</span>${esc(label||text)}</span>`;};
+  const evidence = label => `<span class="evidence">${esc(label)}</span>`;
+  let explained = new Set();
+  const aliases = D.glossary.items.flatMap(t => t.aliases.map(a => [a,t])).sort((a,b)=>b[0].length-a[0].length);
+  const aliasMap = new Map(aliases);
+  const aliasPattern = new RegExp(aliases.map(([a])=>a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'g');
+  function rich(value) {
+    const raw=nice(value);let cursor=0,html='';
+    raw.replace(aliasPattern,(word,index)=>{
+      const term=aliasMap.get(word),prev=raw[index-1]||'',next=raw[index+word.length]||'';
+      if(explained.has(term.id)||(/^[A-Za-z0-9_]/.test(word)&&/[A-Za-z0-9_]/.test(prev))||(/[A-Za-z0-9_]$/.test(word)&&/[A-Za-z0-9_]/.test(next))) return word;
+      html+=esc(raw.slice(cursor,index))+`<button type="button" class="term" data-term="${term.id}" aria-label="${esc(word+'の説明: '+term.definition)}" aria-controls="term-popover" aria-expanded="false" title="${esc(term.definition)}">${esc(word)}<sup aria-hidden="true">ⓘ</sup></button>`;
+      cursor=index+word.length;explained.add(term.id);return word;
+    });
+    return html+esc(raw.slice(cursor));
   }
+  function refs(ids) {return `<div class="refs"><span class="refs-label">出所</span>${[...new Set(ids||[])].map(id=>{const s=sourceMap.get(id);if(!s)throw Error('Unknown source '+id);return `<a href="../../${esc(s.path)}" title="${esc(s.locator)}">${esc(s.title)} ↗</a>`;}).join('')}</div>`;}
+  const owner = value => `<span class="owner">${esc(value==='human'?'本人':value==='Astra'?'Codex':value)}</span>`;
+  const link = (page,label) => `<a class="text-link" href="#${page}">${esc(label)} <span aria-hidden="true">→</span></a>`;
+  const sectionTitle = (title,extra='') => `<div class="section-title"><h2>${esc(title)}</h2>${extra}</div>`;
+  const details = (title,body,open=false) => `<details class="details-card"${open?' open':''}><summary>${esc(title)}</summary><div class="details-body">${body}</div></details>`;
+  function rawTable(obj) {
+    const header=obj.header||['構成','指標','候補','結果'];
+    return `<table class="raw-table ${header.length>5?'wide-table':''}" role="table"><caption>${rich(obj.run_label||obj.title||'詳細データ')}</caption><thead><tr>${header.map(h=>`<th scope="col">${rich(h)}</th>`).join('')}</tr></thead><tbody>${obj.rows.map(row=>`<tr>${row.map((c,i)=>`<td data-label="${esc(header[i])}"><div>${rich(c)}</div></td>`).join('')}</tr>`).join('')}</tbody></table>${obj.note?`<p class="scope-note">${rich(obj.note)}</p>`:''}${refs(obj.sources||D.results.sources)}`;
+  }
+  function keyValues(obj) {return `<dl class="data-list">${Object.entries(obj).filter(([k])=>!['sources','id'].includes(k)).map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${rich(v===null?'未確認':Array.isArray(v)?v.join(' / '):typeof v==='object'?JSON.stringify(v):v)}</dd></div>`).join('')}</dl>${obj.sources?refs(obj.sources):''}`;}
+  function kpis(){return `<div class="kpis">${D.ui.kpis.map(k=>{let value=read(k.ref);if(k.format==='deadline')value=dateOnly(value)+' '+value.slice(11,16);return `<article class="kpi"><div class="kpi-heading"><div class="kpi-label">${rich(k.label)}</div><a class="kpi-jump" href="#${k.route}" aria-label="${esc(k.label+'の詳細を見る')}">↗</a></div><div class="kpi-value ${String(value).length>7?'compact':''}">${rich(value)}</div><p class="kpi-note">${rich(k.note)}</p></article>`;}).join('')}</div>`;}
+  function prioritySteps(){const items=D.status.priority.progress_refs.map(lookupProgress),complete=items.filter(i=>i.state==='done').length;return `<div class="progress-head"><span>資格試験までの確認項目</span><span>${complete} / ${items.length} 完了</span></div><progress value="${complete}" max="${items.length}" aria-label="資格試験までの確認項目 ${complete} / ${items.length}"></progress><ol class="steps">${items.map((p,i)=>`<li class="step"><span class="step-dot ${p.state}" aria-hidden="true">${p.state==='done'?'✓':i+1}</span><div class="step-label">${rich(p.title)}</div><div class="step-state">${fmtState[p.state][0]}</div></li>`).join('')}</ol><p class="scope-note">確認項目の完了数です。試験の合格率や計測の進行率ではありません。</p>`;}
+  function overview(){const s=D.status,finalCheck=D.decisions.items.find(d=>d.id==='dec-007');return `${kpis()}
+    <div class="summary-strip"><h2>${rich(s.headline)}</h2><p>${rich(s.subhead)}</p></div>
+    <div class="grid-2"><article class="card priority-card"><div class="card-title"><span class="mini-label">いまの最優先目標</span>${chip(s.priority.state,s.priority.state_label)}</div><h2 class="priority-title">${rich(s.priority.title)}</h2><p>${rich(s.priority.note)}</p>${prioritySteps()}${refs(s.priority.sources)}${link('results','診断と資格試験の結果を見る')}</article>
+    <article class="card action-box"><div class="card-title"><h2>本人が今やること</h2>${chip(D.status.human_action==='なし'?'done':'decision',D.status.human_action==='なし'?'対応不要':'要判断')}</div><div class="action-value">${esc(s.human_action)}</div><p>${rich(D.ui.copy.action_note)}</p><div class="next-action"><strong>提出前の本人確認 · ${dateOnly(finalCheck.due_date)}</strong><p>${rich(D.ui.copy.action_next)}</p></div>${evidence(D.decisions.ollama_report.evidence_kind)}${refs(D.decisions.ollama_report.sources)}${link('decisions','判断と確認予定を見る')}</article></div>
+    <div class="grid-2 section"><article class="card">${sectionTitle('直近の重要な出来事',`<span class="small muted">時刻不明の項目は推測しません</span>`)}<ol class="timeline">${s.recent.map(e=>{const r=e.run_ref?s[e.run_ref]:null;return `<li>${r?.started_at?`<time datetime="${r.started_at}">${time(r.started_at)}</time>`:`<span class="time-note">${dateOnly(e.date)} · ${esc(e.time_note)}</span>`}<div class="timeline-title">${rich(e.title)}</div><p>${rich(e.text)}</p>${r?`<div class="run-label">${esc(r.name)} · ${r.worlds}世界</div>`:''}${e.repair_ref?`<div class="run-label">${esc(s[e.repair_ref].commit)} · ${s[e.repair_ref].tests} tests / ${s[e.repair_ref].red_controls} 赤対照</div>`:''}${refs(e.sources)}</li>`;}).join('')}</ol></article>
+    <article class="card"><div class="card-title"><h2>次のマイルストーン</h2>${chip(s.next_milestone.state,s.next_milestone.state_label)}</div><h3>${rich(s.next_milestone.title)}</h3><p class="card-sub">${rich(s.next_milestone.note)}</p><div class="notice section"><strong>${s.dev3.completed_at?'確認された完了時刻':'現在の計測の完了見込み'}</strong><br>${time(s.dev3.completed_at||s.dev3.expected_end)}${!s.dev3.completed_at&&s.dev3.expected_end?'頃':''}<br>${rich(s.dev3.note)}</div>${refs(s.next_milestone.sources)}${link('operations','実行状況と時間枠を見る')}</article></div>
+    <div class="notice section">${rich(s.notice)}</div>`;}
+  function plan(){const steps=D.plan.protocol.filter(s=>s.start_date);const highlighted=D.milestones.items.filter(m=>m.highlight||['2026-10-17','2026-10-18','2026-10-25','2026-10-29','2026-10-31'].includes(m.date));return `${kpis()}<div class="summary-strip"><h2>${rich(D.plan.goal)}</h2><p>締切 ${time(D.plan.deadline_at)} · MASTER rev ${D.plan.revision} · ${rich(D.ui.copy.plan_note)}</p></div>
+    <section class="card">${sectionTitle('提出までのロードマップ',chip('blocked',D.ui.copy.plan_state))}<div class="roadmap-axis" aria-hidden="true"><span>工程 / 条件</span>${D.ui.roadmap_axis.map(d=>`<span>${esc(d)}</span>`).join('')}</div><ol>${steps.map((p,i)=>{const offset=Number(D.ui.roadmap_start_date.slice(8))-1,start=Number(p.start_date.slice(8))-offset,end=Number(p.end_date.slice(8))-offset+1;return `<li class="roadmap-row"><div class="roadmap-meta"><strong>Step ${i+1} · ${rich(p.label)}</strong><small>${esc(p.period)}</small>${chip(p.state)}</div><div class="roadmap-track" aria-label="${esc(p.period)}"><div class="roadmap-bar ${i===0?'current':''}" style="grid-column:${start}/${end}"><span class="sr-only">${esc(p.period)}</span></div></div></li>`;}).join('')}</ol><p class="roadmap-caption">帯は予定の期間です。日付が来ても、前の工程・資格・費用の条件を満たすまで開始しません。</p>${refs(D.plan.sources)}</section>
+    <div class="grid-equal section"><section class="card">${sectionTitle('重要な日程')}<ol class="milestone-list">${highlighted.map(m=>`<li><time datetime="${m.date}">${dateOnly(m.date)}</time><div>${chip(m.state)}<h3>${rich(m.title)}</h3><p>${rich(m.dependency)}</p><p>${rich(m.stop)}</p></div></li>`).join('')}</ol></section><div class="stack"><section class="card"><div class="card-title"><h2>先へ進むための条件</h2></div><ol class="timeline">${D.plan.gates.map(g=>`<li><h3>${rich(g.title)}</h3><p>${rich(g.state)}</p><p>${rich(g.resolve)}</p></li>`).join('')}</ol></section>${details('各Stepの入口・出口・停止条件',D.plan.protocol.map(p=>`<article class="section"><h3>${rich(p.title)}</h3><p class="scope-note">${rich(p.body)}</p><p class="scope-note">${rich(p.exit)}</p></article>`).join(''))}</div></div>
+    <div class="stack section">${details('毎日の計画をすべて見る',`<ol class="milestone-list">${D.milestones.items.map(m=>`<li><time datetime="${m.date}">${dateOnly(m.date)}</time><div><h3>${rich(m.title)}</h3><p>必要な条件：${rich(m.dependency)}</p><p>停止・変更条件：${rich(m.stop)}</p></div></li>`).join('')}</ol>`)}${details('競技の採点と守るルール',`<p>${rich(D.plan.win)}</p><ol class="timeline">${D.plan.rules.map(x=>`<li><p>${rich(x)}</p></li>`).join('')}</ol>${refs(D.plan.sources)}`)}</div>`;}
+  function scopeText(s){return `${s.field} · ${s.regimes}レジーム · seed${s.seeds} · ${s.worlds}世界`;}
+  function safetyText(path){
+    const value=read(path);
+    if(path==='status.dev2'){const r=value.result;return `P−noopは全${r.positive_worlds}世界で正、最小${r.min_p_minus_noop}。noop割れ${r.noop_below}・違反${r.violations}・revert ${r.reverts}。G0 ${value.g0}。`;}
+    if(path==='results.q0_summary')return `noop割れ ${value.noop_below}。送信失敗 ${value.submit_failed}、mined revert ${value.mined_reverts}。`;
+    return `noop割れ ${value.noop_below}。G0 ${value.g0_failed_worlds}世界FAIL。${value.safety}`;
+  }
+  function comparison(mode){
+    const head=['候補エージェント','何を測ったか','結果','判定・出所'];
+    const rows=D.results.comparison[mode].map(row=>[
+      `<strong>${rich(row.candidate)}</strong>`,
+      `<div class="run-label">${rich(read(row.run_ref))}</div><p>${rich(scopeText(read(row.scope_ref)))}</p>`,
+      (row.value_note?`<strong>${rich(row.value_note)}</strong>`:'')+(row.metrics?`<div class="metric-pair">${row.metrics.map(m=>`<p>${rich(m.label)} <b>${esc(read(m.candidate_ref))}</b>${m.baseline_ref?' / '+esc(read(m.baseline_ref)):''}</p>`).join('')}</div>`:'')+(row.metric_note?`<p class="scope-note">${rich(row.metric_note)}</p>`:'')+((row.detail||row.detail_ref)?`<p>${rich(row.detail||read(row.detail_ref))}</p>`:''),
+      `${chip(row.state,row.state_label)}<p>${rich(row.verdict)}</p>${row.safety_ref?`<p>${rich(safetyText(row.safety_ref))}</p>`:''}${refs(row.sources)}`
+    ]);
+    return `<table class="comparison" role="table"><caption class="sr-only">${mode==='diagnostic'?'診断計測':'資格試験'}の候補比較</caption><thead><tr>${head.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((v,i)=>`<td data-label="${head[i]}"><div>${v}</div></td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  }
+  function results(){const mode=state.results;const keys=mode==='diagnostic'?['dev2','dev2_detail','dev1','d0','strategies','ranking','zeta']:['q0','q0b'];return `${kpis()}<div class="subnav" role="group" aria-label="結果の種類"><button type="button" data-results="diagnostic" aria-pressed="${mode==='diagnostic'}">診断 · 原因と改善を調べる</button><button type="button" data-results="qualification" aria-pressed="${mode==='qualification'}">資格試験 · 合否を判定する</button></div><div class="notice ${mode==='diagnostic'?'':'warning'}">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_notice:D.ui.copy.qualification_notice)}</div>
+    <section class="card table-card section"><div class="table-intro"><div class="card-title"><h2>${mode==='diagnostic'?'診断計測の比較':'資格試験の判定'}</h2>${evidence('measured引継ぎ / 原ログ未再監査')}</div><p class="card-sub">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_criteria:D.ui.copy.qualification_criteria)}</p></div>${comparison(mode)}<div class="table-foot">${rich(D.status.measurement_note)}</div></section>
+    <section class="section">${sectionTitle('測定の原表・条件')}<div class="stack">${keys.map(k=>details(D.results[k].title,rawTable(D.results[k]))).join('')}</div></section>
+    <div class="stack section">${details('進捗台帳 · すべての作業項目',D.progress.workstreams.map(w=>`<section class="section"><h3>${esc(w)}</h3><ol class="milestone-list">${D.progress.items.filter(p=>p.workstream===w).map(p=>`<li><div>${chip(p.state)}</div><div><h3>${rich(p.title)}</h3><p>${rich(p.evidence)}</p>${refs(p.sources)}</div></li>`).join('')}</ol></section>`).join(''))}${details('固定版・過去の記録',keyValues(D.status.commits)+keyValues(D.status.q0b)+keyValues(D.status.dev1)+keyValues(D.status.repair_v2))}${details('過去の診断・設計の記録',rawTable(D.results.m1)+rawTable(D.results.fields)+D.results.research.concat(D.results.archive).map(r=>`<article class="section"><h3>${rich(r.title)}</h3><p class="scope-note">${rich(r.text)}</p>${refs(r.sources)}</article>`).join(''))}</div>`;}
+  function blockers(){const items=D.blockers.items.filter(b=>state.risk==='all'||(state.risk==='resolved'?b.status==='resolved':b.status!=='resolved'));return `${kpis()}<div class="subnav" role="group" aria-label="リスクの状態">${[['active','未解消'],['resolved','解消済み'],['all','すべて']].map(([k,l])=>`<button type="button" data-risk="${k}" aria-pressed="${state.risk===k}">${l}</button>`).join('')}</div><p class="scope-note">優先順位・可能性・影響は資料に基づく定性判断です。発生確率の実測ではありません。</p><div class="risk-list section">${items.map(b=>`<article class="card risk-card ${b.rank===1?'risk-first':''}"><div class="rank" aria-label="優先順位 ${b.rank}">${b.rank}</div><div><div class="risk-head"><div><h2>${rich(b.title)}</h2><div class="risk-meta"><span>${b.severity==='Critical'?'重要':b.severity==='Warning'?'注意':'記録'}</span><span>可能性 ${esc(b.likelihood)} · 影響 ${esc(b.impact)}</span>${owner(b.owner)}</div></div>${chip(b.status)}</div><dl class="risk-content"><div><dt>原因・根拠</dt><dd>${rich(b.evidence)}</dd></div><div><dt>このままだと</dt><dd>${rich(b.impact_note)}</dd></div></dl><div class="risk-action"><strong>次の対応</strong>${rich(b.mitigation)}</div>${refs(b.sources)}</div></article>`).join('')}</div>`;}
+  function decisionCard(d){const note=d.note.replace(/ 署名者=.*$/,'');return `<article class="card decision-card"><div class="card-title"><h3>${rich(d.title)}</h3>${chip(d.status)}</div><div class="date-line">${owner(d.owner)}<span>記録日 ${dateOnly(d.date)}</span><span>期日 ${d.due_date?dateOnly(d.due_date):'指定なし'}</span></div><p>${rich(note)}</p>${d.origin?`<details><summary>決定の出所・署名を見る</summary><p>${rich(d.origin)}</p><p>署名者：${esc(d.signer)}<br>記録時刻：${time(d.signed_at)}</p><p>本人が委任した決定です。本人の署名として扱いません。</p></details>`:''}${refs(d.sources)}</article>`;}
+  function decisions(){const ds=D.decisions.items,rep=D.decisions.ollama_report;return `${kpis()}<div class="grid-2"><section class="card"><div class="card-title"><h2>本人の現在の作業</h2>${chip(D.status.human_action==='なし'?'done':'decision',D.status.human_action==='なし'?'対応不要':'要判断')}</div><h3 class="action-value">${esc(D.status.human_action)}</h3><p class="card-sub">${rich(D.decisions.human_only.note)}</p>${refs(D.decisions.human_only.sources)}</section><section class="card"><div class="card-title"><h2>${rich('Ollamaの登録状況')}</h2>${evidence(rep.evidence_kind)}</div><dl class="data-list"><div><dt>登録</dt><dd>${rich(D.ui.copy.registration)}</dd></div><div><dt>プラン / 残高</dt><dd>${esc(rep.plan)} / $${esc(rep.balance_usd)}</dd></div><div><dt>自動チャージ</dt><dd>${esc(rep.auto_reload)}</dd></div><div><dt>利用するモデルの前提</dt><dd>${esc(rep.assumed_model)}</dd></div><div><dt>残る確認</dt><dd>${rich(D.ui.copy.provider_remaining)}</dd></div></dl><p class="scope-note">${esc(rep.reported_at_note)}の本人報告。今回の画面・API監査ではありません。</p>${refs(rep.sources)}</section></div>
+    <section class="section">${sectionTitle('本人の確認予定・完了記録')}<div class="grid-equal">${ds.filter(d=>['dec-007','dec-008','dec-no-contact'].includes(d.id)).map(decisionCard).join('')}</div></section>
+    <section class="section">${sectionTitle('委任により確定した決定',`<small>Codex / 過去の記録名 Astra</small>`)}<div class="notice">${rich(D.ui.copy.decisions_note)}</div><div class="grid-equal section">${ds.filter(d=>d.group==='delegated').map(decisionCard).join('')}</div></section>
+    <div class="stack section">${details('既決の方針・旧案の履歴',`<div class="stack">${ds.filter(d=>d.group!=='delegated'&&!['dec-007','dec-008','dec-no-contact'].includes(d.id)).map(decisionCard).join('')}</div>`)}${details('AI契約・資格試験・失敗上限の詳細',rawTable({...D.plan.ai_parameters,title:'AIが変更できる設定'})+keyValues(D.plan.ai_contract)+keyValues(D.plan.q0_requalification)+keyValues(D.plan.revert_contract)+keyValues(D.plan.cutover))}${details('登録報告の全項目',keyValues(rep))}</div>`;}
+  function operations(){const r=D.status.dev3,b=D.budget;const active=D.queue.items.filter(q=>q.active);const queueHead=['順番・作業','状態・担当','規模・全量見積','開始条件'];return `${kpis()}<div class="grid-2"><section class="card running-card"><div class="card-title"><div><p class="eyebrow">CURRENT RUN</p><h2>${rich(r.name)}</h2></div>${chip(r.state==='running-results-pending'?'running':r.state==='measured-diagnostic-complete'?'done':'pending',r.state==='running-results-pending'?'計測中の引継ぎ':r.state==='measured-diagnostic-complete'?'診断完了の引継ぎ':'状態確認待ち')}</div><p class="card-sub">${rich(`${r.field} · seed${r.seeds} · ${r.regimes}レジーム / ${r.worlds}世界`)}</p><p class="scope-note">所要見込み ${r.expected_end&&r.started_at?Math.round((Date.parse(r.expected_end)-Date.parse(r.started_at))/60000)+'分':'未提示'}（開始と完了見込みの差・実測ではありません）</p><div class="run-metrics"><div><small>開始 · JST</small><strong>${r.started_at?r.started_at.slice(11,16):'未確認'}</strong></div><div><small>${r.completed_at?'完了確認':'完了見込み'} · JST</small><strong>${r.completed_at?r.completed_at.slice(11,16):r.expected_end?r.expected_end.slice(11,16)+'頃':'未確認'}</strong></div><div><small>確認済み完了数</small><strong>${r.completed_worlds===null?'未確認':r.completed_worlds}</strong></div></div><div class="notice">${rich(r.note)} 完了数・実消化が未提示のため、時間の経過から進行率は計算しません。</div>${refs(r.sources)}<p class="scope-note">${rich(active[0]?.dependency||'進行中の作業はありません。')}</p></section>
+    <section class="card"><div class="card-title"><h2>${rich('forward100hの消化')}</h2>${chip('warning',b.consumption_status)}</div><div class="budget-values"><div><small>今後の時間枠</small><strong>${esc(b.total_hours)} h</strong></div><div><small>枠内の実消化</small><strong>${b.consumed_forward_hours===null?'未確認':hours(b.consumed_forward_hours)}</strong></div><div><small>残り時間</small><strong>未確定</strong></div></div><p class="card-sub">過去の実測下限は ${esc(b.consumed_lower_bound_hours)} h以上。これは枠外の履歴です。開始・終了区間が未精算のため、${esc(b.total_hours)}hから引きません。</p><p class="scope-note">${rich(b.note)}</p>${refs(b.sources)}</section></div>
+    <section class="card table-card section"><div class="table-intro">${sectionTitle('実行キュー')}<p class="card-sub">${rich(D.queue.note)} 見積もりは全量分で、残り時間ではありません。</p></div><table class="queue-table" role="table"><caption class="sr-only">優先順の実行キュー</caption><thead><tr>${queueHead.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${D.queue.items.map(q=>{const tone=q.active?'running':/不採用/.test(q.state)?'pending':/停止|待ち|未解放/.test(q.state)?'blocked':'pending';const cells=[`<strong>${q.priority}. ${rich(q.title)}</strong>`,`${chip(tone,q.state)}<p>${owner(q.owner)}</p>`,`${q.worlds}世界 / ${hours(q.hours)}<p class="scope-note">${rich(q.window)}</p>`,`${rich(q.dependency)}${refs(q.sources)}`];return `<tr>${cells.map((v,i)=>`<td data-label="${queueHead[i]}"><div>${v}</div></td>`).join('')}</tr>`;}).join('')}</tbody></table></section>
+    <section class="grid-equal section"><div class="card">${sectionTitle(b.total_hours+'hの予約配分',`<small>現行 KEEP / rev ${D.plan.revision}</small>`)}<p class="card-sub">配分は実消化ではありません。下の棒は予約時間を表します。</p><div class="budget-allocation section">${b.rows.filter(r=>fraction(r.keep_hours)>0).map(r=>`<div class="budget-row"><div class="budget-row-title">${rich(r.title)}</div><div class="budget-row-value">${hours(r.keep_hours)}</div><div class="budget-row-track" aria-hidden="true"><div class="budget-row-fill" style="width:${fraction(r.keep_hours)/fraction(b.total_hours)*100}%"></div></div><div class="budget-row-note">${rich(r.accounting)}</div></div>`).join('')}</div>${refs(b.sources)}</div><div class="stack"><section class="card"><h2>追加実行を止めている費用</h2><p class="card-sub">${rich(b.on_note)}</p><div class="notice warning section">${rich(D.queue.bundle)}</div>${refs(b.sources)}</section>${details('予約の原数値・未採用案を照合',rawTable({header:['用途','現行KEEP h','旧AMEND h','会計区分・注記'],rows:b.rows.map(r=>[r.title,r.keep_hours,r.amend_hours,r.accounting+'。'+r.note]),sources:b.sources,title:'分数は原値 / 両列'+b.total_hours+'h。AMENDは未署名・不採用'}))}${details('時間概算・AI改訂の速度感度',rawTable({...b.on_sensitivity,title:'改訂ONの速度による見積もりの変化',sources:b.sources})+keyValues(b.consumption_estimate))}</div></section>`;}
+  const normalize = value => String(value).normalize('NFKC').toLocaleLowerCase('ja');
+  function filteredLogs(){const words=normalize(state.logQuery).trim().split(/\s+/).filter(Boolean);return D.log.items.filter(l=>(state.logType==='all'||l.type===state.logType)&&(state.logDate==='all'||l.timestamp.slice(0,10)===state.logDate)&&words.every(w=>normalize([l.id,l.summary,l.type,l.timestamp,l.event_date,l.time_basis,...l.sources.map(s=>sourceMap.get(s).title)].join(' ')).includes(w)));}
+  function logItems(){const items=filteredLogs();return {count:items.length,html:items.length?`<ol>${items.map(l=>`<li class="log-entry"><div class="log-date"><time datetime="${l.timestamp}">${time(l.timestamp)}</time><small class="mono">${esc(l.id)}</small></div><div>${evidence(l.type)}<p class="log-summary">${rich(l.summary)}</p><details><summary>時刻の根拠・出来事の日付</summary><p>対象日 ${esc(l.event_date)} / ${esc(l.time_basis)}</p></details>${refs(l.sources)}</div></li>`).join('')}</ol>`:'<div class="empty"><strong>一致するログはありません</strong>検索語や種類・日付の条件を変えてください。</div>'};}
+  function logs(){const found=logItems();return `${kpis()}<div class="toolbar"><div class="field search"><label for="log-search">ログを検索</label><input id="log-search" type="search" placeholder="候補名・出来事・出所など" value="${esc(state.logQuery)}"></div><div class="field"><label for="log-type">種類</label><select id="log-type"><option value="all">すべての種類</option>${D.log.allowed_types.map(t=>`<option${state.logType===t?' selected':''}>${esc(t)}</option>`).join('')}</select></div><div class="field"><label for="log-date">記録日 · JST</label><select id="log-date"><option value="all">すべての日付</option>${[...new Set(D.log.items.map(l=>l.timestamp.slice(0,10)))].map(d=>`<option${state.logDate===d?' selected':''}>${d}</option>`).join('')}</select></div><button class="filter-button" type="button" data-reset="log">クリア</button><p class="result-count" id="log-count" aria-live="polite">${found.count} / ${D.log.items.length} 件</p></div><div class="notice">記録当時の内容を保持しています。現在地は「概要」を参照してください。正確な出来事の時刻が不明な記録には、移行・記録時刻の根拠があります。</div><section class="card section" id="log-items" aria-label="更新ログ">${found.html}</section>`;}
+  function filteredTerms(){const words=normalize(state.termQuery).trim().split(/\s+/).filter(Boolean);return D.glossary.items.filter(t=>(state.termCategory==='all'||t.category===state.termCategory)&&words.every(w=>normalize([t.term,t.definition,...t.aliases].join(' ')).includes(w)));}
+  function termItems(){const items=filteredTerms();return {count:items.length,html:items.length?items.map(t=>`<article class="card term-card" id="${t.id}" tabindex="-1"><span class="term-category">${esc(t.category)}</span><h2>${esc(t.term)}</h2><p>${esc(t.definition)}</p></article>`).join(''):'<div class="empty"><strong>一致する用語はありません</strong>別の語句で検索してください。</div>'};}
+  function glossary(){const found=termItems();return `<div class="notice">本文の下線と ⓘ を押すと、その場で説明を開けます。用語は名前・略語・説明文から検索できます。</div><div class="toolbar section"><div class="field search"><label for="term-search">用語を検索</label><input type="search" id="term-search" placeholder="例：資格、T、何もしない" value="${esc(state.termQuery)}"></div><div class="field"><label for="term-category">分類</label><select id="term-category"><option value="all">すべての分類</option>${[...new Set(D.glossary.items.map(t=>t.category))].map(c=>`<option${state.termCategory===c?' selected':''}>${esc(c)}</option>`).join('')}</select></div><button class="filter-button" type="button" data-reset="terms">クリア</button><p class="result-count" id="term-count" aria-live="polite">${found.count} / ${D.glossary.items.length} 語</p></div><div id="term-items" class="glossary-grid">${found.html}</div><div class="section">${details('参照資料',`<ol class="timeline">${D.sources.sources.map(s=>`<li><h3><a href="../../${esc(s.path)}">${esc(s.title)} ↗</a></h3><p>${esc(s.locator)}</p></li>`).join('')}</ol>`)}</div>`;}
+  const renderers={overview,plan,results,blockers,decisions,operations,log:logs,glossary};
+  const iconPaths={overview:'M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z',plan:'M6 4v16M6 6h12M6 12h9M6 18h14',results:'M4 20V10M10 20V4M16 20v-8M22 20H2',blockers:'m12 3 10 18H2L12 3zm0 6v5m0 3v1',decisions:'M5 4h14v16H5zM8 9l2 2 5-5M8 16h8',operations:'m8 4 12 8-12 8V4z',log:'M3 12a9 9 0 1 0 3-7M3 3v5h5m4-2v6l4 2',glossary:'M3 4h7l2 2 2-2h7v16h-7l-2 1-2-1H3V4zm9 2v15'};
+  const icon = key => `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${iconPaths[key]}"></path></svg>`;
+  function navigation(){document.getElementById('navigation').innerHTML=`<ul class="nav-list">${D.ui.pages.map(p=>`<li><a href="#${p.key}" class="nav-link"${state.page===p.key?' aria-current="page"':''}>${icon(p.icon)}<span>${esc(p.label)}</span>${p.key==='log'?`<span class="nav-count">${D.log.items.length}</span>`:''}</a></li>`).join('')}</ul>`;}
+  let activeTermButton=null;
+  function closeTerm(focus=false){const pop=document.getElementById('term-popover');pop.hidden=true;if(activeTermButton){activeTermButton.setAttribute('aria-expanded','false');if(focus)activeTermButton.focus();}activeTermButton=null;}
+  function showTerm(button){const t=terms.get(button.dataset.term);if(!t)return;closeTerm();activeTermButton=button;button.setAttribute('aria-expanded','true');const pop=document.getElementById('term-popover');pop.innerHTML=`<button type="button" class="close" data-close-term aria-label="説明を閉じる">×</button><span class="term-category">${esc(t.category)}</span><h2 id="term-popover-title">${esc(t.term)}</h2><p>${esc(t.definition)}</p><a href="#glossary/${t.id}">用語集で見る →</a>`;pop.hidden=false;pop.querySelector('button').focus();}
+  function render(focus=false){explained=new Set();closeTerm();const page=D.ui.pages.find(p=>p.key===state.page)||D.ui.pages[0];navigation();document.getElementById('breadcrumb-current').textContent=page.label;document.title=`${page.label} · ASCON`;document.getElementById('page').innerHTML=`<header class="page-heading"><div><p class="eyebrow">${esc(page.eyebrow)}</p><h1 id="page-title" tabindex="-1">${esc(page.label)}</h1><p class="page-description">${rich(page.description)}</p></div><div class="heading-aside">${esc(D.ui.brand)} / MASTER rev ${D.plan.revision}</div></header><div class="page-body">${renderers[state.page]()}</div>`;if(focus){document.getElementById('page-title').focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}}
+  function route(focus=false){const [page,term]=location.hash.slice(1).split('/');if(page==='main'){document.getElementById('main').focus();return;}state.page=renderers[page]?page:'overview';if(term&&state.page==='glossary'){state.termQuery='';state.termCategory='all';}render(focus);if(term&&terms.has(term)){document.getElementById(term)?.scrollIntoView({block:'center'});document.getElementById(term)?.focus({preventScroll:true});}}
+  function updateLog(){explained=new Set();closeTerm();const found=logItems();document.getElementById('log-items').innerHTML=found.html;document.getElementById('log-count').textContent=`${found.count} / ${D.log.items.length} 件`;}
+  function updateTerms(){const found=termItems();document.getElementById('term-items').innerHTML=found.html;document.getElementById('term-count').textContent=`${found.count} / ${D.glossary.items.length} 語`;}
+  document.addEventListener('click',event=>{const target=event.target.closest('[data-term],[data-close-term],[data-results],[data-risk],[data-reset]');if(!target)return;
+    if(target.hasAttribute('data-term'))showTerm(target);
+    else if(target.hasAttribute('data-close-term'))closeTerm(true);
+    else if(target.hasAttribute('data-results')){state.results=target.dataset.results;render();document.querySelector(`[data-results="${state.results}"]`).focus();}
+    else if(target.hasAttribute('data-risk')){state.risk=target.dataset.risk;render();document.querySelector(`[data-risk="${state.risk}"]`).focus();}
+    else if(target.dataset.reset==='log'){state.logQuery='';state.logType='all';state.logDate='all';render();document.getElementById('log-search').focus();}
+    else {state.termQuery='';state.termCategory='all';render();document.getElementById('term-search').focus();}
+  });
+  document.addEventListener('input',event=>{if(event.target.id==='log-search'){state.logQuery=event.target.value;updateLog();}if(event.target.id==='term-search'){state.termQuery=event.target.value;updateTerms();}});
+  document.addEventListener('change',event=>{const {id,value}=event.target;if(id==='log-type'){state.logType=value;updateLog();}if(id==='log-date'){state.logDate=value;updateLog();}if(id==='term-category'){state.termCategory=value;updateTerms();}});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape')closeTerm(true);});
+  window.addEventListener('hashchange',()=>route(true));
+  try {
+    document.getElementById('brand-name').textContent=D.ui.brand;document.getElementById('brand-sub').textContent=D.ui.tagline;
+    document.getElementById('sidebar-foot').innerHTML=`<strong>提出締切 ${dateOnly(D.plan.deadline_at)}</strong>${D.plan.deadline_at.slice(11,16)} JST · MASTER rev ${D.plan.revision}<br>記録の更新はファイルの再読込で反映`;
+    const updated=document.getElementById('updated-at');updated.textContent='更新 '+time(D.status.as_of);updated.setAttribute('datetime',D.status.as_of);
+    document.getElementById('footer').innerHTML=`<span>すべてJST · 原ログの再監査なし · 実行状況は引継ぎ時点</span><span>${D.log.items.length}件の履歴を保持 · ローカルデータ</span>`;
+    route();
+  } catch(error) {const el=document.getElementById('render-error');el.hidden=false;el.className='error-box';el.textContent='記録を表示できません。データの形式を確認してください。 '+error.message;}
+  // Read-only test surface: the same renderers and filters as the UI. No I/O or run access.
+  if(typeof globalThis.__DASHBOARD_TEST__==='function')globalThis.__DASHBOARD_TEST__({D,state,renderers,render,route,rich,esc,filteredLogs,filteredTerms,read,chip,closeTerm});
 })();
 </script>
 </body>
