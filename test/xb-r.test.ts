@@ -55,7 +55,7 @@ test("R1 bundle ignores cooldown after either a single or a bundle", t => {
     }, "R1_BUNDLE_PRIORITY");
   }
 });
-test("R1 singles require restoration or a large net edge and still cool down", () => {
+test("R1 singles require restoration or a large fee-adjusted rawEdge before gas and still cool down", () => {
   assert.equal(action(single(0.007)).type, "noop");
   assert.equal(action(restoring(0.007)).type, "swap");
   assert.equal(action(single(0.0101)).type, "swap");
@@ -63,6 +63,83 @@ test("R1 singles require restoration or a large net edge and still cool down", (
   assert.equal(next(single(0.02)).type, "swap");
   assert.equal(next(single(0.02, true, 101)).type, "noop");
   assert.equal(next(single(0.02, true, 102)).type, "swap");
+});
+test("W2 only endgame restoration bypasses single cooldown", t => {
+  for (const first of [single(0.02), bundle()]) for (const buy of [true, false]) {
+    const o = restoring(0.02, buy); o.blockNumber = "101"; o.blocksRemaining = 4;
+    first.blocksRemaining = 5;
+    red(t, `W2-${first.protocols.balancer ? "bundle" : "single"}-${buy}`, p => {
+      const next = createAgent(p);
+      assert.notEqual(next(first).type, "noop");
+      const a = next(o);
+      assert.equal(a.type, "swap");
+      assert.equal(a.tokenIn, buy ? "USDC" : "WETH");
+      safeAction(o, a);
+    }, "R5_PROFITABLE_RESTORE");
+    for (const R1_BUNDLE_PRIORITY of [true, false]) {
+      const p = { ...PARAMS, R1_BUNDLE_PRIORITY };
+      const cooling = new Set(["WETH"]);
+      assert.equal(selectCandidate(o, enumerateCandidates(o, p, cooling), p).type, "swap");
+      const ordinary = structuredClone(o); ordinary.blocksRemaining = 5;
+      assert.equal(enumerateCandidates(ordinary, p, cooling).length, 0, "ordinary restoration still cools down");
+      ordinary.balances.wethWei = String(8n * W);
+      assert.equal(enumerateCandidates(ordinary, p, cooling).length, 0, "ordinary non-restoration still cools down");
+      ordinary.blocksRemaining = 4;
+      assert.equal(enumerateCandidates(ordinary, p, cooling).length, 0, "endgame cannot open directional risk");
+    }
+  }
+});
+test("S1 selected base preserves trade fields and per-base cooldown for singles and bundles", () => {
+  for (const base of ["WETH", "WBTC"] as const) for (const o of [single(0.02), single(0.02, false), bundle()]) {
+    if (base === "WBTC") {
+      const pool = o.protocols.uniswap!.pool;
+      o.protocols.uniswap!.markets = { "WBTC/USDC": { ...pool, pair: "WBTC/USDC", priceUsdcPerWeth: pool.priceUsdcPerWeth * 20 } };
+      pool.priceUsdcPerWeth = 3000;
+      if (o.protocols.balancer) {
+        const v = o.protocols.balancer;
+        v.markets = { "WBTC/USDC": { ...v, priceUsdcPerWeth: 62000,
+          buyPriceUsdcPerWeth: 62186, sellPriceUsdcPerWeth: 61814 } };
+        v.priceUsdcPerWeth = 3000; v.buyPriceUsdcPerWeth = 3009; v.sellPriceUsdcPerWeth = 2991;
+      }
+    }
+    const all = enumerateCandidates(o);
+    assert.ok(all.length > 0);
+    for (const c of all) {
+      const before = structuredClone(c.action);
+      assert.equal(c.base, base);
+      assert.deepEqual(selectCandidate(o, [c]), { ...before, base,
+        maxPriorityFeePerGasWei: bidWei(o, c.profit, c.gas, true).toString() });
+      assert.deepEqual(c.action, before, "candidate action stays unchanged");
+    }
+    const next = createAgent(), a = next(o);
+    assert.equal(a.base, base); safeAction(o, a);
+    const second = structuredClone(o); second.blockNumber = "101";
+    delete second.protocols.balancer;
+    assert.equal(next(second).type, "noop", "selected base is cooled after either action type");
+    second.blockNumber = "102";
+    assert.notEqual(next(second).type, "noop", "single resumes after two blocks");
+  }
+});
+test("S5 createAgent rejects invalid Params before observation handling", () => {
+  for (const value of [-1, -Infinity, Infinity, NaN, undefined, null, "100"]) {
+    assert.throws(() => createAgent({ ...PARAMS, SINGLE_EDGE_BPS: value } as unknown as Params),
+      { name: "RangeError", message: /SINGLE_EDGE_BPS/ });
+  }
+  for (const value of [-1, -Infinity, Infinity, NaN, 0, 46, undefined, null, "50"]) {
+    assert.throws(() => createAgent({ ...PARAMS, ENTRY_BPS: value } as unknown as Params),
+      { name: "RangeError", message: /ENTRY_BPS/ });
+  }
+  for (const key of ["R1_BUNDLE_PRIORITY", "R2_BALANCE_FLOOR", "R3_ENTRY_ONLY", "R4_COMPETITOR_BID", "R5_PROFITABLE_RESTORE"] as const) {
+    for (const value of [0, 1, null, undefined, "true"]) {
+      assert.throws(() => createAgent({ ...PARAMS, [key]: value } as unknown as Params),
+        { name: "TypeError", message: new RegExp(key) });
+    }
+    assert.doesNotThrow(() => createAgent({ ...PARAMS, [key]: false }));
+  }
+  for (const ENTRY_BPS of [45, 50] as const) for (const SINGLE_EDGE_BPS of [0, 0.5, 100]) {
+    assert.doesNotThrow(() => createAgent({ ...PARAMS, ENTRY_BPS, SINGLE_EDGE_BPS }));
+  }
+  assert.deepEqual(action(single(0.02)), action(single(0.02), { ...PARAMS }));
 });
 test("R2 balance floor raises size while the depth ceiling remains binding", t => {
   red(t, "R2-size", p => {

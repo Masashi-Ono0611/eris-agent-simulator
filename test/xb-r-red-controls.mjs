@@ -25,6 +25,12 @@ const controls = [
   ["R5-restore-off", "R5 endgame restores only", "R5_PROFITABLE_RESTORE: true", "R5_PROFITABLE_RESTORE: false"],
   ["R5-net-guard", "R5 restoration cannot pass", "net < MIN_PROFIT_USDC", "false"],
   ["R5-loose-slippage", "R5 single and bundle slippage", "const SLIPPAGE_BPS = 80;", "const SLIPPAGE_BPS = 150;"],
+  ["W2-restore-cooldown", "W2 only endgame restoration", "cooling.has(m.base) && !(endgame && restoring)", "cooling.has(m.base)"],
+  ["W2-ordinary-cooldown", "W2 only endgame restoration", "cooling.has(m.base) && !(endgame && restoring)", "false"],
+  ["S1-selected-base", "S1 selected base", "...c.action, base: c.base, maxPriorityFeePerGasWei", "...c.action, maxPriorityFeePerGasWei"],
+  ["S5-validation-off", "S5 createAgent rejects invalid Params", "validateParams(p);", "// validateParams(p);"],
+  ["S5-negative-edge", "S5 createAgent rejects invalid Params", "p.SINGLE_EDGE_BPS < 0", "false"],
+  ["S5-nonfinite-edge", "S5 createAgent rejects invalid Params", "!Number.isFinite(p.SINGLE_EDGE_BPS)", "false"],
 ];
 const records = [];
 function run(label, pattern) {

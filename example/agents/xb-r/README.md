@@ -41,9 +41,11 @@ candidate-ID input. `runId` is compared only to reset state.
 
 ## Factors and defaults
 
-`PARAMS` is frozen. `createAgent(params)` copies and freezes each independent
-instance's parameters and owns its own state. Toggle one factor at a time for
-diagnosis; factor-off combinations are not claimed equivalent to V0.
+`PARAMS` is frozen. `createAgent(params)` copies, validates and freezes each
+independent instance's parameters and owns its own state. Invalid boolean
+factors, ENTRY_BPS outside 45/50, and non-finite or negative SINGLE_EDGE_BPS
+throw at creation. Toggle one factor at a time for diagnosis; factor-off is
+not equivalent to parent xb-core V0.
 
 | Parameter | Default / enabled behavior | Disabled diagnostic |
 | --- | --- | --- |
@@ -51,7 +53,7 @@ diagnosis; factor-off combinations are not claimed equivalent to V0.
 | R2_BALANCE_FLOOR | Desired size is max(depth target, balance target) | Use the V0 depth target alone |
 | R3_ENTRY_ONLY | Entry uses ENTRY_BPS; never subtract that margin from economic edge | Sonnet-style 60bps entry and another 60bps deduction from sizing/profit edge |
 | R4_COMPETITOR_BID | Competitor + 0.1 gwei, subject to floor and V0 budget; reject unaffordable target | V0 floor-plus-budget bid, still subject to net-profit and native reserve checks |
-| R5_PROFITABLE_RESTORE | Last four blocks may restore toward the anchor if profitable | Hold during the last four blocks |
+| R5_PROFITABLE_RESTORE | Last four blocks may restore toward the anchor if profitable, bypassing single cooldown | Hold during the last four blocks |
 | ENTRY_BPS | 50; configurable as 45 or 50, strict fee-adjusted comparison | Independent of the R3-off historical diagnostic |
 | SINGLE_EDGE_BPS | 100, strict comparison for non-restoring singles | Still bounded by the inventory band |
 
@@ -102,7 +104,8 @@ net calculation. Under the simulator's zero-base-fee assumption, gas and
 priority payment are the same cost; they are not double charged.
 
 All candidates are built before selection. The selector tries bundles first,
-and within each class higher net profit first. Each trial uses a fresh
+and within each class higher net profit first. R1 prioritizes bundle opportunities
+over maximizing net profit across classes. Each trial uses a fresh
 cumulative token-reservation map. Rejection for funding, bid, profit or gas
 cannot consume capital for a later candidate. At most one selected action
 (single or two-leg bundle) is returned per observation.
@@ -112,7 +115,8 @@ their actual amount against current balances. In particular, the SDK's bundle
 crediting of predicted outputs is not used. WBTC retains its actual 8-decimal
 amount and uses 18-decimal normalization only for the generic dust check.
 
-Singles retain a two-block per-base cooldown. A preceding single or bundle
+Singles retain a two-block per-base cooldown, except for R5 restoring singles
+in the last four blocks. A preceding single or bundle
 cannot cool down a new bundle. Same-block duplicate observations still return
 noop. Run changes, block rewinds and horizon resets clear cooldown state. The
 earliest available epoch/day boundary is used; unknown or expired horizons
@@ -130,8 +134,8 @@ npm run typecheck
 node --import tsx --test test/xb-core.test.ts test/xb-variants.test.ts test/xb-r.test.ts
 ```
 
-Typecheck (`tsc --noEmit`): exit 0, no diagnostics. Targeted tests: **98 passed,
-0 failed, 0 skipped** (xb-core 28, xb-variants 45, xb-r 25). No full `npm test`.
+Typecheck (`tsc --noEmit`): exit 0, no diagnostics. Targeted tests: **101 passed,
+0 failed, 0 skipped** (xb-core 28, xb-variants 45, xb-r 28). No full `npm test`.
 
 The strategy static check also passed for `xb-r/agent.ts` via
 `node --import tsx scripts/checkStrategyCode.ts example/agents/xb-r/agent.ts`
@@ -139,9 +143,9 @@ The strategy static check also passed for `xb-r/agent.ts` via
 `tsx` CLI could not open an IPC pipe under the sandbox (`listen EPERM`); running
 the same checker through Node's loader succeeded without that CLI pipe.
 
-xb-r includes eight explicit factor-off assertion controls: R1 priority,
+xb-r includes twelve explicit factor-off assertion controls: R1 priority,
 R1 cooldown after single/bundle, R2 size, R3 entry, R4 bid, and R5 buy/sell
-restoration. Each executes the same assertion against enabled, disabled and
+restoration, plus W2 buy/sell restoration after either action type. Each executes the same assertion against enabled, disabled and
 restored Params and records `RED-CONTROL` only after catching AssertionError.
 
 Additionally, `node test/xb-r-red-controls.mjs` actually mutated agent.ts
@@ -160,12 +164,18 @@ restored after each run and also in a `finally` guard.
 | R5 disable profitable restoration | Endgame buy/sell restoration |
 | R5 remove net-profit gate | Gas-consuming restoration must skip |
 | R5 loosen slippage to 150bps | Every leg remains 80bps |
+| W2 restore unconditional single cooldown | Endgame restoration after single/bundle |
+| W2 remove all single cooldown | Ordinary restoring/non-restoring singles still cool down |
+| S1 omit selected base | Selected base and unchanged trade fields for WETH/WBTC |
+| S5 remove creation-time validation | Invalid Params throw before observation handling |
+| S5 allow negative SINGLE_EDGE_BPS | Negative threshold throws |
+| S5 allow non-finite SINGLE_EDGE_BPS | Non-finite threshold throws |
 
-The final restored 98-test run exited 0 and the script verified the restored
+The final restored 101-test run exited 0 and the script verified the restored
 source SHA-256 matches its initial backup:
-`a7ec52a51e94bb5518158d0687d104b84292e9266e16ad15e7beccb93080a87a`.
+`4058538b2396416e0f4e4bab4611c15846d7fd0eefe47b6969eb276a0e11c10f`.
 This run's full TAP logs and mutation records are local at
-`/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/xb-r-red-controls-XZ0fgy/`.
+`/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/xb-r-red-controls-n1zVpn/`.
 The script creates a fresh evidence directory on rerun. Run it only when no
 evaluation or other process is consuming xb-r, because it temporarily edits
 the source. It never edits xb-core, V0–V7 or upstream-eval.

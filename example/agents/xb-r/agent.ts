@@ -140,11 +140,12 @@ export function enumerateCandidates(obs: AgentObservation, p: Params = PARAMS,
   for (const m of ms) {
     const held = Number(m.held) / 10 ** m.decimals, initial = Number(INITIAL[m.base]) / 10 ** m.decimals;
     const upper = initial * (1 + INV_BAND), lower = initial * (1 - INV_BAND);
-    // Singles retain the two-block cooldown. Endgame only admits profitable restoration.
-    if (!cooling.has(m.base) && (!endgame || p.R5_PROFITABLE_RESTORE)) {
+    // Only endgame restoration bypasses the two-block single cooldown.
+    if (!endgame || p.R5_PROFITABLE_RESTORE) {
       for (const v of m.venues) for (const buy of [true, false]) {
         const restoring = buy ? held < initial : held > initial;
         if (endgame && !restoring) continue;
+        if (cooling.has(m.base) && !(endgame && restoring)) continue;
         const rawEdge = buy ? m.fair / v.mid - 1 - v.cost : v.mid / m.fair - 1 - v.cost;
         if (!entryAllowed(rawEdge, p)) continue;
         if (p.R1_BUNDLE_PRIORITY && !restoring && rawEdge * 10000 <= p.SINGLE_EDGE_BPS) continue;
@@ -207,13 +208,25 @@ export function selectCandidate(obs: AgentObservation, all: readonly Candidate[]
     if (fee <= 0n || !Number.isFinite(net) || net < MIN_PROFIT_USDC) continue;
     if (!reserveCandidate(obs, c)) continue;
     if (BigInt(obs.balances.ethWei) - BigInt(c.gas) * fee < GAS_RESERVE) continue;
-    return { ...c.action, maxPriorityFeePerGasWei: fee.toString() };
+    return { ...c.action, base: c.base, maxPriorityFeePerGasWei: fee.toString() };
   }
   return noop("no funded positive net edge at an affordable bid");
 }
 
+function validateParams(p: Params): void {
+  for (const key of ["R1_BUNDLE_PRIORITY", "R2_BALANCE_FLOOR", "R3_ENTRY_ONLY",
+    "R4_COMPETITOR_BID", "R5_PROFITABLE_RESTORE"] as const) {
+    if (typeof p[key] !== "boolean") throw new TypeError(`${key} must be boolean`);
+  }
+  if (p.ENTRY_BPS !== 45 && p.ENTRY_BPS !== 50)
+    throw new RangeError("ENTRY_BPS must be 45 or 50");
+  if (!Number.isFinite(p.SINGLE_EDGE_BPS) || p.SINGLE_EDGE_BPS < 0)
+    throw new RangeError("SINGLE_EDGE_BPS must be finite and nonnegative");
+}
+
 export function createAgent(params: Params = PARAMS, now: () => number = () => performance.now()) {
   const p = Object.freeze({ ...params });
+  validateParams(p);
   let run = "", lastBlock = -1, lastRemaining = Infinity;
   const lastSent = new Map<Base, number>();
   return function decide(obs: AgentObservation, _ctx?: AgentContext): Action {
@@ -231,7 +244,7 @@ export function createAgent(params: Params = PARAMS, now: () => number = () => p
       const all = enumerateCandidates(obs, p, cooling);
       const action = selectCandidate(obs, all, p);
       if (now() - started >= 4000) return noop("decision deadline reserve");
-      if (action.type !== "noop") lastSent.set(action.base ?? action.actions?.[0]?.base ?? "WETH", block);
+      if (action.type !== "noop") lastSent.set(action.base, block);
       return action;
     } catch {
       return noop("invalid observation");
