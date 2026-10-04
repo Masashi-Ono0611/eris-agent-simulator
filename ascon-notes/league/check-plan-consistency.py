@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""Static revision-3 checks. Reads four named documents, never run data or network."""
+"""Static revision-4 plan/dashboard checks. Never reads run data or network."""
 
 from datetime import date, timedelta
 from fractions import Fraction
-from html.parser import HTMLParser
 from pathlib import Path
 import json
 import re
 import sys
 
 
-QUEUE = ["q0b", "mix-design", "first-mix", "q0m", "first-p60", "first-g3",
-         "m1-implementation", "factor-ab", "m1-pair", "m2"]
+QUEUE = ["q0b-evidence", "human-branch", "mix-design", "first-mix", "q0m",
+         "first-p60", "first-g3", "m1-implementation", "factor-ab", "m1-pair", "m2"]
 FINDINGS = ([f"C{i}" for i in range(1, 6)] + [f"W{i}" for i in range(6, 14)] +
             [f"S{i}" for i in range(14, 19)])
 
@@ -52,118 +51,22 @@ def source_table(document, heading):
     return match[0].rstrip()
 
 
-def unique_put(target, key, value, message):
-    require(key not in target, message)
-    target[key] = value
-
-
-class Summary(HTMLParser):
-    """Inspect tag balance, IDs and source-bound chart markup without rendering."""
-    voids = set("area base br col embed hr img input link meta param source track wbr".split())
-
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.stack, self.ids, self.dates, self.sections, self.numbers = [], [], [], [], []
-        self.queue, self.gates = [], []
-        self.budgets = {"keep": {}, "amend": {}}
-        self.d0, self.zero, self.q0, self.pairs, self.fields, self.mechanisms = {}, {}, {}, {}, {}, {}
-        self.embedded = ""
-        self.in_json = False
-        self.in_number = False
-        self.chart_frame = None
-        self.visible_charts = []
-
-    def handle_starttag(self, tag, attrs):
-        attrs = dict(attrs)
-        if tag not in self.voids:
-            self.stack.append(tag)
-        if "id" in attrs:
-            self.ids.append(attrs["id"])
-        if tag == "section":
-            self.sections.append(attrs.get("id"))
-        if tag == "span" and attrs.get("class") == "n":
-            self.in_number = True
-        if tag == "time":
-            self.dates.append(attrs.get("datetime"))
-        if tag == "script" and attrs.get("id") == "overnight-data":
-            require(attrs.get("type") == "application/json", "HTML: data must be inert JSON")
-            self.in_json = True
-        if "data-experiment" in attrs:
-            self.queue.append((attrs["data-experiment"], attrs["data-worlds"], attrs["data-hours"]))
-        if "data-gate" in attrs:
-            self.gates.append(attrs["data-gate"])
-        if "data-budget-row" in attrs:
-            reading, key = attrs["data-budget-reading"], attrs["data-budget-row"]
-            require(reading in self.budgets, "HTML: unknown budget reading")
-            value = Fraction(attrs["data-hours"])
-            width = re.search(r"--hours:([0-9.]+)(?:;|$)", attrs.get("style", ""))
-            require(width is not None and abs(Fraction(width[1]) - value) < Fraction(1, 10**12),
-                    f"HTML: budget width differs for {reading}/{key}")
-            unique_put(self.budgets[reading], key, value, "HTML: duplicate budget row")
-        chart_value = None
-        if "data-d0" in attrs:
-            unique_put(self.d0, attrs["data-d0"], attrs["data-p-noop"], "duplicate D0 chart")
-            chart_value = attrs["data-p-noop"]
-        if "data-zero" in attrs:
-            unique_put(self.zero, attrs["data-zero"], attrs["data-share"], "duplicate zero chart")
-            chart_value = attrs["data-share"]
-        if "data-q-regime" in attrs:
-            unique_put(self.q0, attrs["data-q-regime"], attrs["data-delta"], "duplicate Q0 chart")
-            chart_value = attrs["data-delta"]
-        if "data-q-pair" in attrs:
-            value = (attrs["data-candidate"], attrs["data-reference"])
-            unique_put(self.pairs, attrs["data-q-pair"], value, "duplicate Q0 pair")
-            chart_value = " / ".join(value)
-        if "data-field" in attrs:
-            key = (attrs["data-field"], attrs["data-metric"], attrs["data-player"])
-            unique_put(self.fields, key, attrs["data-value"], "duplicate field chart")
-            chart_value = attrs["data-value"].replace(",", "")
-        if "data-model" in attrs:
-            key = (attrs["data-model"], attrs["data-cluster"])
-            unique_put(self.mechanisms, key, int(attrs["data-count"]), "duplicate mechanism cell")
-            chart_value = attrs["data-cluster"] + " × " + attrs["data-count"]
-        if chart_value is not None:
-            require(self.chart_frame is None, "nested source-bound charts")
-            self.chart_frame = (len(self.stack), chart_value, [])
-
-    def handle_data(self, data):
-        if self.in_json:
-            self.embedded += data
-        if self.in_number:
-            self.numbers.append(data.strip())
-        if self.chart_frame is not None:
-            self.chart_frame[2].append(data)
-
-    def handle_endtag(self, tag):
-        require(self.stack and self.stack[-1] == tag, f"HTML: mismatched closing tag {tag}")
-        if self.chart_frame is not None and len(self.stack) == self.chart_frame[0]:
-            _, value, texts = self.chart_frame
-            require(value in "".join(texts), f"HTML: chart label missing source value {value}")
-            self.visible_charts.append(value)
-            self.chart_frame = None
-        self.stack.pop()
-        if tag == "script":
-            self.in_json = False
-        if tag == "span":
-            self.in_number = False
-
-
 _RESULT_LINES = [
-    "PASS sources: D0 6 rows, Q0 12 regimes, M1 6 clusters copied verbatim; embedded JSON and chart labels agree",
-    "PASS budget: forward KEEP = 100 h exact; unsigned AMEND = 100 h exact; historical >=18.6 h outside cap",
-    "PASS chunks: D0 3.90 h; Q0 estimated 13/3..143/30 h; completed night 247/30..26/3 h; Q0b reserved, not completed",
-    "PASS exploration: M2-skipped 180 worlds = 13 h + 1.9 h support; AMEND exploration remains gated (10.1333 h < 14.9 h)",
-    "PASS queue: q0b -> mix-design -> first-mix -> q0m -> first-p60 -> first-g3 -> m1-implementation -> factor-ab -> m1-pair -> m2",
-    "PASS amendment: unsigned, new 41201-41205 seeds, fixed sonnet candidate, original FAIL retained, no Q1 transfer",
-    "PASS schedule/review: 28 consecutive dates with gates; all 18 Grok findings addressed",
-    "PASS HTML: balanced tags, unique IDs, 18 integer sections, exact budgets/queue/dates, separate P/T field axes, final co-gates",
-    "PASS scope: read only master plan, summary HTML, MORNING and M1-RESULT; no run data, browser or network",
-    "LIMIT: static consistency only; complete Air usage, ON runtime, strategy safety, rendering and acceptance unverified",
+    "PASS sources: D0 6 rows, Q0 12 regimes, M1 6 clusters unchanged; Q0b handoff table matches dashboard",
+    "PASS Q0b: 60 completed; mean-T FAIL; G0 A/C PASS, B FAIL; safety unknown; no automatic rerun",
+    "PASS budget: KEEP = 100 h; unsigned AMEND = 100 h; Q0b completed-time estimate, actual usage unverified",
+    "PASS exploration: M2-skipped 180 worlds = 13 h + 1.9 h support; no new runs released",
+    "PASS queue: Claude evidence -> human decision -> design only; qualification/exploration blocked",
+    "PASS amendment: original unsigned and pre-view condition expired; new version/signature required; old FAIL retained",
+    "PASS schedule/review: 28 consecutive JST dates; 18 Grok findings; dec-008 Oct 7 / dec-007 Oct 28 preserved",
+    "PASS dashboard correspondence: budgets, queue, schedule, Q0b data and pending decisions match plan",
+    "LIMIT: static consistency only; raw results, actual hours, strategy safety, browser layout and acceptance unverified",
+    "PASS check-plan-consistency",
 ]
 
 
 def check_documents(document, html, morning, m1):
-    require("revision 3" in document.splitlines()[0], "plan revision 3 title")
+    require("revision 4" in document.splitlines()[0], "plan revision 4 title")
     sources = {"d0": source_table(morning, "## 2."),
                "q0": source_table(morning, "## 5."),
                "m1": source_table(m1, "## 結果")}
@@ -184,7 +87,7 @@ def check_documents(document, html, morning, m1):
                 f"budget {reading}: expected exactly 100 h")
     experiment_ids = [i.strip() for row in b for i in row["実験ID"].split(";")]
     require(len(experiment_ids) == len(set(experiment_ids)), "budget duplicate experiment")
-    require(set(QUEUE) <= set(experiment_ids), "queue missing from budget")
+    require(set(QUEUE[2:]) <= set(experiment_ids), "reserved experiments missing from budget")
     for reading in amounts:
         a = amounts[reading]
         require(a["historical"] == 0 and a["overnight"] == Fraction(26, 3), "history/overnight accounting")
@@ -221,14 +124,15 @@ def check_documents(document, html, morning, m1):
     require(amounts["amend"]["deep"] < 13, "amendment exploration must remain gated")
 
     queue = table(document, "next-24h")
-    require([int(r["順序"]) for r in queue] == list(range(1, 11)), "queue numbers")
+    require([int(r["順序"]) for r in queue] == list(range(1, len(QUEUE)+1)), "queue numbers")
     require([r["実験ID"] for r in queue] == QUEUE, "queue priority")
     require(all(r["状態"] and r["窓"] and r["依存・停止"] for r in queue), "queue gates missing")
-    expected_queue = [("60", "143/30"), ("0", "1/2"), ("12", "13/15"),
+    expected_queue = [("0", "未見積"), ("0", "未見積"), ("0", "1/2"), ("12", "13/15"),
                       ("60", "143/30"), ("60", "13/3"), ("36", "13/5"),
                       ("0", "19/10"), ("48", "52/15"), ("24", "39/20"), ("60", "13/3")]
     require([(r["世界数"], r["全量見積h"]) for r in queue] == expected_queue, "queue worlds/hours")
-    require(queue[0]["状態"] == "実行中" and queue[3]["状態"] == "未署名・未実施", "running/unsigned status")
+    require(queue[0]["状態"] == "未確認証跡の補完" and queue[4]["状態"] == "未署名・未実施", "evidence/unsigned status")
+    require(all(queue[i]["状態"] == "停止" for i in (3, 5, 6)), "qualification queue must stop after both FAIL")
     require(3 * ((8 + 2) // 3) * batch == Fraction(39, 20), "D/E/parent independent-chunk cost")
 
     schedule = table(document, "schedule")
@@ -245,51 +149,67 @@ def check_documents(document, html, morning, m1):
                      "Q0bの強弱でopusへ切替えない", "旧Q0 FAILは永久保持", "Q1へ自動拡張しない"):
         require(required in document, f"amendment safeguard missing: {required}")
 
-    if html is None:
-        return [line.replace("; embedded JSON and chart labels agree", "") for line in _RESULT_LINES if not line.startswith("PASS HTML") and not line.startswith("PASS scope")] + [
-            "SKIP HTML: the summary page was merged into ASCON-DASHBOARD.html and is verified by dashboard-check.py"]
-    summary = Summary()
-    summary.feed(html)
-    summary.close()
-    require(not summary.stack and summary.chart_frame is None, "HTML: unclosed tags/charts")
-    require(len(summary.ids) == len(set(summary.ids)), "HTML: duplicate IDs")
-    require(summary.sections == [f"s{i}" for i in range(1, 19)], "HTML: consecutive section IDs")
-    require(summary.numbers == [str(i) for i in range(1, 19)], "HTML: integer section labels")
-    require(summary.budgets == amounts, "HTML: exact budget correspondence")
-    require(summary.queue == [(r["実験ID"], r["世界数"], r["全量見積h"]) for r in queue], "HTML: queue correspondence")
-    require(summary.dates == [d.isoformat() for d in dates], "HTML: schedule dates")
-    require(set(summary.gates) == {"F_mix", "F_ref", "tail", "safe-version"}, "HTML: final co-gates")
-    data = json.loads(summary.embedded)
-    require(set(data) == {"d0", "q0", "m1", "field_comparison"}, "HTML: source data keys")
-    for name, raw in sources.items():
-        require(data[name] == parsed_table(raw), f"HTML: {name} JSON differs from source")
-    drows, qrows, mrows = [data[name]["rows"] for name in ("d0", "q0", "m1")]
-    require(summary.d0 == {r[0]: r[2] for r in drows}, "HTML: D0 bars")
-    require(summary.zero == {r[0]: re.search(r"\(([^%]+)%\)", r[6])[1] for r in drows}, "HTML: zero-priority bars")
-    require(summary.q0 == {r[0]: r[5] for r in qrows}, "HTML: regime delta bars")
-    require(summary.pairs == {r[0]: (r[6], r[7]) for r in qrows}, "HTML: regime T pairs")
-    ref = re.search(r"平均 P は sonnet-1 ([\d,.]+)・multi-arb ([\d,.]+)・clean-arb ([\d,.]+)", morning)
-    mix = re.search(r"multi-arb が最下位（平均 T ([\d.]+)）・sonnet-1 は ([\d.]+)", morning)
-    require(ref is not None and mix is not None, "source field comparison missing")
-    field_rows = [["F_ref", "mean P", "sonnet-1", ref[1]], ["F_ref", "mean P", "multi-arb", ref[2]],
-                  ["u1m", "mean T", "sonnet-1", mix[2]], ["u1m", "mean T", "multi-arb", mix[1]]]
-    require(data["field_comparison"] == field_rows, "HTML: field comparison JSON")
-    require(summary.fields == {tuple(r[:3]): r[3] for r in field_rows}, "HTML: field chart metrics/values")
-    mechanisms = {}
-    for row in mrows:
-        for model in ("Astra", "Sonnet", "Opus", "Grok"):
-            hit = re.search(model + r"(?:×(\d+))?(?=・|（|$)", row[3])
-            if hit:
-                mechanisms[(model, row[0])] = int(hit[1] or "1")
-    require(summary.mechanisms == mechanisms, "HTML: M1 author/cluster cells")
-    require(sum(mechanisms.values()) == 16 and len({c for _, c in mechanisms}) == 6, "M1 totals")
-
+    require(html is not None, "canonical dashboard is required")
+    data = {name: json.loads(raw) for name, raw in re.findall(
+        r'<script type="application/json" id="data-([\w-]+)">\s*(.*?)\s*</script>', html, re.S)}
+    q0b = parsed_table(block(document, "source-q0b"))
+    require(data["results"]["q0b"]["header"] == q0b["header"] and
+            data["results"]["q0b"]["rows"] == q0b["rows"], "Q0b handoff table differs")
+    for phrase in ("候補48.07 / multi-arb56.43", "6/60世界", "A=PASS / B=FAIL / C=PASS",
+                   "loopIterations=361、必要362", "648/531ms", "最小+2.05", "最大+25.74"):
+        require(phrase in block(document, "source-q0b"), "Q0b fact missing: "+phrase)
+    qs = data["results"]["q0b_summary"]
+    require(qs["candidate_t"] == "48.07" and qs["multi_t"] == "56.43" and
+            qs["noop_below"] == "6/60" and qs["g0_failed_worlds"] == 2, "Q0b summary mismatch")
+    require(all(qs[key] is None for key in ("violations", "failed_reads", "invalid_orders", "reverts")),
+            "Q0b uncollected safety must remain null, not zero")
+    status = data["status"]["q0b"]
+    require(status["state"] == "failed" and status["completed_worlds"] == status["worlds"] == 60,
+            "Q0b completed FAIL status")
+    require(status["expected_end"] is None and status["completed_at"] is None and
+            data["status"]["measurement_as_of"] is None, "unreported times must stay unknown")
+    require("終了見込み ${" not in html, "renderer must not show a stale forecast")
+    for phrase in ("Q0bへ自動適用しない", "今回の平均T条件の不合格は動かない",
+                   "第2候補1回まで", "損失許容を事前明文化", "推奨は(a)延期して設計を修理",
+                   "Q0b結果が既知", "別版", "10/8は旧受理目標"):
+        require(phrase in document, "post-Q0b safeguard missing: "+phrase)
+    require("**22.9333–23.3667h相当＋未計上分**" in document, "baseline plus Q0b estimate")
+    require("17.4333hの基本見積" in document, "conditional Q0m path estimate")
+    path_cost = Fraction(1) + Fraction(13,15) + Fraction(143,30) + Fraction(13,3) + Fraction(13,5) + Fraction(58,15)
+    require(path_cost == Fraction(523,30), "conditional path arithmetic")
+    budget_data = data["budget"]
+    require(budget_data["consumed_lower_bound_hours"] == "18.6" and budget_data["consumed_exact_hours"] is None,
+            "actual consumption must not be inferred from estimates")
+    estimate = budget_data["consumption_estimate"]
+    require(Fraction(estimate["baseline_plus_q0b_min"]) == Fraction("18.6") + q_lower and
+            Fraction(estimate["baseline_plus_q0b_max"]) == Fraction("18.6") + q_upper,
+            "baseline plus Q0b estimate arithmetic")
+    for column, reading in (("keep_hours", "keep"), ("amend_hours", "amend")):
+        require({r["id"].removeprefix("budget-"): Fraction(r[column]) for r in budget_data["rows"]} == amounts[reading],
+                "dashboard budget differs: "+reading)
+    dq = data["queue"]["items"]
+    require([q["experiment"] for q in dq] == QUEUE, "dashboard queue order")
+    for r, q in zip(queue, dq):
+        require((q["priority"], q["state"], q["worlds"], q["hours"], q["window"], q["dependency"]) ==
+                (int(r["順序"]), r["状態"], int(r["世界数"]), None if r["全量見積h"] == "未見積" else r["全量見積h"], r["窓"], r["依存・停止"]),
+                "dashboard queue row differs: "+r["実験ID"])
+    require(all(not q["active"] for q in dq[3:]), "post-failure experiments cannot be active")
+    milestones = data["milestones"]["items"]
+    require([(m["date"], m["title"], m["dependency"], m["stop"]) for m in milestones] ==
+            [(r["日付"], r["主な出口"], r["依存"], r["停止・反転条件"]) for r in schedule], "dashboard schedule differs")
+    decisions = {d["id"]: d for d in data["decisions"]["items"]}
+    for identity, due in (("dec-008", "2026-10-07"), ("dec-007", "2026-10-28")):
+        require(decisions[identity]["status"] == "open" and decisions[identity]["due_date"] == due,
+                "existing human operation changed: "+identity)
+    require(decisions["dec-amend"]["status"] == "unsigned", "no automatic amendment signature")
+    require(all(decisions[i]["status"] == "open" for i in ("dec-q0-failure-branch", "dec-q0b-g0")),
+            "human decisions must remain pending")
     return list(_RESULT_LINES)
 
 
 def check():
     directory = Path(__file__).resolve().parent
-    names = ("MASTER-PLAN-2026-10-04.md", "summary-2026-10-03.html",
+    names = ("MASTER-PLAN-2026-10-04.md", "ASCON-DASHBOARD.html",
              "MORNING-2026-10-04.md", "m1/M1-RESULT.md")
     documents = [(directory / name).read_text(encoding="utf-8") if (directory / name).exists() else None for name in names]
     if documents[0] is None or documents[2] is None or documents[3] is None:

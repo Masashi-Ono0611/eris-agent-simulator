@@ -6,6 +6,8 @@
 
 HTML冒頭の `<!-- BEGIN data-… -->` と `<!-- END data-… -->` の間にある `<script type="application/json" id="data-…">` だけを編集する。図・表・件数・バーはインラインJSが生成する。表示用JS/CSSに事実や測定値を足さない。
 
+Q0b完了への移行では、終了見込みの固定表示を `status.measurement_note` の表示へ置き換え、`results.q0b` の表を描画する汎用処理だけを追加した。以後の更新は上記データブロック内で完結する。完了/集計時刻が未提示なら `measurement_as_of` / `q0b.completed_at` は `null`、終了済みなら `q0b.expected_end` は `null` とし、記録時刻を実測時刻へ代入しない。
+
 | ブロック | 編集する内容 |
 |---|---|
 | `data-sources` | `sources` 配列。出典ID、repo root相対の `path`、資料名、節/表の位置 |
@@ -37,7 +39,7 @@ HTML冒頭の `<!-- BEGIN data-… -->` と `<!-- END data-… -->` の間にあ
 
 ## 今回の当日引継ぎ・移行証拠
 
-以下は2026-10-04朝の本人依頼から保存した事実/判断。測定領域へのライブ照会は行っていない。
+以下は2026-10-04朝の初回移行時点の履歴で、現在状態ではない。Q0b完了後の実測引継ぎは [MASTER §1.3](MASTER-PLAN-2026-10-04.md#13-opus-1-q0b-全60世界完了平均t条件fail)、現況は正本のデータブロックを参照する。測定領域へのライブ照会は行っていない。表中の旧時刻はMac現地時刻で、JSTでは+1h（開始07:37、旧見込み12:00）だった。
 
 | 項目 | 引継ぎ内容 |
 |---|---|
@@ -62,22 +64,23 @@ HTML冒頭の `<!-- BEGIN data-… -->` と `<!-- END data-… -->` の間にあ
 repo rootから（別cwdでもスクリプトは自身の場所からrootを決定）:
 
 ```sh
+python3 -B ascon-notes/league/check-plan-consistency.py
 python3 -B ascon-notes/league/dashboard-check.py --self-check
 git diff --check
 ```
 
-標準ライブラリのみ。JSON、ID、JST/日付、ログ降順、予算の正確和、全出典ファイル、blocker必須欄、元の生成表との一致、HTMLタグを検査する。`--self-check` は不正入力の反例をメモリ上で検査する。欠落パスは一覧でFAIL。保護領域は存在確認より前に拒否し、symlinkも辿らない。旧 `check-plan-consistency.py` は退役HTMLの当時の構造に依存する履歴用スクリプトなので、今後のダッシュボード更新には使用しない。
+標準ライブラリのみ。JSON、ID、JST/日付、ログ降順、予算の正確和、全出典ファイル、blocker必須欄、元の生成表との一致、HTMLタグを検査する。`--self-check` は不正入力の反例をメモリ上で検査する。欠落パスは一覧でFAIL。保護領域は存在確認より前に拒否し、symlinkも辿らない。`check-plan-consistency.py` はrevision 4で正本へ対応し、計画とデータのQ0b結果/安全未確認/予算/queue/日程/本人判断を照合する。退役HTMLや「Q0b実行中」の固定条件は使わない。
 
-PASSは静的整合性のみ。ブラウザ描画・モバイル/印刷の実見、Q0bライブ進捗、実消費時間、外部規約、戦略の型/性能/提出適合は未検証。この作業では測定保全と対象範囲のため、npm typecheck・npm test・backtest・Anvil・ネットワーク・ブラウザを実行しない。IBM Plexはローカルのインストールがあれば使用し、未導入ならフォールバックする。外部フォントの取得はしない。
+PASSは静的整合性のみ。ブラウザ描画・モバイル/印刷の実見、Q0b原ログ再監査、実消費時間、外部規約、戦略の型/性能/提出適合は未検証。今回のnode_modulesはupstream-evalへのsymlinkであり、測定領域を開かない境界のためnpm typecheckを実行しない。npm test・backtest・Anvil・ネットワーク・ブラウザも実行しない。IBM Plexはローカルのインストールがあれば使用し、未導入ならフォールバックする。外部フォントの取得はしない。
 
 最終checker出力:
 
 ```text
-PASS JSON: 12 blocks; 216 unique HTML/data ids
-PASS log: 45 entries; JST descending (ties allowed); allowed types; valid dates
+PASS JSON: 12 blocks; 227 unique HTML/data ids
+PASS log: 49 entries; JST descending (ties allowed); allowed types; valid dates
 PASS budget: KEEP = 100 h; unsigned AMEND = 100 h (exact fractions)
-PASS sources: 19 repo files exist; 0 missing; 6 copied tables match
-PASS blockers: 14 complete ranked rows; queue / phase / decision references valid
+PASS sources: 19 repo files exist; 0 missing; 7 copied tables match
+PASS blockers: 15 complete ranked rows; queue / phase / decision references valid
 PASS HTML: balanced tags; unique ids; no external resources
 PASS checker controls: 13 invalid cases rejected in memory
 LIMIT: static consistency only; live runs / browser layout / submission / actual hours unverified

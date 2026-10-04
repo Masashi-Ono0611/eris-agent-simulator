@@ -13,7 +13,7 @@
     {
       "id": "src-master",
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
-      "title": "MASTER revision 3",
+      "title": "MASTER revision 4",
       "locator": "§1–11 / Appendix A"
     },
     {
@@ -92,7 +92,7 @@
       "id": "src-prior",
       "path": "ascon-notes/league/MASTER-PLAN-BEFORE-V2-INTEGRATION.md",
       "title": "旧計画アーカイブ",
-      "locator": "履歴のみ。現行契約はMASTER revision 3"
+      "locator": "履歴のみ。現行契約はMASTER revision 4"
     },
     {
       "id": "src-checklist",
@@ -123,6 +123,18 @@
       "path": "ascon-notes/league/DASHBOARD-README.md",
       "title": "本人引継ぎ・移行記録",
       "locator": "当日引継ぎと旧HTMLの転記。今回の依頼を保存"
+    },
+    {
+      "id": "src-q0b",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "Q0b実測の本人引継ぎ",
+      "locator": "§1.3、Claude /tmp/q0_summary.py 集計の提示値。原ログ再監査なし"
+    },
+    {
+      "id": "src-budget-update",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "Q0b後の時間概算",
+      "locator": "§7、実測60世界×既存13分/p3による推定。実区間は未提示"
     }
   ]
 }
@@ -132,33 +144,35 @@
 <script type="application/json" id="data-status">
 {
   "sources": [
-    "src-handoff",
-    "src-morning",
+    "src-q0b",
     "src-master"
   ],
-  "as_of": "2026-10-04T09:21:32+09:00",
-  "measurement_as_of": "2026-10-04T07:45:00+09:00",
-  "last_update": "既存要約を統合。本人のQ0維持決定・07:37 JST開始の訂正・Q0b後のAstra更新を反映。ライブ結果は再取得していない。",
+  "as_of": "2026-10-04T12:49:55+09:00",
+  "measurement_as_of": null,
+  "last_update": "Q0b全60世界完了・平均T FAIL・G0 FAIL 2世界を反映。安全集計は未確認。延期/設計修理を推奨し、本人判断まで実走停止。",
   "phase_id": "phase-first",
-  "headline": "現契約を維持。Q0bを待つ。",
-  "subhead": "安全な独自戦略の初回受理を確保し、深いリーグを経て、封印した最終比較へ。",
+  "headline": "両候補Q0不合格。延期・設計修理を推奨。",
+  "subhead": "現契約を維持。Claudeは安全・G0・時間証跡を補完し、本人が次の契約と受理目標を決める。",
   "q0b": {
-    "state": "running",
+    "state": "failed",
     "candidate": "opus-1",
     "started_at": "2026-10-04T07:37:00+09:00",
-    "expected_end": "2026-10-04T12:00:00+09:00",
+    "expected_end": null,
     "seeds": "41101–41105",
     "worlds": 60,
     "chunks": 3,
-    "completed_worlds": null,
-    "note": "終了時刻は見込み。時計が過ぎても自動で完了へ変えない。"
+    "completed_worlds": 60,
+    "note": "全量完了と資格合格は別。vuln 41101/41103は361/362loops、p99 648/531msは基準内。除外/同一入力再走は本人判断、どちらでも平均T不合格を保持。違反/失敗読取/無効注文/revertは未確認。",
+    "completed_at": null,
+    "g0": "A=PASS / B=FAIL / C=PASS",
+    "safety": null
   },
   "metrics": [
     {
       "id": "metric-q0",
       "label": "sonnet-1 Q0",
       "value": "FAIL",
-      "note": "競争条件が不成立。旧判定を保持",
+      "note": "平均T 44.56対56.50。現F_ref契約FAILを保持",
       "tone": "bad",
       "sources": [
         "src-morning"
@@ -167,11 +181,12 @@
     {
       "id": "metric-q0b",
       "label": "opus-1 Q0b",
-      "value": "RUNNING",
-      "note": "新seed・全量予約、完了数は未読",
-      "tone": "warn",
+      "value": "FAIL",
+      "note": "全60完了、平均T 48.07対56.43 / G0 2世界FAIL",
+      "tone": "bad",
       "sources": [
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -188,15 +203,15 @@
       "id": "metric-budget",
       "label": "累積Air消費・実測下限",
       "value": "≥18.6 h",
-      "note": "forward枠の消費率ではない",
+      "note": "Q0b概算4.3333–4.7667hは別。実区間未提示で下限は据置",
       "tone": "accent",
       "sources": [
-        "src-handoff",
-        "src-master"
+        "src-budget-update"
       ]
     }
   ],
-  "notice": "このページは証拠付きの記録。実行許可・リアルタイム監視・採用認定ではありません。Q0-AMEND-01は未署名・未適用。"
+  "notice": "Q0-AMEND-01は未署名・未適用。Q0b閲覧前条件は失効し、F_mixへ進むなら既知情報を開示した別版への本人署名が必要。延期の本人決定もまだない。",
+  "measurement_note": "Q0b：全60世界の完了報告を受領（完了・集計時刻は未記録）。開始07:37 JST / 3 chunks / seeds 41101–41105。旧終了見込みは失効。"
 }
 </script>
 <!-- END data-status -->
@@ -215,20 +230,20 @@
     "公式規約が最優先、ローカルの正本はcompetition-start。今回オンラインの最新版は未確認。",
     "decide()＋promptのkind/name/description。在庫のあるlegだけをcanFundで確認し、自己コントラクト残資産の0評価を避ける。",
     "評価価格の歪曲・自己提出間の移転・禁止RPCを使わない。鍵は本人が専用フォームへ入力、記録には残さない。",
-    "p=3・等速・CPU排他・入力固定。既存Q0bの親roundと実行中スクリプトを保全。",
+    "p=3・等速・CPU排他・入力固定。Q0b失敗履歴を保持し、除外/再走は本人判断。",
     "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。"
   ],
   "protocol": [
     {
       "id": "protocol-first",
       "title": "初回提出経路",
-      "body": "現Q0b → 同一hash・独自性 → mix smoke → P60 → 最小G3 / cal → G4 → dec-008 → 本人送信 → 受理",
-      "exit": "受理メール・commit・ZIP hashの組"
+      "body": "両候補FAIL → Claude証跡補完 → 本人が延期/別契約を判断 → 新契約の資格 → mix smoke / P60 → 最小G3 / G4 → dec-008 → 本人送信/受理",
+      "exit": "現経路の10/8受理は成立せず。延期/設計修理を推奨、本人未決"
     },
     {
       "id": "protocol-deep",
       "title": "深いリーグ",
-      "body": "初回受理と校正の後。E1またはD/E代替 → 固定R* → 新E3 → Q1 → full G3。M2は既定省略。",
+      "body": "現在は実走停止。新契約の初回受理とcal、全工程費が揃った後だけE1又はD/E → E3 → Q1 → full G3。遅れは探索から削る。",
       "exit": "最大20h・2世代。現配分14.9h、再承認ではなく解放条件を確認"
     },
     {
@@ -242,21 +257,21 @@
     {
       "id": "gate-g0",
       "title": "G0 / 計測",
-      "state": "部分的に確認",
-      "resolve": "begin/end・親/chunk/hash・予定集合・有限P・完全ログ・負荷がすべて一致。負荷PASSだけでは不可。",
+      "state": "Q0b B FAIL",
+      "resolve": "A/C PASS、Bのvuln 41101/41103は361/362loops。p99 648/531msは基準内。本人が除外/同一入力再走を決め、Q0mの条項を自動適用しない。元の失敗履歴と平均T FAILは保持。",
       "sources": [
-        "src-master",
-        "src-g0"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
       "id": "gate-q",
       "title": "現G2-Q / 初回資格",
-      "state": "Q0 FAIL・Q0b待ち",
-      "resolve": "F_ref全12×新5seed、平均T≥multi-arb、全regimeの平均(T−Tnoop)≥0、安全と世界別P。両候補FAILなら探索実走停止・本人が延期/新契約判断。",
+      "state": "Q0・Q0b FAIL",
+      "resolve": "sonnet 44.56対56.50、opus 48.07対56.43でF_ref平均T条件不成立。全12の対noop平均≥0でも合格ではない。延期推奨、追加候補/損失許容/別版F_mixは本人の新契約を要する。",
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -297,7 +312,7 @@
       ]
     }
   ],
-  "caution": "最終は独立10seedが上限。480世界を独立480標本にしない。小差の非検出は同等性でも、本番勝率の保証でもない。"
+  "caution": "最終は独立10seedが上限。480世界を独立480標本にしない。小差の非検出は同等性でも、本番勝率の保証でもない。 F_ref/u1mの順序逆転は事実だが新F_mix優位の証拠ではない。inc-zeta最小版を第3候補へ足すのは現契約の第2候補1回までに反する。"
 }
 </script>
 <!-- END data-plan -->
@@ -313,16 +328,16 @@
       "title": "初回受理",
       "start_date": "2026-10-04",
       "end_date": "2026-10-08",
-      "state": "running",
-      "gate": "現Q → smoke / P60 / G3 / G4 / dec-008"
+      "state": "blocked",
+      "gate": "10/8は旧目標。本人分岐・新資格/G3/G4/受理が必要"
     },
     {
       "id": "phase-deep",
       "title": "校正・深いリーグ",
       "start_date": "2026-10-09",
       "end_date": "2026-10-17",
-      "state": "pending",
-      "gate": "全工程費・E3 / Q1 / full G3"
+      "state": "blocked",
+      "gate": "初回受理/cal/全費用未成立。遅れは探索から削る"
     },
     {
       "id": "phase-sealed",
@@ -355,45 +370,42 @@
     {
       "id": "day-2026-10-04",
       "date": "2026-10-04",
-      "title": "Q0b保全 → 完了後Astraが計画更新",
-      "dependency": "本人が現Q0契約の維持を決定。Q0bの生成表・G0・区間証跡待ち",
-      "stop": "~12時（JST）までは入力不変。G0不良/資格全滅なら停止",
+      "title": "両候補FAIL・Astra更新完了、Claude証跡補完・本人分岐判断",
+      "dependency": "Q0b集計・安全未確認・G0 2世界FAIL",
+      "stop": "新資格/再走/除外は未承認、実走停止",
       "state": "running",
       "highlight": true,
       "decision_refs": [
         "dec-q0-keep",
         "dec-astra-update",
-        "dec-original",
-        "dec-deep",
-        "dec-no-contact",
+        "dec-q0-failure-branch",
+        "dec-q0b-g0",
         "dec-forward"
       ],
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-master"
       ]
     },
     {
       "id": "day-2026-10-05",
       "date": "2026-10-05",
-      "title": "選択した資格出口・smoke/P60残chunk",
-      "dependency": "現契約のQ0b PASS。Q0mは未署名のため使わない",
-      "stop": "新F_mix全量前の合格宣言なし。失敗は§4.2",
-      "state": "pending",
+      "title": "延期/再設計の別契約案、又は別版Q0m署名準備",
+      "dependency": "本人の分岐・候補/hash・未開封seed・費用",
+      "stop": "原Q0-AMEND-01で自動実行不可",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-master"
       ]
     },
     {
       "id": "day-2026-10-06",
       "date": "2026-10-06",
-      "title": "初回P60完了、G3/適合準備",
-      "dependency": "候補不変・smoke・資格証跡",
-      "stop": "修理は必要再資格、探索実走0",
-      "state": "pending",
+      "title": "修理仕様・資格/受理日を再見積、署名経路のみ測定準備",
+      "dependency": "安全/G0補完・追加費用予約・本人署名",
+      "stop": "第3候補や旧seedでの再選抜禁止",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
@@ -403,28 +415,29 @@
     {
       "id": "day-2026-10-07",
       "date": "2026-10-07",
-      "title": "最小G3/cal36・G4・dec-008",
-      "dependency": "モデル/本人鍵・正常/障害証跡",
-      "stop": "ON未校正/最新仕様未照合ならREADY不可",
-      "state": "pending",
+      "title": "dec-008を維持、技術経路は新資格後のみ",
+      "dependency": "Ollama最小確認＋本人鍵登録。G3/G4は資格依存",
+      "stop": "鍵登録と候補READYを混同しない",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [
         "dec-008"
       ],
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-master"
       ]
     },
     {
       "id": "day-2026-10-08",
       "date": "2026-10-08",
-      "title": "初回受理確認、条件成立時だけE1",
-      "dependency": "G4/鍵/受理/cal/全残量・固定xb begin",
-      "stop": "未受理又は改訂列の不足未解決なら探索0",
-      "state": "pending",
+      "title": "旧初回受理目標の未達/受理証拠を記録、延期日を本人確定",
+      "dependency": "現経路は不成立。新契約でもG0/資格/G3/G4必須",
+      "stop": "日付のため条件緩和しない、未受理なら探索0",
+      "state": "blocked",
       "highlight": true,
-      "decision_refs": [],
+      "decision_refs": [
+        "dec-q0-failure-branch"
+      ],
       "sources": [
         "src-master"
       ]
@@ -432,9 +445,9 @@
     {
       "id": "day-2026-10-09",
       "date": "2026-10-09",
-      "title": "D/E/A準備、親と探索経路を固定",
-      "dependency": "排他・1.9h支援・下流費用",
-      "stop": "未受理なら原因/質問方針を本人判断",
+      "title": "未受理の原因・質問方針を本人判断、受理経路を優先",
+      "dependency": "別契約・資格/適合証跡・追加費用",
+      "stop": "無断で運営へ質問しない、深い探索は後回し",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -445,9 +458,9 @@
     {
       "id": "day-2026-10-10",
       "date": "2026-10-10",
-      "title": "M2既定省略、全残量を再予算",
-      "dependency": "cal完了・受理版・経路凍結",
-      "stop": "M2を足すなら全工程費と20h以内を先に確認",
+      "title": "残量/受理日を再予算、M2既定省略を維持",
+      "dependency": "初回資格とcalの成立確認、未達分も計上",
+      "stop": "未受理/cal未了なら10/11以降の探索窓を受理修復へ振替",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -458,9 +471,9 @@
     {
       "id": "day-2026-10-11",
       "date": "2026-10-11",
-      "title": "新E3全12×3×2=72",
-      "dependency": "E1又は代替棚で選抜したR*不変",
-      "stop": "G1未達なら挑戦者終了、次点なし",
+      "title": "条件成立時のみE3全12×3×2=72、通常は受理修復優先",
+      "dependency": "受理S/cal/新契約と探索候補・全費用",
+      "stop": "G1未達なら挑戦者終了、受理が遅れれば探索を削除",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -471,9 +484,9 @@
     {
       "id": "day-2026-10-12",
       "date": "2026-10-12",
-      "title": "Q1 60、現契約F_ref・ON予算再確認",
-      "dependency": "E3・新Q1・最新規約差分",
-      "stop": "ON遅延/資格不良ならSのみへ",
+      "title": "規約差分照合、資格済み挑戦者がある時だけQ1 60",
+      "dependency": "E3/受理S・ON予算・最新規約差分",
+      "stop": "ON遅延/資格不良ならSのみ。Sなしなら本人へ期限判断",
       "state": "pending",
       "highlight": true,
       "decision_refs": [],
@@ -688,8 +701,7 @@
         "dec-007"
       ],
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-master"
       ]
     },
     {
@@ -816,18 +828,19 @@
       "id": "progress-q0b",
       "workstream": "初回受理",
       "title": "opus-1 Q0b",
-      "state": "running",
-      "evidence": "07:37 JST開始・60世界・3chunk。完了数/結果は未読、~12:00 JST見込み。",
+      "state": "failed",
+      "evidence": "全60世界完了。平均T 48.07対56.43でFAIL。G0 A/C PASS・B FAIL（vuln 2世界361/362loops）、安全集計未確認。",
       "sources": [
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
       "id": "progress-smoke",
       "workstream": "初回受理",
       "title": "新F_mix smoke / P60",
-      "state": "pending",
-      "evidence": "Q0b PASS・同一候補・ロスター/hash固定が入口。",
+      "state": "blocked",
+      "evidence": "現契約の両候補FAIL。新契約の署名/候補固定/G0成立まで実走停止。",
       "sources": [
         "src-master"
       ]
@@ -836,7 +849,7 @@
       "id": "progress-g3",
       "workstream": "初回受理",
       "title": "最小G3・ON時間校正",
-      "state": "pending",
+      "state": "blocked",
       "evidence": "推論待ち・実変更/復帰・障害・API枠の証跡待ち。",
       "sources": [
         "src-master"
@@ -846,7 +859,7 @@
       "id": "progress-g4",
       "workstream": "初回受理",
       "title": "G4・鍵登録・受理",
-      "state": "pending",
+      "state": "blocked",
       "evidence": "dec-008はopen。送信と受理を分け、受理済み版をまだ指名しない。",
       "sources": [
         "src-handoff",
@@ -878,7 +891,7 @@
       "id": "progress-factors",
       "workstream": "探索",
       "title": "E1 / D・E代替 / E3 / Q1",
-      "state": "pending",
+      "state": "blocked",
       "evidence": "初回受理とcal、全工程費の確保後。M2は既定省略。",
       "sources": [
         "src-master"
@@ -898,10 +911,22 @@
       "id": "progress-astra",
       "workstream": "計画管理",
       "title": "Q0b後のAstra計画更新",
-      "state": "pending",
-      "evidence": "本人依頼。結果・G0・予算精算を受けて更新する。",
+      "state": "done",
+      "evidence": "Q0b提示値・未確認安全・G0本人判断・延期推奨・予算概算とqueueを本文/正本へ反映。原区間精算はClaudeの残作業。",
       "sources": [
-        "src-handoff"
+        "src-q0b",
+        "src-master"
+      ]
+    },
+    {
+      "id": "progress-q0b-evidence",
+      "workstream": "計測",
+      "title": "Q0b安全・失敗履歴・時間精算",
+      "state": "pending",
+      "evidence": "Claudeが未集計欄と区間和集合を保存。未確認を0にしない。",
+      "sources": [
+        "src-q0b",
+        "src-master"
       ]
     }
   ]
@@ -932,55 +957,70 @@
     {
       "id": "B01",
       "rank": 1,
-      "title": "初回候補の資格・受理が未確定",
+      "title": "全候補Q0不合格・受理経路が停止",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
       "owner": "human",
-      "evidence": "sonnet Q0 FAIL。Q0b未完、受理版Sは未確認。",
-      "mitigation": "Q0bを現契約で一度判定。PASSは初回経路、全滅は探索停止と延期/別契約。",
+      "evidence": "sonnet 44.56対56.50、opus 48.07対56.43。受理Sは未確認、現経路の10/8目標は不成立。",
+      "mitigation": "延期して設計修理を推奨。本人が新契約/別版F_mix/損失許容を決定。第3候補を自動追加しない。",
       "status": "open",
       "sources": [
-        "src-master",
-        "src-morning",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
-      "id": "B02",
+      "id": "B15",
       "rank": 2,
-      "title": "Q0b後の計画更新待ち",
+      "title": "Q0b vuln 2世界のG0処理が未決",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "大",
-      "owner": "Astra",
-      "evidence": "本人は現Q維持を決定し、完了後のAstra更新を希望。",
-      "mitigation": "生成表・全chunk G0・安全欄・時間区間を受領し、判定/queue/予算/ログを同期。",
-      "status": "waiting",
+      "owner": "human",
+      "evidence": "41101/41103で361/362loops。p99 648/531msは基準内。全60世界集計の平均TはFAIL。",
+      "mitigation": "本人が除外か同一入力再走を決定、失敗履歴を保存。Q0m条項は流用不可、どちらでも今回の平均T FAILは維持。",
+      "status": "open",
       "sources": [
-        "src-handoff"
+        "src-q0b",
+        "src-master"
+      ]
+    },
+    {
+      "id": "B10",
+      "rank": 3,
+      "title": "Q0b安全未集計・Q0未回収証跡の欠落",
+      "severity": "Critical",
+      "likelihood": "高",
+      "impact": "大",
+      "owner": "Claude",
+      "evidence": "Q0bの違反/失敗読取/無効注文/revertは未確認。Q0の未回収欄n/aも未解決。",
+      "mitigation": "Claudeが全60世界の安全表を保存、欠落はnull/未確認。G0 A/C PASSから安全0を推定しない。",
+      "status": "open",
+      "sources": [
+        "src-q0b",
+        "src-master",
+        "src-morning"
       ]
     },
     {
       "id": "B03",
-      "rank": 3,
+      "rank": 4,
       "title": "消費会計と改訂ON容量の不足",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "実測下限≥18.6h、非run占有と境界が未精算。ON速度は未校正。",
-      "mitigation": "区間和集合で精算、forward読みは本人確認待ち。calで再配分、必要なら封印前にS単独へ。",
+      "evidence": "確認済み下限≥18.6h。Q0b概算4.3333–4.7667h、実区間・非run・ONは未精算。",
+      "mitigation": "Claudeが区間和集合で精算。新資格/再走費は未予約、探索から削って再予算。S単独への切替も封印前に判断。",
       "status": "open",
       "sources": [
-        "src-master",
-        "src-grok-plan",
-        "src-handoff"
+        "src-budget-update"
       ]
     },
     {
       "id": "B04",
-      "rank": 4,
+      "rank": 5,
       "title": "Ollama・鍵登録・受理の依存",
       "severity": "Critical",
       "likelihood": "中",
@@ -996,7 +1036,7 @@
     },
     {
       "id": "B05",
-      "rank": 5,
+      "rank": 6,
       "title": "G0入口・CPU排他・入力固定の逸脱",
       "severity": "Critical",
       "likelihood": "高",
@@ -1013,24 +1053,24 @@
     },
     {
       "id": "B06",
-      "rank": 6,
+      "rank": 7,
       "title": "相手の構成で順位が逆転する",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "大",
       "owner": "Astra",
-      "evidence": "F_refではmulti-arb、u1mではsonnetが上。場/単位が異なる診断。",
-      "mitigation": "新F_mix roster/hashを固定。現Qは維持し、最終はF_mix改善＋F_ref非劣性。",
+      "evidence": "F_refで両候補はmulti-arb未満、u1m診断ではsonnetが上。場/seed/指標が異なり、u1mはG0 BLOCKED。",
+      "mitigation": "現契約は維持。新F_mix評価は既知Q0bを開示した別版署名のみ、最終二場ゲートも保持。",
       "status": "mitigating",
       "sources": [
-        "src-grok-plan",
-        "src-morning",
-        "src-master"
+        "src-q0b",
+        "src-master",
+        "src-morning"
       ]
     },
     {
       "id": "B07",
-      "rank": 7,
+      "rank": 8,
       "title": "新F_mixの相手・負荷入口が未確定",
       "severity": "Warning",
       "likelihood": "高",
@@ -1045,7 +1085,7 @@
     },
     {
       "id": "B08",
-      "rank": 8,
+      "rank": 9,
       "title": "少数seed・選抜楽観・尾部の不確実性",
       "severity": "Warning",
       "likelihood": "高",
@@ -1062,7 +1102,7 @@
     },
     {
       "id": "B09",
-      "rank": 9,
+      "rank": 10,
       "title": "改訂ON・障害復帰が未検証",
       "severity": "Critical",
       "likelihood": "中",
@@ -1077,22 +1117,6 @@
       ]
     },
     {
-      "id": "B10",
-      "rank": 10,
-      "title": "Q0の安全証拠に未回収欄の欠落",
-      "severity": "Warning",
-      "likelihood": "中",
-      "impact": "大",
-      "owner": "Claude",
-      "evidence": "集計末尾 unrecovered/violations=n/a と安全記述が併存。",
-      "mitigation": "一次担当の生成表で未回収自前資産・gas枯渇を明示。n/aを0へ置換しない。",
-      "status": "open",
-      "sources": [
-        "src-morning",
-        "src-master"
-      ]
-    },
-    {
       "id": "B11",
       "rank": 11,
       "title": "xb-core修正と利益機構の実測が未接続",
@@ -1101,7 +1125,7 @@
       "impact": "中",
       "owner": "Claude",
       "evidence": "床・zero bid・検査の欠陥は修正報告。チェーン実測0、固定gas/base feeの制約。",
-      "mitigation": "Q0b終了後の別枠で固定hash、赤対照、因子独立性を確認。BIDは支出節約と表現。",
+      "mitigation": "新契約と初回経路の費用を確保するまで実走停止。机上で固定hash・赤対照・因子独立性を準備。",
       "status": "mitigating",
       "sources": [
         "src-xb",
@@ -1159,6 +1183,22 @@
         "src-grok-plan",
         "src-master"
       ]
+    },
+    {
+      "id": "B02",
+      "rank": 15,
+      "title": "Q0b後のAstra更新",
+      "severity": "Suggestion",
+      "likelihood": "低",
+      "impact": "中",
+      "owner": "Astra",
+      "evidence": "revision 4と正本データを更新。Q0b FAIL・安全未確認・G0本人判断・日程/予算/queueを同期。",
+      "mitigation": "新たな安全/区間証跡が届いたら差分更新。今回の更新完了は安全確認完了を意味しない。",
+      "status": "resolved",
+      "sources": [
+        "src-q0b",
+        "src-master"
+      ]
     }
   ]
 }
@@ -1173,36 +1213,37 @@
   ],
   "items": [
     {
-      "id": "queue-q0b",
-      "experiment": "q0b",
+      "id": "queue-q0b-evidence",
+      "experiment": "q0b-evidence",
       "priority": 1,
-      "title": "q0b",
-      "state": "実行中",
-      "worlds": 60,
-      "hours": "143/30",
-      "window": "全量予約、残時間は不明",
-      "dependency": "07:37 JST開始・41101–41105・3chunk。結果は未読。~12:00 JSTまで保全し、完了報告を待つ。",
+      "title": "Q0b安全・G0履歴・時間証跡の補完",
+      "state": "未確認証跡の補完",
+      "worlds": 0,
+      "hours": null,
+      "window": "次のClaude作業",
+      "dependency": "新規実走なし。安全/世界別最悪/G0失敗履歴と区間和集合を生成し保存。欠落は未確認のまま",
       "owner": "Claude",
       "active": true,
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
-      "id": "queue-astra-update",
-      "experiment": "astra-plan-update",
+      "id": "queue-human-branch",
+      "experiment": "human-branch",
       "priority": 2,
-      "title": "Astraによる計画更新",
-      "state": "Q0b完了待ち",
+      "title": "本人の分岐・G0処理判断",
+      "state": "本人判断待ち",
       "worlds": 0,
       "hours": null,
-      "window": "Q0b完了・証跡受領後",
-      "dependency": "生成表と全G0、安全・時間証拠を受領。現Q判定を保持し、queue/残予算/初回経路を更新。時間は未見積。",
-      "owner": "Astra",
+      "window": "証跡と選択肢を提示後",
+      "dependency": "(a)延期推奨/(b)別版Q0m署名/(d)損失許容、G0の除外/同一入力再走を別々に判断。無応答は停止",
+      "owner": "human",
       "active": true,
       "sources": [
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -1210,16 +1251,16 @@
       "experiment": "mix-design",
       "priority": 3,
       "title": "mix-design",
-      "state": "設計待ち",
+      "state": "設計のみ",
       "worlds": 0,
       "hours": "1/2",
-      "window": "12時（JST）後の新枠",
-      "dependency": "10相手/slot/hash/財布順・smoke判定・begin仕様を固定。G0/CPU排他確認",
+      "window": "証跡補完後の空き枠",
+      "dependency": "10相手/hash/財布順/負荷入口と小さい防御版の設計差分を準備。契約締結・実走を代行しない",
       "owner": "Claude",
       "active": true,
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -1227,16 +1268,16 @@
       "experiment": "first-mix",
       "priority": 4,
       "title": "first-mix",
-      "state": "条件付き",
+      "state": "停止",
       "worlds": 12,
       "hours": "13/15",
-      "window": "12時（JST）後の新枠",
-      "dependency": "現Q0b PASS後の同一opus-1、独自性/ロスター/hash/入口G0が成立した場合だけ。安全点検。",
+      "window": "新契約成立後のみ",
+      "dependency": "新資格経路の候補不変、roster/hash/G0を固定。現Q0bから自動継続不可",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -1247,13 +1288,13 @@
       "state": "未署名・未実施",
       "worlds": 60,
       "hours": "143/30",
-      "window": "改訂案のみ、日枠で分割",
-      "dependency": "Q0-AMEND-01は未署名。本人はKEEPを決定したため、現キューでは実行しない。",
+      "window": "別版の本人署名後のみ",
+      "dependency": "原Q0-AMEND-01は閲覧前条件失効。既知Q0b開示・未使用seed・smoke PASS。全量前の開封禁止",
       "owner": "Claude",
       "active": false,
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -1261,16 +1302,16 @@
       "experiment": "first-p60",
       "priority": 6,
       "title": "first-p60",
-      "state": "未実施",
+      "state": "停止",
       "worlds": 60,
       "hours": "13/3",
-      "window": "維持案では4を飛ばし先行",
-      "dependency": "現Q0b PASS・smoke・候補不変。公開回帰、G3/適合費を先に予約。",
+      "window": "新資格PASS後",
+      "dependency": "候補不変・G3/G4費確保。公開回帰は資格代替不可",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -1278,16 +1319,16 @@
       "experiment": "first-g3",
       "priority": 7,
       "title": "first-g3",
-      "state": "未実施",
+      "state": "停止",
       "worlds": 36,
       "hours": "13/5",
-      "window": "次窓へ繰越可",
-      "dependency": "P60/smoke・本人モデル/鍵準備。ON/OFF最小校正＋正常/障害。13分見積は仮",
+      "window": "P60/資格後",
+      "dependency": "ON/OFF最小校正＋正常/障害、本人モデル/鍵準備。13分見積は仮",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -1295,16 +1336,16 @@
       "experiment": "m1-implementation",
       "priority": 8,
       "title": "m1-implementation",
-      "state": "低優先・準備棚",
+      "state": "保留",
       "worlds": 0,
       "hours": "19/10",
-      "window": "初回経路を妨げない空き窓のみ",
-      "dependency": "D 0.75h→E 0.75h→A仕様/観測復元0.40h。A本実装見積0.75hは別途再配分後。CPU排他",
+      "window": "本人の再設計経路確定後",
+      "dependency": "D/E/Aの候補棚。現第2候補枠を越す実装・資格を自動開始しない",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -1315,13 +1356,13 @@
       "state": "未解放",
       "worlds": 48,
       "hours": "52/15",
-      "window": "24h内の確約なし",
-      "dependency": "初回受理/cal/全残量、xb一式を計測用worktreeへ移し固定commit＋begin。E1のV0–V3",
+      "window": "初回受理/cal後のみ",
+      "dependency": "全残量/固定hash/新begin。資格全滅のため実走0",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -1329,16 +1370,16 @@
       "experiment": "m1-pair",
       "priority": 10,
       "title": "m1-pair",
-      "state": "代替棚",
+      "state": "代替棚・停止",
       "worlds": 24,
       "hours": "39/20",
-      "window": "8への追加でなく探索経路の置換",
-      "dependency": "D/E/共通親各8世界、新診断seed34001/34002、単独因子を検証。E3/Q費も先に予約",
+      "window": "探索経路の置換のみ",
+      "dependency": "D/E/親の診断、追加資格許可にはならない。下流E3/Q費を予約",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -1349,19 +1390,19 @@
       "state": "保留",
       "worlds": 60,
       "hours": "13/3",
-      "window": "24h内は0h",
-      "dependency": "既定2×2。未使用枠とE3/Q1が確保できた時だけ、維持案の既定は省略",
+      "window": "当面0h",
+      "dependency": "既定省略。最大20h/2世代と下流費を維持",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
-        "src-master",
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     }
   ],
-  "note": "全量の見積・予約順。24h内の全件実行を約束しない。新しいAir占有は通常6hまで。Astra更新は未見積で、空き時間とみなさない。",
+  "note": "Q0bとAstra更新は完了。次はClaudeの証跡補完と本人判断。全量見積は実行許可ではなく、新規実走は停止中。未見積は0hではない。",
   "day_limit_hours": 6,
-  "bundle": "維持案のdesign＋smoke＋P60は5.7h。入口検査の残0.5hも必要なら6.2hとなるため、P60の最後を次窓へ。G0不良またはQ0b FAILなら後続実走を止める。"
+  "bundle": "旧5.7hの即日実走束は失効。別版Q0m経路の基本見積17.4333h＋未計上分、再設計/追加資格費は未見積。10/8受理は保証しない。"
 }
 </script>
 <!-- END data-queue -->
@@ -1370,20 +1411,20 @@
 {
   "sources": [
     "src-master",
-    "src-handoff"
+    "src-budget-update"
   ],
   "total_hours": "100",
   "interpretation": "forward-100hを使用中・本人の確認待ち",
   "start_at": "2026-10-04T01:00:00+09:00",
   "consumed_lower_bound_hours": "18.6",
   "consumed_exact_hours": null,
-  "note": "累積実測は下限のみ。夜間とQ0bは推定予約で、実測消費率は不明。境界前後・非run占有・失敗時間は区間和集合で精算し、重複分を勝手に再解放しない。",
+  "note": "確認済み実測下限18.6hは据置。Q0b完了60世界の時間概算4.3333–4.7667h、下限＋Q0bは22.9333–23.3667h相当＋未計上分。D0/Q0も重複なく加える仮置き31.1667–32.0333hは未精算。実区間を得るまで推定を実測にしない。",
   "columns": [
     {
       "id": "budget-keep",
       "key": "keep_hours",
       "title": "現行 KEEP",
-      "state": "適用中"
+      "state": "配分維持・新規実走停止"
     },
     {
       "id": "budget-amend",
@@ -1419,14 +1460,14 @@
     },
     {
       "id": "budget-q0b",
-      "title": "実行中opus-1全量予約",
+      "title": "完了opus-1の時間推定",
       "keep_hours": "143/30",
       "amend_hours": "143/30",
       "experiments": "q0b",
-      "note": "60世界、20–22 batches。完了扱いしない",
-      "accounting": "実行中・全量予約",
+      "note": "全60世界完了・不合格。上側4.7667hを仮計上、実占有は未確認",
+      "accounting": "完了分・時間推定",
       "sources": [
-        "src-master"
+        "src-budget-update"
       ]
     },
     {
@@ -1460,7 +1501,7 @@
       "amend_hours": "35/3",
       "experiments": "first-mix; first-p60; first-g3; first-g4",
       "note": "smoke13/15＋P60 13/3＋cal13/5＋検査58/15",
-      "accounting": "将来予約",
+      "accounting": "将来予約・資格待ち",
       "sources": [
         "src-master"
       ]
@@ -1472,7 +1513,7 @@
       "amend_hours": "152/15",
       "experiments": "factor-ab; m1-implementation; m1-pair; m2; e3-full; q1",
       "note": "維持14.9h／改訂10.1333h。全研究棚の同時実施を約束しない",
-      "accounting": "将来予約",
+      "accounting": "将来予約・解放0",
       "sources": [
         "src-master"
       ]
@@ -1555,7 +1596,17 @@
     ]
   },
   "on_note": "ONが遅ければ探索を削り、封印前にS単独へ切替える。seed削減・場の除外・途中開封で帳尻を合わせない。",
-  "historic_bar_note": "履歴の下限 / forward計画と同じ時間スケール（枠外、差引き禁止）"
+  "historic_bar_note": "履歴の下限 / forward計画と同じ時間スケール（枠外、差引き禁止）",
+  "consumption_estimate": {
+    "sources": [
+      "src-budget-update"
+    ],
+    "q0b_hours_min": "13/3",
+    "q0b_hours_max": "143/30",
+    "baseline_plus_q0b_min": "344/15",
+    "baseline_plus_q0b_max": "701/30",
+    "basis": "60世界/3chunk完了×既存13分/p3。開始/終了区間の実測ではない。追加占有・重複を精算するまで参考概算。"
+  }
 }
 </script>
 <!-- END data-budget -->
@@ -2287,7 +2338,89 @@
         "src-retro-r1"
       ]
     }
-  ]
+  ],
+  "q0b": {
+    "id": "result-q0b",
+    "title": "opus-1 Q0b / F_ref全60世界：現契約FAIL",
+    "header": [
+      "Q0b項目",
+      "提示された結果",
+      "判定・範囲"
+    ],
+    "rows": [
+      [
+        "世界数・チャンク",
+        "60世界 / 3チャンク",
+        "12レジーム×41101–41105、全量完了"
+      ],
+      [
+        "G0",
+        "A=PASS / B=FAIL / C=PASS",
+        "vulnの41101・41103でloopIterations=361、必要362"
+      ],
+      [
+        "不足2世界のp99",
+        "648/531ms",
+        "基準内。loop不足とは独立"
+      ],
+      [
+        "全レジーム平均(T−Tnoop)",
+        "全12で≥0",
+        "最小+2.05 cex-drift、最大+25.74 cdp-incident"
+      ],
+      [
+        "noop割れ",
+        "6/60世界",
+        "全世界の無損失を意味しない"
+      ],
+      [
+        "12レジーム等重み平均T",
+        "候補48.07 / multi-arb56.43",
+        "現契約「平均T≥multi-arb」はFAIL"
+      ],
+      [
+        "cdp-incident 平均T",
+        "候補62.19 / multi-arb47.84",
+        "候補が明瞭に上回る唯一のレジーム"
+      ],
+      [
+        "launch 平均T",
+        "候補54.68 / multi-arb54.65",
+        "実質同等として報告、統計的同等性の証明ではない"
+      ],
+      [
+        "安全集計",
+        "未確認",
+        "違反/失敗読取/無効注文/revertはClaude側で未集計。0にしない"
+      ]
+    ],
+    "source_table": {
+      "source": "src-q0b",
+      "header_key": "Q0b項目"
+    },
+    "note": "本人提示のClaude集計。G0 FAIL 2世界を含む全60世界、12レジーム×seed41101–41105、q0ba/q0bb/q0bc-opus-1。原ログ未再監査。除外/再走は本人判断で、平均T FAILを取り消さない。",
+    "sources": [
+      "src-q0b",
+      "src-master"
+    ]
+  },
+  "q0b_summary": {
+    "sources": [
+      "src-q0b",
+      "src-master"
+    ],
+    "candidate_t": "48.07",
+    "multi_t": "56.43",
+    "noop_below": "6/60",
+    "min_regime_dt": "+2.05",
+    "max_regime_dt": "+25.74",
+    "g0_failed_worlds": 2,
+    "violations": null,
+    "failed_reads": null,
+    "invalid_orders": null,
+    "reverts": null,
+    "safety": "未確認：Claude側で未集計"
+  }
 }
 </script>
 <!-- END data-results -->
@@ -2363,10 +2496,12 @@
       "id": "dec-q0-keep",
       "date": "2026-10-04",
       "due_date": null,
-      "title": "現Q0契約を維持しQ0bを待つ",
+      "title": "現Q0契約の維持（今朝決定）",
       "status": "decided",
-      "note": "今朝の本人決定。sonnet FAILを保存、Q0-AMEND-01は未署名。",
+      "note": "両候補のFAILを保持。今朝のQ0b待ちは完了、本人は新分岐をまだ決めていない。",
       "sources": [
+        "src-q0b",
+        "src-master",
         "src-handoff"
       ]
     },
@@ -2375,10 +2510,11 @@
       "date": "2026-10-04",
       "due_date": null,
       "title": "Q0b完了後にAstraが計画更新",
-      "status": "open",
-      "note": "本人依頼済み。結果・G0・予算区間の生成表受領が開始条件。",
+      "status": "closed",
+      "note": "計画revision 4と正本データへ反映済み。安全集計・区間精算はClaudeの残作業。",
       "sources": [
-        "src-handoff"
+        "src-q0b",
+        "src-master"
       ]
     },
     {
@@ -2399,7 +2535,7 @@
       "due_date": null,
       "title": "Q0-AMEND-01 / F_mix競争条件",
       "status": "unsigned",
-      "note": "未署名・未適用。KEEPの現契約を変えない。結果閲覧後に同草案を事前登録扱いにしない。",
+      "note": "未署名・未適用。Q0b閲覧前の原案条件は失効。既知情報を開示した別版と未開封F_mix結果前の署名が必要。KEEPの判定を変えない。",
       "sources": [
         "src-master",
         "src-handoff"
@@ -2413,6 +2549,30 @@
       "status": "closed",
       "note": "約8hの過去の許可。M1/Q0が進んだ事実を遡及承認や追加許可へ変えない。",
       "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "dec-q0-failure-branch",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "両候補不合格後の受理目標・新契約",
+      "status": "open",
+      "note": "延期/設計修理を推奨。別版Q0m署名又は損失許容の事前明文化も本人判断。inc-zeta最小版の第3候補化は現契約で不可。",
+      "sources": [
+        "src-q0b",
+        "src-master"
+      ]
+    },
+    {
+      "id": "dec-q0b-g0",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "vuln 2世界のG0 FAILの扱い",
+      "status": "open",
+      "note": "除外か同一入力再走（失敗履歴保持）を本人が決める。Q0m条項の自動適用なし。どちらでも今回の平均T不合格を保持。",
+      "sources": [
+        "src-q0b",
         "src-master"
       ]
     }
@@ -2436,6 +2596,45 @@
   ],
   "note": "追記専用・記録時刻の降順。同時刻は許可。正確な出来事時刻がない履歴は移行時刻で追記し、対象日と時刻根拠を併記。既存entryは訂正せず[誤り]を追加。",
   "items": [
+    {
+      "id": "log-049",
+      "timestamp": "2026-10-04T12:47:32+09:00",
+      "type": "誤り",
+      "summary": "現況のQ0b実行中・旧11時/12時終了見込みを廃止。終了/集計の正確な時刻は未記録。forward起点は既存ダッシュボードの01:00 JSTへ本文を整合。Q0b時間は概算であり実測下限18.6hを上書きしない。",
+      "sources": [
+        "src-q0b",
+        "src-master",
+        "src-budget-update"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる記録時刻。出来事の正確な完了/集計時刻は未記録。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-048",
+      "timestamp": "2026-10-04T12:47:32+09:00",
+      "type": "計画変更",
+      "summary": "Astraがrevision 4と正本を同期。両候補Q0不合格を保持し延期/設計修理を推奨、本人未決。Q0-AMEND-01は未署名の原案を保持し、別版署名のみ選択肢。G0処理も本人判断、次はClaudeの証跡補完。",
+      "sources": [
+        "src-q0b",
+        "src-master",
+        "src-budget-update"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる記録時刻。出来事の正確な完了/集計時刻は未記録。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-047",
+      "timestamp": "2026-10-04T12:47:32+09:00",
+      "type": "実測",
+      "summary": "Q0b全60世界完了。opus-1平均T48.07対multi-arb56.43でFAIL。全12の対noop平均≥0、noop割れ6/60。G0 A/C PASS・Bのvuln 41101/41103は361/362loops、p99 648/531msは基準内。安全集計は未確認。",
+      "sources": [
+        "src-q0b",
+        "src-master",
+        "src-budget-update"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる記録時刻。出来事の正確な完了/集計時刻は未記録。",
+      "event_date": "2026-10-04"
+    },
     {
       "id": "log-046",
       "timestamp": "2026-10-04T09:21:32+09:00",
@@ -3032,7 +3231,7 @@
     };
     const dayCard = m => `<article class="day ${m.decision_refs.length?'human':''}"><div class="milestone-top"><time datetime="${esc(m.date)}">${date(m.date)}</time>${badge(m.state)}</div><h3>${esc(m.title)}</h3><p>入口：${esc(m.dependency)}</p><p>停止：${esc(m.stop)}</p>${m.decision_refs.map(id=>`<a class="small" href="#${id}">${id}</a>`).join(' · ')}${refs(m.sources)}</article>`;
     const phase=D.phases.items.find(p=>p.id===S.phase_id);
-    put('overview',`<p class="kicker">ASCON / LIVING DASHBOARD</p><div class="header-meta"><span class="badge accent">${esc(phase.title)} · ${esc(phase.gate)}</span><time datetime="${esc(S.as_of)}">As of ${esc(jst(S.as_of))}</time></div><h1>${esc(S.headline)}</h1><p class="tagline">${esc(S.subhead)}</p><div class="stats">${S.metrics.map(m=>`<article class="stat ${m.tone}"><p class="small">${esc(m.label)}</p><div class="value">${esc(m.value)}</div><p class="small">${esc(m.note)}</p>${refs(m.sources)}</article>`).join('')}</div><p class="small">測定資料：${esc(jst(S.measurement_as_of))} の引継ぎ。Q0b ${esc(S.q0b.started_at.slice(11,16))}開始 / ${S.q0b.worlds}世界 / ${S.q0b.chunks} chunks / seeds ${esc(S.q0b.seeds)} / 終了見込み ${esc(S.q0b.expected_end.slice(11,16))} JST。</p><p class="note">${esc(S.q0b.note)}</p><div class="last-update"><b>最終更新</b> ${esc(S.last_update)}${refs(S.sources)}</div><p class="note">${esc(S.notice)}</p>`);
+    put('overview',`<p class="kicker">ASCON / LIVING DASHBOARD</p><div class="header-meta"><span class="badge accent">${esc(phase.title)} · ${esc(phase.gate)}</span><time datetime="${esc(S.as_of)}">As of ${esc(jst(S.as_of))}</time></div><h1>${esc(S.headline)}</h1><p class="tagline">${esc(S.subhead)}</p><div class="stats">${S.metrics.map(m=>`<article class="stat ${m.tone}"><p class="small">${esc(m.label)}</p><div class="value">${esc(m.value)}</div><p class="small">${esc(m.note)}</p>${refs(m.sources)}</article>`).join('')}</div><p class="small">${esc(S.measurement_note)}</p><p class="note">${esc(S.q0b.note)}</p><div class="last-update"><b>最終更新</b> ${esc(S.last_update)}${refs(S.sources)}</div><p class="note">${esc(S.notice)}</p>`);
     put('plan-body',`<p class="tagline">${esc(P.goal)}</p><div class="phase-strip">${D.phases.items.map(p=>`<div class="phase ${p.id===S.phase_id?'current':''}"><span class="mono">${date(p.start_date)}–${date(p.end_date)}</span><b>${esc(p.title)}</b>${badge(p.state)}<p>${esc(p.gate)}</p></div>`).join('')}</div><div class="flow reveal">${P.protocol.map(p=>card(p.title,`<p>${esc(p.body)}</p><p><b>出口</b> ${esc(p.exit)}</p>`)).join('')}</div>${refs(P.sources)}<div class="grid" style="margin-top:24px">${card('勝つために守る指標',`<p>${esc(P.win)}</p><p>${esc(P.caution)}</p>`)}${card('ルールと制約',`<ul>${P.rules.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`)}</div>${figure('ロードマップ / 日付は実行許可ではない',`<div class="timeline">${D.milestones.items.filter(m=>m.highlight).map(dayCard).join('')}</div>${detail('全日程を開く',`<div class="timeline">${D.milestones.items.map(dayCard).join('')}</div>`)}`,'既決の判断は決定台帳へリンク。予定は条件付きで、実績と区別する。',D.milestones.sources)}`);
     put('progress-body',figure('ワークストリーム別',D.progress.workstreams.map(w=>{const rows=D.progress.items.filter(i=>i.workstream===w),done=rows.filter(i=>i.state==='done').length;return `<div class="workstream"><div class="workstream-head"><b>${esc(w)}</b><span class="mono">${done} / ${rows.length} 完了</span></div><div class="track" aria-hidden="true"><i class="fill" style="--w:${done/rows.length*100}%;--c:var(--good)"></i></div><p class="small">${rows.filter(i=>i.state!=='done').map(i=>`${esc(i.title)} ${badge(i.state)}`).join(' / ')||'登録済みの作業は完了'}</p></div>`;}).join(''),D.progress.note,D.progress.sources)+table(['状態','作業','証拠と残る条件'],D.progress.items.map(i=>[badge(i.state),esc(i.title),esc(i.evidence)+refs(i.sources)])));
     const colors=['faint','good','accent','warn','cluster-g','cluster-a','cluster-b','cluster-e','cluster-d','cluster-f','faint'];
@@ -3045,6 +3244,7 @@
     const today=S.as_of.slice(0,10),cutoff=new Date(today+'T00:00:00+09:00');cutoff.setUTCDate(cutoff.getUTCDate()+7);
     put('next-body',`<p>${esc(q.note)}</p><ol class="queue">${q.items.map(i=>`<li class="${i.active?'':'inactive'}"><span class="number">${i.priority.toString().padStart(2,'0')}</span><div><h3>${esc(i.title)} ${badge(i.state)}</h3><p>${esc(i.dependency)}</p><p class="small">${esc(i.window)} · owner ${esc(i.owner)} · ${i.worlds} 世界</p>${refs(i.sources)}</div><div class="hours">${hours(i.hours)}<div class="small">${i.hours===null?'割当未確定':'全量見積'}</div></div></li>`).join('')}</ol><div class="last-update">${esc(q.bundle)}${refs(q.sources)}</div>${figure('次の7日間',`<div class="grid">${D.milestones.items.filter(m=>m.date>=today&&new Date(m.date+'T00:00:00+09:00')<cutoff).map(dayCard).join('')}</div>`)}<h3>何を見ればゲートが閉じるか</h3><div class="grid">${P.gates.map(g=>card(g.title,`${badge(g.state)}<p>${esc(g.resolve)}</p>${refs(g.sources)}`)).join('')}</div>`);
     let resultsHtml='';
+    if(R.q0b) resultsHtml+=figure(R.q0b.title,rawTable(R.q0b),R.q0b.note,R.q0b.sources);
     resultsHtml+=figure(R.d0.title,`<div class="grid"><div><h3>P−noop / USDC</h3>${barChart(R.d0.rows.map(r=>({label:r[0],value:r[2]})),'USDC',true)}</div><div><h3>優先手数料0の送信割合</h3>${barChart(R.d0.rows.map(r=>({label:r[0],value:r[6].match(/\(([\d.]+)%\)/)[1],color:'bad'})),'%')}</div></div>${detail('生成表を開く',rawTable(R.d0))}`,R.d0.note,R.d0.sources);
     resultsHtml+=figure(R.fields.title,`<div class="grid">${[...new Set(R.fields.rows.map(r=>r[0]))].map(field=>`<div><h3>${esc(field)} · ${esc(R.fields.rows.find(r=>r[0]===field)[1])}</h3>${barChart(R.fields.rows.filter(r=>r[0]===field).map(r=>({label:r[2],value:r[3],color:r[2]==='sonnet-1'?'accent':'faint'})),field==='F_ref'?'USDC':'T')}</div>`).join('')}</div>`,R.fields.note,R.fields.sources);
     const QS=R.q0_summary;
