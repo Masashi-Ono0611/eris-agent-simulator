@@ -58,9 +58,9 @@ for(const page of app.D.ui.pages){
 check('overview snapshot and no fake run percentage',()=>{
   const t=rendered.overview;
   assert.ok(t.includes(app.D.status.headline));
-  assert.ok(t.includes('value="2" max="4"'));
+  assert.ok(t.includes('value="3" max="5"'));
   assert.ok(t.includes('本人が今やること'));
-  assert.ok(t.includes('22:07 JST'));
+  assert.ok(t.includes('06:30 JST'));
   assert.ok(!t.includes('17:40 JST'));
   assert.ok(!/log-\d+/.test(t));
 });
@@ -77,8 +77,8 @@ check('diagnostic metrics from JSON rather than display constants',()=>{
   app.D.status.dev2.result.p_candidate='149.0';
 });
 check('log count and complete history',()=>{
-  assert.equal(app.filteredLogs().length,78);
-  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,78);
+  assert.equal(app.filteredLogs().length,84);
+  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,84);
   for(const l of app.D.log.items)assert.ok(rendered.log.includes(l.id));
 });
 check('log AND search, kind and date filters compose',()=>{
@@ -151,14 +151,14 @@ check('AA text palette and responsive/reduced-motion provisions',()=>{
   assert.ok(!/@media print|beforeprint|afterprint/.test(html));
 });
 check('a future reported completion renders without a forecast or live guessing',()=>{
-  const before={...app.D.status.dev5};
-  Object.assign(app.D.status.dev5,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-05T00:41:00+09:00',completed_worlds:24,note:'test-only confirmed completion'});
+  const before={...app.D.status.mix1};
+  Object.assign(app.D.status.mix1,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-05T00:41:00+09:00',completed_worlds:24,note:'test-only confirmed completion'});
   app.state.page='operations';app.render();
   assert.ok(element('page').innerHTML.includes('診断完了の引継ぎ'));
   assert.ok(element('page').innerHTML.includes('00:41'));
   assert.ok(!element('page').innerHTML.includes('NaN'));
   app.state.page='overview';app.render();assert.ok(element('page').innerHTML.includes('確認された完了時刻'));
-  Object.assign(app.D.status.dev5,before);
+  Object.assign(app.D.status.mix1,before);
 });
 check('four KPI cards appear on overview only, including qualification view',()=>{
   for(const [page,text] of Object.entries(rendered)){
@@ -174,21 +174,21 @@ check('comparison is the first results content section, before explanatory notic
     assert.ok(t.indexOf('class="comparison"')<t.indexOf('測定の原表・条件'));
   }
 });
-check('dev3a historical figures and dev5 pending results stay distinct in visible pages',()=>{
+check('dev3a historical figures and mix1 pending results stay distinct in visible pages',()=>{
   const t=rendered.results;
   const operationsText=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   for(const value of ['842.3','2032.9','1050.3','54.4','288.7','61.3','46.83','55.93','980','27'])assert.ok(t.includes(value),value);
   assert.ok(t.includes('9レジーム')&&t.includes('18世界')&&t.includes('比較対象に未達'));
-  assert.ok(operationsText.includes('dev5-xb-r'));
+  assert.ok(operationsText.includes('mix1'));
   assert.ok(operationsText.includes('結果未確認'));
-  assert.ok(operationsText.includes('監視接続/実fixture/smoke実施は未確認'));
+  assert.ok(operationsText.includes('稼働実績・更新成功は本更新で未検証'));
   assert.ok(!operationsText.includes('null'));
 });
-check('rev8 exact current facts, pending run and team are visible',()=>{
+check('historical dev4 facts, current mix1 and team are visible',()=>{
   const t=rendered.results;
   for(const value of ['49.72','55.02','488.2','1460.8','440.0','68.8','273.4','46.3','1652','23','+7.85'])assert.ok(t.includes(value),value);
   const op=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
-  for(const value of ['22:07','00:00','結果未確認','2/3回目','Codex(Astra)','Claude','402','agy','masa-harness#409','PLATEAU-ANALYSIS','ツール使用禁止・差分埋め込み・stdin'])assert.ok(op.includes(value),value);
+  for(const value of ['03:52','06:30','結果待ち','3/3回目','Codex(Astra)','Claude','402','agy','masa-harness#409','PLATEAU-ANALYSIS','ツール使用禁止・差分埋め込み・echo &quot;&quot; | …'])assert.ok(op.includes(value),value);
   const overviewText=rendered.overview.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   assert.ok(overviewText.includes('dev4-xb-r')&&overviewText.includes('49.72'));
 });
@@ -227,8 +227,17 @@ if(process.argv.includes('--dump')){
 check('rev9 authority, runtime limit, no-cost provider and next branch are visible',()=>{
   const plain=page=>rendered[page].replace(/<[^>]*>/g,'');
   for(const value of ['a95054a','検査済み方針の選択+ENTRY','ON起動を拒否','VENDORED','プロンプト誘導','validator ok=true','能力評価ではない','claude-cli:haiku','39001/39002','OFF1+ON3=32世界','安全保証なしで本番と同条件で測るか'])assert.ok(plain('decisions').includes(value),value);
-  for(const value of ['7179efe','38003','第3回にxa-1','専用adapter'])assert.ok(plain('operations').includes(value),value);
-  for(const value of ['本人判断・未許可','第3回にxa-1'])assert.ok(plain('overview').includes(value),value);
+  for(const value of ['7179efe','38003','第3回xa-1は打ち切り','専用adapter','PILOT-STOP','202分','352分'])assert.ok(plain('operations').includes(value),value);
+  for(const value of ['本人判断','第3回xa-1で打ち切り','結果待ち'])assert.ok(plain('overview').includes(value),value);
+});
+check('rev10 live outcomes, xa stop and mix placeholder come from data',()=>{
+  const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
+  for(const value of ['HEALTHY=no','50.15','55.73','54.74','48.91','52.80','53.62','-5.83','-1.93','-1.11','-229.4','+178.7','-19.75','PILOT-STOP','結果待ち'])assert.ok(t.includes(value),value);
+  assert.ok(!t.includes('undefined'));
+  const before=app.D.status.mix1.note;
+  app.D.status.mix1.note='REV10-MIX-SENTINEL';app.state.page='operations';app.render();
+  assert.ok(element('page').innerHTML.includes('REV10-MIX-SENTINEL'));
+  app.D.status.mix1.note=before;
 });
 console.log(`PASS dashboard UI: ${count} checks; 8 page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
 console.log('LIMIT: minimal DOM adapter, not a browser; visual layout and assistive technology unverified');

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static revision-9 plan/dashboard checks. Never reads run data or network."""
+"""Static revision-10 plan/dashboard checks. Never reads run data or network."""
 
 from datetime import date, timedelta
 from fractions import Fraction
@@ -150,6 +150,417 @@ REV9_EXPECTED = {'h1': {'authority': '本人決定 2026-10-04',
                 'sources': ['src-rev9']}]}
 
 
+REV9_LOG_DIGEST = '2c7aba9ea689291815aae9de680ab8b902ef1457e5f0b0f5e5e5ec9f28e2bf1b'
+REV9_DECISIONS_DIGEST = '057079cff473c442634a09baf5ce9c4ba61777a94959c0a1ed9bd51a8bb0ce33'
+REV9_DECISION_IDS = ['dec-original', 'dec-deep', 'dec-no-contact', 'dec-008', 'dec-007', 'dec-q0-keep', 'dec-astra-update', 'dec-forward', 'dec-amend', 'dec-overnight', 'dec-q0-failure-branch', 'dec-q0b-g0', 'dec-step1-policy', 'dec-ai-scope', 'dec-ai-contract', 'dec-ai-budget', 'dec-revert-limit', 'dec-h1-authority', 'dec-full-executor']
+REV10_EXPECTED = {'dev5': {'name': 'dev5-xb-r',
+          'state': 'measured-diagnostic-complete',
+          'verified': False,
+          'evidence_basis': '本人提示measured集計。原ログ/live再監査なし',
+          'field': 'F_ref',
+          'seeds': '36001/36002',
+          'regimes': 12,
+          'worlds': 24,
+          'fix_commit': '7b1448b',
+          'started_at': '2026-10-04T22:07:00+09:00',
+          'started_at_precision': 'minute',
+          'started_at_basis': '本人提示22:07 JST。秒00は保存表現で実測秒ではない',
+          'expected_end': None,
+          'expected_end_basis': '旧見込み2026-10-05 00:00 JST頃は実績ではない。実完了時刻は未提示',
+          'completed_at': None,
+          'completed_worlds': None,
+          'g0': None,
+          'result': {'t_candidate': '50.15', 't_multi': '55.73'},
+          'q0_eligible': False,
+          'independent_screen': False,
+          'iteration': 2,
+          'note': 'v5 7b1448b・F_ref・36001/36002・12レジーム24世界の同seed対応診断（2/3回目）。平均T '
+                  '50.15対55.73、昇格せず。基準はv3。完了時刻/完了数/G0/安全内訳は今回未提示。既見seedの開発診断で独立screen/Q0には使えない。',
+          'sources': ['src-rev10']},
+ 'repair_v5': {'commit': '7b1448b',
+               'tests': 183,
+               'red_controls': 59,
+               'state': 'implemented-reported',
+               'verified': False,
+               'evidence_kind': 'measured引継ぎ',
+               'title': 'v5 = v3 + R9（bundle用在庫余地）ON',
+               'note': 'DEV4-XB-R-V5.mdを根拠にR9のみON。テスト183・赤対照59は既存検査記録の引継ぎで今回再実行なし。dev5平均T 50.15対55.73、v5は昇格せず、基準はv3。',
+               'sources': ['src-v5']},
+ 'team': {'primary': 'Codex(Astra)',
+          'secondary': 'Claude',
+          'unavailable': 'Grok: 利用残高切れ(402)で体制から除外',
+          'support': 'agy: Gemini 3.8 Flash High・ハーネス反映済 masa-harness#409',
+          'independent_review': 'Claudeの別エージェント+agy',
+          'tool_policy': 'ツール使用禁止・差分埋め込み・echo "" | …',
+          'note': '本人の運用引継ぎ。agyへの差分はプロンプトに埋め込み、echo "" | …で標準入力を閉じ、ツール使用を禁止する。本更新で外部照会なし。',
+          'sources': ['src-operations']},
+ 'xa1': {'commit': '3ad4f60',
+         'candidate': 'A: 時間制限付き単脚往復+lot台帳',
+         'state': 'stopped-unhealthy',
+         'tests': 39,
+         'red_controls': 39,
+         'tests_rerun': False,
+         'smoke_seed': 38005,
+         'seeds': [38001, 38002],
+         'regimes': 12,
+         'worlds': 24,
+         'estimated_minutes': 104,
+         'end_check_extra': True,
+         'result': {'g0': 'PASS',
+                    'submitted': 10,
+                    'submitted_min': 30,
+                    'recovery_only': 4,
+                    'decisions': 710,
+                    'lock_resolved': True,
+                    'violations': 0,
+                    'reverts': 0,
+                    'healthy': False},
+         'sources': ['src-rev10'],
+         'commits': ['7179efe', '6cd9e70', '3ad4f60'],
+         'repairs': 2,
+         'iteration': 3,
+         'iteration_outcome': 'unmet-report-to-human',
+         'full_measurement': 'not-completed',
+         'note': '[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 '
+                 'BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 '
+                 'PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。',
+         'smokes': [{'name': 'dev6', 'commit': '7179efe', 'g0': 'BLOCKED', 'reason': '判断ログにround無し+取引停止'},
+                    {'name': 'dev7', 'commit': '6cd9e70', 'submitted': 18, 'recovery_only': 264, 'decisions': 362},
+                    {'name': 'xas2',
+                     'commit': '3ad4f60',
+                     'regime': 'calm',
+                     'seed': 38005,
+                     'g0': 'PASS',
+                     'submitted': 10,
+                     'submitted_min': 30,
+                     'recovery_only': 4,
+                     'decisions': 710,
+                     'lock_resolved': True,
+                     'violations': 0,
+                     'reverts': 0,
+                     'healthy': False}],
+         'initial_tests_note': 'テスト39・赤対照39は7179efe時点の引継ぎ。修理版の検査として再利用しない。',
+         'plan_note': '旧smoke 38003・38001/38002×12=24世界・約104分+終了確認の案は履歴。第3回はsmoke打ち切りで本計測未達。',
+         'measured_scope': {'name': 'xas2', 'field': 'F_ref', 'seeds': '38005', 'regimes': 1, 'worlds': 1}},
+ 'live': {'name': 'xb-r-live',
+          'state': 'measured-pilot-stop',
+          'verified': False,
+          'evidence_basis': '本人提示measured集計。原ログ再監査なし',
+          'initial_code': 'xb-r v3',
+          'prompt': 'v2',
+          'model': 'claude-cli:haiku',
+          'paid_usage': False,
+          'field': 'F_ref',
+          'regimes': 4,
+          'seeds': '39001/39002',
+          'worlds': 32,
+          'g0': 'PASS',
+          'safety': 'OK-reported',
+          'decision': 'PILOT-STOP',
+          'q0_eligible': False,
+          'note': '[measured引継ぎ] xb-r-liveはv3初期コード・prompt '
+                  'v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 '
+                  'PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。',
+          'sources': ['src-rev10'],
+          'groups': [{'group': 'OFF',
+                      't': '54.74',
+                      'd_t': None,
+                      'd_alpha': None,
+                      'worst': None,
+                      'installed': None,
+                      'declined': None,
+                      'rejected': None},
+                     {'group': 'ON1',
+                      't': '48.91',
+                      'd_t': '-5.83',
+                      'd_alpha': '-229.4',
+                      'worst': '-19.75',
+                      'installed': 9,
+                      'declined': 26,
+                      'rejected': 5},
+                     {'group': 'ON2',
+                      't': '52.80',
+                      'd_t': '-1.93',
+                      'd_alpha': '-26.9',
+                      'worst': '-5.68',
+                      'installed': 1,
+                      'declined': 25,
+                      'rejected': 14},
+                     {'group': 'ON3',
+                      't': '53.62',
+                      'd_t': '-1.11',
+                      'd_alpha': '+178.7',
+                      'worst': '-4.50',
+                      'installed': 1,
+                      'declined': 26,
+                      'rejected': 13}],
+          'calibration': [{'seed': 39101, 'prompt': 'v1', 'installed': 0, 'outcome': 'TSモジュール全体を返してcompile failed'},
+                          {'seed': 39102,
+                           'prompt': 'v2',
+                           'installed': 1,
+                           'outcome': 'WBTC slippage許容80→100bps、安全節違反（sim内のみ）'}],
+          'wbtc': {'trades': 16, 'fixed_price_pnl_usdc': '+63.34', 'exclusion_supported': False},
+          'interpretation': 'AI改訂は平均Tでプラスにならず、適用の多いON1ほど悪化した観測。因果効果とは断定しない。形式不備によるrejectedが多い。HaikuのWBTC除外根拠は実ログで支持できない。'},
+ 'mix1': {'name': 'mix1',
+          'state': 'reported-running-unverified',
+          'verified': False,
+          'field': 'F_mix（u1構成の診断）',
+          'seeds': '40001/40002',
+          'regimes': 12,
+          'worlds': 24,
+          'agents': 11,
+          'roster': 'u1のzeta-2をcand=xb-r v3凍結に置換',
+          'fix_commit': 'd30cbbb',
+          'chunks': ['mix1a', 'mix1b'],
+          'started_at': '2026-10-05T03:52:00+09:00',
+          'started_at_precision': 'minute',
+          'expected_end': '2026-10-05T06:30:00+09:00',
+          'expected_end_basis': '本人提示の06:30 JST頃の見込み。完了実績ではない',
+          'completed_at': None,
+          'completed_worlds': None,
+          'g0': None,
+          'result': None,
+          'result_label': '結果待ち',
+          'q0_eligible': False,
+          'contract_effect': 'none-diagnostic-only',
+          'note': '[進行中・診断] mix1: u1の11体、zeta-2をcand=xb-r v3凍結に置換。12レジーム×40001/40002=24世界、mix1a/mix1bの2チャンク。10/5 03:52 '
+                  'JST開始、06:30 JST頃完了見込み。結果待ち（結果未確認）。契約・資格とは無関係で、好成績でもQ0へ昇格させない。',
+          'sources': ['src-rev10']},
+ 'night_operation': {'evidence': '本人引継ぎ',
+                     'verified': False,
+                     'heartbeat_minutes': 8,
+                     'monitor_expiry_minutes': 30,
+                     'state_file': '/tmp/night-state.md',
+                     'note': '[本人引継ぎ] '
+                             '8分ごとのハートビートと/tmp/night-state.mdで夜間の自動進行を管理。監視は30分で失効するため、各ハートビートで監視の有効期限・再登録/更新・次回起床・状態表を確認し、失効前に更新する。失効/未受領なら新規起動を止める。8分は進行管理用で、既決の60秒以下監視・2分検知/5分受領/10分次着手を置換しない。稼働実績・更新成功は本更新で未検証。',
+                     'sources': ['src-rev10']},
+ 'next_branch': {'iteration': 3,
+                 'automatic_launch': False,
+                 'outcome': 'xa-1打ち切り・決定論ライン未達',
+                 'full_executor_decision': '本番自由改訂の安全保証なし・継続方針は本人判断',
+                 'recommendation': 'A',
+                 'options': ['A: Q0維持・追加計測停止', 'B: 現契約を満たす別系統を新たに設計', 'C: mix1診断を踏まえ契約の場の見直しを本人が決める'],
+                 'falsification': '独立した全12レジームの証拠・最悪値・安全・全残費・受理までの日程により、現契約を満たす別系統か、場の見直しを結果への合わせ込みでなく正当化できる場合。mix1単独の好成績は反証にならない。',
+                 'sources': ['src-rev10']},
+ 'live_contract': {'regimes': ['calm', 'whale', 'crash', 'depeg-persist'],
+                   'seeds': [39001, 39002],
+                   'off_repeats': 1,
+                   'on_repeats': 3,
+                   'worlds': 32,
+                   'all_repeats_required': True,
+                   'd_t_strict_min': '0',
+                   'd_alpha_strict_min': '0',
+                   'worst_min': '-2',
+                   'decision': 'PILOT-STOP',
+                   'on4_allowed': False,
+                   'production_equivalent': False,
+                   'sources': ['src-overnight', 'src-rev10']},
+ 'production_assessment': {'model': 'gpt-oss:120b',
+                           'claim': 'Haikuより弱い可能性が高い',
+                           'evidence': '推測',
+                           'measured_comparison': False,
+                           'runtime_safety_boundary': False,
+                           'submission_runtime_edit_allowed': False,
+                           'h1_standard_on': 'refused',
+                           'sources': ['src-rev10']},
+ 'human_only': {'status': 'Q0契約と提出方針は本人判断待ち',
+                'items': ['A: Q0維持・追加計測停止',
+                          'B: 現契約を満たす別系統を新たに設計',
+                          'C: mix1診断を踏まえ契約の場の見直しを本人が決める',
+                          '10/28 dec-007再確認',
+                          '無料枠不足時の前払い判断（G3見積もり後）'],
+                'decision_refs': ['dec-008', 'dec-007', 'dec-h1-authority', 'dec-full-executor', 'dec-rev10-direction'],
+                'sources': ['src-rev10'],
+                'note': 'Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。 10/4 '
+                        'H1選択と既決署名は不変。自由改訂simの測定記録は本番の承認や安全保証ではない。鍵/登録の再操作は不要、10/28 dec-007と金銭境界を維持。'},
+ 'human_action': 'Q0契約の扱い・提出へ向けた次方針を決める',
+ 'table': {'id': 'result-h1',
+           'title': 'H1本人決定・実装の成立範囲・形式確認',
+           'header': ['AIパイロット項目', 'rev 10の事実・境界'],
+           'rows': [['本人決定・仮説',
+                     '[本人決定 2026-10-04] '
+                     'AI-PILOT-DESIGNのH1・推奨案「検査済み方針の選択+ENTRY」を選択。全面コード改訂（executorTs自由）は見送り。決定論の改良で大きな改善が見込めないなら、推論ありモードなど大きく改善される仮説へ切替える（本人提案）。'],
+                    ['実装・安全境界',
+                     '[measured・コード確認の引継ぎ] xb-r-ai '
+                     'a95054aはH1を実装、テスト213・赤対照25。標準runtimeはdecide全体（executorTs）を差し替えるため、(a)固定テンプレ限定・(b)エージェント側検証のどちらも安全境界として成立せず、現状はON起動を拒否する。強制には運営側の受付機構/専用adapterが必要。提出物はruntimeを改変できず、scan-submissionのVENDOREDがBLOCKする。本番の改訂は事実上プロンプト誘導に頼り、機械的な安全保証はない。今回コード・テストの再確認はしていない。'],
+                    ['H1の設定',
+                     '3方針（v5標準 / v5+R11 / v5+R7厳格化）とENTRY 20–60bps・5bps刻み・最大±5bps。初期・復帰v5/50、更新なし120blockで復帰。旧rev '
+                     '6のENTRY単独・初期60の署名契約は履歴として不変。'],
+                    ['形式確認',
+                     '[measured引継ぎ] agy GPT-OSS '
+                     '120B（Medium・無料枠・本番と同系統のモデル）の形式確認はsparse/selection/injection各1回、validator '
+                     'ok=true。sparseとinjectionはnullで期待どおり。selectionは答えを指定した形式試験で能力評価ではない。runtime/haiku/性能へ外挿しない。本人Ollama鍵の疎通確認や本番無料枠の検証ではない。'],
+                    ['推論の費用方針',
+                     '[方針] 課金なし。シミュレーション内の改訂はclaude-cli:haikuを第一、既存サブスクのcodex小型モデルを第二候補とする（利用可能なmodel '
+                     'IDは未確認）。ローカルOllamaと本人のOllama鍵・無料枠（本番と共有）は使わない。追加課金・APIへの暗黙fallbackは認めない。'],
+                    ['パイロット仕様・停止条件',
+                     'H1専用adapterは未実装・標準ON拒否のまま。旧H1の32世界案は未解放。別系統xb-r-live（v3初期コード、標準runtime自由改訂）は同4レジーム×39001/39002・OFF1+ON3=32世界を測定しPILOT-STOP。使用済みseedをH1のfresh '
+                     'seedとして再利用しない。'],
+                    ['本人に残る判断',
+                     'Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。 '
+                     '10/4の全面改訂見送りは原記録に保持。sim内の自由改訂結果は、本番で安全保証なしで本番と同条件で測るかという判断や提出承認を代替しない。']],
+           'sources': ['src-rev10', 'src-h1-pilot', 'src-h1-design'],
+           'source_table': {'source': 'src-rev10', 'header_key': 'AIパイロット項目'}},
+ 'overnight': {'sources': ['src-overnight', 'src-rev10'],
+               'window_start': '2026-10-05T00:26:00+09:00',
+               'xa_smoke_minutes_each': 13,
+               'xa_smoke_count': 2,
+               'live_smoke_minutes_each': 13,
+               'live_smoke_count': 2,
+               'live_main_worlds': 32,
+               'live_main_minutes': 150,
+               'completed_estimate_minutes': 202,
+               'mix1_estimate_minutes': 150,
+               'total_projected_minutes': 352,
+               'exact_union_minutes': None,
+               'repair_check_nonrun_minutes': None,
+               'day_consumed_minutes': None,
+               'forward_consumed_hours': None,
+               'remaining_reserved_hours': None,
+               'next_full_cost_hours': None,
+               'formula': 'C_forward + R_remaining + N_next ≤ 100h',
+               'note': 'OVERNIGHT §2.3: 00:26以降の開始/終了区間の和集合で計測・失敗・検査・非runを一度だけ計上し、p3を3倍しない。xa-1 smoke約13分×2 + live '
+                       'smoke約13分×2 + live本体32世界約150分 = '
+                       '完了分の単純概算202分（3h22）。mix1約150分見込みを含む352分（5h52）は非重複仮定の参考見積で、確定占有ではない。開始/終了全区間・重複・修理/確認/非run・00:26前の当日分は不明。通常6h/日の残り8分とは認定しない。C_forward '
+                       '+ R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止。不明なら追加起動BLOCKED。'},
+ 'comparison': [{'candidate': 'xb-r v5',
+                 'scope_ref': 'status.dev5',
+                 'run_ref': 'status.dev5.name',
+                 'metrics': [{'label': '平均T',
+                              'candidate_ref': 'status.dev5.result.t_candidate',
+                              'baseline_ref': 'status.dev5.result.t_multi'}],
+                 'detail': '同seed開発診断・2/3回目。v5昇格せず、基準はv3。',
+                 'state': 'warning',
+                 'verdict': '平均T未達。G0/安全内訳は未提示、独立screen/Q0には使えない。',
+                 'sources': ['src-rev10']},
+                {'candidate': 'xb-r v3',
+                 'scope_ref': 'status.dev4',
+                 'run_ref': 'status.dev4.name',
+                 'metrics': [{'label': '平均P',
+                              'candidate_ref': 'status.dev4.result.p_candidate',
+                              'baseline_ref': 'status.dev4.result.p_multi'},
+                             {'label': '平均取引数',
+                              'candidate_ref': 'status.dev4.result.trades_candidate',
+                              'baseline_ref': 'status.dev4.result.trades_multi'},
+                             {'label': '平均T',
+                              'candidate_ref': 'status.dev4.result.t_candidate',
+                              'baseline_ref': 'status.dev4.result.t_multi'}],
+                 'metric_note': 'cand / multi-arb、同じ24世界。平均Tは12レジーム等重み、cleanのP/取引数は原表。',
+                 'state': 'warning',
+                 'state_label': '比較対象に未達',
+                 'safety_ref': 'status.dev4',
+                 'verdict': '平均Tは5.3T不足。全12レジーム平均(T−Tnoop)>0、最小+7.85。資格試験ではない。',
+                 'sources': ['src-dev4']},
+                {'candidate': 'xb-r v2',
+                 'scope_ref': 'status.dev3',
+                 'run_ref': 'status.dev3.name',
+                 'metrics': [{'label': '平均P',
+                              'candidate_ref': 'status.dev3.result.p_candidate',
+                              'baseline_ref': 'status.dev3.result.p_multi'},
+                             {'label': '平均取引数',
+                              'candidate_ref': 'status.dev3.result.trades_candidate',
+                              'baseline_ref': 'status.dev3.result.trades_multi'},
+                             {'label': '平均T',
+                              'candidate_ref': 'status.dev3.result.t_candidate',
+                              'baseline_ref': 'status.dev3.result.t_multi'}],
+                 'metric_note': '候補 / multi-arb（同じ18世界）。clean-arbのP/取引数は原表。',
+                 'state': 'warning',
+                 'state_label': '比較対象に未達',
+                 'safety_ref': 'status.dev3',
+                 'verdict': 'dev3aは9レジームの過去診断。dev3bを含む全12平均は未受領。最新v3診断は別seedのdev4。',
+                 'sources': ['src-dev3']},
+                {'candidate': 'xb-r',
+                 'scope_ref': 'status.dev2',
+                 'run_ref': 'status.dev2.name',
+                 'metrics': [{'label': '平均P',
+                              'candidate_ref': 'status.dev2.result.p_candidate',
+                              'baseline_ref': 'status.dev2.result.p_multi'},
+                             {'label': '平均取引数',
+                              'candidate_ref': 'status.dev2.result.trades_candidate',
+                              'baseline_ref': 'status.dev2.result.trades_multi'},
+                             {'label': '平均T',
+                              'candidate_ref': 'status.dev2.result.t_candidate',
+                              'baseline_ref': 'status.dev2.result.t_multi'}],
+                 'metric_note': '候補 / multi-arb（同じ母集団）',
+                 'state': 'warning',
+                 'state_label': '比較対象に未達',
+                 'safety_ref': 'status.dev2',
+                 'verdict': '診断平均TはQ0基準未達。正式な資格試験ではない。',
+                 'sources': ['src-dev2', 'src-dev2-repair']},
+                {'candidate': 'xb-r 初版',
+                 'scope_ref': 'status.dev1',
+                 'run_ref': 'status.dev1.name',
+                 'metrics': [{'label': '取引', 'candidate_ref': 'status.dev1.trades'},
+                             {'label': '全世界P−noop', 'candidate_ref': 'status.dev1.p_minus_noop_all_worlds'}],
+                 'state': 'warning',
+                 'state_label': '無取引を検出',
+                 'verdict': 'G0 PASS。原因修正後はdev2で再診断。',
+                 'sources': ['src-dev1']},
+                {'candidate': 'xa-1',
+                 'scope_ref': 'status.xa1.measured_scope',
+                 'run_ref': 'status.xa1.state',
+                 'value_note': 'HEALTHY=no',
+                 'detail_ref': 'status.xa1.note',
+                 'state': 'failed',
+                 'verdict': '第3回未達・2回修理後打ち切り',
+                 'sources': ['src-rev10']},
+                {'candidate': 'xb-r-live',
+                 'scope_ref': 'status.live',
+                 'run_ref': 'status.live.name',
+                 'value_note': 'PILOT-STOP',
+                 'detail_ref': 'status.live.note',
+                 'state': 'failed',
+                 'verdict': '全ON反復でdT<0。Q0/G3の代替不可',
+                 'sources': ['src-rev10']},
+                {'candidate': 'xb-r v3（mix1）',
+                 'scope_ref': 'status.mix1',
+                 'run_ref': 'status.mix1.name',
+                 'detail_ref': 'status.mix1.note',
+                 'value_note': '結果待ち',
+                 'state': 'running',
+                 'verdict': '結果未確認・契約/資格と無関係の診断',
+                 'sources': ['src-rev10']}],
+ 'new_decision': {'id': 'dec-rev10-direction',
+                  'date': '2026-10-05',
+                  'due_date': None,
+                  'title': '第3回未達後のQ0契約・提出方針',
+                  'status': 'open',
+                  'note': 'Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。 選択肢: A: '
+                          'Q0維持・追加計測停止 / B: 現契約を満たす別系統を新たに設計 / C: mix1診断を踏まえ契約の場の見直しを本人が決める 反証条件: '
+                          '独立した全12レジームの証拠・最悪値・安全・全残費・受理までの日程により、現契約を満たす別系統か、場の見直しを結果への合わせ込みでなく正当化できる場合。mix1単独の好成績は反証にならない。',
+                  'owner': 'human',
+                  'group': 'human',
+                  'sources': ['src-rev10']}}
+
+REV10_TABLES = {'dev5': {'header': ['dev5項目', '提示値・境界'],
+          'rows': [['平均T', 'cand 50.15 / multi 55.73'],
+                   ['母集団', 'F_ref・36001/36002・12レジーム24世界・2/3回目'],
+                   ['判定', 'v5昇格せず、基準はxb-r v3。独立screen/Q0ではない'],
+                   ['未提示', '完了時刻・完了数・G0・安全内訳は未確認']]},
+ 'xa1': {'header': ['xa-1段階', '版・結果'],
+         'rows': [['dev6', '7179efe: 判断ログにround無し+取引停止、G0 BLOCKED'],
+                  ['修理1 → dev7', '6cd9e70: 提出18・回収専用264/362'],
+                  ['修理2 → xas2', '3ad4f60: calm/38005、G0 PASS、提出10件<30、回収専用4/710（ロック解消）、violations0/revert0'],
+                  ['判定', 'HEALTHY=no。2回修理後も不健全で打ち切り。第3回未達扱いは本人報告事項']]},
+ 'live': {'header': ['live群', '平均T', 'dT', 'dAlpha', 'worst', 'installed / declined / rejected'],
+          'rows': [['OFF', '54.74', '—', '—', '—', '—'],
+                   ['ON1', '48.91', '-5.83', '-229.4', '-19.75', '9 / 26 / 5'],
+                   ['ON2', '52.80', '-1.93', '-26.9', '-5.68', '1 / 25 / 14'],
+                   ['ON3', '53.62', '-1.11', '+178.7', '-4.50', '1 / 26 / 13']]},
+ 'live_safety': {'header': ['live校正・安全・解釈', '提示事実 / 境界'],
+                 'rows': [['初回校正 39101 / prompt v1', 'TSモジュール全体を返しcompile failed、installed 0'],
+                          ['再校正 39102 / prompt v2', 'installed 1。WBTC slippage許容80→100bps、安全節に反する変更（sim内のみ）'],
+                          ['WBTC除外の根拠', '実ログで支持できない。WBTC 16取引の固定価格損益+63.34 USDC'],
+                          ['全群の安全と性能', '全群G0 PASS・安全OKは観測。平均Tの増分は全ONで負、適用の多い群ほど悪化、形式不備rejectedが多い。因果効果/安全保証ではない'],
+                          ['本番の見立て',
+                           'gpt-oss:120bはHaikuより弱い可能性が高い（推測、実測比較なし）。標準runtimeは安全な枠を強制できず、提出物はruntime改変不可。H1 ON拒否を維持']]},
+ 'mix1': {'header': ['mix1項目', '引継ぎ・結果'],
+          'rows': [['構成', 'u1の11体、zeta-2をcand=xb-r v3凍結に置換'],
+                   ['範囲', '12レジーム×seed40001/40002=24世界、mix1a/mix1b'],
+                   ['時刻', '2026-10-05 03:52 JST開始、06:30 JST頃完了見込み'],
+                   ['結果', '結果待ち'],
+                   ['境界', '結果未確認。契約・資格とは無関係の診断']]}}
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
@@ -200,17 +611,18 @@ _RESULT_LINES = [
     "PASS AI: ENTRY_BPS 20-60, max step 5; R* ON3/OFF1 + S full = 216 worlds / 17.2 h; no epoch learning carryover",
     "PASS cutover: Oct 17 evidence gates select H480 / S240 / no campaign; no fresh deep exploration",
     "PASS schedule/review: 28 JST dates, 18 findings, five roadmap steps match dashboard",
-    "PASS preservation: all 73 pre-rev9 logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
-    "PASS current: dev4 measured 24-world handoff; dev5 same-seed pending (2/3); no invented result or qualification",
+    "PASS preservation: all 78 pre-rev10 logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
+    "PASS current: dev4 measured 24-world handoff; dev5 measured, v5 not promoted; xa-1 stopped (3/3); mix1 pending diagnostic",
     "PASS operations: independent completion monitoring, 150/180 minute iterations, max 3, fresh 12x2 screen; not execution approval",
     "LIMIT: static consistency only; raw runs, actual hours, strategy safety, browser layout and acceptance unverified",
-    "PASS rev9: H1 selected / standard ON refused / adapter unimplemented; agy format only; xa-1 unmeasured; no-cost CLI pilot gated",
+    "PASS rev9: H1 selected / standard ON refused / adapter unimplemented; agy format only; xa-1 stopped; H1 pilot gated; separate live pilot STOP",
+    "PASS rev10: xa-1 unhealthy / live all ON dT negative / mix1 result pending / accounting unreconciled / human direction pending",
     "PASS check-plan-consistency",
 ]
 
 
-def check_documents(document, html, morning, m1, ai):
-    require("revision 9" in document.splitlines()[0], "plan revision 9 title")
+def check_documents(document, html, morning, m1, ai, morning_new):
+    require("revision 10" in document.splitlines()[0], "plan revision 10 title")
     sources = {"d0": source_table(morning, "## 2."),
                "q0": source_table(morning, "## 5."),
                "m1": source_table(m1, "## 結果")}
@@ -280,7 +692,7 @@ def check_documents(document, html, morning, m1, ai):
                       ("60", "143/30"), ("60", "13/3"), ("36", "13/5"),
                       ("0", "未見積"), ("48", "52/15"), ("48", "52/15"), ("60", "13/3")]
     require([(r["世界数"], r["全量見積h"]) for r in queue] == expected_queue, "queue worlds/hours")
-    require(queue[0]["状態"] == "dev5走行中との引継ぎ・結果未確認" and queue[1]["状態"] == "証跡精算のみ・再走なし" and
+    require(queue[0]["状態"] == "mix1走行中・結果待ち" and queue[1]["状態"] == "証跡精算のみ・再走なし" and
             queue[2]["状態"] == "条件付き決定・実行停止" and queue[5]["状態"] == "不採用・旧未署名記録", "repair/requalification/archive state")
     require(all(queue[i]["状態"] == "停止" for i in (4, 6, 7)), "qualification queue needs Q0 evidence")
     require(queue[11]["状態"] == "不採用・0h配分", "M2 must remain zero allocation")
@@ -345,8 +757,8 @@ def check_documents(document, html, morning, m1, ai):
                 (int(r["順序"]), r["状態"], int(r["世界数"]), None if r["全量見積h"] == "未見積" else r["全量見積h"], r["窓"], r["依存・停止"]),
                 "dashboard queue row differs: "+r["実験ID"])
     require(dq[0]["active"] is True and all(not q["active"] for q in dq[1:]),
-            "only reported dev5 may be active; Q0 and downstream remain blocked")
-    require(dq[0]['worlds'] == 24 and dq[0]['hours'] is None and '既見seedの開発診断で独立screen/Q0には使えない' in dq[0]['dependency'], 'dev5 known scope, unknown cost and independent-screen boundary')
+            "only reported mix1 may be active; Q0 and downstream remain blocked")
+    require(dq[0]['worlds'] == 24 and dq[0]['hours'] is None and '契約・資格とは無関係' in dq[0]['dependency'], 'mix1 known scope, unknown actual cost and qualification boundary')
     require('35001/35002はdev3診断で既見のため再利用不可' in dq[9]['dependency'],
             'D-control cannot silently reuse dev3 development seeds')
     milestones = data["milestones"]["items"]
@@ -377,7 +789,7 @@ def check_documents(document, html, morning, m1, ai):
                 "human-only scope disclosure")
         require("凍結性能は改訂ON性能の代用にならない" in doc, "ON evidence boundary")
         require("17.2h" in doc and "9.7h" in doc and "10/17" in doc, "allocation and cutover prose")
-    require(data["decisions"]["human_only"] == REV9_EXPECTED["human_only"],
+    require(data["decisions"]["human_only"] == REV10_EXPECTED["human_only"],
             "full executor authority remains a pending human decision; registration and cost boundaries retained")
     require(all(decisions[i]["status"] == "decided" for i in ("dec-step1-policy", "dec-q0-keep", "dec-original", "dec-forward")),
             "prior settled decisions must stay decided")
@@ -521,9 +933,9 @@ def check_documents(document, html, morning, m1, ai):
             ('a646e9b',123,25,False,'measured引継ぎ'), 'v2 implementation/test evidence cannot become fresh verification')
     require('123' in document and '赤対照25' in document and '16:24 JST開始' in document and '17:39 JST完了' in document,
             'v2/dev3 MASTER handoff missing')
-    require(data['status']['human_action'] == REV9_EXPECTED['human_action'] and data['budget']['consumed_forward_hours'] is None and
+    require(data['status']['human_action'] == REV10_EXPECTED['human_action'] and data['budget']['consumed_forward_hours'] is None and
             data['budget']['consumption_status'] == '未精算', 'human action and unknown forward consumption')
-    require(data['plan']['revision'] == 9 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
+    require(data['plan']['revision'] == 10 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
             'revision and submission deadline')
     report = data["decisions"]["ollama_report"]
     require(report["evidence_kind"] == "本人報告" and report["registration"] == "accepted-display-reported" and
@@ -544,7 +956,9 @@ def check_documents(document, html, morning, m1, ai):
     require(progress["progress-dev2"]["state"] == "done" and progress['progress-dev3']['state'] == 'done' and
             progress['progress-dev3b']['state'] == 'pending' and progress['progress-xbr-v3']['state'] == 'done' and
             progress['progress-dev4']['state'] == progress['progress-xbr-v5']['state'] == 'done' and
-            progress['progress-dev5']['state'] == progress['progress-plateau']['state'] == 'running' and
+            progress['progress-dev5']['state'] == 'done' and progress['progress-plateau']['state'] == 'running' and
+            progress['progress-xa1']['state'] == 'failed' and progress['progress-live']['state'] == 'done' and
+            progress['progress-mix1']['state'] == 'running' and
             progress['progress-xbr-v2']['state'] == 'done' and progress["progress-xbr-requal"]["state"] == "blocked" and
             progress["progress-ollama"]["state"] == "done", "diagnosis/qualification/registration states are separate")
     require([i["id"] for i in data["log"]["items"][:-60]] == [f"log-{i:03}" for i in range(len(data["log"]["items"]), 60, -1)],
@@ -561,7 +975,7 @@ def check_documents(document, html, morning, m1, ai):
     require(any(s["path"] == "ascon-notes/league/DESIGN-AI-LAYER-01-astra.md" for s in data["sources"]["sources"]), "dashboard AI source missing")
     # Visible comparisons use references to exactly these populations, never cross-field T differences.
     comparisons = data['results']['comparison']
-    require([r['scope_ref'] for r in comparisons['diagnostic']] == ['status.dev5','status.dev4','status.dev3','status.dev2','status.dev1'],
+    require([r['scope_ref'] for r in comparisons['diagnostic']] == ['status.dev5','status.dev4','status.dev3','status.dev2','status.dev1','status.xa1.measured_scope','status.live','status.mix1'],
             'diagnostic comparison populations')
     require([r['scope_ref'] for r in comparisons['qualification']] ==
             ['plan.q0_requalification','results.q0.scope','status.q0b'], 'qualification comparison populations')
@@ -584,21 +998,20 @@ def check_documents(document, html, morning, m1, ai):
     dev4, dev5 = data['status']['dev4'], data['status']['dev5']
     expected_dev4 = {'name': 'dev4-xb-r', 'state': 'measured-diagnostic-complete', 'verified': False, 'evidence_basis': '本人提示measured集計。原ログ/live再監査なし', 'field': 'F_ref', 'seeds': '36001/36002', 'regimes': 12, 'worlds': 24, 'completed_worlds': 24, 'fix_commit': 'd30cbbb', 'g0': 'PASS', 'loops': 362, 'started_at': None, 'completed_at': None, 'expected_end': None, 'q0_eligible': False, 'result': {'t_candidate': '49.72', 't_multi': '55.02', 't_gap': '5.3', 'min_regime_t_minus_noop': '+7.85', 'positive_regimes': 12, 'noop_below': 0, 'violations': 0, 'reverts': 0, 'submitted': 1652, 'submit_failed': 23, 'submit_failed_percent': '1.4', 'p_candidate': '488.2', 'p_multi': '1460.8', 'p_clean': '440.0', 'trades_candidate': '68.8', 'trades_multi': '273.4', 'trades_clean': '46.3', 'regime_t': [{'regime': 'calm', 'candidate': '56.12', 'multi': '35.90'}, {'regime': 'crash', 'candidate': '52.45', 'multi': '50.31'}, {'regime': 'vuln', 'candidate': '54.14', 'multi': '48.69'}, {'regime': 'spike', 'candidate': '50.20', 'multi': '49.99'}, {'regime': 'depeg-persist', 'candidate': '57.02', 'multi': '50.54'}, {'regime': 'launch', 'candidate': '53.46', 'multi': '49.92'}, {'regime': 'whale', 'candidate': '38.86', 'multi': '62.79'}, {'regime': 'cex-drift', 'candidate': '45.67', 'multi': '63.80'}, {'regime': 'depeg', 'candidate': '42.73', 'multi': '63.85'}, {'regime': 'lending-incident', 'candidate': '46.48', 'multi': '63.61'}, {'regime': 'cdp-incident', 'candidate': '47.24', 'multi': '62.98'}, {'regime': 'informed-flow', 'candidate': '52.33', 'multi': '57.81'}]}, 'note': 'v3の全12レジーム等重み平均Tはmulti-arb未達。全レジーム平均(T−Tnoop)>0、最小+7.85。診断完了であり資格合格ではない。', 'sources': ['src-dev4']}
     require(dev4 == expected_dev4, 'dev4 exact handoff: scope/hash/G0/loops/values/all 12 regimes and unknown times')
-    expected_dev5 = {'name': 'dev5-xb-r', 'state': 'reported-running-unverified', 'verified': False, 'evidence_basis': '本人の走行中引継ぎ。プロセス/原ログ再監査なし', 'field': 'F_ref', 'seeds': '36001/36002', 'regimes': 12, 'worlds': 24, 'fix_commit': '7b1448b', 'started_at': '2026-10-04T22:07:00+09:00', 'started_at_precision': 'minute', 'started_at_basis': '本人提示22:07 JST。秒00は保存表現で実測秒ではない', 'expected_end': '2026-10-05T00:00:00+09:00', 'expected_end_basis': '本人提示00:00 JST頃の見込み。実完了ではない', 'completed_at': None, 'completed_worlds': None, 'g0': None, 'result': None, 'q0_eligible': False, 'independent_screen': False, 'iteration': 2, 'note': 'v5・同seed36001/36002の12レジーム24世界。10/4 22:07 JST開始、10/5 00:00 JST頃完了見込み、結果未確認。今回2/3回目。既見seedの開発診断で独立screen/Q0には使えない。', 'sources': ['src-dev5', 'src-v5']}
-    require(dev5 == expected_dev5, 'dev5 exact pending state, minute start, next-day forecast, known seeds, no result or independent qualification')
-    require(data['status']['repair_v5'] == {'commit': '7b1448b', 'tests': 183, 'red_controls': 59, 'state': 'implemented-reported', 'verified': False, 'evidence_kind': 'measured引継ぎ', 'title': 'v5 = v3 + R9（bundle用在庫余地）ON', 'note': 'DEV4-XB-R-V5.mdを根拠にR9のみON。テスト183・赤対照59は既存検査記録の引継ぎで今回再実行なし。性能昇格はdev5結果待ち。', 'sources': ['src-v5']}, 'v5 exact decision and inherited test record')
-    require(data['status']['team'] == {'primary': 'Codex(Astra)', 'secondary': 'Claude', 'unavailable': 'Grok: 利用残高切れ(402)で体制から除外', 'support': 'agy: Gemini 3.8 Flash High・ハーネス反映済 masa-harness#409', 'independent_review': 'Claudeの別エージェント+agy', 'tool_policy': 'ツール使用禁止・差分埋め込み・stdin', 'note': '本人の運用引継ぎ。レビュー用ツールへの入力に差分を埋め込みstdinで渡し、呼び出し先のツール使用を禁止する。本更新で外部モデル照会なし。', 'sources': ['src-operations']}, 'current team and review restrictions')
+    require(dev5 == REV10_EXPECTED['dev5'], 'dev5 measured T only; no invented G0/safety/completion clock or qualification')
+    require(data['status']['repair_v5'] == REV10_EXPECTED['repair_v5'], 'v5 not promoted; initial tests inherited')
+    require(data['status']['team'] == REV10_EXPECTED['team'], 'team and agy invocation restrictions')
     require(data['status']['plateau'] == {'name': 'PLATEAU-ANALYSIS', 'state': 'reported-creating-unverified', 'owner': 'Codex', 'result': None, 'verified': False, 'note': '構造の異なる独自設計候補の検討をAstraが別ジョブで作成中。結果未確認。新規計測・採用・予算追加を意味しない。', 'sources': ['src-operations']}, 'PLATEAU remains a separate unverified job')
-    require(op['iteration_current'] == 2 and op['current_run_ref'] == 'status.dev5', 'current iteration 2/3, no counter reset')
+    require(op['iteration_current'] == 3 and op['current_run_ref'] == 'status.mix1', 'iteration 3/3 stopped; current mix1 is only diagnostic')
     for key, marker, expected in [('dev4', 'source-dev4', {'header': ['dev4-xb-r項目', '提示された結果', '判定・範囲'], 'rows': [['母集団・G0', 'v3 d30cbbb・F_ref・seed36001/36002・12レジーム24世界 / G0 PASS / 362ループ', '本人提示measured。原ログ再監査なし'], ['12レジーム等重み平均T', 'cand 49.72 / multi-arb 55.02（差5.3T）', '平均T条件未達・資格合格ではない'], ['レジーム平均(T−Tnoop)', '全12レジームで正 / 最小+7.85', 'レジーム平均の最小値。世界別Pの最小値ではない'], ['noop割れ / violations / cand revert', '0 / 0 / 0', '未提示の安全項目は補完しない'], ['送信 / 送信失敗', 'submitted 1652 / failed 23（1.4%）', '失敗率は23/(1652+23)の丸め。mined revertと別'], ['1世界平均P', 'cand 488.2 / multi-arb 1460.8 / clean-arb 440.0', '同じ24世界'], ['1世界平均取引数', 'cand 68.8 / multi-arb 273.4 / clean-arb 46.3', '同じ24世界']]}), ('dev4_regimes', 'source-dev4-regimes', {'header': ['dev4レジーム', 'cand 平均T', 'multi-arb 平均T', '比較'], 'rows': [['calm', '56.12', '35.90', 'candが上回る'], ['crash', '52.45', '50.31', 'candが上回る'], ['vuln', '54.14', '48.69', 'candが上回る'], ['spike', '50.20', '49.99', 'candが上回る'], ['depeg-persist', '57.02', '50.54', 'candが上回る'], ['launch', '53.46', '49.92', 'candが上回る'], ['whale', '38.86', '62.79', 'candが下回る'], ['cex-drift', '45.67', '63.80', 'candが下回る'], ['depeg', '42.73', '63.85', 'candが下回る'], ['lending-incident', '46.48', '63.61', 'candが下回る'], ['cdp-incident', '47.24', '62.98', 'candが下回る'], ['informed-flow', '52.33', '57.81', 'candが下回る']]})]:
         require(parsed_table(block(document, marker)) == expected, 'exact dev4 MASTER source table: '+key)
         require({k:data['results'][key][k] for k in ('header','rows')} == expected, 'exact dev4 dashboard source table: '+key)
-    require(comparisons['diagnostic'][:2] == [{'candidate': 'xb-r v5', 'scope_ref': 'status.dev5', 'run_ref': 'status.dev5.name', 'value_note': '結果未確認', 'detail': '同seed開発診断・2/3回目。10/4 22:07開始、10/5 00:00 JST頃見込み。', 'state': 'running', 'verdict': '走行中との引継ぎ。独立screen/Q0には使えない。', 'sources': ['src-dev5']}, {'candidate': 'xb-r v3', 'scope_ref': 'status.dev4', 'run_ref': 'status.dev4.name', 'metrics': [{'label': '平均P', 'candidate_ref': 'status.dev4.result.p_candidate', 'baseline_ref': 'status.dev4.result.p_multi'}, {'label': '平均取引数', 'candidate_ref': 'status.dev4.result.trades_candidate', 'baseline_ref': 'status.dev4.result.trades_multi'}, {'label': '平均T', 'candidate_ref': 'status.dev4.result.t_candidate', 'baseline_ref': 'status.dev4.result.t_multi'}], 'metric_note': 'cand / multi-arb、同じ24世界。平均Tは12レジーム等重み、cleanのP/取引数は原表。', 'state': 'warning', 'state_label': '比較対象に未達', 'safety_ref': 'status.dev4', 'verdict': '平均Tは5.3T不足。全12レジーム平均(T−Tnoop)>0、最小+7.85。資格試験ではない。', 'sources': ['src-dev4']}], 'current visible comparison and safety references')
+    require(comparisons['diagnostic'] == REV10_EXPECTED['comparison'], 'all diagnostic scopes, metrics and pending results exact')
     require([k['ref'] for k in data['ui']['kpis'][:2]] == ['status.dev4.name','status.dev4.result.t_candidate'], 'KPI uses latest completed diagnosis')
-    require(data['status']['priority']['progress_refs'] == ['progress-dev4','progress-xbr-v5','progress-dev5','progress-xbr-requal'], 'current priority progression')
+    require(data['status']['priority']['progress_refs'] == ['progress-dev4','progress-dev5','progress-xa1','progress-live','progress-xbr-requal'], 'current priority progression')
     for phrase in ('v5 = v3 + R9(bundle用在庫余地)ON','7b1448b','2026-10-04 22:07 JST開始','2026-10-05 00:00 JST頃','2/3回目',
                    'Codex(Astra)主・Claude副','利用残高切れ(402)','Gemini 3.8 Flash High','masa-harness#409','Claudeの別エージェント+agy',
-                   'ツール使用禁止・差分埋め込み・stdin','PLATEAU-ANALYSIS','Astraが作成中、結果未確認',
+                   'ツール使用禁止・差分埋め込み・`echo "" | …`','PLATEAU-ANALYSIS','Astraが作成中、結果未確認',
                    '平均対応ΔT≥+1.0','各レジームΔT≥−2.0','failed率≤23/1675','片脚bundle率≤2/114','成功bundle数≥143 ID'):
         require(phrase in document, 'rev8 current prose missing: '+phrase)
     glossary = parsed_table(block(document, 'glossary'))
@@ -608,26 +1021,73 @@ def check_documents(document, html, morning, m1, ai):
     require(len(rev8_logs) == 73 and digest(rev8_logs) == REV8_LOG_DIGEST, 'all 73 prior logs and every field are immutable')
     prior_decisions = [x for x in data['decisions']['items'] if x['id'] in REV8_DECISION_IDS]
     require(digest(prior_decisions) == REV8_DECISIONS_DIGEST, 'all prior decision records/signatures/dates unchanged')
-    for name in ('h1', 'pilot', 'next_branch'):
+    for name in ('h1', 'pilot'):
         require(data['plan'][name] == REV9_EXPECTED[name], 'rev9 exact plan contract: '+name)
-    for name in ('xa1', 'agy_format'):
+    for name in ('agy_format',):
         require(data['status'][name] == REV9_EXPECTED[name], 'rev9 inherited evidence, never fresh verification: '+name)
-    require(data['results']['h1'] == REV9_EXPECTED['table'], 'H1 visible facts and evidence boundaries exact')
-    require(parsed_table(block(document, 'h1-current')) == {k:REV9_EXPECTED['table'][k] for k in ('header','rows')}, 'MASTER H1 current contract matches dashboard')
-    require([decisions[x['id']] for x in REV9_EXPECTED['decisions']] == REV9_EXPECTED['decisions'], 'H1 selected, unrestricted executor not authorized')
+    require(data['results']['h1'] == REV10_EXPECTED['table'], 'H1 visible facts and evidence boundaries exact')
+    require(parsed_table(block(document, 'h1-current')) == {k:REV10_EXPECTED['table'][k] for k in ('header','rows')}, 'MASTER H1 current contract matches dashboard')
+    require([decisions[x['id']] for x in REV9_EXPECTED['decisions']] == REV9_EXPECTED['decisions'], 'rev9 H1/production authority records preserved; live simulation does not change them')
     require(data['plan']['pilot']['worlds'] == len(data['plan']['pilot']['regimes']) * len(data['plan']['pilot']['seeds']) * (data['plan']['pilot']['off_repeats'] + data['plan']['pilot']['on_repeats']), 'pilot world arithmetic')
-    for phrase in ('7179efe','時間制限付き単脚往復+lot台帳','テスト39・赤対照39','smoke 38003','38001/38002×12=24世界','約104分+終了確認','未達なら第3回にxa-1を診断','並行してAIパイロットの専用adapter/受付','AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）'):
+    for phrase in ('7179efe','時間制限付き単脚往復+lot台帳','テスト39・赤対照39','smoke 38003','38001/38002×12=24世界','約104分+終了確認','第3回はsmokeで打ち切り','H1（xb-r-ai）はON拒否を維持','契約変更は未決定'):
         require(phrase in document, 'rev9 current prose missing: '+phrase)
     require('第3回xa-1' in dq[0]['dependency'] and '専用adapter/受付' in dq[0]['dependency'], 'next branch visible in queue')
     require('H1' in dq[3]['dependency'] and '標準ON拒否' in dq[3]['dependency'] and '本人判断' in dq[3]['dependency'], 'acceptance boundary in queue')
     require('専用adapter接続・検査は未実装' in dq[8]['dependency'] and not dq[8]['active'], 'adapter work not pilot execution')
+    rev9_logs = [x for x in data['log']['items'] if x['id'] in {f'log-{i:03}' for i in range(1,79)}]
+    require(len(rev9_logs) == 78 and digest(rev9_logs) == REV9_LOG_DIGEST, 'all 78 existing logs and all fields immutable')
+    require(digest([x for x in data['decisions']['items'] if x['id'] in REV9_DECISION_IDS]) == REV9_DECISIONS_DIGEST,
+            'all 19 existing decisions/signatures/dates immutable')
+    require(decisions['dec-rev10-direction'] == REV10_EXPECTED['new_decision'], 'contract change is proposal only; human decision pending')
+    for name in ('xa1','live','mix1','night_operation'):
+        require(data['status'][name] == REV10_EXPECTED[name], 'rev10 supplied status and uncertainty: '+name)
+    for name in ('next_branch','live_contract','production_assessment'):
+        require(data['plan'][name] == REV10_EXPECTED[name], 'rev10 stop/safety/authority boundary: '+name)
+    night = data['budget']['overnight']
+    require(night == REV10_EXPECTED['overnight'], 'overnight estimates, union unknown and unchanged accounting formula')
+    require(night['xa_smoke_minutes_each'] * night['xa_smoke_count'] +
+            night['live_smoke_minutes_each'] * night['live_smoke_count'] + night['live_main_minutes'] ==
+            night['completed_estimate_minutes'] == 202, 'completed estimates arithmetic')
+    require(night['completed_estimate_minutes'] + night['mix1_estimate_minutes'] ==
+            night['total_projected_minutes'] == 352, 'mix1 projection not confirmed consumed time')
+    live = data['status']['live']
+    require(len(data['plan']['live_contract']['regimes']) * 2 * 4 == live['worlds'] == 32, 'live all groups/worlds retained')
+    for group in live['groups'][1:]:
+        # T means are independently rounded to 0.01; retain reported dT (-1.93, not a recomputed -1.94).
+        require(abs(Fraction(group['t']) - Fraction(live['groups'][0]['t']) - Fraction(group['d_t'])) <= Fraction(1,100),
+                'reported dT consistent within displayed rounding')
+        require(Fraction(group['d_t']) < 0, 'each ON failed pre-registered strict dT>0')
+    for key, marker in [('dev5','source-dev5'),('xa1','source-xa1'),('live','source-live'),('live_safety','source-live-safety'),('mix1','source-mix1')]:
+        require(parsed_table(block(document,marker)) == {k:data['results'][key][k] for k in ('header','rows')},
+                'rev10 MASTER/dashboard table correspondence: '+key)
+        require({k:data['results'][key][k] for k in ('header','rows')} == REV10_TABLES[key], 'rev10 exact displayed table: '+key)
+    expected_live_rows = [[g['group'],g['t'],g['d_t'] or '—',g['d_alpha'] or '—',g['worst'] or '—',
+                          ' / '.join(str(g[k]) for k in ('installed','declined','rejected')) if g['group'] != 'OFF' else '—']
+                         for g in live['groups']]
+    require(data['results']['live']['rows'] == expected_live_rows, 'every ON value and rejected/declined/installed count visible')
+    require(['結果','結果待ち'] in data['results']['mix1']['rows'], 'mix1 result placeholder visible')
+    for phrase in ('202分（3h22）','352分（5h52）','C_forward + R_remaining + N_next ≤ 100h','区間和集合',
+                   '13×2 = 26','30分で失効','8分ごと','/tmp/night-state.md','全反復でdT>0、dAlpha>0、worst≥−2',
+                   '39101/prompt v1','v2/39102','WBTCのslippage許容80→100bps','16取引の固定価格損益+63.34 USDC',
+                   'モデル間の実測比較ではない','HEALTHY=no','契約・資格とは無関係','反証条件'):
+        require(phrase in document, 'rev10 essential fact/accounting/decision prose: '+phrase)
+    require(morning_new is not None, '10/5 morning draft required')
+    morning_rows = parsed_table(block(morning_new,'morning-runs'))
+    require(len(morning_rows['rows']) == 4, 'morning report retains four runs/lines')
+    for phrase in ('49.72対multi 55.02','50.15対55.73','7179efe→6cd9e70→3ad4f60','264/362','10<30','4/710',
+                   '54.74','48.91 / 52.80 / 53.62','−5.83 / −1.93 / −1.11','PILOT-STOP','HEALTHY=no',
+                   '40001/40002=24世界','mix1a/b','03:52 JST','06:30頃','**結果待ち**','結果未確認',
+                   '202分（3h22）','352分（5h52）','不明','C_forward + R_remaining + N_next ≤ 100h',
+                   'A（推奨）','B:','C:','推奨の反証条件','10/31 23:59 JST','dec-007は10/28','H1 ON拒否',
+                   '80→100bps','+63.34','推測','8分heartbeat','30分で失効','echo "" | …'):
+        require(phrase in morning_new, 'morning/current data consistency: '+phrase)
     return list(_RESULT_LINES)
 
 
 def check():
     directory = Path(__file__).resolve().parent
     names = ("MASTER-PLAN-2026-10-04.md", "ASCON-DASHBOARD.html",
-             "MORNING-2026-10-04.md", "m1/M1-RESULT.md", "DESIGN-AI-LAYER-01-astra.md")
+             "MORNING-2026-10-04.md", "m1/M1-RESULT.md", "DESIGN-AI-LAYER-01-astra.md", "MORNING-2026-10-05.md")
     documents = [(directory / name).read_text(encoding="utf-8") if (directory / name).exists() else None for name in names]
     if documents[0] is None or documents[2] is None or documents[3] is None:
         raise OSError("a required source document is missing")
@@ -649,7 +1109,7 @@ def self_check(documents):
             ds[1] = re.sub(pattern, update, ds[1], count=1, flags=re.S)
         return change
     controls = [
-        lambda ds: ds.__setitem__(0, ds[0].replace("revision 9", "revision 6", 1)),
+        lambda ds: ds.__setitem__(0, ds[0].replace("revision 10", "revision 6", 1)),
         mutate("plan", lambda d: d["ai_contract"].update(status="unsigned")),
         mutate("plan", lambda d: d["ai_contract"].update(on_repeats=1)),
         mutate("plan", lambda d: d["ai_contract"].update(selected_total_hours="12")),
@@ -776,7 +1236,7 @@ def self_check(documents):
         mutate('status', lambda d: d['team'].update(tool_policy='tools allowed')),
         mutate('status', lambda d: d['plateau'].update(result='complete')),
         mutate('plan', lambda d: d['continuous_operation'].update(iteration_current=1)),
-        mutate('log', lambda d: d['items'][5].update(summary='rewritten rev7 history')),
+        mutate('log', lambda d: next(x for x in d['items'] if x['id']=='log-073').update(summary='rewritten rev7 history')),
         lambda ds: ds.__setitem__(0, ds[0].replace('平均対応ΔT≥+1.0', '平均対応ΔT≥0')),
         mutate('results', lambda d: d['comparison']['diagnostic'][1]['metrics'][0].update(baseline_ref='status.dev3.result.p_multi')),
     ]
@@ -834,6 +1294,58 @@ def self_check(documents):
         mutate('results', lambda d: d['h1']['rows'][1].__setitem__(1, 'safe on')),
         lambda ds: ds.__setitem__(0, ds[0].replace('smoke 38003', 'smoke 39001'))
     ]
+    controls += [
+        mutate('log', lambda d: next(x for x in d['items'] if x['id']=='log-078').update(time_basis='changed')),
+        mutate('log', lambda d: d['items'].pop(next(i for i,x in enumerate(d['items']) if x['id']=='log-077'))),
+        mutate('status', lambda d: d['dev5']['result'].update(t_candidate='55.74')),
+        mutate('status', lambda d: d['dev5'].update(state='reported-running-unverified')),
+        mutate('status', lambda d: d['xa1']['result'].update(healthy=True)),
+        mutate('status', lambda d: d['xa1']['result'].update(submitted=30)),
+        mutate('status', lambda d: d['xa1']['result'].update(recovery_only=264)),
+        mutate('status', lambda d: d['xa1'].update(repairs=3)),
+        mutate('status', lambda d: d['xa1'].update(iteration_outcome='qualified')),
+        mutate('status', lambda d: d['xa1']['smokes'][0].update(g0='PASS')),
+        mutate('status', lambda d: d['live'].update(decision='PILOT-CONTINUE-ELIGIBLE')),
+        mutate('status', lambda d: d['live'].update(initial_code='v5')),
+        mutate('status', lambda d: d['live'].update(paid_usage=True)),
+        mutate('status', lambda d: d['live']['calibration'][0].update(installed=1)),
+        mutate('status', lambda d: d['live']['calibration'][1].update(outcome='safe')),
+        mutate('status', lambda d: d['live']['wbtc'].update(exclusion_supported=True)),
+        mutate('status', lambda d: d['live']['wbtc'].update(fixed_price_pnl_usdc='-63.34')),
+        mutate('plan', lambda d: d['live_contract'].update(all_repeats_required=False)),
+        mutate('plan', lambda d: d['live_contract'].update(d_t_strict_min='-6')),
+        mutate('plan', lambda d: d['live_contract'].update(worst_min='-20')),
+        mutate('plan', lambda d: d['live_contract'].update(on4_allowed=True)),
+        mutate('plan', lambda d: d['production_assessment'].update(evidence='measured')),
+        mutate('plan', lambda d: d['production_assessment'].update(runtime_safety_boundary=True)),
+        mutate('status', lambda d: d['mix1'].update(result='PASS')),
+        mutate('status', lambda d: d['mix1'].update(result_label='PASS')),
+        mutate('status', lambda d: d['mix1'].update(completed_at='2026-10-05T06:30:00+09:00')),
+        mutate('status', lambda d: d['mix1'].update(completed_worlds=24)),
+        mutate('status', lambda d: d['mix1'].update(g0='PASS')),
+        mutate('status', lambda d: d['mix1'].update(q0_eligible=True)),
+        mutate('status', lambda d: d['mix1'].update(seeds='41301/41302')),
+        mutate('status', lambda d: d['mix1'].update(agents=12)),
+        mutate('status', lambda d: d['mix1'].update(chunks=['mix1a'])),
+        mutate('status', lambda d: d['night_operation'].update(verified=True)),
+        mutate('status', lambda d: d['night_operation'].update(monitor_expiry_minutes=60)),
+        mutate('budget', lambda d: d['overnight'].update(exact_union_minutes=352)),
+        mutate('budget', lambda d: d['overnight'].update(completed_estimate_minutes=606)),
+        mutate('budget', lambda d: d['overnight'].update(total_projected_minutes=364)),
+        mutate('budget', lambda d: d['overnight'].update(repair_check_nonrun_minutes=0)),
+        mutate('plan', lambda d: d['next_branch'].update(recommendation='C')),
+        mutate('decisions', lambda d: next(x for x in d['items'] if x['id']=='dec-rev10-direction').update(status='decided')),
+        lambda ds: ds.__setitem__(5, ds[5].replace('**結果待ち**','**PASS**')),
+        lambda ds: ds.__setitem__(5, ds[5].replace('352分（5h52）','352分消費済み')),
+        lambda ds: ds.__setitem__(5, ds[5].replace('推奨の反証条件','追加提案')),
+    ]
+    controls += [
+        mutate('results', lambda d: d['live_safety']['rows'][1].__setitem__(1, 'safe slippage change')),
+        mutate('results', lambda d: d['mix1']['rows'][3].__setitem__(1, 'PASS')),
+    ]
+    for index in range(1,4):
+        for key in ('t','d_t','d_alpha','worst','installed','declined','rejected'):
+            controls.append(mutate('status', lambda d,i=index,k=key: d['live']['groups'][i].update({k:'999'})))
     for number, control in enumerate(controls, 1):
         changed = copy.deepcopy(documents)
         control(changed)

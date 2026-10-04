@@ -13,8 +13,8 @@
 | 進捗・結果 | 比較表を最初の内容セクションに表示。診断／資格試験の切替、run・母集団・出所、原表、進捗台帳と過去の記録 |
 | ブロッカー・リスク | 優先順位、原因、影響、対応、担当。未解消／解消済み／全件の切替 |
 | 判断 | 本人の予定、登録報告、委任決定、署名・原判断・旧案の詳細 |
-| 実行キュー・予算 | dev5の走行中・結果未確認、体制・別ジョブ、連続稼働の段階・待ち時間・Q0準備screen、依存付きキュー、100h枠の予約と実消化の区別 |
-| 更新ログ | 78件（既存73件を保持し5件追加）。全文検索＋種類＋記録日（JST）の絞り込み。IDは小さな注記だけ |
+| 実行キュー・予算 | mix1の走行中・結果待ち、夜間消費の概算/未精算、体制・別ジョブ、連続稼働の段階・待ち時間・Q0準備screen、依存付きキュー、100h枠の予約と実消化の区別 |
+| 更新ログ | 84件（既存78件を全件保持し6件追加）。全文検索＋種類＋記録日（JST）の絞り込み。IDは小さな注記だけ |
 | 用語集 | 53語。名前・略語・説明検索、分類フィルタ、参照資料 |
 
 本文の専門語はページ内の初出に `ⓘ` を付け、クリック／キーボードで説明を開きます。Escapeで閉じ、元のボタンへフォーカスを戻します。図表の原語・署名のAstra表記は保存し、現担当はCodexで統一しています。
@@ -50,7 +50,7 @@ KPIの `ref`、比較表の `scope_ref` / `run_ref` / `candidate_ref` / `baselin
 
 1. 秘密値を含まない担当者の引継ぎ／生成表で事実を確認する。本人が確認した設定は「本人報告」、提示計測値は「measured引継ぎ」、推定と未確認は別にする。
 2. 該当するJSONを更新し、数値・run・seed・レジーム・場・G0・時刻根拠・出所をそろえる。要約、比較判定、進捗、ブロッカー、キュー、重要イベントに旧状態が残っていないか確認する。
-3. 計画や新しい引継ぎの原表をMASTERへ反映する。現在はrevision 9、最新値は§1.7、連続稼働は§8、用語はAppendix B。revision 6の既決契約を維持する。ロードマップの期間や最大3回という上限は開始を許可するものではない。
+3. 計画や新しい引継ぎの原表をMASTERへ反映する。現在はrevision 10、最新値は§1.7/5、夜間会計は§7.1、連続稼働は§8、用語はAppendix B。revision 6の既決契約を維持する。ロードマップの期間や最大3回という上限は開始を許可するものではない。
 4. `status.as_of` と `last_update` を更新する。時刻はJSTで取得する。測定開始／完了時刻へ更新時刻を代入しない。
 5. 下記の軽量検査を実行し、未検証の境界を引き継ぐ。commitは今回の依頼では行わない。
 
@@ -58,7 +58,7 @@ JSTは `TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z'`、またはPython `ZoneInfo('
 
 IDは全ブロックで一意。progressは `done/running/pending/failed/blocked`、担当は `human/Claude/Codex`。署名の原記録にあるAstraは改名しません。出所は既存ファイルに限り、絶対path・`..`・外部URL・symlink・`upstream-eval`・生の測定出力・秘密への参照を入れません。
 
-ログは追記のみ。訂正は新しい `誤り` エントリにし、時刻を降順に保ちます。既存73件を全件・全フィールド保持し、rev 9ではH1本人決定・実装境界・agy形式確認・課金なし/パイロット仕様・xa-1/次分岐の5件を追加しました。旧60件/65件/rev 7の68件/rev 8の73件のdigestをすべて検査します。本文は該当節へ統合し、末尾の追補で現況を上書きしません。原時刻が不明なら記録時刻と `time_basis` を明示し、出来事の時刻を作りません。dev3aの17:39 JSTは本人提示の分精度で、ISO形式の秒00は保存表現です。
+ログは追記のみ。訂正は新しい `誤り` エントリにし、時刻を降順に保ちます。既存78件を全件・全フィールド保持し、rev 10ではxa-1打ち切り・live結果・校正安全節違反・mix1結果待ち・本人方針判断・夜間運用/会計の6件を追加しました。旧60件/65件/rev 7の68件/rev 8の73件/rev 9の78件のdigestをすべて検査します。既存19判断レコードも全フィールド不変です。本文は該当節へ統合し、末尾の追補で現況を上書きしません。原時刻が不明なら記録時刻と `time_basis` を明示し、出来事の時刻を作りません。dev3aの17:39 JSTは本人提示の分精度で、ISO形式の秒00は保存表現です。
 
 ## 現在の証拠・計画境界
 
@@ -66,17 +66,20 @@ IDは全ブロックで一意。progressは `done/running/pending/failed/blocked
 - a646e9bの123テスト・赤対照25件は既存の検査記録の引継ぎ。今回の再実行結果ではない。
 - dev3a-xb-rはF_ref、35001/35002、9レジーム18世界、10/4 16:24 JST開始・17:39 JST完了（分精度の本人引継ぎ）。G0 PASS、P−noop全正、noop割れ/違反/revert0、submit_failed27/submitted980。平均Pは842.3/2032.9/1050.3、取引54.4/288.7/61.3（cand/multi/clean）、平均T46.83対55.93。最小P−noopは未提示。dev3b（残り3レジーム）はrev 7時点の未確認履歴として保持。v3実装・凍結とdev4結果は最新引継ぎで更新。全12平均やv2の因果効果へ外挿しない。旧D対照35001/35002案は失効。
 - dev4（v3 d30cbbb）は本人提示measured引継ぎ。F_ref・36001/36002・12レジーム24世界・G0 PASS・362ループ。12レジーム等重み平均T49.72/55.02（差5.3T）、全12平均(T−Tnoop)>0・最小+7.85、noop割れ/violations/cand revert0。submitted1652/failed23（1.4%、23/1675の丸め）。1世界平均P488.2/1460.8/440.0、取引68.8/273.4/46.3（cand/multi/clean）。全12レジーム別TはMASTER §1.7とHTML原表で照合。
-- v5はv3 + R9(bundle用在庫余地)ON、根拠`DEV4-XB-R-V5.md`、commit7b1448b、テスト183・赤対照59は既存検証記録の引継ぎ。今回再実行なし。dev5は同seed36001/36002・12レジーム24世界、2026-10-04 22:07 JST開始（分精度）、翌10/5 00:00 JST頃完了見込み、結果未確認。今回2/3回目、最大3回を維持。既見seedの開発診断で独立fresh screen/Q0には使わない。
-- 体制はCodex(Astra)主・Claude副。Grokは利用残高切れ(402)で除外。agy（Gemini 3.8 Flash High・masa-harness#409反映済）を補助レビュー、独立レビューはClaudeの別エージェント+agy。レビュー用ツールへの入力は「ツール使用禁止・差分埋め込み・stdin」。本更新で外部照会なし。
+- v5はv3+R9 ON、7b1448b・183テスト/赤対照59は既存引継ぎ。dev5のF_ref・同seed36001/36002・12レジーム24世界は平均T50.15対55.73、v5昇格せず基準はv3。2/3回目。完了時刻/完了数/G0/安全内訳は未提示のまま。独立screen/Q0へ使わない。
+- Codex(Astra)主・Claude副・agy補助、Grokは402で離脱。agy（Gemini 3.8 Flash High、masa-harness#409）は「ツール使用禁止・差分埋め込み・`echo "" | …`」。差分はプロンプト内、空stdinで入力待ちを避ける。今回は外部照会/別エージェント起動なし。
 - PLATEAU-ANALYSIS（構造の異なる独自設計候補の検討）はAstraが別ジョブで作成中、結果未確認。新規候補の採用や追加計測予算を承認したものではない。
 - [本人決定 2026-10-04] H1「検査済み方針の選択+ENTRY」を選択、全面executorTs改訂は見送り。決定論の改良で大きな改善が見込めないなら推論あり等の大きな改善仮説へ切替える方針。旧rev 6の署名・初期60契約は原記録のまま保持し、H1の初期/復帰50と区別。
 - xb-r-ai a95054aは3方針・ENTRY20–60/5bps/±5・初期50・120block復帰、213テスト/赤対照25のmeasured・コード確認引継ぎ。標準runtimeはdecide全体を置換し、固定テンプレ限定/エージェント内検証とも安全境界は成立せずON拒否。専用adapterは未実装。運営受付が必要で、提出物のruntime改変はVENDORED BLOCK。本番は事実上プロンプト誘導・安全保証なし。
 - agy GPT-OSS 120B（Medium・無料枠・本番と同系統）はsparse/selection/injection各1回、validator ok=true、sparse/injectionは期待どおりnull。selectionは答えを指定した形式確認で能力評価ではない。runtime/haiku/性能へ外挿しない。
-- シミュレーションは課金なし、claude-cli:haiku第一・サブスクcodex小型モデル第二。ローカルOllamaと本人Ollama鍵/本番共有無料枠は使わない。XB-R-AI-PILOTは4レジーム×39001/39002・OFF1+ON3=32世界。専用adapter接続/検査後の条件付き仕様で実行未解放、Q0/G3の代替ではない。
-- xa-1 7179efeは候補A（時間制限付き単脚往復+lot台帳）実装済み・未計測、39テスト/赤対照39は引継ぎ。smoke38003、本計測38001/38002×12=24世界・約104分+終了確認。dev5未達なら第3回xa-1診断、並行してAI専用adapter/受付を整理。最大3回・全残費・seed非交差・安全条件は不変。
-- `plan.continuous_operation` は定義済み・運用未検証。独立監視60秒間隔/2分検知/5分受領/10分次着手、実ログfixture・1世界smoke、全12×2 fresh seed検証、1回目標150分/上限180分・最大3回を§8と同期する。費用未精算のまま実行解放せず、既決の時間/世代枠を保持。
+- 課金なし・claude-cli:haiku、v3初期コード/prompt v2のxb-r-liveはH1と別系統。F_ref・calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界・全群G0 PASS/安全OK。OFF54.74、ON48.91/52.80/53.62、全反復dT>0を満たさずPILOT-STOP。全反復のdAlpha/worst/installed/declined/rejectedをMASTER §5と正本JSONに保持。校正39101/v1はcompile failed/installed0、39102/v2はinstalled1（WBTC slippage80→100bps、安全節違反・sim内のみ）。WBTC16取引の固定価格損益+63.34 USDCは除外理由を支持しない。
+- xa-1は7179efe→6cd9e70→3ad4f60。dev6 G0 BLOCKED（round無し+停止）→修理1→dev7（提出18・回収264/362）→修理2→xas2（calm/38005、G0 PASS、提出10<30・回収4/710、violations0/revert0）。HEALTHY=no、2回修理後も不健全で第3回打ち切り。決定論ラインはQ0のF_ref平均T≥multiに未達。契約を緩めず本人報告。
+- `plan.continuous_operation`の60秒以下監視/2分検知/5分受領/10分次着手、150分目標/180分上限、最大3回、fresh全12×2と費用条件は不変。夜間は8分heartbeatと`/tmp/night-state.md`で進行管理との本人引継ぎ。監視30分失効を各heartbeatで確認/更新し、失効なら新規起動停止。8分heartbeatは60秒監視の代替ではなく、実稼働は未再検証。
 - Q0/Q0bの旧不合格・Q0bの2世界G0 FAIL・安全nullスナップショットを保持。救済再走なし。新Q0は1候補1回60世界・41301–41305・5h上限。ゲートやrevert上限の緩和なし。
-- 委任済み6決定は確定状態・出所・署名日時を保持。KEY/金銭を委任へ拡張しない。Ollamaの登録・Free・残高$0・Auto-reload Off・クリップボード消去は本人報告。dec-008 resolved、dec-007は10/28 open、鍵/登録の再操作は不要。AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）は本人判断・未許可。モデルの運営一覧・無料枠量・疎通は未確認。
+- 委任済み6決定と旧H1/全面改訂判断を含む既存19レコード・署名を保持。KEY/金銭への委任拡張なし。dec-008 resolved、dec-007は10/28 open。現本人判断はQ0の扱いと提出方針（10/31 23:59 JST締切、受理済み版未確保）。朝報告に3選択肢・A推奨・反証条件を記す。契約変更は未決定。
+- mix1はu1の11体、zeta-2をcand=xb-r v3凍結に置換、12×40001/40002=24世界、mix1a/mix1b。03:52 JST開始、06:30頃見込み。`status.mix1.result=null`、`result_label="結果待ち"`、G0/完了数/時刻もnull。朝報告/原表/比較/概要/キューに同期し、経過時間から完了扱いしない。契約/資格と無関係。本人の後続追記時はMASTER原表・JSON・MORNINGと厳密検査の期待値/反例を同時更新する。
+- 本番gpt-oss:120bがHaikuより弱い可能性が高いという見立ては推測。標準runtimeでは安全枠を強制できず提出物はruntime改変不可。H1 ON拒否を維持。
+- OVERNIGHT §2.3会計: 00:26以降xa smoke13×2＋live smoke13×2＋live本体150＝概算202分、mix1約150分見込み込み352分。非重複仮定の単純和で、確定区間和集合ではない。修理/検査/非run・当日/forward消費・残予約は不明。C_forward + R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止を維持し、不明なら追加起動不可。
 - KEEP配分は100h、G3 17.2h・deep 9.7h（Q0 5h優先）・M2 0h。旧AMENDも100hの履歴として保存。全費用未確保を実行許可や残り時間へ読み替えない。10/17 18:00の分岐、10/31 23:59 JST締切を保持。
 
 ## 検査
@@ -92,7 +95,7 @@ git diff --check
 
 `dashboard-check.py` はJSON重複キー・有限数・一意ID・JST・日付・ログ降順・出所の実在と安全・元表一致・正確な分数和・担当／状態／依存・HTML構造を検査します。追加で8ページ、KPI／比較の参照、53語と必須語、外部CSS／ネットワーク呼出しの禁止を確認します。`--rendered` はNodeで生成した各画面のタグ、ID、出典リンクとID露出を検査します。
 
-`check-plan-consistency.py` は旧表、全28日、18件のレビュー判断、予算・署名・Q0・AI反復・切替条件の照合を維持し、73ログの完全保持と全既存判断レコードの不変性、dev2/dev3a/dev4の正確な提示値、dev3bの未確認履歴とdev5/PLATEAUの結果未確認状態、実消化のnull、表示比較の母集団と数値参照、連続稼働の上限・独立seed・screenも検査します。
+`check-plan-consistency.py` は旧表、全28日、18件のレビュー判断、予算・署名・Q0・AI反復・切替条件の照合を維持し、78ログの完全保持と既存19判断レコードの不変性、dev2/dev3a/dev4/dev5/xa-1/liveの正確な提示値、dev3b/PLATEAUの未確認履歴とmix1の結果待ち、実消化のnull、表示比較の母集団と数値参照、連続稼働の上限・独立seed・screenも検査します。
 
 `dashboard-ui-check.mjs` は実際のインラインJSを小さなDOMアダプターで実行します。8ページ＋資格ビューの生成、検索／複合フィルタ、空結果、ハッシュ遷移、用語の開閉とEscape、エスケープ、JSON変更の表示反映、主要文字色のAA比とレスポンシブ指定を検査します。DOMアダプターはブラウザではなく、レイアウトの検証にはなりません。
 
@@ -100,7 +103,9 @@ git diff --check
 
 **rev 8のチェッカー変更理由（履歴）**: rev 7の「v3実装中・dev3bが現在の計測」という固定条件を、本人提示のv3凍結hash・dev4実測とdev5走行中へ置き換えた。dev4の全提示値・12レジーム表、dev5の既見seed/開始/翌日見込み/未確認結果、v5検査記録、体制/別ジョブ、2/3回目を厳密一致で検査する。旧68ログのdigestと旧契約・全既存反例を保持し、反例は76から128件へ増加。UIはdev5の現在表示とdev4の安全集計に対応し、KPIの概要限定も維持。閾値・費用・反復上限は緩めていない。
 
-**rev 9のチェッカー更新**: 旧版番号と「現在の本人作業なし」の固定条件を、H1本人決定/全面改訂未許可の厳密一致へ更新。旧128反例を保持し、H1権限・安全境界・ON拒否・adapter未実装・agyの外挿禁止・xa-1未計測・課金なし・次分岐の52反例を追加して180件とした。旧73ログと既存判断全件のdigestを追加し、UIは78ログと現行H1/分岐の表示検査を追加。既決の閾値・費用・反復上限を緩めず、旧ENTRY単独契約も検査対象に保持。
+**rev 9のチェッカー更新（履歴）**: 旧版番号と「現在の本人作業なし」の固定条件を、H1本人決定/全面改訂未許可の厳密一致へ更新。旧128反例を保持し、H1権限・安全境界・ON拒否・adapter未実装・agyの外挿禁止・xa-1未計測・課金なし・次分岐の52反例を追加して180件とした。旧73ログと既存判断全件のdigestを追加し、UIは78ログと現行H1/分岐の表示検査を追加。既決の閾値・費用・反復上限を緩めず、旧ENTRY単独契約も検査対象に保持。
+
+**rev 10のチェッカー更新**: dev5/xa-1未測定という古い固定条件を今回の提示値と停止判断へ置換し、mix1には未確認の厳密検査を維持する。旧180反例を保持し、live全反復/安全節違反/モデル比較は推測/mix1結果待ち/時間会計/本人判断/朝報告の66反例を追加、計246件。旧78ログ・既存19判断のdigestと全契約検査を保持。Nodeは29項目、表示の現在runをJSON参照へ変更。閾値・反復上限・予算の緩和なし。
 
 ## 省いた表示と保存先
 
@@ -114,16 +119,16 @@ git diff --check
 
 静的検査・Nodeの画面ロジック検査は実行済み。375pxを対象に、左右余白、長語の折返し、flex/grid子の最小幅0、見出しの折返し、表の縦配置、フォーム/ポップアップの幅制限を検査しました。overflowを隠す処理で代用していません。ブラウザ／ヘッドレスChrome／描画エンジンは起動せず、実際の横スクロール量・見た目・支援技術・実ブラウザ操作は未検証です。
 
-`node_modules` 自体のリンク属性だけを確認し、`../upstream-eval/node_modules` を指すため辿っていません。依存を読む `npm run typecheck`、戦略テスト、Docker、backtestは今回未実行です。xb-r/xa-1/xb-r-aiの実装・テスト、保護領域・鍵・`.env`・実行中計測へアクセスせず、型検査済みとは報告しません。新規計測・外部サービス照会・commitも行っていません。
+mix1走行中の重い処理禁止を優先し、依存を読む `npm run typecheck`、戦略テスト、Docker、backtestは今回未実行です。xb-r/xa-1/xb-r-ai/xb-r-liveの実装・テスト、保護領域・鍵・`.env`・実行中計測へアクセスせず、型検査済みとは報告しません。新規計測・外部サービス照会・commitも行っていません。
 
 最終確認結果（ブラウザ未起動）:
 
 ```text
-PASS dashboard-check: 14 blocks / 78 logs / 14 source tables / 53 terms
+PASS dashboard-check: 14 blocks / 84 logs / 19 source tables / 53 terms
 PASS checker controls: 23 invalid cases rejected
-PASS check-plan-consistency: rev 9 current facts + rev 7 operations + rev 6 contracts + all 73 prior logs
-PASS plan controls: 180 unsafe/stale mutations rejected
-PASS dashboard UI: 28 checks / 8 pages + qualification view / 375px static containment
+PASS check-plan-consistency: rev 10 facts + operations + unchanged contracts + all 78 prior logs / 19 decisions
+PASS plan controls: 246 unsafe/stale mutations rejected
+PASS dashboard UI: 29 checks / 8 pages + qualification view / 375px static containment
 PASS rendered HTML: 9 views / balanced tags / safe links / unique IDs
 PASS git diff --check
 ```

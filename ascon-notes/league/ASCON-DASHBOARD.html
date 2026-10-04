@@ -13,7 +13,7 @@
     {
       "id": "src-master",
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
-      "title": "MASTER revision 9",
+      "title": "MASTER revision 10",
       "locator": "§1–11 / Appendix A"
     },
     {
@@ -92,7 +92,7 @@
       "id": "src-prior",
       "path": "ascon-notes/league/MASTER-PLAN-BEFORE-V2-INTEGRATION.md",
       "title": "旧計画アーカイブ",
-      "locator": "履歴のみ。現行契約はMASTER revision 9"
+      "locator": "履歴のみ。現行契約はMASTER revision 10"
     },
     {
       "id": "src-checklist",
@@ -216,8 +216,8 @@
     },
     {
       "id": "src-dev5",
-      "title": "dev5走行中の引継ぎ",
-      "locator": "§1.7/8。開始と見込みは本人提示・結果未確認",
+      "title": "dev5測定値の引継ぎ",
+      "locator": "§1.7。平均T 50.15対55.73・v5昇格せず。終了時刻/安全内訳は未提示",
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md"
     },
     {
@@ -228,8 +228,8 @@
     },
     {
       "id": "src-operations",
-      "title": "rev 8体制・別ジョブ",
-      "locator": "§8.1/8.4。本人引継ぎ・結果未確認",
+      "title": "体制・運用の引継ぎ",
+      "locator": "§8.1/8.4。夜間heartbeat、監視失効対策、別ジョブは未再監査",
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md"
     },
     {
@@ -248,7 +248,25 @@
       "id": "src-h1-design",
       "title": "AIパイロット設計 H1推奨案",
       "path": "ascon-notes/league/AI-PILOT-DESIGN-2026-10-04.md",
-      "locator": "設計当時の提案。本人の採択はMASTER rev 9 §5/10が現行"
+      "locator": "設計当時の提案。H1本人採択はrev 9原記録としてMASTER §5/10に保持"
+    },
+    {
+      "id": "src-rev10",
+      "title": "rev 10 夜間結果・本人提示の引継ぎ",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "locator": "§1.7/5/7.1/8/10。提示値を記録、原ログ・実装・実時間は再監査なし"
+    },
+    {
+      "id": "src-overnight",
+      "title": "夜間の事前登録・会計式",
+      "path": "ascon-notes/league/OVERNIGHT-2026-10-05.md",
+      "locator": "作成時スナップショット。§2.3/3/4/5の契約を保持"
+    },
+    {
+      "id": "src-morning-1005",
+      "title": "10/5朝報告の下書き",
+      "path": "ascon-notes/league/MORNING-2026-10-05.md",
+      "locator": "mix1は結果待ち。本人判断の選択肢・推奨・反証条件"
     }
   ]
 }
@@ -261,14 +279,15 @@
     "src-master",
     "src-ai",
     "src-xbr-debug",
-    "src-ollama-report"
+    "src-ollama-report",
+    "src-rev10"
   ],
-  "as_of": "2026-10-04T23:13:24+09:00",
+  "as_of": "2026-10-05T04:01:50+09:00",
   "measurement_as_of": null,
-  "last_update": "rev 9: 本人H1決定・xb-r-ai安全境界/ON拒否・agy形式確認・課金なし方針・xa-1未計測・dev5後の分岐を本文に統合。",
+  "last_update": "rev 10: xa-1打ち切り・自由改訂PILOT-STOP・mix1結果待ち・時間概算・本人判断を本文へ統合。",
   "phase_id": "phase-first",
-  "headline": "dev4は平均T 49.72対55.02で5.3T不足。dev5（v5）は走行中・結果未確認。",
-  "subhead": "H1は本人決定・実装済みですが標準ONは拒否。dev5未達なら第3回xa-1を診断し、AI専用adapter/受付の前提整理を並行します。",
+  "headline": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix1は診断走行中・結果待ち。",
+  "subhead": "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -286,8 +305,8 @@
     "regimes": 12,
     "name": "Q0b"
   },
-  "notice": "10/8の初回受理目標は延期済み。MASTER rev 9は既決契約と最大3回を維持。dev5は2/3回目・結果未確認。H1選択は確定済み、全面改訂は見送り。鍵/登録の本人作業はなし。",
-  "measurement_note": "dev4は本人提示measured集計、F_ref・36001/36002・12レジーム24世界・G0 PASS・362ループ。dev5は同seedの開発診断。原ログ・プロセスの再監査なし。",
+  "notice": "10/8の初回受理目標は延期済み。rev 10も既決契約・最大3回を維持、第3回は打ち切り。H1は標準ON拒否、登録の再操作は不要。",
+  "measurement_note": "本人提示のmeasured引継ぎ。dev4/dev5はF_ref既見seedの開発診断、liveも診断のみ。mix1は結果未確認。原ログ/プロセスの再監査なし。",
   "dev1": {
     "name": "dev1-xb-r",
     "state": "measured-diagnostic-complete",
@@ -442,68 +461,64 @@
       "src-dev2-repair"
     ]
   },
-  "human_action": "AI全面改訂の許可は本人判断・未許可（安全保証なしで本番と同条件で測るか）",
+  "human_action": "Q0契約の扱い・提出へ向けた次方針を決める",
   "priority": {
-    "title": "dev5の結果を確認し、資格試験に必要な収益性を判定する",
+    "title": "第3回未達を受け、Q0と提出方針を本人が決める",
     "blocker_ref": "B01",
-    "note": "dev4は12レジーム等重み平均T 49.72対55.02（差5.3T）。v5の同seed開発診断dev5は2/3回目・結果未確認。独立した全12×2 fresh screen・安全/hash/費用成立までQ0停止。 dev5の結果・安全・残費を確認し、未達なら第3回にxa-1を診断する。並行してAIパイロットの専用adapter/受付の前提を整理する。最大3回・Q0優先・全残費・fresh seed条件を維持し、本更新は起動許可ではない。",
+    "note": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix1は診断走行中・結果待ち。 Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。",
     "progress_refs": [
       "progress-dev4",
-      "progress-xbr-v5",
       "progress-dev5",
+      "progress-xa1",
+      "progress-live",
       "progress-xbr-requal"
     ],
     "sources": [
-      "src-dev4",
-      "src-dev5",
-      "src-v5",
-      "src-master"
+      "src-rev10"
     ],
     "state": "blocked",
     "state_label": "資格試験はブロック"
   },
   "recent": [
     {
-      "kind": "running",
-      "title": "dev5開始・今回2/3回目",
-      "text": "v5・同seed36001/36002の12レジーム24世界。10/4 22:07 JST開始、10/5 00:00 JST頃完了見込み、結果未確認。今回2/3回目。既見seedの開発診断で独立screen/Q0には使えない。",
-      "date": "2026-10-04",
-      "time_note": "22:07 JST開始（本人引継ぎ・分精度）",
-      "sources": [
-        "src-dev5"
-      ]
-    },
-    {
       "kind": "blocked",
-      "title": "H1実装済み・標準ONは拒否",
-      "text": "検査済み3方針+ENTRYを本人選択。a95054a・213テスト/赤対照25は引継ぎ。専用adapterは未実装。",
-      "date": "2026-10-04",
-      "time_note": "本人決定・measured/コード確認の引継ぎ。正確な時刻未提示",
+      "title": "xa-1: 2回修理後もHEALTHY=no",
+      "text": "[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。",
+      "date": "2026-10-05",
+      "time_note": "本人提示measured。実終了時刻未提示",
       "sources": [
-        "src-rev9",
-        "src-h1-pilot"
+        "src-rev10"
       ]
     },
     {
-      "kind": "pending",
-      "title": "xa-1実装済み・未計測",
-      "text": "[measured引継ぎ] xa-1（7179efe）は候補A（時間制限付き単脚往復+lot台帳）を先行実装・未計測。テスト39・赤対照39は既存検査記録で今回再実行なし。診断案はsmoke 38003、本計測38001/38002×12=24世界（約104分+終了確認）。開始前の未使用性・非交差確認とsmoke/G0/全残費が条件で、性能・資格は未確認。",
-      "date": "2026-10-04",
-      "time_note": "本人提示の検査記録。今回再実行なし",
+      "kind": "failed",
+      "title": "自由改訂: PILOT-STOP",
+      "text": "[measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。",
+      "date": "2026-10-05",
+      "time_note": "本人提示measured。実終了時刻未提示",
       "sources": [
-        "src-rev9"
+        "src-rev10"
+      ]
+    },
+    {
+      "kind": "running",
+      "title": "mix1: 結果待ち",
+      "text": "[進行中・診断] mix1: u1の11体、zeta-2をcand=xb-r v3凍結に置換。12レジーム×40001/40002=24世界、mix1a/mix1bの2チャンク。10/5 03:52 JST開始、06:30 JST頃完了見込み。結果待ち（結果未確認）。契約・資格とは無関係で、好成績でもQ0へ昇格させない。",
+      "date": "2026-10-05",
+      "time_note": "03:52 JST開始（分精度）・06:30頃は見込み",
+      "sources": [
+        "src-rev10"
       ]
     }
   ],
   "next_milestone": {
-    "title": "dev5結果で分岐し、第3回とAI受付の条件を整理する",
-    "note": "dev5の結果・安全・残費を確認し、未達なら第3回にxa-1を診断する。並行してAIパイロットの専用adapter/受付の前提を整理する。最大3回・Q0優先・全残費・fresh seed条件を維持し、本更新は起動許可ではない。 AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）は本人判断・未許可。H1選択は確定済みで、全面改訂の承認へ拡張しない。",
+    "title": "mix1診断の受領と本人の方針判断",
+    "note": "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。 mix1は結果待ち。10/31 23:59 JST締切、dec-007は10/28。受理済み版の確保は未完了。",
     "sources": [
-      "src-dev5",
-      "src-rev9"
+      "src-rev10"
     ],
-    "state": "running",
-    "state_label": "dev5走行中・結果未確認"
+    "state": "blocked",
+    "state_label": "本人判断待ち・mix1結果待ち"
   },
   "dev3b": {
     "name": "dev3b-xb-r",
@@ -643,9 +658,9 @@
   },
   "dev5": {
     "name": "dev5-xb-r",
-    "state": "reported-running-unverified",
+    "state": "measured-diagnostic-complete",
     "verified": false,
-    "evidence_basis": "本人の走行中引継ぎ。プロセス/原ログ再監査なし",
+    "evidence_basis": "本人提示measured集計。原ログ/live再監査なし",
     "field": "F_ref",
     "seeds": "36001/36002",
     "regimes": 12,
@@ -654,19 +669,21 @@
     "started_at": "2026-10-04T22:07:00+09:00",
     "started_at_precision": "minute",
     "started_at_basis": "本人提示22:07 JST。秒00は保存表現で実測秒ではない",
-    "expected_end": "2026-10-05T00:00:00+09:00",
-    "expected_end_basis": "本人提示00:00 JST頃の見込み。実完了ではない",
+    "expected_end": null,
+    "expected_end_basis": "旧見込み2026-10-05 00:00 JST頃は実績ではない。実完了時刻は未提示",
     "completed_at": null,
     "completed_worlds": null,
     "g0": null,
-    "result": null,
+    "result": {
+      "t_candidate": "50.15",
+      "t_multi": "55.73"
+    },
     "q0_eligible": false,
     "independent_screen": false,
     "iteration": 2,
-    "note": "v5・同seed36001/36002の12レジーム24世界。10/4 22:07 JST開始、10/5 00:00 JST頃完了見込み、結果未確認。今回2/3回目。既見seedの開発診断で独立screen/Q0には使えない。",
+    "note": "v5 7b1448b・F_ref・36001/36002・12レジーム24世界の同seed対応診断（2/3回目）。平均T 50.15対55.73、昇格せず。基準はv3。完了時刻/完了数/G0/安全内訳は今回未提示。既見seedの開発診断で独立screen/Q0には使えない。",
     "sources": [
-      "src-dev5",
-      "src-v5"
+      "src-rev10"
     ]
   },
   "repair_v5": {
@@ -677,7 +694,7 @@
     "verified": false,
     "evidence_kind": "measured引継ぎ",
     "title": "v5 = v3 + R9（bundle用在庫余地）ON",
-    "note": "DEV4-XB-R-V5.mdを根拠にR9のみON。テスト183・赤対照59は既存検査記録の引継ぎで今回再実行なし。性能昇格はdev5結果待ち。",
+    "note": "DEV4-XB-R-V5.mdを根拠にR9のみON。テスト183・赤対照59は既存検査記録の引継ぎで今回再実行なし。dev5平均T 50.15対55.73、v5は昇格せず、基準はv3。",
     "sources": [
       "src-v5"
     ]
@@ -688,8 +705,8 @@
     "unavailable": "Grok: 利用残高切れ(402)で体制から除外",
     "support": "agy: Gemini 3.8 Flash High・ハーネス反映済 masa-harness#409",
     "independent_review": "Claudeの別エージェント+agy",
-    "tool_policy": "ツール使用禁止・差分埋め込み・stdin",
-    "note": "本人の運用引継ぎ。レビュー用ツールへの入力に差分を埋め込みstdinで渡し、呼び出し先のツール使用を禁止する。本更新で外部モデル照会なし。",
+    "tool_policy": "ツール使用禁止・差分埋め込み・echo \"\" | …",
+    "note": "本人の運用引継ぎ。agyへの差分はプロンプトに埋め込み、echo \"\" | …で標準入力を閉じ、ツール使用を禁止する。本更新で外部照会なし。",
     "sources": [
       "src-operations"
     ]
@@ -706,13 +723,13 @@
     ]
   },
   "xa1": {
-    "commit": "7179efe",
+    "commit": "3ad4f60",
     "candidate": "A: 時間制限付き単脚往復+lot台帳",
-    "state": "implemented-unmeasured",
+    "state": "stopped-unhealthy",
     "tests": 39,
     "red_controls": 39,
     "tests_rerun": false,
-    "smoke_seed": 38003,
+    "smoke_seed": 38005,
     "seeds": [
       38001,
       38002
@@ -721,10 +738,69 @@
     "worlds": 24,
     "estimated_minutes": 104,
     "end_check_extra": true,
-    "result": null,
+    "result": {
+      "g0": "PASS",
+      "submitted": 10,
+      "submitted_min": 30,
+      "recovery_only": 4,
+      "decisions": 710,
+      "lock_resolved": true,
+      "violations": 0,
+      "reverts": 0,
+      "healthy": false
+    },
     "sources": [
-      "src-rev9"
-    ]
+      "src-rev10"
+    ],
+    "commits": [
+      "7179efe",
+      "6cd9e70",
+      "3ad4f60"
+    ],
+    "repairs": 2,
+    "iteration": 3,
+    "iteration_outcome": "unmet-report-to-human",
+    "full_measurement": "not-completed",
+    "note": "[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。",
+    "smokes": [
+      {
+        "name": "dev6",
+        "commit": "7179efe",
+        "g0": "BLOCKED",
+        "reason": "判断ログにround無し+取引停止"
+      },
+      {
+        "name": "dev7",
+        "commit": "6cd9e70",
+        "submitted": 18,
+        "recovery_only": 264,
+        "decisions": 362
+      },
+      {
+        "name": "xas2",
+        "commit": "3ad4f60",
+        "regime": "calm",
+        "seed": 38005,
+        "g0": "PASS",
+        "submitted": 10,
+        "submitted_min": 30,
+        "recovery_only": 4,
+        "decisions": 710,
+        "lock_resolved": true,
+        "violations": 0,
+        "reverts": 0,
+        "healthy": false
+      }
+    ],
+    "initial_tests_note": "テスト39・赤対照39は7179efe時点の引継ぎ。修理版の検査として再利用しない。",
+    "plan_note": "旧smoke 38003・38001/38002×12=24世界・約104分+終了確認の案は履歴。第3回はsmoke打ち切りで本計測未達。",
+    "measured_scope": {
+      "name": "xas2",
+      "field": "F_ref",
+      "seeds": "38005",
+      "regimes": 1,
+      "worlds": 1
+    }
   },
   "agy_format": {
     "model": "GPT-OSS 120B",
@@ -758,6 +834,132 @@
     "sources": [
       "src-rev9"
     ]
+  },
+  "live": {
+    "name": "xb-r-live",
+    "state": "measured-pilot-stop",
+    "verified": false,
+    "evidence_basis": "本人提示measured集計。原ログ再監査なし",
+    "initial_code": "xb-r v3",
+    "prompt": "v2",
+    "model": "claude-cli:haiku",
+    "paid_usage": false,
+    "field": "F_ref",
+    "regimes": 4,
+    "seeds": "39001/39002",
+    "worlds": 32,
+    "g0": "PASS",
+    "safety": "OK-reported",
+    "decision": "PILOT-STOP",
+    "q0_eligible": false,
+    "note": "[measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。",
+    "sources": [
+      "src-rev10"
+    ],
+    "groups": [
+      {
+        "group": "OFF",
+        "t": "54.74",
+        "d_t": null,
+        "d_alpha": null,
+        "worst": null,
+        "installed": null,
+        "declined": null,
+        "rejected": null
+      },
+      {
+        "group": "ON1",
+        "t": "48.91",
+        "d_t": "-5.83",
+        "d_alpha": "-229.4",
+        "worst": "-19.75",
+        "installed": 9,
+        "declined": 26,
+        "rejected": 5
+      },
+      {
+        "group": "ON2",
+        "t": "52.80",
+        "d_t": "-1.93",
+        "d_alpha": "-26.9",
+        "worst": "-5.68",
+        "installed": 1,
+        "declined": 25,
+        "rejected": 14
+      },
+      {
+        "group": "ON3",
+        "t": "53.62",
+        "d_t": "-1.11",
+        "d_alpha": "+178.7",
+        "worst": "-4.50",
+        "installed": 1,
+        "declined": 26,
+        "rejected": 13
+      }
+    ],
+    "calibration": [
+      {
+        "seed": 39101,
+        "prompt": "v1",
+        "installed": 0,
+        "outcome": "TSモジュール全体を返してcompile failed"
+      },
+      {
+        "seed": 39102,
+        "prompt": "v2",
+        "installed": 1,
+        "outcome": "WBTC slippage許容80→100bps、安全節違反（sim内のみ）"
+      }
+    ],
+    "wbtc": {
+      "trades": 16,
+      "fixed_price_pnl_usdc": "+63.34",
+      "exclusion_supported": false
+    },
+    "interpretation": "AI改訂は平均Tでプラスにならず、適用の多いON1ほど悪化した観測。因果効果とは断定しない。形式不備によるrejectedが多い。HaikuのWBTC除外根拠は実ログで支持できない。"
+  },
+  "mix1": {
+    "name": "mix1",
+    "state": "reported-running-unverified",
+    "verified": false,
+    "field": "F_mix（u1構成の診断）",
+    "seeds": "40001/40002",
+    "regimes": 12,
+    "worlds": 24,
+    "agents": 11,
+    "roster": "u1のzeta-2をcand=xb-r v3凍結に置換",
+    "fix_commit": "d30cbbb",
+    "chunks": [
+      "mix1a",
+      "mix1b"
+    ],
+    "started_at": "2026-10-05T03:52:00+09:00",
+    "started_at_precision": "minute",
+    "expected_end": "2026-10-05T06:30:00+09:00",
+    "expected_end_basis": "本人提示の06:30 JST頃の見込み。完了実績ではない",
+    "completed_at": null,
+    "completed_worlds": null,
+    "g0": null,
+    "result": null,
+    "result_label": "結果待ち",
+    "q0_eligible": false,
+    "contract_effect": "none-diagnostic-only",
+    "note": "[進行中・診断] mix1: u1の11体、zeta-2をcand=xb-r v3凍結に置換。12レジーム×40001/40002=24世界、mix1a/mix1bの2チャンク。10/5 03:52 JST開始、06:30 JST頃完了見込み。結果待ち（結果未確認）。契約・資格とは無関係で、好成績でもQ0へ昇格させない。",
+    "sources": [
+      "src-rev10"
+    ]
+  },
+  "night_operation": {
+    "evidence": "本人引継ぎ",
+    "verified": false,
+    "heartbeat_minutes": 8,
+    "monitor_expiry_minutes": 30,
+    "state_file": "/tmp/night-state.md",
+    "note": "[本人引継ぎ] 8分ごとのハートビートと/tmp/night-state.mdで夜間の自動進行を管理。監視は30分で失効するため、各ハートビートで監視の有効期限・再登録/更新・次回起床・状態表を確認し、失効前に更新する。失効/未受領なら新規起動を止める。8分は進行管理用で、既決の60秒以下監視・2分検知/5分受領/10分次着手を置換しない。稼働実績・更新成功は本更新で未検証。",
+    "sources": [
+      "src-rev10"
+    ]
   }
 }
 </script>
@@ -781,7 +983,7 @@
     "p=3・等速・CPU排他・入力固定。Q0b全60世界とG0/平均Tの旧FAIL保持、資格救済再走なし。",
     "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。",
     "本人決定H1: 検査済み3方針+ENTRY 20–60bps・初期/復帰50・刻み5・最大±5、120block復帰。全面executorTs改訂は見送り。標準ON拒否、専用adapter未実装。旧rev 6署名契約は履歴として保持。",
-    "dev4は全12レジーム平均T未達。dev5は同seed対応診断・2/3回目・結果未確認。独立fresh screen・hash/seed/費用が成立後に現Q0へ。"
+    "dev4/dev5はF_ref平均T未達、第3回xa-1は2回修理後も不健全で打ち切り。Q0契約を維持し、扱いと提出方針は本人判断。mix1は結果待ちの診断。"
   ],
   "protocol": [
     {
@@ -851,7 +1053,7 @@
       "id": "gate-g0",
       "title": "G0 / 計測",
       "state": "dev2 PASS / 旧Q0b B FAIL保持",
-      "resolve": "dev4は24世界G0 PASSの引継ぎ、平均T未達。dev5のG0/結果は未確認。旧Q0bの2世界FAILは保存。診断成立と資格を分ける。",
+      "resolve": "dev4は24世界G0 PASSの引継ぎ、平均T未達。dev5は平均T未達・G0未提示。xas2はG0 PASSでもHEALTHY=no、liveは全群G0 PASSでもPILOT-STOP。mix1はG0/結果未確認。旧Q0bの2世界FAILを保持し、診断成立と資格を分ける。",
       "sources": [
         "src-dev2",
         "src-dev3",
@@ -1019,7 +1221,7 @@
       "src-delegation"
     ]
   },
-  "revision": 9,
+  "revision": 10,
   "deadline_at": "2026-10-31T23:59:00+09:00",
   "continuous_operation": {
     "status": "defined-not-verified",
@@ -1043,7 +1245,7 @@
     "qualification_seeds_excluded": "41301–41305",
     "budget_status": "unreconciled-not-released",
     "title": "連続稼働の運用モデル",
-    "note": "matrixは1本。今回dev5が2/3回目、既見seedの開発診断。独立fresh screenは未成立。監視接続/実fixture/smoke実施は未確認。次回の費用確保・上限は維持。",
+    "note": "決定論ラインは3/3回目xa-1で打ち切り。独立fresh screen未成立。[本人引継ぎ] 8分ごとのハートビートと/tmp/night-state.mdで夜間の自動進行を管理。監視は30分で失効するため、各ハートビートで監視の有効期限・再登録/更新・次回起床・状態表を確認し、失効前に更新する。失効/未受領なら新規起動を止める。8分は進行管理用で、既決の60秒以下監視・2分検知/5分受領/10分次着手を置換しない。稼働実績・更新成功は本更新で未検証。",
     "sources": [
       "src-master",
       "src-retro-day"
@@ -1122,8 +1324,8 @@
         ]
       ]
     },
-    "iteration_current": 2,
-    "current_run_ref": "status.dev5"
+    "iteration_current": 3,
+    "current_run_ref": "status.mix1"
   },
   "h1": {
     "authority": "本人決定 2026-10-04",
@@ -1184,13 +1386,57 @@
     ]
   },
   "next_branch": {
-    "if_dev5_insufficient": "第3回にxa-1を診断",
-    "parallel": "AI専用adapter/受付の前提整理",
     "iteration": 3,
     "automatic_launch": false,
-    "full_executor_decision": "本人判断・未許可",
+    "outcome": "xa-1打ち切り・決定論ライン未達",
+    "full_executor_decision": "本番自由改訂の安全保証なし・継続方針は本人判断",
+    "recommendation": "A",
+    "options": [
+      "A: Q0維持・追加計測停止",
+      "B: 現契約を満たす別系統を新たに設計",
+      "C: mix1診断を踏まえ契約の場の見直しを本人が決める"
+    ],
+    "falsification": "独立した全12レジームの証拠・最悪値・安全・全残費・受理までの日程により、現契約を満たす別系統か、場の見直しを結果への合わせ込みでなく正当化できる場合。mix1単独の好成績は反証にならない。",
     "sources": [
-      "src-rev9"
+      "src-rev10"
+    ]
+  },
+  "live_contract": {
+    "regimes": [
+      "calm",
+      "whale",
+      "crash",
+      "depeg-persist"
+    ],
+    "seeds": [
+      39001,
+      39002
+    ],
+    "off_repeats": 1,
+    "on_repeats": 3,
+    "worlds": 32,
+    "all_repeats_required": true,
+    "d_t_strict_min": "0",
+    "d_alpha_strict_min": "0",
+    "worst_min": "-2",
+    "decision": "PILOT-STOP",
+    "on4_allowed": false,
+    "production_equivalent": false,
+    "sources": [
+      "src-overnight",
+      "src-rev10"
+    ]
+  },
+  "production_assessment": {
+    "model": "gpt-oss:120b",
+    "claim": "Haikuより弱い可能性が高い",
+    "evidence": "推測",
+    "measured_comparison": false,
+    "runtime_safety_boundary": false,
+    "submission_runtime_edit_allowed": false,
+    "h1_standard_on": "refused",
+    "sources": [
+      "src-rev10"
     ]
   }
 }
@@ -1209,7 +1455,7 @@
       "start_date": "2026-10-04",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "dev4全12平均T未達→dev5対応診断（2/3回目・結果未確認）→独立fresh screen→現Q0→受理S。10/8延期済み"
+      "gate": "第3回xa-1まで未達・停止。Q0のF_ref平均T≥multi契約を維持し本人判断待ち。受理S未確保、10/8延期済み。"
     },
     {
       "id": "phase-deep",
@@ -1250,9 +1496,9 @@
     {
       "id": "day-2026-10-04",
       "date": "2026-10-04",
-      "title": "dev4実測・v5 R9決定、dev5開始（2/3回目）",
-      "dependency": "本人提示measuredと走行中引継ぎを区別。Codex主・Claude副・agy補助",
-      "stop": "dev4平均T未達、dev5同seed診断・結果未確認。独立screen前にQ0へ進まない",
+      "title": "dev4/dev5診断、v5昇格せず",
+      "dependency": "dev4 49.72対55.02、dev5 50.15対55.73。基準v3",
+      "stop": "第2回まで未達。既見seedを独立screen/Q0へ使わない",
       "state": "running",
       "highlight": true,
       "decision_refs": [
@@ -1267,9 +1513,9 @@
     {
       "id": "day-2026-10-05",
       "date": "2026-10-05",
-      "title": "dev5結果で分岐、未達なら第3回xa-1診断の準備",
-      "dependency": "7b1448b・36001/36002・24世界。00:00 JST頃は見込み、結果未確認。AI専用adapter/受付整理を並行",
-      "stop": "安全・対応条件・全残費・fresh seed非交差を確認するまで第3回を開始しない",
+      "title": "xa-1打ち切り・PILOT-STOP・mix1結果待ち・本人方針判断",
+      "dependency": "第3回未達は本人報告事項。mix1 03:52開始/06:30頃見込み、契約と無関係",
+      "stop": "Q0維持・追加計測停止。時間未精算、契約変更は本人決定のみ",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
@@ -1849,7 +2095,7 @@
       "workstream": "初回受理",
       "title": "資格試験の開始条件をそろえる",
       "state": "blocked",
-      "evidence": "dev4全12平均T未達。dev5は同seed開発診断で結果未確認。独立fresh screen・G0/安全・固定hash・未使用資格seed・5h枠の成立待ち。",
+      "evidence": "dev4/dev5は平均T未達、第3回xa-1打ち切り。独立fresh screen未成立。G0/安全・固定hash・未使用資格seed・5h枠と全残費は未成立。Q0停止、方針は本人判断。",
       "sources": [
         "src-dev4",
         "src-dev5",
@@ -1942,7 +2188,7 @@
       "workstream": "基盤",
       "title": "v5 R9のみON・183テスト/赤対照59（引継ぎ）",
       "state": "done",
-      "evidence": "DEV4-XB-R-V5.mdを根拠にR9のみON。テスト183・赤対照59は既存検査記録の引継ぎで今回再実行なし。性能昇格はdev5結果待ち。",
+      "evidence": "DEV4-XB-R-V5.mdを根拠にR9のみON。テスト183・赤対照59は既存検査記録の引継ぎで今回再実行なし。dev5平均T 50.15対55.73、v5は昇格せず、基準はv3。",
       "sources": [
         "src-v5"
       ]
@@ -1951,10 +2197,10 @@
       "id": "progress-dev5",
       "workstream": "計測",
       "title": "dev5同seed診断・2/3回目",
-      "state": "running",
-      "evidence": "v5・同seed36001/36002の12レジーム24世界。10/4 22:07 JST開始、10/5 00:00 JST頃完了見込み、結果未確認。今回2/3回目。既見seedの開発診断で独立screen/Q0には使えない。",
+      "state": "done",
+      "evidence": "v5 7b1448b・F_ref・36001/36002・12レジーム24世界の同seed対応診断（2/3回目）。平均T 50.15対55.73、昇格せず。基準はv3。完了時刻/完了数/G0/安全内訳は今回未提示。既見seedの開発診断で独立screen/Q0には使えない。",
       "sources": [
-        "src-dev5"
+        "src-rev10"
       ]
     },
     {
@@ -1970,11 +2216,11 @@
     {
       "id": "progress-xa1",
       "workstream": "探索",
-      "title": "xa-1候補Aの実装（引継ぎ）",
-      "state": "done",
-      "evidence": "[measured引継ぎ] xa-1（7179efe）は候補A（時間制限付き単脚往復+lot台帳）を先行実装・未計測。テスト39・赤対照39は既存検査記録で今回再実行なし。診断案はsmoke 38003、本計測38001/38002×12=24世界（約104分+終了確認）。開始前の未使用性・非交差確認とsmoke/G0/全残費が条件で、性能・資格は未確認。",
+      "title": "xa-1第3回・2回修理後打ち切り",
+      "state": "failed",
+      "evidence": "[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。",
       "sources": [
-        "src-rev9"
+        "src-rev10"
       ]
     },
     {
@@ -1992,9 +2238,9 @@
       "workstream": "基盤",
       "title": "H1専用adapter接続・検査",
       "state": "blocked",
-      "evidence": "XB-R-AI-PILOT-2026-10-04.md: calm/whale/crash/depeg-persistの4レジーム×seed39001/39002、OFF1+ON3=32世界・Haiku第一。ON実行には専用adapter接続・検査が必要（未実装）。開始前のseed非交差監査・校正・全残費確認が必要で、32世界をQ0/G3/全12レジーム資格へ外挿しない。Q0前への実走前倒しは未承認。",
+      "evidence": "H1は専用adapter未実装・標準ON拒否を維持。旧H1仕様の39001/39002は今回liveで使用済みで、fresh seedとして再利用しない。[measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。",
       "sources": [
-        "src-h1-pilot"
+        "src-rev10"
       ]
     },
     {
@@ -2005,6 +2251,26 @@
       "evidence": "[measured引継ぎ] agy GPT-OSS 120B（Medium・無料枠・本番と同系統のモデル）の形式確認はsparse/selection/injection各1回、validator ok=true。sparseとinjectionはnullで期待どおり。selectionは答えを指定した形式試験で能力評価ではない。runtime/haiku/性能へ外挿しない。本人Ollama鍵の疎通確認や本番無料枠の検証ではない。",
       "sources": [
         "src-rev9"
+      ]
+    },
+    {
+      "id": "progress-live",
+      "workstream": "計測",
+      "title": "自由改訂32世界・PILOT-STOP",
+      "state": "done",
+      "evidence": "[measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。",
+      "sources": [
+        "src-rev10"
+      ]
+    },
+    {
+      "id": "progress-mix1",
+      "workstream": "計測",
+      "title": "mix1混成場診断",
+      "state": "running",
+      "evidence": "[進行中・診断] mix1: u1の11体、zeta-2をcand=xb-r v3凍結に置換。12レジーム×40001/40002=24世界、mix1a/mix1bの2チャンク。10/5 03:52 JST開始、06:30 JST頃完了見込み。結果待ち（結果未確認）。契約・資格とは無関係で、好成績でもQ0へ昇格させない。",
+      "sources": [
+        "src-rev10"
       ]
     }
   ]
@@ -2040,14 +2306,11 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Codex",
-      "evidence": "[measured引継ぎ] dev4: 12レジーム24世界、G0 PASS・362ループ。平均T 49.72対55.02（差5.3T）、全12平均(T−Tnoop)>0・最小+7.85。dev5結果未確認。",
-      "mitigation": "dev5の結果・安全・残費を確認し、未達なら第3回にxa-1を診断する。並行してAIパイロットの専用adapter/受付の前提を整理する。最大3回・Q0優先・全残費・fresh seed条件を維持し、本更新は起動許可ではない。",
+      "evidence": "dev4 v3: 49.72対55.02、dev5 v5: 50.15対55.73で昇格せず。[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。",
+      "mitigation": "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。",
       "status": "mitigating",
       "sources": [
-        "src-dev4",
-        "src-dev5",
-        "src-v5",
-        "src-operations"
+        "src-rev10"
       ],
       "impact_note": "初回提出の受理まで進めない"
     },
@@ -2076,7 +2339,7 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "G3 17.2h、deep9.7hへ決定済み。Q0再資格5h優先、dev1/dev2/dev3/dev4/dev5・修理費未精算。",
+      "evidence": "G3 17.2h、deep9.7h、Q0 5h留保を維持。夜間は完了分概算202分、mix1込み352分見込み、区間和集合と修理/非run/当日/forwardは未精算。",
       "mitigation": "AI専用E3/Q1約9.5333hにD48世界52/15h＋実装/支援が別。全工程不足なので実走未解放、cal後再予算。10/17不成立ならS240又はHなし。",
       "status": "open",
       "sources": [
@@ -2111,12 +2374,11 @@
       "impact": "大",
       "owner": "Claude",
       "evidence": "u1m begin欠落。夜間キューを実行中に書換え、末尾構文エラー。",
-      "mitigation": "親/chunk入力固定とCPU排他を維持。全ジョブに独立監視、2分検知/5分受領/10分次着手。監視停止・入力hash不一致は新規起動停止。接続の実装は未確認。",
+      "mitigation": "[本人引継ぎ] 8分ごとのハートビートと/tmp/night-state.mdで夜間の自動進行を管理。監視は30分で失効するため、各ハートビートで監視の有効期限・再登録/更新・次回起床・状態表を確認し、失効前に更新する。失効/未受領なら新規起動を止める。8分は進行管理用で、既決の60秒以下監視・2分検知/5分受領/10分次着手を置換しない。稼働実績・更新成功は本更新で未検証。",
       "status": "open",
       "sources": [
-        "src-retro-u1",
-        "src-morning",
-        "src-master"
+        "src-master",
+        "src-rev10"
       ],
       "impact_note": "結果を資格証拠に使えなくなる"
     },
@@ -2129,7 +2391,7 @@
       "impact": "大",
       "owner": "Codex",
       "evidence": "F_refで両候補はmulti-arb未満、u1m診断ではsonnetが上。場/seed/指標が異なり、u1mはG0 BLOCKED。",
-      "mitigation": "論点4のA現行維持。追加P/F_u1mは不採用、最終二場ゲート保持。将来再検討は対応比較の新証拠がある時だけ。",
+      "mitigation": "Q0はF_refのまま。mix1は結果待ちの診断で資格・契約と無関係。場を見直すかは本人の提案判断、旧Q0mを自動採用しない。",
       "status": "mitigating",
       "sources": [
         "src-q0b",
@@ -2180,12 +2442,11 @@
       "likelihood": "中",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "[measured・コード確認の引継ぎ] xb-r-ai a95054aはH1を実装、テスト213・赤対照25。標準runtimeはdecide全体（executorTs）を差し替えるため、(a)固定テンプレ限定・(b)エージェント側検証のどちらも安全境界として成立せず、現状はON起動を拒否する。強制には運営側の受付機構/専用adapterが必要。提出物はruntimeを改変できず、scan-submissionのVENDOREDがBLOCKする。本番の改訂は事実上プロンプト誘導に頼り、機械的な安全保証はない。今回コード・テストの再確認はしていない。",
-      "mitigation": "XB-R-AI-PILOT-2026-10-04.md: calm/whale/crash/depeg-persistの4レジーム×seed39001/39002、OFF1+ON3=32世界・Haiku第一。ON実行には専用adapter接続・検査が必要（未実装）。開始前のseed非交差監査・校正・全残費確認が必要で、32世界をQ0/G3/全12レジーム資格へ外挿しない。Q0前への実走前倒しは未承認。 AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）は本人判断・未許可。H1選択は確定済みで、全面改訂の承認へ拡張しない。",
+      "evidence": "[measured・コード確認の引継ぎ] xb-r-ai a95054aはH1を実装、テスト213・赤対照25。標準runtimeはdecide全体（executorTs）を差し替えるため、(a)固定テンプレ限定・(b)エージェント側検証のどちらも安全境界として成立せず、現状はON起動を拒否する。強制には運営側の受付機構/専用adapterが必要。提出物はruntimeを改変できず、scan-submissionのVENDOREDがBLOCKする。本番の改訂は事実上プロンプト誘導に頼り、機械的な安全保証はない。今回コード・テストの再確認はしていない。 [measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。",
+      "mitigation": "PILOT-STOPを維持。標準runtimeは安全な枠を強制できず、校正でWBTC slippage 80→100bpsの安全節違反も観測（sim内のみ）。本番gpt-oss:120bがHaikuより弱い可能性は推測。H1はON拒否のまま。",
       "status": "open",
       "sources": [
-        "src-rev9",
-        "src-h1-pilot"
+        "src-rev10"
       ],
       "impact_note": "AIが安全条件を壊す、または利益に寄与しないおそれ"
     },
@@ -2197,7 +2458,7 @@
       "likelihood": "高",
       "impact": "中",
       "owner": "Claude",
-      "evidence": "v5 7b1448b・183テスト/赤対照59件は引継ぎ。dev4平均T未達、dev5結果・独立fresh screen・Q0用hash/費用は未確認。",
+      "evidence": "v5検査記録は引継ぎ。dev5未達・昇格せず、第3回xa-1打ち切り。mix1入力はxb-r v3凍結の引継ぎで結果待ち。独立fresh screen・Q0用hash/費用は未成立。",
       "mitigation": "別ジョブのhash/clock固定再生/取引成立の再診断証跡を受領。編集中コードへ資格認定を移さない。",
       "status": "mitigating",
       "sources": [
@@ -2306,20 +2567,19 @@
   "items": [
     {
       "id": "queue-dev1-evidence",
-      "title": "dev5結果確認・v5対応比較（2/3回目）",
+      "title": "mix1混成場診断・結果受領",
       "owner": "Codex",
       "active": true,
       "sources": [
-        "src-dev5",
-        "src-v5"
+        "src-rev10"
       ],
       "experiment": "dev1-evidence",
       "priority": 1,
-      "state": "dev5走行中との引継ぎ・結果未確認",
+      "state": "mix1走行中・結果待ち",
       "worlds": 24,
       "hours": null,
-      "window": "10/4 22:07 JST開始、10/5 00:00 JST頃完了見込み（結果未確認）",
-      "dependency": "v5 7b1448b・F_ref・36001/36002・12レジーム24世界。既見seedの開発診断で独立screen/Q0には使えない。今回2/3回目。未達なら第3回xa-1（smoke38003、本計測38001/38002×12=24世界・約104分+終了確認）。並行してAI専用adapter/受付を整理。全残費未精算・開始条件維持。"
+      "window": "10/5 03:52 JST開始、06:30 JST頃完了見込み（結果未確認）",
+      "dependency": "[進行中・診断] mix1: u1の11体、zeta-2をcand=xb-r v3凍結に置換。12レジーム×40001/40002=24世界、mix1a/mix1bの2チャンク。10/5 03:52 JST開始、06:30 JST頃完了見込み。結果待ち（結果未確認）。契約・資格とは無関係で、好成績でもQ0へ昇格させない。 第3回xa-1は打ち切り。H1専用adapter/受付未成立、Q0停止。"
     },
     {
       "id": "queue-q0b-evidence",
@@ -2364,7 +2624,7 @@
       "worlds": 0,
       "hours": "1/2",
       "window": "計測を邪魔しない空き枠",
-      "dependency": "固定相手/slot/hashとH1の専用adapter/運営受付・G4経路を整理。標準ON拒否、全面改訂の許可は本人判断",
+      "dependency": "固定相手/slot/hashとH1の専用adapter/運営受付・G4経路を整理。標準ON拒否。mix1診断は契約変更ではなく、Q0の扱い・本番自由改訂の継続は本人判断。",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -2453,7 +2713,7 @@
       "worlds": 0,
       "hours": null,
       "window": "S受理/cal/費用成立後",
-      "dependency": "H1実装済みa95054a（213テスト・赤対照25）の引継ぎ。専用adapter接続・検査は未実装、標準ON拒否。32世界パイロットは別の条件付き仕様、費用追加予約なし",
+      "dependency": "H1実装済みa95054a（213テスト・赤対照25）の引継ぎ。専用adapter接続・検査は未実装、標準ON拒否。別系統xb-r-liveの32世界はPILOT-STOP、追加予約/ON4なし。",
       "active": false,
       "title": "H1専用adapter・D対照の前提整理"
     },
@@ -2509,7 +2769,7 @@
       ]
     }
   ],
-  "note": "dev5は走行中との本人引継ぎ・結果未確認、2/3回目。dev5の結果・安全・残費を確認し、未達なら第3回にxa-1を診断する。並行してAIパイロットの専用adapter/受付の前提を整理する。最大3回・Q0優先・全残費・fresh seed条件を維持し、本更新は起動許可ではない。",
+  "note": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix1は診断走行中・結果待ち。 Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。",
   "day_limit_hours": 6,
   "bundle": "Q0再資格5hをdeep内優先留保。AI G3は17.2hへ振替済み、追加実装/D/下流費は全量成立まで未解放。",
   "side_jobs": [
@@ -2523,22 +2783,30 @@
       ]
     },
     {
-      "title": "xa-1 / 第3回の条件付き診断",
+      "title": "xa-1 / 第3回打ち切り",
       "owner": "Claude",
-      "state": "実装済み・未計測",
-      "note": "[measured引継ぎ] xa-1（7179efe）は候補A（時間制限付き単脚往復+lot台帳）を先行実装・未計測。テスト39・赤対照39は既存検査記録で今回再実行なし。診断案はsmoke 38003、本計測38001/38002×12=24世界（約104分+終了確認）。開始前の未使用性・非交差確認とsmoke/G0/全残費が条件で、性能・資格は未確認。 dev5の結果・安全・残費を確認し、未達なら第3回にxa-1を診断する。並行してAIパイロットの専用adapter/受付の前提を整理する。最大3回・Q0優先・全残費・fresh seed条件を維持し、本更新は起動許可ではない。",
+      "state": "HEALTHY=no・停止",
+      "note": "[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。 旧smoke 38003・38001/38002×12=24世界・約104分+終了確認の案は履歴。第3回はsmoke打ち切りで本計測未達。",
       "sources": [
-        "src-rev9"
+        "src-rev10"
       ]
     },
     {
       "title": "H1 / AI受付の前提整理",
       "owner": "Codex",
       "state": "ON停止・adapter未実装",
-      "note": "XB-R-AI-PILOT-2026-10-04.md: calm/whale/crash/depeg-persistの4レジーム×seed39001/39002、OFF1+ON3=32世界・Haiku第一。ON実行には専用adapter接続・検査が必要（未実装）。開始前のseed非交差監査・校正・全残費確認が必要で、32世界をQ0/G3/全12レジーム資格へ外挿しない。Q0前への実走前倒しは未承認。 [方針] 課金なし。シミュレーション内の改訂はclaude-cli:haikuを第一、既存サブスクのcodex小型モデルを第二候補とする（利用可能なmodel IDは未確認）。ローカルOllamaと本人のOllama鍵・無料枠（本番と共有）は使わない。追加課金・APIへの暗黙fallbackは認めない。",
+      "note": "H1は専用adapter未実装・標準ON拒否を維持。旧H1仕様の39001/39002は今回liveで使用済みで、fresh seedとして再利用しない。[measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。",
       "sources": [
-        "src-rev9",
-        "src-h1-pilot"
+        "src-rev10"
+      ]
+    },
+    {
+      "title": "xb-r-live / 自由改訂",
+      "owner": "Claude",
+      "state": "PILOT-STOP",
+      "note": "[measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。",
+      "sources": [
+        "src-rev10"
       ]
     }
   ]
@@ -2748,7 +3016,31 @@
     "basis": "60世界/3chunk完了×既存13分/p3。開始/終了区間の実測ではない。追加占有・重複を精算するまで参考概算。"
   },
   "consumed_forward_hours": null,
-  "consumption_status": "未精算"
+  "consumption_status": "未精算",
+  "overnight": {
+    "sources": [
+      "src-overnight",
+      "src-rev10"
+    ],
+    "window_start": "2026-10-05T00:26:00+09:00",
+    "xa_smoke_minutes_each": 13,
+    "xa_smoke_count": 2,
+    "live_smoke_minutes_each": 13,
+    "live_smoke_count": 2,
+    "live_main_worlds": 32,
+    "live_main_minutes": 150,
+    "completed_estimate_minutes": 202,
+    "mix1_estimate_minutes": 150,
+    "total_projected_minutes": 352,
+    "exact_union_minutes": null,
+    "repair_check_nonrun_minutes": null,
+    "day_consumed_minutes": null,
+    "forward_consumed_hours": null,
+    "remaining_reserved_hours": null,
+    "next_full_cost_hours": null,
+    "formula": "C_forward + R_remaining + N_next ≤ 100h",
+    "note": "OVERNIGHT §2.3: 00:26以降の開始/終了区間の和集合で計測・失敗・検査・非runを一度だけ計上し、p3を3倍しない。xa-1 smoke約13分×2 + live smoke約13分×2 + live本体32世界約150分 = 完了分の単純概算202分（3h22）。mix1約150分見込みを含む352分（5h52）は非重複仮定の参考見積で、確定占有ではない。開始/終了全区間・重複・修理/確認/非run・00:26前の当日分は不明。通常6h/日の残り8分とは認定しない。C_forward + R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止。不明なら追加起動BLOCKED。"
+  }
 }
 </script>
 <!-- END data-budget -->
@@ -3760,12 +4052,18 @@
         "candidate": "xb-r v5",
         "scope_ref": "status.dev5",
         "run_ref": "status.dev5.name",
-        "value_note": "結果未確認",
-        "detail": "同seed開発診断・2/3回目。10/4 22:07開始、10/5 00:00 JST頃見込み。",
-        "state": "running",
-        "verdict": "走行中との引継ぎ。独立screen/Q0には使えない。",
+        "metrics": [
+          {
+            "label": "平均T",
+            "candidate_ref": "status.dev5.result.t_candidate",
+            "baseline_ref": "status.dev5.result.t_multi"
+          }
+        ],
+        "detail": "同seed開発診断・2/3回目。v5昇格せず、基準はv3。",
+        "state": "warning",
+        "verdict": "平均T未達。G0/安全内訳は未提示、独立screen/Q0には使えない。",
         "sources": [
-          "src-dev5"
+          "src-rev10"
         ]
       },
       {
@@ -3878,6 +4176,42 @@
         "verdict": "G0 PASS。原因修正後はdev2で再診断。",
         "sources": [
           "src-dev1"
+        ]
+      },
+      {
+        "candidate": "xa-1",
+        "scope_ref": "status.xa1.measured_scope",
+        "run_ref": "status.xa1.state",
+        "value_note": "HEALTHY=no",
+        "detail_ref": "status.xa1.note",
+        "state": "failed",
+        "verdict": "第3回未達・2回修理後打ち切り",
+        "sources": [
+          "src-rev10"
+        ]
+      },
+      {
+        "candidate": "xb-r-live",
+        "scope_ref": "status.live",
+        "run_ref": "status.live.name",
+        "value_note": "PILOT-STOP",
+        "detail_ref": "status.live.note",
+        "state": "failed",
+        "verdict": "全ON反復でdT<0。Q0/G3の代替不可",
+        "sources": [
+          "src-rev10"
+        ]
+      },
+      {
+        "candidate": "xb-r v3（mix1）",
+        "scope_ref": "status.mix1",
+        "run_ref": "status.mix1.name",
+        "detail_ref": "status.mix1.note",
+        "value_note": "結果待ち",
+        "state": "running",
+        "verdict": "結果未確認・契約/資格と無関係の診断",
+        "sources": [
+          "src-rev10"
         ]
       }
     ],
@@ -4059,7 +4393,7 @@
       "source": "src-dev4",
       "header_key": "dev4-xb-r項目"
     },
-    "note": "本人提示measured集計。dev5結果は未確認。"
+    "note": "本人提示measured集計。基準はv3を維持し、dev5のv5は昇格せず。"
   },
   "dev4_regimes": {
     "id": "result-dev4-regimes",
@@ -4153,14 +4487,14 @@
       "source": "src-dev4",
       "header_key": "dev4レジーム"
     },
-    "note": "本人提示measured集計。dev5結果は未確認。"
+    "note": "本人提示measured集計。基準はv3を維持し、dev5のv5は昇格せず。"
   },
   "h1": {
     "id": "result-h1",
     "title": "H1本人決定・実装の成立範囲・形式確認",
     "header": [
       "AIパイロット項目",
-      "rev 9の事実・境界"
+      "rev 10の事実・境界"
     ],
     "rows": [
       [
@@ -4185,21 +4519,214 @@
       ],
       [
         "パイロット仕様・停止条件",
-        "XB-R-AI-PILOT-2026-10-04.md: calm/whale/crash/depeg-persistの4レジーム×seed39001/39002、OFF1+ON3=32世界・Haiku第一。ON実行には専用adapter接続・検査が必要（未実装）。開始前のseed非交差監査・校正・全残費確認が必要で、32世界をQ0/G3/全12レジーム資格へ外挿しない。Q0前への実走前倒しは未承認。"
+        "H1専用adapterは未実装・標準ON拒否のまま。旧H1の32世界案は未解放。別系統xb-r-live（v3初期コード、標準runtime自由改訂）は同4レジーム×39001/39002・OFF1+ON3=32世界を測定しPILOT-STOP。使用済みseedをH1のfresh seedとして再利用しない。"
       ],
       [
         "本人に残る判断",
-        "AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）は本人判断・未許可。H1選択は確定済みで、全面改訂の承認へ拡張しない。"
+        "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。 10/4の全面改訂見送りは原記録に保持。sim内の自由改訂結果は、本番で安全保証なしで本番と同条件で測るかという判断や提出承認を代替しない。"
       ]
     ],
     "sources": [
-      "src-rev9",
+      "src-rev10",
       "src-h1-pilot",
       "src-h1-design"
     ],
     "source_table": {
-      "source": "src-rev9",
+      "source": "src-rev10",
       "header_key": "AIパイロット項目"
+    }
+  },
+  "dev5": {
+    "id": "result-dev5",
+    "title": "dev5: v5昇格せず",
+    "header": [
+      "dev5項目",
+      "提示値・境界"
+    ],
+    "rows": [
+      [
+        "平均T",
+        "cand 50.15 / multi 55.73"
+      ],
+      [
+        "母集団",
+        "F_ref・36001/36002・12レジーム24世界・2/3回目"
+      ],
+      [
+        "判定",
+        "v5昇格せず、基準はxb-r v3。独立screen/Q0ではない"
+      ],
+      [
+        "未提示",
+        "完了時刻・完了数・G0・安全内訳は未確認"
+      ]
+    ],
+    "sources": [
+      "src-rev10"
+    ],
+    "source_table": {
+      "source": "src-rev10",
+      "header_key": "dev5項目"
+    }
+  },
+  "xa1": {
+    "id": "result-xa1",
+    "title": "xa-1: 第3回未達・打ち切り",
+    "header": [
+      "xa-1段階",
+      "版・結果"
+    ],
+    "rows": [
+      [
+        "dev6",
+        "7179efe: 判断ログにround無し+取引停止、G0 BLOCKED"
+      ],
+      [
+        "修理1 → dev7",
+        "6cd9e70: 提出18・回収専用264/362"
+      ],
+      [
+        "修理2 → xas2",
+        "3ad4f60: calm/38005、G0 PASS、提出10件<30、回収専用4/710（ロック解消）、violations0/revert0"
+      ],
+      [
+        "判定",
+        "HEALTHY=no。2回修理後も不健全で打ち切り。第3回未達扱いは本人報告事項"
+      ]
+    ],
+    "sources": [
+      "src-rev10"
+    ],
+    "source_table": {
+      "source": "src-rev10",
+      "header_key": "xa-1段階"
+    }
+  },
+  "live": {
+    "id": "result-live",
+    "title": "自由改訂: 全32世界・PILOT-STOP",
+    "header": [
+      "live群",
+      "平均T",
+      "dT",
+      "dAlpha",
+      "worst",
+      "installed / declined / rejected"
+    ],
+    "rows": [
+      [
+        "OFF",
+        "54.74",
+        "—",
+        "—",
+        "—",
+        "—"
+      ],
+      [
+        "ON1",
+        "48.91",
+        "-5.83",
+        "-229.4",
+        "-19.75",
+        "9 / 26 / 5"
+      ],
+      [
+        "ON2",
+        "52.80",
+        "-1.93",
+        "-26.9",
+        "-5.68",
+        "1 / 25 / 14"
+      ],
+      [
+        "ON3",
+        "53.62",
+        "-1.11",
+        "+178.7",
+        "-4.50",
+        "1 / 26 / 13"
+      ]
+    ],
+    "sources": [
+      "src-rev10"
+    ],
+    "source_table": {
+      "source": "src-rev10",
+      "header_key": "live群"
+    }
+  },
+  "mix1": {
+    "id": "result-mix1",
+    "title": "mix1: 混成場診断・結果待ち",
+    "header": [
+      "mix1項目",
+      "引継ぎ・結果"
+    ],
+    "rows": [
+      [
+        "構成",
+        "u1の11体、zeta-2をcand=xb-r v3凍結に置換"
+      ],
+      [
+        "範囲",
+        "12レジーム×seed40001/40002=24世界、mix1a/mix1b"
+      ],
+      [
+        "時刻",
+        "2026-10-05 03:52 JST開始、06:30 JST頃完了見込み"
+      ],
+      [
+        "結果",
+        "結果待ち"
+      ],
+      [
+        "境界",
+        "結果未確認。契約・資格とは無関係の診断"
+      ]
+    ],
+    "sources": [
+      "src-rev10"
+    ],
+    "source_table": {
+      "source": "src-rev10",
+      "header_key": "mix1項目"
+    }
+  },
+  "live_safety": {
+    "id": "result-live-safety",
+    "title": "自由改訂の校正・安全境界・本番の見立て",
+    "header": [
+      "live校正・安全・解釈",
+      "提示事実 / 境界"
+    ],
+    "rows": [
+      [
+        "初回校正 39101 / prompt v1",
+        "TSモジュール全体を返しcompile failed、installed 0"
+      ],
+      [
+        "再校正 39102 / prompt v2",
+        "installed 1。WBTC slippage許容80→100bps、安全節に反する変更（sim内のみ）"
+      ],
+      [
+        "WBTC除外の根拠",
+        "実ログで支持できない。WBTC 16取引の固定価格損益+63.34 USDC"
+      ],
+      [
+        "全群の安全と性能",
+        "全群G0 PASS・安全OKは観測。平均Tの増分は全ONで負、適用の多い群ほど悪化、形式不備rejectedが多い。因果効果/安全保証ではない"
+      ],
+      [
+        "本番の見立て",
+        "gpt-oss:120bはHaikuより弱い可能性が高い（推測、実測比較なし）。標準runtimeは安全な枠を強制できず、提出物はruntime改変不可。H1 ON拒否を維持"
+      ]
+    ],
+    "sources": [
+      "src-rev10"
+    ],
+    "source_table": {
+      "source": "src-rev10",
+      "header_key": "live校正・安全・解釈"
     }
   }
 }
@@ -4500,12 +5027,27 @@
       "sources": [
         "src-rev9"
       ]
+    },
+    {
+      "id": "dec-rev10-direction",
+      "date": "2026-10-05",
+      "due_date": null,
+      "title": "第3回未達後のQ0契約・提出方針",
+      "status": "open",
+      "note": "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。 選択肢: A: Q0維持・追加計測停止 / B: 現契約を満たす別系統を新たに設計 / C: mix1診断を踏まえ契約の場の見直しを本人が決める 反証条件: 独立した全12レジームの証拠・最悪値・安全・全残費・受理までの日程により、現契約を満たす別系統か、場の見直しを結果への合わせ込みでなく正当化できる場合。mix1単独の好成績は反証にならない。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-rev10"
+      ]
     }
   ],
   "human_only": {
-    "status": "AI全面改訂の許可は本人判断・未許可",
+    "status": "Q0契約と提出方針は本人判断待ち",
     "items": [
-      "AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）",
+      "A: Q0維持・追加計測停止",
+      "B: 現契約を満たす別系統を新たに設計",
+      "C: mix1診断を踏まえ契約の場の見直しを本人が決める",
       "10/28 dec-007再確認",
       "無料枠不足時の前払い判断（G3見積もり後）"
     ],
@@ -4513,13 +5055,13 @@
       "dec-008",
       "dec-007",
       "dec-h1-authority",
-      "dec-full-executor"
+      "dec-full-executor",
+      "dec-rev10-direction"
     ],
     "sources": [
-      "src-ollama-report",
-      "src-rev9"
+      "src-rev10"
     ],
-    "note": "AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）は本人判断・未許可。H1選択は確定済みで、全面改訂の承認へ拡張しない。 鍵/登録の再操作は不要。10/28確認と前払い判断の既存境界は維持。"
+    "note": "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。 10/4 H1選択と既決署名は不変。自由改訂simの測定記録は本番の承認や安全保証ではない。鍵/登録の再操作は不要、10/28 dec-007と金銭境界を維持。"
   },
   "ollama_report": {
     "evidence_kind": "本人報告",
@@ -4568,6 +5110,72 @@
   ],
   "note": "追記専用・記録時刻の降順。同時刻は許可。正確な出来事時刻がない履歴は移行時刻で追記し、対象日と時刻根拠を併記。既存entryは訂正せず[誤り]を追加。",
   "items": [
+    {
+      "id": "log-084",
+      "timestamp": "2026-10-05T03:57:38+09:00",
+      "type": "計画変更",
+      "summary": "[本人引継ぎ] 8分ごとのハートビートと/tmp/night-state.mdで夜間の自動進行を管理。監視は30分で失効するため、各ハートビートで監視の有効期限・再登録/更新・次回起床・状態表を確認し、失効前に更新する。失効/未受領なら新規起動を止める。8分は進行管理用で、既決の60秒以下監視・2分検知/5分受領/10分次着手を置換しない。稼働実績・更新成功は本更新で未検証。 OVERNIGHT §2.3: 00:26以降の開始/終了区間の和集合で計測・失敗・検査・非runを一度だけ計上し、p3を3倍しない。xa-1 smoke約13分×2 + live smoke約13分×2 + live本体32世界約150分 = 完了分の単純概算202分（3h22）。mix1約150分見込みを含む352分（5h52）は非重複仮定の参考見積で、確定占有ではない。開始/終了全区間・重複・修理/確認/非run・00:26前の当日分は不明。通常6h/日の残り8分とは認定しない。C_forward + R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止。不明なら追加起動BLOCKED。",
+      "sources": [
+        "src-rev10"
+      ],
+      "time_basis": "rev 10のJST文書記録時刻。event_dateは朝報告の対象日。本人提示の出来事の正確な時刻は未提示（mix1開始/見込みは分精度）。原ログ再監査なし。",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-083",
+      "timestamp": "2026-10-05T03:57:38+09:00",
+      "type": "計画変更",
+      "summary": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix1は診断走行中・結果待ち。 Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。",
+      "sources": [
+        "src-rev10"
+      ],
+      "time_basis": "rev 10のJST文書記録時刻。event_dateは朝報告の対象日。本人提示の出来事の正確な時刻は未提示（mix1開始/見込みは分精度）。原ログ再監査なし。",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-082",
+      "timestamp": "2026-10-05T03:57:38+09:00",
+      "type": "実測",
+      "summary": "[進行中・診断] mix1: u1の11体、zeta-2をcand=xb-r v3凍結に置換。12レジーム×40001/40002=24世界、mix1a/mix1bの2チャンク。10/5 03:52 JST開始、06:30 JST頃完了見込み。結果待ち（結果未確認）。契約・資格とは無関係で、好成績でもQ0へ昇格させない。",
+      "sources": [
+        "src-rev10"
+      ],
+      "time_basis": "rev 10のJST文書記録時刻。event_dateは朝報告の対象日。本人提示の出来事の正確な時刻は未提示（mix1開始/見込みは分精度）。原ログ再監査なし。",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-081",
+      "timestamp": "2026-10-05T03:57:38+09:00",
+      "type": "実測",
+      "summary": "校正39101/prompt v1はTSモジュール全体でcompile failed・installed0、39102/v2はinstalled1。適用改訂はWBTC slippage80→100bpsでprompt安全節違反（sim内のみ）。WBTC16取引の固定価格損益+63.34 USDCで除外根拠は支持されない。",
+      "sources": [
+        "src-rev10"
+      ],
+      "time_basis": "rev 10のJST文書記録時刻。event_dateは朝報告の対象日。本人提示の出来事の正確な時刻は未提示（mix1開始/見込みは分精度）。原ログ再監査なし。",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-080",
+      "timestamp": "2026-10-05T03:57:38+09:00",
+      "type": "実測",
+      "summary": "[measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。 AI改訂は平均Tでプラスにならず、適用の多いON1ほど悪化した観測。因果効果とは断定しない。形式不備によるrejectedが多い。HaikuのWBTC除外根拠は実ログで支持できない。",
+      "sources": [
+        "src-rev10"
+      ],
+      "time_basis": "rev 10のJST文書記録時刻。event_dateは朝報告の対象日。本人提示の出来事の正確な時刻は未提示（mix1開始/見込みは分精度）。原ログ再監査なし。",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-079",
+      "timestamp": "2026-10-05T03:57:38+09:00",
+      "type": "実測",
+      "summary": "[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。",
+      "sources": [
+        "src-rev10"
+      ],
+      "time_basis": "rev 10のJST文書記録時刻。event_dateは朝報告の対象日。本人提示の出来事の正確な時刻は未提示（mix1開始/見込みは分精度）。原ログ再監査なし。",
+      "event_date": "2026-10-05"
+    },
     {
       "id": "log-078",
       "timestamp": "2026-10-04T23:11:15+09:00",
@@ -5964,7 +6572,7 @@
         "bundle用在庫余地"
       ],
       "category": "戦略",
-      "definition": "単脚の在庫帯を初期±10%に抑え、bundle各脚の±20%帯の余地を残す因子。v5でON、収益改善はdev5結果未確認。",
+      "definition": "単脚の在庫帯を初期±10%に抑え、bundle各脚の±20%帯の余地を残す因子。v5でON、dev5は平均T 50.15対55.73で昇格せず、基準はv3。",
       "sources": [
         "src-v5"
       ]
@@ -6079,13 +6687,13 @@
   ],
   "kpis": [
     {
-      "label": "最新の診断結果",
+      "label": "決定論の基準",
       "ref": "status.dev4.name",
-      "note": "dev4完了・dev5走行中、結果未確認",
+      "note": "v3維持。v5昇格せず・第3回xa-1打ち切り",
       "route": "results"
     },
     {
-      "label": "最新診断の平均T",
+      "label": "基準v3の平均T",
       "ref": "status.dev4.result.t_candidate",
       "note": "12レジーム等重み、multi 55.02（差5.3T）",
       "route": "results"
@@ -6119,13 +6727,13 @@
     }
   ],
   "copy": {
-    "action_note": "H1選択は確定済み。全面改訂は見送りで、標準ONは拒否しています。鍵の再登録は不要です。",
-    "action_next": "AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）は本人判断・未許可。H1選択は確定済みで、全面改訂の承認へ拡張しない。",
-    "diagnostic_notice": "dev4は全12レジーム24世界の診断。dev5は同seedの開発診断で結果未確認。2/3回目。独立fresh screen・Q0合格へ読み替えません。",
+    "action_note": "H1は標準ON拒否のまま。第3回打ち切り・自由改訂PILOT-STOPを本人へ報告。",
+    "action_next": "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。",
+    "diagnostic_notice": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix1は診断走行中・結果待ち。 診断を資格合格や契約変更へ読み替えません。",
     "qualification_notice": "資格条件は維持しています。旧2候補は不合格、xb-rの新しい資格試験は未実施です。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
     "diagnostic_criteria": "Pは損益、Tは同じ相手の中での相対スコア。取引が増えることと、資格を満たすことは別です。",
-    "plan_state": "Step 1 の資格待ち",
+    "plan_state": "第3回未達・方針判断待ち",
     "plan_note": "初回受理の旧目標は延期済み",
     "registration": "受理表示を本人が確認済み",
     "provider_remaining": "運営モデル一覧・無料枠量・鍵の疎通",
@@ -6224,12 +6832,12 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
   function keyValues(obj) {return `<dl class="data-list">${Object.entries(obj).filter(([k])=>!['sources','id'].includes(k)).map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${rich(v===null?'未確認':Array.isArray(v)?v.join(' / '):typeof v==='object'?JSON.stringify(v):v)}</dd></div>`).join('')}</dl>${obj.sources?refs(obj.sources):''}`;}
   function kpis(){return `<div class="kpis">${D.ui.kpis.map(k=>{let value=read(k.ref);if(k.format==='deadline')value=dateOnly(value)+' '+value.slice(11,16);return `<article class="kpi"><div class="kpi-heading"><div class="kpi-label">${rich(k.label)}</div><a class="kpi-jump" href="#${k.route}" aria-label="${esc(k.label+'の詳細を見る')}">↗</a></div><div class="kpi-value ${String(value).length>7?'compact':''}">${rich(value)}</div><p class="kpi-note">${rich(k.note)}</p></article>`;}).join('')}</div>`;}
   function prioritySteps(){const items=D.status.priority.progress_refs.map(lookupProgress),complete=items.filter(i=>i.state==='done').length;return `<div class="progress-head"><span>資格試験までの確認項目</span><span>${complete} / ${items.length} 完了</span></div><progress value="${complete}" max="${items.length}" aria-label="資格試験までの確認項目 ${complete} / ${items.length}"></progress><ol class="steps">${items.map((p,i)=>`<li class="step"><span class="step-dot ${p.state}" aria-hidden="true">${p.state==='done'?'✓':i+1}</span><div class="step-label">${rich(p.title)}</div><div class="step-state">${fmtState[p.state][0]}</div></li>`).join('')}</ol><p class="scope-note">確認項目の完了数です。試験の合格率や計測の進行率ではありません。</p>`;}
-  function overview(){const s=D.status,finalCheck=D.decisions.items.find(d=>d.id==='dec-007');return `${kpis()}
+  function overview(){const s=D.status,r=read(D.plan.continuous_operation.current_run_ref),finalCheck=D.decisions.items.find(d=>d.id==='dec-007');return `${kpis()}
     <div class="summary-strip"><h2>${rich(s.headline)}</h2><p>${rich(s.subhead)}</p></div>
     <div class="grid-2"><article class="card priority-card"><div class="card-title"><span class="mini-label">いまの最優先目標</span>${chip(s.priority.state,s.priority.state_label)}</div><h2 class="priority-title">${rich(s.priority.title)}</h2><p>${rich(s.priority.note)}</p>${prioritySteps()}${refs(s.priority.sources)}${link('results','診断と資格試験の結果を見る')}</article>
     <article class="card action-box"><div class="card-title"><h2>本人が今やること</h2>${chip(D.status.human_action==='なし'?'done':'decision',D.status.human_action==='なし'?'対応不要':'要判断')}</div><div class="action-value">${esc(s.human_action)}</div><p>${rich(D.ui.copy.action_note)}</p><div class="next-action"><strong>提出前の本人確認 · ${dateOnly(finalCheck.due_date)}</strong><p>${rich(D.ui.copy.action_next)}</p></div>${evidence(D.decisions.ollama_report.evidence_kind)}${refs(D.decisions.ollama_report.sources)}${link('decisions','判断と確認予定を見る')}</article></div>
     <div class="grid-2 section"><article class="card">${sectionTitle('直近の重要な出来事',`<span class="small muted">時刻不明の項目は推測しません</span>`)}<ol class="timeline">${s.recent.map(e=>{const r=e.run_ref?s[e.run_ref]:null;return `<li>${r?.started_at?`<time datetime="${r.started_at}">${time(r.started_at)}</time>`:`<span class="time-note">${dateOnly(e.date)} · ${esc(e.time_note)}</span>`}<div class="timeline-title">${rich(e.title)}</div><p>${rich(e.text)}</p>${r?`<div class="run-label">${esc(r.name)} · ${r.worlds}世界</div>`:''}${e.repair_ref?`<div class="run-label">${esc(s[e.repair_ref].commit)} · ${s[e.repair_ref].tests} tests / ${s[e.repair_ref].red_controls} 赤対照</div>`:''}${refs(e.sources)}</li>`;}).join('')}</ol></article>
-    <article class="card"><div class="card-title"><h2>次のマイルストーン</h2>${chip(s.next_milestone.state,s.next_milestone.state_label)}</div><h3>${rich(s.next_milestone.title)}</h3><p class="card-sub">${rich(s.next_milestone.note)}</p><div class="notice section"><strong>${s.dev5.completed_at?'確認された完了時刻':'現在の計測の完了見込み'}</strong><br>${time(s.dev5.completed_at||s.dev5.expected_end)}${!s.dev5.completed_at&&s.dev5.expected_end?'頃':''}<br>${rich(s.dev5.note)}</div>${refs(s.next_milestone.sources)}${link('operations','実行状況と時間枠を見る')}</article></div>
+    <article class="card"><div class="card-title"><h2>次のマイルストーン</h2>${chip(s.next_milestone.state,s.next_milestone.state_label)}</div><h3>${rich(s.next_milestone.title)}</h3><p class="card-sub">${rich(s.next_milestone.note)}</p><div class="notice section"><strong>${r.completed_at?'確認された完了時刻':'現在の計測の完了見込み'}</strong><br>${time(r.completed_at||r.expected_end)}${!r.completed_at&&r.expected_end?'頃':''}<br>${rich(r.note)}</div>${refs(s.next_milestone.sources)}${link('operations','実行状況と時間枠を見る')}</article></div>
     <div class="notice section">${rich(s.notice)}</div>`;}
   function plan(){const steps=D.plan.protocol.filter(s=>s.start_date);const highlighted=D.milestones.items.filter(m=>m.highlight||['2026-10-17','2026-10-18','2026-10-25','2026-10-29','2026-10-31'].includes(m.date));return `<div class="summary-strip"><h2>${rich(D.plan.goal)}</h2><p>締切 ${time(D.plan.deadline_at)} · MASTER rev ${D.plan.revision} · ${rich(D.ui.copy.plan_note)}</p></div>
     <section class="card">${sectionTitle('提出までのロードマップ',chip('blocked',D.ui.copy.plan_state))}<div class="roadmap-axis" aria-hidden="true"><span>工程 / 条件</span>${D.ui.roadmap_axis.map(d=>`<span>${esc(d)}</span>`).join('')}</div><ol>${steps.map((p,i)=>{const offset=Number(D.ui.roadmap_start_date.slice(8))-1,start=Number(p.start_date.slice(8))-offset,end=Number(p.end_date.slice(8))-offset+1;return `<li class="roadmap-row"><div class="roadmap-meta"><strong>Step ${i+1} · ${rich(p.label)}</strong><small>${esc(p.period)}</small>${chip(p.state)}</div><div class="roadmap-track" aria-label="${esc(p.period)}"><div class="roadmap-bar ${i===0?'current':''}" style="grid-column:${start}/${end}"><span class="sr-only">${esc(p.period)}</span></div></div></li>`;}).join('')}</ol><p class="roadmap-caption">帯は予定の期間です。日付が来ても、前の工程・資格・費用の条件を満たすまで開始しません。</p>${refs(D.plan.sources)}</section>
@@ -6254,7 +6862,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
     ]);
     return `<table class="comparison" role="table"><caption class="sr-only">${mode==='diagnostic'?'診断計測':'資格試験'}の候補比較</caption><thead><tr>${head.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((v,i)=>`<td data-label="${head[i]}"><div>${v}</div></td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
-  function results(){const mode=state.results;const keys=mode==='diagnostic'?['dev4','dev4_regimes','dev3a','dev2','dev2_detail','dev1','d0','strategies','ranking','zeta']:['q0','q0b'];return `
+  function results(){const mode=state.results;const keys=mode==='diagnostic'?['xa1','live','live_safety','mix1','dev5','dev4','dev4_regimes','dev3a','dev2','dev2_detail','dev1','d0','strategies','ranking','zeta']:['q0','q0b'];return `
     <section class="card table-card results-primary"><div class="table-intro"><div class="subnav" role="group" aria-label="結果の種類"><button type="button" data-results="diagnostic" aria-pressed="${mode==='diagnostic'}">診断 · 原因と改善を調べる</button><button type="button" data-results="qualification" aria-pressed="${mode==='qualification'}">資格試験 · 合否を判定する</button></div><div class="card-title"><h2>${mode==='diagnostic'?'診断計測の比較':'資格試験の判定'}</h2>${evidence('measured引継ぎ / 原ログ未再監査')}</div><p class="card-sub">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_criteria:D.ui.copy.qualification_criteria)}</p></div>${comparison(mode)}<div class="table-foot">${rich(D.status.measurement_note)}</div></section><div class="section"><div class="notice ${mode==='diagnostic'?'':'warning'}">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_notice:D.ui.copy.qualification_notice)}</div></div>
     <section class="section">${sectionTitle('測定の原表・条件')}<div class="stack">${keys.map(k=>details(D.results[k].title,rawTable(D.results[k]))).join('')}</div></section>
     <div class="stack section">${details('進捗台帳 · すべての作業項目',D.progress.workstreams.map(w=>`<section class="section"><h3>${esc(w)}</h3><ol class="milestone-list">${D.progress.items.filter(p=>p.workstream===w).map(p=>`<li><div>${chip(p.state)}</div><div><h3>${rich(p.title)}</h3><p>${rich(p.evidence)}</p>${refs(p.sources)}</div></li>`).join('')}</ol></section>`).join(''))}${details('固定版・過去の記録',keyValues(D.status.commits)+keyValues(D.status.q0b)+keyValues(D.status.dev1)+keyValues(D.status.repair_v2))}${details('過去の診断・設計の記録',rawTable(D.results.m1)+rawTable(D.results.fields)+D.results.research.concat(D.results.archive).map(r=>`<article class="section"><h3>${rich(r.title)}</h3><p class="scope-note">${rich(r.text)}</p>${refs(r.sources)}</article>`).join(''))}</div>`;}
@@ -6265,8 +6873,9 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
     <section class="section">${sectionTitle('委任により確定した決定',`<small>Codex / 過去の記録名 Astra</small>`)}<div class="notice">${rich(D.ui.copy.decisions_note)}</div><div class="grid-equal section">${ds.filter(d=>d.group==='delegated').map(decisionCard).join('')}</div></section>
     <section class="card table-card section">${rawTable(D.results.h1)}</section>
     <div class="stack section">${details('既決の方針・旧案の履歴',`<div class="stack">${ds.filter(d=>d.group!=='delegated'&&!['dec-007','dec-008','dec-no-contact'].includes(d.id)).map(decisionCard).join('')}</div>`)}${details('AI契約・資格試験・失敗上限の詳細',rawTable({...D.plan.ai_parameters,title:'rev 6のENTRY単独契約（原記録・初期60）'})+keyValues(D.plan.ai_contract)+keyValues(D.plan.q0_requalification)+keyValues(D.plan.revert_contract)+keyValues(D.plan.cutover))}${details('登録報告の全項目',keyValues(rep))}</div>`;}
-  function operations(){const r=D.status.dev5,b=D.budget;const active=D.queue.items.filter(q=>q.active);const queueHead=['順番・作業','状態・担当','規模・全量見積','開始条件'];return `<div class="grid-2"><section class="card running-card"><div class="card-title"><div><p class="eyebrow">CURRENT RUN</p><h2>${rich(r.name)}</h2></div>${chip(['running-results-pending','reported-running-unverified'].includes(r.state)?'running':r.state==='measured-diagnostic-complete'?'done':'pending',['running-results-pending','reported-running-unverified'].includes(r.state)?'計測中との引継ぎ・未確認':r.state==='measured-diagnostic-complete'?'診断完了の引継ぎ':'状態確認待ち')}</div><p class="card-sub">${rich(`${r.field} · seed${r.seeds??'未提示'} · ${r.regimes}レジーム / ${r.worlds??'未提示'}世界`)}</p><p class="scope-note">所要見込み ${r.expected_end&&r.started_at?Math.round((Date.parse(r.expected_end)-Date.parse(r.started_at))/60000)+'分':'未提示'}（開始と完了見込みの差・実測ではありません）</p><div class="run-metrics"><div><small>開始 · JST</small><strong>${r.started_at?r.started_at.slice(11,16):'未確認'}</strong></div><div><small>${r.completed_at?'完了確認':'完了見込み'} · JST</small><strong>${r.completed_at?r.completed_at.slice(11,16):r.expected_end?r.expected_end.slice(11,16)+'頃':'未確認'}</strong></div><div><small>確認済み完了数</small><strong>${r.completed_worlds===null?'未確認':r.completed_worlds}</strong></div></div><div class="notice">${rich(r.note)} 実消化は未精算。時間の経過から進行率は計算しません。</div>${refs(r.sources)}<p class="scope-note">${rich(active[0]?.dependency||'進行中の作業はありません。')}</p></section>
+  function operations(){const r=read(D.plan.continuous_operation.current_run_ref),b=D.budget;const active=D.queue.items.filter(q=>q.active);const queueHead=['順番・作業','状態・担当','規模・全量見積','開始条件'];return `<div class="grid-2"><section class="card running-card"><div class="card-title"><div><p class="eyebrow">CURRENT RUN</p><h2>${rich(r.name)}</h2></div>${chip(['running-results-pending','reported-running-unverified'].includes(r.state)?'running':r.state==='measured-diagnostic-complete'?'done':'pending',['running-results-pending','reported-running-unverified'].includes(r.state)?'計測中との引継ぎ・未確認':r.state==='measured-diagnostic-complete'?'診断完了の引継ぎ':'状態確認待ち')}</div><p class="card-sub">${rich(`${r.field} · seed${r.seeds??'未提示'} · ${r.regimes}レジーム / ${r.worlds??'未提示'}世界`)}</p><p class="scope-note">所要見込み ${r.expected_end&&r.started_at?Math.round((Date.parse(r.expected_end)-Date.parse(r.started_at))/60000)+'分':'未提示'}（開始と完了見込みの差・実測ではありません）</p><div class="run-metrics"><div><small>開始 · JST</small><strong>${r.started_at?r.started_at.slice(11,16):'未確認'}</strong></div><div><small>${r.completed_at?'完了確認':'完了見込み'} · JST</small><strong>${r.completed_at?r.completed_at.slice(11,16):r.expected_end?r.expected_end.slice(11,16)+'頃':'未確認'}</strong></div><div><small>確認済み完了数</small><strong>${r.completed_worlds===null?'未確認':r.completed_worlds}</strong></div></div><div class="notice">${rich(r.note)} 実消化は未精算。時間の経過から進行率は計算しません。</div>${refs(r.sources)}<p class="scope-note">${rich(active[0]?.dependency||'進行中の作業はありません。')}</p></section>
     <section class="card"><div class="card-title"><h2>${rich('forward100hの消化')}</h2>${chip('warning',b.consumption_status)}</div><div class="budget-values"><div><small>今後の時間枠</small><strong>${esc(b.total_hours)} h</strong></div><div><small>枠内の実消化</small><strong>${b.consumed_forward_hours===null?'未確認':hours(b.consumed_forward_hours)}</strong></div><div><small>残り時間</small><strong>未確定</strong></div></div><p class="card-sub">過去の実測下限は ${esc(b.consumed_lower_bound_hours)} h以上。これは枠外の履歴です。開始・終了区間が未精算のため、${esc(b.total_hours)}hから引きません。</p><p class="scope-note">${rich(b.note)}</p>${refs(b.sources)}</section></div>
+    <section class="card section"><h2>夜間の消費概算・監視</h2><p>${rich(b.overnight.note)}</p><p>${rich(D.status.night_operation.note)}</p>${refs(b.overnight.sources)}</section>
     <section class="card section">${sectionTitle('現在の体制・別ジョブ')}<div class="stack"><article><h3>${rich(D.status.team.primary)} 主 / ${rich(D.status.team.secondary)} 副</h3><p>${rich(D.status.team.unavailable)}</p><p>補助レビュー：${rich(D.status.team.support)}</p><p>独立レビュー：${rich(D.status.team.independent_review)}</p><p>入力方式：${rich(D.status.team.tool_policy)}</p><p class="scope-note">${rich(D.status.team.note)}</p>${refs(D.status.team.sources)}</article>${D.queue.side_jobs.map(j=>`<article><h3>${rich(j.title)}</h3><p>${rich(j.state)}</p><p>${rich(j.note)}</p>${refs(j.sources)}</article>`).join('')}</div></section>
     <section class="card section">${sectionTitle(D.plan.continuous_operation.title,chip('warning','運用接続は未確認'))}<p class="card-sub">${rich(D.plan.continuous_operation.note)}</p><p class="scope-note">${rich(D.status.repair_v5.note)}</p><div class="stack section">${details('段階・担当・最大待ち時間',rawTable({...D.plan.continuous_operation.stages,sources:D.plan.continuous_operation.sources,title:'1回目標'+D.plan.continuous_operation.iteration_target_minutes+'分・上限'+D.plan.continuous_operation.iteration_limit_minutes+'分、最大'+D.plan.continuous_operation.iteration_limit+'回（予算は別途確保）'}))}${details('Q0に進む診断screen',rawTable({...D.plan.continuous_operation.screen,sources:D.plan.continuous_operation.sources,title:'全'+D.plan.continuous_operation.validation_regimes+'×'+D.plan.continuous_operation.validation_seeds+'のfresh seed診断検証。資格試験は別集合'}))}</div>${refs(D.plan.continuous_operation.sources)}</section>
     <section class="card table-card section"><div class="table-intro">${sectionTitle('実行キュー')}<p class="card-sub">${rich(D.queue.note)} 見積もりは全量分で、残り時間ではありません。</p></div><table class="queue-table" role="table"><caption class="sr-only">優先順の実行キュー</caption><thead><tr>${queueHead.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${D.queue.items.map(q=>{const tone=q.active?'running':/不採用/.test(q.state)?'pending':/停止|待ち|未解放/.test(q.state)?'blocked':'pending';const cells=[`<strong>${q.priority}. ${rich(q.title)}</strong>`,`${chip(tone,q.state)}<p>${owner(q.owner)}</p>`,`${q.worlds}世界 / ${hours(q.hours)}<p class="scope-note">${rich(q.window)}</p>`,`${rich(q.dependency)}${refs(q.sources)}`];return `<tr>${cells.map((v,i)=>`<td data-label="${queueHead[i]}"><div>${v}</div></td>`).join('')}</tr>`;}).join('')}</tbody></table></section>
