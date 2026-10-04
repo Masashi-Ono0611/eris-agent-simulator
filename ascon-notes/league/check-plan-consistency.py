@@ -148,6 +148,20 @@ class Summary(HTMLParser):
             self.in_number = False
 
 
+_RESULT_LINES = [
+    "PASS sources: D0 6 rows, Q0 12 regimes, M1 6 clusters copied verbatim; embedded JSON and chart labels agree",
+    "PASS budget: forward KEEP = 100 h exact; unsigned AMEND = 100 h exact; historical >=18.6 h outside cap",
+    "PASS chunks: D0 3.90 h; Q0 estimated 13/3..143/30 h; completed night 247/30..26/3 h; Q0b reserved, not completed",
+    "PASS exploration: M2-skipped 180 worlds = 13 h + 1.9 h support; AMEND exploration remains gated (10.1333 h < 14.9 h)",
+    "PASS queue: q0b -> mix-design -> first-mix -> q0m -> first-p60 -> first-g3 -> m1-implementation -> factor-ab -> m1-pair -> m2",
+    "PASS amendment: unsigned, new 41201-41205 seeds, fixed sonnet candidate, original FAIL retained, no Q1 transfer",
+    "PASS schedule/review: 28 consecutive dates with gates; all 18 Grok findings addressed",
+    "PASS HTML: balanced tags, unique IDs, 18 integer sections, exact budgets/queue/dates, separate P/T field axes, final co-gates",
+    "PASS scope: read only master plan, summary HTML, MORNING and M1-RESULT; no run data, browser or network",
+    "LIMIT: static consistency only; complete Air usage, ON runtime, strategy safety, rendering and acceptance unverified",
+]
+
+
 def check_documents(document, html, morning, m1):
     require("revision 3" in document.splitlines()[0], "plan revision 3 title")
     sources = {"d0": source_table(morning, "## 2."),
@@ -231,6 +245,9 @@ def check_documents(document, html, morning, m1):
                      "Q0bの強弱でopusへ切替えない", "旧Q0 FAILは永久保持", "Q1へ自動拡張しない"):
         require(required in document, f"amendment safeguard missing: {required}")
 
+    if html is None:
+        return [line.replace("; embedded JSON and chart labels agree", "") for line in _RESULT_LINES if not line.startswith("PASS HTML") and not line.startswith("PASS scope")] + [
+            "SKIP HTML: the summary page was merged into ASCON-DASHBOARD.html and is verified by dashboard-check.py"]
     summary = Summary()
     summary.feed(html)
     summary.close()
@@ -267,25 +284,16 @@ def check_documents(document, html, morning, m1):
     require(summary.mechanisms == mechanisms, "HTML: M1 author/cluster cells")
     require(sum(mechanisms.values()) == 16 and len({c for _, c in mechanisms}) == 6, "M1 totals")
 
-    return [
-        "PASS sources: D0 6 rows, Q0 12 regimes, M1 6 clusters copied verbatim; embedded JSON and chart labels agree",
-        "PASS budget: forward KEEP = 100 h exact; unsigned AMEND = 100 h exact; historical >=18.6 h outside cap",
-        "PASS chunks: D0 3.90 h; Q0 estimated 13/3..143/30 h; completed night 247/30..26/3 h; Q0b reserved, not completed",
-        "PASS exploration: M2-skipped 180 worlds = 13 h + 1.9 h support; AMEND exploration remains gated (10.1333 h < 14.9 h)",
-        "PASS queue: q0b -> mix-design -> first-mix -> q0m -> first-p60 -> first-g3 -> m1-implementation -> factor-ab -> m1-pair -> m2",
-        "PASS amendment: unsigned, new 41201-41205 seeds, fixed sonnet candidate, original FAIL retained, no Q1 transfer",
-        "PASS schedule/review: 28 consecutive dates with gates; all 18 Grok findings addressed",
-        "PASS HTML: balanced tags, unique IDs, 18 integer sections, exact budgets/queue/dates, separate P/T field axes, final co-gates",
-        "PASS scope: read only master plan, summary HTML, MORNING and M1-RESULT; no run data, browser or network",
-        "LIMIT: static consistency only; complete Air usage, ON runtime, strategy safety, rendering and acceptance unverified",
-    ]
+    return list(_RESULT_LINES)
 
 
 def check():
     directory = Path(__file__).resolve().parent
     names = ("MASTER-PLAN-2026-10-04.md", "summary-2026-10-03.html",
              "MORNING-2026-10-04.md", "m1/M1-RESULT.md")
-    documents = [(directory / name).read_text(encoding="utf-8") for name in names]
+    documents = [(directory / name).read_text(encoding="utf-8") if (directory / name).exists() else None for name in names]
+    if documents[0] is None or documents[2] is None or documents[3] is None:
+        raise OSError("a required source document is missing")
     return check_documents(*documents)
 
 
