@@ -143,7 +143,7 @@ def validate(doc, data):
     source_map = {s.get('id'):s for s in sources if isinstance(s, dict)}
     seen, paths = set(doc.ids), set()
     date_keys = {'date', 'due_date', 'event_date', 'start_date', 'end_date'}
-    time_keys = {'timestamp', 'as_of', 'measurement_as_of', 'started_at', 'expected_end', 'start_at'}
+    time_keys = {'timestamp', 'as_of', 'measurement_as_of', 'started_at', 'expected_end', 'start_at', 'signed_at', 'completed_at'}
 
     def walk(value, location, inherited_sources=None):
         if isinstance(value, dict):
@@ -326,7 +326,7 @@ def main():
         print(f"PASS log: {stats['logs']} entries; JST descending (ties allowed); allowed types; valid dates")
         totals = {c['key']: sum(Fraction(str(r[c['key']])) for r in data['budget']['rows'])
                   for c in data['budget']['columns']}
-        print(f"PASS budget: KEEP = {totals['keep_hours']} h; unsigned AMEND = {totals['amend_hours']} h (exact fractions)")
+        print(f"PASS budget: KEEP = {totals['keep_hours']} h; archived unsigned AMEND = {totals['amend_hours']} h (exact fractions)")
         print(f"PASS sources: {stats['paths']} repo files exist; 0 missing; {stats['tables']} copied tables match")
         print(f"PASS blockers: {stats['blockers']} complete ranked rows; queue / phase / decision references valid")
         print('PASS HTML: balanced tags; unique ids; no external resources')

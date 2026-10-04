@@ -13,7 +13,7 @@
     {
       "id": "src-master",
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
-      "title": "MASTER revision 5",
+      "title": "MASTER revision 6",
       "locator": "§1–11 / Appendix A"
     },
     {
@@ -92,7 +92,7 @@
       "id": "src-prior",
       "path": "ascon-notes/league/MASTER-PLAN-BEFORE-V2-INTEGRATION.md",
       "title": "旧計画アーカイブ",
-      "locator": "履歴のみ。現行契約はMASTER revision 4"
+      "locator": "履歴のみ。現行契約はMASTER revision 6"
     },
     {
       "id": "src-checklist",
@@ -104,7 +104,7 @@
       "id": "src-guide",
       "path": "docs/competition-start.md",
       "title": "ローカル競技ガイド",
-      "locator": "§1 / §10、オンライン規約は今回未確認"
+      "locator": "ローカル競技ガイド。規約オンライン取得はrev 5記録、適用版未確認"
     },
     {
       "id": "src-scoring",
@@ -139,7 +139,7 @@
     {
       "id": "src-ai",
       "path": "ascon-notes/league/DESIGN-AI-LAYER-01-astra.md",
-      "title": "AI層設計・根拠と未署名契約",
+      "title": "AI層設計・本人委任で確定した契約",
       "locator": "§1 事実/未確認・A–D・AI-G3-01"
     },
     {
@@ -147,6 +147,18 @@
       "path": "ascon-notes/league/DESIGN-REPAIR-01-astra.md",
       "title": "決定論コア修理設計",
       "locator": "冒頭の延期決定・§1.2の後続診断（原ログ未監査）"
+    },
+    {
+      "id": "src-delegation",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "6論点の本人委任とAstra決定",
+      "locator": "冒頭・§4–7・§10。2026-10-04チャットの明示委任、決定署名/対象外事項"
+    },
+    {
+      "id": "src-dev1",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "dev1-xb-r measured引継ぎ",
+      "locator": "§1.5。本人提示の12世界診断結果、原ログ再監査なし"
     }
   ]
 }
@@ -159,12 +171,12 @@
     "src-master",
     "src-ai"
   ],
-  "as_of": "2026-10-04T14:25:52+09:00",
+  "as_of": "2026-10-04T15:00:11+09:00",
   "measurement_as_of": null,
-  "last_update": "rev 5: 本人の決定論Q0優先・10/8延期済みを反映。限定AI改訂→反復→封印を本文と同期。設計/契約案のみ、実装・新規実走なし。",
+  "last_update": "rev 6: 本人委任でAstraが6論点を決定。xb-r診断は全世界P−noop=0.0・取引0、修理/再診断を最優先。G3 17.2hへ振替、技術実行条件と本人金銭/鍵操作は未成立。",
   "phase_id": "phase-first",
-  "headline": "まずxb-rのQ0と受理。その後に限定AI改訂。",
-  "subhead": "dev1-xb-rは本人申告で走行中、結果未確認。決定論コアを守り、AIの価値は改訂ONで測る。",
+  "headline": "xb-rは取引なし。修理・再診断から現Q0へ。",
+  "subhead": "6論点はAstra決定済み。dev1はG0 PASSの診断だがQ0資格不可。受理Sを先に確保する。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -174,7 +186,7 @@
     "worlds": 60,
     "chunks": 3,
     "completed_worlds": 60,
-    "note": "旧Q0b結果を保存。安全null欄はrev 4引継ぎ時点。その後の修理設計に診断集計はあるが全契約の認定は未了。除外/同一入力再走は本人判断、平均T FAILは維持。",
+    "note": "旧60世界のG0 FAIL 2世界と平均T FAILを保持。救済再走なし。安全nullはrev 4引継ぎスナップショット、後続診断と資格認定は別。",
     "completed_at": null,
     "g0": "A=PASS / B=FAIL / C=PASS",
     "safety": null
@@ -183,12 +195,11 @@
     {
       "id": "metric-xbr",
       "label": "現在の優先経路",
-      "value": "xb-r → Q0",
-      "note": "dev1走行中は本人申告。診断完走をQ0 PASSにしない",
-      "tone": "accent",
+      "value": "修理・再診断",
+      "note": "dev1全12世界P−noop=0.0・取引0、現状Q0資格不可",
+      "tone": "bad",
       "sources": [
-        "src-ai",
-        "src-master"
+        "src-dev1"
       ]
     },
     {
@@ -233,15 +244,29 @@
       ]
     }
   ],
-  "notice": "10/8受理目標は延期済み（本人決定）。AI-G3-01は未署名、追加の反復・実装費は未解放。固定null promptだけで受理適合とは扱わない。",
-  "measurement_note": "dev1-xb-r：本人申告の走行中計測。目的/hash/G0/費用/結果は本担当未確認。Q0bは旧60世界完了/FAILの履歴（完了時刻未記録）。",
+  "notice": "10/8延期済み。Q0維持・forward100h・独自戦略のみは既決。AI契約は決定済み、実装/全費用/資格は未成立。Ollama鍵・API上限・自動チャージ・残高は本人確認待ち。",
+  "measurement_note": "dev1-xb-r: measured引継ぎ、G0 PASS・362ループ・12世界、全世界P−noop=0.0。cand取引0、361回の見送り理由。正確な完了時刻/hash/占有費は未提示、原ログ再監査なし。",
   "dev1": {
-    "state": "reported-running",
     "name": "dev1-xb-r",
+    "state": "measured-diagnostic-complete",
     "verified": false,
+    "evidence_basis": "本人提示measured。原ログ/live再監査なし",
+    "completed_at": null,
+    "g0": "PASS",
+    "loops": 362,
+    "worlds": 12,
+    "regimes": 6,
+    "seeds": "31001/31002",
+    "p_minus_noop_all_worlds": "0.0",
+    "trades": 0,
+    "reported_skip_count": 361,
+    "skip_reason": "no funded positive net edge at an affordable bid",
+    "skip_count_scope": "提示ログの回数。全12世界合計への外挿なし",
+    "multi_arb_p_approx": "1300",
+    "q0_eligible": false,
+    "cause": "調査中（別ジョブ）",
     "sources": [
-      "src-ai",
-      "src-master"
+      "src-dev1"
     ]
   }
 }
@@ -263,35 +288,35 @@
     "公式規約が最優先。本文はオンライン取得済みだが10/6公表・10/20発効の未来日付表示。10/4適用版は未確認。",
     "凍結Q0と提出時の改訂適合を分ける。decide＋kind: improve等が必要。現xb-rのnull固定promptは診断用。",
     "評価価格の歪曲・自己提出間の移転・禁止RPCを使わない。鍵は本人が専用フォームへ入力、記録には残さない。",
-    "p=3・等速・CPU排他・入力固定。Q0b失敗履歴を保持し、除外/再走は本人判断。",
+    "p=3・等速・CPU排他・入力固定。Q0b全60世界とG0/平均Tの旧FAIL保持、資格救済再走なし。",
     "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。",
-    "AIは限定paramの提案層。資金/注文/退出は変更不能なゲートへ。stockのdecide全置換をpromptだけで隔離できない。",
-    "league-v2のxb-rはclosure状態と4,000msのclock分岐を持つ。計測中コピーとの同一性は未確認、今は変更しない。"
+    "AI権限はENTRY_BPSだけ。20–60bps・初期60・刻み5・最大±5/60block。固定テンプレート、return/submit外側ゲート、安全state保持。",
+    "dev1診断完了・取引0。別ジョブで修理中のxb-r/テストへ介入せず、修理hash/再診断/費用を待つ。"
   ],
   "protocol": [
     {
       "id": "protocol-first",
       "title": "Step1 決定論Q0・受理",
-      "body": "10/4以降、受理日未定。入口: dev1証跡・現Q0契約・入力/G0/未開封seed",
-      "exit": "凍結Q0→mix/P60→最小改訂適合/G3/G4→本人受理S。first-next 35/3hは追加修理/資格費を含まない。Q0失敗で停止、延期は既決"
+      "body": "10/4以降、受理日未定。入口: xb-r修理/再診断・現Q0・hash/G0/新seed/費用",
+      "exit": "凍結Q0→mix/P60→最小改訂適合/G3/G4→本人受理S。Q0追加1回5hはdeep内優先留保。first-next35/3h、旧FAIL保持・延期は既決"
     },
     {
       "id": "protocol-ai-min",
       "title": "Step2 限定AI最小版",
-      "body": "S受理後〜10/12目安。入口: S・cal・受付境界/許可model/費用",
-      "exit": "事後分析から小param提案、適用/拒否/復帰、AI-G3-01署名。実装費未見積、deepの置換。guard迂回/適合不可で停止、権限/金銭上限は本人"
+      "body": "S受理後〜10/12目安。入口: S・cal・受付境界/許可model/全費用",
+      "exit": "ENTRY_BPSのみ・適用/拒否/復帰・epoch間学習なし。権限はAstra決定済み。実装費未見積、金銭上限/鍵は本人確認待ち"
     },
     {
       "id": "protocol-ai-eval",
       "title": "Step3 AI価値検証",
-      "body": "10/13〜17。入口: 固定版・未使用集合・反復/下流資格費",
-      "exit": "決定論適応対照・E3/Q1・G3反復を通るR*のみ。G3案1候補12h/2候補22.4hは仮単価。10/17に本人再配分、不明ならS"
+      "body": "10/13〜17。入口: 固定R*・未使用集合・D/反復/下流費",
+      "exit": "Dへの増分・AI専用ON E3/Q1・R* G3三反復PASS。G3はR*12h＋S5.2h=17.2h。全工程未確保なら実走なし、10/17条件分岐"
     },
     {
       "id": "protocol-sealed",
       "title": "Step4 封印・一回採用",
-      "body": "10/18〜25。入口: 二場/10seed・model/state/判定の固定・残費",
-      "exit": "H480又は事前指定S240、一回判定・性能凍結。final-g2 35hはON校正前。欠測/不適合/差不明は適合S"
+      "body": "10/18〜25。入口: 二場/10seed・model/reset/判定固定・残費",
+      "exit": "H480又は事前指定S240、一回判定・性能凍結。final-g2 35hはON校正前。不足ならS240、S/費用不足ならH未実施"
     },
     {
       "id": "protocol-ai-release",
@@ -302,29 +327,29 @@
     {
       "id": "protocol-deep",
       "title": "余力がある時だけ深いリーグ",
-      "body": "最大20h・2世代の既決上限を維持。AI実装/反復/資格費との置換元とし、E1/M1/M2を足し増さない。",
-      "exit": "受理S・cal・全量予約が先。AI追加費を引いた残額で解放判定"
+      "body": "研究最大20h・2世代は維持。M2は0h、因子/D/Eは保留。Q0/受理・限定AIを優先する。",
+      "exit": "10/17時点で既資格候補と全残費/日程がある場合だけ切替。新規探索なし"
     }
   ],
   "gates": [
     {
       "id": "gate-g0",
       "title": "G0 / 計測",
-      "state": "Q0b B FAIL",
-      "resolve": "A/C PASS、Bのvuln 41101/41103は361/362loops。p99 648/531msは基準内。本人が除外/同一入力再走を決め、Q0mの条項を自動適用しない。元の失敗履歴と平均T FAILは保持。",
+      "state": "dev1 PASS / 旧Q0b B FAIL保持",
+      "resolve": "dev1は診断G0 PASS・362loops。旧Q0b全60世界のうちvuln 2世界FAILは保存し、救済再走しない。G0成立と利益資格を分ける。",
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-dev1",
+        "src-delegation"
       ]
     },
     {
       "id": "gate-q",
       "title": "現G2-Q / 初回資格",
-      "state": "旧Q0/Q0b FAIL・xb-r未認定",
-      "resolve": "第1ブロッカーは現Q0契約。dev1終了後にhash/G0/試験目的と資格契約を照合。旧44.56対56.50・48.07対56.43のFAILは保持。10/8延期は既決。",
+      "state": "xb-r現状資格不可",
+      "resolve": "A現行維持。dev1は全世界P−noop=0.0・取引0。修理/再診断→hash/新seed/5h枠成立→追加1候補1回。P/F_u1m追加は不採用、revert上限は新資格だけ採用。",
       "sources": [
-        "src-master",
-        "src-ai"
+        "src-dev1",
+        "src-delegation"
       ]
     },
     {
@@ -340,10 +365,10 @@
       "id": "gate-g3",
       "title": "G3 / 改訂ON",
       "state": "未実施",
-      "resolve": "最小cal/正常cycle≥3・実適用/復帰・全改訂検査・危険取引0を受理前に確認。追加ON3履歴/OFF1とstate系列は未署名AI-G3-01。凍結性能はONの代用不可。",
+      "resolve": "R*は12×3セルのON3/OFF1＋障害12h、SはON/OFF各36の5.2h、計17.2h。各反復に既存G3・全安全、epoch間学習なし。受付/実装/費用証跡待ち。",
       "sources": [
-        "src-master",
-        "src-ai"
+        "src-ai",
+        "src-delegation"
       ]
     },
     {
@@ -366,25 +391,115 @@
       ]
     }
   ],
-  "caution": "AIによる利益増は未実証。G3は非劣化/運用ゲートで、単純な決定論適応との増分と最終二場判定は別。H480は最大10市場seed/系列、各世界1応答履歴。G3反復をH全体の応答頑健性と呼ばない。 AI-onlyはFROZEN E3で差を測れないため、E3/Q1のON modeも未署名案。下流基本9.5333hだけでも振替後deep4.5hを超え、余剰証拠なしに全工程を解放できない。",
+  "caution": "AI実装/増分は未実証。R*だけON3/OFF1、Sは既存full G3、epoch間学習持越しなし。17.2hを予約してもdeep9.7hでは追加Q0/修理/D/AI専用E3/Q1全工程が未確保。D増分とE3/Q1/G3・全費用が10/17に揃わなければS240、S/費用不足ならH未実施。",
   "ai_contract": {
-    "status": "unsigned",
     "name": "AI-G3-01",
+    "status": "decided",
+    "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
+    "signer": "本人委任のAstra決定",
+    "signed_at": "2026-10-04T15:00:11+09:00",
+    "execution_status": "blocked-evidence-and-costs",
     "on_repeats": 3,
     "off_repeats": 1,
     "market_cells": 36,
     "candidate_worlds": 144,
     "one_candidate_hours": "12",
+    "s_worlds": 72,
+    "s_full_hours": "26/5",
+    "s_full_evidence": "unverified",
+    "selected_total_worlds": 216,
+    "selected_total_hours": "86/5",
     "two_candidate_hours": "112/5",
-    "extra_hours": "52/5",
-    "keep_deep_after_transfer": "9/2",
-    "amend_deep_after_transfer": "-4/15",
+    "two_candidate_status": "rejected-both-repeat",
+    "extra_hours": "26/5",
+    "keep_deep_after_transfer": "97/10",
+    "epoch_learning_carryover": false,
+    "e3_q1_mode": "ON-decided",
+    "e3_q1_base_hours": "143/15",
+    "d_control_worlds": 48,
+    "d_control_base_hours": "52/15",
+    "d_control_cost_status": "unreserved",
+    "api_budget_status": "本人の承認待ち",
     "sources": [
       "src-ai",
-      "src-master"
+      "src-delegation"
+    ]
+  },
+  "ai_parameters": {
+    "header": [
+      "許可パラメータ",
+      "初期値",
+      "許可範囲",
+      "刻み",
+      "1回の最大変更幅",
+      "更新間隔"
     ],
-    "e3_q1_mode": "ON-proposed-unsigned",
-    "e3_q1_base_hours": "143/15"
+    "rows": [
+      [
+        "ENTRY_BPS（新規entryの入口だけ）",
+        "60 bps",
+        "20–60 bps",
+        "5 bps",
+        "±5 bps",
+        "60 block以上"
+      ]
+    ],
+    "sources": [
+      "src-ai",
+      "src-delegation"
+    ]
+  },
+  "q0_requalification": {
+    "contract": "Q0-A-REQUAL-01",
+    "option": "A",
+    "status": "decided",
+    "candidate_limit": 1,
+    "attempt_limit": 1,
+    "worlds": 60,
+    "seeds": "41301–41305",
+    "mode": "FROZEN",
+    "field": "F_ref",
+    "hours_cap": "5",
+    "within_deep": true,
+    "hash_status": "修理中・未確定",
+    "seed_audit_status": "担当証跡待ち",
+    "execution_status": "blocked-repair-rediagnosis-hash-cost",
+    "extra_p_vs_multi": false,
+    "extra_all_world_p_minus_noop": false,
+    "extra_absolute_p": false,
+    "extra_u1m_noninferiority": false,
+    "extra_submit_failure_noninferiority": false,
+    "sources": [
+      "src-delegation"
+    ]
+  },
+  "revert_contract": {
+    "status": "decided",
+    "worlds_per_set": 60,
+    "max_count": 1,
+    "max_ratio": "1/1000",
+    "denominator": "候補自身の同セットの全包含取引（成功＋revert）",
+    "retroactive": false,
+    "zero_denominator": "0 revertは率N/A。資格PASSの根拠にはしない",
+    "reject_unknown_cause_or_recovery": true,
+    "sources": [
+      "src-delegation"
+    ]
+  },
+  "cutover": {
+    "at": "2026-10-17T18:00:00+09:00",
+    "h480_requires": [
+      "受理S",
+      "Dへの正の増分",
+      "固定R* E3/Q1/G3",
+      "校正後の全残費100h内",
+      "期限内の全日程確保"
+    ],
+    "fallback": "AI終了、適合受理Sと全費用ならS240、それ以外H未実施",
+    "deep_switch": "既資格候補と全残費/日程がある場合だけ。10/17から新規探索なし",
+    "sources": [
+      "src-delegation"
+    ]
   }
 }
 </script>
@@ -402,7 +517,7 @@
       "start_date": "2026-10-04",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "10/8延期済み・新受理日未定。Q0/最小改訂適合/G3/G4が先"
+      "gate": "xb-r取引0で資格不可。修理/再診断→A現Q0→受理S、10/8延期済み"
     },
     {
       "id": "phase-deep",
@@ -410,7 +525,7 @@
       "start_date": "2026-10-09",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "期間は判断窓。S受理/cal/AI契約/全費用後のみ、未達なら削除"
+      "gate": "契約は決定済み。S/cal/全費用とD増分/E3/Q1/G3が成立した時だけ"
     },
     {
       "id": "phase-sealed",
@@ -443,13 +558,15 @@
     {
       "id": "day-2026-10-04",
       "date": "2026-10-04",
-      "title": "Step1方針/AI設計rev 5、dev1計測保全",
-      "dependency": "本人方針・league-v2コード読取・dev1は申告のみ",
-      "stop": "計測worktree/鍵へ触れず、新規実走なし",
+      "title": "rev 6・6論点を本人委任でAstra決定、dev1診断結果反映",
+      "dependency": "本人の明示委任・measured引継ぎ",
+      "stop": "xb-r資格不可。別ジョブ・計測worktree/鍵へ介入なし",
       "state": "running",
       "highlight": true,
       "decision_refs": [
-        "dec-step1-policy"
+        "dec-q0-failure-branch",
+        "dec-q0b-g0",
+        "dec-revert-limit"
       ],
       "sources": [
         "src-master"
@@ -458,9 +575,9 @@
     {
       "id": "day-2026-10-05",
       "date": "2026-10-05",
-      "title": "dev1担当証跡・Q0契約との対応照合",
-      "dependency": "固定hash/G0/安全/試験目的/時間区間",
-      "stop": "診断をQ0認定にしない、追加資格は対象契約のみ",
+      "title": "xb-r原因調査・修理・再診断の担当証跡",
+      "dependency": "全世界取引0の原因・修理hash/G0/安全/費用",
+      "stop": "診断をQ0認定にしない。原因不明/取引なしならQ0開始なし",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
@@ -471,12 +588,16 @@
     {
       "id": "day-2026-10-06",
       "date": "2026-10-06",
-      "title": "決定論修理の資格/受理経路の不足を解消",
-      "dependency": "現Q0条件・未開封seed/追加費用・担当証跡",
-      "stop": "AIでFAILを上書きしない、未予約実験なし",
+      "title": "Q0追加1候補1回の実行条件を照合",
+      "dependency": "修理再診断・41301–41305未使用性・hash・5h枠",
+      "stop": "現行閾値維持。未予約費/校正超過なら開始しない",
       "state": "blocked",
       "highlight": false,
-      "decision_refs": [],
+      "decision_refs": [
+        "dec-q0-failure-branch",
+        "dec-q0b-g0",
+        "dec-revert-limit"
+      ],
       "sources": [
         "src-master"
       ]
@@ -541,8 +662,8 @@
       "id": "day-2026-10-11",
       "date": "2026-10-11",
       "title": "S受理時だけStep2の限定AI最小版",
-      "dependency": "S/cal・権限/受付方式・実装費振替",
-      "stop": "guardが機械的に固定できなければ導入停止",
+      "dependency": "S/cal・ENTRY_BPS受付・全残費",
+      "stop": "機械的固定/epoch resetが不成立なら停止",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -553,9 +674,9 @@
     {
       "id": "day-2026-10-12",
       "date": "2026-10-12",
-      "title": "規約適用版照合・AI-G3-01署名準備",
-      "dependency": "未来日付問題の解消・model/state・費用見積",
-      "stop": "署名なしに反復数/状態持越し試験を変更しない",
+      "title": "規約適用版・決定済みAI契約の実行条件照合",
+      "dependency": "model/hash/reset・全費用・本人API承認",
+      "stop": "契約決定と実装/資格証明を混同しない",
       "state": "pending",
       "highlight": true,
       "decision_refs": [
@@ -569,9 +690,9 @@
     {
       "id": "day-2026-10-13",
       "date": "2026-10-13",
-      "title": "Step3: S full G3、署名時はON反復",
-      "dependency": "S固定・反復/障害費・state系列",
-      "stop": "各反復でG0/安全/既存G3条件、不明なら拡張停止",
+      "title": "S full G3証跡照合、未取得なら72世界",
+      "dependency": "S固定・ON/OFF各36・全残費",
+      "stop": "同一版の有効証跡だけ再利用。5.2hを二重計上しない",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -582,8 +703,8 @@
     {
       "id": "day-2026-10-14",
       "date": "2026-10-14",
-      "title": "固定R*がある時だけE3/Q1/G3の残工程",
-      "dependency": "D対照・新seed・実測残枠・S受理",
+      "title": "固定R*がある時だけON E3/Q1/G3の残工程",
+      "dependency": "Dへの増分・新seed・全費用・受理S",
       "stop": "次点再選抜/未検証H移行なし、深い棚との二重追加禁止",
       "state": "pending",
       "highlight": false,
@@ -595,9 +716,9 @@
     {
       "id": "day-2026-10-15",
       "date": "2026-10-15",
-      "title": "障害/復帰・遅延・改訂/持越し記録確認",
-      "dependency": "正常cycle・受付/submit境界・CPU排他",
-      "stop": "危険取引/枠切れ/反復間符号反転なら停止",
+      "title": "障害/復帰・遅延・epoch reset確認",
+      "dependency": "正常cycle・return/submit境界・CPU排他",
+      "stop": "危険取引/持越し不一致/反復間の結論反転なら停止",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -621,13 +742,14 @@
     {
       "id": "day-2026-10-17",
       "date": "2026-10-17",
-      "title": "本人がAI/深い探索配分、H480/240/未実施を決定",
-      "dependency": "ON倍率・全反復/資格費・受理証跡",
-      "stop": "不足なら探索を削る。Sのみ又は未実施、100h追加なし",
+      "title": "18:00 JSTにAstraが確定条件でH480/S240/未実施へ切替",
+      "dependency": "受理S・D増分・R* E3/Q1/G3・cal後の全残費と日程",
+      "stop": "不足ならAI終了。既資格候補がなければ深い探索へ替えずS240、S/費用不足はHなし",
       "state": "pending",
       "highlight": true,
       "decision_refs": [
-        "dec-ai-budget"
+        "dec-ai-budget",
+        "dec-ai-contract"
       ],
       "sources": [
         "src-master"
@@ -914,7 +1036,7 @@
       "workstream": "初回受理",
       "title": "新F_mix smoke / P60",
       "state": "blocked",
-      "evidence": "xb-rのQ0契約PASS後。dev1目的/hash/G0と資格の照合が先。",
+      "evidence": "修理・再診断後の現Q0 PASSが先。dev1診断のG0 PASSでは解除しない。",
       "sources": [
         "src-master",
         "src-ai",
@@ -990,13 +1112,11 @@
     {
       "id": "progress-astra",
       "workstream": "計画管理",
-      "title": "MASTER rev 5・AI詳細設計",
+      "title": "MASTER rev 6・6論点の決定",
       "state": "done",
-      "evidence": "本人方針・コード事実・未署名AI-G3-01・段階日程/予算/queueを統合。実装/性能実証は別。",
+      "evidence": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。本文/AI設計/配分/queueを同期。実行条件・本人秘密/金銭は別。",
       "sources": [
-        "src-master",
-        "src-ai",
-        "src-repair"
+        "src-delegation"
       ]
     },
     {
@@ -1014,12 +1134,11 @@
     {
       "id": "progress-dev1",
       "workstream": "計測",
-      "title": "dev1-xb-r（本人申告）",
-      "state": "running",
-      "evidence": "計測worktreeには未アクセス。結果/目的/hash/G0/費用と資格契約の対応は未確認。",
+      "title": "dev1-xb-r診断完了・利益なし",
+      "state": "done",
+      "evidence": "measured引継ぎ: G0 PASS・362ループ・12世界、全世界P−noop=0.0、cand取引0。診断終了のみで資格PASSではない。",
       "sources": [
-        "src-ai",
-        "src-master"
+        "src-dev1"
       ]
     },
     {
@@ -1027,9 +1146,21 @@
       "workstream": "探索",
       "title": "限定AI受付・ON反復",
       "state": "blocked",
-      "evidence": "設計のみ。機械的境界と提出適合は未実装、AI-G3-01未署名・追加費未予約。",
+      "evidence": "ENTRY_BPSだけ・epoch reset・R*三反復＋S fullを決定。機械的境界/実装/全費用は未成立、本人API承認待ち。",
       "sources": [
-        "src-ai"
+        "src-ai",
+        "src-delegation"
+      ]
+    },
+    {
+      "id": "progress-xbr-requal",
+      "workstream": "初回受理",
+      "title": "xb-r修理・再診断とQ0資格",
+      "state": "blocked",
+      "evidence": "現状資格不可。取引なしの原因は別ジョブで調査中。修理後のhash/再診断・seed監査・5h枠成立が先。",
+      "sources": [
+        "src-dev1",
+        "src-delegation"
       ]
     }
   ]
@@ -1060,38 +1191,22 @@
     {
       "id": "B01",
       "rank": 1,
-      "title": "第1ブロッカー: xb-r Q0契約クリア・受理S",
+      "title": "第1ブロッカー: xb-r取引なし、修理・再診断からQ0へ",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
-      "owner": "human",
-      "evidence": "旧候補Q0/Q0bはFAIL。dev1は走行中の本人申告、xb-r資格/受理Sは未確認。10/8延期済み。",
-      "mitigation": "現在計測を保全し、終了後の目的/hash/G0/契約を照合。現Q0→最小改訂適合/G3/G4→本人受理を優先。AI/深いリーグで迂回しない。",
+      "owner": "Claude",
+      "evidence": "dev1 measured: G0 PASS・362loops・12世界だが全世界P−noop=0.0、cand取引0、multi-arb同世界P約1300。原因は別ジョブで調査中。",
+      "mitigation": "修理/再診断→A現Q0（追加1候補1回）→最小改訂適合/G3/G4→受理S。hash/seed/費用証跡が先。",
       "status": "open",
       "sources": [
-        "src-master",
-        "src-ai"
-      ]
-    },
-    {
-      "id": "B15",
-      "rank": 2,
-      "title": "Q0b vuln 2世界のG0処理が未決",
-      "severity": "Critical",
-      "likelihood": "高",
-      "impact": "大",
-      "owner": "human",
-      "evidence": "41101/41103で361/362loops。p99 648/531msは基準内。全60世界集計の平均TはFAIL。",
-      "mitigation": "本人が除外か同一入力再走を決定、失敗履歴を保存。Q0m条項は流用不可、どちらでも今回の平均T FAILは維持。",
-      "status": "open",
-      "sources": [
-        "src-q0b",
-        "src-master"
+        "src-dev1",
+        "src-delegation"
       ]
     },
     {
       "id": "B10",
-      "rank": 3,
+      "rank": 2,
       "title": "Q0b診断と安全契約証跡の差",
       "severity": "Critical",
       "likelihood": "高",
@@ -1107,30 +1222,31 @@
     },
     {
       "id": "B03",
-      "rank": 4,
+      "rank": 3,
       "title": "消費会計と改訂ON容量の不足",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "100h既存配分を維持。dev1実占有・非run・ON/API費は未精算。",
-      "mitigation": "AI反復2候補は仮単価22.4h、既存G3より10.4h追加。KEEP deep残4.5hでは既存深い棚と併存不可。本人振替前は追加実走なし。 AI専用E3/Q1の基本9.5333hも確保が必要。S単独Hの節約で未比較AIを採用しない。",
+      "evidence": "G3 17.2h、deep9.7hへ決定済み。Q0再資格5h優先、dev1/修理費未精算。",
+      "mitigation": "AI専用E3/Q1約9.5333hにD48世界52/15h＋実装/支援が別。全工程不足なので実走未解放、cal後再予算。10/17不成立ならS240又はHなし。",
       "status": "open",
       "sources": [
         "src-master",
-        "src-ai"
+        "src-ai",
+        "src-delegation"
       ]
     },
     {
       "id": "B04",
-      "rank": 5,
+      "rank": 4,
       "title": "Ollama・鍵登録・受理の依存",
       "severity": "Critical",
       "likelihood": "中",
       "impact": "致命",
       "owner": "human",
-      "evidence": "dec-008 / dec-007がopen。モデル/枠/登録/受理の完了証拠がない。",
-      "mitigation": "初回前の最小確認と本人鍵登録、最後に最終再確認。秘密値は保存しない。",
+      "evidence": "dec-008 10/7・dec-007 10/28はopen。鍵登録/API上限/自動チャージ/残高は本人確認待ち。",
+      "mitigation": "本人が確認し秘密なしの結果だけ記録。Astra委任を金銭/鍵操作の承認としない。",
       "status": "open",
       "sources": [
         "src-master",
@@ -1139,7 +1255,7 @@
     },
     {
       "id": "B05",
-      "rank": 6,
+      "rank": 5,
       "title": "G0入口・CPU排他・入力固定の逸脱",
       "severity": "Critical",
       "likelihood": "高",
@@ -1156,14 +1272,14 @@
     },
     {
       "id": "B06",
-      "rank": 7,
+      "rank": 6,
       "title": "相手の構成で順位が逆転する",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "大",
       "owner": "Astra",
       "evidence": "F_refで両候補はmulti-arb未満、u1m診断ではsonnetが上。場/seed/指標が異なり、u1mはG0 BLOCKED。",
-      "mitigation": "現契約は維持。新F_mix評価は既知Q0bを開示した別版署名のみ、最終二場ゲートも保持。",
+      "mitigation": "論点4のA現行維持。追加P/F_u1mは不採用、最終二場ゲート保持。将来再検討は対応比較の新証拠がある時だけ。",
       "status": "mitigating",
       "sources": [
         "src-q0b",
@@ -1173,7 +1289,7 @@
     },
     {
       "id": "B07",
-      "rank": 8,
+      "rank": 7,
       "title": "新F_mixの相手・負荷入口が未確定",
       "severity": "Warning",
       "likelihood": "高",
@@ -1188,7 +1304,7 @@
     },
     {
       "id": "B08",
-      "rank": 9,
+      "rank": 8,
       "title": "少数seed・選抜楽観・尾部の不確実性",
       "severity": "Warning",
       "likelihood": "高",
@@ -1205,14 +1321,14 @@
     },
     {
       "id": "B09",
-      "rank": 10,
+      "rank": 9,
       "title": "AIゲート隔離・改訂ONの価値/頑健性未証明",
       "severity": "Critical",
       "likelihood": "中",
       "impact": "致命",
       "owner": "Claude",
       "evidence": "stockはdecide全体を置換。promptだけで安全ゲート保存を保証しない。xb-rはnull固定診断用。",
-      "mitigation": "限定param受付と両送信経路を機械的に制限。最小G3後、署名したON反復・決定論対照。失敗/費用超過ならS維持。",
+      "mitigation": "決定したENTRY_BPS範囲と固定テンプレート、return/submitゲート、epoch resetを実装検証。D増分・ON反復/全費用がなければAI終了。",
       "status": "open",
       "sources": [
         "src-ai"
@@ -1220,14 +1336,14 @@
     },
     {
       "id": "B11",
-      "rank": 11,
+      "rank": 10,
       "title": "xb-rコードと計測入力・再現性の照合",
       "severity": "Warning",
       "likelihood": "高",
       "impact": "中",
       "owner": "Claude",
-      "evidence": "league-v2版はclosure状態とperformance.now()期限分岐を持つ。dev1のコピー/hashは未確認。",
-      "mitigation": "計測は変更せず、終了後に担当者がhash/clock固定再生/期限挙動を照合。診断とQ0資格を分ける。",
+      "evidence": "rev 5のコード記録にはclosure/clock期限分岐。dev1は完了診断だがhash/費用は未提示、別ジョブが修理中。",
+      "mitigation": "別ジョブのhash/clock固定再生/取引成立の再診断証跡を受領。編集中コードへ資格認定を移さない。",
       "status": "mitigating",
       "sources": [
         "src-ai"
@@ -1235,7 +1351,7 @@
     },
     {
       "id": "B12",
-      "rank": 12,
+      "rank": 11,
       "title": "独自性・zeta回帰・因果の未確定",
       "severity": "Warning",
       "likelihood": "中",
@@ -1252,7 +1368,7 @@
     },
     {
       "id": "B13",
-      "rank": 13,
+      "rank": 12,
       "title": "最新仕様・release住所・ZIPの不整合",
       "severity": "Warning",
       "likelihood": "中",
@@ -1268,7 +1384,7 @@
     },
     {
       "id": "B14",
-      "rank": 14,
+      "rank": 13,
       "title": "生成の重複が初回経路を圧迫",
       "severity": "Warning",
       "likelihood": "高",
@@ -1284,6 +1400,21 @@
       ]
     },
     {
+      "id": "B15",
+      "rank": 14,
+      "title": "Q0b G0 FAILの扱い決定済み",
+      "severity": "Suggestion",
+      "likelihood": "低",
+      "impact": "中",
+      "owner": "Astra",
+      "evidence": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。全60世界/2世界G0 FAIL/平均T FAILを保存。",
+      "mitigation": "救済再走なし。不可欠な原因診断だけ別契約。旧FAILは置換しない。",
+      "status": "resolved",
+      "sources": [
+        "src-delegation"
+      ]
+    },
+    {
       "id": "B02",
       "rank": 15,
       "title": "Q0b後のAstra更新",
@@ -1291,8 +1422,8 @@
       "likelihood": "低",
       "impact": "中",
       "owner": "Astra",
-      "evidence": "revision 5とAI詳細設計・正本データを更新。Q0優先・延期済みとAI未署名事項を分離。",
-      "mitigation": "新たな安全/区間証跡が届いたら差分更新。今回の更新完了は安全確認完了を意味しない。",
+      "evidence": "revision 6で6論点を本人委任に基づきAstraが決定し、dev1 measured結果と正本データを同期。",
+      "mitigation": "未実装/全費用/資格/受理の証跡を後続で更新。本人金銭/鍵は未確認のまま。",
       "status": "resolved",
       "sources": [
         "src-master",
@@ -1313,7 +1444,7 @@
   "items": [
     {
       "id": "queue-dev1-evidence",
-      "title": "dev1終了後の担当証跡照合",
+      "title": "xb-r修理・再診断と担当証跡",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1322,22 +1453,22 @@
       ],
       "experiment": "dev1-evidence",
       "priority": 1,
-      "state": "担当証跡待ち",
+      "state": "修理・再診断待ち",
       "worlds": 0,
       "hours": null,
-      "window": "dev1-xb-r終了後",
-      "dependency": "本人申告の走行中計測を保全。目的/hash/G0/費用/資格契約を照合。新規実走は起動しない"
+      "window": "別ジョブの診断修理後",
+      "dependency": "dev1全世界P−noop=0.0・取引0。原因/hash/費用を照合、取引成立とG0/安全の再診断が先"
     },
     {
       "id": "queue-q0b-evidence",
       "experiment": "q0b-evidence",
       "priority": 2,
       "title": "Q0b安全・G0履歴・時間証跡の補完",
-      "state": "未確認証跡の補完",
+      "state": "証跡精算のみ・再走なし",
       "worlds": 0,
       "hours": null,
       "window": "実行担当の次の空き枠",
-      "dependency": "修理設計の診断集計と契約証跡・G0失敗履歴・区間を照合。旧FAIL保持",
+      "dependency": "旧60世界とG0 2世界FAIL・平均T FAIL保持。安全/区間証跡の照合のみ",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1346,21 +1477,21 @@
       ]
     },
     {
-      "id": "queue-human-branch",
-      "experiment": "human-branch",
-      "priority": 3,
-      "title": "Q0残契約・AI新論点の本人判断",
-      "state": "新契約事項のみ本人判断待ち",
-      "worlds": 0,
-      "hours": null,
-      "window": "Q0経路の不足事項判明後",
-      "dependency": "延期は既決。追加資格の回数/seed/費用・新受理日とAI契約を分離。現Q0条件を維持",
-      "owner": "human",
-      "active": false,
+      "id": "queue-q0-requal",
+      "owner": "Claude",
       "sources": [
-        "src-q0b",
-        "src-master"
-      ]
+        "src-master",
+        "src-delegation"
+      ],
+      "experiment": "q0-requal",
+      "priority": 3,
+      "state": "条件付き決定・実行停止",
+      "worlds": 60,
+      "hours": "5",
+      "window": "修理再診断・hash/seed/費用成立後",
+      "dependency": "A維持、新41301–41305の未使用性監査、1候補1回。deep内5h留保、超過/不足は開始しない",
+      "active": false,
+      "title": "A現Q0・追加1候補1回"
     },
     {
       "id": "queue-mix-design",
@@ -1371,7 +1502,7 @@
       "worlds": 0,
       "hours": "1/2",
       "window": "計測を邪魔しない空き枠",
-      "dependency": "固定相手/slot/hashと限定改訂の受付・G4経路を設計。AI実装費は別見積",
+      "dependency": "固定相手/slot/hashとENTRY_BPSだけの受付・G4経路を設計",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1401,11 +1532,11 @@
       "experiment": "q0m",
       "priority": 6,
       "title": "q0m",
-      "state": "未署名・未実施",
+      "state": "不採用・旧未署名記録",
       "worlds": 60,
       "hours": "143/30",
-      "window": "本人が別場を選び別版署名した時のみ",
-      "dependency": "既知Q0b開示・未使用seed・smoke PASS。既定のxb-r Q0経路に混ぜない",
+      "window": "現契約では実施しない",
+      "dependency": "A維持のため選択しない。旧原案の費用/seedは履歴で実予約なし",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1439,7 +1570,7 @@
       "worlds": 36,
       "hours": "13/5",
       "window": "P60/資格・最小改訂policy後",
-      "dependency": "ON/OFF最小校正・実適用/復帰・機械的境界。本人モデル/鍵準備、金銭費別",
+      "dependency": "ON/OFF最小校正・実適用/復帰・機械的境界。本人モデル/鍵準備、金銭費は本人承認待ち",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1448,49 +1579,49 @@
       ]
     },
     {
-      "id": "queue-m1-implementation",
-      "experiment": "m1-implementation",
-      "priority": 9,
-      "title": "m1-implementation",
-      "state": "保留",
-      "worlds": 0,
-      "hours": "19/10",
-      "window": "受理S後の振替契約次第",
-      "dependency": "AI実装/対照を優先する場合はこの棚と置換。追加費未見積のまま開始しない",
+      "id": "queue-ai-implementation",
       "owner": "Claude",
-      "active": false,
       "sources": [
-        "src-q0b",
-        "src-master"
-      ]
+        "src-master",
+        "src-delegation"
+      ],
+      "experiment": "ai-implementation",
+      "priority": 9,
+      "state": "全費用待ち",
+      "worlds": 0,
+      "hours": null,
+      "window": "S受理/cal/費用成立後",
+      "dependency": "限定param受付・state reset・D対照実装。未見積を0hにしない",
+      "active": false,
+      "title": "限定AI受付・D対照実装"
+    },
+    {
+      "id": "queue-ai-d-control",
+      "owner": "Claude",
+      "sources": [
+        "src-master",
+        "src-delegation"
+      ],
+      "experiment": "ai-d-control",
+      "priority": 10,
+      "state": "未解放",
+      "worlds": 48,
+      "hours": "52/15",
+      "window": "S受理後、AI下流全費用確保時のみ",
+      "dependency": "全12×新35001/35002×A/D、費用は基本単価で支援別。決定論適応への増分screen",
+      "active": false,
+      "title": "AI対決定論適応の開発screen"
     },
     {
       "id": "queue-factor-ab",
       "experiment": "factor-ab",
-      "priority": 10,
+      "priority": 11,
       "title": "factor-ab",
-      "state": "未解放",
+      "state": "保留",
       "worlds": 48,
       "hours": "52/15",
-      "window": "初回受理/cal・AI費確保後のみ",
-      "dependency": "既存深いリーグ棚。AIの反復/資格費との重複予約なし",
-      "owner": "Claude",
-      "active": false,
-      "sources": [
-        "src-q0b",
-        "src-master"
-      ]
-    },
-    {
-      "id": "queue-m1-pair",
-      "experiment": "m1-pair",
-      "priority": 11,
-      "title": "m1-pair",
-      "state": "代替棚・停止",
-      "worlds": 24,
-      "hours": "39/20",
-      "window": "探索経路の置換のみ",
-      "dependency": "D/E/親の診断。AIとの二重追加禁止、下流E3/Q費を予約",
+      "window": "既資格候補と全残費がある場合のみ",
+      "dependency": "AI優先、10/17から新規探索なし。二重予約不可",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1503,11 +1634,11 @@
       "experiment": "m2",
       "priority": 12,
       "title": "m2",
-      "state": "保留",
+      "state": "不採用・0h配分",
       "worlds": 60,
       "hours": "13/3",
-      "window": "当面0h",
-      "dependency": "既定省略。最大20h/2世代と下流費を維持",
+      "window": "現計画では実施しない",
+      "dependency": "13/3hは旧棚の全量見積で配分ではない。研究最大20h/2世代を維持",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1516,9 +1647,9 @@
       ]
     }
   ],
-  "note": "dev1走行中は本人申告。次は終了後の担当証跡と現Q0契約の照合。今回の更新は新規実走を解放しない。",
+  "note": "6論点は決定済み。dev1は完了診断だが取引0のため修理/再診断が最優先。新規計測は本更新から起動しない。",
   "day_limit_hours": 6,
-  "bundle": "延期は既決。Q0/受理を先に済ませ、AI実装・反復は深いリーグ棚からの振替契約後。旧Q0m基本17.4333hをxb-r残費へ流用しない。"
+  "bundle": "Q0再資格5hをdeep内優先留保。AI G3は17.2hへ振替済み、追加実装/D/下流費は全量成立まで未解放。"
 }
 </script>
 <!-- END data-queue -->
@@ -1535,19 +1666,19 @@
   "start_at": "2026-10-04T01:00:00+09:00",
   "consumed_lower_bound_hours": "18.6",
   "consumed_exact_hours": null,
-  "note": "確認済み実測下限18.6hは据置。Q0b完了60世界の時間概算4.3333–4.7667h、下限＋Q0bは22.9333–23.3667h相当＋未計上分。D0/Q0も重複なく加える仮置き31.1667–32.0333hは未精算。実区間を得るまで推定を実測にしない。 dev1-xb-r費用は本更新で未精算。AIの追加費は未署名/未予約で、未消費や0hを意味しない。",
+  "note": "確認済み過去実測下限18.6hは据置。Q0b概算とdev1未精算を実測残枠にしない。KEEPはG3へ5.2h振替済み、AMENDは旧未署名比較の履歴。Q0/受理優先、API金銭/鍵は本人確認待ち。",
   "columns": [
     {
       "id": "budget-keep",
       "key": "keep_hours",
       "title": "現行 KEEP",
-      "state": "既存配分維持・AI追加費未解放"
+      "state": "rev 6: deepからG3へ5.2h振替済み、実走は全条件待ち"
     },
     {
       "id": "budget-amend",
       "key": "amend_hours",
-      "title": "AMEND 比較案",
-      "state": "未署名・未適用"
+      "title": "旧AMEND保存",
+      "state": "未署名・今回不採用"
     }
   ],
   "rows": [
@@ -1589,11 +1720,11 @@
     },
     {
       "id": "budget-q0m",
-      "title": "署名した場合だけF_mix資格",
+      "title": "旧F_mix資格案（今回不採用）",
       "keep_hours": "0",
       "amend_hours": "143/30",
       "experiments": "q0m",
-      "note": "新60世界。維持案は0、改訂案は上側を予約",
+      "note": "旧60世界案。KEEPは0、AMENDの上側予約は履歴のみ",
       "accounting": "未署名",
       "sources": [
         "src-master"
@@ -1625,24 +1756,24 @@
     },
     {
       "id": "budget-deep",
-      "title": "探索・実装支援（上限20h内）",
-      "keep_hours": "149/10",
+      "title": "Q0優先・修理・AI支援（研究上限20h内）",
+      "keep_hours": "97/10",
       "amend_hours": "152/15",
-      "experiments": "factor-ab; m1-implementation; m1-pair; m2; e3-full; q1",
-      "note": "維持14.9h／改訂10.1333h。全研究棚の同時実施を約束しない AI実装/対照/反復の置換元。全部併存を約束しない。",
-      "accounting": "将来予約・解放0",
+      "experiments": "q0-requal; factor-ab; m1-implementation; m1-pair; m2; ai-implementation; ai-d-control; e3-full; q1",
+      "note": "現行9.7h。Q0再資格5h優先留保、残4.7hはdev1精算/修理優先。旧AMENDは未適用",
+      "accounting": "Q0再資格5h優先留保・他は証跡/全費用待ち",
       "sources": [
         "src-master"
       ]
     },
     {
       "id": "budget-final-g3",
-      "title": "両候補ON/OFF・障害",
-      "keep_hours": "12",
+      "title": "S full G3＋R*反復・障害",
+      "keep_hours": "86/5",
       "amend_hours": "12",
       "experiments": "g3-fallback; g3-challenger; g3-faults",
-      "note": "144世界10.4h＋障害1.6h、ON実測で再計算 AI-G3-01の3応答履歴は別契約、現行2候補G3と二重に予約しない。",
-      "accounting": "将来予約",
+      "note": "現行17.2h=R*12h＋S5.2h、deepから5.2h振替。旧AMENDは未適用",
+      "accounting": "決定済み将来予約・実走条件待ち",
       "sources": [
         "src-master"
       ]
@@ -1689,30 +1820,30 @@
       "ON倍率（13分比）",
       "H480全ON",
       "SのみH240全ON",
-      "G3二候補 / Sのみ"
+      "G3決定案 / Sのみ（障害別）"
     ],
     "rows": [
       [
         "1",
         "104/3h",
         "52/3h",
-        "10.4 / 5.2h"
+        "17.2 / 5.2h"
       ],
       [
         "1.5",
         "52h",
         "26h",
-        "13 / 6.5h"
+        "22.4 / 6.5h"
       ],
       [
         "2",
         "208/3h",
         "104/3h",
-        "15.6 / 7.8h"
+        "27.6 / 7.8h"
       ]
     ]
   },
-  "on_note": "AI反復案: 1候補144世界＋障害=12h、2候補288世界＋障害=22.4h（13分/p3・ON倍率1の算術）。追加10.4hをdeepから移すとKEEP残4.5h、AMENDは不足。API金銭費は別。最小calで倍率と同時呼出枠を確認し、封印前に再配分する。 AI専用E3/Q1は別に132世界・143/15h×ON倍率の再予約。全費用不足ならAI挑戦者は進めない。",
+  "on_note": "決定: R*反復12h＋S full G3 5.2h=17.2h（ON倍率1）。deep9.7hへ縮小、Q0再資格5h優先。E3/Q1基本143/15h・D基本52/15h・実装/支援は全費用未確保。cal最大×1.2で再予算、10/17の切替条件を適用。",
   "historic_bar_note": "履歴の下限 / forward計画と同じ時間スケール（枠外、差引き禁止）",
   "consumption_estimate": {
     "sources": [
@@ -2401,6 +2532,14 @@
   ],
   "research": [
     {
+      "id": "research-dev1",
+      "title": "dev1-xb-r: 修理・再診断が先",
+      "text": "G0 PASS・362ループ・12世界（6レジーム×31001/31002）。全世界P−noop=0.0、cand取引0、361回 no funded positive net edge at an affordable bid。同世界multi-arb P約1300。原因調査中、現状Q0資格不可。",
+      "sources": [
+        "src-dev1"
+      ]
+    },
+    {
       "id": "research-xb",
       "title": "xb-core / V0–V7",
       "text": "共通核と因子は実装済み。Grok指摘の利益床・zero bid・検査の欠陥を修正、73検査の報告。実走0。",
@@ -2515,7 +2654,7 @@
       "source": "src-q0b",
       "header_key": "Q0b項目"
     },
-    "note": "本人提示のClaude集計。G0 FAIL 2世界を含む全60世界、12レジーム×seed41101–41105、q0ba/q0bb/q0bc-opus-1。原ログ未再監査。除外/再走は本人判断で、平均T FAILを取り消さない。 安全欄はrev 4引継ぎ時点の保存値。後続の修理設計は別診断、資格認定ではない。",
+    "note": "本人提示のClaude集計。G0 FAIL 2世界を含む全60世界、12レジーム×seed41101–41105、q0ba/q0bb/q0bc-opus-1。原ログ未再監査。論点5で全60世界・旧FAIL保持、資格救済再走なしと決定。 安全欄はrev 4引継ぎ時点の保存値。後続の修理設計は別診断、資格認定ではない。",
     "sources": [
       "src-q0b",
       "src-master"
@@ -2537,6 +2676,55 @@
     "invalid_orders": null,
     "reverts": null,
     "safety": "未確認：Claude側で未集計"
+  },
+  "dev1": {
+    "id": "result-dev1",
+    "title": "dev1-xb-r 診断完了・現状Q0資格不可",
+    "header": [
+      "dev1-xb-r項目",
+      "提示された結果",
+      "判定・範囲"
+    ],
+    "rows": [
+      [
+        "G0 / ループ",
+        "PASS / 362ループ",
+        "診断の計測成立、Q0資格PASSではない"
+      ],
+      [
+        "母集団",
+        "12世界（6レジーム×seed31001/31002）",
+        "既見の開発集合。Q0・E3・Hへ転用しない"
+      ],
+      [
+        "P−noop",
+        "全世界0.0",
+        "全世界でnoopと同じ、利益増なし"
+      ],
+      [
+        "candの挙動",
+        "361回「no funded positive net edge at an affordable bid」、取引0",
+        "提示ログの回数。全12世界の合計回数とは解釈しない"
+      ],
+      [
+        "multi-arb",
+        "同世界でP約1300",
+        "本人提示の概数。レジーム別値や全世界平均を補完しない"
+      ],
+      [
+        "原因",
+        "調査中（別ジョブ）",
+        "原因を断定せず、修理・再診断が先"
+      ]
+    ],
+    "note": "本人提示measured。原ログ再監査なし、完了時刻未提示。",
+    "sources": [
+      "src-dev1"
+    ],
+    "source_table": {
+      "source": "src-dev1",
+      "header_key": "dev1-xb-r項目"
+    }
   }
 }
 </script>
@@ -2548,7 +2736,7 @@
     "src-master",
     "src-handoff"
   ],
-  "date_note": "日付は本人判断日、原時刻/日付が不明な既存判断は資料記録日として本文に明記。openは実行未完で、方針の再承認待ちとは限らない。",
+  "date_note": "6論点は2026-10-04の本人明示委任に基づくAstra決定。signed_atは今回の決定記録時刻で本人委任の発言時刻ではない。dec-008/007は従来ID/期日/openを維持。鍵登録/API金銭上限/自動チャージ/残高は本人の承認・確認待ち。",
   "items": [
     {
       "id": "dec-original",
@@ -2628,7 +2816,7 @@
       "due_date": null,
       "title": "Q0b完了後にAstraが計画更新",
       "status": "closed",
-      "note": "Q0bのrev 4更新済みに続き、本人方針とAI設計をrev 5へ統合。測定/受理の完了を意味しない。",
+      "note": "rev 6で6論点の委任決定・dev1結果・配分を本文に統合。計測/受理の完了ではない。",
       "sources": [
         "src-q0b",
         "src-master"
@@ -2639,8 +2827,8 @@
       "date": "2026-10-04",
       "due_date": null,
       "title": "forward-100hの解釈",
-      "status": "confirmation-pending",
-      "note": "forward100h運用を維持。過去込みへ再質問しない。起点区間/消費精算は担当証跡待ち、100hを再起算しない。",
+      "status": "decided",
+      "note": "forward100hは既決。起点区間/消費精算だけ担当証跡待ち。過去込みへ戻さず100hを再起算しない。",
       "sources": [
         "src-handoff",
         "src-master"
@@ -2652,7 +2840,7 @@
       "due_date": null,
       "title": "Q0-AMEND-01 / F_mix競争条件",
       "status": "unsigned",
-      "note": "未署名・未適用。Q0b閲覧前の原案条件は失効。既知情報を開示した別版と未開封F_mix結果前の署名が必要。KEEPの判定を変えない。",
+      "note": "原案は未署名・閲覧前条件失効。今回A維持で不採用、待ち判断ではない。旧FAIL/旧比較列を履歴保存。",
       "sources": [
         "src-master",
         "src-handoff"
@@ -2673,26 +2861,33 @@
       "id": "dec-q0-failure-branch",
       "date": "2026-10-04",
       "due_date": null,
-      "title": "延期後のQ0追加資格・費用・受理日",
-      "status": "open",
-      "note": "10/8延期/設計修理は本人決定済み。未決はdev1と資格契約の対応、追加回数/seed/費用・新受理日。AI契約とは分離する。",
+      "title": "Q0再資格: A現行維持",
+      "status": "decided",
+      "note": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。追加1候補1回、F_ref/FROZEN・41301–41305全12・5h上限枠。修理/再診断/hash/全履歴seed監査/費用が先。追加P≥multi、全世界P−noop≥0、絶対P≥0、F_u1m、送信失敗率非劣性は不採用。 署名者=本人委任のAstra決定、署名日時=2026-10-04T15:00:11+09:00（決定記録時刻）。Masashi本人の署名ではない。",
       "sources": [
-        "src-master",
-        "src-ai",
-        "src-repair"
-      ]
+        "src-delegation",
+        "src-master"
+      ],
+      "issue": 4,
+      "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
+      "signer": "本人委任のAstra決定",
+      "signed_at": "2026-10-04T15:00:11+09:00"
     },
     {
       "id": "dec-q0b-g0",
       "date": "2026-10-04",
       "due_date": null,
-      "title": "vuln 2世界のG0 FAILの扱い",
-      "status": "open",
-      "note": "除外か同一入力再走（失敗履歴保持）を本人が決める。Q0m条項の自動適用なし。どちらでも今回の平均T不合格を保持。",
+      "title": "vuln 2世界: 旧FAIL保持・救済再走なし",
+      "status": "decided",
+      "note": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。全60世界を残し、G0 2世界FAILと平均T FAILを別記。除外/救済再走なし。不可欠な原因診断だけ将来別契約。 署名者=本人委任のAstra決定、署名日時=2026-10-04T15:00:11+09:00（決定記録時刻）。Masashi本人の署名ではない。",
       "sources": [
-        "src-q0b",
+        "src-delegation",
         "src-master"
-      ]
+      ],
+      "issue": 5,
+      "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
+      "signer": "本人委任のAstra決定",
+      "signed_at": "2026-10-04T15:00:11+09:00"
     },
     {
       "id": "dec-step1-policy",
@@ -2710,39 +2905,83 @@
       "id": "dec-ai-scope",
       "date": "2026-10-04",
       "due_date": null,
-      "title": "AIの権限と機械的受付境界",
-      "status": "open",
-      "note": "推奨: 限定param提案＋固定コア。反証: guard迂回、release差分不適合、単純適応で十分なら権限拡張しない。",
+      "title": "AI権限: ENTRY_BPSだけ",
+      "status": "decided",
+      "note": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。20–60bps、初期60、刻み5、最大±5bps/60block。固定テンプレートと両送信経路ゲート。因子switch/任意コード不採用。 署名者=本人委任のAstra決定、署名日時=2026-10-04T15:00:11+09:00（決定記録時刻）。Masashi本人の署名ではない。",
       "sources": [
-        "src-ai",
-        "src-master"
-      ]
+        "src-delegation",
+        "src-ai"
+      ],
+      "issue": 1,
+      "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
+      "signer": "本人委任のAstra決定",
+      "signed_at": "2026-10-04T15:00:11+09:00"
     },
     {
       "id": "dec-ai-contract",
       "date": "2026-10-04",
       "due_date": null,
-      "title": "AI-G3-01: 反復/対照/state/費用",
-      "status": "unsigned",
-      "note": "ON3独立応答履歴/OFF1、既存G3を各反復に要求する案。AI専用E3/Q1のON mode・決定論対照・系列/再生・API上限とAir振替を開封前に署名。反証: 退行/不安定/費用超過ならS維持。",
+      "title": "AI-G3-01: R*反復＋S fullの17.2h",
+      "status": "decided",
+      "note": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。R* ON3/OFF1・144世界＋障害=12h、S ON/OFF各36=5.2h。epoch間学習なし、D対照/AI専用ON E3/Q1。hash/実装/全費用の成立待ち。 署名者=本人委任のAstra決定、署名日時=2026-10-04T15:00:11+09:00（決定記録時刻）。Masashi本人の署名ではない。",
       "sources": [
-        "src-ai",
-        "src-master"
-      ]
+        "src-delegation",
+        "src-ai"
+      ],
+      "issue": 2,
+      "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
+      "signer": "本人委任のAstra決定",
+      "signed_at": "2026-10-04T15:00:11+09:00"
     },
     {
       "id": "dec-ai-budget",
       "date": "2026-10-04",
       "due_date": "2026-10-17",
-      "title": "AI・深いリーグ・H480/240の配分",
-      "status": "open",
-      "note": "推奨: 限定AI検証を優先し探索を削る。反証: 実装/資格/反復・ON遅延で受理を圧迫するならAI拡張を中止、Sのみ又はH未実施。100h追加なし。",
+      "title": "100h配分・10/17の条件分岐",
+      "status": "decided",
+      "note": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。G3 17.2h、deep9.7h（Q0再資格5h優先）、M2=0h。10/17 18:00に受理S/D増分/R* E3/Q1/G3/全残費・日程が揃えばH480、欠ければS240、S/費用不足はHなし。新探索なし。 署名者=本人委任のAstra決定、署名日時=2026-10-04T15:00:11+09:00（決定記録時刻）。Masashi本人の署名ではない。",
       "sources": [
-        "src-ai",
+        "src-delegation",
+        "src-ai"
+      ],
+      "issue": 3,
+      "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
+      "signer": "本人委任のAstra決定",
+      "signed_at": "2026-10-04T15:00:11+09:00"
+    },
+    {
+      "id": "dec-revert-limit",
+      "date": "2026-10-04",
+      "due_date": null,
+      "issue": 6,
+      "title": "新資格revert: ≤1件かつ≤0.1%",
+      "status": "decided",
+      "origin": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定",
+      "signer": "本人委任のAstra決定",
+      "signed_at": "2026-10-04T15:00:11+09:00",
+      "note": "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。候補自身の各60世界セット、分母は成功＋revertの全包含数。原因不明/片脚回収不明/承認・資金不備反復はFAIL。0包含は率N/Aで資格PASSとはしない。旧結果へ遡及しない。 署名者=本人委任のAstra決定、署名日時=2026-10-04T15:00:11+09:00（決定記録時刻）。Masashi本人の署名ではない。",
+      "sources": [
+        "src-delegation",
         "src-master"
       ]
     }
-  ]
+  ],
+  "human_only": {
+    "status": "本人の承認・確認待ち",
+    "items": [
+      "Ollama鍵登録",
+      "API金銭上限",
+      "自動チャージ",
+      "残高"
+    ],
+    "decision_refs": [
+      "dec-008",
+      "dec-007"
+    ],
+    "sources": [
+      "src-delegation"
+    ]
+  }
 }
 </script>
 <!-- END data-decisions -->
@@ -2762,6 +3001,95 @@
   ],
   "note": "追記専用・記録時刻の降順。同時刻は許可。正確な出来事時刻がない履歴は移行時刻で追記し、対象日と時刻根拠を併記。既存entryは訂正せず[誤り]を追加。",
   "items": [
+    {
+      "id": "log-060",
+      "timestamp": "2026-10-04T15:00:11+09:00",
+      "type": "計画変更",
+      "summary": "MASTER rev 6へ6件の決定を本文統合。KEEPはdeep14.9→9.7h/G3 12→17.2h。本人金銭/鍵は未確認、旧52ログ・旧結果保存、戦略/修理設計は非変更。",
+      "sources": [
+        "src-master",
+        "src-ai"
+      ],
+      "time_basis": "JSTの文書更新記録時刻。実装/計測/受理時刻ではない。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-059",
+      "timestamp": "2026-10-04T15:00:11+09:00",
+      "type": "実測",
+      "summary": "dev1-xb-r本人提示measured: G0 PASS・362ループ・12世界、全世界P−noop=0.0、cand取引0（361回見送り）。multi-arb同世界P約1300。原因は別ジョブ調査中、現状Q0資格不可。",
+      "sources": [
+        "src-dev1"
+      ],
+      "time_basis": "JST引継ぎ記録時刻。測定終了の正確な時刻未記録、更新時刻で代入しない。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-058",
+      "timestamp": "2026-10-04T15:00:11+09:00",
+      "type": "決定",
+      "summary": "論点6: 新資格revert: ≤1件かつ≤0.1%。本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。候補自身の各60世界セット、分母は成功＋revertの全包含数。原因不明/片脚回収不明/承認・資金不備反復はFAIL。0包含は率N/Aで資格PASSとはしない。旧結果へ遡及しない。",
+      "sources": [
+        "src-delegation"
+      ],
+      "time_basis": "JSTの今回決定記録時刻。本人委任の発言は2026-10-04、正確な時刻未記録。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-057",
+      "timestamp": "2026-10-04T15:00:11+09:00",
+      "type": "決定",
+      "summary": "論点5: vuln 2世界: 旧FAIL保持・救済再走なし。本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。全60世界を残し、G0 2世界FAILと平均T FAILを別記。除外/救済再走なし。不可欠な原因診断だけ将来別契約。",
+      "sources": [
+        "src-delegation"
+      ],
+      "time_basis": "JSTの今回決定記録時刻。本人委任の発言は2026-10-04、正確な時刻未記録。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-056",
+      "timestamp": "2026-10-04T15:00:11+09:00",
+      "type": "決定",
+      "summary": "論点4: Q0再資格: A現行維持。本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。追加1候補1回、F_ref/FROZEN・41301–41305全12・5h上限枠。修理/再診断/hash/全履歴seed監査/費用が先。追加P≥multi、全世界P−noop≥0、絶対P≥0、F_u1m、送信失敗率非劣性は不採用。",
+      "sources": [
+        "src-delegation"
+      ],
+      "time_basis": "JSTの今回決定記録時刻。本人委任の発言は2026-10-04、正確な時刻未記録。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-055",
+      "timestamp": "2026-10-04T15:00:11+09:00",
+      "type": "決定",
+      "summary": "論点3: 100h配分・10/17の条件分岐。本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。G3 17.2h、deep9.7h（Q0再資格5h優先）、M2=0h。10/17 18:00に受理S/D増分/R* E3/Q1/G3/全残費・日程が揃えばH480、欠ければS240、S/費用不足はHなし。新探索なし。",
+      "sources": [
+        "src-delegation"
+      ],
+      "time_basis": "JSTの今回決定記録時刻。本人委任の発言は2026-10-04、正確な時刻未記録。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-054",
+      "timestamp": "2026-10-04T15:00:11+09:00",
+      "type": "決定",
+      "summary": "論点2: AI-G3-01: R*反復＋S fullの17.2h。本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。R* ON3/OFF1・144世界＋障害=12h、S ON/OFF各36=5.2h。epoch間学習なし、D対照/AI専用ON E3/Q1。hash/実装/全費用の成立待ち。",
+      "sources": [
+        "src-delegation"
+      ],
+      "time_basis": "JSTの今回決定記録時刻。本人委任の発言は2026-10-04、正確な時刻未記録。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-053",
+      "timestamp": "2026-10-04T15:00:11+09:00",
+      "type": "決定",
+      "summary": "論点1: AI権限: ENTRY_BPSだけ。本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。20–60bps、初期60、刻み5、最大±5bps/60block。固定テンプレートと両送信経路ゲート。因子switch/任意コード不採用。",
+      "sources": [
+        "src-delegation"
+      ],
+      "time_basis": "JSTの今回決定記録時刻。本人委任の発言は2026-10-04、正確な時刻未記録。",
+      "event_date": "2026-10-04"
+    },
     {
       "id": "log-052",
       "timestamp": "2026-10-04T14:21:16+09:00",

@@ -1,19 +1,30 @@
 #!/usr/bin/env python3
-"""Static revision-5 plan/dashboard checks. Never reads run data or network."""
+"""Static revision-6 plan/dashboard checks. Never reads run data or network."""
 
 from datetime import date, timedelta
 from fractions import Fraction
 from pathlib import Path
 import json
+import hashlib
 import copy
 import re
 import sys
 
 
-QUEUE = ["dev1-evidence", "q0b-evidence", "human-branch", "mix-design", "first-mix", "q0m",
-         "first-p60", "first-g3", "m1-implementation", "factor-ab", "m1-pair", "m2"]
+QUEUE = ["dev1-evidence", "q0b-evidence", "q0-requal", "mix-design", "first-mix", "q0m",
+         "first-p60", "first-g3", "ai-implementation", "ai-d-control", "factor-ab", "m2"]
+DECISION_IDS = ["dec-ai-scope", "dec-ai-contract", "dec-ai-budget", "dec-q0-failure-branch", "dec-q0b-g0", "dec-revert-limit"]
+ORIGIN = "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定"
+SIGNER = "本人委任のAstra決定"
 FINDINGS = ([f"C{i}" for i in range(1, 6)] + [f"W{i}" for i in range(6, 14)] +
             [f"S{i}" for i in range(14, 19)])
+
+PRIOR_LOG_DIGEST = "adfdd960ecaa49c7fa63ae656ab22e01df9e4be3ea39e9f52aa1e3e699105d61"
+HUMAN_DECISION_DIGEST = "322893cdbe2bff6e30d688d9eb7787090243d13d1fcbd4db8ba2be1df992da71"
+
+
+def digest(value):
+    return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
 
 def require(condition, message):
@@ -53,23 +64,23 @@ def source_table(document, heading):
 
 
 _RESULT_LINES = [
-    "PASS sources: D0 6 rows, Q0 12 regimes, M1 6 clusters unchanged; Q0b handoff table matches dashboard",
-    "PASS Q0b: 60 completed; mean-T FAIL; G0 A/C PASS, B FAIL; rev-4 safety snapshot retained; no automatic rerun",
-    "PASS budget: KEEP = 100 h; unsigned AMEND = 100 h; Q0b completed-time estimate, actual usage unverified",
-    "PASS exploration: M2-skipped 180 worlds = 13 h + 1.9 h support; no new runs released",
-    "PASS queue: dev1 evidence -> Q0/acceptance first; AI/exploration not released",
-    "PASS amendment: original unsigned and pre-view condition expired; new version/signature required; old FAIL retained",
-    "PASS schedule/review: 28 consecutive JST dates; 18 Grok findings; dec-008 Oct 7 / dec-007 Oct 28 preserved",
-    "PASS dashboard correspondence: budgets, queue, schedule, Q0b data and pending decisions match plan",
-    "PASS AI: five steps match; unsigned 3-ON/1-OFF contract; 144/288 worlds and 12/22.4 h verified; no budget transfer",
-    "PASS current state: Q0 first, Oct 8 deferred, dev1 user-reported only; safety boundary and rule-version caveats retained",
-    "LIMIT: static consistency only; raw results, actual hours, strategy safety, browser layout and acceptance unverified",
+    "PASS sources: D0/Q0/M1/Q0b tables retained; dev1 handoff matches plan/dashboard",
+    "PASS Q0b: old 60-world result, G0 2-world FAIL and mean-T FAIL retained; no rescue rerun",
+    "PASS budget: KEEP 100 h (G3 17.2, deep 9.7); archived unsigned AMEND 100 h; Q0 priority 5 h",
+    "PASS queue: repair/rediagnosis -> Q0 -> acceptance; AI execution blocked by full-cost/evidence gates",
+    "PASS decisions: 6 delegated Astra decisions with origin/signer/JST; human-only accounts/money remain pending",
+    "PASS Q0: A unchanged; 1 new 60-world attempt; extra P/u1m conditions rejected; revert cap prospective only",
+    "PASS AI: ENTRY_BPS 20-60, max step 5; R* ON3/OFF1 + S full = 216 worlds / 17.2 h; no epoch learning carryover",
+    "PASS cutover: Oct 17 evidence gates select H480 / S240 / no campaign; no fresh deep exploration",
+    "PASS schedule/review: 28 JST dates, 18 findings, five roadmap steps match dashboard",
+    "PASS preservation: prior 52 logs and dec-007/008 unchanged; old safety nulls retained",
+    "LIMIT: static consistency only; raw runs, actual hours, strategy safety, browser layout and acceptance unverified",
     "PASS check-plan-consistency",
 ]
 
 
 def check_documents(document, html, morning, m1, ai):
-    require("revision 5" in document.splitlines()[0], "plan revision 5 title")
+    require("revision 6" in document.splitlines()[0], "plan revision 6 title")
     sources = {"d0": source_table(morning, "## 2."),
                "q0": source_table(morning, "## 5."),
                "m1": source_table(m1, "## 結果")}
@@ -90,7 +101,7 @@ def check_documents(document, html, morning, m1, ai):
                 f"budget {reading}: expected exactly 100 h")
     experiment_ids = [i.strip() for row in b for i in row["実験ID"].split(";")]
     require(len(experiment_ids) == len(set(experiment_ids)), "budget duplicate experiment")
-    require(set(QUEUE[3:]) <= set(experiment_ids), "reserved experiments missing from budget")
+    require(set(QUEUE[2:]) <= set(experiment_ids), "reserved experiments missing from budget")
     for reading in amounts:
         a = amounts[reading]
         require(a["historical"] == 0 and a["overnight"] == Fraction(26, 3), "history/overnight accounting")
@@ -98,9 +109,14 @@ def check_documents(document, html, morning, m1, ai):
         require(a["first-next"] == Fraction(13, 15) + Fraction(13, 3) + Fraction(13, 5) + Fraction(58, 15), "first path budget")
         require(a["reserve"] == 3 and a["deep"] <= 20, "approved reserve/exploration cap")
     require(amounts["keep"]["q0m"] == 0 and amounts["amend"]["q0m"] == Fraction(143, 30), "unsigned amendment reservation")
-    require(amounts["keep"]["deep"] == Fraction(149, 10) and
-            amounts["amend"]["deep"] == Fraction(152, 15), "exploration allocations")
-    require(amounts["keep"]["deep"] - amounts["amend"]["deep"] == amounts["amend"]["q0m"], "amendment transfer")
+    require(amounts["keep"]["deep"] == Fraction(97, 10) and
+            amounts["keep"]["final-g3"] == Fraction(86, 5), "decided AI allocation")
+    require(amounts["amend"]["deep"] == Fraction(152, 15) and amounts["amend"]["final-g3"] == 12,
+            "archived AMEND must remain unchanged")
+    require(Fraction(149, 10) - amounts["keep"]["deep"] == amounts["keep"]["final-g3"] - 12 == Fraction(26, 5),
+            "exact 5.2 h deep to G3 transfer")
+    require(Fraction(149, 10) - amounts["amend"]["deep"] == amounts["amend"]["q0m"], "archived amendment transfer")
+    require(amounts["keep"]["final-g2"] == 35 and amounts["keep"]["final-g4"] == 9, "final verification reservations")
 
     # Six separate 8-world chunks must not be costed as one 48-world chunk.
     batch = Fraction(13, 60)
@@ -122,20 +138,22 @@ def check_documents(document, html, morning, m1, ai):
         require(cost == Fraction(row["13分/p3の正確h"]), "deep stage cost")
         costs[row["ID"]] = cost
     require(sum(costs.values()) == Fraction(52, 3), "full research shelf")
-    require(sum(costs.values()) - costs["m2"] + Fraction(19, 10) == amounts["keep"]["deep"],
-            "M2-skipped path must fit keep budget")
+    require(sum(costs.values()) - costs["m2"] + Fraction(19, 10) == Fraction(149, 10) > amounts["keep"]["deep"],
+            "old M2-skipped shelf no longer fits current deep allocation")
     require(amounts["amend"]["deep"] < 13, "amendment exploration must remain gated")
 
     queue = table(document, "next-24h")
     require([int(r["順序"]) for r in queue] == list(range(1, len(QUEUE)+1)), "queue numbers")
     require([r["実験ID"] for r in queue] == QUEUE, "queue priority")
     require(all(r["状態"] and r["窓"] and r["依存・停止"] for r in queue), "queue gates missing")
-    expected_queue = [("0", "未見積"), ("0", "未見積"), ("0", "未見積"), ("0", "1/2"), ("12", "13/15"),
+    expected_queue = [("0", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
                       ("60", "143/30"), ("60", "13/3"), ("36", "13/5"),
-                      ("0", "19/10"), ("48", "52/15"), ("24", "39/20"), ("60", "13/3")]
+                      ("0", "未見積"), ("48", "52/15"), ("48", "52/15"), ("60", "13/3")]
     require([(r["世界数"], r["全量見積h"]) for r in queue] == expected_queue, "queue worlds/hours")
-    require(queue[0]["状態"] == "担当証跡待ち" and queue[1]["状態"] == "未確認証跡の補完" and queue[5]["状態"] == "未署名・未実施", "evidence/unsigned status")
-    require(all(queue[i]["状態"] == "停止" for i in (4, 6, 7)), "qualification queue needs Q0 contract evidence")
+    require(queue[0]["状態"] == "修理・再診断待ち" and queue[1]["状態"] == "証跡精算のみ・再走なし" and
+            queue[2]["状態"] == "条件付き決定・実行停止" and queue[5]["状態"] == "不採用・旧未署名記録", "repair/requalification/archive state")
+    require(all(queue[i]["状態"] == "停止" for i in (4, 6, 7)), "qualification queue needs Q0 evidence")
+    require(queue[11]["状態"] == "不採用・0h配分", "M2 must remain zero allocation")
     require(3 * ((8 + 2) // 3) * batch == Fraction(39, 20), "D/E/parent independent-chunk cost")
 
     schedule = table(document, "schedule")
@@ -148,7 +166,7 @@ def check_documents(document, html, morning, m1, ai):
         require(row["判定"] in {"accept", "partly", "reject"}, "finding disposition")
         require(all(re.search(r"\[(measured|inferred|unverified)(?::[^\]]+)?\]", row[k])
                     for k in ("根拠・理由（tag）", "正確な変更箇所・内容（tag）")), "finding evidence tags")
-    for required in ("Q0-AMEND-01（署名待ち・未適用）", "41201–41205", "Masashi:",
+    for required in ("Q0-AMEND-01（未署名・失効記録・今回不採用）", "41201–41205", "原案の署名状態",
                      "Q0bの強弱でopusへ切替えない", "旧Q0 FAILは永久保持", "Q1へ自動拡張しない"):
         require(required in document, f"amendment safeguard missing: {required}")
 
@@ -196,7 +214,7 @@ def check_documents(document, html, morning, m1, ai):
         require((q["priority"], q["state"], q["worlds"], q["hours"], q["window"], q["dependency"]) ==
                 (int(r["順序"]), r["状態"], int(r["世界数"]), None if r["全量見積h"] == "未見積" else r["全量見積h"], r["窓"], r["依存・停止"]),
                 "dashboard queue row differs: "+r["実験ID"])
-    require(all(not q["active"] for q in dq[3:]), "post-failure experiments cannot be active")
+    require(all(not q["active"] for q in dq), "post-failure experiments cannot be active")
     milestones = data["milestones"]["items"]
     require([(m["date"], m["title"], m["dependency"], m["stop"]) for m in milestones] ==
             [(r["日付"], r["主な出口"], r["依存"], r["停止・反転条件"]) for r in schedule], "dashboard schedule differs")
@@ -205,36 +223,98 @@ def check_documents(document, html, morning, m1, ai):
         require(decisions[identity]["status"] == "open" and decisions[identity]["due_date"] == due,
                 "existing human operation changed: "+identity)
     require(decisions["dec-amend"]["status"] == "unsigned", "no automatic amendment signature")
-    require(all(decisions[i]["status"] == "open" for i in ("dec-q0-failure-branch", "dec-q0b-g0")),
-            "human decisions must remain pending")
-    # Revision 5: source-backed AI plan; proposal is not a signed budget or a live result.
-    require(ai is not None and "AI-G3-01" in ai, "AI design document missing")
-    require("DESIGN-AI-LAYER-01-astra.md" in document, "AI design link missing")
+    # Revision 6 records explicit delegated decisions, never a forged Masashi signature.
+    require(ai is not None and "AI-G3-01" in ai and "MASTER revision 6" in ai, "AI design revision")
+    require("DESIGN-AI-LAYER-01-astra.md" in document, "AI design link")
+    for n, identity in enumerate(DECISION_IDS, 1):
+        d = decisions[identity]
+        require(d["status"] == "decided" and d["issue"] == n and d["origin"] == ORIGIN and d["signer"] == SIGNER,
+                "delegated decision provenance: " + identity)
+        require(re.fullmatch(r"2026-10-04T\d{2}:\d{2}:\d{2}\+09:00", d["signed_at"]) is not None,
+                "decision signature timestamp: " + identity)
+        require(d["signed_at"] <= data["status"]["as_of"] and d["signed_at"] in document and d["signed_at"] in ai,
+                "decision signature document correspondence")
+        require(ORIGIN in d["note"] and SIGNER in d["note"], "visible decision provenance")
+    for doc in (document, ai):
+        require(ORIGIN in doc and "署名者=" + SIGNER in doc and "署名日時=" in doc, "document decision signature")
+        require("______" not in doc, "no empty signature placeholders")
+        require("本人の承認" in doc and "自動チャージ" in doc and "残高" in doc and "鍵登録" in doc,
+                "human-only scope disclosure")
+        require("凍結性能は改訂ON性能の代用にならない" in doc, "ON evidence boundary")
+        require("17.2h" in doc and "9.7h" in doc and "10/17" in doc, "allocation and cutover prose")
+    require(data["decisions"]["human_only"]["status"] == "本人の承認・確認待ち" and
+            data["decisions"]["human_only"]["items"] == ["Ollama鍵登録", "API金銭上限", "自動チャージ", "残高"],
+            "human-only operations must stay pending")
+    require(all(decisions[i]["status"] == "decided" for i in ("dec-step1-policy", "dec-q0-keep", "dec-original", "dec-forward")),
+            "prior settled decisions must stay decided")
     ac = data["plan"]["ai_contract"]
-    require(ac["status"] == "unsigned" and ac["name"] == "AI-G3-01", "AI contract must remain unsigned")
+    require(ac["status"] == "decided" and ac["name"] == "AI-G3-01" and ac["origin"] == ORIGIN and
+            ac["signer"] == SIGNER and ac["signed_at"] == decisions["dec-ai-contract"]["signed_at"], "AI delegated signature")
+    require(ac["execution_status"] == "blocked-evidence-and-costs" and ac["api_budget_status"] == "本人の承認待ち",
+            "decision is not execution/money approval")
     require((ac["on_repeats"], ac["off_repeats"], ac["market_cells"]) == (3, 1, 36), "AI repetition contract")
     worlds = ac["market_cells"] * (ac["on_repeats"] + ac["off_repeats"])
-    require(ac["candidate_worlds"] == worlds == 144, "AI worlds arithmetic")
+    require(ac["candidate_worlds"] == worlds == 144 and ac["s_worlds"] == 72 and
+            ac["selected_total_worlds"] == worlds + ac["s_worlds"] == 216, "asymmetric G3 worlds")
     one = Fraction(worlds, 3) * batch + Fraction(8, 5)
-    two = Fraction(worlds * 2, 3) * batch + Fraction(8, 5)
-    extra = two - amounts["keep"]["final-g3"]
-    require(Fraction(ac["one_candidate_hours"]) == one == 12, "AI one-candidate cost")
-    require(Fraction(ac["two_candidate_hours"]) == two == Fraction(112, 5), "AI two-candidate cost")
-    require(Fraction(ac["extra_hours"]) == extra == Fraction(52, 5), "AI extra cost")
-    require(ac["e3_q1_mode"] == "ON-proposed-unsigned", "AI-only E3/Q1 mode must be explicit and unsigned")
+    fallback = Fraction(ac["s_worlds"], 3) * batch
+    total = one + fallback
+    require(Fraction(ac["one_candidate_hours"]) == one == 12 and Fraction(ac["s_full_hours"]) == fallback == Fraction(26, 5),
+            "R* 12 plus S 5.2")
+    require(Fraction(ac["selected_total_hours"]) == total == amounts["keep"]["final-g3"] == Fraction(86, 5), "total 17.2 h")
+    require(Fraction(ac["two_candidate_hours"]) == Fraction(112, 5) and ac["two_candidate_status"] == "rejected-both-repeat",
+            "both-candidate repetition is rejected")
+    require(Fraction(ac["extra_hours"]) == total - 12 == Fraction(26, 5), "G3 transfer")
+    require(ac["s_full_evidence"] == "unverified", "cannot assume reusable S evidence")
+    require(Fraction(ac["keep_deep_after_transfer"]) == amounts["keep"]["deep"] == Fraction(97, 10), "deep residual")
+    require(ac["e3_q1_mode"] == "ON-decided" and ac["epoch_learning_carryover"] is False, "AI mode/reset")
     require(Fraction(ac["e3_q1_base_hours"]) == costs["e3-full"] + costs["q1"] == Fraction(143, 15), "AI downstream cost")
-    require(Fraction(ac["keep_deep_after_transfer"]) == amounts["keep"]["deep"] - extra == Fraction(9, 2), "AI KEEP residual")
-    require(Fraction(ac["amend_deep_after_transfer"]) == amounts["amend"]["deep"] - extra == -Fraction(4, 15), "AI AMEND deficit")
-    for phrase in ("22.4h", "10.4h", "4.5h", "凍結性能は改訂ON性能の代用にならない"):
-        require(phrase in document and phrase in ai, "AI plan/design safeguard: " + phrase)
-    for phrase in ("1,440世界", "104h", "3独立応答履歴", "performance.now()", "10/4適用版との一致は未確認", "AIは鍵に触れない"):
-        require(phrase in ai, "AI evidence/limit missing: " + phrase)
-    require(decisions["dec-step1-policy"]["status"] == "decided", "Step1/defer decision must stay decided")
-    require(decisions["dec-ai-contract"]["status"] == "unsigned", "AI signature cannot be inferred")
-    require(all(decisions[i]["status"] == "open" for i in ("dec-ai-scope", "dec-ai-budget")), "AI choices pending")
+    require(ac["d_control_worlds"] == 48 and Fraction(ac["d_control_base_hours"]) == Fraction(48, 3) * batch == Fraction(52, 15)
+            and ac["d_control_cost_status"] == "unreserved", "D control cost cannot disappear")
+    require(Fraction(ac["e3_q1_base_hours"]) + Fraction(ac["d_control_base_hours"]) > amounts["keep"]["deep"],
+            "AI full path not released")
+    params = parsed_table(block(document, "ai-parameters"))
+    require(params == parsed_table(block(ai, "ai-parameters")), "parameter contract source mismatch")
+    require(data["plan"]["ai_parameters"]["header"] == params["header"] and data["plan"]["ai_parameters"]["rows"] == params["rows"],
+            "parameter contract dashboard mismatch")
+    require(params["rows"] == [["ENTRY_BPS（新規entryの入口だけ）", "60 bps", "20–60 bps", "5 bps", "±5 bps", "60 block以上"]],
+            "allowlist and bounded updates")
+    for phrase in ("return/submit", "canFund", "120block", "未解消在庫", "20bps", "政策値"):
+        require(phrase in document and phrase in ai, "parameter boundary/rationale: " + phrase)
+    q = data["plan"]["q0_requalification"]
+    require((q["option"], q["status"], q["candidate_limit"], q["attempt_limit"], q["worlds"], q["mode"], q["field"]) ==
+            ("A", "decided", 1, 1, 60, "FROZEN", "F_ref"), "Q0 A fixed one-attempt contract")
+    require(q["seeds"] == "41301–41305" and Fraction(q["hours_cap"]) == 5 and q["within_deep"] is True and
+            q["execution_status"] == "blocked-repair-rediagnosis-hash-cost", "Q0 fresh inputs/cost/repair gate")
+    require(all(q[k] is False for k in ("extra_p_vs_multi", "extra_all_world_p_minus_noop", "extra_absolute_p",
+                                       "extra_u1m_noninferiority", "extra_submit_failure_noninferiority")), "extra conditions explicitly rejected")
+    require("追加条件" in document and "不採用" in document and "5h上限枠" in document, "Q0 contract prose")
+    revert = data["plan"]["revert_contract"]
+    require(revert["status"] == "decided" and revert["worlds_per_set"] == 60 and revert["max_count"] == 1 and
+            Fraction(revert["max_ratio"]) == Fraction(1, 1000) and revert["retroactive"] is False and
+            revert["reject_unknown_cause_or_recovery"] is True, "prospective count AND ratio revert cap")
+    for phrase in ("旧結果へ遡及", "≤0.1%", "≤1件", "全包含取引", "片脚回収不明"):
+        require(phrase in document and phrase in ai, "revert contract prose: " + phrase)
+    cut = data["plan"]["cutover"]
+    require(cut["at"] == "2026-10-17T18:00:00+09:00" and cut["h480_requires"] ==
+            ["受理S", "Dへの正の増分", "固定R* E3/Q1/G3", "校正後の全残費100h内", "期限内の全日程確保"], "Oct 17 H480 evidence gates")
+    require(cut["fallback"] == "AI終了、適合受理Sと全費用ならS240、それ以外H未実施" and
+            "10/17から新規探索なし" in cut["deep_switch"], "S240/no-H and no fresh research")
     dev1 = data["status"]["dev1"]
-    require(dev1["state"] == "reported-running" and dev1["verified"] is False, "dev1 is user-reported, not live-verified")
-    require("延期済み" in data["status"]["notice"], "dashboard deferral decision")
+    require(dev1["state"] == "measured-diagnostic-complete" and dev1["verified"] is False and dev1["completed_at"] is None,
+            "dev1 measured handoff is not raw/live audit or invented time")
+    require((dev1["g0"], dev1["loops"], dev1["worlds"], dev1["regimes"], dev1["seeds"], dev1["p_minus_noop_all_worlds"],
+             dev1["trades"], dev1["reported_skip_count"], dev1["q0_eligible"]) ==
+            ("PASS", 362, 12, 6, "31001/31002", "0.0", 0, 361, False), "dev1 diagnosis/qualification boundary")
+    devtable = parsed_table(block(document, "source-dev1"))
+    require(data["results"]["dev1"]["header"] == devtable["header"] and data["results"]["dev1"]["rows"] == devtable["rows"],
+            "dev1 source table")
+    require("現状Q0資格不可" in document and "現状Q0資格不可" in ai and "延期済み" in data["status"]["notice"],
+            "current state not success")
+    # Immutable historical entries: corrections are new logs, never edits of prior events.
+    prior = [log for log in data["log"]["items"] if log["id"] in {f"log-{i:03}" for i in range(1, 53)}]
+    require(len(prior) == 52 and digest(prior) == PRIOR_LOG_DIGEST, "prior 52 log entries changed")
+    require(digest([decisions[i] for i in ("dec-007", "dec-008")]) == HUMAN_DECISION_DIGEST, "human operation entries changed")
     roadmap = table(document, "ai-roadmap")
     protocols = {p["id"]: p for p in data["plan"]["protocol"]}
     step_ids = ["protocol-first", "protocol-ai-min", "protocol-ai-eval", "protocol-sealed", "protocol-ai-release"]
@@ -273,18 +353,34 @@ def self_check(documents):
             ds[1] = re.sub(pattern, update, ds[1], count=1, flags=re.S)
         return change
     controls = [
-        lambda ds: ds.__setitem__(0, ds[0].replace("revision 5", "revision 4", 1)),
-        mutate("plan", lambda d: d["ai_contract"].update(status="signed")),
+        lambda ds: ds.__setitem__(0, ds[0].replace("revision 6", "revision 5", 1)),
+        mutate("plan", lambda d: d["ai_contract"].update(status="unsigned")),
         mutate("plan", lambda d: d["ai_contract"].update(on_repeats=1)),
-        mutate("plan", lambda d: d["ai_contract"].update(two_candidate_hours="12")),
+        mutate("plan", lambda d: d["ai_contract"].update(selected_total_hours="12")),
         mutate("plan", lambda d: d["protocol"][1].update(exit="already implemented")),
         mutate("status", lambda d: d["dev1"].update(verified=True)),
+        mutate("status", lambda d: d["dev1"].update(q0_eligible=True)),
+        mutate("status", lambda d: d["dev1"].update(state="reported-running")),
         mutate("plan", lambda d: d["ai_contract"].update(e3_q1_mode="FROZEN")),
+        mutate("plan", lambda d: d["ai_contract"].update(epoch_learning_carryover=True)),
         mutate("decisions", lambda d: next(x for x in d["items"] if x["id"] == "dec-step1-policy").update(status="open")),
-        mutate("decisions", lambda d: next(x for x in d["items"] if x["id"] == "dec-ai-contract").update(status="signed")),
-        mutate("budget", lambda d: d["rows"][6].update(keep_hours="4.5")),
+        mutate("decisions", lambda d: next(x for x in d["items"] if x["id"] == "dec-ai-contract").update(signer="Masashi")),
+        mutate("decisions", lambda d: next(x for x in d["items"] if x["id"] == "dec-ai-scope").update(origin="")),
+        mutate("decisions", lambda d: next(x for x in d["items"] if x["id"] == "dec-ai-scope").update(signed_at="")),
+        mutate("decisions", lambda d: next(x for x in d["items"] if x["id"] == "dec-008").update(status="closed")),
+        mutate("decisions", lambda d: d["human_only"].update(status="approved")),
+        mutate("budget", lambda d: d["rows"][6].update(keep_hours="14.9")),
         mutate("results", lambda d: d["q0b_summary"].update(reverts=0)),
-        mutate("queue", lambda d: d["items"][4].update(active=True)),
+        mutate("queue", lambda d: d["items"][2].update(active=True)),
+        mutate("plan", lambda d: d["ai_contract"].update(d_control_base_hours="0")),
+        mutate("plan", lambda d: d["ai_parameters"]["rows"][0].__setitem__(4, "±40 bps")),
+        mutate("plan", lambda d: d["q0_requalification"].update(option="B")),
+        mutate("plan", lambda d: d["q0_requalification"].update(extra_all_world_p_minus_noop=True)),
+        mutate("plan", lambda d: d["revert_contract"].update(retroactive=True)),
+        mutate("plan", lambda d: d["revert_contract"].update(max_ratio="1/100")),
+        mutate("plan", lambda d: d["revert_contract"].update(max_count=2)),
+        mutate("plan", lambda d: d["cutover"].update(h480_requires=["受理S"])),
+        mutate("log", lambda d: d["items"][-1].update(summary="rewritten history")),
         lambda ds: ds.__setitem__(4, ds[4].replace("凍結性能は改訂ON性能の代用にならない", "凍結で十分")),
     ]
     for number, control in enumerate(controls, 1):
