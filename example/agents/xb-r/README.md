@@ -1,4 +1,16 @@
-# xb-r v1 — Q0 blocker repair candidate
+# xb-r — v4 preparation, v3 defaults
+
+The current implementation keeps `d30cbbb` behavior by default. R10 full-depth
+sizing, R11 4% single-leg cap and R12 unconfirmed-single backoff are all OFF;
+R9 bundle headroom remains OFF. ENTRY_BPS alone retains the AI-reserved 20–60
+range in 5bps steps. The frozen experiment does not enable live AI edits.
+See [the dev3/v4 report](../../../ascon-notes/league/DEV3-XB-R-V4-PREP.md)
+for measured decomposition, specialist risks, activation rules and validation.
+v4 has no measured chain performance or qualification result.
+
+## Historical v1 design and validation record
+
+The remainder records v1; its parameter ranges and test totals are historical.
 
 Implementation candidate only. The a042a70 diagnostic made no trades; this
 repair has only local replay validation. No Q0, F_ref, P or mean-T pass is

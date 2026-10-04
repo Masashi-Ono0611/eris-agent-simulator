@@ -1,4 +1,4 @@
-// xb-r v3: spot-only repair of the sonnet-derived xb-core V0.
+// xb-r v4 preparation: v3 defaults, independently disabled spot-only probes.
 // Market decoding and funding normalization below are copied from xb-core.
 import type { AgentContext, AgentObservation } from "@eris/sdk";
 import { BALANCER, MARKET_LEGS, UNISWAP } from "@eris/sdk/constants.js";
@@ -14,6 +14,9 @@ export type Params = Readonly<{
   R7_SINGLE_ENTRY: boolean;
   R8_SETTLED_COOLDOWN: boolean;
   R9_BUNDLE_HEADROOM: boolean;
+  R10_FULL_DEPTH_SIZE: boolean;
+  R11_SMALL_SINGLE_CAP: boolean;
+  R12_UNCONFIRMED_BACKOFF: boolean;
   ENTRY_BPS: number;
   SINGLE_EDGE_BPS: number;
 }>;
@@ -22,6 +25,7 @@ export const PARAMS: Params = Object.freeze({
   R4_COMPETITOR_BID: true, R5_PROFITABLE_RESTORE: true,
   R6_ANCHOR_CROSS: true, R7_SINGLE_ENTRY: true,
   R8_SETTLED_COOLDOWN: true, R9_BUNDLE_HEADROOM: false,
+  R10_FULL_DEPTH_SIZE: false, R11_SMALL_SINGLE_CAP: false, R12_UNCONFIRMED_BACKOFF: false,
   ENTRY_BPS: 50, SINGLE_EDGE_BPS: 100,
 });
 // v2 replay profile; v3 factors are independently switchable and not AI controls.
@@ -97,13 +101,14 @@ export const entryAllowed = (edge: number, p: Params) =>
   edge * 10000 > (p.R3_ENTRY_ONLY ? p.ENTRY_BPS : 60);
 // The factor-off diagnostic recreates sonnet's margin subtraction, not xb-v0 equivalence.
 export const economicEdge = (edge: number, p: Params) => edge - (p.R3_ENTRY_ONLY ? 0 : 0.006);
-export function sizeUsd(edge: number, slope: number, balance: number, cap: number, floor: boolean): number {
+export function sizeUsd(edge: number, slope: number, balance: number, cap: number, floor: boolean,
+  fullDepth = false): number {
   if (![edge, slope, balance, cap].every(positive)) return 0;
   const depthTarget = 0.5 * edge / (2 * slope); // xb-core V0 desired size
   const balanceTarget = balance * Math.max(0.025, Math.min(0.25, edge * 10));
   const desired = floor ? Math.max(depthTarget, balanceTarget) : depthTarget;
   // Hard depth ceiling is the edge-closing size; the floor is a target, not an override.
-  return Math.min(desired, edge / (2 * slope), cap, balance * 0.9);
+  return Math.min(fullDepth ? edge / (2 * slope) : desired, edge / (2 * slope), cap, balance * 0.9);
 }
 export const profitUsd = (usd: number, edge: number, slope: number, legs: number) =>
   usd * (edge - usd * slope) * (legs === 2 ? 0.8 : 1);
@@ -149,6 +154,9 @@ export function enumerateCandidates(obs: AgentObservation, p: Params = PARAMS,
   const out: Candidate[] = [], ms = markets(obs);
   const cash = Number(BigInt(obs.balances.usdcUnits)) / 1e6;
   const cap = 0.08 * (cash + ms.reduce((sum, m) => sum + Number(m.held) / 10 ** m.decimals * m.fair, 0));
+  // Allocation probe: smaller singles leave capital and inventory room for
+  // subsequent opportunities. Neither probe expands the common 8% ceiling.
+  const singleCap = p.R11_SMALL_SINGLE_CAP ? cap / 2 : cap;
   const left = remaining(obs);
   if (left <= 0) return out;
   const endgame = left <= 4;
@@ -176,8 +184,8 @@ export function enumerateCandidates(obs: AgentObservation, p: Params = PARAMS,
         const singleLower = p.R9_BUNDLE_HEADROOM ? initial * (1 - INV_BAND / 2) : lower;
         const room = Math.max(0, restoring && !crossAnchor ? Math.abs(held - initial)
           : buy ? singleUpper - held : held - singleLower);
-        const usd = Math.min(sizeUsd(edge, slope, buy ? cash : held * v.mid, cap, p.R2_BALANCE_FLOOR),
-          room * v.mid / (buy ? 1.008 : 1), cap * Math.min(1, v.mid / m.fair));
+        const usd = Math.min(sizeUsd(edge, slope, buy ? cash : held * v.mid, singleCap, p.R2_BALANCE_FLOOR, p.R10_FULL_DEPTH_SIZE),
+          room * v.mid / (buy ? 1.008 : 1), singleCap * Math.min(1, v.mid / m.fair));
         if (!(usd >= 50)) continue;
         const amount = units(buy ? usd : usd / v.mid, buy ? 6 : m.decimals);
         const actualUsd = Number(amount) / 10 ** (buy ? 6 : m.decimals) * (buy ? 1 : v.mid);
@@ -192,7 +200,7 @@ export function enumerateCandidates(obs: AgentObservation, p: Params = PARAMS,
       const rawEdge = rich.mid / cheap.mid - 1 - cheap.cost - rich.cost;
       if (!entryAllowed(rawEdge, p)) continue;
       const edge = economicEdge(rawEdge, p), slope = 1 / cheap.depth + 1 / rich.depth;
-      const usd = Math.min(sizeUsd(edge, slope, cash, cap, p.R2_BALANCE_FLOOR),
+      const usd = Math.min(sizeUsd(edge, slope, cash, cap, p.R2_BALANCE_FLOOR, p.R10_FULL_DEPTH_SIZE),
         held * cheap.mid / 1.008, Math.max(0, upper - held) * cheap.mid / 1.008,
         Math.max(0, held - lower) * cheap.mid, cap * Math.min(1, cheap.mid / m.fair));
       if (!(usd >= 50)) continue;
@@ -295,7 +303,8 @@ export function selectCandidate(obs: AgentObservation, all: readonly Candidate[]
 function validateParams(p: Params): void {
   for (const key of ["R1_BUNDLE_PRIORITY", "R2_BALANCE_FLOOR", "R3_ENTRY_ONLY",
     "R4_COMPETITOR_BID", "R5_PROFITABLE_RESTORE", "R6_ANCHOR_CROSS", "R7_SINGLE_ENTRY",
-    "R8_SETTLED_COOLDOWN", "R9_BUNDLE_HEADROOM"] as const) {
+    "R8_SETTLED_COOLDOWN", "R9_BUNDLE_HEADROOM", "R10_FULL_DEPTH_SIZE",
+    "R11_SMALL_SINGLE_CAP", "R12_UNCONFIRMED_BACKOFF"] as const) {
     if (typeof p[key] !== "boolean") throw new TypeError(`${key} must be boolean`);
   }
   if (!Number.isFinite(p.ENTRY_BPS) || p.ENTRY_BPS < 20 || p.ENTRY_BPS > 60 || p.ENTRY_BPS % 5 !== 0)
@@ -329,6 +338,7 @@ export function createAgent(params: Params = PARAMS, now: () => number = () => p
   validateParams(p);
   let run = "", lastBlock = -1, lastRemaining = Infinity;
   const lastSent = new Map<Base, number>();
+  const unconfirmedSingles = new Map<Base, { observation: AgentObservation; action: Action }>();
   let previous: { observation: AgentObservation; action: Action } | undefined;
   return function decide(obs: AgentObservation, _ctx?: AgentContext,
     execution?: { started: number; bids: SpotBids | undefined }): Action {
@@ -336,13 +346,20 @@ export function createAgent(params: Params = PARAMS, now: () => number = () => p
       const started = execution?.started ?? now(), block = Number(obs.blockNumber), left = remaining(obs);
       if (!Number.isSafeInteger(block) || block < 0) return noop("invalid block");
       if (run !== obs.runId || block < lastBlock || left > lastRemaining + 5) {
-        run = obs.runId; lastBlock = -1; lastSent.clear(); previous = undefined;
+        run = obs.runId; lastBlock = -1; lastSent.clear(); previous = undefined; unconfirmedSingles.clear();
       }
       if (block === lastBlock) return noop("duplicate observation");
       lastBlock = block; lastRemaining = left;
       if (left <= 0) return noop("valuation boundary or unknown horizon");
       const cooling = new Set<Base>();
-      for (const [base, at] of lastSent) if (block - at < 2) cooling.add(base);
+      // Back off ambiguous/failed single attempts, per base. Only the same
+      // exact next-block balance confirmation as R8 can clear this early.
+      for (const [base, sent] of unconfirmedSingles)
+        if (settledSingle(sent.observation, sent.action, obs)) unconfirmedSingles.delete(base);
+      for (const [base, at] of lastSent) {
+        const wait = p.R12_UNCONFIRMED_BACKOFF && unconfirmedSingles.has(base) ? 4 : 2;
+        if (block - at < wait) cooling.add(base);
+      }
       if (p.R8_SETTLED_COOLDOWN && previous && settledSingle(previous.observation, previous.action, obs))
         cooling.delete(previous.action.base);
       const all = enumerateCandidates(obs, p, cooling);
@@ -351,6 +368,10 @@ export function createAgent(params: Params = PARAMS, now: () => number = () => p
       if (action.type !== "noop") {
         lastSent.set(action.base, block);
         previous = { observation: structuredClone(obs), action: structuredClone(action) };
+        if (p.R12_UNCONFIRMED_BACKOFF) {
+          if (action.type === "bundle") unconfirmedSingles.delete(action.base);
+          else unconfirmedSingles.set(action.base, previous);
+        }
       }
       return action;
     } catch {

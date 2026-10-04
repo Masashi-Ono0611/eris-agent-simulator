@@ -46,14 +46,24 @@ const controls = [
   ["DEV3-no-gas-confirmation", "DEV3 R8 rejects", "BigInt(after.balances.ethWei) >= BigInt(before.balances.ethWei)", "false"],
   ["DEV3-other-base-ambiguity", "DEV3 R8 rejects", "balanceOf(before, other) !== balanceOf(after, other)", "false"],
   ["DEV3-headroom-off", "DEV3 R9 reserves", "p.R9_BUNDLE_HEADROOM ? initial * (1 + INV_BAND / 2)", "false ? initial * (1 + INV_BAND / 2)"],
+  ["V4-default-on", "V4 defaults", "R10_FULL_DEPTH_SIZE: false", "R10_FULL_DEPTH_SIZE: true"],
+  ["V4-depth-off", "V4 R10 full depth", "fullDepth ? edge / (2 * slope) : desired", "desired"],
+  ["V4-depth-cap-bypass", "V4 R10 full depth", "edge / (2 * slope), cap, balance * 0.9", "edge / (2 * slope), balance * 0.9"],
+  ["V4-single-cap-off", "V4 R11 logged", "p.R11_SMALL_SINGLE_CAP ? cap / 2 : cap", "cap"],
+  ["V4-bundle-cap-shrunk", "V4 R11 never shrinks", "sizeUsd(edge, slope, cash, cap, p.R2_BALANCE_FLOOR", "sizeUsd(edge, slope, cash, singleCap, p.R2_BALANCE_FLOOR"],
+  ["V4-backoff-off", "V4 R12 ambiguous", "p.R12_UNCONFIRMED_BACKOFF && unconfirmedSingles.has(base) ? 4 : 2", "2"],
+  ["V4-confirmation-off", "V4 R12 with R8 OFF", "if (settledSingle(sent.observation, sent.action, obs))", "if (false)"],
+  ["V4-blind-release", "V4 R12 incomplete", "if (settledSingle(sent.observation, sent.action, obs))", "if (true)"],
+  ["V4-funding-bypass", "V4 final selection", "if (!reserveCandidate(obs, c)) continue;", "if (false) continue;"],
+  ["V4-gas-bypass", "V4 final selection", "if (BigInt(obs.balances.ethWei) - BigInt(c.gas) * fee < GAS_RESERVE) continue;", "if (false) continue;"],
 
 ];
 const records = [];
 function run(label, pattern) {
   const args = ["--import", "tsx", "--test", "--test-concurrency=1", "--test-reporter=tap"];
   if (pattern) args.push(`--test-name-pattern=${pattern}`);
-  args.push(...(pattern ? [pattern.startsWith("DEV3") ? "test/xb-r-dev3a.test.ts" : pattern.startsWith("DEV2") ? "test/xb-r-dev2.test.ts" : "test/xb-r.test.ts"]
-    : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts", "test/xb-r-dev2.test.ts", "test/xb-r-dev3a.test.ts"]));
+  args.push(...(pattern ? [pattern.startsWith("V4") ? "test/xb-r-v4.test.ts" : pattern.startsWith("DEV3") ? "test/xb-r-dev3a.test.ts" : pattern.startsWith("DEV2") ? "test/xb-r-dev2.test.ts" : "test/xb-r.test.ts"]
+    : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts", "test/xb-r-dev2.test.ts", "test/xb-r-dev3a.test.ts", "test/xb-r-v4.test.ts"]));
   const result = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8", timeout: 60000 });
   const log = (result.stdout ?? "") + (result.stderr ?? "");
   writeFileSync(join(evidence, `${label}.log`), log);
