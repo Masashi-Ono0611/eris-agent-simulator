@@ -58,9 +58,10 @@ for(const page of app.D.ui.pages){
 check('overview snapshot and no fake run percentage',()=>{
   const t=rendered.overview;
   assert.ok(t.includes(app.D.status.headline));
-  assert.ok(t.includes('value="3" max="5"'));
+  assert.ok(t.includes('value="4" max="5"'));
   assert.ok(t.includes('本人が今やること'));
-  assert.ok(t.includes('17:40 JST'));
+  assert.ok(t.includes('17:39 JST'));
+  assert.ok(!t.includes('17:40 JST'));
   assert.ok(!/log-\d+/.test(t));
 });
 check('qualification result keeps failed and blocked states',()=>{
@@ -76,13 +77,13 @@ check('diagnostic metrics from JSON rather than display constants',()=>{
   app.D.status.dev2.result.p_candidate='149.0';
 });
 check('log count and complete history',()=>{
-  assert.equal(app.filteredLogs().length,65);
-  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,65);
+  assert.equal(app.filteredLogs().length,68);
+  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,68);
   for(const l of app.D.log.items)assert.ok(rendered.log.includes(l.id));
 });
 check('log AND search, kind and date filters compose',()=>{
   app.state.logQuery='Ollama';
-  const selected=app.filteredLogs();assert.ok(selected.length>0&&selected.length<65);
+  const selected=app.filteredLogs();assert.ok(selected.length>0&&selected.length<app.D.log.items.length);
   app.state.logType=selected[0].type;app.state.logDate=selected[0].timestamp.slice(0,10);
   const combined=app.filteredLogs();assert.ok(combined.length>0);
   assert.ok(combined.every(l=>l.type===app.state.logType&&l.timestamp.startsWith(app.state.logDate)));
@@ -92,7 +93,7 @@ check('log AND search, kind and date filters compose',()=>{
 check('search input handler updates results without replacing input focus',()=>{
   app.state.page='log';app.render();
   listeners.get('input')({target:{id:'log-search',value:'Ollama'}});
-  assert.ok(!element('log-count').textContent.startsWith('65 /'));
+  assert.ok(!element('log-count').textContent.startsWith(`${app.D.log.items.length} /`));
   assert.ok(element('log-items').innerHTML.includes('Ollama'));
   listeners.get('input')({target:{id:'log-search',value:'not-present-284'}});
   assert.ok(element('log-items').innerHTML.includes('一致するログはありません'));
@@ -150,14 +151,58 @@ check('AA text palette and responsive/reduced-motion provisions',()=>{
   assert.ok(!/@media print|beforeprint|afterprint/.test(html));
 });
 check('a future reported completion renders without a forecast or live guessing',()=>{
-  const before={...app.D.status.dev3};
-  Object.assign(app.D.status.dev3,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-04T17:41:00+09:00',completed_worlds:18,note:'test-only confirmed completion'});
+  const before={...app.D.status.dev3b};
+  Object.assign(app.D.status.dev3b,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-04T20:41:00+09:00',completed_worlds:6,note:'test-only confirmed completion'});
   app.state.page='operations';app.render();
   assert.ok(element('page').innerHTML.includes('診断完了の引継ぎ'));
-  assert.ok(element('page').innerHTML.includes('17:41'));
+  assert.ok(element('page').innerHTML.includes('20:41'));
   assert.ok(!element('page').innerHTML.includes('NaN'));
   app.state.page='overview';app.render();assert.ok(element('page').innerHTML.includes('確認された完了時刻'));
-  Object.assign(app.D.status.dev3,before);
+  Object.assign(app.D.status.dev3b,before);
+});
+check('four KPI cards appear on overview only, including qualification view',()=>{
+  for(const [page,text] of Object.entries(rendered)){
+    assert.equal((text.match(/class="kpi"/g)||[]).length,page==='overview'?4:0,page);
+    assert.equal((text.match(/class="kpis"/g)||[]).length,page==='overview'?1:0,page);
+  }
+});
+check('comparison is the first results content section, before explanatory notices',()=>{
+  for(const key of ['results','qualification']){
+    const t=rendered[key];
+    assert.ok(t.slice(t.indexOf('<div class="page-body">')).startsWith('<div class="page-body">\n    <section class="card table-card results-primary">'));
+    assert.ok(t.indexOf('class="comparison"')<t.indexOf('class="notice'));
+    assert.ok(t.indexOf('class="comparison"')<t.indexOf('測定の原表・条件'));
+  }
+});
+check('dev3a exact figures and dev3b unknowns stay distinct in visible pages',()=>{
+  const t=rendered.results;
+  const operationsText=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
+  for(const value of ['842.3','2032.9','1050.3','54.4','288.7','61.3','46.83','55.93','980','27'])assert.ok(t.includes(value),value);
+  assert.ok(t.includes('9レジーム')&&t.includes('18世界')&&t.includes('比較対象に未達'));
+  assert.ok(operationsText.includes('dev3b-xb-r'));
+  assert.ok(operationsText.includes('未提示'));
+  assert.ok(operationsText.includes('監視接続/実fixture/smoke実施は未確認'));
+  assert.ok(!operationsText.includes('null'));
+});
+check('375px static containment: shrinkable children, wrapping text, stacked tables',()=>{
+  const css=html.match(/<style>([\s\S]*?)<\/style>/)[1];
+  // A structural CSS audit, not a browser layout measurement.
+  const mobile=css.slice(css.indexOf('@media(max-width:640px)'));
+  assert.ok(css.includes('body{overflow-wrap:anywhere}'));
+  for(const selector of ['.card-title>*','.section-title>*','.nav-link>*','.refs>*','.comparison td>*']){
+    assert.ok(new RegExp(selector.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[^{}]*\\{min-width:0;max-width:100%\\}').test(css),selector);
+  }
+  assert.ok(mobile.includes('.section-title,.card-title,.progress-head{flex-wrap:wrap}'));
+  assert.ok(mobile.includes('.toolbar>.field{flex-basis:100%;width:100%}'));
+  assert.ok(mobile.includes('.raw-table,.comparison,.queue-table{display:block}'));
+  assert.ok(mobile.includes('grid-template-columns:minmax(82px,.4fr) minmax(0,1fr)'));
+  assert.ok(mobile.includes('.workspace{margin-left:0}')||css.includes('@media(max-width:960px)')&&css.includes('.workspace{margin-left:0}'));
+  assert.ok(css.includes('width:min(390px,calc(100vw - 32px))'));
+  // The narrowest table content: 375 - main margins - card borders - details padding - row padding.
+  const content=375-32-2-32-34, label=83, gap=12;
+  assert.ok(content-label-gap>0,'the fixed label track leaves positive space for a minmax(0,1fr) value');
+  assert.ok(!/(?:body|html)\s*\{[^}]*overflow-x\s*:\s*(?:hidden|clip)/.test(css),'do not mask page overflow');
+  assert.ok(!/[{;]\s*(?:min-width|width)\s*:\s*(?:[4-9]\d{2}|\d{4,})px/.test(mobile),'no wide fixed box in mobile overrides');
 });
 if(process.argv.includes('--dump')){
   const target=process.argv[process.argv.indexOf('--dump')+1];

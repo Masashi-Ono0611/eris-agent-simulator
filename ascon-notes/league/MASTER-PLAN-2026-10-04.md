@@ -1,10 +1,10 @@
-# ASCON master plan — 2026-10-04 — revision 6
+# ASCON master plan — 2026-10-04 — revision 7
 
-更新: **2026-10-04 17:14:01 JST**（Asia/TokyoによるJST）。文書更新時刻。既存の決定署名日時・計測時刻は変更しない。
+更新: **2026-10-04 19:45:31 JST**（Asia/TokyoによるJST）。文書更新時刻。既存の決定署名日時・計測時刻は変更しない。
 
 **決定の出所: 本人が 2026-10-04 に Astra へ判断を委任。Astra が決定。** 本人のチャット上の「全てコデックス(Astra)に決めさせて」に基づき、直前の`decisions.out`の論点1〜6を本書の各節へ統合した。既決のQ0維持・10/8延期・forward100h・独自戦略のみ・Q0最優先は変更しない。金銭/API上限・自動チャージ・残高・Ollama鍵登録は委任対象外。本人報告による登録・設定確認は§10、前払い判断はG3見積もり後。
 
-**現況**: dev2-xb-rで取引成立。全12世界P−noop正、最小+147.7。診断平均Tは44.36対56.84で現Q0基準未達。xb-r v2（a646e9b）で2つの売買制限を独立化、123テスト・赤対照25件の引継ぎ。dev3a-xb-rは10/4 16:24 JST開始、17:40頃完了見込みだが結果未確認。第2チャンク3レジームを後で追加。正確な完了時刻・実消化・受理Sは未確認。旧sonnet Q0・opus Q0bのFAILを保持。計画commit f5e8e6a/c2aeb72/0c910c1、xb-r ad04879/a042a70/2ae0d59/a646e9b。league/v2未push・PR未作成は前回引継ぎ、今回リモート再照会なし。
+**現況**: dev3a-xb-r（v2 a646e9b）は10/4 17:39 JST完了の本人引継ぎ。F_ref・35001/35002・9レジーム18世界・G0 PASS、P−noop全正、noop割れ/違反/revert 0。平均T 46.83対55.93で比較対象未達。dev3b（残り3レジーム）は走行中との引継ぎ、v3は別担当Astraが実装中との引継ぎで、いずれも結果未確認。全12レジームの成績やQ0資格を推測しない。旧sonnet Q0・opus Q0b FAILを保持。dev3a完了後の約2時間アイドルを受け、§8の連続稼働モデルを定義した。監視の実装・接続は本更新では未実施。原ログ/実行中プロセス/リモートの再照会なし。
 
 **決定した順序**: 決定論修理/再診断→現Q0→最小改訂適合/G3/G4→受理S→限定AI→D対照/E3/Q1/G3反復→10/17条件分岐→封印/最終受理。AIはENTRY_BPSのみ、R*反復12h＋S full G3 5.2h=17.2h。全費用・hash・未使用seedの証跡が揃うまで新規実走は解放しない。詳細は[DESIGN-AI-LAYER-01](DESIGN-AI-LAYER-01-astra.md)。
 
@@ -122,7 +122,7 @@
 
 [measured: [Astra診断](XB-R-DEV1-DEBUG-2026-10-04.md)] 2ae0d59で公開ブロックから実行先ごとの競合入札を取得するよう修正。112テスト・赤対照19件・回帰3件が旧コードで赤の記録あり。本人も独立再実行したとの引継ぎ（本更新では再実行なし）。当時は修正後の結果待ちだったが、今回のdev2実測とv2/dev3引継ぎを§1.6に追記。旧15:50頃は見込みで、実完了時刻には転用しない。null固定promptは診断用で、live改訂適合は未完成。担当者が修理後のhash・再生・clock依存・取引成立を照合する。G0 PASSやfixture通過を収益資格にしない。
 
-### 1.6 最新の診断引継ぎ（ダッシュボード再構成時）
+### 1.6 最新の診断引継ぎ（10/4夕・rev 7）
 
 [measured: 今回の本人提示集計] dev2-xb-r。原ログを今回再監査した意味ではない。dev2の正確な完了時刻は未提示。
 
@@ -139,7 +139,26 @@
 
 [measured引継ぎ] xb-r v2 commit **a646e9b**。単脚の追加100bpsゲートと初期在庫停止を独立スイッチ化。**テスト123件・赤対照25件**。本更新で再実行していない。詳細原表は[DEV2-XB-R-REPAIR](DEV2-XB-R-REPAIR.md)を保持し、概要の丸め値と区別する。
 
-[進行中引継ぎ / unverified result] **dev3a-xb-r、F_ref・seed35001/35002・9レジーム18世界、2026-10-04 16:24 JST開始、17:40頃完了見込み**。結果・G0・完了数・完了時刻は未確認。**第2チャンク3レジーム**を後で追加。時刻の経過だけで完了にしない。旧AI D対照案の同seedは未使用でなくなったため、将来のD対照は実行前に未使用集合を再登録する。資格の41301–41305や契約閾値は変更しない。
+[measured: 本人提示集計、原ログ再監査なし] **dev3a-xb-rは16:24 JST開始、17:39 JST完了**（分単位の引継ぎ。秒は不明）。旧17:40頃完了見込みは予測として退役し、完了時刻に転用しない。
+
+<!-- source-dev3a:start -->
+| dev3a-xb-r項目 | 提示された結果 | 判定・範囲 |
+|---|---|---|
+| 母集団・G0 | F_ref・seed35001/35002・9レジーム18世界 / G0 PASS | v2 a646e9b。全12レジームの資格ではない |
+| P−noop / noop割れ | 全18世界で正 / 0 | 最小値は未提示。dev2の+147.7を流用しない |
+| 違反 / revert | 0 / 0 | 提示集計。未提示の安全項目を0にしない |
+| 送信失敗 / 送信 | submit_failed 27 / submitted 980 | 送信と包含成功数は別。revert率の分母へ転用しない |
+| 1世界平均P | cand 842.3 / multi-arb 2032.9 / clean-arb 1050.3 | 同じ18世界 |
+| 1世界平均取引数 | cand 54.4 / multi-arb 288.7 / clean-arb 61.3 | 同じ18世界 |
+| 診断9レジーム平均T | cand 46.83 / multi-arb 55.93 | 比較対象未達。12レジーム平均は未確認 |
+| informed-flow 平均T | cand 55.23 / multi-arb 36.01 | 候補が上回る |
+| lending-incident 平均T | cand 52.52 / multi-arb 49.15 | 候補が上回る |
+| vuln 平均T | cand 49.35 / multi-arb 50.10 | 小差で下回る。ほぼ同等との記述であり、勝利/統計的同等ではない |
+<!-- source-dev3a:end -->
+
+[unverified] **dev3bは残り3レジームを走行中との引継ぎ**。seed・世界数・G0・開始/完了時刻・結果は本依頼で未提示。dev3aとの同一hash/母集団が照合されるまで全12平均を合算しない。**v3はAstraが実装中との引継ぎ**。commit・検査・性能は未確認。dev2→dev3aはseedとレジーム数が違うため、平均値の差をv2の因果効果と断定しない。
+
+35001/35002は開発既見seed。旧AI D対照案は失効し、将来のD対照は実行前に未使用の全集合を再登録する。資格の41301–41305や契約閾値は変更しない。
 
 Ollama登録・Free・残高$0・Auto-reload Off・クリップボード消去は**本人報告**。gpt-oss:120b前提。dec-008 resolved、dec-007は10/28の運営一覧・無料枠量・疎通の再確認。本人が今やることは**なし**。MASTER revision 6の決定は維持。
 
@@ -151,7 +170,7 @@ Ollama登録・Free・残高$0・Auto-reload Off・クリップボード消去�
 - **forward 100h（10/4以降）は既決**。過去込み案へ戻して再質問しない。18.6h以上の過去消費は別記する。
 - dec-008（旧期日10/7）は本人報告でresolved。本人の現在作業なし。10/28最後にdec-007で未確認事項を再確認。送信・登録・確認・受理は別状態（§10）。
 - 運営への質問なし。10/8未受理なら10/9に本人が質問方針を再判断する。
-- p=3・等速、CPUを使う実装/検査/生成とmatrixは排他。背景コマンドは2h未満・hard limit110分。親roundのchunk間も入力/HEAD/実行中スクリプトを変更しない。
+- p=3・等速、同一ホストのCPUを使う生成/検査/buildとmatrixは排他。軽量な解析・設計・隔離した次版編集は並行し、測定入力を変更しない（§8）。背景コマンドは2h未満・hard limit110分。親roundのchunk間も入力/HEAD/実行中スクリプトを変更しない。
 - 約8hの夜間自律枠は過去の許可。夜間に実際にM1/Q0まで進んだ事実を記録し、revision 2の未解放記載を遡って承認へ変えない。次の拡張許可には使わない。
 
 優先: **xb-r修理・再診断/G0 → 現Q0 → mix/P60・最小改訂適合/G3/G4・受理S → 決定済み限定AIの全費用確認 → AI検証 → 既資格候補がある時だけ深いリーグへ切替 → 二場封印確認 → 最終適合/受理**。旧「M1未実施」「Q0未着手」「2c running」は失効。Q0不合格の緩和、20hの再承認、過去u1mの資格流用はしない。
@@ -188,11 +207,11 @@ D0/E1/E2/決定論E3/Q0/P60初回/smokeはFROZEN。AI専用E3/Q1は候補ON、G3
 
 ### 4.1 Step1: 決定論コアで現Q0を通し、受理Sを確保する
 
-**10/8延期・設計修理は本人決定済み。延期自体を再承認へ戻さない。** dev1は全世界取引なしで現状Q0資格不可。修正2ae0d59後のdev2で取引成立を確認したが、収益基準未達。v2のdev3を再診断中。xb-rが取引することを前提に、利益機会・実取引・会計・安全状態を担当証拠で照合してからQ0再資格へ進む。本更新で計測は起動しない。
+**10/8延期・設計修理は本人決定済み。延期自体を再承認へ戻さない。** dev1は全世界取引なしで現状Q0資格不可。修正2ae0d59後のdev2で取引成立を確認したが、収益基準未達。v2のdev3aは9レジーム平均T未達、dev3b/v3の結果は未確認。§8.3の全12レジーム診断screenを満たすまで再資格を開始しない。xb-rが取引することを前提に、利益機会・実取引・会計・安全状態を担当証拠で照合してからQ0再資格へ進む。本更新で計測は起動しない。
 
 **論点4の決定: A（現行維持）**。厳しいF_ref資格条件として維持し、届かなければ停止する。Bの場変更は不採用、CのF_u1m追加資格も不採用。3体採点で参照2体のPが等しい極限では候補との差が約±21.21Tとなるため大勝額だけでは多数の負けを埋めにくいが、これを旧FAIL無効化の根拠にはしない。
 
-新Q0再資格は**修理済み1候補・1回・F_ref/FROZEN・全12×41301–41305=60世界**。旧「第2候補1回まで」とは別の追加1回としてAstraが決定する。seedは担当者の全履歴未使用性監査・stream/scorer整合・候補/依存/prompt/roster/slot/判定コードhash固定後に登録完了とする。Q0用固定hashはdev3結果・担当照合待ちで未確定、架空値で埋めない。衝突時は結果閲覧前に全seed集合を差し替え記録。最大18世界、18+18+18+6の4chunk、基本13/3h＋終了確認2/3h=**5h上限枠**を§7のdeep内で優先留保し、校正で超過なら開始しない。修理/再診断・dev1既消費は別途精算。全量一回開封、欠測/不良で停止、性能救済再走・次点・seed追加なし。
+新Q0再資格は**修理済み1候補・1回・F_ref/FROZEN・全12×41301–41305=60世界**。旧「第2候補1回まで」とは別の追加1回としてAstraが決定する。seedは担当者の全履歴未使用性監査・stream/scorer整合・候補/依存/prompt/roster/slot/判定コードhash固定後に登録完了とする。Q0用固定hashは§8.3の診断screen・担当照合待ちで未確定、架空値で埋めない。衝突時は結果閲覧前に全seed集合を差し替え記録。最大18世界、18+18+18+6の4chunk、基本13/3h＋終了確認2/3h=**5h上限枠**を§7のdeep内で優先留保し、校正で超過なら開始しない。修理/再診断・dev1既消費は別途精算。全量一回開封、欠測/不良で停止、性能救済再走・次点・seed追加なし。
 
 | 現行維持と別の追加条件 | 採否 | 理由・残す記録 |
 |---|---|---|
@@ -214,7 +233,7 @@ D0/E1/E2/決定論E3/Q0/P60初回/smokeはFROZEN。AI専用E3/Q1は候補ON、G3
 
 ### 4.2 Q0失敗・境界不成立時の停止
 
-契約の判断は確定済みだが実行証跡は未成立。修理・再診断後の固定hash、未使用seed、G0/安全、5h枠と全残費の校正が揃うまでQ0を開始しない。Q0不合格なら後続AI・深い探索へ進まず停止する。受理Sは未確認で、参加可能とは断定しない。旧Q0bの救済再走はしない。
+契約の判断は確定済みだが実行証跡は未成立。§8.3の診断screen、修理・再診断後の固定hash、未使用seed、G0/安全、5h枠と全残費の校正が揃うまでQ0を開始しない。Q0不合格なら後続AI・深い探索へ進まず停止する。受理Sは未確認で、参加可能とは断定しない。旧Q0bの救済再走はしない。
 
 別版F_mix Q0mは今回不採用。§4.3の原案は失効した未署名記録のみで、現在の待ち判断や実行キューとして扱わない。新たな対応比較でF_refと混成場の持続的な逆行が示された場合だけ、将来の別契約として再検討する。
 
@@ -308,7 +327,9 @@ M2を実施する場合もE2は選抜専用、別E3全12×3×親/R*を最初か�
 | E3 | 33001–33003、全12 | R*選抜後の新たな全域screen。失敗で終了、同seed修理認定なし |
 | Q0 / Q0b / Q1 | 41001–41005 / 41101–41105 / 42001–42005 | 初回/一度限りの第2候補/挑戦者資格。開発者へ結果を渡した集合は開発済みに格下げ |
 | Q0再資格 | 41301–41305全12、F_ref/FROZEN | 修理済み1候補1回。担当者の全履歴未使用性監査・hash・5h枠校正が先 |
-| D対照開発 | 35001/35002全12、A/D各24 | 新規提案、未使用性未確認。基本48世界52/15h＋支援は未予約 |
+| xb-r診断 | 35001/35002はdev3aで既見 | 開発専用、dev3bとの同一母集団は担当照合待ち。資格/E3/Hへ再利用不可 |
+| 次版の調整 / 診断検証 | 各試行前に別のfresh seed集合を登録 | 調整・1世界smoke・全12×2の検証を分離。開封後は使い捨て、Q0/E3/Q1/G3/H予約と交差0 |
+| D対照開発 | seed全集合を実行前に再登録、A/D各24 | 旧35001/35002案は開発使用で失効。基本48世界52/15h＋支援は未予約 |
 | Q0m草案 | 41201–41205全12、F_mix | 未署名・今回不採用。将来別契約を作る場合だけ既知情報開示/未使用性確認。旧FAIL保持 |
 | M1修理診断 | 34001/34002、D0と同じ4regime | 親/D/Eの開発専用。E3/Q/Hへ再利用しない |
 | MVP mix / Cal | 43001全12 / 50001–50003のcalm/crash/depeg | smokeとON時間校正。資格/Hから分離、性能優位に使わない |
@@ -413,23 +434,68 @@ AI専用E3/Q1だけで143/15h=約9.5333h、deep9.7hとの差は1/6h。D対照48�
 
 各chunkは終了検査10分を含め110分以内、`3*floor(100/校正後batch分)`以下かつ新規FROZEN最大18世界。ONで26分なら9世界、19.5分なら15世界。既存Q0bの分割は本書で書き換えない。
 
-## 8. 次の24h: xb-r修理・再診断 → 現Q0 → 受理
+## 8. 連続稼働と次の24h: 診断 → 並行解析・実装 → 検証 → 次診断
 
-dev1-xb-rのmeasured引継ぎ・Astra診断・修正2ae0d59を反映。第1ブロッカーはQ0契約クリア: xb-r v2再診断中（dev3結果待ち）。本担当は戦略/テスト/計測領域へ介入しない。下記は条件付きキューであり、文書更新による計測起動ではない。通常6h窓・p3排他・固定入力を維持する。
+第1ブロッカーは収益性。dev3aの9レジーム平均Tは46.83対55.93、dev3b/v3は未確認。[当日振り返り](RETRO-2026-10-04-DAY.md)の再発防止を次の運用契約に統合する。**以下は担当者が次ジョブから実装・確認する運用ルールで、監視が稼働済みという報告ではない。** 本更新で計測の起動/停止や戦略への介入は行わない。
+
+### 8.1 2本の作業列と完了監視
+
+計測担当Claudeは常にmatrixを1本だけ、p=3・等速で実行する。解析/設計担当Astraは直前の確定結果の分解、次仮説、隔離した次版の編集を並行する。重いローカル生成・テスト・build・CIは計測間の排他枠で行う。実行中の親roundはchunk間もHEAD/入力/実行スクリプトを凍結する。別ファイルでもrunnerが読む場所には編集せず、凍結入力と切り離せない編集は待つ。
+
+全ジョブに、起動シェルから独立した完了監視と引継ぎ先を**起動前**に設定する。job ID・親/chunk ID・hash・予定世界・worker/監視の識別子・期限・次タスクを台帳へ記録。状態はLAUNCHED/RUNNING/COMPLETED/FAILED/BLOCKEDを分ける。**起動シェル終了≠計測完了**。launcherのrc=0はLAUNCHEDまで。COMPLETEDはworker終了コード、全予定世界の終端記録、欠測/重複0、G0/安全集計が揃って初めて付ける。欠落はUNKNOWN/BLOCKEDにし、成功通知へ変換しない。
+
+監視は60秒以下の間隔で軽量に確認し、完了/異常を2分以内に実行担当へ通知、担当は5分以内に受領・結果を記録する。次の許可済み作業へ完了から10分以内に移る。5分間ログ進展なし、予定終了+5分、監視停止は要点検通知とし、計測を無断再起動しない。未受領5分で担当への再通知、10分で次ジョブをBLOCKEDとして本人へ報告する。待つ間は解析・費用精算・文書更新を進め、無言の待機にしない。通知設定/テスト受信の証跡がないジョブは開始不可。
+
+### 8.2 段階別の上限と実測fixture
+
+<!-- continuous-stages:start -->
+| 段階 | 担当・並行可能な作業 | 目標 / 上限 | 次へ進む証跡 |
+|---|---|---|---|
+| 診断結果の確定 | Claude。Astraは直前結果を解析 | 完了検知2分・受領5分・次着手10分以内 | worker終了＋全予定終端＋G0/安全＋hash。launcher終了は不可 |
+| 解析・隔離実装 | Astra。現matrixと軽量作業のみ並行 | 仮説/変更案30分、実装60分上限 | 主因・予測する行動差・1変更群・次のfresh seed用途を先に記録 |
+| 排他検査・入力凍結 | 実装担当、計測間のみ | 目標15分 / 上限20分 | typecheck・関連テスト・赤対照・実ログfixture・hash固定 |
+| 1世界ゲートsmoke | Claude、F_ref・1レジーム1fresh seed | 短縮120block以内、目標5分 / 上限10分 | cand submitted>0・包含成功>0、revert/violations/failedReads/未解消片脚0 |
+| 全域診断検証 | Claude、固定候補F_ref/FROZEN・12×2=24世界 | 18+6世界、基本104分＋終了確認、各chunk110分上限 | 全24世界・G0・12レジーム等重みT・対noop・安全・失敗明細 |
+| 判定・引継ぎ | Astra解析、Claudeが次ジョブ準備 | 開封から10分以内 | §8.3ならQ0準備、不足なら残枠内の次診断、停止条件なら本人報告 |
+<!-- continuous-stages:end -->
+
+fixtureは公開実観測から秘密を除いた**実ログ由来入力を必須**とする。出典run/観測形式/対象hashを記録し、dev1のoracle 6gweiを競合へ混入させる旧コードが赤、修正版が緑になることを確認する。合成fixtureだけの緑で入口を解除しない。smokeでは短縮範囲の健全性を確認し、360blocks/362loopsの本G0 PASSや利益資格とは呼ばない。取引0なら本計測を開始せず、機会欠如/ゲート/観測不一致を分解し、変更後は別fresh seedでやり直す。smokeと検査の失敗もイテレーション・費用に数える。
+
+**1イテレーションは次版hashの検証着手から判定まで目標150分、上限180分**（並行する解析/編集を二重加算しない）。全域24世界は18世界だけの約50〜80分ジョブより長い。校正で180分に入らなければ開始前に停止・再見積し、世界/安全条件を削らない。v3の最初のsmokeから**最大3回**、dev3a/dev3bは既知のベースラインとして別記する。smoke失敗・G0 FAILも回数を消さず、再起動/名前変更/日付変更でリセットしない。
+
+上限3回は実行予算の追加許可ではない。通常6h/日、forward100h、deep9.7h中Q0留保5h、既消費精算後の修理枠、既決20h/2新世代のうち最も早い限界を適用する。3回を同日へ詰め込まない。次の1回全量＋Q0＋受理/最終安全費が未確保なら開始不可。現時点の実消化は未精算で、3回分の枠は未解放。
+
+### 8.3 Q0へ回す事前screenと停止
+
+<!-- diagnostic-screen:start -->
+| 項目 | Q0準備へ進む条件（すべて必要） |
+|---|---|
+| 母集団 | 修正版hash固定後に未開封の検証用fresh seed 2本、F_ref/FROZEN全12×2=24世界、全G0 PASS、欠測/重複0 |
+| 相対収益 | 12レジーム等重み平均(Tcand−Tmulti)≥0、各12レジームの平均(Tcand−Tnoop)≥0 |
+| 安全・執行 | violations/failedReads/無効注文/未回収自前資産損失/gas枯渇/未解消片脚/mined revert=0、候補の包含成功>0。submit_failed全件の理由を照合し、承認/資金不備反復・原因不明0 |
+| 尾部報告 | 全世界P/P−noop・noop割れ数・最悪P−noop・最悪レジームT差・送信/包含/失敗数を報告。欠落は未達、全世界P非負や対multi P条件は追加しない |
+| 独立性・費用 | 調整/短縮smoke/診断検証/Q0のseed交差0、全履歴未使用性監査、stream/scorer整合、候補/依存/prompt/roster/slot/hash固定、Q0 5hと全残費確保 |
+<!-- diagnostic-screen:end -->
+
+このscreenは診断からQ0へ費用を配分する基準で、Q0契約の変更・合格ではない。診断24世界のrevert=0と新Q0の60世界≤1件かつ≤0.1%を混同しない。診断検証は調整seedから分離し、開封後は既見扱いで調整後の再検証に再利用しない。41301–41305を含むQ0/E3/Q1/G3/Hの予約seedを診断に使わない。修正版を選ぶ検証集合をQ0の代用にも使わない。
+
+**3回で全12レジーム平均T≥multi-arbに届かなければ打ち切り、本人へ結果・最悪値・失敗理由・残費を報告して判断を仰ぐ。** 平均だけ届いても上記screenの他条件が不成立なら同様に停止。回数を増やす、seedを追加する、閾値を下げる変更を自動でしない。G0 FAIL/安全違反/入力hash不一致はその時点で新規起動停止、当該runを隔離し原因と修理・再検査の証跡が揃うまで再開しない。ディスク/リース異常、chunk110分、イテレーション180分、予算/日次/世代上限も停止条件。本人専用の鍵/API金銭/自動チャージ判断を自律処理へ広げない。
+
+### 8.4 現在のキュー（引継ぎ時点）
 
 <!-- next-24h:start -->
 | 順序 | 実験ID | 状態 | 世界数 | 全量見積h | 窓 | 依存・停止 |
 |---|---|---|---|---|---|---|
-| 1 | dev1-evidence | dev3a再診断中・結果待ち | 18 | 未見積 | 10/4 16:24開始、17:40頃完了見込み（JST） | a646e9b、F_ref・9レジーム×35001/35002。第2チャンク3レジームを後で追加。結果/G0/安全/hash/費用確認後にQ0。 |
+| 1 | dev1-evidence | dev3b走行中との引継ぎ・結果未確認 | 0 | 未見積 | dev3a 10/4 17:39 JST完了、dev3b時刻未確認 | dev3b残り3レジーム、世界数未提示（0は新規予約なし）。v3は別担当実装中・未確認。監視接続を担当確認、凍結入力を保持。§8.3の全12×2診断screen・hash/seed/費用成立までQ0停止。 |
 | 2 | q0b-evidence | 証跡精算のみ・再走なし | 0 | 未見積 | 実行担当の次の空き枠 | 旧60世界とG0 2世界FAIL・平均T FAIL保持。安全/区間証跡の照合のみ |
-| 3 | q0-requal | 条件付き決定・実行停止 | 60 | 5 | 修理再診断・hash/seed/費用成立後 | A維持、dev3再診断の全条件確認後、新41301–41305の未使用性監査、1候補1回。deep内5h留保、超過/不足は開始しない |
+| 3 | q0-requal | 条件付き決定・実行停止 | 60 | 5 | 修理再診断・hash/seed/費用成立後 | A維持、§8.3の全12×2診断screen成立後、新41301–41305の未使用性監査、1候補1回。deep内5h留保、超過/不足は開始しない |
 | 4 | mix-design | 設計のみ | 0 | 1/2 | 計測を邪魔しない空き枠 | 固定相手/slot/hashとENTRY_BPSだけの受付・G4経路を設計 |
 | 5 | first-mix | 停止 | 12 | 13/15 | Q0契約PASS後のみ | 候補不変・roster/hash/G0。診断完走を資格PASSにしない |
 | 6 | q0m | 不採用・旧未署名記録 | 60 | 143/30 | 現契約では実施しない | A維持のため選択しない。旧原案の費用/seedは履歴で実予約なし |
 | 7 | first-p60 | 停止 | 60 | 13/3 | Q0 PASS後 | 候補不変・G3/G4費確保。公開回帰は資格代替不可 |
 | 8 | first-g3 | 停止 | 36 | 13/5 | P60/資格・最小改訂policy後 | ON/OFF最小校正・実適用/復帰・機械的境界。gpt-oss:120b前提を本人了承・鍵登録受理は本人報告。無料枠不足時の前払い判断はG3見積もり後 |
 | 9 | ai-implementation | 全費用待ち | 0 | 未見積 | S受理/cal/費用成立後 | 限定param受付・state reset・D対照実装。未見積を0hにしない |
-| 10 | ai-d-control | 未解放 | 48 | 52/15 | S受理後、AI下流全費用確保時のみ | 全12×新seed×A/D、48世界。旧案35001/35002はdev3診断に使用中のため再利用不可。実行前に未使用の全seed集合を再登録。費用は基本単価で支援別。 |
+| 10 | ai-d-control | 未解放 | 48 | 52/15 | S受理後、AI下流全費用確保時のみ | 全12×新seed×A/D、48世界。旧案35001/35002はdev3診断で既見のため再利用不可。実行前に未使用の全seed集合を再登録。費用は基本単価で支援別。 |
 | 11 | factor-ab | 保留 | 48 | 52/15 | 既資格候補と全残費がある場合のみ | AI優先、10/17から新規探索なし。二重予約不可 |
 | 12 | m2 | 不採用・0h配分 | 60 | 13/3 | 現計画では実施しない | 13/3hは旧棚の全量見積で配分ではない。研究最大20h/2世代を維持 |
 <!-- next-24h:end -->
@@ -457,8 +523,8 @@ dev1-xb-rのmeasured引継ぎ・Astra診断・修正2ae0d59を反映。第1ブ�
 <!-- schedule:start -->
 | 日付 | 主な出口 | 依存 | 停止・反転条件 |
 |---|---|---|---|
-| 2026-10-04 | dev2取引成立・収益不足、v2修理後のdev3a開始 | measured診断と進行中引継ぎ・本人報告を区別 | dev3結果未確認。診断をQ0資格に転用しない。計測/鍵へ介入なし |
-| 2026-10-05 | dev3の担当証跡と残る3レジームを照合 | a646e9b・35001/35002・取引成立/hash/G0/安全/費用 | 結果と全条件がそろうまでQ0開始なし |
+| 2026-10-04 | dev3a完了・収益不足、dev3b/v3未確認、連続稼働モデル定義 | measured診断と進行中引継ぎ・本人報告を区別 | dev3aは9レジームのみ。dev3b/v3未確認、全12×2診断screen前にQ0へ進まない |
+| 2026-10-05 | dev3bの担当証跡とv3のsmoke・診断検証条件を照合 | a646e9b・35001/35002・取引成立/hash/G0/安全/費用 | 結果と全条件がそろうまでQ0開始なし |
 | 2026-10-06 | Q0追加1候補1回の実行条件を照合 | 修理再診断・41301–41305未使用性・hash・5h枠 | 現行閾値維持。未予約費/校正超過なら開始しない |
 | 2026-10-07 | dec-008: 10/4本人報告でresolved（旧期日） | 受理表示・Cloud鍵/代表者メール一致・無料枠画面の本人確認 | 現在の本人作業なし。未確認のモデル照合/無料枠量/鍵疎通は10/28 dec-007へ |
 | 2026-10-08 | 延期済み旧目標の照合、新受理日は証拠から再見積 | Q0/最小改訂適合/G3/G4 | 延期の再承認なし、日付で条件緩和しない |
@@ -539,31 +605,14 @@ dev1-xb-rのmeasured引継ぎ・Astra診断・修正2ae0d59を反映。第1ブ�
 
 <!-- self-check-output:start -->
 ```text
-PASS sources: D0/Q0/M1/Q0b tables retained; dev1 handoff matches plan/dashboard
-PASS Q0b: old 60-world result, G0 2-world FAIL and mean-T FAIL retained; no rescue rerun
-PASS budget: KEEP 100 h (G3 17.2, deep 9.7); archived unsigned AMEND 100 h; Q0 priority 5 h
-PASS queue: repair/rediagnosis -> Q0 -> acceptance; AI execution blocked by full-cost/evidence gates
-PASS decisions: 6 delegated Astra decisions with origin/signer/JST; human-only accounts/money remain pending
-PASS Q0: A unchanged; 1 new 60-world attempt; extra P/u1m conditions rejected; revert cap prospective only
-PASS AI: ENTRY_BPS 20-60, max step 5; R* ON3/OFF1 + S full = 216 worlds / 17.2 h; no epoch learning carryover
-PASS cutover: Oct 17 evidence gates select H480 / S240 / no campaign; no fresh deep exploration
-PASS schedule/review: 28 JST dates, 18 findings, five roadmap steps match dashboard
-PASS preservation: prior 52 logs and dec-007/008 unchanged; old safety nulls retained
-LIMIT: static consistency only; raw runs, actual hours, strategy safety, browser layout and acceptance unverified
-PASS check-plan-consistency
-PASS plan controls: 29 unsafe/stale mutations rejected in memory
-PASS JSON: 12 blocks; 257 unique HTML/data ids
-PASS log: 60 entries; JST descending (ties allowed); allowed types; valid dates
-PASS budget: KEEP = 100 h; archived unsigned AMEND = 100 h (exact fractions)
-PASS sources: 21 repo files exist; 0 missing; 8 copied tables match
-PASS blockers: 15 complete ranked rows; queue / phase / decision references valid
-PASS HTML: balanced tags; unique ids; no external resources
-PASS checker controls: 13 invalid cases rejected in memory
-LIMIT: static consistency only; live runs / browser layout / submission / actual hours unverified
-PASS dashboard-check
-PASS preservation: repair design unchanged; HTML edits only within JSON blocks; checker Python syntax valid
-PASS renderer smoke: 10 populated sections; six decisions with visible origin/signatures; DOM stub only, not visual QA
+PASS check-plan-consistency: rev 7 operations, rev 6 contracts, budgets, decisions, 65 preserved logs
+PASS plan controls: 76 unsafe/stale mutations rejected in memory
+PASS dashboard-check: 14 blocks / 68 logs / 11 source tables / 49 terms
+PASS checker controls: 23 invalid cases rejected in memory
+PASS dashboard UI: 25 checks / 8 pages + qualification / 375px static containment
+PASS rendered HTML: 9 views / balanced tags / safe links / unique IDs
 PASS git diff --check
+LIMIT: static consistency only; browser layout, live runs, monitor/smoke operation and acceptance unverified
 ```
 <!-- self-check-output:end -->
 
@@ -571,10 +620,11 @@ PASSは静的整合だけ。dev1/Q0b原ログ・実占有時間・ON性能・戦
 
 ## 11. 未解決事項と引継ぎ
 
-第1ブロッカーはxb-rの取引なしの原因・修理・再診断、その後の現Q0契約クリアと受理S。dev1診断はmeasuredだが全世界P−noop=0.0、現状Q0資格不可。修理原因/hash/費用は未確認。6件の判断は確定し、技術実行条件・AI境界実装・D増分・ON遅延・全費用は未成立のまま分ける。
+第1ブロッカーは収益性。dev1の無取引は2ae0d59後のdev2で解消したが、dev3aでも平均Tは比較対象未達。dev3b/v3の結果、全12レジーム、§8.3の独立診断screen、Q0固定hash/費用は未確認。6件の既決判断を維持し、技術実行条件・AI境界実装・D増分・ON遅延・全費用は未成立として分ける。
 
-本人確認待ちはOllama鍵登録・API金銭上限・自動チャージ・残高（dec-008 10/7、dec-007 10/28）。既存の本人送信/受理・10/9質問方針も自動化しない。DESIGN-REPAIR-01は原案のまま保存し、現行の追加条件採否は本書§4.1に従う。本担当はコミットせず、別ジョブの戦略/テストへ介入しない。
+次の担当は監視の接続/テスト通知と現在jobの状態を確認し、dev3bの確定結果を受領する。その間にv3仮説・隔離実装を進める。監視・実ログfixture・短縮smokeの運用実装は本文の契約であり、本更新では実施していない。未受領・停止条件・費用不足を隠して連続起動しない。
 
+Ollama鍵登録は本人報告でdec-008 resolved。現在の本人作業なし。10/28 dec-007のモデル/無料枠/疎通確認、無料枠不足時の前払い判断はG3見積もり後。本人専用の鍵/API金銭/自動チャージ/残高・送信/受理・10/9質問方針の境界を維持する。DESIGN-REPAIR-01は原案のまま保存。本担当はコミットせず、別ジョブの戦略/テストへ介入しない。
 
 ## Appendix B. ダッシュボード用語・表示整理
 
