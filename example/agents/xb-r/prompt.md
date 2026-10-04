@@ -1,7 +1,7 @@
 ---
 kind: improve
 name: xb-r
-description: Spot-only xb-r v4 probes with frozen v3 defaults and independently switchable R1-R12 factors.
+description: Spot-only xb-r v4 probes with frozen v3 defaults and independently switchable R1-R13 factors.
 ---
 
 This is the xb-r v4 preparation candidate, with exactly the v3 default behavior.
@@ -26,6 +26,12 @@ The new v4 factors are all OFF and are not AI controls:
 - R12_UNCONFIRMED_BACKOFF: wait 4 blocks after an unconfirmed single attempt;
   exact next-block settlement still permits R8 release. Bundles keep the
   historical wait and profitable endgame restoration keeps its exception.
+- R13_EDGE_SLIPPAGE: cap each leg at the lesser of 80bps, ENTRY_BPS and the
+  integer-bps budget from modeled net profit after gas, reserving $0.05.
+  The shared exposure is leg-count * input USD + modeled profit; bundles
+  share that budget. Reject candidates with less than 1bps room. OFF preserves
+  historical 80bps actions exactly. This is a model-based bound, not a guarantee
+  against loss: amount-specific execution quotes are obtained later by the SDK.
 R7_SINGLE_ENTRY=false with SINGLE_EDGE_BPS=75 is a separate existing-factor
 probe for stricter new-risk singles. Its default remains true/100.
 Never change these factors mid-matrix. ENTRY_BPS remains the sole reserved AI

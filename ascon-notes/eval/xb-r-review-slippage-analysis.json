@@ -1,0 +1,698 @@
+{
+  "exactQuoteSlippage": null,
+  "reason": "No amount-specific SDK quote, minOut or transaction calldata in cand/summary/events/blocks. market.json is a different-size block-end probe (Uniswap: mid plus fee).",
+  "proxyPriceBps": "buy=(fill/benchmark-1)*10000; sell=(1-fill/benchmark)*10000; positive=worse",
+  "proxyOutputLossBps": "buy=(1-benchmark/fill)*10000; sell=(1-fill/benchmark)*10000",
+  "caveat": "Proxy includes own size impact, probe-size differences and intervening state changes; cannot identify SDK quote slippage or infer tighter-minOut fill counts.",
+  "groups": {
+    "dev2": {
+      "worlds": 12,
+      "submitted": 538,
+      "success": 538,
+      "exactQuotePairs": 0,
+      "loggedFields": {
+        "candSubmitted": [
+          "actionType",
+          "agentId",
+          "amount",
+          "base",
+          "blockSeen",
+          "bundleId",
+          "bundleIndex",
+          "event",
+          "hash",
+          "kind",
+          "nonce",
+          "priorityFeeWei",
+          "protocol",
+          "ts"
+        ],
+        "candObservation": [
+          "blockNumber",
+          "fairPriceUsdcPerWeth",
+          "inventory",
+          "poolPriceUsdcPerWeth",
+          "reconstructed",
+          "round"
+        ],
+        "candTxSubmitted": [],
+        "summary": [
+          "agents",
+          "blockTimeSec",
+          "blocksProcessed",
+          "elapsedMs",
+          "finalBlock",
+          "finalFairPriceUsdcPerWeth",
+          "loopIterations",
+          "mode",
+          "resetUnit",
+          "runId",
+          "runStartBlock",
+          "stressEvents",
+          "valueSeries",
+          "violations"
+        ]
+      },
+      "proxyPriceBps": {
+        "n": 538,
+        "min": -19.839839209443433,
+        "median": 2.684557775751717,
+        "p95": 15.760269423789053,
+        "max": 33.886420995972166,
+        "gt0": 409,
+        "gt30": 1,
+        "gt50": 0,
+        "gt80": 0
+      },
+      "proxyOutputLossBps": {
+        "n": 538,
+        "min": -19.839839209443433,
+        "median": 2.683837284126467,
+        "p95": 15.743734387413388,
+        "max": 33.77197984328784,
+        "gt0": 409,
+        "gt30": 1,
+        "gt50": 0,
+        "gt80": 0
+      },
+      "byMode": {
+        "single": {
+          "n": 245,
+          "min": -19.839839209443433,
+          "median": 2.058971492735484,
+          "p95": 15.895656291368132,
+          "max": 33.886420995972166,
+          "gt0": 172,
+          "gt30": 1,
+          "gt50": 0,
+          "gt80": 0
+        },
+        "bundle": {
+          "n": 293,
+          "min": -18.218123206648063,
+          "median": 2.8269699007044125,
+          "p95": 14.37261748041041,
+          "max": 15.920886660887312,
+          "gt0": 237,
+          "gt30": 0,
+          "gt50": 0,
+          "gt80": 0
+        }
+      }
+    },
+    "dev3a": {
+      "worlds": 12,
+      "submitted": 722,
+      "success": 722,
+      "exactQuotePairs": 0,
+      "loggedFields": {
+        "candSubmitted": [
+          "actionType",
+          "agentId",
+          "amount",
+          "base",
+          "blockSeen",
+          "bundleId",
+          "bundleIndex",
+          "event",
+          "hash",
+          "kind",
+          "nonce",
+          "priorityFeeWei",
+          "protocol",
+          "ts"
+        ],
+        "candObservation": [
+          "blockNumber",
+          "fairPriceUsdcPerWeth",
+          "inventory",
+          "poolPriceUsdcPerWeth",
+          "reconstructed",
+          "round"
+        ],
+        "candTxSubmitted": [],
+        "summary": [
+          "agents",
+          "blockTimeSec",
+          "blocksProcessed",
+          "elapsedMs",
+          "finalBlock",
+          "finalFairPriceUsdcPerWeth",
+          "loopIterations",
+          "mode",
+          "resetUnit",
+          "runId",
+          "runStartBlock",
+          "stressEvents",
+          "valueSeries",
+          "violations"
+        ]
+      },
+      "proxyPriceBps": {
+        "n": 722,
+        "min": -19.334669976355244,
+        "median": 2.820055813302913,
+        "p95": 18.66022770961706,
+        "max": 32.77463292967964,
+        "gt0": 537,
+        "gt30": 2,
+        "gt50": 0,
+        "gt80": 0
+      },
+      "proxyOutputLossBps": {
+        "n": 722,
+        "min": -19.372125341377,
+        "median": 2.820055813302913,
+        "p95": 18.643801419219173,
+        "max": 32.667566180653026,
+        "gt0": 537,
+        "gt30": 2,
+        "gt50": 0,
+        "gt80": 0
+      },
+      "byMode": {
+        "single": {
+          "n": 509,
+          "min": -19.334669976355244,
+          "median": 2.3930103605684927,
+          "p95": 19.2119671479829,
+          "max": 32.77463292967964,
+          "gt0": 359,
+          "gt30": 2,
+          "gt50": 0,
+          "gt80": 0
+        },
+        "bundle": {
+          "n": 213,
+          "min": -17.821289156654263,
+          "median": 3.4200157747199533,
+          "p95": 14.22242871241819,
+          "max": 15.637770682970231,
+          "gt0": 178,
+          "gt30": 0,
+          "gt50": 0,
+          "gt80": 0
+        }
+      }
+    },
+    "dev3b": {
+      "worlds": 12,
+      "submitted": 584,
+      "success": 584,
+      "exactQuotePairs": 0,
+      "loggedFields": {
+        "candSubmitted": [
+          "actionType",
+          "agentId",
+          "amount",
+          "base",
+          "blockSeen",
+          "bundleId",
+          "bundleIndex",
+          "event",
+          "hash",
+          "kind",
+          "nonce",
+          "priorityFeeWei",
+          "protocol",
+          "ts"
+        ],
+        "candObservation": [
+          "blockNumber",
+          "fairPriceUsdcPerWeth",
+          "inventory",
+          "poolPriceUsdcPerWeth",
+          "reconstructed",
+          "round"
+        ],
+        "candTxSubmitted": [],
+        "summary": [
+          "agents",
+          "blockTimeSec",
+          "blocksProcessed",
+          "elapsedMs",
+          "finalBlock",
+          "finalFairPriceUsdcPerWeth",
+          "loopIterations",
+          "mode",
+          "resetUnit",
+          "runId",
+          "runStartBlock",
+          "stressEvents",
+          "valueSeries",
+          "violations"
+        ]
+      },
+      "proxyPriceBps": {
+        "n": 584,
+        "min": -19.286853933482284,
+        "median": 2.5896401039793293,
+        "p95": 19.178250771426654,
+        "max": 40.65389118979468,
+        "gt0": 418,
+        "gt30": 3,
+        "gt50": 0,
+        "gt80": 0
+      },
+      "proxyOutputLossBps": {
+        "n": 584,
+        "min": -19.286853933482284,
+        "median": 2.5896401039793293,
+        "p95": 19.178250771426654,
+        "max": 40.65389118979468,
+        "gt0": 418,
+        "gt30": 3,
+        "gt50": 0,
+        "gt80": 0
+      },
+      "byMode": {
+        "single": {
+          "n": 502,
+          "min": -19.286853933482284,
+          "median": 2.5587589204056904,
+          "p95": 19.224621277220688,
+          "max": 40.65389118979468,
+          "gt0": 360,
+          "gt30": 3,
+          "gt50": 0,
+          "gt80": 0
+        },
+        "bundle": {
+          "n": 82,
+          "min": -17.54488073049565,
+          "median": 2.711513679464206,
+          "p95": 6.565696961278178,
+          "max": 9.764502066393899,
+          "gt0": 58,
+          "gt30": 0,
+          "gt50": 0,
+          "gt80": 0
+        }
+      }
+    }
+  },
+  "sources": [
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T05-57-17-581Z",
+      "sha256": {
+        "agents/cand.jsonl": "50a396b6dfb891391ee5659deb999f6b1634630fc5571891ad805879b0ec7fa9",
+        "summary.json": "96e70642fe05c35915b01f1dc6561983324a47aaa4d4b99ee4bd0cf8f398eb9c",
+        "events.jsonl": "aaf8bed5eb61fe408f29276e4a88b8b83a883ec1c0de0d000b216170c92c3912",
+        "market.json": "1c046aa59ad570a8f852941b71f2277f11078c643031729d0435f9f42fb5671a",
+        "blocks.csv": "aac4510707510bf9e9d70614d7ab784064c7ac3fd96b5c4e59c365e7a06e0427"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T05-57-20-552Z",
+      "sha256": {
+        "agents/cand.jsonl": "62364ade0a2fa6a9821c178ebfe5d4848764abe8f498a55df1e16fbe8eed0894",
+        "summary.json": "2c1f9dd010bca8542c6dd82b828a4724641d3c748e5b435e9aa422cd597ca6b6",
+        "events.jsonl": "c6cfd879c9ae4c1f330cfaef7378f106f3282da73e3eddc61ce9a05456c1f431",
+        "market.json": "505758639c591dd08dc5a498a3f726f1f735c73dba62f8ed89260649c4034dd8",
+        "blocks.csv": "1caed18e04b15fa07493b877a4819fcd9f010965245be796698f3c312be0dfdc"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T05-57-23-591Z",
+      "sha256": {
+        "agents/cand.jsonl": "c712d58ec4f3d4ee113bae355dac6506defe7a15a12a94c3d4636bbf3d574856",
+        "summary.json": "6c9260401ef74ab7c52db188bb5a7f011af9fdbe6896944135c56c2cb1335538",
+        "events.jsonl": "7fbd9e293af9a6ef43378eb7482a6db9414b01f7b6013b67f90e2d7f2392e602",
+        "market.json": "2fb016b60584d0bbaa0e9a077909ad4d06a1b025a357f2360336db9834220c9a",
+        "blocks.csv": "f402014623a5b658d0df105987a9dd9c46fe298e51eb6f7a7480de0c7e85520f"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T06-09-47-890Z",
+      "sha256": {
+        "agents/cand.jsonl": "88d0b37567f74f94b5779b2bbee509510d4ddf6d18b47be86b26e2d46514ed2c",
+        "summary.json": "7a3a2022bf922100f496c5f338be74c3be035dfda69da63c275bef93d47d1f3d",
+        "events.jsonl": "5a8c79986cfd435e4cecba5c03615eb24888a3244dd663a6d08214520afb41e1",
+        "market.json": "16ccfaac58733a7f3b02edeff36b2a62515033df6bb14cd2edc4b5f4b5cb2f71",
+        "blocks.csv": "581eba859a8e07fa971c1959310c90c00e162d84ce70d1bf84086794368819ba"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T06-09-50-558Z",
+      "sha256": {
+        "agents/cand.jsonl": "2c13a2ecfcea5bbc7ca83197e529dcb29f40545cf7dd4b615d1d9533e2052317",
+        "summary.json": "87838a7e63a7189024554f7ad7311d078c8db59d0f1a915cb5a25bc9b2476424",
+        "events.jsonl": "c8fdb129f3bdca290fe89cd55188c4b71ab82ec30384cff57978e9edd606261b",
+        "market.json": "abe166978c7e93976ce391f74ba30c68586495abcbb9231e6a4d878d00a37dce",
+        "blocks.csv": "f584debdb563a6d4d944e9d1077c14f939ed133989e0253f4fee475b68fcc725"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T06-09-53-585Z",
+      "sha256": {
+        "agents/cand.jsonl": "b5a14591f9cd2e04413a901203e17d68513fa4475f49e1d87c046eb119249aa6",
+        "summary.json": "585f8f6a71ff83cd861b1b6ce9e105b632ed503f40546d6c426089c811da67e4",
+        "events.jsonl": "907349e5f52708090441194c69b48044689ccaa3c19875dfd20903766bb5ec13",
+        "market.json": "9e1bc044ec60fff76ca0fd40554729e1bc8cda2bdd5806edf4adfbb33dd288e8",
+        "blocks.csv": "6e512a905badd807e4bcd35dc9d962426b4ae60c49c52b9335b9c83ccaab7312"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T06-22-18-418Z",
+      "sha256": {
+        "agents/cand.jsonl": "cf4941ed46d6e2f205fbf04c226d6e9b6be87d245c249c48a3e2906eb84480ad",
+        "summary.json": "1714ca51b9bb37e2925ef5d2a6d517827b6a851233e05f2b4ed02162fc20b702",
+        "events.jsonl": "efa1ddc099c56025b62e947029ae9e5db316cbf278b875bd25a854b81d7a9ad0",
+        "market.json": "ed52c8eaf7e096166360f0cfa214f591e5529a8d57f626cd5adf8924236bff93",
+        "blocks.csv": "29a8f9753bb163434bbd6df4b0f96831643c491834150e8be2e28ae60694d847"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T06-22-21-214Z",
+      "sha256": {
+        "agents/cand.jsonl": "2a148ea18396fe1f0ddcc9f7831ccb88942b5cce5f74446959652da0141aae1f",
+        "summary.json": "685c6cf89b459b08d38d00a9bb4cd988942f6162fdacd3148caf902c3180c7b8",
+        "events.jsonl": "b2472733f16943efb3eb6bd12fdb2de8e76b194aa4962da80c5f0b3966c3ec55",
+        "market.json": "3ab197cdbda1f925038ffd0db6a5d5eeaa5a91c783697255891e3dab2deeb883",
+        "blocks.csv": "fbcbbb8cbd6c85fd9ff4bc5d052913057dbe842d8f6b860e696a2d9ab9961bd3"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T06-22-24-254Z",
+      "sha256": {
+        "agents/cand.jsonl": "96afa9e81bc33d8f9368f7bc72cdda5399aa339271ab077e6f2fb10a109606a3",
+        "summary.json": "bdd79c17b62e94a55f4c8564412847b4a898477bdfc60c393b1a0059860c4b0c",
+        "events.jsonl": "85581cae5de1c58087e4ea2ad98b0771b28bb631331a9fa56f32fc0cfda50bf5",
+        "market.json": "9412a36193169b35fce039482b6cbeb4cce410541b9da041a68dcea833422f1e",
+        "blocks.csv": "0aead7d6f6d5b1a06c9add18da4664fa9256dca2dbd0a027145b3c666474cbc7"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T06-34-48-667Z",
+      "sha256": {
+        "agents/cand.jsonl": "ceb488d08721d5c3a138db8ceb1600baac8d1545428b99e0aa3e864c8f49ceba",
+        "summary.json": "c2e0be4ed2daf3c62a6a2d2f47bc7c00ede0e249a3de96373e5a13fe156974e8",
+        "events.jsonl": "8188cf9636607fe8b67734777d21b499ebb1effa630693eb06df0f6595c01fe5",
+        "market.json": "8d776fcbe6ffacd03237e65d4802d68134e0d531b74fcf5e16be09206a6656d8",
+        "blocks.csv": "c7d9ff7ae7c5b2de114780e2e8cc43260e0095409b7c2fcf5c04175a378be63e"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T06-34-51-455Z",
+      "sha256": {
+        "agents/cand.jsonl": "d55587cd52a819e9a21bd6c624ea6fc7c8d8933786b890bdc54db044132d7823",
+        "summary.json": "0fefe5b22953269ac501d3776beb9f52d3353b8bc07cf21682fada9c1141980c",
+        "events.jsonl": "cb64cada91e1ddfba1b60b7a20670006c294d5e52175052167fe478864a7f7cc",
+        "market.json": "5b8b6a6646ae3f71aa7bb69073f5f66d1af150108455052c7aecb7ca6ec867a2",
+        "blocks.csv": "e12279ad06d36d15b8779588a89619408f0bf4996861c15ead0066f4fd2738d8"
+      }
+    },
+    {
+      "group": "dev2",
+      "run": "runs/2026-10-04T06-34-54-489Z",
+      "sha256": {
+        "agents/cand.jsonl": "90ad49fcc67e11511be79c409bd0e9a7492473c3d6dee9293a1c2513424fbecd",
+        "summary.json": "c8790ed626a0d510f92cb0bfcf22e8d519feae5d96beb37938abeb7a58ea3a03",
+        "events.jsonl": "8983030095a4daff3d83e94329165feec45f7d6823ab9e552981779ecbeb029b",
+        "market.json": "a547362cc96f57c3cf073304fb6455281aefaf02a505c4cd71caf202013801db",
+        "blocks.csv": "2359b41bae79c15d420b75ad5ee7e8289090d73ee597238cc711f00e7e2dcf50"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T07-23-53-218Z",
+      "sha256": {
+        "agents/cand.jsonl": "e7ae61ad816d8e406b35aacb5157b572152a040ab64c1e59f176487a8b4e60da",
+        "summary.json": "e72736795c48d1f629676749f5e32b7aa377856f0768d79ba6b11d65f22f3e89",
+        "events.jsonl": "8b111206e7b60caaae9688cfe2320663feb48d6023b689767e90891ea2e430cd",
+        "market.json": "7be980a7d763e8ffe82f01efa507fa72d7192e2ddb320a6998c7791050b64e29",
+        "blocks.csv": "0baf4b15de0762b4b991c22cd97cb5af3c3638ef398eb7c40c42860a4d1e37de"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T07-23-56-184Z",
+      "sha256": {
+        "agents/cand.jsonl": "d1a084f1315890e98a496a3871cf1fd5a166f6abca5b031efe0f2a6fe742a3ea",
+        "summary.json": "f6c909450b0788b94662a9bcc8da3ed0660df4a01b06abbc744549fa657a9526",
+        "events.jsonl": "3e22c0a9475b4f229ea6909d5665651803122e8ae501cb7e03babcab08cec6b9",
+        "market.json": "37db24931991247a058c7a49ea2a330171632fbd7d966f251070e2d5aff6d032",
+        "blocks.csv": "98fb5f08c0bfc0f2bac7cb3c94e68defad7f67a544da93e794452253da515744"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T07-23-59-557Z",
+      "sha256": {
+        "agents/cand.jsonl": "04669cef757e9a03ccd32ca7feb3d729d26ae464505759e8df927ad96d9cac14",
+        "summary.json": "9cf3ec11b722c065582bf0e07596a377587d36bfd11e3ee9e8889ab8f7d2c0fe",
+        "events.jsonl": "bbacba73d0ba426d9600399dd282a519133314c12a7be78adc6815d2bf0b7e43",
+        "market.json": "472939740a928c7dac094805227451d0d14d41dec2cc713d2c548d86b577a24d",
+        "blocks.csv": "9b3ecf29b94e37bb4a9ac89b59dff3af3ecbd3496bd7ce97b2d2399e133fb2ae"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T07-36-30-419Z",
+      "sha256": {
+        "agents/cand.jsonl": "276b39817a249f2c3cad77fcdd8bd90e1b8b583f5adfb28de9d06e8fb8ad81ea",
+        "summary.json": "a73ac77a52877a5c34b2959a6596a71be286e2d3e3a46b490b1c145624945a29",
+        "events.jsonl": "d6c005ee34a6028db0bc6fd403e7c4111031d6de9839c654af66c4c165bdda6f",
+        "market.json": "d37ae8a3abca426f951183b44f0efc5e4dabeb37d9cf142bfd1585250252c09c",
+        "blocks.csv": "47821fc13e19e7c481389c31f8ed13f7bdecdc61f8f5639a95eba643d79a5e42"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T07-36-33-185Z",
+      "sha256": {
+        "agents/cand.jsonl": "d2d3480b764e0b275ba87a8165f31c1fe5be8f6e6a2fff6f3c2693f51c3a582f",
+        "summary.json": "a8e1e5fe701167144cf7ed649c0f1e18c79b7f4cf905c7fb7adc1c69c8eb5d4a",
+        "events.jsonl": "0607ff6dde2ec69610838dbd19355a2b95fe3737fa56602a2213a8032b38a7a4",
+        "market.json": "5034e53a9570510ae35a11662712ebbe8f92556aaed67b1be0daa2ade5afa595",
+        "blocks.csv": "bca8965014a178865bc1b858795af3fb97f4a4a1a1712aef9052de033d33d9c0"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T07-36-36-256Z",
+      "sha256": {
+        "agents/cand.jsonl": "2625480e6d1604636a74d27edfd17f9c8314840055a1ec7eb11850248ab5a172",
+        "summary.json": "3258214f639b4213506cd0bde9807fbc00b647902b6d06144ca3df1afc8ec7f3",
+        "events.jsonl": "a5087df8dad596945810b33f71984f38f73ce4a1f0243b2a427129f0e9ee60b1",
+        "market.json": "b01689209bf5fd9f94ce700f52ff7f7351d9e1dda61b5de705bb1ead53338c56",
+        "blocks.csv": "39c0f230fc49e1df557ea5c72a8d1d408b8f4de6e43e8bbd4bc10c2f7c5e4558"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T07-49-00-964Z",
+      "sha256": {
+        "agents/cand.jsonl": "04ee4402f2ded38ccd0faf8db8499dc4f430940ea197a9459a2d3186992eb390",
+        "summary.json": "a6fdd1ad77da034405d1d7d55e47bc746c1c5fb5813a18634896dc435e720859",
+        "events.jsonl": "0287d32d8db614c9dd648855a93d0972a145fc732c003768cd3292fe399b6c8d",
+        "market.json": "8a66499ee2d51d83bee4dfddb0171b575f9a4548e38efa9a2a9882301dbf5292",
+        "blocks.csv": "a949ac52651841a30e5339e4ce5bb2b88a4e05149662dea43eb66bebc2e0f027"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T07-49-03-748Z",
+      "sha256": {
+        "agents/cand.jsonl": "4551c4a1e184b4f36c8177e07737dfde1e8f428da2588d64aed7c68d49868b38",
+        "summary.json": "789da8d2d77a4c2fd5c90c8e4a7f3dc469a8ac6f1d571604cb4dbc302f33508c",
+        "events.jsonl": "043abc5682a94f79ed4f238f8262061b4e6ea83792c44f3129e8d51681841b9d",
+        "market.json": "66c7237bc6fca4df416fcf9b36486ab12f4a5c5febb22b55eb904a848e998a40",
+        "blocks.csv": "707020e1593c39f960dc1c8dc38d2472ceb5df21a8cabc7a4d9dc9b00b81ed93"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T07-49-06-805Z",
+      "sha256": {
+        "agents/cand.jsonl": "302b4d5a7cdd3ca3c5946d61df0de5388d6dc77e456ce7ff54701cab21de2718",
+        "summary.json": "2f19d7298239ae22d30f12c9fc3229e0534f526ad7b3af4211b8733752889f25",
+        "events.jsonl": "a02d95a3b082fce65a420fe5a9a2a134e91a5766eca80cb1327762976e078feb",
+        "market.json": "29c0670ba6f2253492e8b1cd01e79270418d1bf0b55e2470218bf1fcde438990",
+        "blocks.csv": "2af06777b91222f18cc4d67f089f30399c5b6cb6d68957e7cde60aa3203d3dc5"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T08-01-33-133Z",
+      "sha256": {
+        "agents/cand.jsonl": "444b848fd58bce9fd87193e3baa60702a2309c1da46ffb685540a57d52aecefc",
+        "summary.json": "b30731c8d75a315a1683eeacbfb94d8a14ca95f9079f9a8765818c5b2fa97db3",
+        "events.jsonl": "48211786f75ffdb2ce5e96e3c44b3f83a1e3a12536db0fa817099849f6c1d2a5",
+        "market.json": "c270a8c121aa09703ccd81dd92e8c1a129b986c341eb0b194960f56798f1e377",
+        "blocks.csv": "76dddb9aec4ebb7785b53dc998ecdfc1340a022caf23dc83b8ceccca5b04c9e0"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T08-01-35-929Z",
+      "sha256": {
+        "agents/cand.jsonl": "8d46db536422476170a357e4099000afb6639cbe8cd0ba629fe841d0182946d0",
+        "summary.json": "0b835e0cd416d6f2b96816f52524082a39a651741face7fd10fd9c41e436f528",
+        "events.jsonl": "4c1df97fdf8876f399580cd0769dd5421e35734349ee195b16586871b81850e5",
+        "market.json": "547875c3f20cb8eedc38ff812c407131644ee0e5885a955c8059f450f44b0915",
+        "blocks.csv": "856abe7526b933c5190accaac075ff4b5faf9a1b4c1b9fb139b09aa2e1bc93ed"
+      }
+    },
+    {
+      "group": "dev3a",
+      "run": "runs/2026-10-04T08-01-39-171Z",
+      "sha256": {
+        "agents/cand.jsonl": "54b399e77f87c08e7cdf85d26e86db07432b5f90827285095dacb80b6f24e2f7",
+        "summary.json": "b7ab476992cf8aa32896a628e9eaf62aaac02f1e24f87ffd50688fb279b96984",
+        "events.jsonl": "063bee5b95acc2809dc54d2598599dfd7b7a292dff0b5991908de93fc937b7e8",
+        "market.json": "7adb8af798a6b7df2116be1a3c11355940f488e6486c065c687df7d7e567a33b",
+        "blocks.csv": "3a5e63f7bc1d2bd58faaf4dbbb7a7526cffc627da84d3f3c5ca00e3ef46dd3d2"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T08-14-05-738Z",
+      "sha256": {
+        "agents/cand.jsonl": "f6f3c53783b8ea3f6e9ef6bfa3e963e29d4f647a19c8ba827046503c6c01c637",
+        "summary.json": "7ec564d01de01e11b05a7f64e64db070aee78981b27c19dbd4d1fdfe887d7521",
+        "events.jsonl": "106c15d9898cbd2ce129edc741525b1027647a2dcd4c5b239f761d57f68db52c",
+        "market.json": "74f8974f27b5ba71ece02f7c1f93dcc846816d8b9caf39d05949f8b6e535e7f8",
+        "blocks.csv": "b59edfb31196f2d70d6479693ffabdd68b6206e45450a43fedefbc752fbb07f3"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T08-14-08-540Z",
+      "sha256": {
+        "agents/cand.jsonl": "8e950b84baf3c574a403946b5e0df298598d1666f637738efd8c134376e1eda7",
+        "summary.json": "2aea9a3b03557a8362e41394c107edee507524a1820270a3b4c95ff36bd0d0da",
+        "events.jsonl": "e63e3ceffb9e94e47c7e12c56edacd1fb0cc35206181c059fbe9a35b6ee8eb1f",
+        "market.json": "665eb47a5b57ad55050f50188a80d75d7a57b30fa438e22e4435d4ab6a48b182",
+        "blocks.csv": "8e7eceec98a5db67f0d20beaca49070c9dd4db7076aa3e04f209f30e0cb9eddc"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T08-14-11-649Z",
+      "sha256": {
+        "agents/cand.jsonl": "7a56859edba1e45f69acc4a63f9e9fd0fcb8f7da90815aae962cbd37964a0d64",
+        "summary.json": "9cdcc4b65ff3ca502735de72f0e3d92353d0b4179fc1a22be1841a94072402df",
+        "events.jsonl": "bc808f85a56d5a3aba7eae27b6d2161ff67681898a3951c62fd2d0dc4e520ffb",
+        "market.json": "cbbabe790dd223e8256a353f0e8da4e7639d1508bc453410935ef69374c79a05",
+        "blocks.csv": "431916a765fec89bf6d2a0f62881657aa8163ee10e9e0dcfc3ee0abcef8bd33f"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T08-26-37-296Z",
+      "sha256": {
+        "agents/cand.jsonl": "a8764cb4cb84c86ce9cedaed07405e3d8636c99e0c7037412dfdefdeeb93139e",
+        "summary.json": "22e2d8d23b28774a5dfabdcf74e7785c3a1299d3b60ea1f07d6dae3ee889a251",
+        "events.jsonl": "72a4de8731477c8efee6e443d4142d94e904179581dac87d58a8db2d0a2a1bfe",
+        "market.json": "43b81e3717cb55c2d73f79f895174f9761f46f939e816db4e1acc8742aa22058",
+        "blocks.csv": "71c1f1cafc0050c794c3afb43dbc6e65ae35659563637bcee0e259811145e3dc"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T08-26-40-075Z",
+      "sha256": {
+        "agents/cand.jsonl": "6d8dafaec000c3ebed3de9e0bd02e0865deec3ad948eec9712c67a0c75214a79",
+        "summary.json": "d23a300ccde88ef9f76ac14af0e55f4d42b1a9acff788c0371d6924b076a3ec6",
+        "events.jsonl": "2db44ed63ccdee44364462d7195e720064782897f34edb4ffa87556b25f1c4f0",
+        "market.json": "5ee1f1257b03a5dd10efcd93faba35e2fb30ead6785d5e8adef188b43d927dab",
+        "blocks.csv": "2237e7acb37cf82caee7cefad7473e5dc3dccdd97fa83d1620504188b654775c"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T08-26-43-128Z",
+      "sha256": {
+        "agents/cand.jsonl": "cc9699102e5415d027b91591e32623ac3a38d4af311c076fb6cddf40cd3740e5",
+        "summary.json": "ecfbc1a62c8fa245473ef9e3bf1980fe52ccd2b212d521911cb11134e6b21ee7",
+        "events.jsonl": "259ecd2bf8a856743fd730815ce267232834606c67334bd2b754257f4a6a2e11",
+        "market.json": "83f69a5b547dbd2ad7efa5a4f8a8348873069475d5adc3cd83f77194a59acfbe",
+        "blocks.csv": "5a1336ef73372665bb110f9ae93c2044915c0f77437472ecb8500dab67798320"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T10-38-38-875Z",
+      "sha256": {
+        "agents/cand.jsonl": "9aab3498c8350f80c044b708c116f573da1afdfdedb46ce9e825110c906a083d",
+        "summary.json": "b0ea7f1bbd7fd9b862c3fca3a7fc79efb87cbb60dd9dafafc2a17e6d18ed253a",
+        "events.jsonl": "5ca9a66be1e1abeb3e918f63b9e51769cb5bda1a548ee3e8c53c0653af077d14",
+        "market.json": "2bee833f881018675bbd2cda8e6668ed1c11f19f8786e756a962eeff2518bfe5",
+        "blocks.csv": "ef988af4c42552556d51aa01a226226187c0b1c992e8083bc0bffd8576699250"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T10-38-41-660Z",
+      "sha256": {
+        "agents/cand.jsonl": "15860948aa621a90ed333b1c9bf80247318942795da1ba1888aaa73b7da0e242",
+        "summary.json": "a8290f2439a64e7dba6d4a469a8d6f65c369eb969f82b0b28e05350073621469",
+        "events.jsonl": "7bd1d104d4bf10a7939da51cc5d2efdce2e06f0f8d800ad437edff8925c6a0d8",
+        "market.json": "73dbada1d702ee91c4b6a745c7698f60da800f5f7c5d6af5143510d52c72a83e",
+        "blocks.csv": "707ec8410abd05bfd140cad4f89a604e5f1ee68ce8953875b6872db90fc4427a"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T10-38-44-739Z",
+      "sha256": {
+        "agents/cand.jsonl": "5869ff6b1449c7755151a5298cf7722623579238c5382489a5188e498ea7593c",
+        "summary.json": "954c46f0d6457dfcf7d20590426bfad458a6549ccb321b4c5161c835b851aee9",
+        "events.jsonl": "5be4935f5d8f5bb15b055e14c8835c9fed7085cde2dbc22b164ae2b8f72ed680",
+        "market.json": "c1c74b6477c67135a1b7ea6144dcb7177f7b275fdc46fc348040821c84202ecf",
+        "blocks.csv": "c920fcd4935ca6d8f31676a0654791aa018e5a5711b651bea9d89661e038e792"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T10-51-10-114Z",
+      "sha256": {
+        "agents/cand.jsonl": "624419c1c860e2b48398b7d85a76656794326d3ce65584c6d9bbfff44c69b205",
+        "summary.json": "5a2dfced78b9ae33bf887f20b2bd8d4926980edb886a4b1a19f9cb52097d66ff",
+        "events.jsonl": "d2ba7486667acb78994fff30388fa70aaf5942d6aab0151d1f046e5db827a737",
+        "market.json": "ba0dbc67322174262cdc7fc3752c20c10e9136ae42cad2163231c7a540cf6696",
+        "blocks.csv": "b173089bee892d40d2e666afc81f62e7af375a42ce94ac00b5b633b793dd1a57"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T10-51-13-084Z",
+      "sha256": {
+        "agents/cand.jsonl": "8269f85b483fd10cd42f217d99af2eb1769ab1a0a53ce4854a47e0c359feb185",
+        "summary.json": "42a6e035ca7b6d25f4a93436068ea9877667b2b3aa7d23b1f8c0f7661ff31e18",
+        "events.jsonl": "eb1a9fa4eed6d6ef968e83744ac194828bfeaf6ce465896a5a6672af88def169",
+        "market.json": "17c7b3e157b502939eea003af71151538ccfc5574d6fa1b079fe67fa729b1a57",
+        "blocks.csv": "3ac4a7a9563d5b2c102fd22027017fa0796b0f729654cb8fd05bc02065026216"
+      }
+    },
+    {
+      "group": "dev3b",
+      "run": "runs/2026-10-04T10-51-16-104Z",
+      "sha256": {
+        "agents/cand.jsonl": "c60ab8ddbc8e93a70f7d18eb939cfef9493db7e96d94ea90ac0ac68647e21be6",
+        "summary.json": "e9b1ae878db2b711fb2270bec857211fea1703ee38f8b7bd5c9fd9ff1fe39c85",
+        "events.jsonl": "78d48e430849996195ab2a58ed9bfc7c4bc627f889d59ea3d7c1d0df6672ce5f",
+        "market.json": "d573d725dcba697439543d31615677a7a4efe5235ec893990639ca8c7dbad3e5",
+        "blocks.csv": "b2510097164f348551690a35c4b79123dffca9e37abd1d24bc52e3e3fd39cabc"
+      }
+    }
+  ],
+  "scriptSha256": "89f1676b52c96c7c7af9417a377a556264d9fdbadac498e7cf417e6d29dbe8dc",
+  "sampleEvidence": {
+    "path": "/private/tmp/xb-r-slippage-audit.json",
+    "sha256": "35e50848248b049031e45cb66b37caa90f12c88134c1a6213b80b25dbdd89e99",
+    "samples": 1844
+  }
+}

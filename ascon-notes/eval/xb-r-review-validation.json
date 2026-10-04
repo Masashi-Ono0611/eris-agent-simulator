@@ -1,0 +1,485 @@
+{
+  "baseCommit": "96b9764",
+  "implementationSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa",
+  "typecheck": {
+    "command": "npm run typecheck",
+    "exit": 0
+  },
+  "tests": {
+    "command": "node --import tsx --test --test-concurrency=1 --test-reporter=tap test/xb*.test.ts",
+    "existing": 159,
+    "added": 14,
+    "pass": 173,
+    "fail": 0,
+    "skipped": 0
+  },
+  "staticCheck": {
+    "command": "node --import tsx scripts/checkStrategyCode.ts example/agents/xb-r/agent.ts",
+    "exit": 0,
+    "findings": 0
+  },
+  "redControls": {
+    "existing": 43,
+    "added": 11,
+    "intendedAssertionFailures": 54,
+    "restoredSuitePass": 173,
+    "sourceRestored": true,
+    "records": [
+      {
+        "label": "LIVE-original-a042a70",
+        "exit": 1,
+        "pass": 0,
+        "fail": 3,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV2-original-2ae0d59",
+        "exit": 1,
+        "pass": 0,
+        "fail": 4,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-original-a646e9b",
+        "exit": 1,
+        "pass": 0,
+        "fail": 3,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "LIVE-unscoped-oracle",
+        "exit": 1,
+        "pass": 0,
+        "fail": 3,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "LIVE-own-bid",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "LIVE-total-deadline",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R1-priority",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R1-cooldown",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R2-size",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R3-double-margin",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R4-budget-bid",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R4-zero-send",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R5-restore-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R5-net-guard",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R5-loose-slippage",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "W2-restore-cooldown",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "W2-ordinary-cooldown",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "S1-selected-base",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "S5-validation-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "S5-negative-edge",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "S5-nonfinite-edge",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV2-anchor-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 2,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV2-duplicate-single-gate",
+        "exit": 1,
+        "pass": 0,
+        "fail": 2,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV2-endgame-cross",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV2-cross-without-entry",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV2-entry-step",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-default-entry",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-settlement-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-no-input-confirmation",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-no-proceeds-confirmation",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-no-gas-confirmation",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-other-base-ambiguity",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-no-next-block",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-no-run-id",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-no-previous-reset",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-no-bundle-exclusion",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "DEV3-headroom-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "V4-default-on",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "V4-depth-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "V4-depth-cap-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "V4-single-cap-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "V4-bundle-cap-shrunk",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "V4-backoff-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "V4-confirmation-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "V4-blind-release",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "V4-funding-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "V4-gas-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R13-default-on",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R13-factor-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R13-entry-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R13-gas-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R13-double-budget",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R13-zero-room-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      },
+      {
+        "label": "R13-profit-reserve-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa"
+      }
+    ]
+  },
+  "evidenceDirectory": "/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/xb-r-red-controls-skoZKB",
+  "logs": {
+    "/private/tmp/xb-r-review-typecheck.log": "82f5a6578829f2e287c737fe55752814d12538fe9228c7c6099b2992515007da",
+    "/private/tmp/xb-r-review-all.tap": "7d966ef8a97b639b1bb711468893090131377656197124d79310d3a211943f65",
+    "/private/tmp/xb-r-review-red-controls.log": "4ca996e240f1e1058d67f4f68e5e1bfb4f00753acf5aa98b8644d6a24125e62f",
+    "/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/xb-r-red-controls-skoZKB/restored-xb-tests.log": "35b967affacad616b8d58c0acd7cbb6c8d931b83ab4ff2062172ba0b3589a4bc"
+  },
+  "reviewFile": {
+    "path": "/private/tmp/claude-501/-Users-masashi-mac-ssd-Developer/b274e4c9-6365-44d8-96d5-84b3db6e48ad/scratchpad/review-v3-claude.md",
+    "observedBytes": 0,
+    "basis": "User supplied findings"
+  },
+  "notRun": [
+    "amount-specific quote vs fill distribution (not recorded)",
+    "R13 actual fill-count impact",
+    "chain backtest",
+    "Docker",
+    "public60",
+    "bundle/selftest",
+    "full repository test suite"
+  ],
+  "committed": false,
+  "upstreamEval": "Completed dev2/dev3 log artifacts read only; no source, index or dev4 accesses or changes"
+}

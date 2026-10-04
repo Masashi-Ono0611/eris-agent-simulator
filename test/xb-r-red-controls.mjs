@@ -1,4 +1,5 @@
-// Run manually, with no concurrent evaluation: node test/xb-r-red-controls.mjs
+// Run manually, with no concurrent evaluation consuming THIS source tree:
+// node test/xb-r-red-controls.mjs (sequential; never changes another worktree).
 // Temporarily mutates ONLY xb-r/agent.ts, restores after each run and in finally,
 // then reruns the complete xb test subset. Evidence stays in a unique temp directory.
 import assert from "node:assert/strict";
@@ -30,7 +31,7 @@ const controls = [
   ["R5-loose-slippage", "R5 single and bundle slippage", "const SLIPPAGE_BPS = 80;", "const SLIPPAGE_BPS = 150;"],
   ["W2-restore-cooldown", "W2 only endgame restoration", "cooling.has(m.base) && !(endgame && restoring)", "cooling.has(m.base)"],
   ["W2-ordinary-cooldown", "W2 only endgame restoration", "cooling.has(m.base) && !(endgame && restoring)", "false"],
-  ["S1-selected-base", "S1 selected base", "...c.action, base: c.base, maxPriorityFeePerGasWei", "...c.action, maxPriorityFeePerGasWei"],
+  ["S1-selected-base", "S1 selected base", "...action, base: c.base, maxPriorityFeePerGasWei", "...action, maxPriorityFeePerGasWei"],
   ["S5-validation-off", "S5 createAgent rejects invalid Params", "validateParams(p);", "// validateParams(p);"],
   ["S5-negative-edge", "S5 createAgent rejects invalid Params", "p.SINGLE_EDGE_BPS < 0", "false"],
   ["S5-nonfinite-edge", "S5 createAgent rejects invalid Params", "!Number.isFinite(p.SINGLE_EDGE_BPS)", "false"],
@@ -45,6 +46,10 @@ const controls = [
   ["DEV3-no-proceeds-confirmation", "DEV3 R8 rejects", "baseDelta === -amount && cashDelta > 0n", "baseDelta === -amount"],
   ["DEV3-no-gas-confirmation", "DEV3 R8 rejects", "BigInt(after.balances.ethWei) >= BigInt(before.balances.ethWei)", "false"],
   ["DEV3-other-base-ambiguity", "DEV3 R8 rejects", "balanceOf(before, other) !== balanceOf(after, other)", "false"],
+  ["DEV3-no-next-block", "DEV3 R8 guard block", "Number(after.blockNumber) !== Number(before.blockNumber) + 1", "false"],
+  ["DEV3-no-run-id", "DEV3 R8 guard runId", "before.runId !== after.runId", "false"],
+  ["DEV3-no-previous-reset", "DEV3 R8 run reset discards", "previous = undefined;", ""],
+  ["DEV3-no-bundle-exclusion", "DEV3 R8 guard bundle", "!Object.values(SWAPS).includes(action.type)", "false"],
   ["DEV3-headroom-off", "DEV3 R9 reserves", "p.R9_BUNDLE_HEADROOM ? initial * (1 + INV_BAND / 2)", "false ? initial * (1 + INV_BAND / 2)"],
   ["V4-default-on", "V4 defaults", "R10_FULL_DEPTH_SIZE: false", "R10_FULL_DEPTH_SIZE: true"],
   ["V4-depth-off", "V4 R10 full depth", "fullDepth ? edge / (2 * slope) : desired", "desired"],
@@ -56,14 +61,21 @@ const controls = [
   ["V4-blind-release", "V4 R12 incomplete", "if (settledSingle(sent.observation, sent.action, obs))", "if (true)"],
   ["V4-funding-bypass", "V4 final selection", "if (!reserveCandidate(obs, c)) continue;", "if (false) continue;"],
   ["V4-gas-bypass", "V4 final selection", "if (BigInt(obs.balances.ethWei) - BigInt(c.gas) * fee < GAS_RESERVE) continue;", "if (false) continue;"],
+  ["R13-default-on", "R13 defaults OFF", "R13_EDGE_SLIPPAGE: false", "R13_EDGE_SLIPPAGE: true"],
+  ["R13-factor-bypass", "R13 singles cap", "if (p.R13_EDGE_SLIPPAGE)", "if (false)"],
+  ["R13-entry-bypass", "R13 ENTRY bounds", "Math.min(SLIPPAGE_BPS, p.ENTRY_BPS,", "Math.min(SLIPPAGE_BPS,"],
+  ["R13-gas-bypass", "R13 gas at", "slippageBudgetBps(c, net, p)", "slippageBudgetBps(c, c.profit, p)"],
+  ["R13-double-budget", "R13 bundle legs", "legs * c.usd + Math.max(0, c.profit)", "c.usd + Math.max(0, c.profit)"],
+  ["R13-zero-room-bypass", "R13 sub-bps room", "if (slippageBps < 1) continue;", "if (false) continue;"],
+  ["R13-profit-reserve-bypass", "R13 retains the minimum", "(net - MIN_PROFIT_USDC) / exposure", "net / exposure"],
 
 ];
 const records = [];
 function run(label, pattern) {
   const args = ["--import", "tsx", "--test", "--test-concurrency=1", "--test-reporter=tap"];
   if (pattern) args.push(`--test-name-pattern=${pattern}`);
-  args.push(...(pattern ? [pattern.startsWith("V4") ? "test/xb-r-v4.test.ts" : pattern.startsWith("DEV3") ? "test/xb-r-dev3a.test.ts" : pattern.startsWith("DEV2") ? "test/xb-r-dev2.test.ts" : "test/xb-r.test.ts"]
-    : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts", "test/xb-r-dev2.test.ts", "test/xb-r-dev3a.test.ts", "test/xb-r-v4.test.ts"]));
+  args.push(...(pattern ? [pattern.startsWith("R13") ? "test/xb-r-slippage.test.ts" : pattern.startsWith("V4") ? "test/xb-r-v4.test.ts" : pattern.startsWith("DEV3") ? "test/xb-r-dev3a.test.ts" : pattern.startsWith("DEV2") ? "test/xb-r-dev2.test.ts" : "test/xb-r.test.ts"]
+    : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts", "test/xb-r-dev2.test.ts", "test/xb-r-dev3a.test.ts", "test/xb-r-v4.test.ts", "test/xb-r-slippage.test.ts"]));
   const result = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8", timeout: 60000 });
   const log = (result.stdout ?? "") + (result.stderr ?? "");
   writeFileSync(join(evidence, `${label}.log`), log);
@@ -81,7 +93,7 @@ function expectRed(label, pattern, mutated) {
   const fail = Number(log.match(/^# fail (\d+)/m)?.[1]);
   const pass = Number(log.match(/^# pass (\d+)/m)?.[1]);
   assert.equal(digest(readFileSync(sourcePath, "utf8")), digest(original));
-  records.push({ label, exit: result.status, pass, fail, restored: true });
+  records.push({ label, exit: result.status, pass, fail, restored: true, restoredSha256: digest(original) });
   console.log(`RED ${label}: exit=${result.status}, pass=${pass}, fail=${fail}; source restored`);
 }
 try {

@@ -17,6 +17,7 @@ export type Params = Readonly<{
   R10_FULL_DEPTH_SIZE: boolean;
   R11_SMALL_SINGLE_CAP: boolean;
   R12_UNCONFIRMED_BACKOFF: boolean;
+  R13_EDGE_SLIPPAGE: boolean;
   ENTRY_BPS: number;
   SINGLE_EDGE_BPS: number;
 }>;
@@ -26,6 +27,7 @@ export const PARAMS: Params = Object.freeze({
   R6_ANCHOR_CROSS: true, R7_SINGLE_ENTRY: true,
   R8_SETTLED_COOLDOWN: true, R9_BUNDLE_HEADROOM: false,
   R10_FULL_DEPTH_SIZE: false, R11_SMALL_SINGLE_CAP: false, R12_UNCONFIRMED_BACKOFF: false,
+  R13_EDGE_SLIPPAGE: false,
   ENTRY_BPS: 50, SINGLE_EDGE_BPS: 100,
 });
 // v2 replay profile; v3 factors are independently switchable and not AI controls.
@@ -43,7 +45,7 @@ type Base = typeof BASES[number];
 const INITIAL = { WETH: 8n * W, WBTC: 40_000_000n };
 const GAS_RESERVE = W / 20n;
 const INV_BAND = 0.2;
-const SLIPPAGE_BPS = 80; // xb-core unchanged, including every bundle leg.
+const SLIPPAGE_BPS = 80; // Historical ceiling; R13 can only tighten it.
 const MIN_PROFIT_USDC = 0.05;
 const SWAPS = { uniswap: "swap", balancer: "balancerSwap", curve: "curveSwap" } as const;
 type Venue = { protocol: keyof typeof SWAPS; mid: number; cost: number; depth: number };
@@ -137,6 +139,18 @@ export function netProfitUsd(obs: AgentObservation, c: Candidate, fee: bigint): 
   // Base fee = 0 in the target simulator. The total sent fee includes the default floor.
   const ethPrice = obs.fairPricesUsd?.WETH ?? obs.fairPriceUsdcPerWeth;
   return c.profit - Number(fee) * c.gas * ethPrice / 1e18;
+}
+// A model budget, not an executable-price guarantee: the SDK quotes again
+// when building each transaction. Reserve MIN_PROFIT after modeled gas and
+// charge every bundle leg against the same budget (no double spending).
+// Include modeled profit in output exposure so output slippage is not treated
+// as an equal percentage of input. Actual quotes/receipts are unavailable here.
+export function slippageBudgetBps(c: Candidate, net: number, p: Params): number {
+  const legs = c.action.type === "bundle" ? c.action.actions.length : 1;
+  const exposure = legs * c.usd + Math.max(0, c.profit);
+  if (!positive(c.usd) || !positive(exposure) || !Number.isFinite(net) || legs < 1) return 0;
+  return Math.max(0, Math.floor(Math.min(SLIPPAGE_BPS, p.ENTRY_BPS,
+    (net - MIN_PROFIT_USDC) / exposure * 10000)));
 }
 function swap(m: Market, v: Venue, token: string, amount: bigint): Action {
   return { type: SWAPS[v.protocol], ...(m.base === "WETH" ? {} : { base: m.base }),
@@ -295,7 +309,16 @@ export function selectCandidate(obs: AgentObservation, all: readonly Candidate[]
     if (fee <= 0n || !Number.isFinite(net) || net < MIN_PROFIT_USDC) continue;
     if (!reserveCandidate(obs, c)) continue;
     if (BigInt(obs.balances.ethWei) - BigInt(c.gas) * fee < GAS_RESERVE) continue;
-    return { ...c.action, base: c.base, maxPriorityFeePerGasWei: fee.toString() };
+    let action = c.action;
+    if (p.R13_EDGE_SLIPPAGE) {
+      const slippageBps = slippageBudgetBps(c, net, p);
+      // Less than one integer bps of modeled room: try the next candidate.
+      if (slippageBps < 1) continue;
+      action = c.action.type === "bundle"
+        ? { ...c.action, actions: c.action.actions.map((leg: Action) => ({ ...leg, slippageBps })) }
+        : { ...c.action, slippageBps };
+    }
+    return { ...action, base: c.base, maxPriorityFeePerGasWei: fee.toString() };
   }
   return noop("no funded positive net edge at an affordable bid");
 }
@@ -304,7 +327,7 @@ function validateParams(p: Params): void {
   for (const key of ["R1_BUNDLE_PRIORITY", "R2_BALANCE_FLOOR", "R3_ENTRY_ONLY",
     "R4_COMPETITOR_BID", "R5_PROFITABLE_RESTORE", "R6_ANCHOR_CROSS", "R7_SINGLE_ENTRY",
     "R8_SETTLED_COOLDOWN", "R9_BUNDLE_HEADROOM", "R10_FULL_DEPTH_SIZE",
-    "R11_SMALL_SINGLE_CAP", "R12_UNCONFIRMED_BACKOFF"] as const) {
+    "R11_SMALL_SINGLE_CAP", "R12_UNCONFIRMED_BACKOFF", "R13_EDGE_SLIPPAGE"] as const) {
     if (typeof p[key] !== "boolean") throw new TypeError(`${key} must be boolean`);
   }
   if (!Number.isFinite(p.ENTRY_BPS) || p.ENTRY_BPS < 20 || p.ENTRY_BPS > 60 || p.ENTRY_BPS % 5 !== 0)

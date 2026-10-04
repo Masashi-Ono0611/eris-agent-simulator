@@ -12,6 +12,25 @@ const profile = (entry = 50, settled = true, headroom = false) => ({ ...xb.PARAM
 // Historical-source red control must fail assertions, not a missing export.
 const settled = (before: AgentObservation, action: xb.Action, after: AgentObservation) =>
   (xb as any).settledSingle?.(before, action, after) ?? false;
+// Independent test accessors: WBTC is never aliased to the WETH balance.
+const balance = (o: AgentObservation, token: string): string => token === 'USDC' ? o.balances.usdcUnits
+  : token === 'WETH' ? o.balances.wethWei : o.baseBalances![token];
+function setBalance(o: AgentObservation, token: string, value: string) {
+  if (token === 'USDC') o.balances.usdcUnits = value;
+  else if (token === 'WETH') o.balances.wethWei = value;
+  else o.baseBalances![token] = value;
+}
+const btcFixture = JSON.parse(readFileSync(new URL('./fixtures/xb-r-wbtc-settlement.json', import.meta.url), 'utf8'));
+const btcFrames = btcFixture.cases.map((x: any) => {
+  const before = observation(), after = structuredClone(before);
+  after.blockNumber = String(Number(before.blockNumber) + 1);
+  after.balances.ethWei = String(BigInt(before.balances.ethWei) - 100000000000000n);
+  setBalance(after, 'USDC', String(BigInt(balance(before, 'USDC')) + BigInt(x.cashDelta)));
+  setBalance(after, 'WBTC', String(BigInt(balance(before, 'WBTC')) + BigInt(x.baseDelta)));
+  return { name: `synthetic_WBTC_${x.side}`, observation: after,
+    settledFrame: { observation: before, action: { type: 'swap', base: 'WBTC', tokenIn: x.tokenIn, amountIn: x.amountIn } } };
+});
+const settlementFrames = [...fixture.frames.filter((x: any) => x.settledFrame), ...btcFrames];
 function replay(f: any, p = profile(), cooling: ReadonlySet<string> = new Set(f.cooling)) {
   // Match execution targets to the test SDK deployment, as in the dev1 replay.
   const bids = new Map<string, bigint>();
@@ -55,27 +74,70 @@ test('DEV3 defaults and historical profiles freeze separate experiments', () => 
 });
 
 test('DEV3 R8 rejects unchanged failed partial and ambiguous settlement', () => {
-  for (const f of fixture.frames.filter((x: any) => x.settledFrame)) {
+  for (const f of settlementFrames) {
     const { observation: before, action } = f.settledFrame;
+    assert.equal(settled(before, action, f.observation), true, `${f.name}: positive control`);
     for (const mode of ['pending', 'input', 'output', 'gas', 'otherBase', 'bundle', 'run', 'gap', 'invalid']) {
       const after = structuredClone(f.observation), a = structuredClone(action);
-      if (mode === 'pending') after.balances = structuredClone(before.balances);
+      if (mode === 'pending') {
+        after.balances = structuredClone(before.balances);
+        after.baseBalances = structuredClone(before.baseBalances);
+      }
       if (mode === 'input') {
-        const key = a.tokenIn === 'USDC' ? 'usdcUnits' : 'wethWei';
-        after.balances[key] = String(BigInt(after.balances[key]) + 1n);
+        setBalance(after, a.tokenIn, String(BigInt(balance(after, a.tokenIn)) + 1n));
       }
       if (mode === 'output') {
-        const key = a.tokenIn === 'USDC' ? 'wethWei' : 'usdcUnits';
-        after.balances[key] = before.balances[key];
+        const token = a.tokenIn === 'USDC' ? a.base : 'USDC';
+        setBalance(after, token, balance(before, token));
       }
       if (mode === 'gas') after.balances.ethWei = before.balances.ethWei;
-      if (mode === 'otherBase') after.baseBalances.WBTC = String(BigInt(before.baseBalances.WBTC) + 1n);
+      if (mode === 'otherBase') {
+        const token = a.base === 'WETH' ? 'WBTC' : 'WETH';
+        setBalance(after, token, String(BigInt(balance(before, token)) + 1n));
+      }
       if (mode === 'bundle') a.type = 'bundle';
       if (mode === 'run') after.runId = 'another-run';
       if (mode === 'gap') after.blockNumber = String(Number(before.blockNumber) + 2);
       if (mode === 'invalid') a.amountIn = 'invalid';
-      assert.equal(settled(before, a, after), false, mode);
+      assert.equal(settled(before, a, after), false, `${f.name}: ${mode}`);
     }
+  }
+});
+
+for (const mode of ['block+1', 'runId', 'bundle']) test(`DEV3 R8 guard ${mode}`, () => {
+  for (const f of settlementFrames) {
+    const { observation: before, action } = f.settledFrame;
+    assert.equal(settled(before, action, f.observation), true);
+    const after = structuredClone(f.observation), a = structuredClone(action);
+    if (mode === 'block+1') after.blockNumber = String(Number(before.blockNumber) + 2);
+    if (mode === 'runId') after.runId = `${before.runId}-different`;
+    if (mode === 'bundle') a.type = 'bundle'; // partial bundle that otherwise looks like a single
+    assert.equal(settled(before, a, after), false, f.name);
+  }
+});
+
+test('DEV3 R8 run reset discards previous settlement before reading new run data', () => {
+  const reused = xb.createAgent(profile(), () => 0), fresh = xb.createAgent(profile(), () => 0);
+  assert.equal(reused(single(.012)).type, 'swap');
+  const next = observation(101); next.enabledProtocols = [];
+  // No new attempt replaces previous. Compare with a fresh agent's observation
+  // access, since cleared lastSent alone can mask a stale previous in actions.
+  let reads = 0;
+  Object.defineProperty(next, 'runId', { enumerable: true, get() { reads++; return 'new-run'; } });
+  const actual = reused(next), reusedReads = reads;
+  reads = 0;
+  assert.deepEqual(actual, fresh(next));
+  assert.equal(reusedReads, reads, 'reset must not consult the previous run for settlement');
+});
+
+for (const f of btcFrames) test(`DEV3 R8 ${f.name} checks the WBTC input and output legs`, () => {
+  const { observation: before, action } = f.settledFrame;
+  assert.equal(before.balances.wethWei, f.observation.balances.wethWei);
+  assert.equal(settled(before, action, f.observation), true);
+  for (const token of ['USDC', 'WBTC']) {
+    const after = structuredClone(f.observation);
+    setBalance(after, token, balance(before, token));
+    assert.equal(settled(before, action, after), false, `missing ${token} leg`);
   }
 });
 
