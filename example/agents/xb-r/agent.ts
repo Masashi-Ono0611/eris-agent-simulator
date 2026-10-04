@@ -1,4 +1,4 @@
-// xb-r v1: spot-only repair of the sonnet-derived xb-core V0.
+// xb-r v2: spot-only repair of the sonnet-derived xb-core V0.
 // Market decoding and funding normalization below are copied from xb-core.
 import type { AgentContext, AgentObservation } from "@eris/sdk";
 import { BALANCER, MARKET_LEGS, UNISWAP } from "@eris/sdk/constants.js";
@@ -10,13 +10,20 @@ export type Params = Readonly<{
   R3_ENTRY_ONLY: boolean;
   R4_COMPETITOR_BID: boolean;
   R5_PROFITABLE_RESTORE: boolean;
-  ENTRY_BPS: 45 | 50;
+  R6_ANCHOR_CROSS: boolean;
+  R7_SINGLE_ENTRY: boolean;
+  ENTRY_BPS: number;
   SINGLE_EDGE_BPS: number;
 }>;
 export const PARAMS: Params = Object.freeze({
   R1_BUNDLE_PRIORITY: true, R2_BALANCE_FLOOR: true, R3_ENTRY_ONLY: true,
   R4_COMPETITOR_BID: true, R5_PROFITABLE_RESTORE: true,
-  ENTRY_BPS: 50, SINGLE_EDGE_BPS: 100,
+  R6_ANCHOR_CROSS: true, R7_SINGLE_ENTRY: true,
+  ENTRY_BPS: 60, SINGLE_EDGE_BPS: 100,
+});
+// Historical diagnostic profile. All factors are baked, never read from environment.
+export const DEV2_PARAMS: Params = Object.freeze({ ...PARAMS,
+  R6_ANCHOR_CROSS: false, R7_SINGLE_ENTRY: false, ENTRY_BPS: 50,
 });
 export type Action = Record<string, any>;
 const W = 10n ** 18n;
@@ -149,17 +156,22 @@ export function enumerateCandidates(obs: AgentObservation, p: Params = PARAMS,
         if (cooling.has(m.base) && !(endgame && restoring)) continue;
         const rawEdge = buy ? m.fair / v.mid - 1 - v.cost : v.mid / m.fair - 1 - v.cost;
         if (!entryAllowed(rawEdge, p)) continue;
-        if (p.R1_BUNDLE_PRIORITY && !restoring && rawEdge * 10000 <= p.SINGLE_EDGE_BPS) continue;
+        if (p.R1_BUNDLE_PRIORITY && !p.R7_SINGLE_ENTRY && !restoring && rawEdge * 10000 <= p.SINGLE_EDGE_BPS) continue;
         const edge = economicEdge(rawEdge, p), slope = 1 / v.depth;
-        // A restoration candidate stops at the anchor, instead of crossing it into new risk.
-        const room = Math.max(0, restoring ? Math.abs(held - initial) : buy ? upper - held : held - lower);
+        // The anchor is not a hard barrier during ordinary profitable trading.
+        // Crossing it is NEW risk and must pass that gate; endgame never crosses.
+        // Keep the same independent-leg band even when the anchor residue is dust.
+        const crossAnchor = p.R6_ANCHOR_CROSS && !endgame &&
+          (p.R7_SINGLE_ENTRY || rawEdge * 10000 > p.SINGLE_EDGE_BPS);
+        const room = Math.max(0, restoring && !crossAnchor ? Math.abs(held - initial) : buy ? upper - held : held - lower);
         const usd = Math.min(sizeUsd(edge, slope, buy ? cash : held * v.mid, cap, p.R2_BALANCE_FLOOR),
           room * v.mid / (buy ? 1.008 : 1), cap * Math.min(1, v.mid / m.fair));
         if (!(usd >= 50)) continue;
         const amount = units(buy ? usd : usd / v.mid, buy ? 6 : m.decimals);
         const actualUsd = Number(amount) / 10 ** (buy ? 6 : m.decimals) * (buy ? 1 : v.mid);
         out.push({ action: swap(m, v, buy ? "USDC" : m.base, amount), base: m.base,
-          usd: actualUsd, edge, slope, restoring, profit: profitUsd(actualUsd, edge, slope, 1), gas: 200_000 });
+          usd: actualUsd, edge, slope, restoring: restoring && !crossAnchor,
+          profit: profitUsd(actualUsd, edge, slope, 1), gas: 200_000 });
       }
     }
     if (endgame || (!p.R1_BUNDLE_PRIORITY && cooling.has(m.base))) continue;
@@ -270,11 +282,11 @@ export function selectCandidate(obs: AgentObservation, all: readonly Candidate[]
 
 function validateParams(p: Params): void {
   for (const key of ["R1_BUNDLE_PRIORITY", "R2_BALANCE_FLOOR", "R3_ENTRY_ONLY",
-    "R4_COMPETITOR_BID", "R5_PROFITABLE_RESTORE"] as const) {
+    "R4_COMPETITOR_BID", "R5_PROFITABLE_RESTORE", "R6_ANCHOR_CROSS", "R7_SINGLE_ENTRY"] as const) {
     if (typeof p[key] !== "boolean") throw new TypeError(`${key} must be boolean`);
   }
-  if (p.ENTRY_BPS !== 45 && p.ENTRY_BPS !== 50)
-    throw new RangeError("ENTRY_BPS must be 45 or 50");
+  if (!Number.isFinite(p.ENTRY_BPS) || p.ENTRY_BPS < 20 || p.ENTRY_BPS > 60 || p.ENTRY_BPS % 5 !== 0)
+    throw new RangeError("ENTRY_BPS must be 20 to 60 in 5bps steps");
   if (!Number.isFinite(p.SINGLE_EDGE_BPS) || p.SINGLE_EDGE_BPS < 0)
     throw new RangeError("SINGLE_EDGE_BPS must be finite and nonnegative");
 }

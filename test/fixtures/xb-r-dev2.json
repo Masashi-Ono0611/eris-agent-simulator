@@ -1,0 +1,573 @@
+{
+  "kind": "dev2 log-derived reconstruction; NOT captured runtime observations",
+  "baselineCommit": "2ae0d59",
+  "limitations": [
+    "market.json rounded post-run quotes, not original runtime snapshot",
+    "Uniswap active liquidity absent: use existing 300000 USD fallback, never treat total pool depth as active depth",
+    "Balances replay receipt baseUnits * priceUsd cash flows from endowment; startup/unlogged approval gas not included",
+    "Spot destinations projected from CSV method and receipt base; raw tx.to unavailable",
+    "Frozen observed wallet and cooldown; counterfactual actions are not chained and estimated net is not realized P"
+  ],
+  "sources": [
+    {
+      "regime": "calm",
+      "seed": "31001",
+      "run": "runs/2026-10-04T05-57-17-581Z",
+      "elapsedMs": 721621,
+      "attempts": 29,
+      "loggedNoops": 333,
+      "frames": 361,
+      "agreement": 343,
+      "factors": {
+        "single50": 30,
+        "single60": 20,
+        "combined60": 92,
+        "entry20": 6,
+        "anchor": 36,
+        "band40": 30
+      },
+      "sha256": {
+        "market.json": "1c046aa59ad570a8f852941b71f2277f11078c643031729d0435f9f42fb5671a",
+        "blocks.csv": "aac4510707510bf9e9d70614d7ab784064c7ac3fd96b5c4e59c365e7a06e0427",
+        "agents/cand.jsonl": "50a396b6dfb891391ee5659deb999f6b1634630fc5571891ad805879b0ec7fa9",
+        "agents/multi-arb.jsonl": "e3eaa80fa39f486a2051047e5c7f6404e0bbe8aff89488fed2796c16d7851040",
+        "agents/clean-arb.jsonl": "1c8907d32ed718c60ab3942fe5c1ebe3e506c1a646d30bad1fe84c38065f3dc2"
+      }
+    },
+    {
+      "regime": "cex-drift",
+      "seed": "31001",
+      "run": "runs/2026-10-04T05-57-23-591Z",
+      "elapsedMs": 721555,
+      "attempts": 26,
+      "loggedNoops": 335,
+      "frames": 360,
+      "agreement": 342,
+      "factors": {
+        "single50": 25,
+        "single60": 20,
+        "combined60": 77,
+        "entry20": 7,
+        "anchor": 24,
+        "band40": 30
+      },
+      "sha256": {
+        "market.json": "2fb016b60584d0bbaa0e9a077909ad4d06a1b025a357f2360336db9834220c9a",
+        "blocks.csv": "f402014623a5b658d0df105987a9dd9c46fe298e51eb6f7a7480de0c7e85520f",
+        "agents/cand.jsonl": "c712d58ec4f3d4ee113bae355dac6506defe7a15a12a94c3d4636bbf3d574856",
+        "agents/multi-arb.jsonl": "22983b79e7973d3a64005422b364d8332ff3f18f325d6cbda3d55dc9e9ae015b",
+        "agents/clean-arb.jsonl": "0f8adcd63303b8506970b907da72d9063dc54a8a22d068e3daf19f2c1f66fa16"
+      }
+    }
+  ],
+  "frames": [
+    {
+      "regime": "calm",
+      "seed": "31001",
+      "source": "runs/2026-10-04T05-57-17-581Z",
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T05-57-17-581Z",
+        "round": 1393,
+        "blockNumber": "1393",
+        "blocksRemaining": 253,
+        "agentAddress": "0x1c71a3ec70bd251a3ee4d390574e03EcA56dABde",
+        "fairPriceUsdcPerWeth": 2955.195611,
+        "fairPricesUsd": {
+          "WETH": 2955.195611,
+          "WBTC": 59578.997378
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WBTC": "40041211"
+        },
+        "balances": {
+          "ethWei": "999789129414000000",
+          "wethWei": "8006619362222004224",
+          "usdcUnits": "24986009785"
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve"
+        ],
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000"
+        },
+        "protocols": {
+          "uniswap": {
+            "pool": {
+              "pair": "WETH/USDC",
+              "priceUsdcPerWeth": 2993.603821,
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            },
+            "markets": {
+              "WBTC/USDC": {
+                "pair": "WBTC/USDC",
+                "priceUsdcPerWeth": 59838.852683,
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "positions": []
+          },
+          "balancer": {
+            "priceUsdcPerWeth": 2987.087507,
+            "buyPriceUsdcPerWeth": 2996.373321,
+            "sellPriceUsdcPerWeth": 2977.83047,
+            "effectiveHalfSpreadBps": 31.086514636657903,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59382.611384,
+                "buyPriceUsdcPerWeth": 59679.147802,
+                "sellPriceUsdcPerWeth": 59087.54841,
+                "effectiveHalfSpreadBps": 49.936574157340985
+              }
+            }
+          },
+          "curve": {
+            "priceUsdcPerWeth": 3001.987708,
+            "buyPriceUsdcPerWeth": 3010.425184,
+            "sellPriceUsdcPerWeth": 2993.57388,
+            "effectiveHalfSpreadBps": 28.10629788866814,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59905.237478,
+                "buyPriceUsdcPerWeth": 60103.406557,
+                "sellPriceUsdcPerWeth": 59707.72179,
+                "effectiveHalfSpreadBps": 33.08042618628937
+              }
+            }
+          }
+        }
+      },
+      "cooling": [],
+      "bids": [
+        [
+          "0xe592427a0aece92de3edee1f18e0157c05861564",
+          "177000000"
+        ],
+        [
+          "0xba12222222228d8ba445958a75a0704d566bf2c8",
+          "179000000"
+        ],
+        [
+          "0x960ea3e3c7fb317332d990873d354e18d7645590",
+          "151000000"
+        ]
+      ],
+      "referenceTrades": [
+        {
+          "agent": "multi-arb",
+          "protocol": "curve",
+          "side": "sell",
+          "actionType": "curveSwap",
+          "receiptBlock": 1394
+        }
+      ],
+      "candDecision": {
+        "ts": "2026-10-04T06:01:01.106Z",
+        "agentId": "cand",
+        "round": 1393,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "name": "anchor_sell"
+    },
+    {
+      "regime": "cex-drift",
+      "seed": "31001",
+      "source": "runs/2026-10-04T05-57-23-591Z",
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T05-57-23-591Z",
+        "round": 1380,
+        "blockNumber": "1380",
+        "blocksRemaining": 266,
+        "agentAddress": "0x1c71a3ec70bd251a3ee4d390574e03EcA56dABde",
+        "fairPriceUsdcPerWeth": 3044.719962,
+        "fairPricesUsd": {
+          "WETH": 3044.719962,
+          "WBTC": 59920.90277
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WBTC": "40068934"
+        },
+        "balances": {
+          "ethWei": "999838609986999936",
+          "wethWei": "7986874857689680896",
+          "usdcUnits": "25048727419"
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve"
+        ],
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000"
+        },
+        "protocols": {
+          "uniswap": {
+            "pool": {
+              "pair": "WETH/USDC",
+              "priceUsdcPerWeth": 3009.404725,
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            },
+            "markets": {
+              "WBTC/USDC": {
+                "pair": "WBTC/USDC",
+                "priceUsdcPerWeth": 59938.727412,
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "positions": []
+          },
+          "balancer": {
+            "priceUsdcPerWeth": 3002.244149,
+            "buyPriceUsdcPerWeth": 3011.577845,
+            "sellPriceUsdcPerWeth": 2992.93938,
+            "effectiveHalfSpreadBps": 31.089064931641985,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59807.175731,
+                "buyPriceUsdcPerWeth": 60106.257236,
+                "sellPriceUsdcPerWeth": 59509.58242,
+                "effectiveHalfSpreadBps": 50.0076288733764
+              }
+            }
+          },
+          "curve": {
+            "priceUsdcPerWeth": 2996.667484,
+            "buyPriceUsdcPerWeth": 3005.098069,
+            "sellPriceUsdcPerWeth": 2988.26055,
+            "effectiveHalfSpreadBps": 28.13320211188186,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59665.090233,
+                "buyPriceUsdcPerWeth": 59929.27444,
+                "sellPriceUsdcPerWeth": 59402.07062,
+                "effectiveHalfSpreadBps": 44.277852618968
+              }
+            }
+          }
+        }
+      },
+      "cooling": [],
+      "bids": [
+        [
+          "0x960ea3e3c7fb317332d990873d354e18d7645590",
+          "191000000"
+        ],
+        [
+          "0xba12222222228d8ba445958a75a0704d566bf2c8",
+          "190000000"
+        ],
+        [
+          "0xe592427a0aece92de3edee1f18e0157c05861564",
+          "155000000"
+        ]
+      ],
+      "referenceTrades": [
+        {
+          "agent": "multi-arb",
+          "protocol": "curve",
+          "side": "buy",
+          "actionType": "curveSwap",
+          "receiptBlock": 1381
+        }
+      ],
+      "candDecision": {
+        "ts": "2026-10-04T06:00:41.984Z",
+        "agentId": "cand",
+        "round": 1380,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "name": "anchor_buy"
+    },
+    {
+      "regime": "calm",
+      "seed": "31001",
+      "source": "runs/2026-10-04T05-57-17-581Z",
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T05-57-17-581Z",
+        "round": 1315,
+        "blockNumber": "1315",
+        "blocksRemaining": 331,
+        "agentAddress": "0x1c71a3ec70bd251a3ee4d390574e03EcA56dABde",
+        "fairPriceUsdcPerWeth": 2971.445409,
+        "fairPricesUsd": {
+          "WETH": 2971.445409,
+          "WBTC": 59775.080347
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WBTC": "40041211"
+        },
+        "balances": {
+          "ethWei": "999941371840000000",
+          "wethWei": "8000000000000000000",
+          "usdcUnits": "24996273815"
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve"
+        ],
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000"
+        },
+        "protocols": {
+          "uniswap": {
+            "pool": {
+              "pair": "WETH/USDC",
+              "priceUsdcPerWeth": 2999.979295,
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            },
+            "markets": {
+              "WBTC/USDC": {
+                "pair": "WBTC/USDC",
+                "priceUsdcPerWeth": 59906.118425,
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "positions": []
+          },
+          "balancer": {
+            "priceUsdcPerWeth": 2983.597379,
+            "buyPriceUsdcPerWeth": 2992.872191,
+            "sellPriceUsdcPerWeth": 2974.35131,
+            "effectiveHalfSpreadBps": 31.086002860614137,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59952.875575,
+                "buyPriceUsdcPerWeth": 60252.83479,
+                "sellPriceUsdcPerWeth": 59654.40966,
+                "effectiveHalfSpreadBps": 50.0324983401379
+              }
+            }
+          },
+          "curve": {
+            "priceUsdcPerWeth": 3000.853453,
+            "buyPriceUsdcPerWeth": 3008.852934,
+            "sellPriceUsdcPerWeth": 2992.87524,
+            "effectiveHalfSpreadBps": 26.65735274003822,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59949.848676,
+                "buyPriceUsdcPerWeth": 60132.262976,
+                "sellPriceUsdcPerWeth": 59767.98774,
+                "effectiveHalfSpreadBps": 30.427816514564388
+              }
+            }
+          }
+        }
+      },
+      "cooling": [],
+      "bids": [
+        [
+          "0xe592427a0aece92de3edee1f18e0157c05861564",
+          "199000000"
+        ],
+        [
+          "0xba12222222228d8ba445958a75a0704d566bf2c8",
+          "185000000"
+        ],
+        [
+          "0x960ea3e3c7fb317332d990873d354e18d7645590",
+          "172000000"
+        ]
+      ],
+      "referenceTrades": [
+        {
+          "agent": "multi-arb",
+          "protocol": "curve",
+          "side": "sell",
+          "actionType": "curveSwap",
+          "receiptBlock": 1316
+        }
+      ],
+      "candDecision": {
+        "ts": "2026-10-04T05:58:25.201Z",
+        "agentId": "cand",
+        "round": 1315,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "name": "single_sell"
+    },
+    {
+      "regime": "calm",
+      "seed": "31001",
+      "source": "runs/2026-10-04T05-57-17-581Z",
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T05-57-17-581Z",
+        "round": 1493,
+        "blockNumber": "1493",
+        "blocksRemaining": 153,
+        "agentAddress": "0x1c71a3ec70bd251a3ee4d390574e03EcA56dABde",
+        "fairPriceUsdcPerWeth": 2980.399014,
+        "fairPricesUsd": {
+          "WETH": 2980.399014,
+          "WBTC": 60187.889935
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WBTC": "40096622"
+        },
+        "balances": {
+          "ethWei": "999614475466000000",
+          "wethWei": "8019721872968212480",
+          "usdcUnits": "24974721253"
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve"
+        ],
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000"
+        },
+        "protocols": {
+          "uniswap": {
+            "pool": {
+              "pair": "WETH/USDC",
+              "priceUsdcPerWeth": 2947.292806,
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            },
+            "markets": {
+              "WBTC/USDC": {
+                "pair": "WBTC/USDC",
+                "priceUsdcPerWeth": 60434.864016,
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "positions": []
+          },
+          "balancer": {
+            "priceUsdcPerWeth": 2951.6438,
+            "buyPriceUsdcPerWeth": 2960.817664,
+            "sellPriceUsdcPerWeth": 2942.49836,
+            "effectiveHalfSpreadBps": 31.080526230113925,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 60117.974702,
+                "buyPriceUsdcPerWeth": 60418.912512,
+                "sellPriceUsdcPerWeth": 59818.53582,
+                "effectiveHalfSpreadBps": 50.05787556979557
+              }
+            }
+          },
+          "curve": {
+            "priceUsdcPerWeth": 2949.51531,
+            "buyPriceUsdcPerWeth": 2960.720165,
+            "sellPriceUsdcPerWeth": 2938.35286,
+            "effectiveHalfSpreadBps": 37.98880062159782,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59992.650555,
+                "buyPriceUsdcPerWeth": 60157.690972,
+                "sellPriceUsdcPerWeth": 59828.06292,
+                "effectiveHalfSpreadBps": 27.510105927488482
+              }
+            }
+          }
+        }
+      },
+      "cooling": [],
+      "bids": [
+        [
+          "0xe592427a0aece92de3edee1f18e0157c05861564",
+          "197000000"
+        ],
+        [
+          "0xba12222222228d8ba445958a75a0704d566bf2c8",
+          "176000000"
+        ],
+        [
+          "0x960ea3e3c7fb317332d990873d354e18d7645590",
+          "154000000"
+        ]
+      ],
+      "referenceTrades": [
+        {
+          "agent": "multi-arb",
+          "protocol": "uniswap",
+          "side": "buy",
+          "actionType": "swap",
+          "receiptBlock": 1494
+        }
+      ],
+      "candDecision": {
+        "ts": "2026-10-04T06:04:21.247Z",
+        "agentId": "cand",
+        "round": 1493,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "name": "single_buy"
+    }
+  ]
+}

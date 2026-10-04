@@ -34,12 +34,18 @@ const controls = [
   ["S5-validation-off", "S5 createAgent rejects invalid Params", "validateParams(p);", "// validateParams(p);"],
   ["S5-negative-edge", "S5 createAgent rejects invalid Params", "p.SINGLE_EDGE_BPS < 0", "false"],
   ["S5-nonfinite-edge", "S5 createAgent rejects invalid Params", "!Number.isFinite(p.SINGLE_EDGE_BPS)", "false"],
+  ["DEV2-anchor-off", "DEV2 R6 anchor", "const crossAnchor = p.R6_ANCHOR_CROSS", "const crossAnchor = false"],
+  ["DEV2-duplicate-single-gate", "DEV2 R7 single", "&& !p.R7_SINGLE_ENTRY && !restoring", "&& !restoring"],
+  ["DEV2-endgame-cross", "DEV2 endgame cannot", "p.R6_ANCHOR_CROSS && !endgame &&", "p.R6_ANCHOR_CROSS &&"],
+  ["DEV2-cross-without-entry", "DEV2 crossing with R7 off", "(p.R7_SINGLE_ENTRY || rawEdge * 10000 > p.SINGLE_EDGE_BPS)", "true"],
+  ["DEV2-entry-step", "DEV2 entry admits only", " || p.ENTRY_BPS % 5 !== 0", ""],
 ];
 const records = [];
 function run(label, pattern) {
   const args = ["--import", "tsx", "--test", "--test-reporter=tap"];
   if (pattern) args.push(`--test-name-pattern=${pattern}`);
-  args.push(...(pattern ? ["test/xb-r.test.ts"] : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts"]));
+  args.push(...(pattern ? [pattern.startsWith("DEV2") ? "test/xb-r-dev2.test.ts" : "test/xb-r.test.ts"]
+    : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts", "test/xb-r-dev2.test.ts"]));
   const result = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8", timeout: 60000 });
   const log = (result.stdout ?? "") + (result.stderr ?? "");
   writeFileSync(join(evidence, `${label}.log`), log);
@@ -64,6 +70,9 @@ try {
   const previous = spawnSync("git", ["show", "a042a70:example/agents/xb-r/agent.ts"], { cwd: root, encoding: "utf8" });
   assert.equal(previous.status, 0, "load the exact diagnosed source without changing git state");
   expectRed("LIVE-original-a042a70", "LIVE replay block", previous.stdout);
+  const dev2 = spawnSync("git", ["show", "2ae0d59:example/agents/xb-r/agent.ts"], { cwd: root, encoding: "utf8" });
+  assert.equal(dev2.status, 0, "load the dev2 source without changing git state");
+  expectRed("DEV2-original-2ae0d59", "DEV2 R[67]", dev2.stdout);
   for (const [label, pattern, from, to] of controls) {
     assert.equal(original.split(from).length, 2, `${label}: unique mutation anchor`);
     expectRed(label, pattern, original.replace(from, to));

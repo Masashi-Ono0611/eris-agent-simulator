@@ -1,0 +1,532 @@
+{
+  "worlds": [
+    {
+      "regime": "calm",
+      "seed": "31001",
+      "run": "runs/2026-10-04T05-57-17-581Z",
+      "elapsedMs": 721621,
+      "attempts": 29,
+      "loggedNoops": 333,
+      "frames": 361,
+      "agreement": 343,
+      "factors": {
+        "single50": 30,
+        "bidBudget": 44,
+        "single60": 20,
+        "combined60": 92,
+        "entry20": 6,
+        "anchor": 36,
+        "band40": 30
+      },
+      "sha256": {
+        "market.json": "1c046aa59ad570a8f852941b71f2277f11078c643031729d0435f9f42fb5671a",
+        "blocks.csv": "aac4510707510bf9e9d70614d7ab784064c7ac3fd96b5c4e59c365e7a06e0427",
+        "agents/cand.jsonl": "50a396b6dfb891391ee5659deb999f6b1634630fc5571891ad805879b0ec7fa9",
+        "agents/multi-arb.jsonl": "e3eaa80fa39f486a2051047e5c7f6404e0bbe8aff89488fed2796c16d7851040",
+        "agents/clean-arb.jsonl": "1c8907d32ed718c60ab3942fe5c1ebe3e506c1a646d30bad1fe84c38065f3dc2"
+      }
+    },
+    {
+      "regime": "calm",
+      "seed": "31002",
+      "run": "runs/2026-10-04T05-57-20-552Z",
+      "elapsedMs": 721874,
+      "attempts": 42,
+      "loggedNoops": 320,
+      "frames": 361,
+      "agreement": 338,
+      "factors": {
+        "single50": 41,
+        "single60": 28,
+        "combined60": 63,
+        "bidBudget": 64,
+        "band40": 58,
+        "anchor": 18,
+        "entry20": 6
+      },
+      "sha256": {
+        "market.json": "505758639c591dd08dc5a498a3f726f1f735c73dba62f8ed89260649c4034dd8",
+        "blocks.csv": "1caed18e04b15fa07493b877a4819fcd9f010965245be796698f3c312be0dfdc",
+        "agents/cand.jsonl": "62364ade0a2fa6a9821c178ebfe5d4848764abe8f498a55df1e16fbe8eed0894",
+        "agents/multi-arb.jsonl": "f334a50179c673d5f37da1b6e443e3febd512071b93289abccfd287b6bf847e4",
+        "agents/clean-arb.jsonl": "421314ff71a952c737bac5e78e890f2af0d7a8a358007a6500d54a0ab553f980"
+      }
+    },
+    {
+      "regime": "cex-drift",
+      "seed": "31001",
+      "run": "runs/2026-10-04T05-57-23-591Z",
+      "elapsedMs": 721555,
+      "attempts": 26,
+      "loggedNoops": 335,
+      "frames": 360,
+      "agreement": 342,
+      "factors": {
+        "single50": 25,
+        "single60": 20,
+        "combined60": 77,
+        "bidBudget": 14,
+        "entry20": 7,
+        "anchor": 24,
+        "band40": 30
+      },
+      "sha256": {
+        "market.json": "2fb016b60584d0bbaa0e9a077909ad4d06a1b025a357f2360336db9834220c9a",
+        "blocks.csv": "f402014623a5b658d0df105987a9dd9c46fe298e51eb6f7a7480de0c7e85520f",
+        "agents/cand.jsonl": "c712d58ec4f3d4ee113bae355dac6506defe7a15a12a94c3d4636bbf3d574856",
+        "agents/multi-arb.jsonl": "22983b79e7973d3a64005422b364d8332ff3f18f325d6cbda3d55dc9e9ae015b",
+        "agents/clean-arb.jsonl": "0f8adcd63303b8506970b907da72d9063dc54a8a22d068e3daf19f2c1f66fa16"
+      }
+    },
+    {
+      "regime": "cex-drift",
+      "seed": "31002",
+      "run": "runs/2026-10-04T06-09-47-890Z",
+      "elapsedMs": 721978,
+      "attempts": 26,
+      "loggedNoops": 336,
+      "frames": 361,
+      "agreement": 343,
+      "factors": {
+        "single50": 7,
+        "single60": 6,
+        "combined60": 116,
+        "bidBudget": 39,
+        "band40": 113,
+        "entry20": 1,
+        "anchor": 82
+      },
+      "sha256": {
+        "market.json": "16ccfaac58733a7f3b02edeff36b2a62515033df6bb14cd2edc4b5f4b5cb2f71",
+        "blocks.csv": "581eba859a8e07fa971c1959310c90c00e162d84ce70d1bf84086794368819ba",
+        "agents/cand.jsonl": "88d0b37567f74f94b5779b2bbee509510d4ddf6d18b47be86b26e2d46514ed2c",
+        "agents/multi-arb.jsonl": "5f52eae46b42969d56627c72c477be728728de814f5e7788dcb15370b1002333",
+        "agents/clean-arb.jsonl": "ef87d85cfcc5f2bc31b0482b540ea3041212f4e1cd2449c2e096dc61508e9b2b"
+      }
+    },
+    {
+      "regime": "whale",
+      "seed": "31001",
+      "run": "runs/2026-10-04T06-09-50-558Z",
+      "elapsedMs": 721805,
+      "attempts": 44,
+      "loggedNoops": 318,
+      "frames": 361,
+      "agreement": 333,
+      "factors": {
+        "single50": 33,
+        "single60": 25,
+        "combined60": 45,
+        "band40": 74,
+        "bidBudget": 30,
+        "entry20": 6,
+        "anchor": 5
+      },
+      "sha256": {
+        "market.json": "abe166978c7e93976ce391f74ba30c68586495abcbb9231e6a4d878d00a37dce",
+        "blocks.csv": "f584debdb563a6d4d944e9d1077c14f939ed133989e0253f4fee475b68fcc725",
+        "agents/cand.jsonl": "2c13a2ecfcea5bbc7ca83197e529dcb29f40545cf7dd4b615d1d9533e2052317",
+        "agents/multi-arb.jsonl": "38922f7e6602faeebe3afd57b69d439ffd588cc8c4a428124c971404e369d359",
+        "agents/clean-arb.jsonl": "f0fed585afe9bfe29c44031cd7029ea915116d4ca9aab1bb35c5721782b1f8da"
+      }
+    },
+    {
+      "regime": "whale",
+      "seed": "31002",
+      "run": "runs/2026-10-04T06-09-53-585Z",
+      "elapsedMs": 721894,
+      "attempts": 40,
+      "loggedNoops": 322,
+      "frames": 361,
+      "agreement": 339,
+      "factors": {
+        "single50": 25,
+        "single60": 18,
+        "combined60": 122,
+        "band40": 3,
+        "entry20": 3,
+        "bidBudget": 67,
+        "anchor": 41
+      },
+      "sha256": {
+        "market.json": "9e1bc044ec60fff76ca0fd40554729e1bc8cda2bdd5806edf4adfbb33dd288e8",
+        "blocks.csv": "6e512a905badd807e4bcd35dc9d962426b4ae60c49c52b9335b9c83ccaab7312",
+        "agents/cand.jsonl": "b5a14591f9cd2e04413a901203e17d68513fa4475f49e1d87c046eb119249aa6",
+        "agents/multi-arb.jsonl": "810e804d8b12d7af926210ac4ed1fbe61886459f2f69c7c4e94138b12bdea80f",
+        "agents/clean-arb.jsonl": "611dbc30f7c6889c95eab9f809f9ac34db6ea75ba3b2b9e244cfec251933e146"
+      }
+    },
+    {
+      "regime": "informed-flow",
+      "seed": "31001",
+      "run": "runs/2026-10-04T06-22-18-418Z",
+      "elapsedMs": 721635,
+      "attempts": 41,
+      "loggedNoops": 320,
+      "frames": 360,
+      "agreement": 338,
+      "factors": {
+        "single50": 33,
+        "single60": 22,
+        "combined60": 69,
+        "bidBudget": 29,
+        "band40": 59,
+        "anchor": 26,
+        "entry20": 1
+      },
+      "sha256": {
+        "market.json": "ed52c8eaf7e096166360f0cfa214f591e5529a8d57f626cd5adf8924236bff93",
+        "blocks.csv": "29a8f9753bb163434bbd6df4b0f96831643c491834150e8be2e28ae60694d847",
+        "agents/cand.jsonl": "cf4941ed46d6e2f205fbf04c226d6e9b6be87d245c249c48a3e2906eb84480ad",
+        "agents/multi-arb.jsonl": "84a0c4dd54fa3380ae4ac19d23ae4255e04a7aa8faebc0d27e01061b6757be45",
+        "agents/clean-arb.jsonl": "75bdbd95c0bcfecea9f141027cddd4d1e9e0dac2f06c17ac4c055803ee4c4ee2"
+      }
+    },
+    {
+      "regime": "informed-flow",
+      "seed": "31002",
+      "run": "runs/2026-10-04T06-22-21-214Z",
+      "elapsedMs": 721749,
+      "attempts": 35,
+      "loggedNoops": 327,
+      "frames": 361,
+      "agreement": 340,
+      "factors": {
+        "single50": 30,
+        "single60": 20,
+        "combined60": 87,
+        "bidBudget": 57,
+        "anchor": 28,
+        "entry20": 2,
+        "band40": 6
+      },
+      "sha256": {
+        "market.json": "3ab197cdbda1f925038ffd0db6a5d5eeaa5a91c783697255891e3dab2deeb883",
+        "blocks.csv": "fbcbbb8cbd6c85fd9ff4bc5d052913057dbe842d8f6b860e696a2d9ab9961bd3",
+        "agents/cand.jsonl": "2a148ea18396fe1f0ddcc9f7831ccb88942b5cce5f74446959652da0141aae1f",
+        "agents/multi-arb.jsonl": "b71d158de1de5c74feaab412743914ccc9f79ccffeedbedb6925ea43bcd36e75",
+        "agents/clean-arb.jsonl": "be86721b4a8845dea8dff610d62a65e74a94328e487788abeab77915b4145219"
+      }
+    },
+    {
+      "regime": "spike",
+      "seed": "31001",
+      "run": "runs/2026-10-04T06-22-24-254Z",
+      "elapsedMs": 721783,
+      "attempts": 24,
+      "loggedNoops": 338,
+      "frames": 361,
+      "agreement": 348,
+      "factors": {
+        "single50": 58,
+        "single60": 44,
+        "combined60": 58,
+        "bidBudget": 27,
+        "anchor": 3,
+        "band40": 30,
+        "entry20": 3
+      },
+      "sha256": {
+        "market.json": "9412a36193169b35fce039482b6cbeb4cce410541b9da041a68dcea833422f1e",
+        "blocks.csv": "0aead7d6f6d5b1a06c9add18da4664fa9256dca2dbd0a027145b3c666474cbc7",
+        "agents/cand.jsonl": "96afa9e81bc33d8f9368f7bc72cdda5399aa339271ab077e6f2fb10a109606a3",
+        "agents/multi-arb.jsonl": "c36ad61932823f5049c9477f236e5d4dde50b8e383685a2565a7df0b5e6ab0d3",
+        "agents/clean-arb.jsonl": "942cfab26a91492554d20a47d7c635db32946afb4707aa3002af7fbfaccf7da8"
+      }
+    },
+    {
+      "regime": "spike",
+      "seed": "31002",
+      "run": "runs/2026-10-04T06-34-48-667Z",
+      "elapsedMs": 722016,
+      "attempts": 26,
+      "loggedNoops": 336,
+      "frames": 361,
+      "agreement": 339,
+      "factors": {
+        "single50": 8,
+        "bidBudget": 46,
+        "single60": 6,
+        "combined60": 21,
+        "band40": 123,
+        "entry20": 5,
+        "anchor": 4
+      },
+      "sha256": {
+        "market.json": "8d776fcbe6ffacd03237e65d4802d68134e0d531b74fcf5e16be09206a6656d8",
+        "blocks.csv": "c7d9ff7ae7c5b2de114780e2e8cc43260e0095409b7c2fcf5c04175a378be63e",
+        "agents/cand.jsonl": "ceb488d08721d5c3a138db8ceb1600baac8d1545428b99e0aa3e864c8f49ceba",
+        "agents/multi-arb.jsonl": "bdd6787410886f840465416969013f94c43a420fc9e44bd1811e371eb88a614d",
+        "agents/clean-arb.jsonl": "2535bd7b4cba314a2b7f07cc061253736bbc06f5b99463bb00b27bc383cc9ff0"
+      }
+    },
+    {
+      "regime": "depeg-persist",
+      "seed": "31001",
+      "run": "runs/2026-10-04T06-34-51-455Z",
+      "elapsedMs": 721554,
+      "attempts": 42,
+      "loggedNoops": 319,
+      "frames": 360,
+      "agreement": 338,
+      "factors": {
+        "single50": 36,
+        "single60": 29,
+        "combined60": 48,
+        "band40": 25,
+        "bidBudget": 20,
+        "entry20": 9,
+        "anchor": 12
+      },
+      "sha256": {
+        "market.json": "5b8b6a6646ae3f71aa7bb69073f5f66d1af150108455052c7aecb7ca6ec867a2",
+        "blocks.csv": "e12279ad06d36d15b8779588a89619408f0bf4996861c15ead0066f4fd2738d8",
+        "agents/cand.jsonl": "d55587cd52a819e9a21bd6c624ea6fc7c8d8933786b890bdc54db044132d7823",
+        "agents/multi-arb.jsonl": "81eaaf0a6a055ec41a88f9945320c49c605e86b263aa938db005f7c1f6a1cc0f",
+        "agents/clean-arb.jsonl": "a8c80c3b3b880e7cf2a3da41a050305630cf407c60f80e0aeec7a1f45dd80523"
+      }
+    },
+    {
+      "regime": "depeg-persist",
+      "seed": "31002",
+      "run": "runs/2026-10-04T06-34-54-489Z",
+      "elapsedMs": 721660,
+      "attempts": 33,
+      "loggedNoops": 329,
+      "frames": 361,
+      "agreement": 343,
+      "factors": {
+        "bidBudget": 36,
+        "single50": 48,
+        "single60": 27,
+        "combined60": 39,
+        "band40": 22,
+        "entry20": 8,
+        "anchor": 11
+      },
+      "sha256": {
+        "market.json": "a547362cc96f57c3cf073304fb6455281aefaf02a505c4cd71caf202013801db",
+        "blocks.csv": "2359b41bae79c15d420b75ad5ee7e8289090d73ee597238cc711f00e7e2dcf50",
+        "agents/cand.jsonl": "90ad49fcc67e11511be79c409bd0e9a7492473c3d6dee9293a1c2513424fbecd",
+        "agents/multi-arb.jsonl": "2d91190a767c67616cbdd81ae3d85c23e48d910aca6d611834361792bc0dca27",
+        "agents/clean-arb.jsonl": "f48c7686867c76a81a5aac7004bedbedca67a13d5814d34a70be9955f30cea16"
+      }
+    }
+  ],
+  "reasons": {
+    "no funded positive net edge at an affordable bid": 3924,
+    "valuation boundary or unknown horizon": 9
+  },
+  "failures": {
+    "Execution reverted with reason: Too little received.": 14,
+    "Execution reverted with reason: BAL#507.": 4,
+    "Execution reverted with reason: Slippage.": 5
+  },
+  "gates": {
+    "no_edge": 80362,
+    "entry_positive": 13577,
+    "single_edge": 2671,
+    "bid": 842,
+    "cooldown": 972,
+    "anchor_dust": 1846,
+    "eligible": 549,
+    "inventory_band": 1997,
+    "endgame_new_risk": 288,
+    "endgame_bundle": 96,
+    "horizon": 9
+  },
+  "matchedGates": {
+    "entry_positive": 7994,
+    "no_edge": 45768,
+    "single_edge": 2350,
+    "cooldown": 660,
+    "bid": 478,
+    "anchor_dust": 1675,
+    "eligible": 120,
+    "inventory_band": 1831,
+    "endgame_new_risk": 180,
+    "endgame_bundle": 60
+  },
+  "matchedRouteGates": {
+    "cooldown": 85,
+    "entry_positive": 527,
+    "no_edge": 1508,
+    "bid": 100,
+    "anchor_dust": 282,
+    "single_edge": 320,
+    "inventory_band": 361,
+    "endgame_new_risk": 9
+  },
+  "matchedGateBlocks": {
+    "entry_positive": 2463,
+    "no_edge": 2559,
+    "single_edge": 1437,
+    "cooldown": 110,
+    "bid": 317,
+    "anchor_dust": 917,
+    "eligible": 73,
+    "inventory_band": 816,
+    "endgame_new_risk": 30,
+    "endgame_bundle": 30
+  },
+  "factors": {
+    "baseline": {
+      "trades": 311,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 6727.237410115189,
+      "addedNet": 0,
+      "usd": 483180.73165340716
+    },
+    "entry20": {
+      "trades": 368,
+      "added": 57,
+      "addedOnLoggedNoop": 53,
+      "addedOnMatchedNoop": 27,
+      "modelNet": 6797.588230663898,
+      "addedNet": 70.35082054870841,
+      "usd": 519649.1287925496
+    },
+    "single50": {
+      "trades": 685,
+      "added": 374,
+      "addedOnLoggedNoop": 363,
+      "addedOnMatchedNoop": 361,
+      "modelNet": 8093.059388276714,
+      "addedNet": 1365.8219781615255,
+      "usd": 875159.2754414866
+    },
+    "min10": {
+      "trades": 311,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 6727.237410115189,
+      "addedNet": 0,
+      "usd": 483180.73165340716
+    },
+    "anchor": {
+      "trades": 601,
+      "added": 290,
+      "addedOnLoggedNoop": 271,
+      "addedOnMatchedNoop": 270,
+      "modelNet": 13355.033023018039,
+      "addedNet": 5418.3993461485625,
+      "usd": 1174656.046812192
+    },
+    "band40": {
+      "trades": 884,
+      "added": 573,
+      "addedOnLoggedNoop": 542,
+      "addedOnMatchedNoop": 532,
+      "modelNet": 21591.076290656747,
+      "addedNet": 15304.248495174785,
+      "usd": 1922501.6566451236
+    },
+    "sizeMax": {
+      "trades": 311,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 6727.237410115189,
+      "addedNet": 0,
+      "usd": 483180.73165340716
+    },
+    "profit01": {
+      "trades": 311,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 6727.237410115189,
+      "addedNet": 0,
+      "usd": 483180.73165340716
+    },
+    "cooldown0": {
+      "trades": 311,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 6727.237410115189,
+      "addedNet": 0,
+      "usd": 483180.73165340716
+    },
+    "bidBudget": {
+      "trades": 784,
+      "added": 473,
+      "addedOnLoggedNoop": 302,
+      "addedOnMatchedNoop": 300,
+      "modelNet": 6296.184283062773,
+      "addedNet": 964.6229887186136,
+      "usd": 657794.0368690578
+    },
+    "cap16": {
+      "trades": 311,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 6727.237410115189,
+      "addedNet": 0,
+      "usd": 483180.73165340716
+    },
+    "entry60": {
+      "trades": 286,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 6676.457220087433,
+      "addedNet": 0,
+      "usd": 463161.5794780768
+    },
+    "single60": {
+      "trades": 551,
+      "added": 265,
+      "addedOnLoggedNoop": 258,
+      "addedOnMatchedNoop": 256,
+      "modelNet": 7811.864074362024,
+      "addedNet": 1135.4068542745897,
+      "usd": 765146.6405452037
+    },
+    "combined60": {
+      "trades": 1123,
+      "added": 837,
+      "addedOnLoggedNoop": 799,
+      "addedOnMatchedNoop": 794,
+      "modelNet": 15749.814458238823,
+      "addedNet": 7840.790073285133,
+      "usd": 1796996.345760223
+    }
+  },
+  "coverage": {
+    "loggedNoopFrames": 3921,
+    "noopWithReferenceSuccess": 2559,
+    "noopWith_multi-arb": 2557,
+    "attemptFrames": 408,
+    "noopWith_clean-arb": 251
+  },
+  "confusion": {
+    "noop_noop": 3847,
+    "attempted_noop": 171,
+    "attempted_trade": 237,
+    "noop_trade": 74
+  },
+  "repairedMatches": 4329,
+  "method": {
+    "kind": "frozen-wallet counterfactual reconstruction, not simulator replay",
+    "baselineCommit": "2ae0d59",
+    "repairedSourceSha256": "904f54a99326ffe36ad86d43421c2ffbf9c79670acd821624a5433ec4e9d874c",
+    "entryProfile": {
+      "dev2": 50,
+      "repaired": 60
+    },
+    "qualificationConsumed": false
+  },
+  "seedReservation": {
+    "seeds": [
+      35001,
+      35002
+    ],
+    "status": "reserved, not executed",
+    "audit": "No matches in seed/flowSeed fields, TSV seed columns, CLI seed arguments or filenames under upstream-eval/runs and upstream-eval/ascon-notes/eval/out. league-v2/runs and league-v2/ascon-notes/eval/out do not exist. Recheck before execution."
+  }
+}

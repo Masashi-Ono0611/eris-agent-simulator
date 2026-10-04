@@ -7,12 +7,18 @@ import { loadImproveAgent } from "../example/agents/runtime/improve.js";
 import { bidWei as v0Bid } from "../example/agents/xb-core/agent.js";
 import * as xbR from "../example/agents/xb-r/agent.js";
 import {
-  PARAMS, bidWei, createAgent, decide, economicEdge, entryAllowed, enumerateCandidates,
-  netProfitUsd, profitUsd, reserveCandidate, selectCandidate, sizeUsd, type Params,
+  bidWei, decide, economicEdge, entryAllowed,
+  netProfitUsd, profitUsd, reserveCandidate, sizeUsd, type Params,
 } from "../example/agents/xb-r/agent.js";
+// Retain all 112 historical assertions against the exact dev2 factor profile.
+// Fallback lets the old-source red controls load without missing exports.
+const PARAMS = (xbR as any).DEV2_PARAMS ?? xbR.PARAMS;
+const createAgent = (p: Params = PARAMS, now?: () => number) => xbR.createAgent(p, now);
+const enumerateCandidates = (o: AgentObservation, p: Params = PARAMS, cooling?: ReadonlySet<string>) => xbR.enumerateCandidates(o, p, cooling);
+const selectCandidate = (o: AgentObservation, cs: readonly xbR.Candidate[], p: Params = PARAMS) => xbR.selectCandidate(o, cs, p);
 // Namespace lookup lets the exact a042a70 source run the LIVE replay tests:
 // that version lacks the new live factory, but the regression uses only decide.
-const createLiveAgent = xbR.createLiveAgent;
+const createLiveAgent = (p: Params = PARAMS, now?: () => number) => xbR.createLiveAgent(p, now);
 
 const action = (o: AgentObservation, p: Params = PARAMS) => createAgent(p)(structuredClone(o));
 const liveFixture = JSON.parse(readFileSync(new URL("./fixtures/xb-r-dev1-calm-31001.json", import.meta.url), "utf8"));
