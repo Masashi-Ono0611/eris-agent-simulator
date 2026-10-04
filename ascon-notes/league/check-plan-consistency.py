@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static revision-8 plan/dashboard checks. Never reads run data or network."""
+"""Static revision-9 plan/dashboard checks. Never reads run data or network."""
 
 from datetime import date, timedelta
 from fractions import Fraction
@@ -24,6 +24,130 @@ REDESIGN_LOG_DIGEST = "1129b604c2877fc19e889c77a3c5746d0800d343a3ba2f8a2bacfefe2
 
 
 REV7_LOG_DIGEST = "87777dab1ccb0bdff9aaffebe6fdea449d29b9e5080a86d44f3cdac7ea1997dc"
+
+REV8_LOG_DIGEST = 'd1b2b543ef983117af72a55c52e571fa2e4ef23b5f7e4fb728263d44b795779b'
+REV8_DECISIONS_DIGEST = 'c5cb01cf1f9978e1478cd8e16c9a50dfa16b8173741c6c3c17d1128890c563c8'
+REV8_DECISION_IDS = ['dec-original', 'dec-deep', 'dec-no-contact', 'dec-008', 'dec-007', 'dec-q0-keep', 'dec-astra-update', 'dec-forward', 'dec-amend', 'dec-overnight', 'dec-q0-failure-branch', 'dec-q0b-g0', 'dec-step1-policy', 'dec-ai-scope', 'dec-ai-contract', 'dec-ai-budget', 'dec-revert-limit']
+REV9_EXPECTED = {'h1': {'authority': '本人決定 2026-10-04',
+        'selected': '検査済み方針の選択+ENTRY',
+        'full_executor_allowed': False,
+        'policies': ['v5', 'v5+R11', 'v5+R7厳格化'],
+        'entry_min': 20,
+        'entry_max': 60,
+        'entry_step': 5,
+        'entry_max_delta': 5,
+        'initial_entry': 50,
+        'fallback_entry': 50,
+        'expiry_blocks': 120,
+        'commit': 'a95054a',
+        'tests': 213,
+        'red_controls': 25,
+        'tests_rerun': False,
+        'standard_on': 'refused',
+        'fixed_template_safe': False,
+        'agent_validator_safe': False,
+        'adapter': 'unimplemented',
+        'vendored': 'BLOCK',
+        'production_boundary': 'prompt-guidance-only',
+        'sources': ['src-rev9', 'src-h1-pilot']},
+ 'pilot': {'regimes': ['calm', 'whale', 'crash', 'depeg-persist'],
+           'seeds': [39001, 39002],
+           'off_repeats': 1,
+           'on_repeats': 3,
+           'worlds': 32,
+           'primary': 'claude-cli:haiku',
+           'secondary': 'codex subscription small model',
+           'paid_usage': False,
+           'local_ollama': False,
+           'personal_ollama_key': False,
+           'personal_ollama_quota': False,
+           'on_ready': False,
+           'pre_q0_run_approved': False,
+           'sources': ['src-h1-pilot', 'src-rev9']},
+ 'next_branch': {'if_dev5_insufficient': '第3回にxa-1を診断',
+                 'parallel': 'AI専用adapter/受付の前提整理',
+                 'iteration': 3,
+                 'automatic_launch': False,
+                 'full_executor_decision': '本人判断・未許可',
+                 'sources': ['src-rev9']},
+ 'xa1': {'commit': '7179efe',
+         'candidate': 'A: 時間制限付き単脚往復+lot台帳',
+         'state': 'implemented-unmeasured',
+         'tests': 39,
+         'red_controls': 39,
+         'tests_rerun': False,
+         'smoke_seed': 38003,
+         'seeds': [38001, 38002],
+         'regimes': 12,
+         'worlds': 24,
+         'estimated_minutes': 104,
+         'end_check_extra': True,
+         'result': None,
+         'sources': ['src-rev9']},
+ 'agy_format': {'model': 'GPT-OSS 120B',
+                'reasoning': 'Medium',
+                'quota': '無料枠',
+                'same_model_family_as_production': True,
+                'cases': [{'name': 'sparse', 'calls': 1, 'ok': True, 'output': 'null'},
+                          {'name': 'selection', 'calls': 1, 'ok': True, 'answer_prescribed': True},
+                          {'name': 'injection', 'calls': 1, 'ok': True, 'output': 'null'}],
+                'capability_evaluated': False,
+                'runtime_verified': False,
+                'haiku_verified': False,
+                'performance_verified': False,
+                'sources': ['src-rev9']},
+ 'table': {'id': 'result-h1',
+           'title': 'H1本人決定・実装の成立範囲・形式確認',
+           'header': ['AIパイロット項目', 'rev 9の事実・境界'],
+           'rows': [['本人決定・仮説',
+                     '[本人決定 2026-10-04] '
+                     'AI-PILOT-DESIGNのH1・推奨案「検査済み方針の選択+ENTRY」を選択。全面コード改訂（executorTs自由）は見送り。決定論の改良で大きな改善が見込めないなら、推論ありモードなど大きく改善される仮説へ切替える（本人提案）。'],
+                    ['実装・安全境界',
+                     '[measured・コード確認の引継ぎ] xb-r-ai '
+                     'a95054aはH1を実装、テスト213・赤対照25。標準runtimeはdecide全体（executorTs）を差し替えるため、(a)固定テンプレ限定・(b)エージェント側検証のどちらも安全境界として成立せず、現状はON起動を拒否する。強制には運営側の受付機構/専用adapterが必要。提出物はruntimeを改変できず、scan-submissionのVENDOREDがBLOCKする。本番の改訂は事実上プロンプト誘導に頼り、機械的な安全保証はない。今回コード・テストの再確認はしていない。'],
+                    ['H1の設定',
+                     '3方針（v5標準 / v5+R11 / v5+R7厳格化）とENTRY '
+                     '20–60bps・5bps刻み・最大±5bps。初期・復帰v5/50、更新なし120blockで復帰。旧rev 6のENTRY単独・初期60の署名契約は履歴として不変。'],
+                    ['形式確認',
+                     '[measured引継ぎ] agy GPT-OSS '
+                     '120B（Medium・無料枠・本番と同系統のモデル）の形式確認はsparse/selection/injection各1回、validator '
+                     'ok=true。sparseとinjectionはnullで期待どおり。selectionは答えを指定した形式試験で能力評価ではない。runtime/haiku/性能へ外挿しない。本人Ollama鍵の疎通確認や本番無料枠の検証ではない。'],
+                    ['推論の費用方針',
+                     '[方針] 課金なし。シミュレーション内の改訂はclaude-cli:haikuを第一、既存サブスクのcodex小型モデルを第二候補とする（利用可能なmodel '
+                     'IDは未確認）。ローカルOllamaと本人のOllama鍵・無料枠（本番と共有）は使わない。追加課金・APIへの暗黙fallbackは認めない。'],
+                    ['パイロット仕様・停止条件',
+                     'XB-R-AI-PILOT-2026-10-04.md: '
+                     'calm/whale/crash/depeg-persistの4レジーム×seed39001/39002、OFF1+ON3=32世界・Haiku第一。ON実行には専用adapter接続・検査が必要（未実装）。開始前のseed非交差監査・校正・全残費確認が必要で、32世界をQ0/G3/全12レジーム資格へ外挿しない。Q0前への実走前倒しは未承認。'],
+                    ['本人に残る判断', 'AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）は本人判断・未許可。H1選択は確定済みで、全面改訂の承認へ拡張しない。']],
+           'sources': ['src-rev9', 'src-h1-pilot', 'src-h1-design'],
+           'source_table': {'source': 'src-rev9', 'header_key': 'AIパイロット項目'}},
+ 'human_action': 'AI全面改訂の許可は本人判断・未許可（安全保証なしで本番と同条件で測るか）',
+ 'human_only': {'status': 'AI全面改訂の許可は本人判断・未許可',
+                'items': ['AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）', '10/28 dec-007再確認', '無料枠不足時の前払い判断（G3見積もり後）'],
+                'decision_refs': ['dec-008', 'dec-007', 'dec-h1-authority', 'dec-full-executor'],
+                'sources': ['src-ollama-report', 'src-rev9'],
+                'note': 'AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）は本人判断・未許可。H1選択は確定済みで、全面改訂の承認へ拡張しない。 '
+                        '鍵/登録の再操作は不要。10/28確認と前払い判断の既存境界は維持。'},
+ 'decisions': [{'id': 'dec-h1-authority',
+                'date': '2026-10-04',
+                'due_date': None,
+                'title': '本人決定: H1（検査済み方針の選択+ENTRY）',
+                'status': 'decided',
+                'note': '[本人決定 2026-10-04] '
+                        'AI-PILOT-DESIGNのH1・推奨案「検査済み方針の選択+ENTRY」を選択。全面コード改訂（executorTs自由）は見送り。決定論の改良で大きな改善が見込めないなら、推論ありモードなど大きく改善される仮説へ切替える（本人提案）。 '
+                        'AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）は本人判断・未許可。H1選択は確定済みで、全面改訂の承認へ拡張しない。',
+                'owner': 'human',
+                'group': 'human',
+                'sources': ['src-rev9', 'src-h1-pilot']},
+               {'id': 'dec-full-executor',
+                'date': '2026-10-04',
+                'due_date': None,
+                'title': 'AI全面改訂を許すか',
+                'status': 'open',
+                'note': 'AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）は本人判断・未許可。H1選択は確定済みで、全面改訂の承認へ拡張しない。',
+                'owner': 'human',
+                'group': 'human',
+                'sources': ['src-rev9']}]}
 
 
 def digest(value):
@@ -76,16 +200,17 @@ _RESULT_LINES = [
     "PASS AI: ENTRY_BPS 20-60, max step 5; R* ON3/OFF1 + S full = 216 worlds / 17.2 h; no epoch learning carryover",
     "PASS cutover: Oct 17 evidence gates select H480 / S240 / no campaign; no fresh deep exploration",
     "PASS schedule/review: 28 JST dates, 18 findings, five roadmap steps match dashboard",
-    "PASS preservation: all 68 pre-rev8 logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
+    "PASS preservation: all 73 pre-rev9 logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
     "PASS current: dev4 measured 24-world handoff; dev5 same-seed pending (2/3); no invented result or qualification",
     "PASS operations: independent completion monitoring, 150/180 minute iterations, max 3, fresh 12x2 screen; not execution approval",
     "LIMIT: static consistency only; raw runs, actual hours, strategy safety, browser layout and acceptance unverified",
+    "PASS rev9: H1 selected / standard ON refused / adapter unimplemented; agy format only; xa-1 unmeasured; no-cost CLI pilot gated",
     "PASS check-plan-consistency",
 ]
 
 
 def check_documents(document, html, morning, m1, ai):
-    require("revision 8" in document.splitlines()[0], "plan revision 8 title")
+    require("revision 9" in document.splitlines()[0], "plan revision 9 title")
     sources = {"d0": source_table(morning, "## 2."),
                "q0": source_table(morning, "## 5."),
                "m1": source_table(m1, "## 結果")}
@@ -252,9 +377,8 @@ def check_documents(document, html, morning, m1, ai):
                 "human-only scope disclosure")
         require("凍結性能は改訂ON性能の代用にならない" in doc, "ON evidence boundary")
         require("17.2h" in doc and "9.7h" in doc and "10/17" in doc, "allocation and cutover prose")
-    require(data["decisions"]["human_only"]["status"] == "現在の本人作業なし" and
-            data["decisions"]["human_only"]["items"] == ["10/28 dec-007再確認", "無料枠不足時の前払い判断（G3見積もり後）"],
-            "no current human task; final recheck and conditional prepayment remain future work")
+    require(data["decisions"]["human_only"] == REV9_EXPECTED["human_only"],
+            "full executor authority remains a pending human decision; registration and cost boundaries retained")
     require(all(decisions[i]["status"] == "decided" for i in ("dec-step1-policy", "dec-q0-keep", "dec-original", "dec-forward")),
             "prior settled decisions must stay decided")
     ac = data["plan"]["ai_contract"]
@@ -397,9 +521,9 @@ def check_documents(document, html, morning, m1, ai):
             ('a646e9b',123,25,False,'measured引継ぎ'), 'v2 implementation/test evidence cannot become fresh verification')
     require('123' in document and '赤対照25' in document and '16:24 JST開始' in document and '17:39 JST完了' in document,
             'v2/dev3 MASTER handoff missing')
-    require(data['status']['human_action'] == 'なし' and data['budget']['consumed_forward_hours'] is None and
+    require(data['status']['human_action'] == REV9_EXPECTED['human_action'] and data['budget']['consumed_forward_hours'] is None and
             data['budget']['consumption_status'] == '未精算', 'human action and unknown forward consumption')
-    require(data['plan']['revision'] == 8 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
+    require(data['plan']['revision'] == 9 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
             'revision and submission deadline')
     report = data["decisions"]["ollama_report"]
     require(report["evidence_kind"] == "本人報告" and report["registration"] == "accepted-display-reported" and
@@ -480,6 +604,23 @@ def check_documents(document, html, morning, m1, ai):
     glossary = parsed_table(block(document, 'glossary'))
     require(glossary['header'] == ['用語','説明'] and glossary['rows'] ==
             [[t['term'],t['definition']] for t in data['glossary']['items']], 'glossary definition source mismatch')
+    rev8_logs = [x for x in data['log']['items'] if x['id'] in {f'log-{i:03}' for i in range(1,74)}]
+    require(len(rev8_logs) == 73 and digest(rev8_logs) == REV8_LOG_DIGEST, 'all 73 prior logs and every field are immutable')
+    prior_decisions = [x for x in data['decisions']['items'] if x['id'] in REV8_DECISION_IDS]
+    require(digest(prior_decisions) == REV8_DECISIONS_DIGEST, 'all prior decision records/signatures/dates unchanged')
+    for name in ('h1', 'pilot', 'next_branch'):
+        require(data['plan'][name] == REV9_EXPECTED[name], 'rev9 exact plan contract: '+name)
+    for name in ('xa1', 'agy_format'):
+        require(data['status'][name] == REV9_EXPECTED[name], 'rev9 inherited evidence, never fresh verification: '+name)
+    require(data['results']['h1'] == REV9_EXPECTED['table'], 'H1 visible facts and evidence boundaries exact')
+    require(parsed_table(block(document, 'h1-current')) == {k:REV9_EXPECTED['table'][k] for k in ('header','rows')}, 'MASTER H1 current contract matches dashboard')
+    require([decisions[x['id']] for x in REV9_EXPECTED['decisions']] == REV9_EXPECTED['decisions'], 'H1 selected, unrestricted executor not authorized')
+    require(data['plan']['pilot']['worlds'] == len(data['plan']['pilot']['regimes']) * len(data['plan']['pilot']['seeds']) * (data['plan']['pilot']['off_repeats'] + data['plan']['pilot']['on_repeats']), 'pilot world arithmetic')
+    for phrase in ('7179efe','時間制限付き単脚往復+lot台帳','テスト39・赤対照39','smoke 38003','38001/38002×12=24世界','約104分+終了確認','未達なら第3回にxa-1を診断','並行してAIパイロットの専用adapter/受付','AI全面改訂を許すか（安全保証なしで本番と同条件で測るか）'):
+        require(phrase in document, 'rev9 current prose missing: '+phrase)
+    require('第3回xa-1' in dq[0]['dependency'] and '専用adapter/受付' in dq[0]['dependency'], 'next branch visible in queue')
+    require('H1' in dq[3]['dependency'] and '標準ON拒否' in dq[3]['dependency'] and '本人判断' in dq[3]['dependency'], 'acceptance boundary in queue')
+    require('専用adapter接続・検査は未実装' in dq[8]['dependency'] and not dq[8]['active'], 'adapter work not pilot execution')
     return list(_RESULT_LINES)
 
 
@@ -508,7 +649,7 @@ def self_check(documents):
             ds[1] = re.sub(pattern, update, ds[1], count=1, flags=re.S)
         return change
     controls = [
-        lambda ds: ds.__setitem__(0, ds[0].replace("revision 8", "revision 6", 1)),
+        lambda ds: ds.__setitem__(0, ds[0].replace("revision 9", "revision 6", 1)),
         mutate("plan", lambda d: d["ai_contract"].update(status="unsigned")),
         mutate("plan", lambda d: d["ai_contract"].update(on_repeats=1)),
         mutate("plan", lambda d: d["ai_contract"].update(selected_total_hours="12")),
@@ -638,6 +779,60 @@ def self_check(documents):
         mutate('log', lambda d: d['items'][5].update(summary='rewritten rev7 history')),
         lambda ds: ds.__setitem__(0, ds[0].replace('平均対応ΔT≥+1.0', '平均対応ΔT≥0')),
         mutate('results', lambda d: d['comparison']['diagnostic'][1]['metrics'][0].update(baseline_ref='status.dev3.result.p_multi')),
+    ]
+    controls += [
+        mutate('plan', lambda d: d['h1'].update(full_executor_allowed=True)),
+        mutate('plan', lambda d: d['h1'].update(initial_entry=60)),
+        mutate('plan', lambda d: d['h1'].update(fallback_entry=60)),
+        mutate('plan', lambda d: d['h1'].update(entry_min=0)),
+        mutate('plan', lambda d: d['h1'].update(entry_max=65)),
+        mutate('plan', lambda d: d['h1'].update(entry_step=10)),
+        mutate('plan', lambda d: d['h1'].update(entry_max_delta=40)),
+        mutate('plan', lambda d: d['h1'].update(expiry_blocks=121)),
+        mutate('plan', lambda d: d['h1'].update(tests=214)),
+        mutate('plan', lambda d: d['h1'].update(red_controls=24)),
+        mutate('plan', lambda d: d['h1'].update(tests_rerun=True)),
+        mutate('plan', lambda d: d['h1'].update(standard_on='ready')),
+        mutate('plan', lambda d: d['h1'].update(fixed_template_safe=True)),
+        mutate('plan', lambda d: d['h1'].update(agent_validator_safe=True)),
+        mutate('plan', lambda d: d['h1'].update(adapter='implemented')),
+        mutate('plan', lambda d: d['h1'].update(vendored='PASS')),
+        mutate('plan', lambda d: d['h1'].update(production_boundary='safe')),
+        mutate('plan', lambda d: d['h1'].update(policies=['v5'])),
+        mutate('plan', lambda d: d['pilot'].update(regimes=['calm'])),
+        mutate('plan', lambda d: d['pilot'].update(seeds=[36001, 36002])),
+        mutate('plan', lambda d: d['pilot'].update(off_repeats=0)),
+        mutate('plan', lambda d: d['pilot'].update(on_repeats=1)),
+        mutate('plan', lambda d: d['pilot'].update(worlds=8)),
+        mutate('plan', lambda d: d['pilot'].update(primary='ollama')),
+        mutate('plan', lambda d: d['pilot'].update(paid_usage=True)),
+        mutate('plan', lambda d: d['pilot'].update(local_ollama=True)),
+        mutate('plan', lambda d: d['pilot'].update(personal_ollama_key=True)),
+        mutate('plan', lambda d: d['pilot'].update(personal_ollama_quota=True)),
+        mutate('plan', lambda d: d['pilot'].update(on_ready=True)),
+        mutate('plan', lambda d: d['pilot'].update(pre_q0_run_approved=True)),
+        mutate('status', lambda d: d['xa1'].update(tests=40)),
+        mutate('status', lambda d: d['xa1'].update(red_controls=38)),
+        mutate('status', lambda d: d['xa1'].update(result='PASS')),
+        mutate('status', lambda d: d['xa1'].update(tests_rerun=True)),
+        mutate('status', lambda d: d['xa1'].update(smoke_seed=38001)),
+        mutate('status', lambda d: d['xa1'].update(seeds=[39001, 39002])),
+        mutate('status', lambda d: d['xa1'].update(estimated_minutes=50)),
+        mutate('status', lambda d: d['xa1'].update(state='measured')),
+        mutate('status', lambda d: d['agy_format'].update(capability_evaluated=True)),
+        mutate('status', lambda d: d['agy_format'].update(runtime_verified=True)),
+        mutate('status', lambda d: d['agy_format'].update(haiku_verified=True)),
+        mutate('status', lambda d: d['agy_format'].update(performance_verified=True)),
+        mutate('status', lambda d: d['agy_format']['cases'][1].update(answer_prescribed=False)),
+        mutate('status', lambda d: d['agy_format']['cases'][0].update(calls=3)),
+        mutate('status', lambda d: d['agy_format']['cases'][2].update(output='selection')),
+        mutate('plan', lambda d: d['next_branch'].update(automatic_launch=True)),
+        mutate('plan', lambda d: d['next_branch'].update(iteration=4)),
+        mutate('decisions', lambda d: next(x for x in d['items'] if x['id']=='dec-full-executor').update(status='decided')),
+        mutate('decisions', lambda d: next(x for x in d['items'] if x['id']=='dec-ai-scope').update(title='changed prior decision')),
+        mutate('log', lambda d: next(x for x in d['items'] if x['id']=='log-073').update(summary='rewritten rev8 log')),
+        mutate('results', lambda d: d['h1']['rows'][1].__setitem__(1, 'safe on')),
+        lambda ds: ds.__setitem__(0, ds[0].replace('smoke 38003', 'smoke 39001'))
     ]
     for number, control in enumerate(controls, 1):
         changed = copy.deepcopy(documents)

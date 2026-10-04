@@ -77,8 +77,8 @@ check('diagnostic metrics from JSON rather than display constants',()=>{
   app.D.status.dev2.result.p_candidate='149.0';
 });
 check('log count and complete history',()=>{
-  assert.equal(app.filteredLogs().length,73);
-  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,73);
+  assert.equal(app.filteredLogs().length,78);
+  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,78);
   for(const l of app.D.log.items)assert.ok(rendered.log.includes(l.id));
 });
 check('log AND search, kind and date filters compose',()=>{
@@ -224,5 +224,11 @@ if(process.argv.includes('--dump')){
   assert.ok(target?.startsWith('/tmp/')||target?.startsWith('/private/tmp/'),'dump must be an explicit temporary path');
   writeFileSync(target,JSON.stringify(rendered));
 }
+check('rev9 authority, runtime limit, no-cost provider and next branch are visible',()=>{
+  const plain=page=>rendered[page].replace(/<[^>]*>/g,'');
+  for(const value of ['a95054a','検査済み方針の選択+ENTRY','ON起動を拒否','VENDORED','プロンプト誘導','validator ok=true','能力評価ではない','claude-cli:haiku','39001/39002','OFF1+ON3=32世界','安全保証なしで本番と同条件で測るか'])assert.ok(plain('decisions').includes(value),value);
+  for(const value of ['7179efe','38003','第3回にxa-1','専用adapter'])assert.ok(plain('operations').includes(value),value);
+  for(const value of ['本人判断・未許可','第3回にxa-1'])assert.ok(plain('overview').includes(value),value);
+});
 console.log(`PASS dashboard UI: ${count} checks; 8 page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
 console.log('LIMIT: minimal DOM adapter, not a browser; visual layout and assistive technology unverified');
