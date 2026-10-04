@@ -131,6 +131,65 @@ test('stock revision replies accept body/decline/revert, but reject a full TS mo
   assert.deepEqual(await compiled.executor(single(), {} as AgentContext), { type: 'noop', reason: 'fixture' });
 });
 
+function promptFormatBody(): string {
+  const policy = readFileSync(`${dir}/prompt.md`, 'utf8');
+  const match = policy.match(/<!-- executorTs-format-example:start -->\s*```js\n([\s\S]*?)\n```\s*<!-- executorTs-format-example:end -->/);
+  assert.ok(match, 'prompt v2 carries a complete, locally executable format example');
+  return match[1];
+}
+
+test('prompt v2 body executes in the stock VM with only obs/ctx and retains state across calls', async () => {
+  const source = promptFormatBody();
+  const parsed = parseRevision(JSON.parse(JSON.stringify({ notes: 'offline format test only', executorTs: source })));
+  assert.ok(parsed.ok);
+  const compiled = compileExecutor(source);
+  assert.ok(compiled.ok);
+  const logs: unknown[] = [];
+  const ctx = { log: (record: unknown) => logs.push(record) } as unknown as AgentContext;
+  const obs = single();
+  const first = await compiled.executor(obs, ctx);
+  assert.deepEqual(first, { type: 'noop', reason: 'format example only; not an installable strategy' });
+  safeAction(obs, first as any);
+  assert.deepEqual(await compiled.executor(obs, ctx), { type: 'noop', reason: 'duplicate observation' });
+  assert.equal(logs.length, 1);
+  await compiled.executor({ ...obs, runId: 'new-run' }, ctx);
+  assert.equal(logs.length, 2);
+  await compiled.executor({ ...obs, runId: 'new-run', blockNumber: '99' }, ctx);
+  assert.equal(logs.length, 3);
+});
+
+test('prompt funding helpers preserve v3 WBTC normalization, real balances and dust boundaries', async () => {
+  // Probe the exact helper text taught to the model, without any network, LLM or installation.
+  const source = promptFormatBody().split('const revisionLabel =')[0];
+  const compiled = compileExecutor(`${source}\nreturn {
+    weth: funded(obs, "WETH", 1n),
+    wbtc: funded(obs, "WBTC", 1n),
+    overdraw: funded(obs, "WBTC", balanceOf(obs, "WBTC") + 1n),
+    zero: funded(obs, "WBTC", 0n),
+    cash: funded(obs, "USDC", 1000000n)
+  };`);
+  assert.ok(compiled.ok);
+  for (const raw of ['0', '99999', '100000', '40000000']) {
+    const obs = single();
+    obs.baseBalances = { WBTC: raw };
+    assert.deepEqual(await compiled.executor(obs, {} as AgentContext), {
+      weth: true, wbtc: BigInt(raw) >= 100000n, overdraw: false, zero: false, cash: true,
+    });
+  }
+});
+
+test('block-1465 failure is syntax rejection; missing globals instead fail only on execution', async () => {
+  const parsed = parseRevision({ notes: 'offline rejection reproduction',
+    executorTs: 'import type { AgentContext, AgentObservation } from "@eris/sdk";' });
+  assert.ok(parsed.ok);
+  assert.deepEqual(compileExecutor(parsed.revision.executorTs!), {
+    ok: false, reason: 'compile failed: Cannot use import statement outside a module',
+  });
+  const compiled = compileExecutor('return performance.now();');
+  assert.ok(compiled.ok);
+  await assert.rejects(async () => compiled.executor(single(), {} as AgentContext), /performance is not defined/);
+});
+
 test('timing helper logs only start metadata and execs the mock CLI in the same PID', () => {
   const temp = mkdtempSync(join(tmpdir(), 'xb-r-live-timing-'));
   try {
