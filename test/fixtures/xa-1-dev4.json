@@ -1,0 +1,322 @@
+{
+  "sourceRun": "runs/2026-10-04T11-16-18-511Z",
+  "sourceAgentCommit": "d30cbbb46ca472b5a7a72fc1b99deab96dc97bf3",
+  "regime": "calm",
+  "seed": 36001,
+  "sources": [
+    {
+      "path": "runs/2026-10-04T11-16-18-511Z/market.json",
+      "sha256": "b2fdb550f4b691ead9e7ac58e7e95c514bb3d23fbcf8f68043f5f4c538c301f2"
+    },
+    {
+      "path": "runs/2026-10-04T11-16-18-511Z/agents/cand.jsonl",
+      "sha256": "d2a905598e6e429acdd8579cfe6d9d901a2c0c583a924ad10f0bf40ca608b703"
+    },
+    {
+      "path": "runs/2026-10-04T11-16-18-511Z/agents/multi-arb.jsonl",
+      "sha256": "32cde944ca3335afa0b5f4d6241a6fddc4881dfe4bc67a2989c214ce36f0b37d"
+    }
+  ],
+  "caveats": [
+    "Small dev4 cand/multi JSONL selections, errors sanitized to first line; no RPC or credentials retained.",
+    "market.json is post-run reconstruction, not the runtime observation. Market depthUsd is NOT active liquidity and is intentionally not injected.",
+    "Tests use synthetic initial wallets and projected historical submitted bids, not actual transaction-to-block membership. No alternate trajectory or performance claim."
+  ],
+  "frames": [
+    {
+      "block": 1384,
+      "market": {
+        "block": 1384,
+        "fair": {
+          "WETH": 3005.206359,
+          "WBTC": 59499.675533
+        },
+        "venues": {
+          "uniswap": {
+            "WETH": {
+              "mid": 2928.941767,
+              "buy": 2937.755032,
+              "sell": 2920.154942,
+              "depthUsd": 6006231.14
+            },
+            "WBTC": {
+              "mid": 59598.161809,
+              "buy": 59777.494291,
+              "sell": 59419.367323,
+              "depthUsd": 5975393.28
+            }
+          },
+          "balancer": {
+            "WETH": {
+              "mid": 2989.373015,
+              "buy": 2998.666049,
+              "sell": 2980.10878,
+              "depthUsd": 6005576.06
+            },
+            "WBTC": {
+              "mid": 59582.303732,
+              "buy": 59880.039952,
+              "sell": 59286.04792,
+              "depthUsd": 5975140.46
+            }
+          },
+          "curve": {
+            "WETH": {
+              "mid": 3002.957894,
+              "buy": 3011.42071,
+              "sell": 2994.51886,
+              "depthUsd": 6005428.27
+            },
+            "WBTC": {
+              "mid": 60144.529314,
+              "buy": 60365.308685,
+              "sell": 59924.55742,
+              "depthUsd": 5975485.2
+            }
+          }
+        },
+        "gmx": {
+          "WETH": {
+            "longOiUsd": 0,
+            "shortOiUsd": 0,
+            "fundingPerHourBps": 0
+          },
+          "WBTC": {
+            "longOiUsd": 0,
+            "shortOiUsd": 0,
+            "fundingPerHourBps": 0
+          }
+        },
+        "aave": {
+          "WETH": {
+            "suppliedUsd": 6035653.54,
+            "borrowedUsd": 0,
+            "utilization": 0
+          },
+          "WBTC": {
+            "suppliedUsd": 0,
+            "borrowedUsd": 0,
+            "utilization": 0
+          },
+          "USDC": {
+            "suppliedUsd": 5000000,
+            "borrowedUsd": 3979.73,
+            "utilization": 0.000796
+          }
+        },
+        "stables": {
+          "EUSD": {
+            "priceUsdc": 1,
+            "sellPriceUsdc": 0.999801,
+            "buyPriceUsdc": 1.000199,
+            "quoted": true
+          },
+          "DAI": {
+            "priceUsdc": 1,
+            "sellPriceUsdc": 0.999801,
+            "buyPriceUsdc": 1.000199,
+            "quoted": true
+          }
+        }
+      },
+      "records": [
+        {
+          "file": "cand.jsonl",
+          "line": 101,
+          "record": {
+            "agentId": "cand",
+            "event": "submit_failed",
+            "blockSeen": 1384,
+            "actionType": "swap",
+            "protocol": "uniswap",
+            "amount": "5688027816",
+            "errorFirstLine": "Execution reverted with reason: Too little received."
+          }
+        },
+        {
+          "file": "multi-arb.jsonl",
+          "line": 104,
+          "record": {
+            "agentId": "multi-arb",
+            "event": "submitted",
+            "blockSeen": 1384,
+            "priorityFeeWei": "100000000",
+            "actionType": "swap",
+            "protocol": "uniswap",
+            "amount": "9252645885",
+            "hash": "0xd90e7a42b01c15d023d6c9ab3f29ac44ce73a2b527adc8f85e9d63fc69bdd7bc"
+          }
+        },
+        {
+          "file": "multi-arb.jsonl",
+          "line": 105,
+          "record": {
+            "agentId": "multi-arb",
+            "event": "submitted",
+            "blockSeen": 1384,
+            "priorityFeeWei": "100000000",
+            "actionType": "curveSwap",
+            "protocol": "curve",
+            "amount": "3095859763639711744",
+            "hash": "0xa5149baa6f24c98bf74839a5365204428ca42b90f9650d368fd2fd660e641b97"
+          }
+        }
+      ]
+    },
+    {
+      "block": 1559,
+      "market": {
+        "block": 1559,
+        "fair": {
+          "WETH": 3026.896767,
+          "WBTC": 58978.815806
+        },
+        "venues": {
+          "uniswap": {
+            "WETH": {
+              "mid": 3008.023093,
+              "buy": 3017.074316,
+              "sell": 2998.999024,
+              "depthUsd": 6028518.76
+            },
+            "WBTC": {
+              "mid": 59513.661961,
+              "buy": 59692.740182,
+              "sell": 59335.120975,
+              "depthUsd": 5949811.93
+            }
+          },
+          "balancer": {
+            "WETH": {
+              "mid": 2943.780659,
+              "buy": 2952.929673,
+              "sell": 2934.65999,
+              "depthUsd": 6028660.83
+            },
+            "WBTC": {
+              "mid": 59367.670912,
+              "buy": 59664.108617,
+              "sell": 59072.70604,
+              "depthUsd": 5949662.55
+            }
+          },
+          "curve": {
+            "WETH": {
+              "mid": 3005.380801,
+              "buy": 3013.68583,
+              "sell": 2997.09866,
+              "depthUsd": 6027783.35
+            },
+            "WBTC": {
+              "mid": 59315.564495,
+              "buy": 59620.194086,
+              "sell": 59012.49141,
+              "depthUsd": 5949147.08
+            }
+          }
+        },
+        "gmx": {
+          "WETH": {
+            "longOiUsd": 136561.6,
+            "shortOiUsd": 89083.2,
+            "fundingPerHourBps": 0.00513
+          },
+          "WBTC": {
+            "longOiUsd": 0,
+            "shortOiUsd": 0,
+            "fundingPerHourBps": 0
+          }
+        },
+        "aave": {
+          "WETH": {
+            "suppliedUsd": 6079216.53,
+            "borrowedUsd": 0,
+            "utilization": 0
+          },
+          "WBTC": {
+            "suppliedUsd": 0,
+            "borrowedUsd": 0,
+            "utilization": 0
+          },
+          "USDC": {
+            "suppliedUsd": 5000000,
+            "borrowedUsd": 3330.5,
+            "utilization": 0.000666
+          }
+        },
+        "stables": {
+          "EUSD": {
+            "priceUsdc": 1,
+            "sellPriceUsdc": 0.999801,
+            "buyPriceUsdc": 1.000199,
+            "quoted": true
+          },
+          "DAI": {
+            "priceUsdc": 1,
+            "sellPriceUsdc": 0.999801,
+            "buyPriceUsdc": 1.000199,
+            "quoted": true
+          }
+        }
+      },
+      "records": [
+        {
+          "file": "cand.jsonl",
+          "line": 285,
+          "record": {
+            "agentId": "cand",
+            "event": "submitted",
+            "blockSeen": 1559,
+            "priorityFeeWei": "295000000",
+            "actionType": "balancerSwap",
+            "protocol": "balancer",
+            "amount": "2143240738",
+            "hash": "0xfadc45b024a911b02cbe47ae6886b69bc99080283d9dded786cdfd20822767cd"
+          }
+        },
+        {
+          "file": "cand.jsonl",
+          "line": 286,
+          "record": {
+            "agentId": "cand",
+            "event": "submitted",
+            "blockSeen": 1559,
+            "priorityFeeWei": "295000000",
+            "actionType": "swap",
+            "protocol": "uniswap",
+            "amount": "709807015411169664",
+            "hash": "0x12dfe29c9e1f6753ae50afae4898bc526b278ebaab9b3bd5f1c5e9d915b6eaf0"
+          }
+        },
+        {
+          "file": "multi-arb.jsonl",
+          "line": 315,
+          "record": {
+            "agentId": "multi-arb",
+            "event": "submitted",
+            "blockSeen": 1559,
+            "priorityFeeWei": "100000000",
+            "actionType": "balancerSwap",
+            "protocol": "balancer",
+            "amount": "4236413777",
+            "hash": "0xca8ed7098f2154841246353e284ed9dd32fa521eb8eee8a5cdee8ca4130f9f12"
+          }
+        },
+        {
+          "file": "multi-arb.jsonl",
+          "line": 316,
+          "record": {
+            "agentId": "multi-arb",
+            "event": "submitted",
+            "blockSeen": 1559,
+            "priorityFeeWei": "100000000",
+            "actionType": "swap",
+            "protocol": "uniswap",
+            "amount": "1410324335631198720",
+            "hash": "0x6e25dd887313dc751642f7b9da6ec57c2f3e15e2f7a83c9061d3f9bc55ef818a"
+          }
+        }
+      ]
+    }
+  ]
+}
