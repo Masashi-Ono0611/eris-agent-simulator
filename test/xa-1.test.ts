@@ -1,7 +1,11 @@
 import { observation, single, safeAction, W, U } from "./xb-fixtures.js";
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readFileSync } from "node:fs";
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
+import { createJsonlAppender } from "../example/agents/runtime/agentLog.js";
 import { resolve } from "node:path";
 import { createAgent, createLiveAgent, funded, bidWei, planEntry, PARAMS, POLICY } from "../example/agents/xa-1/agent.js";
 import { MARKET_LEGS, UNISWAP, BALANCER } from "@eris/sdk/constants.js";
@@ -50,6 +54,190 @@ test("XA parameters restrict and freeze sole AI authority", () => {
   for (const value of [20, 25, 60]) assert.doesNotThrow(() => createAgent({ ENTRY_BPS: value }));
   const p = { ENTRY_BPS: 50 }, c = createAgent(p); p.ENTRY_BPS = NaN;
   assert.notEqual(c.decide(obs()).type, "noop");
+});
+
+const dev6 = JSON.parse(readFileSync(new URL("./fixtures/xa-1-dev6s.json", import.meta.url), "utf8"));
+function dev6Obs(block: number, wallet: Record<string, string>): AgentObservation {
+  // Only the balances and block are historical; a synthetic admissible market
+  // drives the same exact-input amount without claiming historical quote replay.
+  const o = obs(block); o.blocksRemaining = 1646 - block;
+  o.balances = { usdcUnits: wallet.USDC, wethWei: wallet.WETH, ethWei: wallet.ETH };
+  o.baseBalances = { WETH: wallet.WETH, WBTC: wallet.WBTC };
+  return o;
+}
+const dev6Frame = (block: number) => dev6.frames.find((f: any) => f.block === block);
+
+test("XA dev6s measured buy and sell confirm actual debit proceeds and gas", () => {
+  const c = createAgent(), entry = dev6Frame(1298), filled = dev6Frame(1299), closed = dev6Frame(1306);
+  const a = c.decide(dev6Obs(1298, entry.wallet));
+  assert.equal(a.amountIn, entry.action.amountIn);
+  c.decide(dev6Obs(1299, filled.wallet));
+  assert.equal(String(c.inspect().lot!.quantity), filled.lot.quantity);
+  assert.equal(String(c.inspect().lot!.entryGasWei), filled.lot.entryGasWei);
+  const exitObs = dev6Obs(1305, filled.wallet);
+  exitObs.protocols.uniswap!.pool.priceUsdcPerWeth = 3000;
+  const exit = c.decide(exitObs);
+  assert.equal(exit.amountIn, dev6Frame(1305).action.amountIn);
+  c.decide(dev6Obs(1306, closed.wallet));
+  assert.equal(c.inspect().closed, 1);
+  assert.equal(String(c.inspect().lastClose!.cashOut), "996298130");
+  assert.equal(String(c.inspect().lastClose!.gasWei), "59130462000000");
+});
+
+test("XA dev6s rejected entry leaves bounded waiting and recovers a late fill only", () => {
+  const failed = dev6.runtime.find((r: any) => r.event === "submit_failed");
+  assert.equal(failed.blockSeen, 1312); assert.match(failed.error, /Too little received/);
+  assert.deepEqual(dev6.mined.map((r: any) => Number(r.blockNumber)), [1299, 1306]);
+  const c = createAgent(), o = dev6Obs(1312, dev6Frame(1312).wallet), entry = c.decide(o);
+  assert.equal(entry.amountIn, failed.amount);
+  for (let b = 1313; b < 1320; b++) {
+    assert.equal(c.decide(dev6Obs(b, dev6Frame(1312).wallet)).type, "noop");
+    assert.ok(c.inspect().pending);
+  }
+  const expired = c.decide(dev6Obs(1320, dev6Frame(1312).wallet));
+  assert.match(expired.reason, /recovery only/);
+  assert.equal(c.inspect().pending, undefined, "ordinary confirmation wait has a deadline");
+  assert.ok(c.inspect().unresolved, "in-flight reservation is retained, not time-released");
+  assert.match(c.inspect().halt!, /confirmation deadline/);
+  // Worst case: a lost submit response was actually accepted and fills late.
+  // Use a synthetic fill before the ordinary lot deadline to prove immediate
+  // recovery is due after confirmation timeout, not another maxHold wait.
+  const late = execute(o, entry, 1321);
+  late.blocksRemaining = 325;
+  const recovery = c.decide(late);
+  assert.notEqual(recovery.type, "noop"); assert.equal(recovery.tokenIn, "WETH");
+  assert.equal(BigInt(recovery.amountIn), baseOf(late, "WETH") - baseOf(o, "WETH"));
+  assert.equal(c.inspect().unresolved, undefined);
+  assert.equal(c.decide(at(late, 1322)).type, "noop", "no duplicate recovery exit");
+  const closed = execute(late, recovery, 1323); closed.blocksRemaining = 323;
+  assert.equal(c.decide(closed).type, "noop", "new entry stays disabled after recovery");
+  assert.equal(c.inspect().closed, 1); assert.equal(c.inspect().lot, undefined);
+  assert.equal(c.inspect().pending, undefined);
+});
+
+test("XA recovery timeout never unlocks unchanged partial or gas-only entry funds", () => {
+  for (const kind of ["unchanged", "partial", "gas-only", "other-base"] as const) {
+    const c = createAgent(), o = obs(), entry = c.decide(o), next = at(o, 108);
+    if (kind === "partial") Object.assign(next.balances, execute(o, entry, 108).balances,
+      { usdcUnits: String(BigInt(o.balances.usdcUnits) - BigInt(entry.amountIn) + 1n) });
+    if (kind === "gas-only") next.balances.ethWei = String(W - 1n);
+    if (kind === "other-base") next.baseBalances!.WBTC = "39999999";
+    for (const b of [108, 109, 125, 300]) {
+      const a = c.decide(at(next, b));
+      assert.equal(a.type, "noop"); assert.match(a.reason, /recovery only/);
+      assert.ok(c.inspect().unresolved); assert.equal(c.inspect().pending, undefined);
+      assert.equal(c.inspect().lot, undefined);
+    }
+  }
+});
+
+test("XA recovery timeout never resells an in-flight exit and books its late fill once", () => {
+  const { c, next } = entered(), x = fairExit(next, 102), exit = c.decide(x);
+  for (const b of [110, 111, 200]) {
+    const a = c.decide(at(x, b)); assert.equal(a.type, "noop");
+    assert.match(a.reason, /recovery only/);
+    assert.ok(c.inspect().unresolved); assert.equal(c.inspect().pending, undefined);
+  }
+  const closed = execute(x, exit, 201);
+  assert.equal(c.decide(closed).type, "noop");
+  assert.equal(c.inspect().closed, 1); assert.equal(c.inspect().unresolved, undefined);
+  c.decide(at(closed, 202)); assert.equal(c.inspect().closed, 1);
+});
+
+test("XA recovery WBTC late fill uses eight decimal proceeds and preserves ETH gas", () => {
+  const o = observation(); o.protocols.uniswap!.markets = {
+    "WBTC/USDC": { ...o.protocols.uniswap!.pool, pair: "WBTC/USDC", priceUsdcPerWeth: 57526 },
+  };
+  const c = createAgent(), entry = c.decide(o); assert.equal(entry.base, "WBTC");
+  c.decide(at(o, 108));
+  const late = execute(o, entry, 109), exit = c.decide(late);
+  assert.equal(exit.tokenIn, "WBTC");
+  assert.equal(BigInt(exit.amountIn), baseOf(late, "WBTC") - baseOf(o, "WBTC"));
+  assert.equal(c.inspect().lot!.entryGasWei, BigInt(o.balances.ethWei) - BigInt(late.balances.ethWei));
+});
+
+// Execute the production gate, not a duplicated TypeScript interpretation.
+function telemetryGate(records: any[]) {
+  const dir = mkdtempSync(join(tmpdir(), "xa-1-gate-"));
+  try {
+    mkdirSync(join(dir, "agents"));
+    writeFileSync(join(dir, "agents/cand.jsonl"), records.map(x => JSON.stringify(x) + "\n").join(""));
+    writeFileSync(join(dir, "summary.json"), JSON.stringify({ runId: "fixture", blocksProcessed: 360,
+      loopIterations: 362, runStartBlock: 1286, finalBlock: 1646, blockTimeSec: 2,
+      valueSeries: { failedReads: 0 }, violations: [], agents: [{ id: "cand", pnlUsdc: 0 }] }));
+    const events: any[] = [{ type: "run_started_realtime", runId: "fixture", runBlocks: 360 },
+      { type: "agents_registered", agents: [{ id: "cand" }] },
+      { type: "agents_ready", ready: [{ id: "cand" }], launched: 1, timedOut: false, late: [], exited: [] }];
+    for (let b = 1287; b <= 1646; b++) events.push({ type: "round_timing", blockNumber: b, blocksCaughtUp: 1, totalMs: 1 });
+    events.push(...[0, 0].map(() => ({ type: "round_timing", blockNumber: 1646, blocksCaughtUp: 0, totalMs: 1 })),
+      { type: "run_completed", runId: "fixture" });
+    writeFileSync(join(dir, "events.jsonl"), events.map(x => JSON.stringify(x) + "\n").join(""));
+    const py = `import importlib.util,sys,json,argparse
+from pathlib import Path
+sys.path.insert(0, str(Path('ascon-notes/league').resolve()))
+spec=importlib.util.spec_from_file_location('gate','ascon-notes/league/degradation-gate.py')
+gate=importlib.util.module_from_spec(spec);spec.loader.exec_module(gate)
+r=gate.extract((Path(sys.argv[1]),'calm','0'),argparse.Namespace(blocks=360,expected_loops=362,block_time_sec=2,max_p99_fraction=.5))
+print(json.dumps(r,default=str))`;
+    const result = spawnSync("python3", ["-B", "-c", py, dir], { encoding: "utf8", timeout: 10000 });
+    assert.equal(result.status, 0, result.stderr); return JSON.parse(result.stdout);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
+async function telemetryFixture() {
+  const records: any[] = dev6.runtime.map((x: any) => ({ ...x })), live = createLiveAgent();
+  for (let block = 1285; block <= 1646; block++) {
+    const o = dev6Obs(block, dev6Frame(1312).wallet); o.round = 0; // never confuse round ordinal with block
+    const a = await live.decide(o, context(o, [], x => records.push({ agentId: "cand", ...x })));
+    if (a.type === "noop") records.push({ agentId: "cand", round: block, action: { type: "noop" }, reason: a.reason });
+  }
+  return records;
+}
+
+test("XA telemetry production gate accepts integer blocks and rejects missing round", async () => {
+  const rows = await telemetryFixture(), good = telemetryGate(rows);
+  assert.deepEqual(good.blocked, []); assert.deepEqual(good.failed, []);
+  assert.equal(good.agents.cand.decisions, 360);
+  assert.equal(good.agents.cand.submit_failed, 1);
+  for (const row of rows.filter(x => "action" in x)) assert.ok(Number.isSafeInteger(row.round) && row.round >= 1285);
+  const missing = clone(rows); delete missing.find(x => x.state && x.action).round;
+  assert.ok(telemetryGate(missing).blocked.includes("agent telemetry cand"));
+});
+
+test("XA telemetry production gate enforces identity startup caps and submission blockSeen", async () => {
+  const rows = await telemetryFixture();
+  const corruptions = [
+    (r: any[]) => { r[1].agentId = "xa-1"; },
+    (r: any[]) => { r.shift(); },
+    (r: any[]) => { r.push(clone(r[0])); },
+    ...["log_cap_reached", "log_line_truncated"].map(event => (r: any[]) => { r.push({ agentId: "cand", event }); }),
+    ...["submitted", "submit_failed"].flatMap(event => [undefined, "1312", 1312.5].map(blockSeen => (r: any[]) => {
+      r.find(x => x.event === event).blockSeen = blockSeen;
+    })),
+  ];
+  for (const corrupt of corruptions) {
+    const broken = clone(rows); corrupt(broken);
+    assert.ok(telemetryGate(broken).blocked.includes("agent telemetry cand"));
+  }
+});
+
+test("XA telemetry compact ledger fits actual runtime logger budget", async () => {
+  const rows = await telemetryFixture(), dir = mkdtempSync(join(tmpdir(), "xa-1-log-"));
+  try {
+    const log = createJsonlAppender(dir, "cand");
+    rows.forEach(log);
+    const raw = readFileSync(join(dir, "agents/cand.jsonl"), "utf8");
+    assert.ok(Buffer.byteLength(raw) < 240_000, `${Buffer.byteLength(raw)} bytes exceeds fixture budget`);
+    const parsed = raw.trim().split("\n").map(x => JSON.parse(x));
+    assert.equal(parsed.length, rows.length);
+    assert.ok(!parsed.some(x => ["log_cap_reached", "log_line_truncated"].includes(x.event)));
+    assert.ok(Math.max(...raw.trim().split("\n").map(x => Buffer.byteLength(x))) < 2048);
+    for (const x of parsed.filter(x => x.state)) {
+      assert.equal(x.state.initial, undefined); assert.equal(x.state.wallet, undefined);
+      assert.equal(x.state.pending?.before, undefined); assert.equal(x.state.pending?.plan, undefined);
+    }
+    console.log(`xa-1 362-block telemetry fixture: ${Buffer.byteLength(raw)} bytes; historical cand ${dev6.counts.bytes}`);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 test("XA complete plan reserves both legs and explicit costs", () => {
   const o = obs(), c = createAgent(), a = c.decide(o);
@@ -133,10 +321,10 @@ test("XA initial allocation is never a sell signal", () => {
   const o = single(0.2, false);
   assert.equal(createAgent().decide(o).type, "noop");
 });
-test("XA pending entry never expires or reuses balances", () => {
+test("XA pending entry reservation never expires or reuses balances", () => {
   const c = createAgent(), o = obs(), a = c.decide(o); assert.notEqual(a.type, "noop");
   for (const n of [100, 101, 105, 125]) assert.equal(c.decide(at(o, n)).type, "noop");
-  assert.equal(c.inspect().pending!.phase, "entry"); assert.equal(c.inspect().lot, undefined);
+  assert.equal(c.inspect().unresolved!.phase, "entry"); assert.equal(c.inspect().lot, undefined);
 });
 test("XA settlement requires exact debit proceeds gas and other base", () => {
   for (const corrupt of [
@@ -162,7 +350,7 @@ test("XA gas only failure locks instead of repeating reverts", () => {
   const c = createAgent(), o = obs(); c.decide(o);
   const next = at(o, 101); next.balances.ethWei = String(W - 10n ** 12n);
   for (const n of [101, 110, 130]) assert.equal(c.decide(at(next, n)).type, "noop");
-  assert.match(c.inspect().halt!, /ambiguous/); assert.ok(c.inspect().pending);
+  assert.match(c.inspect().halt!, /ambiguous|confirmation deadline/); assert.ok(c.inspect().unresolved);
 });
 test("XA profitable exit needs no positive single leg edge", () => {
   const { c, next } = entered(), x = fairExit(next, 102), lot = c.inspect().lot!;
@@ -205,7 +393,7 @@ test("XA pending exit cannot be resold or reopened", () => {
   const { c, next } = entered(), x = fairExit(next, 102), a = c.decide(x);
   assert.notEqual(a.type, "noop");
   for (const block of [103, 105, 359]) assert.equal(c.decide(at(x, block)).type, "noop");
-  assert.equal(c.inspect().pending!.phase, "exit");
+  assert.equal(c.inspect().unresolved!.phase, "exit");
 });
 test("XA exact closure restores anchor and books both actual gas payments", () => {
   const { c, next } = entered(), x = fairExit(next, 102), a = c.decide(x);
@@ -337,7 +525,7 @@ test("XA LIVE logs serializable lot reservations without config reads", async ()
   Object.defineProperty(ctx, "config", { get() { throw Error("forbidden config"); } });
   const c = createLiveAgent(), a = await c.decide(o, ctx);
   assert.notEqual(a.type, "noop"); assert.equal(logs[0].state.pending.phase, "entry");
-  assert.equal(typeof logs[0].state.pending.plan.cashIn, "string");
+  assert.equal(typeof logs[0].state.observed.USDC, "string");
   assert.doesNotThrow(() => JSON.stringify(logs));
 });
 test("XA diagnostic prompt freezes null executor and AI bounds", () => {

@@ -7,6 +7,7 @@ export type Params = Readonly<{ ENTRY_BPS: number }>;
 export const PARAMS: Params = Object.freeze({ ENTRY_BPS: 50 });
 export const POLICY = Object.freeze({
   maxHold: 6, entryLag: 2, exitBuffer: 4, minUsd: 50, maxUsd: 1000,
+  confirmationBlocks: 8,
   lossBps: 200, lossUsd: 20, epochLossUsd: 60, holdBpsPerBlock: 1,
   gasUnits: 200_000, slippageBps: 20, minProfit: 0.05,
 });
@@ -153,7 +154,7 @@ type Pending = { phase: "entry" | "exit"; action: Action; before: Wallet; sentBl
 type Close = { id: number; cashIn: bigint; cashOut: bigint; gasWei: bigint; netUsd: number; heldBlocks: number };
 type State = {
   runId: string; lastBlock: number; initial?: Wallet; wallet?: Wallet;
-  lot?: Lot; pending?: Pending; halt?: string; nextId: number;
+  lot?: Lot; pending?: Pending; unresolved?: Pending; halt?: string; nextId: number;
   closed: number; realizedNet: number; lossSpent: number; lastClose?: Close;
 };
 function wallet(obs: AgentObservation): Wallet {
@@ -274,9 +275,10 @@ function exitLot(obs: AgentObservation, lot: Lot, initial: Wallet, bids?: SpotBi
 
 // Confirm the actual exact-input debit, positive proceeds, paid gas and untouched
 // other base. No tx hash is exposed by decide(); this is balance evidence, not a
-// fabricated receipt. A timeout NEVER releases a reservation.
+// fabricated receipt. A timeout moves the reservation into recovery-only
+// quarantine, NEVER back into spendable funds. Continue matching late fills.
 function reconcile(s: State, obs: AgentObservation, w: Wallet): void {
-  const pending = s.pending;
+  const pending = s.pending ?? s.unresolved;
   if (!pending) {
     if (s.wallet && (w.USDC !== s.wallet.USDC || w.WETH !== s.wallet.WETH ||
         w.WBTC !== s.wallet.WBTC || w.ETH !== s.wallet.ETH)) s.halt = "unexplained wallet change";
@@ -305,7 +307,7 @@ function reconcile(s: State, obs: AgentObservation, w: Wallet): void {
     if (netUsd < -lot.lossLimit || gas > lot.exitGas) s.halt = "realized loss or gas exceeded reservation";
     s.lot = undefined;
   }
-  s.pending = undefined; s.wallet = w;
+  s.pending = undefined; s.unresolved = undefined; s.wallet = w;
 }
 
 const freshState = (runId = ""): State => ({ runId, lastBlock: -1, nextId: 1, closed: 0, realizedNet: 0, lossSpent: 0 });
@@ -323,10 +325,19 @@ export function createAgent(params: Params = PARAMS) {
       const w = wallet(obs);
       if (!s.initial) { s.initial = { ...w }; s.wallet = { ...w }; }
       reconcile(s, obs, w);
+      if (s.pending && block - s.pending.sentBlock >= POLICY.confirmationBlocks) {
+        // A failed RPC response is not proof that no tx exists. Keep its exact
+        // debit/proceeds baseline until a late fill can be identified. No new
+        // entry for this run; a confirmed late entry can still be liquidated.
+        s.unresolved = s.pending; s.pending = undefined;
+        s.halt = "confirmation deadline; recovery only";
+      }
       s.lastBlock = block;
       // Reconcile final-block fills before returning; no post-valuation orders.
       if (horizon(obs) <= 0) return noop("valuation boundary or unknown horizon");
       if (s.pending) return noop("pending confirmation; both legs reserved");
+      // In particular, never resell a lot whose exit may still be in flight.
+      if (s.unresolved) return noop("confirmation unresolved; recovery only; both legs reserved");
       if (s.lot) {
         const action = exitLot(obs, s.lot, s.initial, bids);
         if (action.type !== "noop") s.pending = { phase: "exit", action: { ...action }, before: w, sentBlock: block, plan: { ...s.lot } };
@@ -344,13 +355,33 @@ export function createAgent(params: Params = PARAMS) {
 
 export function createLiveAgent(params: Params = PARAMS) {
   const core = createAgent(params);
+  let lastWallet = "";
   const decide = async (obs: AgentObservation, ctx?: AgentContext): Promise<Action> => {
     const bids = ctx && obs && horizon(obs) > 0 ? await readSpotBids(obs, ctx) : undefined;
     const action = core.decide(obs, bids);
-    // Diagnostic ledger is observable in cand.jsonl. No runtime config/identity
-    // is read. Logging failure cannot erase an already-created reservation.
-    try { ctx?.log({ action, reason: action.reason ?? "xa-1 lot action",
-      state: JSON.parse(JSON.stringify(core.inspect(), (_, v) => typeof v === "bigint" ? String(v) : v)) }); } catch { /* retained */ }
+    // The runtime owns agentId and runtime_start. Every action row needs an
+    // integer absolute block, just like the runtime's xb-r/noop rows. Do not
+    // repeat the full plan, initial wallet and before wallet on every block.
+    // Logging failure cannot erase an already-created reservation.
+    try {
+      const round = Number(obs.blockNumber);
+      if (!Number.isSafeInteger(round) || round < 0) {
+        ctx?.log({ reason: "invalid block; no decision telemetry" });
+      } else {
+        const s = core.inspect(), pending = s.pending ?? s.unresolved;
+        const observed = Object.fromEntries(Object.entries(wallet(obs)).map(([k, v]) => [k, String(v)]));
+        const serialized = JSON.stringify(observed);
+        ctx?.log({ round, action, state: {
+          mode: s.unresolved ? "recovery_wait" : s.halt ? "recovery_only" : "normal",
+          ...(s.halt ? { halt: s.halt } : {}),
+          ...(pending ? { pending: { phase: pending.phase, sentBlock: pending.sentBlock, base: pending.plan.base } } : {}),
+          ...(s.lot ? { lot: { id: s.lot.id, base: s.lot.base, quantity: String(s.lot.quantity), deadlineBlock: s.lot.deadlineBlock } } : {}),
+          closed: s.closed, realizedNet: s.realizedNet,
+          ...(serialized !== lastWallet ? { observed } : {}),
+        } });
+        lastWallet = serialized;
+      }
+    } catch { /* retained */ }
     return action;
   };
   return { decide, inspect: core.inspect };

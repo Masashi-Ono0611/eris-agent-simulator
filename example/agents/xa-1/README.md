@@ -1,9 +1,10 @@
-# xa-1 — 候補 A の先行準備
+# xa-1 — 候補 A と dev6s 修理
 
 [PLATEAU §3 A](../../../ascon-notes/league/PLATEAU-ANALYSIS-2026-10-04.md)
-の独立実装。xb-r の置換・昇格・Q0 合格ではない。性能は未測定。
-dev5 を動かしている upstream-eval の HEAD `7b1448b` と入力は変更しない。
-本作業はコミット・チェーン起動・フル npm test を行わない。
+の独立実装。xb-r の置換・昇格・Q0 合格ではない。性能判断は行わない。
+2026-10-04 の dev6s（元コード `7179efe`）の G0/確認待ちを修理。
+upstream-eval は読取専用。コミット・チェーン起動・フル npm test は行わず、
+次のスモーク前にユーザーがコミットする。
 
 ## 独自設計と台帳
 
@@ -22,6 +23,7 @@ runtime import は SDK の公開定数/型と `../lib/affordable.js`。
 |---|---|
 | `initial` | 最初の有効観測の USDC/WETH/WBTC/native ETH。WETH/WBTC は固定アンカーで、後続の損益・追加在庫から分離 |
 | `pending` | entry/exit、送信観測 block、exact-input action、送信前全残高、予約した Plan。未確認時は予約解除・再送・新規を禁止 |
+| `unresolved` | 8 block の確認期限を超えた予約。新規を停止し、同じ exact-input 基準で遅延約定を追跡。未確定の exit は再送しない |
 | `Plan` | 入金額、入口/予定出口、予測数量、独立に前払い可能な base 数量、両脚分 gas、往復費用控除後見積、固定損失枠、回収期限 |
 | `lot` | 実 USDC debit、**実 base 増分**、実 gas ETH 減分、確認 block と期限。初期保有は数量に含めない |
 | `lastClose` | 実 cashOut−cashIn−両脚実 gas の時点 USD 換算、gasWei、保有 block 数。`closed` と lot id で重複ログを除外可能 |
@@ -29,8 +31,11 @@ runtime import は SDK の公開定数/型と `../lib/affordable.js`。
 
 次の観測の exact-input debit、正の受取数量、gas 減少、他方の base 不変を
 すべて照合して初めて pending を解除する。遅い観測でも一致すれば照合するが、
-**時間経過だけでは解除しない**。gas のみ減った revert 相当、部分 debit、
-外部資金移動などは停止状態として残す。入口・出口とも同じ基準。
+**時間経過だけでは予約解除しない**。送信観測から **8 block** で通常の
+`pending` を `unresolved` に移し、その run の新規を停止して回収専用にする。
+遅延した入口が exact-input として確認できれば、その実増分だけを期限回収する。
+遅延した出口は一度だけ計上する。gas のみの減少、部分 debit、外部資金移動、
+変化なしは失敗確定と見なさず予約を維持する。入口・出口とも同じ基準。
 `decide` は送信 hash/receipt を受け取らないため、これは残高確認であり、
 receipt を取得したという意味ではない。SDK/runtime は変更していない。
 
@@ -73,14 +78,18 @@ runId は別 run の状態初期化のための等値比較だけに使う。
 
 ## 診断ログ・決定論・限界
 
-`ctx.log` へ各観測の action とシリアライズした台帳を記録する。未回収数量、
-確認待ち、停止理由、回収期限、実現往復損益を確認できる。環境変数、乱数、seed、
+`ctx.log` は整数の `round = Number(obs.blockNumber)`、action、短い状態要約を
+記録する。initial/wallet/pending.before/plan 全体は繰り返さない。実際の観測残高は
+初回と変化時だけ `state.observed` に出す（照合済み台帳の wallet とは別）。
+未回収数量、確認待ち、停止理由、回収期限、実現往復損益を確認できる。環境変数、乱数、seed、
 regime、未来イベント、候補 identity は意思決定入力にしない。競合は観測 block
 に固定した 1 回の公開 getBlock から取得し、750ms の読取失敗/不完全結果は保守的な
 aggregate に戻す。自身を除き、router/vault/direct pool の全 tx を対象とする。
 
-残高だけでは未送信/送信前失敗/滞留を区別できない。最初の未確認注文で
-その run の残り全部を待機する可能性がある。無期限再送で解消しない。
+残高だけでは未送信/送信前失敗/滞留を区別できない。8 block で通常待機は
+打ち切るが、期限は取消証明ではない。未約定のままなら `unresolved` の予約は
+run 終了まで残り得る。遅延約定は回収可能であり、期限による二重送信や新規再開はしない。
+SDK に sender の確定結果を返す口がないため、送信失敗を確定して再開する修理とは区別する。
 1 lot 制約、買い始点限定により売り始点・同時機会を取り逃す。
 初期値と pending は process 内状態であり、途中再起動からの復元は未実装。
 診断は epoch ごとの新規 process と専用 wallet を前提とする。
@@ -94,23 +103,25 @@ runner の期末価格で別計算する。安全機構の単体検証と凍結 
 
 ## 軽量検証
 
-`test/xa-1.test.ts` は 39 件。既存 xb 183 件と合わせ **222 件**を対象にする。
-`test/xa-1-red-controls.mjs` は **39 因子破壊**を逐次適用し、指定テスト名の
-`ERR_ASSERTION` / exit 1 を確認する。構文/ロード失敗は赤成功と数えない。
-xa-1 の source だけを各回と finally で復元し、SHA256 一致後に xa テストを再実行する。
-xb-r の赤対照スクリプトは実行しない。
+`test/xa-1.test.ts` は **47 件（元39件＋8件）**。確認期限に達した既存テストは
+予約の移動先 `unresolved` を検査し、同じ残高安全条件を維持する。
+`test/xa-1-red-controls.mjs` は **47 赤対照（既存39＋追加7＋旧commit全体1）**。
+指定テストの `ERR_ASSERTION` / exit 1 を確認し、構文/ロード失敗は数えない。
+各回と finally で source を復元し、SHA256 一致後に47件を再実行する。
+元の `7179efe` 全体でも dev6s 回帰が赤になり、復元後は緑になる。
+この修理では xa-1 と gate の関連テストのみ実行し、xb/フル suite は実行しない。
 
 ```sh
 npm run typecheck
 TSX_DISABLE_CACHE=1 node --import tsx scripts/checkStrategyCode.ts example/agents/xa-1/agent.ts
-TSX_DISABLE_CACHE=1 node --import tsx --test --test-concurrency=1 test/xa-1.test.ts test/xb-core.test.ts test/xb-variants.test.ts test/xb-r.test.ts test/xb-r-dev2.test.ts test/xb-r-dev3a.test.ts test/xb-r-v4.test.ts test/xb-r-slippage.test.ts test/xb-r-v5.test.ts
+TSX_DISABLE_CACHE=1 node --import tsx --test --test-concurrency=1 test/xa-1.test.ts
 TSX_DISABLE_CACHE=1 node test/xa-1-red-controls.mjs
 ```
 
 復元後 `agent.ts` SHA256:
-`70706ea292d9a838657b1bb70a6a25cdac594cb47edc292d92e5613a404adf65`。
-詳細な最終実行結果・ログ・台帳 hash は
-[検証証跡](../../../ascon-notes/eval/xa-1-prep-validation.json) に保存する。
+`14849fc8f96772ccb18883b971e7d058eb9f8a844dc0177d2cf5e9f91ea3b800`。
+今回の復元ログは `/tmp/xa-1-dev6s-red-controls.log` とそこに記載した evidence
+ディレクトリ。`xa-1-prep-validation.json` は初版の履歴であり、今回の検証結果ではない。
 
 [実ログ fixture](../../../test/fixtures/xa-1-dev4.json) は dev4 calm/36001 の
 block 1384/1559、cand/multi の **7 件**と market.json の 2 フレーム、原本 SHA256。
@@ -119,25 +130,44 @@ market は事後再構成で、残高は明示的な合成初期値、入札は�
 aggregate に oracle 高額 bid が混入した場合の見送りと、実行先別 bid の復元、
 submit_failed が残高確認の代わりにならないことを検査する。
 
-## 第3イテレーションの提案（未起動）
+## dev6s の事実・推測・修理
 
-dev5 の結果と既消費・残費を確認後、xa-1 を固定して一案だけ診断する。
-smoke は **calm / 38003 / 最大120 block / 上限10分**、包含成功と未回収ゼロを
-先に確認。その後 F_ref/FROZEN、全12×**38001/38002** の **24世界**、p=3、18+6。
-既存校正 13分/batch なら **104分＋smoke/終了検査**、1反復180分上限。
-新候補の実時間・G0 p99/362 loops は未校正。既存 xb-r を同居させず cand slot で別測定する。
-親との因果効果を求める fresh 対応比較は48世界/208分以上となり、この案には含めない。
+原本は `upstream-eval/runs/2026-10-04T15-00-28-261Z/agents/cand.jsonl` と
+`blocks.csv`。`/tmp/dev6s.log` は G0 BLOCKED を記録。読取専用で production gate の
+`extract` を実行して `blocked = ["agent telemetry cand"]`、failed なしを再現した。
 
-準備時の可視兄弟 worktree 全 **44 index.tsv / 565 行**を seed 列で監査し、
-38001/38002/38003 の使用記録は各0件。両 checkout の公開 league 計画にも記載なし。
-全履歴の完全性・非公開 Hfinal/未記録予約との非交差は未検証。実走直前に再監査し、
-入口/hash/予算条件を記録する。先行準備で検証時計や最大3回をリセットしない。
+- **事実**: 判断行362件のすべてに round がない。全725行は判断回数ではない。
+  pending理由は判断333行＋runtime noop333行の666回。同じ判断の重複記録。
+- **事実**: block1298で USDC 1,000 を買い入力、1299で WETH
+  `0.332580878762405375` 増、native ETH gas `32013246000000` wei 減を照合済み。
+  block1305で同数量を売り、1306で USDC `996.298130` 増、gas
+  `27117216000000` wei 減を照合し1往復を閉鎖。両方の包含は blocks.csv で success。
+- **事実**: block1312の次の買いは `submit_failed: Too little received`。
+  以後 cand の包含なし（全runで2件、revertなし）。送信前に作る pending が
+  期限なく残った。WETH/WBTC桁、gas、買い受取の照合不一致を示す証拠はない。
+- **推測と限界**: 原因となる submit_failed は送信前の simulation/estimate 失敗と
+  整合する。元ログの `state.wallet` は照合済み台帳で、生の毎回の残高ではない。
+  1312以降の残高不変は直接測定しておらず、fixture の不変残高は明示的な推定。
+  quote と執行時価格の競争はあり得るが、この資料だけで価格変動原因を断定しない。
+- **修理**: 8 block で回収専用へ遷移し、未確定予約を保存したまま遅延した
+  exact-input 約定を回収する。新規停止、初期在庫保護、gas/損失上限、二重送信禁止を維持。
+  安全に確認できない注文を時間だけで「未送信だった」と判定しない。
 
-screen は MASTER §8.3 を維持し、全24世界G0、安全0条件、等重み平均T≥multi、
-全12平均(T−Tnoop)≥0、全世界 P/P−noop と最悪値を確認する。lot 別の保有時間、
-閉鎖損益、期末残量、pending、出口失敗を追加報告し、E/M/G を receipt と結合して
-「失った entry edge」と「回収した carry」を分離する。初期在庫の売却量は常に0を確認。
-第3回未達なら停止し、4回目や安全閾値の変更へ進まない。
+[dev6s fixture](../../../test/fixtures/xa-1-dev6s.json) は原本SHA256付きの小さい抜粋。
+実測した買い/売り残高と失敗の履歴を使い、市場・遅延約定・WBTCは合成ケースと明記。
+production `degradation-gate.py` を fixture に実行し、round欠落、agentId不一致、
+startup回数、cap/truncation、submitted/submit_failed の非整数blockSeenを赤確認する。
+actual runtime logger で362観測の合成ログは **174,897 bytes、各行2,048 bytes未満**、
+cap/truncationなし。原本 cand は516,009 bytes（multi-arb 92,708 bytes）。
+これはログ容量のfixture検証であり、修理後の実チェーン計測や性能評価ではない。
 
-未検証: チェーン/Docker、public60、bundle/selftest、Q0/F_ref、安全実績、実 gas・
-包含/revert/回収率・p99、最新外部規約/提出適合、AI ON/OFF。収益性・T改善は主張しない。
+## 再スモークの提案（未起動）
+
+ユーザーのcommit後、**F_ref / FROZEN / calm / seed 38004 / 360 blocks** を提案。
+G0の362 loops・telemetry、送信/残高照合、8 block期限、遅延回収、未回収在庫を確認する。
+seed **38003 はdev6sで使用済み**。過去の未使用記述は今回の監査で更新した。
+可視の兄弟worktree全46 index.tsv / 590行（seed列）と、agent-view重複を除く
+1,177 manifest/run-start JSONのseed欄に38004の使用は0件。
+league-v2/upstream-evalの公開計画・設定でも38004の記載なし。監査詳細は
+`/tmp/xa-1-dev6s-seed-audit.json`。非公開・未記録の使用/予約は確認できないため、
+実行直前にも再確認する。実チェーン・Docker・実G0の修理後PASSは未検証。

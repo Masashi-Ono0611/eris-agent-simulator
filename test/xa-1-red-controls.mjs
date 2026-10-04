@@ -53,6 +53,13 @@ const controls = [
   ["own-bid-exclusion", "XA LIVE scopes route", "tx.from.toLowerCase() === obs.agentAddress.toLowerCase()", "false"],
   ["pinned-block", "XA LIVE failed incomplete", "if (block.number !== BigInt(obs.blockNumber)) return undefined;", "if (false) return undefined;"],
   ["real-fixture-route", "XA real dev4", "core.decide(obs, bids)", "core.decide(obs, undefined)"],
+  ["telemetry-round", "XA telemetry production gate accepts", "ctx?.log({ round, action, state:", "ctx?.log({ action, state:"],
+  ["telemetry-full-ledger", "XA telemetry compact ledger", "mode: s.unresolved ?", "...JSON.parse(JSON.stringify(s, (_, v) => typeof v === 'bigint' ? String(v) : v)), mode: s.unresolved ?"],
+  ["confirmation-deadline", "XA dev6s rejected entry", "block - s.pending.sentBlock >= POLICY.confirmationBlocks", "false"],
+  ["late-confirmation", "XA dev6s rejected entry", "const pending = s.pending ?? s.unresolved;", "const pending = s.pending;"],
+  ["timeout-retains-reservation", "XA recovery timeout never unlocks", "s.unresolved = s.pending; s.pending = undefined;", "s.pending = undefined;"],
+  ["unresolved-exit-lock", "XA recovery timeout never resells", "if (s.unresolved) return noop", "if (false) return noop"],
+  ["recovery-stops-new-entry", "XA dev6s rejected entry", "s.halt = \"confirmation deadline; recovery only\";", "s.halt = undefined;"],
 ];
 const records = [];
 function run(label, pattern) {
@@ -83,6 +90,23 @@ try {
     records.push({ id, pattern, exitCode: 1, restoredSha256: sha256, logSha256: digest(r.log) });
     console.log(`RED ${id}; restored ${sha256.slice(0, 12)}`);
   }
+  // The exact user-named pre-repair source must fail the real-log regression,
+  // not just a hand-picked line mutation. All tests/fixtures remain current.
+  const legacy = spawnSync("git", ["show", "7179efe:example/agents/xa-1/agent.ts"], { cwd: root, encoding: "utf8" });
+  assert.equal(legacy.status, 0, "read historical source");
+  const pattern = "XA dev6s rejected entry";
+  let red;
+  try {
+    writeFileSync(sourcePath, legacy.stdout);
+    red = run("dev6s-7179efe", pattern);
+  } finally { writeFileSync(sourcePath, original); }
+  assert.equal(digest(readFileSync(sourcePath, "utf8")), sha256);
+  assert.equal(red.result.status, 1);
+  assert.match(red.log, /ERR_ASSERTION/);
+  assert.match(red.log, new RegExp(`not ok \\d+ - ${pattern}`));
+  records.push({ id: "dev6s-7179efe", pattern, exitCode: 1, restoredSha256: sha256,
+    legacySha256: digest(legacy.stdout), logSha256: digest(red.log) });
+  console.log(`RED dev6s-7179efe; restored ${sha256.slice(0, 12)}`);
 } finally {
   writeFileSync(sourcePath, original);
   assert.equal(digest(readFileSync(sourcePath, "utf8")), sha256);
