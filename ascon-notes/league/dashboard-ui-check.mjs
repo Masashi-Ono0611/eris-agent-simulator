@@ -77,8 +77,8 @@ check('diagnostic metrics from JSON rather than display constants',()=>{
   app.D.status.dev2.result.p_candidate='149.0';
 });
 check('log count and complete history',()=>{
-  assert.equal(app.filteredLogs().length,91);
-  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,91);
+  assert.equal(app.filteredLogs().length,95);
+  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,95);
   for(const l of app.D.log.items)assert.ok(rendered.log.includes(l.id));
 });
 check('log AND search, kind and date filters compose',()=>{
@@ -174,13 +174,13 @@ check('comparison is the first results content section, before explanatory notic
     assert.ok(t.indexOf('class="comparison"')<t.indexOf('測定の原表・条件'));
   }
 });
-check('dev3a historical figures and incz pending results stay distinct in visible pages',()=>{
+check('dev3a historical figures and incz completed results stay distinct in visible pages',()=>{
   const t=rendered.results;
   const operationsText=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   for(const value of ['842.3','2032.9','1050.3','54.4','288.7','61.3','46.83','55.93','980','27'])assert.ok(t.includes(value),value);
   assert.ok(t.includes('9レジーム')&&t.includes('18世界')&&t.includes('比較対象に未達'));
   assert.ok(operationsText.includes('incz'));
-  assert.ok(operationsText.includes('結果未確認'));
+  assert.ok(operationsText.includes('全計測終了・走行中なし'));
   assert.ok(operationsText.includes('稼働実績・更新成功は本更新で未検証'));
   assert.ok(!operationsText.includes('null'));
 });
@@ -188,7 +188,7 @@ check('historical dev4 facts, current incz and team are visible',()=>{
   const t=rendered.results;
   for(const value of ['49.72','55.02','488.2','1460.8','440.0','68.8','273.4','46.3','1652','23','+7.85'])assert.ok(t.includes(value),value);
   const op=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
-  for(const value of ['07:20','08:15','結果待ち','3/3回目','Codex(Astra)','Claude','402','agy','masa-harness#409','PLATEAU-ANALYSIS','ツール使用禁止・差分埋め込み・echo &quot;&quot; | …'])assert.ok(op.includes(value),value);
+  for(const value of ['07:20','08:15','診断完了','3/3回目','Codex(Astra)','Claude','402','agy','masa-harness#409','PLATEAU-ANALYSIS','ツール使用禁止・差分埋め込み・echo &quot;&quot; | …'])assert.ok(op.includes(value),value);
   const overviewText=rendered.overview.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   assert.ok(overviewText.includes('mix1+mix2')&&overviewText.includes('58.26'));
 });
@@ -228,11 +228,11 @@ check('rev9 authority, runtime limit, no-cost provider and next branch are visib
   const plain=page=>rendered[page].replace(/<[^>]*>/g,'');
   for(const value of ['a95054a','検査済み方針の選択+ENTRY','ON起動を拒否','VENDORED','プロンプト誘導','validator ok=true','能力評価ではない','claude-cli:haiku','39001/39002','OFF1+ON3=32世界','安全保証なしで本番と同条件で測るか'])assert.ok(plain('decisions').includes(value),value);
   for(const value of ['7179efe','38003','第3回xa-1は打ち切り','専用adapter','PILOT-STOP','202分','352分'])assert.ok(plain('operations').includes(value),value);
-  for(const value of ['本人判断','第3回xa-1で打ち切り','結果待ち'])assert.ok(plain('overview').includes(value),value);
+  for(const value of ['本人判断','第3回xa-1で打ち切り','全計測終了・走行中なし'])assert.ok(plain('overview').includes(value),value);
 });
 check('rev10 live outcomes, xa stop and mix placeholder come from data',()=>{
   const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
-  for(const value of ['HEALTHY=no','50.15','55.73','54.74','48.91','52.80','53.62','-5.83','-1.93','-1.11','-229.4','+178.7','-19.75','PILOT-STOP','結果待ち'])assert.ok(t.includes(value),value);
+  for(const value of ['HEALTHY=no','50.15','55.73','54.74','48.91','52.80','53.62','-5.83','-1.93','-1.11','-229.4','+178.7','-19.75','PILOT-STOP','診断完了'])assert.ok(t.includes(value),value);
   assert.ok(!t.includes('undefined'));
   const before=app.D.status.incz.note;
   app.D.status.incz.note='REV10-MIX-SENTINEL';app.state.page='operations';app.render();
@@ -249,13 +249,25 @@ check('mix1 ranking, regimes and G0 exception render from measured JSON',()=>{
   assert.ok(element('page').innerHTML.includes('REV11-MIX-SENTINEL'));
   app.D.status.mix1.result.t_candidate=before;
 });
-check('rev12 all mixed rankings and incz pending boundary are rendered',()=>{
+check('rev12 all mixed rankings and incz completed boundary are rendered',()=>{
   const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   for(const name of ['mix2','mix48'])for(const row of app.D.status[name].result.ranking)
     for(const key of ['agent','t','worst_regime_t'])assert.ok(t.includes(String(row[key])),`${name} ${row.agent} ${key}`);
-  for(const v of ['40005','07:20','08:15','結果追記欄','commit不一致でG0 FAIL','F_ref契約(Q0)未通過'])assert.ok(t.includes(v),v);
-  assert.equal(app.D.status.incz.result,null);
-  assert.equal(app.D.status.incz.completed_worlds,null);
+  for(const v of ['40005','07:20','08:15','診断完了','commit不一致でG0 FAIL','F_ref契約(Q0)未通過'])assert.ok(t.includes(v),v);
+  assert.equal(app.D.status.incz.result.t_candidate,'56.30');
+  assert.equal(app.D.status.incz.result.noop_below,4);
+  assert.equal(app.D.status.incz.completed_at,null);
+  assert.equal(app.D.status.incz.completed_worlds,12);
+});
+check('rev13 incz measured values, all regimes and accounting visible without qualification',()=>{
+  const plain=page=>rendered[page].replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
+  const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
+  for(const v of ['56.30','44.44','1343.6','730.0','281.1','254.2','253.0','42.2','3057','90','2.9','−52.8','−131.4','−104.8','−142.1','−8.12','0.2/世界','8.4'])assert.ok(t.includes(v),v);
+  for(const row of app.D.status.incz.result.regime_t)for(const k of ['regime','candidate','multi'])assert.ok(t.includes(row[k]),row[k]);
+  assert.ok(plain('operations').includes('457分（7h37）'));
+  assert.ok(plain('overview').includes('全計測終了・走行中なし'));
+  assert.ok(app.D.queue.items.every(q=>q.active===false));
+  assert.equal(app.D.status.incz.q0_eligible,false);
 });
 console.log(`PASS dashboard UI: ${count} checks; 8 page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
 console.log('LIMIT: minimal DOM adapter, not a browser; visual layout and assistive technology unverified');
