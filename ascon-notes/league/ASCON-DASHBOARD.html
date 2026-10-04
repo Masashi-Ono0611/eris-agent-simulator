@@ -13,7 +13,7 @@
     {
       "id": "src-master",
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
-      "title": "MASTER revision 4",
+      "title": "MASTER revision 5",
       "locator": "§1–11 / Appendix A"
     },
     {
@@ -135,6 +135,18 @@
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
       "title": "Q0b後の時間概算",
       "locator": "§7、実測60世界×既存13分/p3による推定。実区間は未提示"
+    },
+    {
+      "id": "src-ai",
+      "path": "ascon-notes/league/DESIGN-AI-LAYER-01-astra.md",
+      "title": "AI層設計・根拠と未署名契約",
+      "locator": "§1 事実/未確認・A–D・AI-G3-01"
+    },
+    {
+      "id": "src-repair",
+      "path": "ascon-notes/league/DESIGN-REPAIR-01-astra.md",
+      "title": "決定論コア修理設計",
+      "locator": "冒頭の延期決定・§1.2の後続診断（原ログ未監査）"
     }
   ]
 }
@@ -144,15 +156,15 @@
 <script type="application/json" id="data-status">
 {
   "sources": [
-    "src-q0b",
-    "src-master"
+    "src-master",
+    "src-ai"
   ],
-  "as_of": "2026-10-04T12:49:55+09:00",
+  "as_of": "2026-10-04T14:25:52+09:00",
   "measurement_as_of": null,
-  "last_update": "Q0b全60世界完了・平均T FAIL・G0 FAIL 2世界を反映。安全集計は未確認。延期/設計修理を推奨し、本人判断まで実走停止。",
+  "last_update": "rev 5: 本人の決定論Q0優先・10/8延期済みを反映。限定AI改訂→反復→封印を本文と同期。設計/契約案のみ、実装・新規実走なし。",
   "phase_id": "phase-first",
-  "headline": "両候補Q0不合格。延期・設計修理を推奨。",
-  "subhead": "現契約を維持。Claudeは安全・G0・時間証跡を補完し、本人が次の契約と受理目標を決める。",
+  "headline": "まずxb-rのQ0と受理。その後に限定AI改訂。",
+  "subhead": "dev1-xb-rは本人申告で走行中、結果未確認。決定論コアを守り、AIの価値は改訂ONで測る。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -162,12 +174,23 @@
     "worlds": 60,
     "chunks": 3,
     "completed_worlds": 60,
-    "note": "全量完了と資格合格は別。vuln 41101/41103は361/362loops、p99 648/531msは基準内。除外/同一入力再走は本人判断、どちらでも平均T不合格を保持。違反/失敗読取/無効注文/revertは未確認。",
+    "note": "旧Q0b結果を保存。安全null欄はrev 4引継ぎ時点。その後の修理設計に診断集計はあるが全契約の認定は未了。除外/同一入力再走は本人判断、平均T FAILは維持。",
     "completed_at": null,
     "g0": "A=PASS / B=FAIL / C=PASS",
     "safety": null
   },
   "metrics": [
+    {
+      "id": "metric-xbr",
+      "label": "現在の優先経路",
+      "value": "xb-r → Q0",
+      "note": "dev1走行中は本人申告。診断完走をQ0 PASSにしない",
+      "tone": "accent",
+      "sources": [
+        "src-ai",
+        "src-master"
+      ]
+    },
     {
       "id": "metric-q0",
       "label": "sonnet-1 Q0",
@@ -210,8 +233,17 @@
       ]
     }
   ],
-  "notice": "Q0-AMEND-01は未署名・未適用。Q0b閲覧前条件は失効し、F_mixへ進むなら既知情報を開示した別版への本人署名が必要。延期の本人決定もまだない。",
-  "measurement_note": "Q0b：全60世界の完了報告を受領（完了・集計時刻は未記録）。開始07:37 JST / 3 chunks / seeds 41101–41105。旧終了見込みは失効。"
+  "notice": "10/8受理目標は延期済み（本人決定）。AI-G3-01は未署名、追加の反復・実装費は未解放。固定null promptだけで受理適合とは扱わない。",
+  "measurement_note": "dev1-xb-r：本人申告の走行中計測。目的/hash/G0/費用/結果は本担当未確認。Q0bは旧60世界完了/FAILの履歴（完了時刻未記録）。",
+  "dev1": {
+    "state": "reported-running",
+    "name": "dev1-xb-r",
+    "verified": false,
+    "sources": [
+      "src-ai",
+      "src-master"
+    ]
+  }
 }
 </script>
 <!-- END data-status -->
@@ -221,36 +253,57 @@
   "sources": [
     "src-master",
     "src-guide",
-    "src-rules"
+    "src-rules",
+    "src-ai"
   ],
-  "goal": "ASCONで優勝する。まず安全で受理済みの独自エージェントを確保する。",
+  "goal": "ASCONで優勝する。決定論コアでQ0をクリアし受理Sを確保してから、AI改訂の増分を検証する。",
   "win": "エポック終了時のPを参加者間でTへ標準化し、後半ほど重く集計。対noop・最悪レジーム・混成場・改訂ONの尾部を同時に守る。",
   "rules": [
     "独自戦略のみ・提出は1体。参照の改名や設定移植だけへ戻さない。",
-    "公式規約が最優先、ローカルの正本はcompetition-start。今回オンラインの最新版は未確認。",
-    "decide()＋promptのkind/name/description。在庫のあるlegだけをcanFundで確認し、自己コントラクト残資産の0評価を避ける。",
+    "公式規約が最優先。本文はオンライン取得済みだが10/6公表・10/20発効の未来日付表示。10/4適用版は未確認。",
+    "凍結Q0と提出時の改訂適合を分ける。decide＋kind: improve等が必要。現xb-rのnull固定promptは診断用。",
     "評価価格の歪曲・自己提出間の移転・禁止RPCを使わない。鍵は本人が専用フォームへ入力、記録には残さない。",
     "p=3・等速・CPU排他・入力固定。Q0b失敗履歴を保持し、除外/再走は本人判断。",
-    "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。"
+    "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。",
+    "AIは限定paramの提案層。資金/注文/退出は変更不能なゲートへ。stockのdecide全置換をpromptだけで隔離できない。",
+    "league-v2のxb-rはclosure状態と4,000msのclock分岐を持つ。計測中コピーとの同一性は未確認、今は変更しない。"
   ],
   "protocol": [
     {
       "id": "protocol-first",
-      "title": "初回提出経路",
-      "body": "両候補FAIL → Claude証跡補完 → 本人が延期/別契約を判断 → 新契約の資格 → mix smoke / P60 → 最小G3 / G4 → dec-008 → 本人送信/受理",
-      "exit": "現経路の10/8受理は成立せず。延期/設計修理を推奨、本人未決"
+      "title": "Step1 決定論Q0・受理",
+      "body": "10/4以降、受理日未定。入口: dev1証跡・現Q0契約・入力/G0/未開封seed",
+      "exit": "凍結Q0→mix/P60→最小改訂適合/G3/G4→本人受理S。first-next 35/3hは追加修理/資格費を含まない。Q0失敗で停止、延期は既決"
     },
     {
-      "id": "protocol-deep",
-      "title": "深いリーグ",
-      "body": "現在は実走停止。新契約の初回受理とcal、全工程費が揃った後だけE1又はD/E → E3 → Q1 → full G3。遅れは探索から削る。",
-      "exit": "最大20h・2世代。現配分14.9h、再承認ではなく解放条件を確認"
+      "id": "protocol-ai-min",
+      "title": "Step2 限定AI最小版",
+      "body": "S受理後〜10/12目安。入口: S・cal・受付境界/許可model/費用",
+      "exit": "事後分析から小param提案、適用/拒否/復帰、AI-G3-01署名。実装費未見積、deepの置換。guard迂回/適合不可で停止、権限/金銭上限は本人"
+    },
+    {
+      "id": "protocol-ai-eval",
+      "title": "Step3 AI価値検証",
+      "body": "10/13〜17。入口: 固定版・未使用集合・反復/下流資格費",
+      "exit": "決定論適応対照・E3/Q1・G3反復を通るR*のみ。G3案1候補12h/2候補22.4hは仮単価。10/17に本人再配分、不明ならS"
     },
     {
       "id": "protocol-sealed",
-      "title": "封印した最終比較",
-      "body": "S / R*を同slotの別世界で、F_mix改善＋F_ref非劣性＋安全・尾部を確認。一度だけ開封。",
-      "exit": "10/18封印 → 10/25判定・凍結 → 10/28最終確認 → 10/29受理"
+      "title": "Step4 封印・一回採用",
+      "body": "10/18〜25。入口: 二場/10seed・model/state/判定の固定・残費",
+      "exit": "H480又は事前指定S240、一回判定・性能凍結。final-g2 35hはON校正前。欠測/不適合/差不明は適合S"
+    },
+    {
+      "id": "protocol-ai-release",
+      "title": "Step5 最終受理",
+      "body": "10/26〜31 23:59。入口: 選定版・G4・本人確認",
+      "exit": "10/28 dec-007→10/29送信/受理目標→10/30予備→締切照合。final-g4 9h＋予備3h。探索再開なし、受理メール/hashで閉じる"
+    },
+    {
+      "id": "protocol-deep",
+      "title": "余力がある時だけ深いリーグ",
+      "body": "最大20h・2世代の既決上限を維持。AI実装/反復/資格費との置換元とし、E1/M1/M2を足し増さない。",
+      "exit": "受理S・cal・全量予約が先。AI追加費を引いた残額で解放判定"
     }
   ],
   "gates": [
@@ -267,11 +320,11 @@
     {
       "id": "gate-q",
       "title": "現G2-Q / 初回資格",
-      "state": "Q0・Q0b FAIL",
-      "resolve": "sonnet 44.56対56.50、opus 48.07対56.43でF_ref平均T条件不成立。全12の対noop平均≥0でも合格ではない。延期推奨、追加候補/損失許容/別版F_mixは本人の新契約を要する。",
+      "state": "旧Q0/Q0b FAIL・xb-r未認定",
+      "resolve": "第1ブロッカーは現Q0契約。dev1終了後にhash/G0/試験目的と資格契約を照合。旧44.56対56.50・48.07対56.43のFAILは保持。10/8延期は既決。",
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-master",
+        "src-ai"
       ]
     },
     {
@@ -287,9 +340,10 @@
       "id": "gate-g3",
       "title": "G3 / 改訂ON",
       "state": "未実施",
-      "resolve": "正常cycle≥3・実変更適用/復帰・遅延/無効出力/枠切れの危険取引0。fullはON/OFF平均≥−1T、最悪≥−3。最大batch時間×1.2で残工程を再予算。",
+      "resolve": "最小cal/正常cycle≥3・実適用/復帰・全改訂検査・危険取引0を受理前に確認。追加ON3履歴/OFF1とstate系列は未署名AI-G3-01。凍結性能はONの代用不可。",
       "sources": [
-        "src-master"
+        "src-master",
+        "src-ai"
       ]
     },
     {
@@ -312,7 +366,26 @@
       ]
     }
   ],
-  "caution": "最終は独立10seedが上限。480世界を独立480標本にしない。小差の非検出は同等性でも、本番勝率の保証でもない。 F_ref/u1mの順序逆転は事実だが新F_mix優位の証拠ではない。inc-zeta最小版を第3候補へ足すのは現契約の第2候補1回までに反する。"
+  "caution": "AIによる利益増は未実証。G3は非劣化/運用ゲートで、単純な決定論適応との増分と最終二場判定は別。H480は最大10市場seed/系列、各世界1応答履歴。G3反復をH全体の応答頑健性と呼ばない。 AI-onlyはFROZEN E3で差を測れないため、E3/Q1のON modeも未署名案。下流基本9.5333hだけでも振替後deep4.5hを超え、余剰証拠なしに全工程を解放できない。",
+  "ai_contract": {
+    "status": "unsigned",
+    "name": "AI-G3-01",
+    "on_repeats": 3,
+    "off_repeats": 1,
+    "market_cells": 36,
+    "candidate_worlds": 144,
+    "one_candidate_hours": "12",
+    "two_candidate_hours": "112/5",
+    "extra_hours": "52/5",
+    "keep_deep_after_transfer": "9/2",
+    "amend_deep_after_transfer": "-4/15",
+    "sources": [
+      "src-ai",
+      "src-master"
+    ],
+    "e3_q1_mode": "ON-proposed-unsigned",
+    "e3_q1_base_hours": "143/15"
+  }
 }
 </script>
 <!-- END data-plan -->
@@ -325,23 +398,23 @@
   "items": [
     {
       "id": "phase-first",
-      "title": "初回受理",
+      "title": "Step1 Q0・初回受理",
       "start_date": "2026-10-04",
-      "end_date": "2026-10-08",
+      "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "10/8は旧目標。本人分岐・新資格/G3/G4/受理が必要"
+      "gate": "10/8延期済み・新受理日未定。Q0/最小改訂適合/G3/G4が先"
     },
     {
       "id": "phase-deep",
-      "title": "校正・深いリーグ",
+      "title": "Step2/3 AI検証・任意探索",
       "start_date": "2026-10-09",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "初回受理/cal/全費用未成立。遅れは探索から削る"
+      "gate": "期間は判断窓。S受理/cal/AI契約/全費用後のみ、未達なら削除"
     },
     {
       "id": "phase-sealed",
-      "title": "封印・最終比較",
+      "title": "Step4 封印・一回比較",
       "start_date": "2026-10-18",
       "end_date": "2026-10-25",
       "state": "pending",
@@ -349,7 +422,7 @@
     },
     {
       "id": "phase-release",
-      "title": "最終適合・受理",
+      "title": "Step5 最終適合・受理",
       "start_date": "2026-10-26",
       "end_date": "2026-10-31",
       "state": "pending",
@@ -370,17 +443,13 @@
     {
       "id": "day-2026-10-04",
       "date": "2026-10-04",
-      "title": "両候補FAIL・Astra更新完了、Claude証跡補完・本人分岐判断",
-      "dependency": "Q0b集計・安全未確認・G0 2世界FAIL",
-      "stop": "新資格/再走/除外は未承認、実走停止",
+      "title": "Step1方針/AI設計rev 5、dev1計測保全",
+      "dependency": "本人方針・league-v2コード読取・dev1は申告のみ",
+      "stop": "計測worktree/鍵へ触れず、新規実走なし",
       "state": "running",
       "highlight": true,
       "decision_refs": [
-        "dec-q0-keep",
-        "dec-astra-update",
-        "dec-q0-failure-branch",
-        "dec-q0b-g0",
-        "dec-forward"
+        "dec-step1-policy"
       ],
       "sources": [
         "src-master"
@@ -389,9 +458,9 @@
     {
       "id": "day-2026-10-05",
       "date": "2026-10-05",
-      "title": "延期/再設計の別契約案、又は別版Q0m署名準備",
-      "dependency": "本人の分岐・候補/hash・未開封seed・費用",
-      "stop": "原Q0-AMEND-01で自動実行不可",
+      "title": "dev1担当証跡・Q0契約との対応照合",
+      "dependency": "固定hash/G0/安全/試験目的/時間区間",
+      "stop": "診断をQ0認定にしない、追加資格は対象契約のみ",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
@@ -402,9 +471,9 @@
     {
       "id": "day-2026-10-06",
       "date": "2026-10-06",
-      "title": "修理仕様・資格/受理日を再見積、署名経路のみ測定準備",
-      "dependency": "安全/G0補完・追加費用予約・本人署名",
-      "stop": "第3候補や旧seedでの再選抜禁止",
+      "title": "決定論修理の資格/受理経路の不足を解消",
+      "dependency": "現Q0条件・未開封seed/追加費用・担当証跡",
+      "stop": "AIでFAILを上書きしない、未予約実験なし",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
@@ -415,9 +484,9 @@
     {
       "id": "day-2026-10-07",
       "date": "2026-10-07",
-      "title": "dec-008を維持、技術経路は新資格後のみ",
-      "dependency": "Ollama最小確認＋本人鍵登録。G3/G4は資格依存",
-      "stop": "鍵登録と候補READYを混同しない",
+      "title": "dec-008: 最小Ollama確認と本人鍵登録",
+      "dependency": "service/model/枠/料金・登録の確認",
+      "stop": "鍵登録と受理は別。初ZIP時にも対応関係を照合",
       "state": "blocked",
       "highlight": true,
       "decision_refs": [
@@ -430,13 +499,13 @@
     {
       "id": "day-2026-10-08",
       "date": "2026-10-08",
-      "title": "旧初回受理目標の未達/受理証拠を記録、延期日を本人確定",
-      "dependency": "現経路は不成立。新契約でもG0/資格/G3/G4必須",
-      "stop": "日付のため条件緩和しない、未受理なら探索0",
-      "state": "blocked",
+      "title": "延期済み旧目標の照合、新受理日は証拠から再見積",
+      "dependency": "Q0/最小改訂適合/G3/G4",
+      "stop": "延期の再承認なし、日付で条件緩和しない",
+      "state": "pending",
       "highlight": true,
       "decision_refs": [
-        "dec-q0-failure-branch"
+        "dec-step1-policy"
       ],
       "sources": [
         "src-master"
@@ -445,9 +514,9 @@
     {
       "id": "day-2026-10-09",
       "date": "2026-10-09",
-      "title": "未受理の原因・質問方針を本人判断、受理経路を優先",
-      "dependency": "別契約・資格/適合証跡・追加費用",
-      "stop": "無断で運営へ質問しない、深い探索は後回し",
+      "title": "未受理なら原因・質問方針を本人判断",
+      "dependency": "Q0/適合/受理の残工程",
+      "stop": "運営へ無断質問なし、AI性能研究/深い探索は後回し",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -458,9 +527,9 @@
     {
       "id": "day-2026-10-10",
       "date": "2026-10-10",
-      "title": "残量/受理日を再予算、M2既定省略を維持",
-      "dependency": "初回資格とcalの成立確認、未達分も計上",
-      "stop": "未受理/cal未了なら10/11以降の探索窓を受理修復へ振替",
+      "title": "最小G3/cal・残量を再予算",
+      "dependency": "資格・最小改訂受付・model/usage証拠",
+      "stop": "未受理なら探索窓を受理修復へ振替",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -471,9 +540,9 @@
     {
       "id": "day-2026-10-11",
       "date": "2026-10-11",
-      "title": "条件成立時のみE3全12×3×2=72、通常は受理修復優先",
-      "dependency": "受理S/cal/新契約と探索候補・全費用",
-      "stop": "G1未達なら挑戦者終了、受理が遅れれば探索を削除",
+      "title": "S受理時だけStep2の限定AI最小版",
+      "dependency": "S/cal・権限/受付方式・実装費振替",
+      "stop": "guardが機械的に固定できなければ導入停止",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -484,12 +553,15 @@
     {
       "id": "day-2026-10-12",
       "date": "2026-10-12",
-      "title": "規約差分照合、資格済み挑戦者がある時だけQ1 60",
-      "dependency": "E3/受理S・ON予算・最新規約差分",
-      "stop": "ON遅延/資格不良ならSのみ。Sなしなら本人へ期限判断",
+      "title": "規約適用版照合・AI-G3-01署名準備",
+      "dependency": "未来日付問題の解消・model/state・費用見積",
+      "stop": "署名なしに反復数/状態持越し試験を変更しない",
       "state": "pending",
       "highlight": true,
-      "decision_refs": [],
+      "decision_refs": [
+        "dec-ai-scope",
+        "dec-ai-contract"
+      ],
       "sources": [
         "src-master"
       ]
@@ -497,9 +569,9 @@
     {
       "id": "day-2026-10-13",
       "date": "2026-10-13",
-      "title": "Sのfull G3 ON/OFF72",
-      "dependency": "初回資格と受理版固定",
-      "stop": "S不適合なら提出経路再点検",
+      "title": "Step3: S full G3、署名時はON反復",
+      "dependency": "S固定・反復/障害費・state系列",
+      "stop": "各反復でG0/安全/既存G3条件、不明なら拡張停止",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -510,9 +582,9 @@
     {
       "id": "day-2026-10-14",
       "date": "2026-10-14",
-      "title": "R* full G3 ON/OFF72（挑戦者がある時）",
-      "dependency": "Q1・実測予算",
-      "stop": "挑戦者なしなら0。未検証でHへ進めない",
+      "title": "固定R*がある時だけE3/Q1/G3の残工程",
+      "dependency": "D対照・新seed・実測残枠・S受理",
+      "stop": "次点再選抜/未検証H移行なし、深い棚との二重追加禁止",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -523,9 +595,9 @@
     {
       "id": "day-2026-10-15",
       "date": "2026-10-15",
-      "title": "3障害・復帰/履歴、遅延時残G3",
-      "dependency": "正常G3とCPU排他",
-      "stop": "危険取引/予算超過なら候補除外",
+      "title": "障害/復帰・遅延・改訂/持越し記録確認",
+      "dependency": "正常cycle・受付/submit境界・CPU排他",
+      "stop": "危険取引/枠切れ/反復間符号反転なら停止",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -536,9 +608,9 @@
     {
       "id": "day-2026-10-16",
       "date": "2026-10-16",
-      "title": "結論・人間/生成費用を整理",
-      "dependency": "全探索記録",
-      "stop": "第三世代・追加モデル生成なし",
+      "title": "AI増分・決定論代替・費用を整理",
+      "dependency": "全予定の開封条件と証拠",
+      "stop": "LLM導入そのものを利益証明にしない",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -549,12 +621,14 @@
     {
       "id": "day-2026-10-17",
       "date": "2026-10-17",
-      "title": "480/240/未実施の容量判定",
-      "dependency": "G3実測・残枠・受理証跡",
-      "stop": "不足なら開始せずS維持を推奨",
+      "title": "本人がAI/深い探索配分、H480/240/未実施を決定",
+      "dependency": "ON倍率・全反復/資格費・受理証跡",
+      "stop": "不足なら探索を削る。Sのみ又は未実施、100h追加なし",
       "state": "pending",
       "highlight": true,
-      "decision_refs": [],
+      "decision_refs": [
+        "dec-ai-budget"
+      ],
       "sources": [
         "src-master"
       ]
@@ -562,9 +636,9 @@
     {
       "id": "day-2026-10-18",
       "date": "2026-10-18",
-      "title": "場/候補/10seed/判定コード封印",
-      "dependency": "正常10seed計画・資格/G3",
-      "stop": "未達ならHを開始しない",
+      "title": "Step4: 二場/候補/10seed/model/stateを封印",
+      "dependency": "資格/G3・独立系列と判定/費用契約",
+      "stop": "未達ならH開始なし、反復数を後付けしない",
       "state": "pending",
       "highlight": true,
       "decision_refs": [],
@@ -588,9 +662,9 @@
     {
       "id": "day-2026-10-20",
       "date": "2026-10-20",
-      "title": "H継続、通常最大6h",
-      "dependency": "前chunk正常・入力不変",
-      "stop": "障害で停止、性能再走禁止",
+      "title": "H継続・適用規約版を照合、通常最大6h",
+      "dependency": "前chunk正常・入力不変・10/20表示版の確認",
+      "stop": "仕様差分が出れば比較可能性を再判定、性能再走禁止",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
@@ -733,9 +807,9 @@
     {
       "id": "day-2026-10-31",
       "date": "2026-10-31",
-      "title": "最後に受理された版の照合",
-      "dependency": "最新締切の確認",
-      "stop": "ローカル資料は23:59 JST、駆込み無検証更新なし",
+      "title": "10/31 23:59 JSTまでに最後の受理版を照合",
+      "dependency": "本人指定期限・適用版・受理メール/hash",
+      "stop": "駆込み無検証更新なし。未受理版を最終扱いしない",
       "state": "pending",
       "highlight": true,
       "decision_refs": [],
@@ -840,19 +914,23 @@
       "workstream": "初回受理",
       "title": "新F_mix smoke / P60",
       "state": "blocked",
-      "evidence": "現契約の両候補FAIL。新契約の署名/候補固定/G0成立まで実走停止。",
+      "evidence": "xb-rのQ0契約PASS後。dev1目的/hash/G0と資格の照合が先。",
       "sources": [
-        "src-master"
+        "src-master",
+        "src-ai",
+        "src-repair"
       ]
     },
     {
       "id": "progress-g3",
       "workstream": "初回受理",
-      "title": "最小G3・ON時間校正",
+      "title": "最小改訂適合・G3/cal",
       "state": "blocked",
-      "evidence": "推論待ち・実変更/復帰・障害・API枠の証跡待ち。",
+      "evidence": "受理前に実改訂/拒否/復帰と機械的安全境界を確認。null固定promptのまま適合扱いしない。",
       "sources": [
-        "src-master"
+        "src-master",
+        "src-ai",
+        "src-repair"
       ]
     },
     {
@@ -890,11 +968,13 @@
     {
       "id": "progress-factors",
       "workstream": "探索",
-      "title": "E1 / D・E代替 / E3 / Q1",
+      "title": "AIと置換するE1 / D・E / E3 / Q1棚",
       "state": "blocked",
-      "evidence": "初回受理とcal、全工程費の確保後。M2は既定省略。",
+      "evidence": "受理/cal/AI実装・反復費と下流資格費を確保した後だけ。M2既定省略。",
       "sources": [
-        "src-master"
+        "src-master",
+        "src-ai",
+        "src-repair"
       ]
     },
     {
@@ -910,23 +990,46 @@
     {
       "id": "progress-astra",
       "workstream": "計画管理",
-      "title": "Q0b後のAstra計画更新",
+      "title": "MASTER rev 5・AI詳細設計",
       "state": "done",
-      "evidence": "Q0b提示値・未確認安全・G0本人判断・延期推奨・予算概算とqueueを本文/正本へ反映。原区間精算はClaudeの残作業。",
+      "evidence": "本人方針・コード事実・未署名AI-G3-01・段階日程/予算/queueを統合。実装/性能実証は別。",
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-master",
+        "src-ai",
+        "src-repair"
       ]
     },
     {
       "id": "progress-q0b-evidence",
       "workstream": "計測",
-      "title": "Q0b安全・失敗履歴・時間精算",
+      "title": "Q0b診断と契約証跡・時間の照合",
       "state": "pending",
-      "evidence": "Claudeが未集計欄と区間和集合を保存。未確認を0にしない。",
+      "evidence": "修理設計に後続診断あり。原ログ未読、未回収資産等の全契約証明と区間精算は未了。",
       "sources": [
-        "src-q0b",
+        "src-master",
+        "src-ai",
+        "src-repair"
+      ]
+    },
+    {
+      "id": "progress-dev1",
+      "workstream": "計測",
+      "title": "dev1-xb-r（本人申告）",
+      "state": "running",
+      "evidence": "計測worktreeには未アクセス。結果/目的/hash/G0/費用と資格契約の対応は未確認。",
+      "sources": [
+        "src-ai",
         "src-master"
+      ]
+    },
+    {
+      "id": "progress-ai-implementation",
+      "workstream": "探索",
+      "title": "限定AI受付・ON反復",
+      "state": "blocked",
+      "evidence": "設計のみ。機械的境界と提出適合は未実装、AI-G3-01未署名・追加費未予約。",
+      "sources": [
+        "src-ai"
       ]
     }
   ]
@@ -957,17 +1060,17 @@
     {
       "id": "B01",
       "rank": 1,
-      "title": "全候補Q0不合格・受理経路が停止",
+      "title": "第1ブロッカー: xb-r Q0契約クリア・受理S",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
       "owner": "human",
-      "evidence": "sonnet 44.56対56.50、opus 48.07対56.43。受理Sは未確認、現経路の10/8目標は不成立。",
-      "mitigation": "延期して設計修理を推奨。本人が新契約/別版F_mix/損失許容を決定。第3候補を自動追加しない。",
+      "evidence": "旧候補Q0/Q0bはFAIL。dev1は走行中の本人申告、xb-r資格/受理Sは未確認。10/8延期済み。",
+      "mitigation": "現在計測を保全し、終了後の目的/hash/G0/契約を照合。現Q0→最小改訂適合/G3/G4→本人受理を優先。AI/深いリーグで迂回しない。",
       "status": "open",
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-master",
+        "src-ai"
       ]
     },
     {
@@ -989,18 +1092,17 @@
     {
       "id": "B10",
       "rank": 3,
-      "title": "Q0b安全未集計・Q0未回収証跡の欠落",
+      "title": "Q0b診断と安全契約証跡の差",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "大",
       "owner": "Claude",
-      "evidence": "Q0bの違反/失敗読取/無効注文/revertは未確認。Q0の未回収欄n/aも未解決。",
+      "evidence": "rev 4安全欄は当時未集計。後続修理設計に診断あり、全資格証跡の照合は別。",
       "mitigation": "Claudeが全60世界の安全表を保存、欠落はnull/未確認。G0 A/C PASSから安全0を推定しない。",
       "status": "open",
       "sources": [
-        "src-q0b",
-        "src-master",
-        "src-morning"
+        "src-repair",
+        "src-master"
       ]
     },
     {
@@ -1011,11 +1113,12 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "確認済み下限≥18.6h。Q0b概算4.3333–4.7667h、実区間・非run・ONは未精算。",
-      "mitigation": "Claudeが区間和集合で精算。新資格/再走費は未予約、探索から削って再予算。S単独への切替も封印前に判断。",
+      "evidence": "100h既存配分を維持。dev1実占有・非run・ON/API費は未精算。",
+      "mitigation": "AI反復2候補は仮単価22.4h、既存G3より10.4h追加。KEEP deep残4.5hでは既存深い棚と併存不可。本人振替前は追加実走なし。 AI専用E3/Q1の基本9.5333hも確保が必要。S単独Hの節約で未比較AIを採用しない。",
       "status": "open",
       "sources": [
-        "src-budget-update"
+        "src-master",
+        "src-ai"
       ]
     },
     {
@@ -1103,34 +1206,31 @@
     {
       "id": "B09",
       "rank": 10,
-      "title": "改訂ON・障害復帰が未検証",
+      "title": "AIゲート隔離・改訂ONの価値/頑健性未証明",
       "severity": "Critical",
       "likelihood": "中",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "現行の性能資料はFROZEN。最小/full G3は未実施。",
-      "mitigation": "正常の変更適用/復帰と障害を記録、危険取引時は自由度縮小。必須改訂は止めない。",
+      "evidence": "stockはdecide全体を置換。promptだけで安全ゲート保存を保証しない。xb-rはnull固定診断用。",
+      "mitigation": "限定param受付と両送信経路を機械的に制限。最小G3後、署名したON反復・決定論対照。失敗/費用超過ならS維持。",
       "status": "open",
       "sources": [
-        "src-master",
-        "src-retro-u1"
+        "src-ai"
       ]
     },
     {
       "id": "B11",
       "rank": 11,
-      "title": "xb-core修正と利益機構の実測が未接続",
+      "title": "xb-rコードと計測入力・再現性の照合",
       "severity": "Warning",
       "likelihood": "高",
       "impact": "中",
       "owner": "Claude",
-      "evidence": "床・zero bid・検査の欠陥は修正報告。チェーン実測0、固定gas/base feeの制約。",
-      "mitigation": "新契約と初回経路の費用を確保するまで実走停止。机上で固定hash・赤対照・因子独立性を準備。",
+      "evidence": "league-v2版はclosure状態とperformance.now()期限分岐を持つ。dev1のコピー/hashは未確認。",
+      "mitigation": "計測は変更せず、終了後に担当者がhash/clock固定再生/期限挙動を照合。診断とQ0資格を分ける。",
       "status": "mitigating",
       "sources": [
-        "src-xb",
-        "src-morning",
-        "src-master"
+        "src-ai"
       ]
     },
     {
@@ -1158,12 +1258,11 @@
       "likelihood": "中",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "オンライン規約未確認。旧--submission記載、住所表汚染の履歴。",
-      "mitigation": "提出時に最新規約と固定upstream bytes、clean release、selftest、受理hashを照合。",
+      "evidence": "規約本文はオンライン取得済み、10/6公表・10/20発効の未来日付表示。適用版/許可model/改訂受付の提出適合は未確定。",
+      "mitigation": "初回G4/10/12/10/28に版とmodelを照合。isolated releaseの受付差分をbundle/scan/selftestで確認。",
       "status": "open",
       "sources": [
-        "src-upstream",
-        "src-retro-u1",
+        "src-ai",
         "src-master"
       ]
     },
@@ -1192,12 +1291,12 @@
       "likelihood": "低",
       "impact": "中",
       "owner": "Astra",
-      "evidence": "revision 4と正本データを更新。Q0b FAIL・安全未確認・G0本人判断・日程/予算/queueを同期。",
+      "evidence": "revision 5とAI詳細設計・正本データを更新。Q0優先・延期済みとAI未署名事項を分離。",
       "mitigation": "新たな安全/区間証跡が届いたら差分更新。今回の更新完了は安全確認完了を意味しない。",
       "status": "resolved",
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-master",
+        "src-ai"
       ]
     }
   ]
@@ -1213,17 +1312,34 @@
   ],
   "items": [
     {
+      "id": "queue-dev1-evidence",
+      "title": "dev1終了後の担当証跡照合",
+      "owner": "Claude",
+      "active": false,
+      "sources": [
+        "src-master",
+        "src-ai"
+      ],
+      "experiment": "dev1-evidence",
+      "priority": 1,
+      "state": "担当証跡待ち",
+      "worlds": 0,
+      "hours": null,
+      "window": "dev1-xb-r終了後",
+      "dependency": "本人申告の走行中計測を保全。目的/hash/G0/費用/資格契約を照合。新規実走は起動しない"
+    },
+    {
       "id": "queue-q0b-evidence",
       "experiment": "q0b-evidence",
-      "priority": 1,
+      "priority": 2,
       "title": "Q0b安全・G0履歴・時間証跡の補完",
       "state": "未確認証跡の補完",
       "worlds": 0,
       "hours": null,
-      "window": "次のClaude作業",
-      "dependency": "新規実走なし。安全/世界別最悪/G0失敗履歴と区間和集合を生成し保存。欠落は未確認のまま",
+      "window": "実行担当の次の空き枠",
+      "dependency": "修理設計の診断集計と契約証跡・G0失敗履歴・区間を照合。旧FAIL保持",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
         "src-q0b",
         "src-master"
@@ -1232,15 +1348,15 @@
     {
       "id": "queue-human-branch",
       "experiment": "human-branch",
-      "priority": 2,
-      "title": "本人の分岐・G0処理判断",
-      "state": "本人判断待ち",
+      "priority": 3,
+      "title": "Q0残契約・AI新論点の本人判断",
+      "state": "新契約事項のみ本人判断待ち",
       "worlds": 0,
       "hours": null,
-      "window": "証跡と選択肢を提示後",
-      "dependency": "(a)延期推奨/(b)別版Q0m署名/(d)損失許容、G0の除外/同一入力再走を別々に判断。無応答は停止",
+      "window": "Q0経路の不足事項判明後",
+      "dependency": "延期は既決。追加資格の回数/seed/費用・新受理日とAI契約を分離。現Q0条件を維持",
       "owner": "human",
-      "active": true,
+      "active": false,
       "sources": [
         "src-q0b",
         "src-master"
@@ -1249,15 +1365,15 @@
     {
       "id": "queue-mix-design",
       "experiment": "mix-design",
-      "priority": 3,
-      "title": "mix-design",
+      "priority": 4,
+      "title": "F_mixと最小改訂受付の設計",
       "state": "設計のみ",
       "worlds": 0,
       "hours": "1/2",
-      "window": "証跡補完後の空き枠",
-      "dependency": "10相手/hash/財布順/負荷入口と小さい防御版の設計差分を準備。契約締結・実走を代行しない",
+      "window": "計測を邪魔しない空き枠",
+      "dependency": "固定相手/slot/hashと限定改訂の受付・G4経路を設計。AI実装費は別見積",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
         "src-q0b",
         "src-master"
@@ -1266,13 +1382,13 @@
     {
       "id": "queue-first-mix",
       "experiment": "first-mix",
-      "priority": 4,
+      "priority": 5,
       "title": "first-mix",
       "state": "停止",
       "worlds": 12,
       "hours": "13/15",
-      "window": "新契約成立後のみ",
-      "dependency": "新資格経路の候補不変、roster/hash/G0を固定。現Q0bから自動継続不可",
+      "window": "Q0契約PASS後のみ",
+      "dependency": "候補不変・roster/hash/G0。診断完走を資格PASSにしない",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1283,13 +1399,13 @@
     {
       "id": "queue-q0m",
       "experiment": "q0m",
-      "priority": 5,
+      "priority": 6,
       "title": "q0m",
       "state": "未署名・未実施",
       "worlds": 60,
       "hours": "143/30",
-      "window": "別版の本人署名後のみ",
-      "dependency": "原Q0-AMEND-01は閲覧前条件失効。既知Q0b開示・未使用seed・smoke PASS。全量前の開封禁止",
+      "window": "本人が別場を選び別版署名した時のみ",
+      "dependency": "既知Q0b開示・未使用seed・smoke PASS。既定のxb-r Q0経路に混ぜない",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1300,12 +1416,12 @@
     {
       "id": "queue-first-p60",
       "experiment": "first-p60",
-      "priority": 6,
+      "priority": 7,
       "title": "first-p60",
       "state": "停止",
       "worlds": 60,
       "hours": "13/3",
-      "window": "新資格PASS後",
+      "window": "Q0 PASS後",
       "dependency": "候補不変・G3/G4費確保。公開回帰は資格代替不可",
       "owner": "Claude",
       "active": false,
@@ -1317,13 +1433,13 @@
     {
       "id": "queue-first-g3",
       "experiment": "first-g3",
-      "priority": 7,
+      "priority": 8,
       "title": "first-g3",
       "state": "停止",
       "worlds": 36,
       "hours": "13/5",
-      "window": "P60/資格後",
-      "dependency": "ON/OFF最小校正＋正常/障害、本人モデル/鍵準備。13分見積は仮",
+      "window": "P60/資格・最小改訂policy後",
+      "dependency": "ON/OFF最小校正・実適用/復帰・機械的境界。本人モデル/鍵準備、金銭費別",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1334,13 +1450,13 @@
     {
       "id": "queue-m1-implementation",
       "experiment": "m1-implementation",
-      "priority": 8,
+      "priority": 9,
       "title": "m1-implementation",
       "state": "保留",
       "worlds": 0,
       "hours": "19/10",
-      "window": "本人の再設計経路確定後",
-      "dependency": "D/E/Aの候補棚。現第2候補枠を越す実装・資格を自動開始しない",
+      "window": "受理S後の振替契約次第",
+      "dependency": "AI実装/対照を優先する場合はこの棚と置換。追加費未見積のまま開始しない",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1351,13 +1467,13 @@
     {
       "id": "queue-factor-ab",
       "experiment": "factor-ab",
-      "priority": 9,
+      "priority": 10,
       "title": "factor-ab",
       "state": "未解放",
       "worlds": 48,
       "hours": "52/15",
-      "window": "初回受理/cal後のみ",
-      "dependency": "全残量/固定hash/新begin。資格全滅のため実走0",
+      "window": "初回受理/cal・AI費確保後のみ",
+      "dependency": "既存深いリーグ棚。AIの反復/資格費との重複予約なし",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1368,13 +1484,13 @@
     {
       "id": "queue-m1-pair",
       "experiment": "m1-pair",
-      "priority": 10,
+      "priority": 11,
       "title": "m1-pair",
       "state": "代替棚・停止",
       "worlds": 24,
       "hours": "39/20",
       "window": "探索経路の置換のみ",
-      "dependency": "D/E/親の診断、追加資格許可にはならない。下流E3/Q費を予約",
+      "dependency": "D/E/親の診断。AIとの二重追加禁止、下流E3/Q費を予約",
       "owner": "Claude",
       "active": false,
       "sources": [
@@ -1385,7 +1501,7 @@
     {
       "id": "queue-m2",
       "experiment": "m2",
-      "priority": 11,
+      "priority": 12,
       "title": "m2",
       "state": "保留",
       "worlds": 60,
@@ -1400,9 +1516,9 @@
       ]
     }
   ],
-  "note": "Q0bとAstra更新は完了。次はClaudeの証跡補完と本人判断。全量見積は実行許可ではなく、新規実走は停止中。未見積は0hではない。",
+  "note": "dev1走行中は本人申告。次は終了後の担当証跡と現Q0契約の照合。今回の更新は新規実走を解放しない。",
   "day_limit_hours": 6,
-  "bundle": "旧5.7hの即日実走束は失効。別版Q0m経路の基本見積17.4333h＋未計上分、再設計/追加資格費は未見積。10/8受理は保証しない。"
+  "bundle": "延期は既決。Q0/受理を先に済ませ、AI実装・反復は深いリーグ棚からの振替契約後。旧Q0m基本17.4333hをxb-r残費へ流用しない。"
 }
 </script>
 <!-- END data-queue -->
@@ -1411,20 +1527,21 @@
 {
   "sources": [
     "src-master",
-    "src-budget-update"
+    "src-budget-update",
+    "src-ai"
   ],
   "total_hours": "100",
-  "interpretation": "forward-100hを使用中・本人の確認待ち",
+  "interpretation": "forward100h運用を維持・起点実区間の精算待ち",
   "start_at": "2026-10-04T01:00:00+09:00",
   "consumed_lower_bound_hours": "18.6",
   "consumed_exact_hours": null,
-  "note": "確認済み実測下限18.6hは据置。Q0b完了60世界の時間概算4.3333–4.7667h、下限＋Q0bは22.9333–23.3667h相当＋未計上分。D0/Q0も重複なく加える仮置き31.1667–32.0333hは未精算。実区間を得るまで推定を実測にしない。",
+  "note": "確認済み実測下限18.6hは据置。Q0b完了60世界の時間概算4.3333–4.7667h、下限＋Q0bは22.9333–23.3667h相当＋未計上分。D0/Q0も重複なく加える仮置き31.1667–32.0333hは未精算。実区間を得るまで推定を実測にしない。 dev1-xb-r費用は本更新で未精算。AIの追加費は未署名/未予約で、未消費や0hを意味しない。",
   "columns": [
     {
       "id": "budget-keep",
       "key": "keep_hours",
       "title": "現行 KEEP",
-      "state": "配分維持・新規実走停止"
+      "state": "既存配分維持・AI追加費未解放"
     },
     {
       "id": "budget-amend",
@@ -1512,7 +1629,7 @@
       "keep_hours": "149/10",
       "amend_hours": "152/15",
       "experiments": "factor-ab; m1-implementation; m1-pair; m2; e3-full; q1",
-      "note": "維持14.9h／改訂10.1333h。全研究棚の同時実施を約束しない",
+      "note": "維持14.9h／改訂10.1333h。全研究棚の同時実施を約束しない AI実装/対照/反復の置換元。全部併存を約束しない。",
       "accounting": "将来予約・解放0",
       "sources": [
         "src-master"
@@ -1524,7 +1641,7 @@
       "keep_hours": "12",
       "amend_hours": "12",
       "experiments": "g3-fallback; g3-challenger; g3-faults",
-      "note": "144世界10.4h＋障害1.6h、ON実測で再計算",
+      "note": "144世界10.4h＋障害1.6h、ON実測で再計算 AI-G3-01の3応答履歴は別契約、現行2候補G3と二重に予約しない。",
       "accounting": "将来予約",
       "sources": [
         "src-master"
@@ -1595,7 +1712,7 @@
       ]
     ]
   },
-  "on_note": "ONが遅ければ探索を削り、封印前にS単独へ切替える。seed削減・場の除外・途中開封で帳尻を合わせない。",
+  "on_note": "AI反復案: 1候補144世界＋障害=12h、2候補288世界＋障害=22.4h（13分/p3・ON倍率1の算術）。追加10.4hをdeepから移すとKEEP残4.5h、AMENDは不足。API金銭費は別。最小calで倍率と同時呼出枠を確認し、封印前に再配分する。 AI専用E3/Q1は別に132世界・143/15h×ON倍率の再予約。全費用不足ならAI挑戦者は進めない。",
   "historic_bar_note": "履歴の下限 / forward計画と同じ時間スケール（枠外、差引き禁止）",
   "consumption_estimate": {
     "sources": [
@@ -2398,7 +2515,7 @@
       "source": "src-q0b",
       "header_key": "Q0b項目"
     },
-    "note": "本人提示のClaude集計。G0 FAIL 2世界を含む全60世界、12レジーム×seed41101–41105、q0ba/q0bb/q0bc-opus-1。原ログ未再監査。除外/再走は本人判断で、平均T FAILを取り消さない。",
+    "note": "本人提示のClaude集計。G0 FAIL 2世界を含む全60世界、12レジーム×seed41101–41105、q0ba/q0bb/q0bc-opus-1。原ログ未再監査。除外/再走は本人判断で、平均T FAILを取り消さない。 安全欄はrev 4引継ぎ時点の保存値。後続の修理設計は別診断、資格認定ではない。",
     "sources": [
       "src-q0b",
       "src-master"
@@ -2498,7 +2615,7 @@
       "due_date": null,
       "title": "現Q0契約の維持（今朝決定）",
       "status": "decided",
-      "note": "両候補のFAILを保持。今朝のQ0b待ちは完了、本人は新分岐をまだ決めていない。",
+      "note": "現Q0条件維持。旧両候補FAIL保持。本人方針はxb-rの決定論Q0優先・10/8延期済み。",
       "sources": [
         "src-q0b",
         "src-master",
@@ -2511,7 +2628,7 @@
       "due_date": null,
       "title": "Q0b完了後にAstraが計画更新",
       "status": "closed",
-      "note": "計画revision 4と正本データへ反映済み。安全集計・区間精算はClaudeの残作業。",
+      "note": "Q0bのrev 4更新済みに続き、本人方針とAI設計をrev 5へ統合。測定/受理の完了を意味しない。",
       "sources": [
         "src-q0b",
         "src-master"
@@ -2523,7 +2640,7 @@
       "due_date": null,
       "title": "forward-100hの解釈",
       "status": "confirmation-pending",
-      "note": "運用は10/4以降の100h。本人の明示確認待ち、確定済みと書かない。18.6h下限の履歴は残す。",
+      "note": "forward100h運用を維持。過去込みへ再質問しない。起点区間/消費精算は担当証跡待ち、100hを再起算しない。",
       "sources": [
         "src-handoff",
         "src-master"
@@ -2556,12 +2673,13 @@
       "id": "dec-q0-failure-branch",
       "date": "2026-10-04",
       "due_date": null,
-      "title": "両候補不合格後の受理目標・新契約",
+      "title": "延期後のQ0追加資格・費用・受理日",
       "status": "open",
-      "note": "延期/設計修理を推奨。別版Q0m署名又は損失許容の事前明文化も本人判断。inc-zeta最小版の第3候補化は現契約で不可。",
+      "note": "10/8延期/設計修理は本人決定済み。未決はdev1と資格契約の対応、追加回数/seed/費用・新受理日。AI契約とは分離する。",
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-master",
+        "src-ai",
+        "src-repair"
       ]
     },
     {
@@ -2573,6 +2691,54 @@
       "note": "除外か同一入力再走（失敗履歴保持）を本人が決める。Q0m条項の自動適用なし。どちらでも今回の平均T不合格を保持。",
       "sources": [
         "src-q0b",
+        "src-master"
+      ]
+    },
+    {
+      "id": "dec-step1-policy",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "Step1決定論Q0優先・10/8受理延期",
+      "status": "decided",
+      "note": "今回本人方針。受理前の最小改訂適合は別途必要。AI性能実験をQ0より優先しない。",
+      "sources": [
+        "src-ai",
+        "src-master"
+      ]
+    },
+    {
+      "id": "dec-ai-scope",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "AIの権限と機械的受付境界",
+      "status": "open",
+      "note": "推奨: 限定param提案＋固定コア。反証: guard迂回、release差分不適合、単純適応で十分なら権限拡張しない。",
+      "sources": [
+        "src-ai",
+        "src-master"
+      ]
+    },
+    {
+      "id": "dec-ai-contract",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "AI-G3-01: 反復/対照/state/費用",
+      "status": "unsigned",
+      "note": "ON3独立応答履歴/OFF1、既存G3を各反復に要求する案。AI専用E3/Q1のON mode・決定論対照・系列/再生・API上限とAir振替を開封前に署名。反証: 退行/不安定/費用超過ならS維持。",
+      "sources": [
+        "src-ai",
+        "src-master"
+      ]
+    },
+    {
+      "id": "dec-ai-budget",
+      "date": "2026-10-04",
+      "due_date": "2026-10-17",
+      "title": "AI・深いリーグ・H480/240の配分",
+      "status": "open",
+      "note": "推奨: 限定AI検証を優先し探索を削る。反証: 実装/資格/反復・ON遅延で受理を圧迫するならAI拡張を中止、Sのみ又はH未実施。100h追加なし。",
+      "sources": [
+        "src-ai",
         "src-master"
       ]
     }
@@ -2596,6 +2762,42 @@
   ],
   "note": "追記専用・記録時刻の降順。同時刻は許可。正確な出来事時刻がない履歴は移行時刻で追記し、対象日と時刻根拠を併記。既存entryは訂正せず[誤り]を追加。",
   "items": [
+    {
+      "id": "log-052",
+      "timestamp": "2026-10-04T14:21:16+09:00",
+      "type": "誤り",
+      "summary": "rev 4の「10/8延期は本人未決」を訂正: 延期済み。league-v2 xb-rは状態/clock期限分岐があり厳密な純粋関数ではない。dev1のコピーは未確認。",
+      "sources": [
+        "src-ai",
+        "src-master"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる記録時刻。dev1の開始/終了時刻は未確認。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-051",
+      "timestamp": "2026-10-04T14:21:16+09:00",
+      "type": "計画変更",
+      "summary": "MASTER rev 5へStep1 Q0/受理→限定AI→反復→封印/受理を統合。AI-G3-01は未署名、100h両列維持、追加費は深い棚との振替待ち。",
+      "sources": [
+        "src-ai",
+        "src-master"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる記録時刻。dev1の開始/終了時刻は未確認。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-050",
+      "timestamp": "2026-10-04T14:21:16+09:00",
+      "type": "レビュー",
+      "summary": "規約・SDK/runtime/proxy/Ollama公開説明を確認。規約ページの未来日付表示は適用確認と分離。鍵・計測worktreeは未アクセス、実装/新規実走/コミットなし。",
+      "sources": [
+        "src-ai",
+        "src-master"
+      ],
+      "time_basis": "TZ=Asia/Tokyo dateによる記録時刻。dev1の開始/終了時刻は未確認。",
+      "event_date": "2026-10-04"
+    },
     {
       "id": "log-049",
       "timestamp": "2026-10-04T12:47:32+09:00",
