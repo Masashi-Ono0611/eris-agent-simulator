@@ -1,4 +1,4 @@
-// xb-r v2: spot-only repair of the sonnet-derived xb-core V0.
+// xb-r v3: spot-only repair of the sonnet-derived xb-core V0.
 // Market decoding and funding normalization below are copied from xb-core.
 import type { AgentContext, AgentObservation } from "@eris/sdk";
 import { BALANCER, MARKET_LEGS, UNISWAP } from "@eris/sdk/constants.js";
@@ -12,6 +12,8 @@ export type Params = Readonly<{
   R5_PROFITABLE_RESTORE: boolean;
   R6_ANCHOR_CROSS: boolean;
   R7_SINGLE_ENTRY: boolean;
+  R8_SETTLED_COOLDOWN: boolean;
+  R9_BUNDLE_HEADROOM: boolean;
   ENTRY_BPS: number;
   SINGLE_EDGE_BPS: number;
 }>;
@@ -19,10 +21,15 @@ export const PARAMS: Params = Object.freeze({
   R1_BUNDLE_PRIORITY: true, R2_BALANCE_FLOOR: true, R3_ENTRY_ONLY: true,
   R4_COMPETITOR_BID: true, R5_PROFITABLE_RESTORE: true,
   R6_ANCHOR_CROSS: true, R7_SINGLE_ENTRY: true,
-  ENTRY_BPS: 60, SINGLE_EDGE_BPS: 100,
+  R8_SETTLED_COOLDOWN: true, R9_BUNDLE_HEADROOM: false,
+  ENTRY_BPS: 50, SINGLE_EDGE_BPS: 100,
+});
+// v2 replay profile; v3 factors are independently switchable and not AI controls.
+export const DEV3A_PARAMS: Params = Object.freeze({ ...PARAMS,
+  R8_SETTLED_COOLDOWN: false, R9_BUNDLE_HEADROOM: false, ENTRY_BPS: 60,
 });
 // Historical diagnostic profile. All factors are baked, never read from environment.
-export const DEV2_PARAMS: Params = Object.freeze({ ...PARAMS,
+export const DEV2_PARAMS: Params = Object.freeze({ ...DEV3A_PARAMS,
   R6_ANCHOR_CROSS: false, R7_SINGLE_ENTRY: false, ENTRY_BPS: 50,
 });
 export type Action = Record<string, any>;
@@ -163,7 +170,12 @@ export function enumerateCandidates(obs: AgentObservation, p: Params = PARAMS,
         // Keep the same independent-leg band even when the anchor residue is dust.
         const crossAnchor = p.R6_ANCHOR_CROSS && !endgame &&
           (p.R7_SINGLE_ENTRY || rawEdge * 10000 > p.SINGLE_EDGE_BPS);
-        const room = Math.max(0, restoring && !crossAnchor ? Math.abs(held - initial) : buy ? upper - held : held - lower);
+        // Optional allocation probe: reserve half the band for independently
+        // funded bundle legs. This tightens single risk; never widens the hard band.
+        const singleUpper = p.R9_BUNDLE_HEADROOM ? initial * (1 + INV_BAND / 2) : upper;
+        const singleLower = p.R9_BUNDLE_HEADROOM ? initial * (1 - INV_BAND / 2) : lower;
+        const room = Math.max(0, restoring && !crossAnchor ? Math.abs(held - initial)
+          : buy ? singleUpper - held : held - singleLower);
         const usd = Math.min(sizeUsd(edge, slope, buy ? cash : held * v.mid, cap, p.R2_BALANCE_FLOOR),
           room * v.mid / (buy ? 1.008 : 1), cap * Math.min(1, v.mid / m.fair));
         if (!(usd >= 50)) continue;
@@ -282,7 +294,8 @@ export function selectCandidate(obs: AgentObservation, all: readonly Candidate[]
 
 function validateParams(p: Params): void {
   for (const key of ["R1_BUNDLE_PRIORITY", "R2_BALANCE_FLOOR", "R3_ENTRY_ONLY",
-    "R4_COMPETITOR_BID", "R5_PROFITABLE_RESTORE", "R6_ANCHOR_CROSS", "R7_SINGLE_ENTRY"] as const) {
+    "R4_COMPETITOR_BID", "R5_PROFITABLE_RESTORE", "R6_ANCHOR_CROSS", "R7_SINGLE_ENTRY",
+    "R8_SETTLED_COOLDOWN", "R9_BUNDLE_HEADROOM"] as const) {
     if (typeof p[key] !== "boolean") throw new TypeError(`${key} must be boolean`);
   }
   if (!Number.isFinite(p.ENTRY_BPS) || p.ENTRY_BPS < 20 || p.ENTRY_BPS > 60 || p.ENTRY_BPS % 5 !== 0)
@@ -291,28 +304,54 @@ function validateParams(p: Params): void {
     throw new RangeError("SINGLE_EDGE_BPS must be finite and nonnegative");
 }
 
+// Balance confirmation, not a receipt oracle. Release just the next-block
+// cooldown for an exact-input single whose debit AND proceeds are now visible.
+// Any ambiguity (partial bundle, unchanged wallet, gas refill, another base
+// moving, skipped block) keeps the historical two-block wait. No extra RPC.
+export function settledSingle(before: AgentObservation, action: Action, after: AgentObservation): boolean {
+  try {
+    if (before.runId !== after.runId || Number(after.blockNumber) !== Number(before.blockNumber) + 1 ||
+        !Object.values(SWAPS).includes(action.type) || !BASES.includes(action.base) ||
+        BigInt(after.balances.ethWei) >= BigInt(before.balances.ethWei)) return false;
+    const base = action.base as Base, other = base === "WETH" ? "WBTC" : "WETH";
+    if (balanceOf(before, other) !== balanceOf(after, other)) return false;
+    const cashDelta = balanceOf(after, "USDC") - balanceOf(before, "USDC");
+    const baseDelta = balanceOf(after, base) - balanceOf(before, base);
+    const amount = BigInt(action.amountIn);
+    if (amount <= 0n) return false;
+    return action.tokenIn === "USDC" ? cashDelta === -amount && baseDelta > 0n
+      : action.tokenIn === base && baseDelta === -amount && cashDelta > 0n;
+  } catch { return false; }
+}
+
 export function createAgent(params: Params = PARAMS, now: () => number = () => performance.now()) {
   const p = Object.freeze({ ...params });
   validateParams(p);
   let run = "", lastBlock = -1, lastRemaining = Infinity;
   const lastSent = new Map<Base, number>();
+  let previous: { observation: AgentObservation; action: Action } | undefined;
   return function decide(obs: AgentObservation, _ctx?: AgentContext,
     execution?: { started: number; bids: SpotBids | undefined }): Action {
     try {
       const started = execution?.started ?? now(), block = Number(obs.blockNumber), left = remaining(obs);
       if (!Number.isSafeInteger(block) || block < 0) return noop("invalid block");
       if (run !== obs.runId || block < lastBlock || left > lastRemaining + 5) {
-        run = obs.runId; lastBlock = -1; lastSent.clear();
+        run = obs.runId; lastBlock = -1; lastSent.clear(); previous = undefined;
       }
       if (block === lastBlock) return noop("duplicate observation");
       lastBlock = block; lastRemaining = left;
       if (left <= 0) return noop("valuation boundary or unknown horizon");
       const cooling = new Set<Base>();
       for (const [base, at] of lastSent) if (block - at < 2) cooling.add(base);
+      if (p.R8_SETTLED_COOLDOWN && previous && settledSingle(previous.observation, previous.action, obs))
+        cooling.delete(previous.action.base);
       const all = enumerateCandidates(obs, p, cooling);
       const action = selectCandidate(obs, all, p, execution?.bids);
       if (now() - started >= 4000) return noop("decision deadline reserve");
-      if (action.type !== "noop") lastSent.set(action.base, block);
+      if (action.type !== "noop") {
+        lastSent.set(action.base, block);
+        previous = { observation: structuredClone(obs), action: structuredClone(action) };
+      }
       return action;
     } catch {
       return noop("invalid observation");

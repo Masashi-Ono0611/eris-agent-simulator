@@ -5,10 +5,11 @@ import { readFileSync } from 'node:fs';
 import type { AgentObservation } from '@eris/sdk';
 import * as xb from '../example/agents/xb-r/agent.js';
 
+const PARAMS = (xb as any).DEV3A_PARAMS ?? xb.PARAMS;
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/xb-r-dev2.json', import.meta.url), 'utf8'));
 // Extra properties are deliberately structural: the exact old source can load
 // these tests and must fail behavioral assertions, not missing-export errors.
-const profile = (r6: boolean, r7: boolean, entry = 60) => ({ ...xb.PARAMS,
+const profile = (r6: boolean, r7: boolean, entry = 60) => ({ ...PARAMS,
   ENTRY_BPS: entry, R6_ANCHOR_CROSS: r6, R7_SINGLE_ENTRY: r7 }) as xb.Params;
 const replay = (frame: any, p: xb.Params) => xb.createAgent(p, () => 0)(
   structuredClone(frame.observation), undefined,
@@ -37,11 +38,11 @@ for (const side of ['buy', 'sell']) {
   });
 }
 test('DEV2 defaults retain initial entry60 and independently switch both repairs', () => {
-  assert.equal(xb.PARAMS.ENTRY_BPS, 60);
-  assert.equal((xb.PARAMS as any).R6_ANCHOR_CROSS, true);
-  assert.equal((xb.PARAMS as any).R7_SINGLE_ENTRY, true);
+  assert.equal(PARAMS.ENTRY_BPS, 60);
+  assert.equal((PARAMS as any).R6_ANCHOR_CROSS, true);
+  assert.equal((PARAMS as any).R7_SINGLE_ENTRY, true);
   for (const f of fixture.frames) {
-    const a = replay(f, xb.PARAMS);
+    const a = replay(f, PARAMS);
     assert.notEqual(a.type, 'noop'); safeAction(f.observation, a);
   }
 });

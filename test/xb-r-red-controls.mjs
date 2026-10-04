@@ -39,13 +39,21 @@ const controls = [
   ["DEV2-endgame-cross", "DEV2 endgame cannot", "p.R6_ANCHOR_CROSS && !endgame &&", "p.R6_ANCHOR_CROSS &&"],
   ["DEV2-cross-without-entry", "DEV2 crossing with R7 off", "(p.R7_SINGLE_ENTRY || rawEdge * 10000 > p.SINGLE_EDGE_BPS)", "true"],
   ["DEV2-entry-step", "DEV2 entry admits only", " || p.ENTRY_BPS % 5 !== 0", ""],
+  ["DEV3-default-entry", "DEV3 defaults", "ENTRY_BPS: 50, SINGLE_EDGE_BPS", "ENTRY_BPS: 60, SINGLE_EDGE_BPS"],
+  ["DEV3-settlement-off", "DEV3 R8 state machine", "p.R8_SETTLED_COOLDOWN && previous", "false && previous"],
+  ["DEV3-no-input-confirmation", "DEV3 R8 rejects", "cashDelta === -amount && baseDelta > 0n", "baseDelta > 0n"],
+  ["DEV3-no-proceeds-confirmation", "DEV3 R8 rejects", "baseDelta === -amount && cashDelta > 0n", "baseDelta === -amount"],
+  ["DEV3-no-gas-confirmation", "DEV3 R8 rejects", "BigInt(after.balances.ethWei) >= BigInt(before.balances.ethWei)", "false"],
+  ["DEV3-other-base-ambiguity", "DEV3 R8 rejects", "balanceOf(before, other) !== balanceOf(after, other)", "false"],
+  ["DEV3-headroom-off", "DEV3 R9 reserves", "p.R9_BUNDLE_HEADROOM ? initial * (1 + INV_BAND / 2)", "false ? initial * (1 + INV_BAND / 2)"],
+
 ];
 const records = [];
 function run(label, pattern) {
-  const args = ["--import", "tsx", "--test", "--test-reporter=tap"];
+  const args = ["--import", "tsx", "--test", "--test-concurrency=1", "--test-reporter=tap"];
   if (pattern) args.push(`--test-name-pattern=${pattern}`);
-  args.push(...(pattern ? [pattern.startsWith("DEV2") ? "test/xb-r-dev2.test.ts" : "test/xb-r.test.ts"]
-    : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts", "test/xb-r-dev2.test.ts"]));
+  args.push(...(pattern ? [pattern.startsWith("DEV3") ? "test/xb-r-dev3a.test.ts" : pattern.startsWith("DEV2") ? "test/xb-r-dev2.test.ts" : "test/xb-r.test.ts"]
+    : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts", "test/xb-r-dev2.test.ts", "test/xb-r-dev3a.test.ts"]));
   const result = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8", timeout: 60000 });
   const log = (result.stdout ?? "") + (result.stderr ?? "");
   writeFileSync(join(evidence, `${label}.log`), log);
@@ -73,6 +81,9 @@ try {
   const dev2 = spawnSync("git", ["show", "2ae0d59:example/agents/xb-r/agent.ts"], { cwd: root, encoding: "utf8" });
   assert.equal(dev2.status, 0, "load the dev2 source without changing git state");
   expectRed("DEV2-original-2ae0d59", "DEV2 R[67]", dev2.stdout);
+  const dev3 = spawnSync("git", ["show", "a646e9b:example/agents/xb-r/agent.ts"], { cwd: root, encoding: "utf8" });
+  assert.equal(dev3.status, 0, "load exact dev3a source without changing git state");
+  expectRed("DEV3-original-a646e9b", "DEV3 (defaults|R8 confirms)", dev3.stdout);
   for (const [label, pattern, from, to] of controls) {
     assert.equal(original.split(from).length, 2, `${label}: unique mutation anchor`);
     expectRed(label, pattern, original.replace(from, to));
