@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static revision-7 plan/dashboard checks. Never reads run data or network."""
+"""Static revision-8 plan/dashboard checks. Never reads run data or network."""
 
 from datetime import date, timedelta
 from fractions import Fraction
@@ -21,6 +21,9 @@ FINDINGS = ([f"C{i}" for i in range(1, 6)] + [f"W{i}" for i in range(6, 14)] +
 
 PRIOR_LOG_DIGEST = "2d41bce950f66f7b06c2e2a567a84d019d05f0201cb529b31f1691b9eb4c19e2"
 REDESIGN_LOG_DIGEST = "1129b604c2877fc19e889c77a3c5746d0800d343a3ba2f8a2bacfefe24b24958"
+
+
+REV7_LOG_DIGEST = "87777dab1ccb0bdff9aaffebe6fdea449d29b9e5080a86d44f3cdac7ea1997dc"
 
 
 def digest(value):
@@ -73,8 +76,8 @@ _RESULT_LINES = [
     "PASS AI: ENTRY_BPS 20-60, max step 5; R* ON3/OFF1 + S full = 216 worlds / 17.2 h; no epoch learning carryover",
     "PASS cutover: Oct 17 evidence gates select H480 / S240 / no campaign; no fresh deep exploration",
     "PASS schedule/review: 28 JST dates, 18 findings, five roadmap steps match dashboard",
-    "PASS preservation: all 65 pre-redesign logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
-    "PASS current: dev3a measured 18-world handoff; dev3b/v3 unknown; no invented full-12 result or qualification",
+    "PASS preservation: all 68 pre-rev8 logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
+    "PASS current: dev4 measured 24-world handoff; dev5 same-seed pending (2/3); no invented result or qualification",
     "PASS operations: independent completion monitoring, 150/180 minute iterations, max 3, fresh 12x2 screen; not execution approval",
     "LIMIT: static consistency only; raw runs, actual hours, strategy safety, browser layout and acceptance unverified",
     "PASS check-plan-consistency",
@@ -82,7 +85,7 @@ _RESULT_LINES = [
 
 
 def check_documents(document, html, morning, m1, ai):
-    require("revision 7" in document.splitlines()[0], "plan revision 7 title")
+    require("revision 8" in document.splitlines()[0], "plan revision 8 title")
     sources = {"d0": source_table(morning, "## 2."),
                "q0": source_table(morning, "## 5."),
                "m1": source_table(m1, "## 結果")}
@@ -148,11 +151,11 @@ def check_documents(document, html, morning, m1, ai):
     require([int(r["順序"]) for r in queue] == list(range(1, len(QUEUE)+1)), "queue numbers")
     require([r["実験ID"] for r in queue] == QUEUE, "queue priority")
     require(all(r["状態"] and r["窓"] and r["依存・停止"] for r in queue), "queue gates missing")
-    expected_queue = [("0", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
+    expected_queue = [("24", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
                       ("60", "143/30"), ("60", "13/3"), ("36", "13/5"),
                       ("0", "未見積"), ("48", "52/15"), ("48", "52/15"), ("60", "13/3")]
     require([(r["世界数"], r["全量見積h"]) for r in queue] == expected_queue, "queue worlds/hours")
-    require(queue[0]["状態"] == "dev3b走行中との引継ぎ・結果未確認" and queue[1]["状態"] == "証跡精算のみ・再走なし" and
+    require(queue[0]["状態"] == "dev5走行中との引継ぎ・結果未確認" and queue[1]["状態"] == "証跡精算のみ・再走なし" and
             queue[2]["状態"] == "条件付き決定・実行停止" and queue[5]["状態"] == "不採用・旧未署名記録", "repair/requalification/archive state")
     require(all(queue[i]["状態"] == "停止" for i in (4, 6, 7)), "qualification queue needs Q0 evidence")
     require(queue[11]["状態"] == "不採用・0h配分", "M2 must remain zero allocation")
@@ -217,8 +220,8 @@ def check_documents(document, html, morning, m1, ai):
                 (int(r["順序"]), r["状態"], int(r["世界数"]), None if r["全量見積h"] == "未見積" else r["全量見積h"], r["窓"], r["依存・停止"]),
                 "dashboard queue row differs: "+r["実験ID"])
     require(dq[0]["active"] is True and all(not q["active"] for q in dq[1:]),
-            "only reported dev3b follow-up may be active; Q0 and downstream remain blocked")
-    require('世界数未提示（0は新規予約なし）' in dq[0]['dependency'], 'unknown dev3b world count is not zero measured worlds')
+            "only reported dev5 may be active; Q0 and downstream remain blocked")
+    require(dq[0]['worlds'] == 24 and dq[0]['hours'] is None and '既見seedの開発診断で独立screen/Q0には使えない' in dq[0]['dependency'], 'dev5 known scope, unknown cost and independent-screen boundary')
     require('35001/35002はdev3診断で既見のため再利用不可' in dq[9]['dependency'],
             'D-control cannot silently reuse dev3 development seeds')
     milestones = data["milestones"]["items"]
@@ -365,12 +368,13 @@ def check_documents(document, html, morning, m1, ai):
                    'submit_failed 27 / submitted 980', '最小値は未提示', '全18世界で正 / 0', '勝利/統計的同等ではない'):
         require(phrase in block(document,'source-dev3a'), 'dev3a source fact missing: '+phrase)
     dev3b, v3 = data['status']['dev3b'], data['status']['repair_v3']
-    require((dev3b['state'],dev3b['verified'],dev3b['regimes']) == ('reported-running-unverified',False,3),
-            'dev3b is a reported running job, not current process verification')
+    require((dev3b['state'],dev3b['verified'],dev3b['regimes']) == ('historical-unverified',False,3),
+            'dev3b is historical unverified handoff, not the current run')
     require(all(dev3b[k] is None for k in ('seeds','worlds','started_at','expected_end','completed_at',
                                          'completed_worlds','g0','result','fix_commit')), 'dev3b unknowns must remain null')
-    require(v3['state'] == 'reported-implementing-unverified' and v3['verified'] is False and
-            all(v3[k] is None for k in ('commit','tests','result')), 'v3 implementation/test/performance unverified')
+    require(v3['state'] == 'implemented-reported' and v3['verified'] is False and
+            v3['commit'] == 'd30cbbb' and v3['result_ref'] == 'status.dev4' and
+            all(v3[k] is None for k in ('tests','result')), 'v3 reported hash; tests unknown, performance references dev4')
     op = data['plan']['continuous_operation']
     expected_op = dict(status='defined-not-verified',monitor_status='unverified',iteration_start='v3-first-smoke',
                        iteration_target_minutes=150,iteration_limit_minutes=180,iteration_limit=3,
@@ -395,7 +399,7 @@ def check_documents(document, html, morning, m1, ai):
             'v2/dev3 MASTER handoff missing')
     require(data['status']['human_action'] == 'なし' and data['budget']['consumed_forward_hours'] is None and
             data['budget']['consumption_status'] == '未精算', 'human action and unknown forward consumption')
-    require(data['plan']['revision'] == 7 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
+    require(data['plan']['revision'] == 8 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
             'revision and submission deadline')
     report = data["decisions"]["ollama_report"]
     require(report["evidence_kind"] == "本人報告" and report["registration"] == "accepted-display-reported" and
@@ -414,7 +418,9 @@ def check_documents(document, html, morning, m1, ai):
             "Q0 contract is first blocker")
     progress = {i["id"]: i for i in data["progress"]["items"]}
     require(progress["progress-dev2"]["state"] == "done" and progress['progress-dev3']['state'] == 'done' and
-            progress['progress-dev3b']['state'] == progress['progress-xbr-v3']['state'] == 'running' and
+            progress['progress-dev3b']['state'] == 'pending' and progress['progress-xbr-v3']['state'] == 'done' and
+            progress['progress-dev4']['state'] == progress['progress-xbr-v5']['state'] == 'done' and
+            progress['progress-dev5']['state'] == progress['progress-plateau']['state'] == 'running' and
             progress['progress-xbr-v2']['state'] == 'done' and progress["progress-xbr-requal"]["state"] == "blocked" and
             progress["progress-ollama"]["state"] == "done", "diagnosis/qualification/registration states are separate")
     require([i["id"] for i in data["log"]["items"][:-60]] == [f"log-{i:03}" for i in range(len(data["log"]["items"]), 60, -1)],
@@ -431,23 +437,46 @@ def check_documents(document, html, morning, m1, ai):
     require(any(s["path"] == "ascon-notes/league/DESIGN-AI-LAYER-01-astra.md" for s in data["sources"]["sources"]), "dashboard AI source missing")
     # Visible comparisons use references to exactly these populations, never cross-field T differences.
     comparisons = data['results']['comparison']
-    require([r['scope_ref'] for r in comparisons['diagnostic']] == ['status.dev3','status.dev2','status.dev1'],
+    require([r['scope_ref'] for r in comparisons['diagnostic']] == ['status.dev5','status.dev4','status.dev3','status.dev2','status.dev1'],
             'diagnostic comparison populations')
     require([r['scope_ref'] for r in comparisons['qualification']] ==
             ['plan.q0_requalification','results.q0.scope','status.q0b'], 'qualification comparison populations')
     require([r['state'] for r in comparisons['qualification']] == ['blocked','failed','failed'],
             'visible qualification statuses must preserve failures')
-    require(comparisons['diagnostic'][1]['metrics'] == [
+    require(comparisons['diagnostic'][3]['metrics'] == [
         dict(label='平均P',candidate_ref='status.dev2.result.p_candidate',baseline_ref='status.dev2.result.p_multi'),
         dict(label='平均取引数',candidate_ref='status.dev2.result.trades_candidate',baseline_ref='status.dev2.result.trades_multi'),
         dict(label='平均T',candidate_ref='status.dev2.result.t_candidate',baseline_ref='status.dev2.result.t_multi')],
         'visible dev2 metrics cannot substitute another run or unit')
-    require(comparisons['diagnostic'][0]['metrics'] == [
+    require(comparisons['diagnostic'][2]['metrics'] == [
         dict(label='平均P',candidate_ref='status.dev3.result.p_candidate',baseline_ref='status.dev3.result.p_multi'),
         dict(label='平均取引数',candidate_ref='status.dev3.result.trades_candidate',baseline_ref='status.dev3.result.trades_multi'),
         dict(label='平均T',candidate_ref='status.dev3.result.t_candidate',baseline_ref='status.dev3.result.t_multi')]
-        and comparisons['diagnostic'][0]['state'] == 'warning' and comparisons['diagnostic'][0]['safety_ref'] == 'status.dev3',
+        and comparisons['diagnostic'][2]['state'] == 'warning' and comparisons['diagnostic'][2]['safety_ref'] == 'status.dev3',
         'visible dev3a numbers/population/status must match handoff')
+    # Rev 8 adds exact current facts without relaxing any historical or safety contract.
+    rev7_logs = [x for x in data['log']['items'] if x['id'] in {f'log-{i:03}' for i in range(1,69)}]
+    require(len(rev7_logs) == 68 and digest(rev7_logs) == REV7_LOG_DIGEST, 'all 68 prior logs are immutable')
+    dev4, dev5 = data['status']['dev4'], data['status']['dev5']
+    expected_dev4 = {'name': 'dev4-xb-r', 'state': 'measured-diagnostic-complete', 'verified': False, 'evidence_basis': '本人提示measured集計。原ログ/live再監査なし', 'field': 'F_ref', 'seeds': '36001/36002', 'regimes': 12, 'worlds': 24, 'completed_worlds': 24, 'fix_commit': 'd30cbbb', 'g0': 'PASS', 'loops': 362, 'started_at': None, 'completed_at': None, 'expected_end': None, 'q0_eligible': False, 'result': {'t_candidate': '49.72', 't_multi': '55.02', 't_gap': '5.3', 'min_regime_t_minus_noop': '+7.85', 'positive_regimes': 12, 'noop_below': 0, 'violations': 0, 'reverts': 0, 'submitted': 1652, 'submit_failed': 23, 'submit_failed_percent': '1.4', 'p_candidate': '488.2', 'p_multi': '1460.8', 'p_clean': '440.0', 'trades_candidate': '68.8', 'trades_multi': '273.4', 'trades_clean': '46.3', 'regime_t': [{'regime': 'calm', 'candidate': '56.12', 'multi': '35.90'}, {'regime': 'crash', 'candidate': '52.45', 'multi': '50.31'}, {'regime': 'vuln', 'candidate': '54.14', 'multi': '48.69'}, {'regime': 'spike', 'candidate': '50.20', 'multi': '49.99'}, {'regime': 'depeg-persist', 'candidate': '57.02', 'multi': '50.54'}, {'regime': 'launch', 'candidate': '53.46', 'multi': '49.92'}, {'regime': 'whale', 'candidate': '38.86', 'multi': '62.79'}, {'regime': 'cex-drift', 'candidate': '45.67', 'multi': '63.80'}, {'regime': 'depeg', 'candidate': '42.73', 'multi': '63.85'}, {'regime': 'lending-incident', 'candidate': '46.48', 'multi': '63.61'}, {'regime': 'cdp-incident', 'candidate': '47.24', 'multi': '62.98'}, {'regime': 'informed-flow', 'candidate': '52.33', 'multi': '57.81'}]}, 'note': 'v3の全12レジーム等重み平均Tはmulti-arb未達。全レジーム平均(T−Tnoop)>0、最小+7.85。診断完了であり資格合格ではない。', 'sources': ['src-dev4']}
+    require(dev4 == expected_dev4, 'dev4 exact handoff: scope/hash/G0/loops/values/all 12 regimes and unknown times')
+    expected_dev5 = {'name': 'dev5-xb-r', 'state': 'reported-running-unverified', 'verified': False, 'evidence_basis': '本人の走行中引継ぎ。プロセス/原ログ再監査なし', 'field': 'F_ref', 'seeds': '36001/36002', 'regimes': 12, 'worlds': 24, 'fix_commit': '7b1448b', 'started_at': '2026-10-04T22:07:00+09:00', 'started_at_precision': 'minute', 'started_at_basis': '本人提示22:07 JST。秒00は保存表現で実測秒ではない', 'expected_end': '2026-10-05T00:00:00+09:00', 'expected_end_basis': '本人提示00:00 JST頃の見込み。実完了ではない', 'completed_at': None, 'completed_worlds': None, 'g0': None, 'result': None, 'q0_eligible': False, 'independent_screen': False, 'iteration': 2, 'note': 'v5・同seed36001/36002の12レジーム24世界。10/4 22:07 JST開始、10/5 00:00 JST頃完了見込み、結果未確認。今回2/3回目。既見seedの開発診断で独立screen/Q0には使えない。', 'sources': ['src-dev5', 'src-v5']}
+    require(dev5 == expected_dev5, 'dev5 exact pending state, minute start, next-day forecast, known seeds, no result or independent qualification')
+    require(data['status']['repair_v5'] == {'commit': '7b1448b', 'tests': 183, 'red_controls': 59, 'state': 'implemented-reported', 'verified': False, 'evidence_kind': 'measured引継ぎ', 'title': 'v5 = v3 + R9（bundle用在庫余地）ON', 'note': 'DEV4-XB-R-V5.mdを根拠にR9のみON。テスト183・赤対照59は既存検査記録の引継ぎで今回再実行なし。性能昇格はdev5結果待ち。', 'sources': ['src-v5']}, 'v5 exact decision and inherited test record')
+    require(data['status']['team'] == {'primary': 'Codex(Astra)', 'secondary': 'Claude', 'unavailable': 'Grok: 利用残高切れ(402)で体制から除外', 'support': 'agy: Gemini 3.8 Flash High・ハーネス反映済 masa-harness#409', 'independent_review': 'Claudeの別エージェント+agy', 'tool_policy': 'ツール使用禁止・差分埋め込み・stdin', 'note': '本人の運用引継ぎ。レビュー用ツールへの入力に差分を埋め込みstdinで渡し、呼び出し先のツール使用を禁止する。本更新で外部モデル照会なし。', 'sources': ['src-operations']}, 'current team and review restrictions')
+    require(data['status']['plateau'] == {'name': 'PLATEAU-ANALYSIS', 'state': 'reported-creating-unverified', 'owner': 'Codex', 'result': None, 'verified': False, 'note': '構造の異なる独自設計候補の検討をAstraが別ジョブで作成中。結果未確認。新規計測・採用・予算追加を意味しない。', 'sources': ['src-operations']}, 'PLATEAU remains a separate unverified job')
+    require(op['iteration_current'] == 2 and op['current_run_ref'] == 'status.dev5', 'current iteration 2/3, no counter reset')
+    for key, marker, expected in [('dev4', 'source-dev4', {'header': ['dev4-xb-r項目', '提示された結果', '判定・範囲'], 'rows': [['母集団・G0', 'v3 d30cbbb・F_ref・seed36001/36002・12レジーム24世界 / G0 PASS / 362ループ', '本人提示measured。原ログ再監査なし'], ['12レジーム等重み平均T', 'cand 49.72 / multi-arb 55.02（差5.3T）', '平均T条件未達・資格合格ではない'], ['レジーム平均(T−Tnoop)', '全12レジームで正 / 最小+7.85', 'レジーム平均の最小値。世界別Pの最小値ではない'], ['noop割れ / violations / cand revert', '0 / 0 / 0', '未提示の安全項目は補完しない'], ['送信 / 送信失敗', 'submitted 1652 / failed 23（1.4%）', '失敗率は23/(1652+23)の丸め。mined revertと別'], ['1世界平均P', 'cand 488.2 / multi-arb 1460.8 / clean-arb 440.0', '同じ24世界'], ['1世界平均取引数', 'cand 68.8 / multi-arb 273.4 / clean-arb 46.3', '同じ24世界']]}), ('dev4_regimes', 'source-dev4-regimes', {'header': ['dev4レジーム', 'cand 平均T', 'multi-arb 平均T', '比較'], 'rows': [['calm', '56.12', '35.90', 'candが上回る'], ['crash', '52.45', '50.31', 'candが上回る'], ['vuln', '54.14', '48.69', 'candが上回る'], ['spike', '50.20', '49.99', 'candが上回る'], ['depeg-persist', '57.02', '50.54', 'candが上回る'], ['launch', '53.46', '49.92', 'candが上回る'], ['whale', '38.86', '62.79', 'candが下回る'], ['cex-drift', '45.67', '63.80', 'candが下回る'], ['depeg', '42.73', '63.85', 'candが下回る'], ['lending-incident', '46.48', '63.61', 'candが下回る'], ['cdp-incident', '47.24', '62.98', 'candが下回る'], ['informed-flow', '52.33', '57.81', 'candが下回る']]})]:
+        require(parsed_table(block(document, marker)) == expected, 'exact dev4 MASTER source table: '+key)
+        require({k:data['results'][key][k] for k in ('header','rows')} == expected, 'exact dev4 dashboard source table: '+key)
+    require(comparisons['diagnostic'][:2] == [{'candidate': 'xb-r v5', 'scope_ref': 'status.dev5', 'run_ref': 'status.dev5.name', 'value_note': '結果未確認', 'detail': '同seed開発診断・2/3回目。10/4 22:07開始、10/5 00:00 JST頃見込み。', 'state': 'running', 'verdict': '走行中との引継ぎ。独立screen/Q0には使えない。', 'sources': ['src-dev5']}, {'candidate': 'xb-r v3', 'scope_ref': 'status.dev4', 'run_ref': 'status.dev4.name', 'metrics': [{'label': '平均P', 'candidate_ref': 'status.dev4.result.p_candidate', 'baseline_ref': 'status.dev4.result.p_multi'}, {'label': '平均取引数', 'candidate_ref': 'status.dev4.result.trades_candidate', 'baseline_ref': 'status.dev4.result.trades_multi'}, {'label': '平均T', 'candidate_ref': 'status.dev4.result.t_candidate', 'baseline_ref': 'status.dev4.result.t_multi'}], 'metric_note': 'cand / multi-arb、同じ24世界。平均Tは12レジーム等重み、cleanのP/取引数は原表。', 'state': 'warning', 'state_label': '比較対象に未達', 'safety_ref': 'status.dev4', 'verdict': '平均Tは5.3T不足。全12レジーム平均(T−Tnoop)>0、最小+7.85。資格試験ではない。', 'sources': ['src-dev4']}], 'current visible comparison and safety references')
+    require([k['ref'] for k in data['ui']['kpis'][:2]] == ['status.dev4.name','status.dev4.result.t_candidate'], 'KPI uses latest completed diagnosis')
+    require(data['status']['priority']['progress_refs'] == ['progress-dev4','progress-xbr-v5','progress-dev5','progress-xbr-requal'], 'current priority progression')
+    for phrase in ('v5 = v3 + R9(bundle用在庫余地)ON','7b1448b','2026-10-04 22:07 JST開始','2026-10-05 00:00 JST頃','2/3回目',
+                   'Codex(Astra)主・Claude副','利用残高切れ(402)','Gemini 3.8 Flash High','masa-harness#409','Claudeの別エージェント+agy',
+                   'ツール使用禁止・差分埋め込み・stdin','PLATEAU-ANALYSIS','Astraが作成中、結果未確認',
+                   '平均対応ΔT≥+1.0','各レジームΔT≥−2.0','failed率≤23/1675','片脚bundle率≤2/114','成功bundle数≥143 ID'):
+        require(phrase in document, 'rev8 current prose missing: '+phrase)
     glossary = parsed_table(block(document, 'glossary'))
     require(glossary['header'] == ['用語','説明'] and glossary['rows'] ==
             [[t['term'],t['definition']] for t in data['glossary']['items']], 'glossary definition source mismatch')
@@ -479,7 +508,7 @@ def self_check(documents):
             ds[1] = re.sub(pattern, update, ds[1], count=1, flags=re.S)
         return change
     controls = [
-        lambda ds: ds.__setitem__(0, ds[0].replace("revision 7", "revision 6", 1)),
+        lambda ds: ds.__setitem__(0, ds[0].replace("revision 8", "revision 6", 1)),
         mutate("plan", lambda d: d["ai_contract"].update(status="unsigned")),
         mutate("plan", lambda d: d["ai_contract"].update(on_repeats=1)),
         mutate("plan", lambda d: d["ai_contract"].update(selected_total_hours="12")),
@@ -520,7 +549,7 @@ def self_check(documents):
         mutate('plan', lambda d: d.update(deadline_at='2026-10-31T23:59:00+08:00')),
         mutate('log', lambda d: next(x for x in d['items'] if x['id']=='log-065').update(summary='rewritten latest history')),
         mutate('results', lambda d: d['comparison']['qualification'][0].update(state='done')),
-        mutate('results', lambda d: d['comparison']['diagnostic'][1]['metrics'][0].update(baseline_ref='results.q0_summary.multi_t')),
+        mutate('results', lambda d: d['comparison']['diagnostic'][3]['metrics'][0].update(baseline_ref='results.q0_summary.multi_t')),
         mutate('glossary', lambda d: d['items'][0].update(definition='invented definition')),
         mutate("log", lambda d: d["items"][0].update(id="log-999")),
         mutate("budget", lambda d: d["rows"][6].update(keep_hours="14.9")),
@@ -552,9 +581,63 @@ def self_check(documents):
         mutate('plan', lambda d: d['continuous_operation'].update(mean_t_delta_min='-1')),
         mutate('plan', lambda d: d['continuous_operation'].update(validation_regimes=9)),
         mutate('plan', lambda d: d['continuous_operation'].update(budget_status='released')),
-        mutate('results', lambda d: d['comparison']['diagnostic'][0]['metrics'][0].update(baseline_ref='status.dev2.result.p_multi')),
+        mutate('results', lambda d: d['comparison']['diagnostic'][2]['metrics'][0].update(baseline_ref='status.dev2.result.p_multi')),
         lambda ds: ds.__setitem__(0, ds[0].replace('調整/短縮smoke/診断検証/Q0のseed交差0','seed共有可')),
         lambda ds: ds.__setitem__(0, ds[0].replace('全予定世界の終端記録','launcher終了')),
+    ]
+    controls += [
+        mutate('status', lambda d: d['dev4']['result'].update(t_candidate='999')),
+        mutate('status', lambda d: d['dev4']['result'].update(t_multi='999')),
+        mutate('status', lambda d: d['dev4']['result'].update(t_gap='999')),
+        mutate('status', lambda d: d['dev4']['result'].update(min_regime_t_minus_noop='999')),
+        mutate('status', lambda d: d['dev4']['result'].update(positive_regimes=999)),
+        mutate('status', lambda d: d['dev4']['result'].update(noop_below=999)),
+        mutate('status', lambda d: d['dev4']['result'].update(violations=999)),
+        mutate('status', lambda d: d['dev4']['result'].update(reverts=999)),
+        mutate('status', lambda d: d['dev4']['result'].update(submitted=999)),
+        mutate('status', lambda d: d['dev4']['result'].update(submit_failed=999)),
+        mutate('status', lambda d: d['dev4']['result'].update(submit_failed_percent='999')),
+        mutate('status', lambda d: d['dev4']['result'].update(p_candidate='999')),
+        mutate('status', lambda d: d['dev4']['result'].update(p_multi='999')),
+        mutate('status', lambda d: d['dev4']['result'].update(p_clean='999')),
+        mutate('status', lambda d: d['dev4']['result'].update(trades_candidate='999')),
+        mutate('status', lambda d: d['dev4']['result'].update(trades_multi='999')),
+        mutate('status', lambda d: d['dev4']['result'].update(trades_clean='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][0].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][1].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][2].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][3].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][4].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][5].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][6].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][7].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][8].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][9].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][10].update(candidate='999')),
+        mutate('status', lambda d: d['dev4']['result']['regime_t'][11].update(candidate='999')),
+        mutate('status', lambda d: d['dev4'].update(worlds=18)),
+        mutate('status', lambda d: d['dev4'].update(fix_commit='7b1448b')),
+        mutate('status', lambda d: d['dev4'].update(loops=361)),
+        mutate('status', lambda d: d['dev4'].update(g0='FAIL')),
+        mutate('status', lambda d: d['dev4'].update(q0_eligible=True)),
+        mutate('status', lambda d: d['dev5'].update(result='PASS')),
+        mutate('status', lambda d: d['dev5'].update(completed_at='2026-10-05T00:00:00+09:00')),
+        mutate('status', lambda d: d['dev5'].update(completed_worlds=24)),
+        mutate('status', lambda d: d['dev5'].update(g0='PASS')),
+        mutate('status', lambda d: d['dev5'].update(started_at='2026-10-04T21:07:00+09:00')),
+        mutate('status', lambda d: d['dev5'].update(expected_end='2026-10-04T00:00:00+09:00')),
+        mutate('status', lambda d: d['dev5'].update(independent_screen=True)),
+        mutate('status', lambda d: d['dev5'].update(seeds='37001/37002')),
+        mutate('status', lambda d: d['repair_v5'].update(tests=184)),
+        mutate('status', lambda d: d['repair_v5'].update(red_controls=60)),
+        mutate('status', lambda d: d['repair_v5'].update(verified=True)),
+        mutate('status', lambda d: d['team'].update(primary='Grok')),
+        mutate('status', lambda d: d['team'].update(tool_policy='tools allowed')),
+        mutate('status', lambda d: d['plateau'].update(result='complete')),
+        mutate('plan', lambda d: d['continuous_operation'].update(iteration_current=1)),
+        mutate('log', lambda d: d['items'][5].update(summary='rewritten rev7 history')),
+        lambda ds: ds.__setitem__(0, ds[0].replace('平均対応ΔT≥+1.0', '平均対応ΔT≥0')),
+        mutate('results', lambda d: d['comparison']['diagnostic'][1]['metrics'][0].update(baseline_ref='status.dev3.result.p_multi')),
     ]
     for number, control in enumerate(controls, 1):
         changed = copy.deepcopy(documents)

@@ -47,7 +47,7 @@ for(const page of app.D.ui.pages){
     app.state.page=page.key;app.render();
     const text=element('page').innerHTML;
     assert.ok(text.includes(page.label));
-    assert.ok(!text.includes('undefined'),'missing data must not leak');
+    assert.ok(!text.includes('undefined'),`missing data must not leak: ${page.key}: ${text.slice(Math.max(0,text.indexOf('undefined')-100),text.indexOf('undefined')+100)}`);
     assert.ok(!text.includes('NaN'),'numbers must remain defined');
     assert.ok(!/src=["']https?:|<iframe|<script/i.test(text),'rendered UI must not load resources');
     assert.equal((text.match(/<h1\b/g)||[]).length,1,'one page heading');
@@ -58,9 +58,9 @@ for(const page of app.D.ui.pages){
 check('overview snapshot and no fake run percentage',()=>{
   const t=rendered.overview;
   assert.ok(t.includes(app.D.status.headline));
-  assert.ok(t.includes('value="4" max="5"'));
+  assert.ok(t.includes('value="2" max="4"'));
   assert.ok(t.includes('本人が今やること'));
-  assert.ok(t.includes('17:39 JST'));
+  assert.ok(t.includes('22:07 JST'));
   assert.ok(!t.includes('17:40 JST'));
   assert.ok(!/log-\d+/.test(t));
 });
@@ -77,8 +77,8 @@ check('diagnostic metrics from JSON rather than display constants',()=>{
   app.D.status.dev2.result.p_candidate='149.0';
 });
 check('log count and complete history',()=>{
-  assert.equal(app.filteredLogs().length,68);
-  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,68);
+  assert.equal(app.filteredLogs().length,73);
+  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,73);
   for(const l of app.D.log.items)assert.ok(rendered.log.includes(l.id));
 });
 check('log AND search, kind and date filters compose',()=>{
@@ -102,7 +102,7 @@ check('search input handler updates results without replacing input focus',()=>{
 check('glossary finds aliases and Japanese definitions',()=>{
   app.state.termQuery='FROZEN';assert.ok(app.filteredTerms().some(t=>t.id==='term-frozen'));
   app.state.termQuery='何もしない';assert.ok(app.filteredTerms().some(t=>t.id==='term-noop'));
-  app.state.termQuery='';assert.equal(app.filteredTerms().length,49);
+  app.state.termQuery='';assert.equal(app.filteredTerms().length,53);
 });
 check('hash routes, back/forward handler and direct term links',()=>{
   location.hash='#glossary/term-q0';listeners.get('window:hashchange')();
@@ -151,14 +151,14 @@ check('AA text palette and responsive/reduced-motion provisions',()=>{
   assert.ok(!/@media print|beforeprint|afterprint/.test(html));
 });
 check('a future reported completion renders without a forecast or live guessing',()=>{
-  const before={...app.D.status.dev3b};
-  Object.assign(app.D.status.dev3b,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-04T20:41:00+09:00',completed_worlds:6,note:'test-only confirmed completion'});
+  const before={...app.D.status.dev5};
+  Object.assign(app.D.status.dev5,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-05T00:41:00+09:00',completed_worlds:24,note:'test-only confirmed completion'});
   app.state.page='operations';app.render();
   assert.ok(element('page').innerHTML.includes('診断完了の引継ぎ'));
-  assert.ok(element('page').innerHTML.includes('20:41'));
+  assert.ok(element('page').innerHTML.includes('00:41'));
   assert.ok(!element('page').innerHTML.includes('NaN'));
   app.state.page='overview';app.render();assert.ok(element('page').innerHTML.includes('確認された完了時刻'));
-  Object.assign(app.D.status.dev3b,before);
+  Object.assign(app.D.status.dev5,before);
 });
 check('four KPI cards appear on overview only, including qualification view',()=>{
   for(const [page,text] of Object.entries(rendered)){
@@ -174,15 +174,30 @@ check('comparison is the first results content section, before explanatory notic
     assert.ok(t.indexOf('class="comparison"')<t.indexOf('測定の原表・条件'));
   }
 });
-check('dev3a exact figures and dev3b unknowns stay distinct in visible pages',()=>{
+check('dev3a historical figures and dev5 pending results stay distinct in visible pages',()=>{
   const t=rendered.results;
   const operationsText=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   for(const value of ['842.3','2032.9','1050.3','54.4','288.7','61.3','46.83','55.93','980','27'])assert.ok(t.includes(value),value);
   assert.ok(t.includes('9レジーム')&&t.includes('18世界')&&t.includes('比較対象に未達'));
-  assert.ok(operationsText.includes('dev3b-xb-r'));
-  assert.ok(operationsText.includes('未提示'));
+  assert.ok(operationsText.includes('dev5-xb-r'));
+  assert.ok(operationsText.includes('結果未確認'));
   assert.ok(operationsText.includes('監視接続/実fixture/smoke実施は未確認'));
   assert.ok(!operationsText.includes('null'));
+});
+check('rev8 exact current facts, pending run and team are visible',()=>{
+  const t=rendered.results;
+  for(const value of ['49.72','55.02','488.2','1460.8','440.0','68.8','273.4','46.3','1652','23','+7.85'])assert.ok(t.includes(value),value);
+  const op=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
+  for(const value of ['22:07','00:00','結果未確認','2/3回目','Codex(Astra)','Claude','402','agy','masa-harness#409','PLATEAU-ANALYSIS','ツール使用禁止・差分埋め込み・stdin'])assert.ok(op.includes(value),value);
+  const overviewText=rendered.overview.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
+  assert.ok(overviewText.includes('dev4-xb-r')&&overviewText.includes('49.72'));
+});
+check('dev4 display is sourced from JSON',()=>{
+  app.state.page='results';app.state.results='diagnostic';
+  const before=app.D.status.dev4.result.t_candidate;
+  app.D.status.dev4.result.t_candidate='REV8-SENTINEL';app.render();
+  assert.ok(element('page').innerHTML.includes('REV8-SENTINEL'));
+  app.D.status.dev4.result.t_candidate=before;
 });
 check('375px static containment: shrinkable children, wrapping text, stacked tables',()=>{
   const css=html.match(/<style>([\s\S]*?)<\/style>/)[1];

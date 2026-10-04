@@ -13,9 +13,9 @@
 | 進捗・結果 | 比較表を最初の内容セクションに表示。診断／資格試験の切替、run・母集団・出所、原表、進捗台帳と過去の記録 |
 | ブロッカー・リスク | 優先順位、原因、影響、対応、担当。未解消／解消済み／全件の切替 |
 | 判断 | 本人の予定、登録報告、委任決定、署名・原判断・旧案の詳細 |
-| 実行キュー・予算 | dev3bの未確認状態、連続稼働の段階・待ち時間・Q0準備screen、依存付きキュー、100h枠の予約と実消化の区別 |
-| 更新ログ | 68件（既存65件を保持し3件追加）。全文検索＋種類＋記録日（JST）の絞り込み。IDは小さな注記だけ |
-| 用語集 | 49語。名前・略語・説明検索、分類フィルタ、参照資料 |
+| 実行キュー・予算 | dev5の走行中・結果未確認、体制・別ジョブ、連続稼働の段階・待ち時間・Q0準備screen、依存付きキュー、100h枠の予約と実消化の区別 |
+| 更新ログ | 73件（既存68件を保持し5件追加）。全文検索＋種類＋記録日（JST）の絞り込み。IDは小さな注記だけ |
+| 用語集 | 53語。名前・略語・説明検索、分類フィルタ、参照資料 |
 
 本文の専門語はページ内の初出に `ⓘ` を付け、クリック／キーボードで説明を開きます。Escapeで閉じ、元のボタンへフォーカスを戻します。図表の原語・署名のAstra表記は保存し、現担当はCodexで統一しています。
 
@@ -50,7 +50,7 @@ KPIの `ref`、比較表の `scope_ref` / `run_ref` / `candidate_ref` / `baselin
 
 1. 秘密値を含まない担当者の引継ぎ／生成表で事実を確認する。本人が確認した設定は「本人報告」、提示計測値は「measured引継ぎ」、推定と未確認は別にする。
 2. 該当するJSONを更新し、数値・run・seed・レジーム・場・G0・時刻根拠・出所をそろえる。要約、比較判定、進捗、ブロッカー、キュー、重要イベントに旧状態が残っていないか確認する。
-3. 計画や新しい引継ぎの原表をMASTERへ反映する。現在はrevision 7、最新値は§1.6、連続稼働は§8、用語はAppendix B。revision 6の既決契約を維持する。ロードマップの期間や最大3回という上限は開始を許可するものではない。
+3. 計画や新しい引継ぎの原表をMASTERへ反映する。現在はrevision 8、最新値は§1.7、連続稼働は§8、用語はAppendix B。revision 6の既決契約を維持する。ロードマップの期間や最大3回という上限は開始を許可するものではない。
 4. `status.as_of` と `last_update` を更新する。時刻はJSTで取得する。測定開始／完了時刻へ更新時刻を代入しない。
 5. 下記の軽量検査を実行し、未検証の境界を引き継ぐ。commitは今回の依頼では行わない。
 
@@ -58,13 +58,17 @@ JSTは `TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z'`、またはPython `ZoneInfo('
 
 IDは全ブロックで一意。progressは `done/running/pending/failed/blocked`、担当は `human/Claude/Codex`。署名の原記録にあるAstraは改名しません。出所は既存ファイルに限り、絶対path・`..`・外部URL・symlink・`upstream-eval`・生の測定出力・秘密への参照を入れません。
 
-ログは追記のみ。訂正は新しい `誤り` エントリにし、時刻を降順に保ちます。既存65件を全件・全フィールド保持し、rev 7ではdev3a実測・運用計画・UI変更の3件を追加しました。今後も既存65件のdigestを変更しません。原時刻が不明なら記録時刻と `time_basis` を明示し、出来事の時刻を作りません。dev3aの17:39 JSTは本人提示の分精度で、ISO形式の秒00は保存表現です。
+ログは追記のみ。訂正は新しい `誤り` エントリにし、時刻を降順に保ちます。既存68件を全件・全フィールド保持し、rev 8ではdev4実測・v5決定・dev5開始・体制変更・別ジョブの5件を追加しました。旧60件/65件とrev 7の68件のdigestをすべて検査します。原時刻が不明なら記録時刻と `time_basis` を明示し、出来事の時刻を作りません。dev3aの17:39 JSTは本人提示の分精度で、ISO形式の秒00は保存表現です。
 
 ## 現在の証拠・計画境界
 
 - dev2-xb-rはmeasured引継ぎ。F_ref、31001/31002、6レジーム12世界、G0 PASS。平均P 149.0/1352.2、平均取引数44.8/300.9、診断平均T44.36/56.84。全世界P−noop正・最小+147.7、noop割れ／違反／revertは0。原表の細かい桁は `DEV2-XB-R-REPAIR.md` の別表を維持。資格合格にはしない。
 - a646e9bの123テスト・赤対照25件は既存の検査記録の引継ぎ。今回の再実行結果ではない。
-- dev3a-xb-rはF_ref、35001/35002、9レジーム18世界、10/4 16:24 JST開始・17:39 JST完了（分精度の本人引継ぎ）。G0 PASS、P−noop全正、noop割れ/違反/revert0、submit_failed27/submitted980。平均Pは842.3/2032.9/1050.3、取引54.4/288.7/61.3（cand/multi/clean）、平均T46.83対55.93。最小P−noopは未提示。dev3b（残り3レジーム）とv3は進行中との引継ぎだが結果未確認。全12平均やv2の因果効果へ外挿しない。旧D対照35001/35002案は失効。
+- dev3a-xb-rはF_ref、35001/35002、9レジーム18世界、10/4 16:24 JST開始・17:39 JST完了（分精度の本人引継ぎ）。G0 PASS、P−noop全正、noop割れ/違反/revert0、submit_failed27/submitted980。平均Pは842.3/2032.9/1050.3、取引54.4/288.7/61.3（cand/multi/clean）、平均T46.83対55.93。最小P−noopは未提示。dev3b（残り3レジーム）はrev 7時点の未確認履歴として保持。v3実装・凍結とdev4結果は最新引継ぎで更新。全12平均やv2の因果効果へ外挿しない。旧D対照35001/35002案は失効。
+- dev4（v3 d30cbbb）は本人提示measured引継ぎ。F_ref・36001/36002・12レジーム24世界・G0 PASS・362ループ。12レジーム等重み平均T49.72/55.02（差5.3T）、全12平均(T−Tnoop)>0・最小+7.85、noop割れ/violations/cand revert0。submitted1652/failed23（1.4%、23/1675の丸め）。1世界平均P488.2/1460.8/440.0、取引68.8/273.4/46.3（cand/multi/clean）。全12レジーム別TはMASTER §1.7とHTML原表で照合。
+- v5はv3 + R9(bundle用在庫余地)ON、根拠`DEV4-XB-R-V5.md`、commit7b1448b、テスト183・赤対照59は既存検証記録の引継ぎ。今回再実行なし。dev5は同seed36001/36002・12レジーム24世界、2026-10-04 22:07 JST開始（分精度）、翌10/5 00:00 JST頃完了見込み、結果未確認。今回2/3回目、最大3回を維持。既見seedの開発診断で独立fresh screen/Q0には使わない。
+- 体制はCodex(Astra)主・Claude副。Grokは利用残高切れ(402)で除外。agy（Gemini 3.8 Flash High・masa-harness#409反映済）を補助レビュー、独立レビューはClaudeの別エージェント+agy。レビュー用ツールへの入力は「ツール使用禁止・差分埋め込み・stdin」。本更新で外部照会なし。
+- PLATEAU-ANALYSIS（構造の異なる独自設計候補の検討）はAstraが別ジョブで作成中、結果未確認。新規候補の採用や追加計測予算を承認したものではない。
 - `plan.continuous_operation` は定義済み・運用未検証。独立監視60秒間隔/2分検知/5分受領/10分次着手、実ログfixture・1世界smoke、全12×2 fresh seed検証、1回目標150分/上限180分・最大3回を§8と同期する。費用未精算のまま実行解放せず、既決の時間/世代枠を保持。
 - Q0/Q0bの旧不合格・Q0bの2世界G0 FAIL・安全nullスナップショットを保持。救済再走なし。新Q0は1候補1回60世界・41301–41305・5h上限。ゲートやrevert上限の緩和なし。
 - 委任済み6決定は確定状態・出所・署名日時を保持。KEY/金銭を委任へ拡張しない。Ollamaの登録・Free・残高$0・Auto-reload Off・クリップボード消去は本人報告。dec-008 resolved、dec-007は10/28 open、現在の本人作業はなし。モデルの運営一覧・無料枠量・疎通は未確認。
@@ -81,13 +85,15 @@ python3 -B ascon-notes/league/dashboard-check.py --self-check --rendered /tmp/as
 git diff --check
 ```
 
-`dashboard-check.py` はJSON重複キー・有限数・一意ID・JST・日付・ログ降順・出所の実在と安全・元表一致・正確な分数和・担当／状態／依存・HTML構造を検査します。追加で8ページ、KPI／比較の参照、49語と必須語、外部CSS／ネットワーク呼出しの禁止を確認します。`--rendered` はNodeで生成した各画面のタグ、ID、出典リンクとID露出を検査します。
+`dashboard-check.py` はJSON重複キー・有限数・一意ID・JST・日付・ログ降順・出所の実在と安全・元表一致・正確な分数和・担当／状態／依存・HTML構造を検査します。追加で8ページ、KPI／比較の参照、53語と必須語、外部CSS／ネットワーク呼出しの禁止を確認します。`--rendered` はNodeで生成した各画面のタグ、ID、出典リンクとID露出を検査します。
 
-`check-plan-consistency.py` は旧表、全28日、18件のレビュー判断、予算・署名・Q0・AI反復・切替条件の照合を維持し、65ログの完全保持、dev2/dev3aの正確な提示値、dev3b/v3の未確認状態、実消化のnull、表示比較の母集団と数値参照、連続稼働の上限・独立seed・screenも検査します。
+`check-plan-consistency.py` は旧表、全28日、18件のレビュー判断、予算・署名・Q0・AI反復・切替条件の照合を維持し、68ログの完全保持、dev2/dev3a/dev4の正確な提示値、dev3bの未確認履歴とdev5/PLATEAUの結果未確認状態、実消化のnull、表示比較の母集団と数値参照、連続稼働の上限・独立seed・screenも検査します。
 
 `dashboard-ui-check.mjs` は実際のインラインJSを小さなDOMアダプターで実行します。8ページ＋資格ビューの生成、検索／複合フィルタ、空結果、ハッシュ遷移、用語の開閉とEscape、エスケープ、JSON変更の表示反映、主要文字色のAA比とレスポンシブ指定を検査します。DOMアダプターはブラウザではなく、レイアウトの検証にはなりません。
 
-**rev 7のチェッカー変更理由**: dev3a未確認という旧固定条件が今回の本人提示集計と衝突するため、提示値・18世界・G0・17:39分精度・資格不可を厳密一致で検査し、未確認項目の拒否はdev3b/v3へ維持・拡張した。旧60件/65件のdigest、全既決契約、予算、旧安全nullの検査は保持。監視稼働済み化、診断閾値緩和、回数増加、既見seedの流用を拒否する反例を追加した。UI検査には概要だけのKPI4枚、比較表の先頭配置、最新数値、375pxのCSS構造確認を追加。合否閾値・費用・反復回数は緩めていない。
+**rev 7のチェッカー変更理由（履歴）**: dev3a未確認という旧固定条件が今回の本人提示集計と衝突するため、提示値・18世界・G0・17:39分精度・資格不可を厳密一致で検査し、未確認項目の拒否はdev3b/v3へ維持・拡張した。旧60件/65件のdigest、全既決契約、予算、旧安全nullの検査は保持。監視稼働済み化、診断閾値緩和、回数増加、既見seedの流用を拒否する反例を追加した。UI検査には概要だけのKPI4枚、比較表の先頭配置、最新数値、375pxのCSS構造確認を追加。合否閾値・費用・反復回数は緩めていない。
+
+**rev 8のチェッカー変更理由**: rev 7の「v3実装中・dev3bが現在の計測」という固定条件を、本人提示のv3凍結hash・dev4実測とdev5走行中へ置き換えた。dev4の全提示値・12レジーム表、dev5の既見seed/開始/翌日見込み/未確認結果、v5検査記録、体制/別ジョブ、2/3回目を厳密一致で検査する。旧68ログのdigestと旧契約・全既存反例を保持し、反例は76から128件へ増加。UIはdev5の現在表示とdev4の安全集計に対応し、KPIの概要限定も維持。閾値・費用・反復上限は緩めていない。
 
 ## 省いた表示と保存先
 
@@ -106,11 +112,11 @@ git diff --check
 最終確認結果（ブラウザ未起動）:
 
 ```text
-PASS dashboard-check: 14 blocks / 68 logs / 11 source tables / 49 terms
+PASS dashboard-check: 14 blocks / 73 logs / 13 source tables / 53 terms
 PASS checker controls: 23 invalid cases rejected
-PASS check-plan-consistency: rev 7 operations + rev 6 contracts + latest handoff + all 65 prior logs
-PASS plan controls: 76 unsafe/stale mutations rejected
-PASS dashboard UI: 25 checks / 8 pages + qualification view / 375px static containment
+PASS check-plan-consistency: rev 8 current facts + rev 7 operations + rev 6 contracts + all 68 prior logs
+PASS plan controls: 128 unsafe/stale mutations rejected
+PASS dashboard UI: 27 checks / 8 pages + qualification view / 375px static containment
 PASS rendered HTML: 9 views / balanced tags / safe links / unique IDs
 PASS git diff --check
 ```

@@ -13,7 +13,7 @@
     {
       "id": "src-master",
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
-      "title": "MASTER revision 7",
+      "title": "MASTER revision 8",
       "locator": "§1–11 / Appendix A"
     },
     {
@@ -92,7 +92,7 @@
       "id": "src-prior",
       "path": "ascon-notes/league/MASTER-PLAN-BEFORE-V2-INTEGRATION.md",
       "title": "旧計画アーカイブ",
-      "locator": "履歴のみ。現行契約はMASTER revision 7"
+      "locator": "履歴のみ。現行契約はMASTER revision 8"
     },
     {
       "id": "src-checklist",
@@ -182,7 +182,7 @@
       "id": "src-dev3",
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
       "title": "dev3a実測・dev3b未確認の引継ぎ",
-      "locator": "MASTER §1.6。dev3aは本人提示集計、17:39 JST完了（分単位）。dev3b/v3未確認"
+      "locator": "MASTER §1.6。rev 7のdev3a実測とdev3b未確認の履歴。現況は§1.7。"
     },
     {
       "id": "src-v2-repair",
@@ -207,6 +207,30 @@
       "path": "ascon-notes/league/RETRO-2026-10-04-DAY.md",
       "title": "10/4 当日振り返り",
       "locator": "本人提示事実・原因の解釈・再発防止。運用実装は未確認"
+    },
+    {
+      "id": "src-dev4",
+      "title": "dev4 measured引継ぎ",
+      "locator": "§1.7。本人提示24世界集計・原ログ再監査なし",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md"
+    },
+    {
+      "id": "src-dev5",
+      "title": "dev5走行中の引継ぎ",
+      "locator": "§1.7/8。開始と見込みは本人提示・結果未確認",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md"
+    },
+    {
+      "id": "src-v5",
+      "title": "v5判断根拠・既存検証記録",
+      "locator": "R9のみON・183テスト/赤対照59・2/3回目。今回再実行なし",
+      "path": "ascon-notes/league/DEV4-XB-R-V5.md"
+    },
+    {
+      "id": "src-operations",
+      "title": "rev 8体制・別ジョブ",
+      "locator": "§8.1/8.4。本人引継ぎ・結果未確認",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md"
     }
   ]
 }
@@ -221,11 +245,11 @@
     "src-xbr-debug",
     "src-ollama-report"
   ],
-  "as_of": "2026-10-04T19:45:31+09:00",
+  "as_of": "2026-10-04T22:11:09+09:00",
   "measurement_as_of": null,
-  "last_update": "rev 7: 当日振り返り・連続稼働モデル・dev3a結果を反映。KPIは概要のみ、結果比較を先頭へ。",
+  "last_update": "rev 8: dev4実測・v5決定・dev5走行中（2/3回目）・体制変更・PLATEAU-ANALYSIS未確認を同期。",
   "phase_id": "phase-first",
-  "headline": "dev3aは安全集計良好、平均Tは比較対象未達。dev3b・v3は未確認。",
+  "headline": "dev4は平均T 49.72対55.02で5.3T不足。dev5（v5）は走行中・結果未確認。",
   "subhead": "最優先は、独自エージェントを資格試験に進める状態へ改善すること。提出版の受理は未確認です。",
   "q0b": {
     "state": "failed",
@@ -244,8 +268,8 @@
     "regimes": 12,
     "name": "Q0b"
   },
-  "notice": "10/8の初回受理目標は延期済み。MASTER rev 7はrev 6の決定を維持。監視運用は定義済み・接続未確認。現在の本人作業なし。",
-  "measurement_note": "dev3aは本人提示の18世界集計、完了は17:39 JST（分単位）。dev3b/v3と全12平均は未確認。原ログ・実行中プロセスの再監査なし。",
+  "notice": "10/8の初回受理目標は延期済み。MASTER rev 8は既決契約と最大3回を維持。今回2/3回目。監視運用の接続・実消化は未確認。現在の本人作業なし。",
+  "measurement_note": "dev4は本人提示measured集計、F_ref・36001/36002・12レジーム24世界・G0 PASS・362ループ。dev5は同seedの開発診断。原ログ・プロセスの再監査なし。",
   "dev1": {
     "name": "dev1-xb-r",
     "state": "measured-diagnostic-complete",
@@ -315,7 +339,9 @@
       "ad04879",
       "a042a70",
       "2ae0d59",
-      "a646e9b"
+      "a646e9b",
+      "d30cbbb",
+      "7b1448b"
     ],
     "branch": "league/v2",
     "pushed": false,
@@ -376,7 +402,7 @@
     "g0": "PASS",
     "fix_commit": "a646e9b",
     "next_chunk_regimes": 3,
-    "note": "9レジーム18世界の診断完了。平均Tは比較対象未達。dev3b（残り3レジーム）とv3は未確認、全12平均は未算出。",
+    "note": "dev3aの9レジーム18世界は完了・平均T未達。dev3bとの全12平均は未受領。最新v3の別seed診断はdev4に記録。",
     "sources": [
       "src-dev3"
     ],
@@ -392,7 +418,7 @@
     "verified": false,
     "evidence_kind": "measured引継ぎ",
     "title": "売買を止める2つの条件を、別々に検証できるよう修正",
-    "note": "単脚の追加100bpsゲートと初期在庫での停止を独立スイッチ化。R6/R7で検証する。テスト123件・赤対照25件は提示された検査記録。dev3aの9レジーム結果は提示済み、全12は未確認。",
+    "note": "単脚の追加100bpsゲートと初期在庫での停止を独立スイッチ化。R6/R7で検証する。テスト123件・赤対照25件は提示された検査記録。dev3aの9レジーム結果は提示済み、v2の全12集計は未受領。最新v3診断はdev4。",
     "sources": [
       "src-v2-repair",
       "src-dev2-repair"
@@ -400,19 +426,19 @@
   },
   "human_action": "なし",
   "priority": {
-    "title": "資格試験に進める収益性を確認する",
+    "title": "dev5の結果を確認し、資格試験に必要な収益性を判定する",
     "blocker_ref": "B01",
-    "note": "dev3aは9レジーム平均T 46.83対55.93。全12×2のfresh seed診断screen・安全・固定hash・未使用資格seed・費用が揃うまでQ0は停止。",
+    "note": "dev4は12レジーム等重み平均T 49.72対55.02（差5.3T）。v5の同seed開発診断dev5は2/3回目・結果未確認。独立した全12×2 fresh screen・安全/hash/費用成立までQ0停止。",
     "progress_refs": [
-      "progress-xbr-fix",
-      "progress-dev2",
-      "progress-xbr-v2",
-      "progress-dev3",
+      "progress-dev4",
+      "progress-xbr-v5",
+      "progress-dev5",
       "progress-xbr-requal"
     ],
     "sources": [
-      "src-dev2",
-      "src-dev3",
+      "src-dev4",
+      "src-dev5",
+      "src-v5",
       "src-master"
     ],
     "state": "blocked",
@@ -420,49 +446,51 @@
   },
   "recent": [
     {
-      "kind": "done",
-      "title": "dev3a完了・平均Tは比較対象未達",
-      "text": "9レジーム18世界、G0 PASS・P−noop全正。dev3b/v3は未確認。",
+      "kind": "running",
+      "title": "dev5開始・今回2/3回目",
+      "text": "v5・同seed36001/36002の12レジーム24世界。10/4 22:07 JST開始、10/5 00:00 JST頃完了見込み、結果未確認。今回2/3回目。既見seedの開発診断で独立screen/Q0には使えない。",
       "date": "2026-10-04",
-      "time_note": "17:39 JST完了（本人引継ぎ・分単位）",
+      "time_note": "22:07 JST開始（本人引継ぎ・分精度）",
       "sources": [
-        "src-dev3"
+        "src-dev5"
+      ]
+    },
+    {
+      "kind": "done",
+      "title": "v5はR9のみONを決定",
+      "text": "DEV4-XB-R-V5.mdを根拠にR9のみON。テスト183・赤対照59は既存検査記録の引継ぎで今回再実行なし。性能昇格はdev5結果待ち。",
+      "repair_ref": "repair_v5",
+      "date": "2026-10-04",
+      "time_note": "決定・検査記録の引継ぎ。正確な時刻未提示",
+      "sources": [
+        "src-v5"
       ]
     },
     {
       "kind": "warning",
-      "title": "約2時間のアイドルを振り返り",
-      "text": "全ジョブの独立監視・次担当・最大待ち時間を運用ルールに定義。監視接続は未確認。",
+      "title": "dev4完了・全12平均T未達",
+      "text": "G0 PASS・362ループ。noop割れ/violations/cand revert 0、全12レジーム平均(T−Tnoop)>0。",
       "date": "2026-10-04",
-      "time_note": "運用損失の本人引継ぎ。厳密な区間は未監査",
+      "time_note": "完了の正確な時刻未提示",
       "sources": [
-        "src-retro-day"
-      ]
-    },
-    {
-      "kind": "running",
-      "title": "次版の解析・隔離実装を並行",
-      "text": "v3は別担当Astraが実装中との引継ぎ。戦略実装・テスト・性能は本更新で未確認。",
-      "date": "2026-10-04",
-      "time_note": "正確な開始/完了時刻は未提示",
-      "sources": [
-        "src-master"
+        "src-dev4"
       ]
     }
   ],
   "next_milestone": {
-    "title": "dev3b確認とv3検証準備を並行する",
-    "note": "独立監視の接続を確認 → 排他検査・実ログfixture → 1世界smoke → 全12×2診断screen。Q0開始日は未定。",
+    "title": "dev5結果とPLATEAU-ANALYSISを受領する",
+    "note": "dev5は10/5 00:00 JST頃の完了見込み、結果未確認。対応比較・安全・残費を確認し、残る第3回の用途を決める。PLATEAU-ANALYSISは別ジョブでAstra作成中・結果未確認。",
     "sources": [
-      "src-dev3",
-      "src-master"
+      "src-dev5",
+      "src-operations",
+      "src-v5"
     ],
     "state": "running",
-    "state_label": "dev3b・v3未確認"
+    "state_label": "dev5走行中・結果未確認"
   },
   "dev3b": {
     "name": "dev3b-xb-r",
-    "state": "reported-running-unverified",
+    "state": "historical-unverified",
     "verified": false,
     "evidence_basis": "本人の走行中引継ぎ。プロセス/原ログ再監査なし",
     "field": "F_ref",
@@ -476,21 +504,188 @@
     "g0": null,
     "result": null,
     "fix_commit": null,
-    "note": "残り3レジームを走行中との引継ぎ。結果・G0・seed/世界数・hash・開始/完了時刻は未確認。監視接続は担当確認待ち。",
+    "note": "rev 7時点の走行中引継ぎを履歴として保持。dev3bの結果・世界数・G0は今回未提示。現在の計測はdev5。",
     "sources": [
       "src-dev3"
     ]
   },
   "repair_v3": {
-    "state": "reported-implementing-unverified",
+    "state": "implemented-reported",
     "verified": false,
-    "commit": null,
+    "commit": "d30cbbb",
     "tests": null,
     "result": null,
-    "note": "別担当Astraが実装中との本人引継ぎ。commit・検査・性能は未確認。",
+    "note": "v3 d30cbbbの実装・凍結を本人引継ぎ。性能はdev4に保存。v3単独のテスト件数は未提示、今回再実行なし。",
     "sources": [
-      "src-retro-day",
-      "src-master"
+      "src-dev4"
+    ],
+    "result_ref": "status.dev4"
+  },
+  "dev4": {
+    "name": "dev4-xb-r",
+    "state": "measured-diagnostic-complete",
+    "verified": false,
+    "evidence_basis": "本人提示measured集計。原ログ/live再監査なし",
+    "field": "F_ref",
+    "seeds": "36001/36002",
+    "regimes": 12,
+    "worlds": 24,
+    "completed_worlds": 24,
+    "fix_commit": "d30cbbb",
+    "g0": "PASS",
+    "loops": 362,
+    "started_at": null,
+    "completed_at": null,
+    "expected_end": null,
+    "q0_eligible": false,
+    "result": {
+      "t_candidate": "49.72",
+      "t_multi": "55.02",
+      "t_gap": "5.3",
+      "min_regime_t_minus_noop": "+7.85",
+      "positive_regimes": 12,
+      "noop_below": 0,
+      "violations": 0,
+      "reverts": 0,
+      "submitted": 1652,
+      "submit_failed": 23,
+      "submit_failed_percent": "1.4",
+      "p_candidate": "488.2",
+      "p_multi": "1460.8",
+      "p_clean": "440.0",
+      "trades_candidate": "68.8",
+      "trades_multi": "273.4",
+      "trades_clean": "46.3",
+      "regime_t": [
+        {
+          "regime": "calm",
+          "candidate": "56.12",
+          "multi": "35.90"
+        },
+        {
+          "regime": "crash",
+          "candidate": "52.45",
+          "multi": "50.31"
+        },
+        {
+          "regime": "vuln",
+          "candidate": "54.14",
+          "multi": "48.69"
+        },
+        {
+          "regime": "spike",
+          "candidate": "50.20",
+          "multi": "49.99"
+        },
+        {
+          "regime": "depeg-persist",
+          "candidate": "57.02",
+          "multi": "50.54"
+        },
+        {
+          "regime": "launch",
+          "candidate": "53.46",
+          "multi": "49.92"
+        },
+        {
+          "regime": "whale",
+          "candidate": "38.86",
+          "multi": "62.79"
+        },
+        {
+          "regime": "cex-drift",
+          "candidate": "45.67",
+          "multi": "63.80"
+        },
+        {
+          "regime": "depeg",
+          "candidate": "42.73",
+          "multi": "63.85"
+        },
+        {
+          "regime": "lending-incident",
+          "candidate": "46.48",
+          "multi": "63.61"
+        },
+        {
+          "regime": "cdp-incident",
+          "candidate": "47.24",
+          "multi": "62.98"
+        },
+        {
+          "regime": "informed-flow",
+          "candidate": "52.33",
+          "multi": "57.81"
+        }
+      ]
+    },
+    "note": "v3の全12レジーム等重み平均Tはmulti-arb未達。全レジーム平均(T−Tnoop)>0、最小+7.85。診断完了であり資格合格ではない。",
+    "sources": [
+      "src-dev4"
+    ]
+  },
+  "dev5": {
+    "name": "dev5-xb-r",
+    "state": "reported-running-unverified",
+    "verified": false,
+    "evidence_basis": "本人の走行中引継ぎ。プロセス/原ログ再監査なし",
+    "field": "F_ref",
+    "seeds": "36001/36002",
+    "regimes": 12,
+    "worlds": 24,
+    "fix_commit": "7b1448b",
+    "started_at": "2026-10-04T22:07:00+09:00",
+    "started_at_precision": "minute",
+    "started_at_basis": "本人提示22:07 JST。秒00は保存表現で実測秒ではない",
+    "expected_end": "2026-10-05T00:00:00+09:00",
+    "expected_end_basis": "本人提示00:00 JST頃の見込み。実完了ではない",
+    "completed_at": null,
+    "completed_worlds": null,
+    "g0": null,
+    "result": null,
+    "q0_eligible": false,
+    "independent_screen": false,
+    "iteration": 2,
+    "note": "v5・同seed36001/36002の12レジーム24世界。10/4 22:07 JST開始、10/5 00:00 JST頃完了見込み、結果未確認。今回2/3回目。既見seedの開発診断で独立screen/Q0には使えない。",
+    "sources": [
+      "src-dev5",
+      "src-v5"
+    ]
+  },
+  "repair_v5": {
+    "commit": "7b1448b",
+    "tests": 183,
+    "red_controls": 59,
+    "state": "implemented-reported",
+    "verified": false,
+    "evidence_kind": "measured引継ぎ",
+    "title": "v5 = v3 + R9（bundle用在庫余地）ON",
+    "note": "DEV4-XB-R-V5.mdを根拠にR9のみON。テスト183・赤対照59は既存検査記録の引継ぎで今回再実行なし。性能昇格はdev5結果待ち。",
+    "sources": [
+      "src-v5"
+    ]
+  },
+  "team": {
+    "primary": "Codex(Astra)",
+    "secondary": "Claude",
+    "unavailable": "Grok: 利用残高切れ(402)で体制から除外",
+    "support": "agy: Gemini 3.8 Flash High・ハーネス反映済 masa-harness#409",
+    "independent_review": "Claudeの別エージェント+agy",
+    "tool_policy": "ツール使用禁止・差分埋め込み・stdin",
+    "note": "本人の運用引継ぎ。レビュー用ツールへの入力に差分を埋め込みstdinで渡し、呼び出し先のツール使用を禁止する。本更新で外部モデル照会なし。",
+    "sources": [
+      "src-operations"
+    ]
+  },
+  "plateau": {
+    "name": "PLATEAU-ANALYSIS",
+    "state": "reported-creating-unverified",
+    "owner": "Codex",
+    "result": null,
+    "verified": false,
+    "note": "構造の異なる独自設計候補の検討をAstraが別ジョブで作成中。結果未確認。新規計測・採用・予算追加を意味しない。",
+    "sources": [
+      "src-operations"
     ]
   }
 }
@@ -515,7 +710,7 @@
     "p=3・等速・CPU排他・入力固定。Q0b全60世界とG0/平均Tの旧FAIL保持、資格救済再走なし。",
     "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。",
     "AI権限はENTRY_BPSだけ。20–60bps・初期60・刻み5・最大±5/60block。固定テンプレート、return/submit外側ゲート、安全state保持。",
-    "dev3aは9レジーム平均T未達。dev3b/v3未確認。全12×2 fresh seedの診断screen・hash/seed/費用が成立後に現Q0へ。"
+    "dev4は全12レジーム平均T未達。dev5は同seed対応診断・2/3回目・結果未確認。独立fresh screen・hash/seed/費用が成立後に現Q0へ。"
   ],
   "protocol": [
     {
@@ -585,7 +780,7 @@
       "id": "gate-g0",
       "title": "G0 / 計測",
       "state": "dev2 PASS / 旧Q0b B FAIL保持",
-      "resolve": "dev3aは18世界G0 PASSの引継ぎ。dev3b/v3は未確認。旧Q0bの2世界FAILは保存。診断成立と資格を分ける。",
+      "resolve": "dev4は24世界G0 PASSの引継ぎ、平均T未達。dev5のG0/結果は未確認。旧Q0bの2世界FAILは保存。診断成立と資格を分ける。",
       "sources": [
         "src-dev2",
         "src-dev3",
@@ -753,7 +948,7 @@
       "src-delegation"
     ]
   },
-  "revision": 7,
+  "revision": 8,
   "deadline_at": "2026-10-31T23:59:00+09:00",
   "continuous_operation": {
     "status": "defined-not-verified",
@@ -777,7 +972,7 @@
     "qualification_seeds_excluded": "41301–41305",
     "budget_status": "unreconciled-not-released",
     "title": "連続稼働の運用モデル",
-    "note": "matrixは1本、解析・隔離編集を並行。起動シェル終了≠完了。監視接続/実fixture/smoke実施は未確認。3回上限は予算追加の許可ではない。",
+    "note": "matrixは1本。今回dev5が2/3回目、既見seedの開発診断。独立fresh screenは未成立。監視接続/実fixture/smoke実施は未確認。次回の費用確保・上限は維持。",
     "sources": [
       "src-master",
       "src-retro-day"
@@ -855,7 +1050,9 @@
           "調整/短縮smoke/診断検証/Q0のseed交差0、全履歴未使用性監査、stream/scorer整合、候補/依存/prompt/roster/slot/hash固定、Q0 5hと全残費確保"
         ]
       ]
-    }
+    },
+    "iteration_current": 2,
+    "current_run_ref": "status.dev5"
   }
 }
 </script>
@@ -873,7 +1070,7 @@
       "start_date": "2026-10-04",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "dev3a完了・平均T未達。dev3b/v3未確認→全12×2診断screen→現Q0→受理S。10/8延期済み"
+      "gate": "dev4全12平均T未達→dev5対応診断（2/3回目・結果未確認）→独立fresh screen→現Q0→受理S。10/8延期済み"
     },
     {
       "id": "phase-deep",
@@ -914,9 +1111,9 @@
     {
       "id": "day-2026-10-04",
       "date": "2026-10-04",
-      "title": "dev3a完了・収益不足、dev3b/v3未確認、連続稼働モデル定義",
-      "dependency": "measured診断と進行中引継ぎ・本人報告を区別",
-      "stop": "dev3aは9レジームのみ。dev3b/v3未確認、全12×2診断screen前にQ0へ進まない",
+      "title": "dev4実測・v5 R9決定、dev5開始（2/3回目）",
+      "dependency": "本人提示measuredと走行中引継ぎを区別。Codex主・Claude副・agy補助",
+      "stop": "dev4平均T未達、dev5同seed診断・結果未確認。独立screen前にQ0へ進まない",
       "state": "running",
       "highlight": true,
       "decision_refs": [
@@ -931,9 +1128,9 @@
     {
       "id": "day-2026-10-05",
       "date": "2026-10-05",
-      "title": "dev3bの担当証跡とv3のsmoke・診断検証条件を照合",
-      "dependency": "a646e9b・35001/35002・取引成立/hash/G0/安全/費用",
-      "stop": "結果と全条件がそろうまでQ0開始なし",
+      "title": "dev5結果・対応比較・PLATEAU-ANALYSISを受領",
+      "dependency": "7b1448b・36001/36002・24世界。00:00 JST頃は見込み、結果未確認",
+      "stop": "安全・対応条件・全残費・fresh seed非交差を確認するまで第3回を開始しない",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
@@ -1513,9 +1710,10 @@
       "workstream": "初回受理",
       "title": "資格試験の開始条件をそろえる",
       "state": "blocked",
-      "evidence": "全12×2の診断screen・G0/安全・固定hash/未使用資格seed・5h枠の成立待ち。dev3b/v3未確認。",
+      "evidence": "dev4全12平均T未達。dev5は同seed開発診断で結果未確認。独立fresh screen・G0/安全・固定hash・未使用資格seed・5h枠の成立待ち。",
       "sources": [
-        "src-dev3",
+        "src-dev4",
+        "src-dev5",
         "src-delegation"
       ]
     },
@@ -1555,7 +1753,7 @@
       "workstream": "基盤",
       "title": "売買の追加制限を切り分ける",
       "state": "done",
-      "evidence": "単脚の追加100bpsゲートと初期在庫での停止を独立スイッチ化。R6/R7で検証する。テスト123件・赤対照25件は提示された検査記録。dev3aの9レジーム結果は提示済み、全12は未確認。",
+      "evidence": "単脚の追加100bpsゲートと初期在庫での停止を独立スイッチ化。R6/R7で検証する。テスト123件・赤対照25件は提示された検査記録。dev3aの9レジーム結果は提示済み、v2の全12集計は未受領。最新v3診断はdev4。",
       "sources": [
         "src-v2-repair"
       ]
@@ -1565,7 +1763,7 @@
       "workstream": "計測",
       "title": "dev3aの9レジーム診断を完了",
       "state": "done",
-      "evidence": "9レジーム18世界の診断完了。平均Tは比較対象未達。dev3b（残り3レジーム）とv3は未確認、全12平均は未算出。",
+      "evidence": "dev3aの9レジーム18世界は完了・平均T未達。dev3bとの全12平均は未受領。最新v3の別seed診断はdev4に記録。",
       "sources": [
         "src-dev3"
       ]
@@ -1573,9 +1771,9 @@
     {
       "id": "progress-dev3b",
       "workstream": "計測",
-      "title": "dev3b残り3レジームの結果確認",
-      "state": "running",
-      "evidence": "残り3レジームを走行中との引継ぎ。結果・G0・seed/世界数・hash・開始/完了時刻は未確認。監視接続は担当確認待ち。",
+      "title": "dev3bの過去結果（未受領）",
+      "state": "pending",
+      "evidence": "rev 7時点の走行中引継ぎを履歴として保持。dev3bの結果・世界数・G0は今回未提示。現在の計測はdev5。",
       "sources": [
         "src-master"
       ]
@@ -1583,11 +1781,51 @@
     {
       "id": "progress-xbr-v3",
       "workstream": "基盤",
-      "title": "v3の隔離実装",
-      "state": "running",
-      "evidence": "別担当Astraが実装中との本人引継ぎ。commit・検査・性能は未確認。",
+      "title": "v3 d30cbbbの実装・凍結（引継ぎ）",
+      "state": "done",
+      "evidence": "v3 d30cbbbの実装・凍結を本人引継ぎ。性能はdev4に保存。v3単独のテスト件数は未提示、今回再実行なし。",
       "sources": [
         "src-master"
+      ]
+    },
+    {
+      "id": "progress-dev4",
+      "workstream": "計測",
+      "title": "dev4全12レジーム診断完了",
+      "state": "done",
+      "evidence": "v3の全12レジーム等重み平均Tはmulti-arb未達。全レジーム平均(T−Tnoop)>0、最小+7.85。診断完了であり資格合格ではない。",
+      "sources": [
+        "src-dev4"
+      ]
+    },
+    {
+      "id": "progress-xbr-v5",
+      "workstream": "基盤",
+      "title": "v5 R9のみON・183テスト/赤対照59（引継ぎ）",
+      "state": "done",
+      "evidence": "DEV4-XB-R-V5.mdを根拠にR9のみON。テスト183・赤対照59は既存検査記録の引継ぎで今回再実行なし。性能昇格はdev5結果待ち。",
+      "sources": [
+        "src-v5"
+      ]
+    },
+    {
+      "id": "progress-dev5",
+      "workstream": "計測",
+      "title": "dev5同seed診断・2/3回目",
+      "state": "running",
+      "evidence": "v5・同seed36001/36002の12レジーム24世界。10/4 22:07 JST開始、10/5 00:00 JST頃完了見込み、結果未確認。今回2/3回目。既見seedの開発診断で独立screen/Q0には使えない。",
+      "sources": [
+        "src-dev5"
+      ]
+    },
+    {
+      "id": "progress-plateau",
+      "workstream": "探索",
+      "title": "PLATEAU-ANALYSISの別ジョブ",
+      "state": "running",
+      "evidence": "構造の異なる独自設計候補の検討をAstraが別ジョブで作成中。結果未確認。新規計測・採用・予算追加を意味しない。",
+      "sources": [
+        "src-operations"
       ]
     }
   ]
@@ -1622,14 +1860,15 @@
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
-      "owner": "Claude",
-      "evidence": "[measured引継ぎ] dev3aは9レジーム18世界、全P−noop正・G0 PASS。平均T 46.83対55.93。dev3b/v3と全12平均は未確認。",
-      "mitigation": "dev3b受領とv3解析/隔離編集を並行。全12×2 fresh seedの診断screen・安全/hash/費用が揃うまでQ0停止。最大3回、予算不足なら先に停止。",
+      "owner": "Codex",
+      "evidence": "[measured引継ぎ] dev4: 12レジーム24世界、G0 PASS・362ループ。平均T 49.72対55.02（差5.3T）、全12平均(T−Tnoop)>0・最小+7.85。dev5結果未確認。",
+      "mitigation": "v5 R9のみONのdev5を受領し、同seed対応比較・安全・残費を確認。今回2/3回目。独立fresh screen成立までQ0停止。PLATEAU-ANALYSISは別ジョブ・結果未確認。",
       "status": "mitigating",
       "sources": [
-        "src-dev2",
-        "src-dev3",
-        "src-delegation"
+        "src-dev4",
+        "src-dev5",
+        "src-v5",
+        "src-operations"
       ],
       "impact_note": "初回提出の受理まで進めない"
     },
@@ -1658,7 +1897,7 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "G3 17.2h、deep9.7hへ決定済み。Q0再資格5h優先、dev1/dev2/dev3・修理費未精算。",
+      "evidence": "G3 17.2h、deep9.7hへ決定済み。Q0再資格5h優先、dev1/dev2/dev3/dev4/dev5・修理費未精算。",
       "mitigation": "AI専用E3/Q1約9.5333hにD48世界52/15h＋実装/支援が別。全工程不足なので実走未解放、cal後再予算。10/17不成立ならS240又はHなし。",
       "status": "open",
       "sources": [
@@ -1778,7 +2017,7 @@
       "likelihood": "高",
       "impact": "中",
       "owner": "Claude",
-      "evidence": "a646e9b・123テスト/赤対照25件とdev3a実測の引継ぎ。dev3b/v3・全12診断screen・Q0用hash/費用は未確認。",
+      "evidence": "v5 7b1448b・183テスト/赤対照59件は引継ぎ。dev4平均T未達、dev5結果・独立fresh screen・Q0用hash/費用は未確認。",
       "mitigation": "別ジョブのhash/clock固定再生/取引成立の再診断証跡を受領。編集中コードへ資格認定を移さない。",
       "status": "mitigating",
       "sources": [
@@ -1887,20 +2126,20 @@
   "items": [
     {
       "id": "queue-dev1-evidence",
-      "title": "dev3b結果確認・v3検証準備",
-      "owner": "Claude",
+      "title": "dev5結果確認・v5対応比較（2/3回目）",
+      "owner": "Codex",
       "active": true,
       "sources": [
-        "src-dev3",
-        "src-master"
+        "src-dev5",
+        "src-v5"
       ],
       "experiment": "dev1-evidence",
       "priority": 1,
-      "state": "dev3b走行中との引継ぎ・結果未確認",
-      "worlds": 0,
+      "state": "dev5走行中との引継ぎ・結果未確認",
+      "worlds": 24,
       "hours": null,
-      "window": "dev3a 10/4 17:39 JST完了、dev3b時刻未確認",
-      "dependency": "dev3b残り3レジーム、世界数未提示（0は新規予約なし）。v3は別担当実装中・未確認。監視接続を担当確認、凍結入力を保持。§8.3の全12×2診断screen・hash/seed/費用成立までQ0停止。"
+      "window": "10/4 22:07 JST開始、10/5 00:00 JST頃完了見込み（結果未確認）",
+      "dependency": "v5 7b1448b・F_ref・36001/36002・12レジーム24世界。既見seedの開発診断で独立screen/Q0には使えない。今回2/3回目。対応比較・安全・残費確認後に次を判断、全残費未精算。"
     },
     {
       "id": "queue-q0b-evidence",
@@ -2090,9 +2329,20 @@
       ]
     }
   ],
-  "note": "dev3a完了、dev3b走行中・v3実装中との引継ぎで結果は未確認。先頭の0世界は新規予約なしで、走行中dev3bの世界数は未提示。Q0以降は停止中。",
+  "note": "dev5が走行中との本人引継ぎ、24世界・2/3回目・結果未確認。Codex(Astra)主・Claude副。PLATEAU-ANALYSISは別ジョブでAstra作成中・結果未確認。Q0以降は停止中。",
   "day_limit_hours": 6,
-  "bundle": "Q0再資格5hをdeep内優先留保。AI G3は17.2hへ振替済み、追加実装/D/下流費は全量成立まで未解放。"
+  "bundle": "Q0再資格5hをdeep内優先留保。AI G3は17.2hへ振替済み、追加実装/D/下流費は全量成立まで未解放。",
+  "side_jobs": [
+    {
+      "title": "PLATEAU-ANALYSIS",
+      "owner": "Codex",
+      "state": "作成中・結果未確認",
+      "note": "構造の異なる独自設計候補の検討をAstraが別ジョブで作成中。結果未確認。新規計測・採用・予算追加を意味しない。",
+      "sources": [
+        "src-operations"
+      ]
+    }
+  ]
 }
 </script>
 <!-- END data-queue -->
@@ -3302,9 +3552,53 @@
     "sources": [
       "src-master",
       "src-dev2",
-      "src-dev3"
+      "src-dev3",
+      "src-dev4",
+      "src-dev5"
     ],
     "diagnostic": [
+      {
+        "candidate": "xb-r v5",
+        "scope_ref": "status.dev5",
+        "run_ref": "status.dev5.name",
+        "value_note": "結果未確認",
+        "detail": "同seed開発診断・2/3回目。10/4 22:07開始、10/5 00:00 JST頃見込み。",
+        "state": "running",
+        "verdict": "走行中との引継ぎ。独立screen/Q0には使えない。",
+        "sources": [
+          "src-dev5"
+        ]
+      },
+      {
+        "candidate": "xb-r v3",
+        "scope_ref": "status.dev4",
+        "run_ref": "status.dev4.name",
+        "metrics": [
+          {
+            "label": "平均P",
+            "candidate_ref": "status.dev4.result.p_candidate",
+            "baseline_ref": "status.dev4.result.p_multi"
+          },
+          {
+            "label": "平均取引数",
+            "candidate_ref": "status.dev4.result.trades_candidate",
+            "baseline_ref": "status.dev4.result.trades_multi"
+          },
+          {
+            "label": "平均T",
+            "candidate_ref": "status.dev4.result.t_candidate",
+            "baseline_ref": "status.dev4.result.t_multi"
+          }
+        ],
+        "metric_note": "cand / multi-arb、同じ24世界。平均Tは12レジーム等重み、cleanのP/取引数は原表。",
+        "state": "warning",
+        "state_label": "比較対象に未達",
+        "safety_ref": "status.dev4",
+        "verdict": "平均Tは5.3T不足。全12レジーム平均(T−Tnoop)>0、最小+7.85。資格試験ではない。",
+        "sources": [
+          "src-dev4"
+        ]
+      },
       {
         "candidate": "xb-r v2",
         "scope_ref": "status.dev3",
@@ -3330,7 +3624,7 @@
         "state": "warning",
         "state_label": "比較対象に未達",
         "safety_ref": "status.dev3",
-        "verdict": "9レジームの診断。全12平均とdev3b/v3は未確認。資格試験ではない。",
+        "verdict": "dev3aは9レジームの過去診断。dev3bを含む全12平均は未受領。最新v3診断は別seedのdev4。",
         "sources": [
           "src-dev3"
         ]
@@ -3510,7 +3804,157 @@
       "source": "src-dev3",
       "header_key": "dev3a-xb-r項目"
     },
-    "note": "原ログ未再監査。dev3bと合わせた全12平均やv3性能は未確認。"
+    "note": "rev 7時点の本人提示集計を保持。dev3bとの合算は未確認。最新v3診断はdev4。"
+  },
+  "dev4": {
+    "id": "result-dev4",
+    "title": "dev4-xb-r / 全12レジーム診断",
+    "run_label": "dev4-xb-r",
+    "category": "diagnostic",
+    "header": [
+      "dev4-xb-r項目",
+      "提示された結果",
+      "判定・範囲"
+    ],
+    "rows": [
+      [
+        "母集団・G0",
+        "v3 d30cbbb・F_ref・seed36001/36002・12レジーム24世界 / G0 PASS / 362ループ",
+        "本人提示measured。原ログ再監査なし"
+      ],
+      [
+        "12レジーム等重み平均T",
+        "cand 49.72 / multi-arb 55.02（差5.3T）",
+        "平均T条件未達・資格合格ではない"
+      ],
+      [
+        "レジーム平均(T−Tnoop)",
+        "全12レジームで正 / 最小+7.85",
+        "レジーム平均の最小値。世界別Pの最小値ではない"
+      ],
+      [
+        "noop割れ / violations / cand revert",
+        "0 / 0 / 0",
+        "未提示の安全項目は補完しない"
+      ],
+      [
+        "送信 / 送信失敗",
+        "submitted 1652 / failed 23（1.4%）",
+        "失敗率は23/(1652+23)の丸め。mined revertと別"
+      ],
+      [
+        "1世界平均P",
+        "cand 488.2 / multi-arb 1460.8 / clean-arb 440.0",
+        "同じ24世界"
+      ],
+      [
+        "1世界平均取引数",
+        "cand 68.8 / multi-arb 273.4 / clean-arb 46.3",
+        "同じ24世界"
+      ]
+    ],
+    "sources": [
+      "src-dev4"
+    ],
+    "source_table": {
+      "source": "src-dev4",
+      "header_key": "dev4-xb-r項目"
+    },
+    "note": "本人提示measured集計。dev5結果は未確認。"
+  },
+  "dev4_regimes": {
+    "id": "result-dev4-regimes",
+    "title": "dev4 / レジーム別平均T",
+    "run_label": "dev4-xb-r",
+    "category": "diagnostic",
+    "header": [
+      "dev4レジーム",
+      "cand 平均T",
+      "multi-arb 平均T",
+      "比較"
+    ],
+    "rows": [
+      [
+        "calm",
+        "56.12",
+        "35.90",
+        "candが上回る"
+      ],
+      [
+        "crash",
+        "52.45",
+        "50.31",
+        "candが上回る"
+      ],
+      [
+        "vuln",
+        "54.14",
+        "48.69",
+        "candが上回る"
+      ],
+      [
+        "spike",
+        "50.20",
+        "49.99",
+        "candが上回る"
+      ],
+      [
+        "depeg-persist",
+        "57.02",
+        "50.54",
+        "candが上回る"
+      ],
+      [
+        "launch",
+        "53.46",
+        "49.92",
+        "candが上回る"
+      ],
+      [
+        "whale",
+        "38.86",
+        "62.79",
+        "candが下回る"
+      ],
+      [
+        "cex-drift",
+        "45.67",
+        "63.80",
+        "candが下回る"
+      ],
+      [
+        "depeg",
+        "42.73",
+        "63.85",
+        "candが下回る"
+      ],
+      [
+        "lending-incident",
+        "46.48",
+        "63.61",
+        "candが下回る"
+      ],
+      [
+        "cdp-incident",
+        "47.24",
+        "62.98",
+        "candが下回る"
+      ],
+      [
+        "informed-flow",
+        "52.33",
+        "57.81",
+        "candが下回る"
+      ]
+    ],
+    "sources": [
+      "src-dev4"
+    ],
+    "source_table": {
+      "source": "src-dev4",
+      "header_key": "dev4レジーム"
+    },
+    "note": "本人提示measured集計。dev5結果は未確認。"
   }
 }
 </script>
@@ -3847,6 +4291,62 @@
   ],
   "note": "追記専用・記録時刻の降順。同時刻は許可。正確な出来事時刻がない履歴は移行時刻で追記し、対象日と時刻根拠を併記。既存entryは訂正せず[誤り]を追加。",
   "items": [
+    {
+      "id": "log-073",
+      "timestamp": "2026-10-04T22:11:09+09:00",
+      "type": "計画変更",
+      "summary": "PLATEAU-ANALYSIS: 構造の異なる独自設計候補の検討をAstraが別ジョブで作成中、結果未確認。",
+      "sources": [
+        "src-operations"
+      ],
+      "time_basis": "JSTによる文書記録時刻。出来事の正確な時刻はdev5開始22:07（本人提示・分精度）以外未提示。00:00頃は翌10/5の完了見込みで実績ではない。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-072",
+      "timestamp": "2026-10-04T22:11:09+09:00",
+      "type": "計画変更",
+      "summary": "rev 8体制: Grokは利用残高切れ(402)で除外、Codex(Astra)主・Claude副。agy(Gemini 3.8 Flash High、masa-harness#409反映済)を補助レビュー。独立レビューはClaudeの別エージェント+agy。ツール使用禁止・差分埋め込み・stdin。",
+      "sources": [
+        "src-operations"
+      ],
+      "time_basis": "JSTによる文書記録時刻。出来事の正確な時刻はdev5開始22:07（本人提示・分精度）以外未提示。00:00頃は翌10/5の完了見込みで実績ではない。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-071",
+      "timestamp": "2026-10-04T22:11:09+09:00",
+      "type": "実測",
+      "summary": "dev5: v5・F_ref・同seed36001/36002・12レジーム24世界。2026-10-04 22:07 JST開始、10/5 00:00 JST頃完了見込み、結果未確認。既見seed開発診断で独立screen/Q0には使えない。",
+      "sources": [
+        "src-dev5"
+      ],
+      "time_basis": "JSTによる文書記録時刻。出来事の正確な時刻はdev5開始22:07（本人提示・分精度）以外未提示。00:00頃は翌10/5の完了見込みで実績ではない。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-070",
+      "timestamp": "2026-10-04T22:11:09+09:00",
+      "type": "決定",
+      "summary": "v5 = v3 + R9(bundle用在庫余地)ON、根拠DEV4-XB-R-V5.md、commit7b1448b。テスト183・赤対照59は引継ぎ、今回再実行なし。今回が2/3回目、rev7上限維持。",
+      "sources": [
+        "src-v5",
+        "src-master"
+      ],
+      "time_basis": "JSTによる文書記録時刻。出来事の正確な時刻はdev5開始22:07（本人提示・分精度）以外未提示。00:00頃は翌10/5の完了見込みで実績ではない。",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-069",
+      "timestamp": "2026-10-04T22:11:09+09:00",
+      "type": "実測",
+      "summary": "dev4: v3 d30cbbb・F_ref・36001/36002・12レジーム24世界・G0 PASS・362ループ。等重み平均T49.72/55.02（差5.3T）、全12平均(T−Tnoop)>0・最小+7.85、noop割れ/violations/cand revert0。submitted1652/failed23（1.4%）、P488.2/1460.8/440.0、取引68.8/273.4/46.3（cand/multi/clean）。",
+      "sources": [
+        "src-dev4"
+      ],
+      "time_basis": "JSTによる文書記録時刻。出来事の正確な時刻はdev5開始22:07（本人提示・分精度）以外未提示。00:00頃は翌10/5の完了見込みで実績ではない。",
+      "event_date": "2026-10-04"
+    },
     {
       "id": "log-068",
       "timestamp": "2026-10-04T19:45:31+09:00",
@@ -5123,6 +5623,56 @@
       ],
       "category": "判断",
       "definition": "過去の計画・判断で使われるCodex側の担当名。現在の担当欄はCodexに統一し、判断者・署名の原記録は保持する。"
+    },
+    {
+      "id": "term-r9",
+      "term": "R9 / bundle用在庫余地",
+      "aliases": [
+        "R9",
+        "bundle用在庫余地"
+      ],
+      "category": "戦略",
+      "definition": "単脚の在庫帯を初期±10%に抑え、bundle各脚の±20%帯の余地を残す因子。v5でON、収益改善はdev5結果未確認。",
+      "sources": [
+        "src-v5"
+      ]
+    },
+    {
+      "id": "term-agy",
+      "term": "agy / Gemini 3.8 Flash High",
+      "aliases": [
+        "agy",
+        "Gemini 3.8 Flash High"
+      ],
+      "category": "運用",
+      "definition": "補助レビュー役。masa-harness#409でハーネス反映済との本人引継ぎ。独立レビューはClaudeの別エージェントと組み合わせる。",
+      "sources": [
+        "src-operations"
+      ]
+    },
+    {
+      "id": "term-plateau",
+      "term": "PLATEAU-ANALYSIS",
+      "aliases": [
+        "PLATEAU-ANALYSIS"
+      ],
+      "category": "運用",
+      "definition": "構造の異なる独自設計候補を検討する別ジョブ。Astraが作成中との引継ぎで結果未確認。採用や追加計測の承認を表さない。",
+      "sources": [
+        "src-operations"
+      ]
+    },
+    {
+      "id": "term-paired-diagnostic",
+      "term": "同seed対応診断",
+      "aliases": [
+        "同seed対応診断"
+      ],
+      "category": "計測",
+      "definition": "同じレジームとseedの旧版・新版を比較する開発診断。因子選択に使った既見seedなので独立fresh screenやQ0には使えない。",
+      "sources": [
+        "src-v5"
+      ]
     }
   ]
 }
@@ -5198,14 +5748,14 @@
   "kpis": [
     {
       "label": "最新の診断結果",
-      "ref": "status.dev3.name",
-      "note": "dev3a完了・dev3b/v3未確認",
+      "ref": "status.dev4.name",
+      "note": "dev4完了・dev5走行中、結果未確認",
       "route": "results"
     },
     {
       "label": "最新診断の平均T",
-      "ref": "status.dev3.result.t_candidate",
-      "note": "dev3a / 9レジーム、multi 55.93",
+      "ref": "status.dev4.result.t_candidate",
+      "note": "12レジーム等重み、multi 55.02（差5.3T）",
       "route": "results"
     },
     {
@@ -5239,7 +5789,7 @@
   "copy": {
     "action_note": "鍵の登録は本人報告で確認済み。クリップボードの鍵も消去済みです。",
     "action_next": "運営のモデル一覧・無料枠の量・鍵の疎通を再確認します。無料枠が不足する場合の前払い判断は、AI改訂の費用見積もり後です。",
-    "diagnostic_notice": "dev3aは9レジームのみ。dev3b/v3と全12平均は未確認。診断完了を資格合格にせず、異なるseed/母集団の差を因果効果と呼びません。",
+    "diagnostic_notice": "dev4は全12レジーム24世界の診断。dev5は同seedの開発診断で結果未確認。2/3回目。独立fresh screen・Q0合格へ読み替えません。",
     "qualification_notice": "資格条件は維持しています。旧2候補は不合格、xb-rの新しい資格試験は未実施です。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
     "diagnostic_criteria": "Pは損益、Tは同じ相手の中での相対スコア。取引が増えることと、資格を満たすことは別です。",
@@ -5347,7 +5897,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
     <div class="grid-2"><article class="card priority-card"><div class="card-title"><span class="mini-label">いまの最優先目標</span>${chip(s.priority.state,s.priority.state_label)}</div><h2 class="priority-title">${rich(s.priority.title)}</h2><p>${rich(s.priority.note)}</p>${prioritySteps()}${refs(s.priority.sources)}${link('results','診断と資格試験の結果を見る')}</article>
     <article class="card action-box"><div class="card-title"><h2>本人が今やること</h2>${chip(D.status.human_action==='なし'?'done':'decision',D.status.human_action==='なし'?'対応不要':'要判断')}</div><div class="action-value">${esc(s.human_action)}</div><p>${rich(D.ui.copy.action_note)}</p><div class="next-action"><strong>提出前の本人確認 · ${dateOnly(finalCheck.due_date)}</strong><p>${rich(D.ui.copy.action_next)}</p></div>${evidence(D.decisions.ollama_report.evidence_kind)}${refs(D.decisions.ollama_report.sources)}${link('decisions','判断と確認予定を見る')}</article></div>
     <div class="grid-2 section"><article class="card">${sectionTitle('直近の重要な出来事',`<span class="small muted">時刻不明の項目は推測しません</span>`)}<ol class="timeline">${s.recent.map(e=>{const r=e.run_ref?s[e.run_ref]:null;return `<li>${r?.started_at?`<time datetime="${r.started_at}">${time(r.started_at)}</time>`:`<span class="time-note">${dateOnly(e.date)} · ${esc(e.time_note)}</span>`}<div class="timeline-title">${rich(e.title)}</div><p>${rich(e.text)}</p>${r?`<div class="run-label">${esc(r.name)} · ${r.worlds}世界</div>`:''}${e.repair_ref?`<div class="run-label">${esc(s[e.repair_ref].commit)} · ${s[e.repair_ref].tests} tests / ${s[e.repair_ref].red_controls} 赤対照</div>`:''}${refs(e.sources)}</li>`;}).join('')}</ol></article>
-    <article class="card"><div class="card-title"><h2>次のマイルストーン</h2>${chip(s.next_milestone.state,s.next_milestone.state_label)}</div><h3>${rich(s.next_milestone.title)}</h3><p class="card-sub">${rich(s.next_milestone.note)}</p><div class="notice section"><strong>${s.dev3.completed_at?'確認された完了時刻':'現在の計測の完了見込み'}</strong><br>${time(s.dev3.completed_at||s.dev3.expected_end)}${!s.dev3.completed_at&&s.dev3.expected_end?'頃':''}<br>${rich(s.dev3.note)}</div>${refs(s.next_milestone.sources)}${link('operations','実行状況と時間枠を見る')}</article></div>
+    <article class="card"><div class="card-title"><h2>次のマイルストーン</h2>${chip(s.next_milestone.state,s.next_milestone.state_label)}</div><h3>${rich(s.next_milestone.title)}</h3><p class="card-sub">${rich(s.next_milestone.note)}</p><div class="notice section"><strong>${s.dev5.completed_at?'確認された完了時刻':'現在の計測の完了見込み'}</strong><br>${time(s.dev5.completed_at||s.dev5.expected_end)}${!s.dev5.completed_at&&s.dev5.expected_end?'頃':''}<br>${rich(s.dev5.note)}</div>${refs(s.next_milestone.sources)}${link('operations','実行状況と時間枠を見る')}</article></div>
     <div class="notice section">${rich(s.notice)}</div>`;}
   function plan(){const steps=D.plan.protocol.filter(s=>s.start_date);const highlighted=D.milestones.items.filter(m=>m.highlight||['2026-10-17','2026-10-18','2026-10-25','2026-10-29','2026-10-31'].includes(m.date));return `<div class="summary-strip"><h2>${rich(D.plan.goal)}</h2><p>締切 ${time(D.plan.deadline_at)} · MASTER rev ${D.plan.revision} · ${rich(D.ui.copy.plan_note)}</p></div>
     <section class="card">${sectionTitle('提出までのロードマップ',chip('blocked',D.ui.copy.plan_state))}<div class="roadmap-axis" aria-hidden="true"><span>工程 / 条件</span>${D.ui.roadmap_axis.map(d=>`<span>${esc(d)}</span>`).join('')}</div><ol>${steps.map((p,i)=>{const offset=Number(D.ui.roadmap_start_date.slice(8))-1,start=Number(p.start_date.slice(8))-offset,end=Number(p.end_date.slice(8))-offset+1;return `<li class="roadmap-row"><div class="roadmap-meta"><strong>Step ${i+1} · ${rich(p.label)}</strong><small>${esc(p.period)}</small>${chip(p.state)}</div><div class="roadmap-track" aria-label="${esc(p.period)}"><div class="roadmap-bar ${i===0?'current':''}" style="grid-column:${start}/${end}"><span class="sr-only">${esc(p.period)}</span></div></div></li>`;}).join('')}</ol><p class="roadmap-caption">帯は予定の期間です。日付が来ても、前の工程・資格・費用の条件を満たすまで開始しません。</p>${refs(D.plan.sources)}</section>
@@ -5356,6 +5906,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
   function scopeText(s){return `${s.field} · ${s.regimes}レジーム · seed${s.seeds} · ${s.worlds}世界`;}
   function safetyText(path){
     const value=read(path);
+    if(path==='status.dev4'){const r=value.result;return `全${r.positive_regimes}レジーム平均(T−Tnoop)>0、最小${r.min_regime_t_minus_noop}。noop割れ${r.noop_below}・違反${r.violations}・cand revert ${r.reverts}。submitted ${r.submitted} / failed ${r.submit_failed}（${r.submit_failed_percent}%）。G0 ${value.g0}・${value.loops}ループ。`;}
     if(path==='status.dev3'){const r=value.result;return `P−noopは全${r.positive_worlds}世界で正（最小値未提示）。noop割れ${r.noop_below}・違反${r.violations}・revert ${r.reverts}。submit_failed ${r.submit_failed} / submitted ${r.submitted}。G0 ${value.g0}。`;}
     if(path==='status.dev2'){const r=value.result;return `P−noopは全${r.positive_worlds}世界で正、最小${r.min_p_minus_noop}。noop割れ${r.noop_below}・違反${r.violations}・revert ${r.reverts}。G0 ${value.g0}。`;}
     if(path==='results.q0_summary')return `noop割れ ${value.noop_below}。送信失敗 ${value.submit_failed}、mined revert ${value.mined_reverts}。`;
@@ -5371,7 +5922,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
     ]);
     return `<table class="comparison" role="table"><caption class="sr-only">${mode==='diagnostic'?'診断計測':'資格試験'}の候補比較</caption><thead><tr>${head.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((v,i)=>`<td data-label="${head[i]}"><div>${v}</div></td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
-  function results(){const mode=state.results;const keys=mode==='diagnostic'?['dev3a','dev2','dev2_detail','dev1','d0','strategies','ranking','zeta']:['q0','q0b'];return `
+  function results(){const mode=state.results;const keys=mode==='diagnostic'?['dev4','dev4_regimes','dev3a','dev2','dev2_detail','dev1','d0','strategies','ranking','zeta']:['q0','q0b'];return `
     <section class="card table-card results-primary"><div class="table-intro"><div class="subnav" role="group" aria-label="結果の種類"><button type="button" data-results="diagnostic" aria-pressed="${mode==='diagnostic'}">診断 · 原因と改善を調べる</button><button type="button" data-results="qualification" aria-pressed="${mode==='qualification'}">資格試験 · 合否を判定する</button></div><div class="card-title"><h2>${mode==='diagnostic'?'診断計測の比較':'資格試験の判定'}</h2>${evidence('measured引継ぎ / 原ログ未再監査')}</div><p class="card-sub">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_criteria:D.ui.copy.qualification_criteria)}</p></div>${comparison(mode)}<div class="table-foot">${rich(D.status.measurement_note)}</div></section><div class="section"><div class="notice ${mode==='diagnostic'?'':'warning'}">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_notice:D.ui.copy.qualification_notice)}</div></div>
     <section class="section">${sectionTitle('測定の原表・条件')}<div class="stack">${keys.map(k=>details(D.results[k].title,rawTable(D.results[k]))).join('')}</div></section>
     <div class="stack section">${details('進捗台帳 · すべての作業項目',D.progress.workstreams.map(w=>`<section class="section"><h3>${esc(w)}</h3><ol class="milestone-list">${D.progress.items.filter(p=>p.workstream===w).map(p=>`<li><div>${chip(p.state)}</div><div><h3>${rich(p.title)}</h3><p>${rich(p.evidence)}</p>${refs(p.sources)}</div></li>`).join('')}</ol></section>`).join(''))}${details('固定版・過去の記録',keyValues(D.status.commits)+keyValues(D.status.q0b)+keyValues(D.status.dev1)+keyValues(D.status.repair_v2))}${details('過去の診断・設計の記録',rawTable(D.results.m1)+rawTable(D.results.fields)+D.results.research.concat(D.results.archive).map(r=>`<article class="section"><h3>${rich(r.title)}</h3><p class="scope-note">${rich(r.text)}</p>${refs(r.sources)}</article>`).join(''))}</div>`;}
@@ -5381,9 +5932,10 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
     <section class="section">${sectionTitle('本人の確認予定・完了記録')}<div class="grid-equal">${ds.filter(d=>['dec-007','dec-008','dec-no-contact'].includes(d.id)).map(decisionCard).join('')}</div></section>
     <section class="section">${sectionTitle('委任により確定した決定',`<small>Codex / 過去の記録名 Astra</small>`)}<div class="notice">${rich(D.ui.copy.decisions_note)}</div><div class="grid-equal section">${ds.filter(d=>d.group==='delegated').map(decisionCard).join('')}</div></section>
     <div class="stack section">${details('既決の方針・旧案の履歴',`<div class="stack">${ds.filter(d=>d.group!=='delegated'&&!['dec-007','dec-008','dec-no-contact'].includes(d.id)).map(decisionCard).join('')}</div>`)}${details('AI契約・資格試験・失敗上限の詳細',rawTable({...D.plan.ai_parameters,title:'AIが変更できる設定'})+keyValues(D.plan.ai_contract)+keyValues(D.plan.q0_requalification)+keyValues(D.plan.revert_contract)+keyValues(D.plan.cutover))}${details('登録報告の全項目',keyValues(rep))}</div>`;}
-  function operations(){const r=D.status.dev3b,b=D.budget;const active=D.queue.items.filter(q=>q.active);const queueHead=['順番・作業','状態・担当','規模・全量見積','開始条件'];return `<div class="grid-2"><section class="card running-card"><div class="card-title"><div><p class="eyebrow">CURRENT RUN</p><h2>${rich(r.name)}</h2></div>${chip(['running-results-pending','reported-running-unverified'].includes(r.state)?'running':r.state==='measured-diagnostic-complete'?'done':'pending',['running-results-pending','reported-running-unverified'].includes(r.state)?'計測中との引継ぎ・未確認':r.state==='measured-diagnostic-complete'?'診断完了の引継ぎ':'状態確認待ち')}</div><p class="card-sub">${rich(`${r.field} · seed${r.seeds??'未提示'} · ${r.regimes}レジーム / ${r.worlds??'未提示'}世界`)}</p><p class="scope-note">所要見込み ${r.expected_end&&r.started_at?Math.round((Date.parse(r.expected_end)-Date.parse(r.started_at))/60000)+'分':'未提示'}（開始と完了見込みの差・実測ではありません）</p><div class="run-metrics"><div><small>開始 · JST</small><strong>${r.started_at?r.started_at.slice(11,16):'未確認'}</strong></div><div><small>${r.completed_at?'完了確認':'完了見込み'} · JST</small><strong>${r.completed_at?r.completed_at.slice(11,16):r.expected_end?r.expected_end.slice(11,16)+'頃':'未確認'}</strong></div><div><small>確認済み完了数</small><strong>${r.completed_worlds===null?'未確認':r.completed_worlds}</strong></div></div><div class="notice">${rich(r.note)} 実消化は未精算。時間の経過から進行率は計算しません。</div>${refs(r.sources)}<p class="scope-note">${rich(active[0]?.dependency||'進行中の作業はありません。')}</p></section>
+  function operations(){const r=D.status.dev5,b=D.budget;const active=D.queue.items.filter(q=>q.active);const queueHead=['順番・作業','状態・担当','規模・全量見積','開始条件'];return `<div class="grid-2"><section class="card running-card"><div class="card-title"><div><p class="eyebrow">CURRENT RUN</p><h2>${rich(r.name)}</h2></div>${chip(['running-results-pending','reported-running-unverified'].includes(r.state)?'running':r.state==='measured-diagnostic-complete'?'done':'pending',['running-results-pending','reported-running-unverified'].includes(r.state)?'計測中との引継ぎ・未確認':r.state==='measured-diagnostic-complete'?'診断完了の引継ぎ':'状態確認待ち')}</div><p class="card-sub">${rich(`${r.field} · seed${r.seeds??'未提示'} · ${r.regimes}レジーム / ${r.worlds??'未提示'}世界`)}</p><p class="scope-note">所要見込み ${r.expected_end&&r.started_at?Math.round((Date.parse(r.expected_end)-Date.parse(r.started_at))/60000)+'分':'未提示'}（開始と完了見込みの差・実測ではありません）</p><div class="run-metrics"><div><small>開始 · JST</small><strong>${r.started_at?r.started_at.slice(11,16):'未確認'}</strong></div><div><small>${r.completed_at?'完了確認':'完了見込み'} · JST</small><strong>${r.completed_at?r.completed_at.slice(11,16):r.expected_end?r.expected_end.slice(11,16)+'頃':'未確認'}</strong></div><div><small>確認済み完了数</small><strong>${r.completed_worlds===null?'未確認':r.completed_worlds}</strong></div></div><div class="notice">${rich(r.note)} 実消化は未精算。時間の経過から進行率は計算しません。</div>${refs(r.sources)}<p class="scope-note">${rich(active[0]?.dependency||'進行中の作業はありません。')}</p></section>
     <section class="card"><div class="card-title"><h2>${rich('forward100hの消化')}</h2>${chip('warning',b.consumption_status)}</div><div class="budget-values"><div><small>今後の時間枠</small><strong>${esc(b.total_hours)} h</strong></div><div><small>枠内の実消化</small><strong>${b.consumed_forward_hours===null?'未確認':hours(b.consumed_forward_hours)}</strong></div><div><small>残り時間</small><strong>未確定</strong></div></div><p class="card-sub">過去の実測下限は ${esc(b.consumed_lower_bound_hours)} h以上。これは枠外の履歴です。開始・終了区間が未精算のため、${esc(b.total_hours)}hから引きません。</p><p class="scope-note">${rich(b.note)}</p>${refs(b.sources)}</section></div>
-    <section class="card section">${sectionTitle(D.plan.continuous_operation.title,chip('warning','運用接続は未確認'))}<p class="card-sub">${rich(D.plan.continuous_operation.note)}</p><p class="scope-note">${rich(D.status.repair_v3.note)}</p><div class="stack section">${details('段階・担当・最大待ち時間',rawTable({...D.plan.continuous_operation.stages,sources:D.plan.continuous_operation.sources,title:'1回目標'+D.plan.continuous_operation.iteration_target_minutes+'分・上限'+D.plan.continuous_operation.iteration_limit_minutes+'分、最大'+D.plan.continuous_operation.iteration_limit+'回（予算は別途確保）'}))}${details('Q0に進む診断screen',rawTable({...D.plan.continuous_operation.screen,sources:D.plan.continuous_operation.sources,title:'全'+D.plan.continuous_operation.validation_regimes+'×'+D.plan.continuous_operation.validation_seeds+'のfresh seed診断検証。資格試験は別集合'}))}</div>${refs(D.plan.continuous_operation.sources)}</section>
+    <section class="card section">${sectionTitle('現在の体制・別ジョブ')}<div class="stack"><article><h3>${rich(D.status.team.primary)} 主 / ${rich(D.status.team.secondary)} 副</h3><p>${rich(D.status.team.unavailable)}</p><p>補助レビュー：${rich(D.status.team.support)}</p><p>独立レビュー：${rich(D.status.team.independent_review)}</p><p>入力方式：${rich(D.status.team.tool_policy)}</p><p class="scope-note">${rich(D.status.team.note)}</p>${refs(D.status.team.sources)}</article><article><h3>${rich(D.status.plateau.name)}</h3><p>${rich(D.status.plateau.note)}</p>${refs(D.status.plateau.sources)}</article></div></section>
+    <section class="card section">${sectionTitle(D.plan.continuous_operation.title,chip('warning','運用接続は未確認'))}<p class="card-sub">${rich(D.plan.continuous_operation.note)}</p><p class="scope-note">${rich(D.status.repair_v5.note)}</p><div class="stack section">${details('段階・担当・最大待ち時間',rawTable({...D.plan.continuous_operation.stages,sources:D.plan.continuous_operation.sources,title:'1回目標'+D.plan.continuous_operation.iteration_target_minutes+'分・上限'+D.plan.continuous_operation.iteration_limit_minutes+'分、最大'+D.plan.continuous_operation.iteration_limit+'回（予算は別途確保）'}))}${details('Q0に進む診断screen',rawTable({...D.plan.continuous_operation.screen,sources:D.plan.continuous_operation.sources,title:'全'+D.plan.continuous_operation.validation_regimes+'×'+D.plan.continuous_operation.validation_seeds+'のfresh seed診断検証。資格試験は別集合'}))}</div>${refs(D.plan.continuous_operation.sources)}</section>
     <section class="card table-card section"><div class="table-intro">${sectionTitle('実行キュー')}<p class="card-sub">${rich(D.queue.note)} 見積もりは全量分で、残り時間ではありません。</p></div><table class="queue-table" role="table"><caption class="sr-only">優先順の実行キュー</caption><thead><tr>${queueHead.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${D.queue.items.map(q=>{const tone=q.active?'running':/不採用/.test(q.state)?'pending':/停止|待ち|未解放/.test(q.state)?'blocked':'pending';const cells=[`<strong>${q.priority}. ${rich(q.title)}</strong>`,`${chip(tone,q.state)}<p>${owner(q.owner)}</p>`,`${q.worlds}世界 / ${hours(q.hours)}<p class="scope-note">${rich(q.window)}</p>`,`${rich(q.dependency)}${refs(q.sources)}`];return `<tr>${cells.map((v,i)=>`<td data-label="${queueHead[i]}"><div>${v}</div></td>`).join('')}</tr>`;}).join('')}</tbody></table></section>
     <section class="grid-equal section"><div class="card">${sectionTitle(b.total_hours+'hの予約配分',`<small>現行 KEEP / rev ${D.plan.revision}</small>`)}<p class="card-sub">配分は実消化ではありません。下の棒は予約時間を表します。</p><div class="budget-allocation section">${b.rows.filter(r=>fraction(r.keep_hours)>0).map(r=>`<div class="budget-row"><div class="budget-row-title">${rich(r.title)}</div><div class="budget-row-value">${hours(r.keep_hours)}</div><div class="budget-row-track" aria-hidden="true"><div class="budget-row-fill" style="width:${fraction(r.keep_hours)/fraction(b.total_hours)*100}%"></div></div><div class="budget-row-note">${rich(r.accounting)}</div></div>`).join('')}</div>${refs(b.sources)}</div><div class="stack"><section class="card"><h2>追加実行を止めている費用</h2><p class="card-sub">${rich(b.on_note)}</p><div class="notice warning section">${rich(D.queue.bundle)}</div>${refs(b.sources)}</section>${details('予約の原数値・未採用案を照合',rawTable({header:['用途','現行KEEP h','旧AMEND h','会計区分・注記'],rows:b.rows.map(r=>[r.title,r.keep_hours,r.amend_hours,r.accounting+'。'+r.note]),sources:b.sources,title:'分数は原値 / 両列'+b.total_hours+'h。AMENDは未署名・不採用'}))}${details('時間概算・AI改訂の速度感度',rawTable({...b.on_sensitivity,title:'改訂ONの速度による見積もりの変化',sources:b.sources})+keyValues(b.consumption_estimate))}</div></section>`;}
   const normalize = value => String(value).normalize('NFKC').toLocaleLowerCase('ja');
