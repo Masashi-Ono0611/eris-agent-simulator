@@ -266,13 +266,19 @@
       "id": "src-morning-1005",
       "title": "10/5朝報告の下書き",
       "path": "ascon-notes/league/MORNING-2026-10-05.md",
-      "locator": "mix1測定値・mix2未確認。本人判断の選択肢・推奨・反証条件"
+      "locator": "mix2・48世界集計・incz未確認。本人判断の選択肢・単一推奨・反証条件"
     },
     {
       "id": "src-rev11",
       "title": "rev 11 mix1結果・mix2進行中の本人提示引継ぎ",
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
-      "locator": "§1.7/8/10。提示集計、原ログ再監査なし。mix2結果は未確認"
+      "locator": "§1.7のmix1と更新ログのrev 11履歴。mix2未確認は当時の状態"
+    },
+    {
+      "id": "src-rev12",
+      "title": "rev 12 mix2・48世界集計とinczの本人引継ぎ",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "locator": "§1.7/8/10。提示集計・原ログ再監査なし。incz結果は未確認"
     }
   ]
 }
@@ -288,12 +294,12 @@
     "src-ollama-report",
     "src-rev10"
   ],
-  "as_of": "2026-10-05T05:40:25+09:00",
+  "as_of": "2026-10-05T07:19:55+09:00",
   "measurement_as_of": null,
-  "last_update": "rev 11: mix1全ランキング・12レジーム・23 PASS/1 BLOCKEDを本文へ統合。mix2未確認・48世界集計予定・本人判断を同期。",
+  "last_update": "rev 12: mix2・mix1+mix2(48世界)全11体順位を本文へ統合。incz走行中・結果未確認と開始見込み訂正、本人への単一推奨を同期。",
   "phase_id": "phase-first",
-  "headline": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix1は診断結果受領：cand平均T52.18・5/11位、最悪レジーム47.6は全員で最良。G0は23 PASS/1 BLOCKED。mix2は進行中・結果未確認。",
-  "subhead": "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。 [inferred] 2 seed×12レジームなのでinc-zetaとの差約2.8Tはノイズの範囲とみる。sonnet-1(53.34)・opus-1(51.66)など既存候補とも有意に区別できないという見立てで、統計検定の結果ではない。",
+  "headline": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix2・48世界集計を受領、混成場はinc-zetaが1位、candは48世界で5位。inczは走行中・結果未確認。",
+  "subhead": "推奨はA: 混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。 [inferred] xb-r v3とsonnet-1/grok-1/opus-1はこの集計では区別できないとの見立てで、統計検定の結果ではない。決定論ラインxb-rの追加改良より、混成場で強い既存の独自戦略inc-zeta=zeta-a30（Claude+Codex作成の本命）を提出基盤にする案が示唆される。ただしinc-zetaはF_ref契約(Q0)未通過。D0のF_ref診断はcommit不一致でG0 FAIL、性能は診断のみ。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -312,7 +318,7 @@
     "name": "Q0b"
   },
   "notice": "10/8の初回受理目標は延期済み。rev 11も既決契約・最大3回を維持、第3回は打ち切り。H1は標準ON拒否、登録の再操作は不要。",
-  "measurement_note": "本人提示のmeasured引継ぎ。dev4/dev5はF_ref既見seedの開発診断、liveも診断のみ。mix1は本人提示measured、mix2は結果未確認。原ログ/プロセスの再監査なし。",
+  "measurement_note": "本人提示measured引継ぎ。mix1/mix2/48世界集計は診断のみ。inczは走行中との引継ぎ・結果未確認。原ログ/プロセスの再監査なし。",
   "dev1": {
     "name": "dev1-xb-r",
     "state": "measured-diagnostic-complete",
@@ -471,7 +477,7 @@
   "priority": {
     "title": "第3回未達を受け、Q0と提出方針を本人が決める",
     "blocker_ref": "B01",
-    "note": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix1は診断結果受領：cand平均T52.18・5/11位、最悪レジーム47.6は全員で最良。G0は23 PASS/1 BLOCKED。mix2は進行中・結果未確認。 推奨はA（Q0維持・追加計測停止）。走行中mix2には介入せず、結果受領と48世界集計を待つ。契約変更は提案のみ。",
+    "note": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix2・48世界集計を受領、混成場はinc-zetaが1位、candは48世界で5位。inczは走行中・結果未確認。 推奨はA: 混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。",
     "progress_refs": [
       "progress-dev4",
       "progress-dev5",
@@ -480,51 +486,51 @@
       "progress-xbr-requal"
     ],
     "sources": [
-      "src-rev10"
+      "src-rev12"
     ],
     "state": "blocked",
     "state_label": "資格試験はブロック"
   },
   "recent": [
     {
-      "kind": "blocked",
-      "title": "xa-1: 2回修理後もHEALTHY=no",
-      "text": "[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。",
+      "kind": "warning",
+      "title": "mix2: 両chunk G0 PASS・違反0",
+      "text": "[measured] mix2はmix1と同じroster（u1の11体、zeta-2をcand=xb-r v3凍結に置換）。fresh seed40003/40004・12レジーム24世界、mix2a/mix2bともG0 PASS、violations 0。candは平均T51.63・6位・最悪46.2、inc-zetaは61.54・1位・最悪53.2。05:34 JST開始の引継ぎを保持し、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
       "date": "2026-10-05",
-      "time_note": "本人提示measured。実終了時刻未提示",
+      "time_note": "本人引継ぎ。更新時刻は測定完了時刻ではない",
       "sources": [
-        "src-rev10"
-      ]
-    },
-    {
-      "kind": "failed",
-      "title": "自由改訂: PILOT-STOP",
-      "text": "[measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。",
-      "date": "2026-10-05",
-      "time_note": "本人提示measured。実終了時刻未提示",
-      "sources": [
-        "src-rev10"
+        "src-rev12"
       ]
     },
     {
       "kind": "warning",
-      "title": "mix1: 5/11位・最悪値1位、G0 1世界BLOCKED",
-      "text": "[measured] mix1は12レジーム等重み平均Tでcand(xb-r v3)52.18・11体中5位、平均(50)より上。worst regime T47.6は全員で最良の最悪値。multi-arbは36.73・最下位。F_refの対multi-arb基準での負けと混成場での順位は逆の見え方。 G0は24世界中23世界PASS、crash/40001のみBLOCKED（grok-1のtelemetryが原因、candではない）。診断として全24世界を保持し、BLOCKEDをPASSとは扱わない。violations 0。 契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+      "title": "48世界: inc-zeta 1位・cand 5位",
+      "text": "[measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb 11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。",
       "date": "2026-10-05",
-      "time_note": "本人提示measured。実完了時刻未提示",
+      "time_note": "本人引継ぎ。更新時刻は測定完了時刻ではない",
       "sources": [
-        "src-rev11"
+        "src-rev12"
+      ]
+    },
+    {
+      "kind": "running",
+      "title": "incz: 07:20 JST頃開始・結果未確認",
+      "text": "[進行中・診断] inczはinc-zetaをF_refで12レジーム×seed40005=12世界。10/5 07:20 JST頃開始との本人引継ぎ（旧05:40頃開始見込みを訂正）、約55分・08:15 JST頃完了見込み。走行中・結果未確認・結果待ち。G0・完了数・完了時刻・性能・安全内訳は未確認。結果追記欄: 未受領。経過時間で完了としない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+      "date": "2026-10-05",
+      "time_note": "本人引継ぎ。更新時刻は測定完了時刻ではない",
+      "sources": [
+        "src-rev12"
       ]
     }
   ],
   "next_milestone": {
-    "title": "mix2結果受領・48世界集計と本人方針判断",
-    "note": "推奨はA（Q0維持・追加計測停止）。走行中mix2には介入せず、結果受領と48世界集計を待つ。契約変更は提案のみ。 10/31 23:59 JST締切、dec-007は10/28。受理済み版の確保は未完了。",
+    "title": "incz結果受領と提出基盤・Q0の本人判断",
+    "note": "推奨はA: 混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。 10/31 23:59 JST締切、dec-007は10/28。受理済み版の確保は未完了。",
     "sources": [
-      "src-rev10"
+      "src-rev12"
     ],
     "state": "blocked",
-    "state_label": "本人判断待ち・mix2結果待ち"
+    "state_label": "本人判断待ち・incz結果待ち"
   },
   "dev3b": {
     "name": "dev3b-xb-r",
@@ -1117,7 +1123,7 @@
   },
   "mix2": {
     "name": "mix2",
-    "state": "reported-running-unverified",
+    "state": "measured-diagnostic-complete",
     "verified": false,
     "field": "F_mix（u1構成の診断）",
     "seeds": "40003/40004",
@@ -1128,20 +1134,228 @@
     "fix_commit": "d30cbbb",
     "started_at": "2026-10-05T05:34:00+09:00",
     "started_at_precision": "minute",
-    "expected_end": "2026-10-05T07:20:00+09:00",
-    "expected_end_basis": "本人提示の07:20 JST頃の見込み。完了実績ではない",
+    "expected_end": null,
+    "expected_end_basis": "旧07:20 JST頃は見込み。実完了時刻は未提示",
     "completed_at": null,
-    "completed_worlds": null,
-    "g0": null,
-    "result": null,
-    "result_label": "結果待ち",
+    "completed_worlds": 24,
+    "g0": "PASS",
+    "result": {
+      "t_candidate": "51.63",
+      "rank_candidate": 6,
+      "worst_regime_t": "46.2",
+      "t_multi": "34.54",
+      "rank_multi": 11,
+      "violations": 0,
+      "g0_pass_worlds": 24,
+      "g0_blocked_worlds": 0,
+      "ranking": [
+        {
+          "rank": 1,
+          "agent": "inc-zeta",
+          "t": "61.54",
+          "worst_regime_t": "53.2"
+        },
+        {
+          "rank": 2,
+          "agent": "venue-arb",
+          "t": "53.07",
+          "worst_regime_t": "39.5"
+        },
+        {
+          "rank": 3,
+          "agent": "sonnet-1",
+          "t": "52.49",
+          "worst_regime_t": "46.1"
+        },
+        {
+          "rank": 4,
+          "agent": "opus-1",
+          "t": "52.11",
+          "worst_regime_t": "43.6"
+        },
+        {
+          "rank": 5,
+          "agent": "grok-1",
+          "t": "52.07",
+          "worst_regime_t": "45.1"
+        },
+        {
+          "rank": 6,
+          "agent": "cand(xb-r v3)",
+          "t": "51.63",
+          "worst_regime_t": "46.2"
+        },
+        {
+          "rank": 7,
+          "agent": "clean-arb",
+          "t": "49.88",
+          "worst_regime_t": "42.9"
+        },
+        {
+          "rank": 8,
+          "agent": "astra-1",
+          "t": "49.20",
+          "worst_regime_t": "42.1"
+        },
+        {
+          "rank": 9,
+          "agent": "astra-2",
+          "t": "49.07",
+          "worst_regime_t": "40.8"
+        },
+        {
+          "rank": 10,
+          "agent": "sonnet-2",
+          "t": "44.40",
+          "worst_regime_t": "30.0"
+        },
+        {
+          "rank": 11,
+          "agent": "multi-arb",
+          "t": "34.54",
+          "worst_regime_t": "23.5"
+        }
+      ]
+    },
+    "result_label": "診断結果受領・資格判定なし",
     "continue_on_g0_blocked": true,
     "q0_eligible": false,
     "contract_effect": "none-diagnostic-only",
     "combined_worlds_planned": 48,
-    "note": "[進行中・診断] mix2はmix1と同じroster、fresh seed40003/40004・12レジーム24世界。10/5 05:34 JST開始、07:20 JST頃完了見込み。結果未確認・結果待ち。G0がBLOCKEDでも継続して診断として保持し、PASSへ変更しない。完了後にmix1+mix2の48世界で集計予定。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+    "note": "[measured] mix2はmix1と同じroster（u1の11体、zeta-2をcand=xb-r v3凍結に置換）。fresh seed40003/40004・12レジーム24世界、mix2a/mix2bともG0 PASS、violations 0。candは平均T51.63・6位・最悪46.2、inc-zetaは61.54・1位・最悪53.2。05:34 JST開始の引継ぎを保持し、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
     "sources": [
-      "src-rev11"
+      "src-rev12"
+    ],
+    "chunks": [
+      "mix2a",
+      "mix2b"
+    ]
+  },
+  "mix48": {
+    "name": "mix1+mix2",
+    "state": "measured-diagnostic-complete",
+    "verified": false,
+    "field": "F_mix（u1構成の診断）",
+    "seeds": "40001/40002/40003/40004",
+    "regimes": 12,
+    "worlds": 48,
+    "completed_worlds": 48,
+    "agents": 11,
+    "roster": "u1のzeta-2をcand=xb-r v3凍結に置換",
+    "started_at": null,
+    "expected_end": null,
+    "completed_at": null,
+    "g0": "mix1: 23 PASS / 1 BLOCKED; mix2a/mix2b: PASS",
+    "result": {
+      "t_candidate": "51.91",
+      "rank_candidate": 5,
+      "worst_regime_t": "47.6",
+      "t_multi": "35.63",
+      "rank_multi": 11,
+      "t_leader": "58.26",
+      "t_second": "53.71",
+      "leader_worst_regime_t": "46.8",
+      "ranking": [
+        {
+          "rank": 1,
+          "agent": "inc-zeta",
+          "t": "58.26",
+          "worst_regime_t": "46.8"
+        },
+        {
+          "rank": 2,
+          "agent": "venue-arb",
+          "t": "53.71",
+          "worst_regime_t": "42.5"
+        },
+        {
+          "rank": 3,
+          "agent": "sonnet-1",
+          "t": "52.92",
+          "worst_regime_t": "47.2"
+        },
+        {
+          "rank": 4,
+          "agent": "grok-1",
+          "t": "52.80",
+          "worst_regime_t": "45.1"
+        },
+        {
+          "rank": 5,
+          "agent": "cand(xb-r v3)",
+          "t": "51.91",
+          "worst_regime_t": "47.6"
+        },
+        {
+          "rank": 6,
+          "agent": "opus-1",
+          "t": "51.88",
+          "worst_regime_t": "44.5"
+        },
+        {
+          "rank": 7,
+          "agent": "clean-arb",
+          "t": "50.04",
+          "worst_regime_t": "42.8"
+        },
+        {
+          "rank": 8,
+          "agent": "astra-1",
+          "t": "49.14",
+          "worst_regime_t": "41.7"
+        },
+        {
+          "rank": 9,
+          "agent": "astra-2",
+          "t": "49.02",
+          "worst_regime_t": "42.5"
+        },
+        {
+          "rank": 10,
+          "agent": "sonnet-2",
+          "t": "44.70",
+          "worst_regime_t": "36.3"
+        },
+        {
+          "rank": 11,
+          "agent": "multi-arb",
+          "t": "35.63",
+          "worst_regime_t": "24.9"
+        }
+      ]
+    },
+    "q0_eligible": false,
+    "contract_effect": "none-diagnostic-only",
+    "result_label": "診断集計・資格判定なし",
+    "note": "[measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb 11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。 mix1のcrash/40001（grok-1 telemetry）BLOCKEDを保持し、PASSへ変更しない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+    "interpretation": "[inferred] xb-r v3とsonnet-1/grok-1/opus-1はこの集計では区別できないとの見立てで、統計検定の結果ではない。決定論ラインxb-rの追加改良より、混成場で強い既存の独自戦略inc-zeta=zeta-a30（Claude+Codex作成の本命）を提出基盤にする案が示唆される。ただしinc-zetaはF_ref契約(Q0)未通過。D0のF_ref診断はcommit不一致でG0 FAIL、性能は診断のみ。",
+    "sources": [
+      "src-rev12"
+    ]
+  },
+  "incz": {
+    "name": "incz",
+    "candidate": "inc-zeta=zeta-a30",
+    "state": "reported-running-unverified",
+    "verified": false,
+    "field": "F_ref",
+    "seeds": "40005",
+    "regimes": 12,
+    "worlds": 12,
+    "started_at": "2026-10-05T07:20:00+09:00",
+    "started_at_precision": "approximate-minute",
+    "expected_end": "2026-10-05T08:15:00+09:00",
+    "expected_end_basis": "本人提示の約55分・08:15 JST頃の見込み。実完了時刻ではない",
+    "completed_at": null,
+    "completed_worlds": null,
+    "g0": null,
+    "result": null,
+    "result_label": "結果待ち（結果未確認・追記欄）",
+    "q0_eligible": false,
+    "contract_effect": "none-diagnostic-only",
+    "note": "[進行中・診断] inczはinc-zetaをF_refで12レジーム×seed40005=12世界。10/5 07:20 JST頃開始との本人引継ぎ（旧05:40頃開始見込みを訂正）、約55分・08:15 JST頃完了見込み。走行中・結果未確認・結果待ち。G0・完了数・完了時刻・性能・安全内訳は未確認。結果追記欄: 未受領。経過時間で完了としない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+    "sources": [
+      "src-rev12"
     ]
   }
 }
@@ -1404,7 +1618,7 @@
       "src-delegation"
     ]
   },
-  "revision": 11,
+  "revision": 12,
   "deadline_at": "2026-10-31T23:59:00+09:00",
   "continuous_operation": {
     "status": "defined-not-verified",
@@ -1508,7 +1722,7 @@
       ]
     },
     "iteration_current": 3,
-    "current_run_ref": "status.mix2"
+    "current_run_ref": "status.incz"
   },
   "h1": {
     "authority": "本人決定 2026-10-04",
@@ -1575,13 +1789,13 @@
     "full_executor_decision": "本番自由改訂の安全保証なし・継続方針は本人判断",
     "recommendation": "A",
     "options": [
-      "A: Q0維持・追加計測停止。mix1の5位・最悪値1位は保持し、既に走行中のmix2には介入せず結果受領と48世界集計を待つ。時間を精算し、受理済み版を確保する残工程・期限を再計画する",
-      "B: 現契約を満たす別系統を設計。混成場ではv3が52.18でsonnet-1(53.34)・opus-1(51.66)と有意に区別できないとの見立てから、別系統の優位を前提にせず改善仮説・新たな回数/全費用・受理日程を本人が決めるまで起動しない",
-      "C: 契約の場を見直すか本人が決める。F_refで基準のmulti-arbが混成場では36.73で最下位、v3は5位・最悪値1位という事実から、F_refの対multi-arbが本番に近い混成場での強さの代理として適切か検討する。変更は提案のみで、旧Q0m復活や資格・提出可否への転用はしない"
+      "A: inc-zetaを提出基盤の第一候補にする（推奨・未決）。incz結果を診断として受領し、現Q0を維持して条件成立を目指すか、場の妥当性を検証して契約変更を提案するかを本人が決める。決定・全費用・安全・受理日程が揃うまで追加起動しない",
+      "B: 現Q0を維持し、提出基盤の選定を保留する。inc-zetaのF_ref適性・資格証跡が不足したままなら新規実走を止め、残工程と期限から継続可否を本人が決める",
+      "C: xb-rの追加改良または別系統設計を再検討する。混成場での優位を示す反証可能な仮説と新たな回数・全費用・受理日程を本人が決めるまで起動しない。第3回打ち切りを自動解除しない"
     ],
-    "falsification": "mix2の独立fresh seed結果とmix1+mix2の48世界集計で、全12レジームの平均・最悪値・G0注記を確認した上で、別系統が現契約を満たす根拠、または結果への合わせ込みでない場の妥当性を示す根拠が得られ、全残費・安全・受理までの日程も成立する場合。48世界の好成績だけでは資格にも反証にもならず、mix1単独の好成績は反証にならない。",
+    "falsification": "inczでF_refの対multi-arb・対noop・最悪値・G0/安全に重大な弱点が示され、現Q0達成の経路も場の見直しの独立した根拠も成立しない場合、または提出適合・全残費・受理までの日程が成立しない場合はAを撤回/保留する。別候補の優位には独立した比較証拠を要する。inczは1seedの12世界診断で、好成績でも全12×2のscreenや60世界Q0の代用にならない。",
     "sources": [
-      "src-rev11"
+      "src-rev12"
     ]
   },
   "live_contract": {
@@ -1696,8 +1910,8 @@
     {
       "id": "day-2026-10-05",
       "date": "2026-10-05",
-      "title": "xa-1打ち切り・PILOT-STOP・mix1結果受領/mix2未確認・本人方針判断",
-      "dependency": "第3回未達は本人報告事項。mix1は5/11位・最悪値1位。mix2は05:34開始/07:20頃見込み、結果未確認・契約と無関係",
+      "title": "mix2・48世界結果受領/incz未確認・本人方針判断",
+      "dependency": "混成場inc-zeta 1位・cand 5位。inczは07:20 JST頃開始/08:15頃見込み、結果未確認・契約と無関係",
       "stop": "Q0維持・追加計測停止。時間未精算、契約変更は本人決定のみ",
       "state": "blocked",
       "highlight": false,
@@ -2460,10 +2674,30 @@
       "id": "progress-mix2",
       "workstream": "計測",
       "title": "mix2混成場診断",
-      "state": "running",
-      "evidence": "[進行中・診断] mix2はmix1と同じroster、fresh seed40003/40004・12レジーム24世界。10/5 05:34 JST開始、07:20 JST頃完了見込み。結果未確認・結果待ち。G0がBLOCKEDでも継続して診断として保持し、PASSへ変更しない。完了後にmix1+mix2の48世界で集計予定。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+      "state": "done",
+      "evidence": "[measured] mix2はmix1と同じroster（u1の11体、zeta-2をcand=xb-r v3凍結に置換）。fresh seed40003/40004・12レジーム24世界、mix2a/mix2bともG0 PASS、violations 0。candは平均T51.63・6位・最悪46.2、inc-zetaは61.54・1位・最悪53.2。05:34 JST開始の引継ぎを保持し、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
       "sources": [
-        "src-rev11"
+        "src-rev12"
+      ]
+    },
+    {
+      "id": "progress-mix48",
+      "workstream": "計測",
+      "title": "mix1+mix2 48世界集計",
+      "state": "done",
+      "evidence": "[measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb 11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。",
+      "sources": [
+        "src-rev12"
+      ]
+    },
+    {
+      "id": "progress-incz",
+      "workstream": "計測",
+      "title": "inc-zeta F_ref診断incz",
+      "state": "running",
+      "evidence": "[進行中・診断] inczはinc-zetaをF_refで12レジーム×seed40005=12世界。10/5 07:20 JST頃開始との本人引継ぎ（旧05:40頃開始見込みを訂正）、約55分・08:15 JST頃完了見込み。走行中・結果未確認・結果待ち。G0・完了数・完了時刻・性能・安全内訳は未確認。結果追記欄: 未受領。経過時間で完了としない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+      "sources": [
+        "src-rev12"
       ]
     }
   ]
@@ -2500,7 +2734,7 @@
       "impact": "致命",
       "owner": "Codex",
       "evidence": "dev4 v3: 49.72対55.02、dev5 v5: 50.15対55.73で昇格せず。[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。",
-      "mitigation": "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。",
+      "mitigation": "推奨はA: 混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。",
       "status": "mitigating",
       "sources": [
         "src-rev10"
@@ -2532,7 +2766,7 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "G3 17.2h、deep9.7h、Q0 5h留保を維持。夜間のrev 10時点の概算は202分、mix1込み352分見込み（mix2分は含まない）、区間和集合と修理/非run/当日/forwardは未精算。",
+      "evidence": "G3 17.2h、deep9.7h、Q0 5h留保を維持。夜間のrev 10時点の概算は202分、mix1込み352分見込み（mix2/incz分は含まない）、区間和集合と修理/非run/当日/forwardは未精算。",
       "mitigation": "AI専用E3/Q1約9.5333hにD48世界52/15h＋実装/支援が別。全工程不足なので実走未解放、cal後再予算。10/17不成立ならS240又はHなし。",
       "status": "open",
       "sources": [
@@ -2760,19 +2994,19 @@
   "items": [
     {
       "id": "queue-dev1-evidence",
-      "title": "mix2混成場診断・結果受領と48世界集計",
+      "title": "incz F_ref診断・結果受領",
       "owner": "Codex",
       "active": true,
       "sources": [
-        "src-rev10"
+        "src-rev12"
       ],
       "experiment": "dev1-evidence",
       "priority": 1,
-      "state": "mix2走行中・結果待ち",
-      "worlds": 24,
+      "state": "incz走行中・結果待ち",
+      "worlds": 12,
       "hours": null,
-      "window": "10/5 05:34 JST開始、07:20 JST頃完了見込み（結果未確認）",
-      "dependency": "[進行中・診断] mix2はmix1と同じroster、fresh seed40003/40004・12レジーム24世界。10/5 05:34 JST開始、07:20 JST頃完了見込み。結果未確認・結果待ち。G0がBLOCKEDでも継続して診断として保持し、PASSへ変更しない。完了後にmix1+mix2の48世界で集計予定。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。 第3回xa-1は打ち切り。H1専用adapter/受付未成立、Q0停止。"
+      "window": "10/5 07:20 JST頃開始、約55分・08:15 JST頃完了見込み（結果未確認）",
+      "dependency": "[進行中・診断] inczはinc-zetaをF_refで12レジーム×seed40005=12世界。10/5 07:20 JST頃開始との本人引継ぎ（旧05:40頃開始見込みを訂正）、約55分・08:15 JST頃完了見込み。走行中・結果未確認・結果待ち。G0・完了数・完了時刻・性能・安全内訳は未確認。結果追記欄: 未受領。経過時間で完了としない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。 第3回xa-1は打ち切り。H1専用adapter/受付未成立、Q0停止。"
     },
     {
       "id": "queue-q0b-evidence",
@@ -2962,7 +3196,7 @@
       ]
     }
   ],
-  "note": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix1は診断結果受領：cand平均T52.18・5/11位、最悪レジーム47.6は全員で最良。G0は23 PASS/1 BLOCKED。mix2は進行中・結果未確認。 推奨はA（Q0維持・追加計測停止）。走行中mix2には介入せず、結果受領と48世界集計を待つ。契約変更は提案のみ。",
+  "note": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix2・48世界集計を受領、混成場はinc-zetaが1位、candは48世界で5位。inczは走行中・結果未確認。 推奨はA: 混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。",
   "day_limit_hours": 6,
   "bundle": "Q0再資格5hをdeep内優先留保。AI G3は17.2hへ振替済み、追加実装/D/下流費は全量成立まで未解放。",
   "side_jobs": [
@@ -3232,7 +3466,7 @@
     "remaining_reserved_hours": null,
     "next_full_cost_hours": null,
     "formula": "C_forward + R_remaining + N_next ≤ 100h",
-    "note": "rev 10時点の参考見積。mix2分は含まず、mix1/mix2とも実時間は未精算。OVERNIGHT §2.3: 00:26以降の開始/終了区間の和集合で計測・失敗・検査・非runを一度だけ計上し、p3を3倍しない。xa-1 smoke約13分×2 + live smoke約13分×2 + live本体32世界約150分 = 完了分の単純概算202分（3h22）。mix1約150分見込みを含む352分（5h52）は非重複仮定の参考見積で、確定占有ではない。開始/終了全区間・重複・修理/確認/非run・00:26前の当日分は不明。通常6h/日の残り8分とは認定しない。C_forward + R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止。不明なら追加起動BLOCKED。"
+    "note": "rev 10時点の参考見積。mix2/incz分は含まず、mix1/mix2/inczとも実時間は未精算。OVERNIGHT §2.3: 00:26以降の開始/終了区間の和集合で計測・失敗・検査・非runを一度だけ計上し、p3を3倍しない。xa-1 smoke約13分×2 + live smoke約13分×2 + live本体32世界約150分 = 完了分の単純概算202分（3h22）。mix1約150分見込みを含む352分（5h52）は非重複仮定の参考見積で、確定占有ではない。開始/終了全区間・重複・修理/確認/非run・00:26前の当日分は不明。通常6h/日の残り8分とは認定しない。C_forward + R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止。不明なら追加起動BLOCKED。"
   }
 }
 </script>
@@ -4419,12 +4653,54 @@
         "scope_ref": "status.mix2",
         "run_ref": "status.mix2.name",
         "detail_ref": "status.mix2.note",
-        "value_note": "結果待ち",
-        "state": "running",
-        "verdict": "結果未確認・契約/資格と無関係の診断",
+        "value_note": "cand 6/11位・最悪46.2",
+        "state": "warning",
+        "verdict": "診断結果受領・資格判定なし",
         "sources": [
-          "src-rev11"
-        ]
+          "src-rev12"
+        ],
+        "metrics": [
+          {
+            "label": "平均T",
+            "candidate_ref": "status.mix2.result.t_candidate",
+            "baseline_ref": "status.mix2.result.t_multi"
+          }
+        ],
+        "detail": "24世界の診断結果。資格判定なし"
+      },
+      {
+        "candidate": "inc-zeta（mix1+mix2）",
+        "scope_ref": "status.mix48",
+        "run_ref": "status.mix48.name",
+        "detail_ref": "status.mix48.note",
+        "state": "warning",
+        "metrics": [
+          {
+            "label": "平均T（対2位venue-arb）",
+            "candidate_ref": "status.mix48.result.t_leader",
+            "baseline_ref": "status.mix48.result.t_second"
+          }
+        ],
+        "detail": "48世界集計・診断のみ",
+        "sources": [
+          "src-rev12"
+        ],
+        "verdict": "診断結果受領・資格判定なし",
+        "value_note": "inc-zeta 1/11位・最悪46.8、cand 5位"
+      },
+      {
+        "candidate": "inc-zeta（incz）",
+        "scope_ref": "status.incz",
+        "run_ref": "status.incz.name",
+        "detail_ref": "status.incz.note",
+        "state": "pending",
+        "metrics": [],
+        "detail": "結果待ち・診断のみ",
+        "sources": [
+          "src-rev12"
+        ],
+        "verdict": "結果未確認・診断のみ",
+        "value_note": "結果待ち"
       }
     ],
     "qualification": [
@@ -4735,7 +5011,7 @@
       ],
       [
         "本人に残る判断",
-        "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。 10/4の全面改訂見送りは原記録に保持。sim内の自由改訂結果は、本番で安全保証なしで本番と同条件で測るかという判断や提出承認を代替しない。"
+        "推奨はA: 混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。 10/4の全面改訂見送りは原記録に保持。sim内の自由改訂結果は、本番で安全保証なしで本番と同条件で測るかという判断や提出承認を代替しない。"
       ]
     ],
     "sources": [
@@ -4869,9 +5145,9 @@
   },
   "mix1": {
     "id": "result-mix1",
-    "title": "mix1: 混成場24世界の診断結果とmix2未確認",
+    "title": "混成場mix1/mix2・48世界集計とincz（診断）",
     "header": [
-      "mix1項目",
+      "混成場診断・incz項目",
       "引継ぎ・結果"
     ],
     "rows": [
@@ -4996,24 +5272,125 @@
         "[measured] mix1は12レジーム等重み平均Tでcand(xb-r v3)52.18・11体中5位、平均(50)より上。worst regime T47.6は全員で最良の最悪値。multi-arbは36.73・最下位。F_refの対multi-arb基準での負けと混成場での順位は逆の見え方。"
       ],
       [
-        "推測",
+        "mix1単独時点の推測（rev 11履歴）",
         "[inferred] 2 seed×12レジームなのでinc-zetaとの差約2.8Tはノイズの範囲とみる。sonnet-1(53.34)・opus-1(51.66)など既存候補とも有意に区別できないという見立てで、統計検定の結果ではない。"
       ],
       [
-        "mix2進行中",
-        "[進行中・診断] mix2はmix1と同じroster、fresh seed40003/40004・12レジーム24世界。10/5 05:34 JST開始、07:20 JST頃完了見込み。結果未確認・結果待ち。G0がBLOCKEDでも継続して診断として保持し、PASSへ変更しない。完了後にmix1+mix2の48世界で集計予定。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。"
+        "mix2結果",
+        "[measured] mix2はmix1と同じroster（u1の11体、zeta-2をcand=xb-r v3凍結に置換）。fresh seed40003/40004・12レジーム24世界、mix2a/mix2bともG0 PASS、violations 0。candは平均T51.63・6位・最悪46.2、inc-zetaは61.54・1位・最悪53.2。05:34 JST開始の引継ぎを保持し、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。"
       ],
       [
-        "mix2結果",
-        "結果待ち（結果未確認）。G0・完了数・完了時刻・結果は未確認。mix1+mix2の48世界集計は完了後の予定"
+        "mix2順位1 / inc-zeta",
+        "平均T 61.54 / worst regime T 53.2"
+      ],
+      [
+        "mix2順位2 / venue-arb",
+        "平均T 53.07 / worst regime T 39.5"
+      ],
+      [
+        "mix2順位3 / sonnet-1",
+        "平均T 52.49 / worst regime T 46.1"
+      ],
+      [
+        "mix2順位4 / opus-1",
+        "平均T 52.11 / worst regime T 43.6"
+      ],
+      [
+        "mix2順位5 / grok-1",
+        "平均T 52.07 / worst regime T 45.1"
+      ],
+      [
+        "mix2順位6 / cand(xb-r v3)",
+        "平均T 51.63 / worst regime T 46.2"
+      ],
+      [
+        "mix2順位7 / clean-arb",
+        "平均T 49.88 / worst regime T 42.9"
+      ],
+      [
+        "mix2順位8 / astra-1",
+        "平均T 49.20 / worst regime T 42.1"
+      ],
+      [
+        "mix2順位9 / astra-2",
+        "平均T 49.07 / worst regime T 40.8"
+      ],
+      [
+        "mix2順位10 / sonnet-2",
+        "平均T 44.40 / worst regime T 30.0"
+      ],
+      [
+        "mix2順位11 / multi-arb",
+        "平均T 34.54 / worst regime T 23.5"
+      ],
+      [
+        "48世界の範囲",
+        "mix1+mix2・seed40001–40004・12レジーム等重み。mix1の1世界BLOCKEDを含め全48世界を診断として保持"
+      ],
+      [
+        "48世界順位1 / inc-zeta",
+        "平均T 58.26 / worst regime T 46.8"
+      ],
+      [
+        "48世界順位2 / venue-arb",
+        "平均T 53.71 / worst regime T 42.5"
+      ],
+      [
+        "48世界順位3 / sonnet-1",
+        "平均T 52.92 / worst regime T 47.2"
+      ],
+      [
+        "48世界順位4 / grok-1",
+        "平均T 52.80 / worst regime T 45.1"
+      ],
+      [
+        "48世界順位5 / cand(xb-r v3)",
+        "平均T 51.91 / worst regime T 47.6"
+      ],
+      [
+        "48世界順位6 / opus-1",
+        "平均T 51.88 / worst regime T 44.5"
+      ],
+      [
+        "48世界順位7 / clean-arb",
+        "平均T 50.04 / worst regime T 42.8"
+      ],
+      [
+        "48世界順位8 / astra-1",
+        "平均T 49.14 / worst regime T 41.7"
+      ],
+      [
+        "48世界順位9 / astra-2",
+        "平均T 49.02 / worst regime T 42.5"
+      ],
+      [
+        "48世界順位10 / sonnet-2",
+        "平均T 44.70 / worst regime T 36.3"
+      ],
+      [
+        "48世界順位11 / multi-arb",
+        "平均T 35.63 / worst regime T 24.9"
+      ],
+      [
+        "48世界の観測",
+        "[measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb 11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。"
+      ],
+      [
+        "現時点の推測",
+        "[inferred] xb-r v3とsonnet-1/grok-1/opus-1はこの集計では区別できないとの見立てで、統計検定の結果ではない。決定論ラインxb-rの追加改良より、混成場で強い既存の独自戦略inc-zeta=zeta-a30（Claude+Codex作成の本命）を提出基盤にする案が示唆される。ただしinc-zetaはF_ref契約(Q0)未通過。D0のF_ref診断はcommit不一致でG0 FAIL、性能は診断のみ。"
+      ],
+      [
+        "incz進行中・結果追記欄",
+        "[進行中・診断] inczはinc-zetaをF_refで12レジーム×seed40005=12世界。10/5 07:20 JST頃開始との本人引継ぎ（旧05:40頃開始見込みを訂正）、約55分・08:15 JST頃完了見込み。走行中・結果未確認・結果待ち。G0・完了数・完了時刻・性能・安全内訳は未確認。結果追記欄: 未受領。経過時間で完了としない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。"
       ]
     ],
     "sources": [
-      "src-rev11"
+      "src-rev11",
+      "src-rev12"
     ],
     "source_table": {
-      "source": "src-rev11",
-      "header_key": "mix1項目"
+      "source": "src-rev12",
+      "header_key": "混成場診断・incz項目"
     }
   },
   "live_safety": {
@@ -5369,9 +5746,9 @@
   "human_only": {
     "status": "Q0契約と提出方針は本人判断待ち",
     "items": [
-      "A: Q0維持・追加計測停止。mix1の5位・最悪値1位は保持し、既に走行中のmix2には介入せず結果受領と48世界集計を待つ。時間を精算し、受理済み版を確保する残工程・期限を再計画する",
-      "B: 現契約を満たす別系統を設計。混成場ではv3が52.18でsonnet-1(53.34)・opus-1(51.66)と有意に区別できないとの見立てから、別系統の優位を前提にせず改善仮説・新たな回数/全費用・受理日程を本人が決めるまで起動しない",
-      "C: 契約の場を見直すか本人が決める。F_refで基準のmulti-arbが混成場では36.73で最下位、v3は5位・最悪値1位という事実から、F_refの対multi-arbが本番に近い混成場での強さの代理として適切か検討する。変更は提案のみで、旧Q0m復活や資格・提出可否への転用はしない",
+      "A: inc-zetaを提出基盤の第一候補にする（推奨・未決）。incz結果を診断として受領し、現Q0を維持して条件成立を目指すか、場の妥当性を検証して契約変更を提案するかを本人が決める。決定・全費用・安全・受理日程が揃うまで追加起動しない",
+      "B: 現Q0を維持し、提出基盤の選定を保留する。inc-zetaのF_ref適性・資格証跡が不足したままなら新規実走を止め、残工程と期限から継続可否を本人が決める",
+      "C: xb-rの追加改良または別系統設計を再検討する。混成場での優位を示す反証可能な仮説と新たな回数・全費用・受理日程を本人が決めるまで起動しない。第3回打ち切りを自動解除しない",
       "10/28 dec-007再確認",
       "無料枠不足時の前払い判断（G3見積もり後）"
     ],
@@ -5383,9 +5760,9 @@
       "dec-rev10-direction"
     ],
     "sources": [
-      "src-rev11"
+      "src-rev12"
     ],
-    "note": "推奨はA（Q0維持・追加計測停止）。走行中mix2には介入せず、結果受領と48世界集計を待つ。契約変更は提案のみ。 [inferred] 2 seed×12レジームなのでinc-zetaとの差約2.8Tはノイズの範囲とみる。sonnet-1(53.34)・opus-1(51.66)など既存候補とも有意に区別できないという見立てで、統計検定の結果ではない。 反証条件: mix2の独立fresh seed結果とmix1+mix2の48世界集計で、全12レジームの平均・最悪値・G0注記を確認した上で、別系統が現契約を満たす根拠、または結果への合わせ込みでない場の妥当性を示す根拠が得られ、全残費・安全・受理までの日程も成立する場合。48世界の好成績だけでは資格にも反証にもならず、mix1単独の好成績は反証にならない。 既決署名・H1選択・金銭境界は不変。"
+    "note": "推奨はA: 混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。 [inferred] xb-r v3とsonnet-1/grok-1/opus-1はこの集計では区別できないとの見立てで、統計検定の結果ではない。決定論ラインxb-rの追加改良より、混成場で強い既存の独自戦略inc-zeta=zeta-a30（Claude+Codex作成の本命）を提出基盤にする案が示唆される。ただしinc-zetaはF_ref契約(Q0)未通過。D0のF_ref診断はcommit不一致でG0 FAIL、性能は診断のみ。 反証条件: inczでF_refの対multi-arb・対noop・最悪値・G0/安全に重大な弱点が示され、現Q0達成の経路も場の見直しの独立した根拠も成立しない場合、または提出適合・全残費・受理までの日程が成立しない場合はAを撤回/保留する。別候補の優位には独立した比較証拠を要する。inczは1seedの12世界診断で、好成績でも全12×2のscreenや60世界Q0の代用にならない。 既決署名・H1選択・金銭境界は不変。"
   },
   "ollama_report": {
     "evidence_kind": "本人報告",
@@ -5434,6 +5811,50 @@
   ],
   "note": "追記専用・記録時刻の降順。同時刻は許可。正確な出来事時刻がない履歴は移行時刻で追記し、対象日と時刻根拠を併記。既存entryは訂正せず[誤り]を追加。",
   "items": [
+    {
+      "id": "log-091",
+      "timestamp": "2026-10-05T07:19:55+09:00",
+      "type": "誤り",
+      "summary": "[進行中・診断] inczはinc-zetaをF_refで12レジーム×seed40005=12世界。10/5 07:20 JST頃開始との本人引継ぎ（旧05:40頃開始見込みを訂正）、約55分・08:15 JST頃完了見込み。走行中・結果未確認・結果待ち。G0・完了数・完了時刻・性能・安全内訳は未確認。結果追記欄: 未受領。経過時間で完了としない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+      "sources": [
+        "src-rev12"
+      ],
+      "time_basis": "rev 12本人引継ぎの記録時刻。測定完了時刻ではない",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-090",
+      "timestamp": "2026-10-05T07:19:55+09:00",
+      "type": "計画変更",
+      "summary": "[inferred] xb-r v3とsonnet-1/grok-1/opus-1はこの集計では区別できないとの見立てで、統計検定の結果ではない。決定論ラインxb-rの追加改良より、混成場で強い既存の独自戦略inc-zeta=zeta-a30（Claude+Codex作成の本命）を提出基盤にする案が示唆される。ただしinc-zetaはF_ref契約(Q0)未通過。D0のF_ref診断はcommit不一致でG0 FAIL、性能は診断のみ。 推奨はA: 混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。",
+      "sources": [
+        "src-rev12"
+      ],
+      "time_basis": "rev 12本人引継ぎの記録時刻。測定完了時刻ではない",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-089",
+      "timestamp": "2026-10-05T07:19:55+09:00",
+      "type": "実測",
+      "summary": "[measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb 11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。",
+      "sources": [
+        "src-rev12"
+      ],
+      "time_basis": "rev 12本人引継ぎの記録時刻。測定完了時刻ではない",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-088",
+      "timestamp": "2026-10-05T07:19:55+09:00",
+      "type": "実測",
+      "summary": "[measured] mix2はmix1と同じroster（u1の11体、zeta-2をcand=xb-r v3凍結に置換）。fresh seed40003/40004・12レジーム24世界、mix2a/mix2bともG0 PASS、violations 0。candは平均T51.63・6位・最悪46.2、inc-zetaは61.54・1位・最悪53.2。05:34 JST開始の引継ぎを保持し、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+      "sources": [
+        "src-rev12"
+      ],
+      "time_basis": "rev 12本人引継ぎの記録時刻。測定完了時刻ではない",
+      "event_date": "2026-10-05"
+    },
     {
       "id": "log-087",
       "timestamp": "2026-10-05T05:38:10+09:00",
@@ -7045,14 +7466,14 @@
   "kpis": [
     {
       "label": "最新の混成場診断",
-      "ref": "status.mix1.name",
-      "note": "v3凍結・24世界。23 PASS/1 BLOCKEDを保持",
+      "ref": "status.mix48.name",
+      "note": "48世界の診断集計。mix1の1世界BLOCKEDを保持",
       "route": "results"
     },
     {
-      "label": "混成場v3の平均T",
-      "ref": "status.mix1.result.t_candidate",
-      "note": "12レジーム等重み・5/11位、最悪値47.6は全員で最良",
+      "label": "混成場首位 inc-zeta 平均T",
+      "ref": "status.mix48.result.t_leader",
+      "note": "12レジーム等重み・1/11位、最悪46.8。Q0未通過",
       "route": "results"
     },
     {
@@ -7084,9 +7505,9 @@
     }
   ],
   "copy": {
-    "action_note": "推奨はA（Q0維持・追加計測停止）。走行中mix2には介入せず、結果受領と48世界集計を待つ。契約変更は提案のみ。 [measured] mix1は12レジーム等重み平均Tでcand(xb-r v3)52.18・11体中5位、平均(50)より上。worst regime T47.6は全員で最良の最悪値。multi-arbは36.73・最下位。F_refの対multi-arb基準での負けと混成場での順位は逆の見え方。 [inferred] 2 seed×12レジームなのでinc-zetaとの差約2.8Tはノイズの範囲とみる。sonnet-1(53.34)・opus-1(51.66)など既存候補とも有意に区別できないという見立てで、統計検定の結果ではない。",
-    "action_next": "Q0契約の扱いと提出へ向けた次方針は本人判断。推奨はA: 契約を維持し追加計測を停止、時間を精算して受理済み版の確保に必要な工程を再計画する。契約変更は提案のみ。",
-    "diagnostic_notice": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix1は診断結果受領：cand平均T52.18・5/11位、最悪レジーム47.6は全員で最良。G0は23 PASS/1 BLOCKED。mix2は進行中・結果未確認。 診断を資格合格や契約変更へ読み替えません。",
+    "action_note": "推奨はA: 混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。 [measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb 11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。 [inferred] xb-r v3とsonnet-1/grok-1/opus-1はこの集計では区別できないとの見立てで、統計検定の結果ではない。決定論ラインxb-rの追加改良より、混成場で強い既存の独自戦略inc-zeta=zeta-a30（Claude+Codex作成の本命）を提出基盤にする案が示唆される。ただしinc-zetaはF_ref契約(Q0)未通過。D0のF_ref診断はcommit不一致でG0 FAIL、性能は診断のみ。",
+    "action_next": "推奨はA: 混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。",
+    "diagnostic_notice": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix2・48世界集計を受領、混成場はinc-zetaが1位、candは48世界で5位。inczは走行中・結果未確認。 診断を資格合格や契約変更へ読み替えません。",
     "qualification_notice": "資格条件は維持しています。旧2候補は不合格、xb-rの新しい資格試験は未実施です。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
     "diagnostic_criteria": "Pは損益、Tは同じ相手の中での相対スコア。取引が増えることと、資格を満たすことは別です。",

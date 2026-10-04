@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static revision-11 plan/dashboard checks. Never reads run data or network."""
+"""Static revision-12 plan/dashboard checks. Never reads run data or network."""
 
 from datetime import date, timedelta
 from fractions import Fraction
@@ -564,7 +564,7 @@ REV10_TABLES = {'dev5': {'header': ['dev5項目', '提示値・境界'],
 REV10_LOG_DIGEST = '5ce33aa6b349214e24736b4f170a3528c1d40ea2e9e7182ff4b5875ef678c95f'
 REV10_ALL_DECISIONS_DIGEST = '9a1ec6ef93c1040c99042372335143a1a4185e2b07ab3ab1923a289815b7fe07'
 
-REV11_EXPECTED = {'mix1': {'name': 'mix1',
+REV12_EXPECTED = {'mix1': {'name': 'mix1',
           'state': 'measured-diagnostic-complete',
           'verified': False,
           'field': 'F_mix（u1構成の診断）',
@@ -632,7 +632,7 @@ REV11_EXPECTED = {'mix1': {'name': 'mix1',
           'interpretation': '[inferred] 2 '
                             'seed×12レジームなのでinc-zetaとの差約2.8Tはノイズの範囲とみる。sonnet-1(53.34)・opus-1(51.66)など既存候補とも有意に区別できないという見立てで、統計検定の結果ではない。'},
  'mix2': {'name': 'mix2',
-          'state': 'reported-running-unverified',
+          'state': 'measured-diagnostic-complete',
           'verified': False,
           'field': 'F_mix（u1構成の診断）',
           'seeds': '40003/40004',
@@ -643,53 +643,135 @@ REV11_EXPECTED = {'mix1': {'name': 'mix1',
           'fix_commit': 'd30cbbb',
           'started_at': '2026-10-05T05:34:00+09:00',
           'started_at_precision': 'minute',
-          'expected_end': '2026-10-05T07:20:00+09:00',
-          'expected_end_basis': '本人提示の07:20 JST頃の見込み。完了実績ではない',
+          'expected_end': None,
+          'expected_end_basis': '旧07:20 JST頃は見込み。実完了時刻は未提示',
           'completed_at': None,
-          'completed_worlds': None,
-          'g0': None,
-          'result': None,
-          'result_label': '結果待ち',
+          'completed_worlds': 24,
+          'g0': 'PASS',
+          'result': {'t_candidate': '51.63',
+                     'rank_candidate': 6,
+                     'worst_regime_t': '46.2',
+                     't_multi': '34.54',
+                     'rank_multi': 11,
+                     'violations': 0,
+                     'g0_pass_worlds': 24,
+                     'g0_blocked_worlds': 0,
+                     'ranking': [{'rank': 1, 'agent': 'inc-zeta', 't': '61.54', 'worst_regime_t': '53.2'},
+                                 {'rank': 2, 'agent': 'venue-arb', 't': '53.07', 'worst_regime_t': '39.5'},
+                                 {'rank': 3, 'agent': 'sonnet-1', 't': '52.49', 'worst_regime_t': '46.1'},
+                                 {'rank': 4, 'agent': 'opus-1', 't': '52.11', 'worst_regime_t': '43.6'},
+                                 {'rank': 5, 'agent': 'grok-1', 't': '52.07', 'worst_regime_t': '45.1'},
+                                 {'rank': 6, 'agent': 'cand(xb-r v3)', 't': '51.63', 'worst_regime_t': '46.2'},
+                                 {'rank': 7, 'agent': 'clean-arb', 't': '49.88', 'worst_regime_t': '42.9'},
+                                 {'rank': 8, 'agent': 'astra-1', 't': '49.20', 'worst_regime_t': '42.1'},
+                                 {'rank': 9, 'agent': 'astra-2', 't': '49.07', 'worst_regime_t': '40.8'},
+                                 {'rank': 10, 'agent': 'sonnet-2', 't': '44.40', 'worst_regime_t': '30.0'},
+                                 {'rank': 11, 'agent': 'multi-arb', 't': '34.54', 'worst_regime_t': '23.5'}]},
+          'result_label': '診断結果受領・資格判定なし',
           'continue_on_g0_blocked': True,
           'q0_eligible': False,
           'contract_effect': 'none-diagnostic-only',
           'combined_worlds_planned': 48,
-          'note': '[進行中・診断] mix2はmix1と同じroster、fresh seed40003/40004・12レジーム24世界。10/5 05:34 JST開始、07:20 '
-                  'JST頃完了見込み。結果未確認・結果待ち。G0がBLOCKEDでも継続して診断として保持し、PASSへ変更しない。完了後にmix1+mix2の48世界で集計予定。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。',
-          'sources': ['src-rev11']},
+          'note': '[measured] mix2はmix1と同じroster（u1の11体、zeta-2をcand=xb-r v3凍結に置換）。fresh '
+                  'seed40003/40004・12レジーム24世界、mix2a/mix2bともG0 PASS、violations '
+                  '0。candは平均T51.63・6位・最悪46.2、inc-zetaは61.54・1位・最悪53.2。05:34 '
+                  'JST開始の引継ぎを保持し、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。',
+          'sources': ['src-rev12'],
+          'chunks': ['mix2a', 'mix2b']},
+ 'mix48': {'name': 'mix1+mix2',
+           'state': 'measured-diagnostic-complete',
+           'verified': False,
+           'field': 'F_mix（u1構成の診断）',
+           'seeds': '40001/40002/40003/40004',
+           'regimes': 12,
+           'worlds': 48,
+           'completed_worlds': 48,
+           'agents': 11,
+           'roster': 'u1のzeta-2をcand=xb-r v3凍結に置換',
+           'started_at': None,
+           'expected_end': None,
+           'completed_at': None,
+           'g0': 'mix1: 23 PASS / 1 BLOCKED; mix2a/mix2b: PASS',
+           'result': {'t_candidate': '51.91',
+                      'rank_candidate': 5,
+                      'worst_regime_t': '47.6',
+                      't_multi': '35.63',
+                      'rank_multi': 11,
+                      't_leader': '58.26',
+                      't_second': '53.71',
+                      'leader_worst_regime_t': '46.8',
+                      'ranking': [{'rank': 1, 'agent': 'inc-zeta', 't': '58.26', 'worst_regime_t': '46.8'},
+                                  {'rank': 2, 'agent': 'venue-arb', 't': '53.71', 'worst_regime_t': '42.5'},
+                                  {'rank': 3, 'agent': 'sonnet-1', 't': '52.92', 'worst_regime_t': '47.2'},
+                                  {'rank': 4, 'agent': 'grok-1', 't': '52.80', 'worst_regime_t': '45.1'},
+                                  {'rank': 5, 'agent': 'cand(xb-r v3)', 't': '51.91', 'worst_regime_t': '47.6'},
+                                  {'rank': 6, 'agent': 'opus-1', 't': '51.88', 'worst_regime_t': '44.5'},
+                                  {'rank': 7, 'agent': 'clean-arb', 't': '50.04', 'worst_regime_t': '42.8'},
+                                  {'rank': 8, 'agent': 'astra-1', 't': '49.14', 'worst_regime_t': '41.7'},
+                                  {'rank': 9, 'agent': 'astra-2', 't': '49.02', 'worst_regime_t': '42.5'},
+                                  {'rank': 10, 'agent': 'sonnet-2', 't': '44.70', 'worst_regime_t': '36.3'},
+                                  {'rank': 11, 'agent': 'multi-arb', 't': '35.63', 'worst_regime_t': '24.9'}]},
+           'q0_eligible': False,
+           'contract_effect': 'none-diagnostic-only',
+           'result_label': '診断集計・資格判定なし',
+           'note': '[measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb '
+                   '11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r '
+                   'v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。 mix1のcrash/40001（grok-1 '
+                   'telemetry）BLOCKEDを保持し、PASSへ変更しない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。',
+           'interpretation': '[inferred] xb-r '
+                             'v3とsonnet-1/grok-1/opus-1はこの集計では区別できないとの見立てで、統計検定の結果ではない。決定論ラインxb-rの追加改良より、混成場で強い既存の独自戦略inc-zeta=zeta-a30（Claude+Codex作成の本命）を提出基盤にする案が示唆される。ただしinc-zetaはF_ref契約(Q0)未通過。D0のF_ref診断はcommit不一致でG0 '
+                             'FAIL、性能は診断のみ。',
+           'sources': ['src-rev12']},
+ 'incz': {'name': 'incz',
+          'candidate': 'inc-zeta=zeta-a30',
+          'state': 'reported-running-unverified',
+          'verified': False,
+          'field': 'F_ref',
+          'seeds': '40005',
+          'regimes': 12,
+          'worlds': 12,
+          'started_at': '2026-10-05T07:20:00+09:00',
+          'started_at_precision': 'approximate-minute',
+          'expected_end': '2026-10-05T08:15:00+09:00',
+          'expected_end_basis': '本人提示の約55分・08:15 JST頃の見込み。実完了時刻ではない',
+          'completed_at': None,
+          'completed_worlds': None,
+          'g0': None,
+          'result': None,
+          'result_label': '結果待ち（結果未確認・追記欄）',
+          'q0_eligible': False,
+          'contract_effect': 'none-diagnostic-only',
+          'note': '[進行中・診断] inczはinc-zetaをF_refで12レジーム×seed40005=12世界。10/5 07:20 '
+                  'JST頃開始との本人引継ぎ（旧05:40頃開始見込みを訂正）、約55分・08:15 JST頃完了見込み。走行中・結果未確認・結果待ち。G0・完了数・完了時刻・性能・安全内訳は未確認。結果追記欄: '
+                  '未受領。経過時間で完了としない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。',
+          'sources': ['src-rev12']},
  'next_branch': {'iteration': 3,
                  'automatic_launch': False,
                  'outcome': 'xa-1打ち切り・決定論ライン未達',
                  'full_executor_decision': '本番自由改訂の安全保証なし・継続方針は本人判断',
                  'recommendation': 'A',
                  'options': ['A: '
-                             'Q0維持・追加計測停止。mix1の5位・最悪値1位は保持し、既に走行中のmix2には介入せず結果受領と48世界集計を待つ。時間を精算し、受理済み版を確保する残工程・期限を再計画する',
-                             'B: '
-                             '現契約を満たす別系統を設計。混成場ではv3が52.18でsonnet-1(53.34)・opus-1(51.66)と有意に区別できないとの見立てから、別系統の優位を前提にせず改善仮説・新たな回数/全費用・受理日程を本人が決めるまで起動しない',
+                             'inc-zetaを提出基盤の第一候補にする（推奨・未決）。incz結果を診断として受領し、現Q0を維持して条件成立を目指すか、場の妥当性を検証して契約変更を提案するかを本人が決める。決定・全費用・安全・受理日程が揃うまで追加起動しない',
+                             'B: 現Q0を維持し、提出基盤の選定を保留する。inc-zetaのF_ref適性・資格証跡が不足したままなら新規実走を止め、残工程と期限から継続可否を本人が決める',
                              'C: '
-                             '契約の場を見直すか本人が決める。F_refで基準のmulti-arbが混成場では36.73で最下位、v3は5位・最悪値1位という事実から、F_refの対multi-arbが本番に近い混成場での強さの代理として適切か検討する。変更は提案のみで、旧Q0m復活や資格・提出可否への転用はしない'],
-                 'falsification': 'mix2の独立fresh '
-                                  'seed結果とmix1+mix2の48世界集計で、全12レジームの平均・最悪値・G0注記を確認した上で、別系統が現契約を満たす根拠、または結果への合わせ込みでない場の妥当性を示す根拠が得られ、全残費・安全・受理までの日程も成立する場合。48世界の好成績だけでは資格にも反証にもならず、mix1単独の好成績は反証にならない。',
-                 'sources': ['src-rev11']},
+                             'xb-rの追加改良または別系統設計を再検討する。混成場での優位を示す反証可能な仮説と新たな回数・全費用・受理日程を本人が決めるまで起動しない。第3回打ち切りを自動解除しない'],
+                 'falsification': 'inczでF_refの対multi-arb・対noop・最悪値・G0/安全に重大な弱点が示され、現Q0達成の経路も場の見直しの独立した根拠も成立しない場合、または提出適合・全残費・受理までの日程が成立しない場合はAを撤回/保留する。別候補の優位には独立した比較証拠を要する。inczは1seedの12世界診断で、好成績でも全12×2のscreenや60世界Q0の代用にならない。',
+                 'sources': ['src-rev12']},
  'human_only': {'status': 'Q0契約と提出方針は本人判断待ち',
                 'items': ['A: '
-                          'Q0維持・追加計測停止。mix1の5位・最悪値1位は保持し、既に走行中のmix2には介入せず結果受領と48世界集計を待つ。時間を精算し、受理済み版を確保する残工程・期限を再計画する',
-                          'B: '
-                          '現契約を満たす別系統を設計。混成場ではv3が52.18でsonnet-1(53.34)・opus-1(51.66)と有意に区別できないとの見立てから、別系統の優位を前提にせず改善仮説・新たな回数/全費用・受理日程を本人が決めるまで起動しない',
-                          'C: '
-                          '契約の場を見直すか本人が決める。F_refで基準のmulti-arbが混成場では36.73で最下位、v3は5位・最悪値1位という事実から、F_refの対multi-arbが本番に近い混成場での強さの代理として適切か検討する。変更は提案のみで、旧Q0m復活や資格・提出可否への転用はしない',
+                          'inc-zetaを提出基盤の第一候補にする（推奨・未決）。incz結果を診断として受領し、現Q0を維持して条件成立を目指すか、場の妥当性を検証して契約変更を提案するかを本人が決める。決定・全費用・安全・受理日程が揃うまで追加起動しない',
+                          'B: 現Q0を維持し、提出基盤の選定を保留する。inc-zetaのF_ref適性・資格証跡が不足したままなら新規実走を止め、残工程と期限から継続可否を本人が決める',
+                          'C: xb-rの追加改良または別系統設計を再検討する。混成場での優位を示す反証可能な仮説と新たな回数・全費用・受理日程を本人が決めるまで起動しない。第3回打ち切りを自動解除しない',
                           '10/28 dec-007再確認',
                           '無料枠不足時の前払い判断（G3見積もり後）'],
-                'decision_refs': ['dec-008',
-                                  'dec-007',
-                                  'dec-h1-authority',
-                                  'dec-full-executor',
-                                  'dec-rev10-direction'],
-                'sources': ['src-rev11'],
-                'note': '推奨はA（Q0維持・追加計測停止）。走行中mix2には介入せず、結果受領と48世界集計を待つ。契約変更は提案のみ。 [inferred] 2 '
-                        'seed×12レジームなのでinc-zetaとの差約2.8Tはノイズの範囲とみる。sonnet-1(53.34)・opus-1(51.66)など既存候補とも有意に区別できないという見立てで、統計検定の結果ではない。 '
-                        '反証条件: mix2の独立fresh '
-                        'seed結果とmix1+mix2の48世界集計で、全12レジームの平均・最悪値・G0注記を確認した上で、別系統が現契約を満たす根拠、または結果への合わせ込みでない場の妥当性を示す根拠が得られ、全残費・安全・受理までの日程も成立する場合。48世界の好成績だけでは資格にも反証にもならず、mix1単独の好成績は反証にならない。 '
+                'decision_refs': ['dec-008', 'dec-007', 'dec-h1-authority', 'dec-full-executor', 'dec-rev10-direction'],
+                'sources': ['src-rev12'],
+                'note': '推奨はA: '
+                        '混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。 '
+                        '[inferred] xb-r '
+                        'v3とsonnet-1/grok-1/opus-1はこの集計では区別できないとの見立てで、統計検定の結果ではない。決定論ラインxb-rの追加改良より、混成場で強い既存の独自戦略inc-zeta=zeta-a30（Claude+Codex作成の本命）を提出基盤にする案が示唆される。ただしinc-zetaはF_ref契約(Q0)未通過。D0のF_ref診断はcommit不一致でG0 '
+                        'FAIL、性能は診断のみ。 反証条件: '
+                        'inczでF_refの対multi-arb・対noop・最悪値・G0/安全に重大な弱点が示され、現Q0達成の経路も場の見直しの独立した根拠も成立しない場合、または提出適合・全残費・受理までの日程が成立しない場合はAを撤回/保留する。別候補の優位には独立した比較証拠を要する。inczは1seedの12世界診断で、好成績でも全12×2のscreenや60世界Q0の代用にならない。 '
                         '既決署名・H1選択・金銭境界は不変。'},
  'comparison': [{'candidate': 'xb-r v5',
                  'scope_ref': 'status.dev5',
@@ -795,11 +877,37 @@ REV11_EXPECTED = {'mix1': {'name': 'mix1',
                  'scope_ref': 'status.mix2',
                  'run_ref': 'status.mix2.name',
                  'detail_ref': 'status.mix2.note',
-                 'value_note': '結果待ち',
-                 'state': 'running',
-                 'verdict': '結果未確認・契約/資格と無関係の診断',
-                 'sources': ['src-rev11']}],
- 'mix1_table': {'header': ['mix1項目', '引継ぎ・結果'],
+                 'value_note': 'cand 6/11位・最悪46.2',
+                 'state': 'warning',
+                 'verdict': '診断結果受領・資格判定なし',
+                 'sources': ['src-rev12'],
+                 'metrics': [{'label': '平均T',
+                              'candidate_ref': 'status.mix2.result.t_candidate',
+                              'baseline_ref': 'status.mix2.result.t_multi'}],
+                 'detail': '24世界の診断結果。資格判定なし'},
+                {'candidate': 'inc-zeta（mix1+mix2）',
+                 'scope_ref': 'status.mix48',
+                 'run_ref': 'status.mix48.name',
+                 'detail_ref': 'status.mix48.note',
+                 'state': 'warning',
+                 'metrics': [{'label': '平均T（対2位venue-arb）',
+                              'candidate_ref': 'status.mix48.result.t_leader',
+                              'baseline_ref': 'status.mix48.result.t_second'}],
+                 'detail': '48世界集計・診断のみ',
+                 'sources': ['src-rev12'],
+                 'verdict': '診断結果受領・資格判定なし',
+                 'value_note': 'inc-zeta 1/11位・最悪46.8、cand 5位'},
+                {'candidate': 'inc-zeta（incz）',
+                 'scope_ref': 'status.incz',
+                 'run_ref': 'status.incz.name',
+                 'detail_ref': 'status.incz.note',
+                 'state': 'pending',
+                 'metrics': [],
+                 'detail': '結果待ち・診断のみ',
+                 'sources': ['src-rev12'],
+                 'verdict': '結果未確認・診断のみ',
+                 'value_note': '結果待ち'}],
+ 'mix1_table': {'header': ['混成場診断・incz項目', '引継ぎ・結果'],
                 'rows': [['構成', 'u1の11体、zeta-2をcand=xb-r v3凍結に置換。xb-r-liveのagent.ts=d30cbbbとバイト同一（本人提示）'],
                          ['範囲', '12レジーム×seed40001/40002=24世界、mix1a/mix1b、p=3'],
                          ['時刻', '2026-10-05 03:52 JST開始。旧06:30 JST頃見込みは実績に使わず、完了時刻は未提示'],
@@ -834,15 +942,94 @@ REV11_EXPECTED = {'mix1': {'name': 'mix1',
                          ['観測の解釈',
                           '[measured] mix1は12レジーム等重み平均Tでcand(xb-r v3)52.18・11体中5位、平均(50)より上。worst regime '
                           'T47.6は全員で最良の最悪値。multi-arbは36.73・最下位。F_refの対multi-arb基準での負けと混成場での順位は逆の見え方。'],
-                         ['推測',
+                         ['mix1単独時点の推測（rev 11履歴）',
                           '[inferred] 2 '
                           'seed×12レジームなのでinc-zetaとの差約2.8Tはノイズの範囲とみる。sonnet-1(53.34)・opus-1(51.66)など既存候補とも有意に区別できないという見立てで、統計検定の結果ではない。'],
-                         ['mix2進行中',
-                          '[進行中・診断] mix2はmix1と同じroster、fresh seed40003/40004・12レジーム24世界。10/5 05:34 JST開始、07:20 '
-                          'JST頃完了見込み。結果未確認・結果待ち。G0がBLOCKEDでも継続して診断として保持し、PASSへ変更しない。完了後にmix1+mix2の48世界で集計予定。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。'],
-                         ['mix2結果', '結果待ち（結果未確認）。G0・完了数・完了時刻・結果は未確認。mix1+mix2の48世界集計は完了後の予定']]}}
+                         ['mix2結果',
+                          '[measured] mix2はmix1と同じroster（u1の11体、zeta-2をcand=xb-r v3凍結に置換）。fresh '
+                          'seed40003/40004・12レジーム24世界、mix2a/mix2bともG0 PASS、violations '
+                          '0。candは平均T51.63・6位・最悪46.2、inc-zetaは61.54・1位・最悪53.2。05:34 '
+                          'JST開始の引継ぎを保持し、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。'],
+                         ['mix2順位1 / inc-zeta', '平均T 61.54 / worst regime T 53.2'],
+                         ['mix2順位2 / venue-arb', '平均T 53.07 / worst regime T 39.5'],
+                         ['mix2順位3 / sonnet-1', '平均T 52.49 / worst regime T 46.1'],
+                         ['mix2順位4 / opus-1', '平均T 52.11 / worst regime T 43.6'],
+                         ['mix2順位5 / grok-1', '平均T 52.07 / worst regime T 45.1'],
+                         ['mix2順位6 / cand(xb-r v3)', '平均T 51.63 / worst regime T 46.2'],
+                         ['mix2順位7 / clean-arb', '平均T 49.88 / worst regime T 42.9'],
+                         ['mix2順位8 / astra-1', '平均T 49.20 / worst regime T 42.1'],
+                         ['mix2順位9 / astra-2', '平均T 49.07 / worst regime T 40.8'],
+                         ['mix2順位10 / sonnet-2', '平均T 44.40 / worst regime T 30.0'],
+                         ['mix2順位11 / multi-arb', '平均T 34.54 / worst regime T 23.5'],
+                         ['48世界の範囲', 'mix1+mix2・seed40001–40004・12レジーム等重み。mix1の1世界BLOCKEDを含め全48世界を診断として保持'],
+                         ['48世界順位1 / inc-zeta', '平均T 58.26 / worst regime T 46.8'],
+                         ['48世界順位2 / venue-arb', '平均T 53.71 / worst regime T 42.5'],
+                         ['48世界順位3 / sonnet-1', '平均T 52.92 / worst regime T 47.2'],
+                         ['48世界順位4 / grok-1', '平均T 52.80 / worst regime T 45.1'],
+                         ['48世界順位5 / cand(xb-r v3)', '平均T 51.91 / worst regime T 47.6'],
+                         ['48世界順位6 / opus-1', '平均T 51.88 / worst regime T 44.5'],
+                         ['48世界順位7 / clean-arb', '平均T 50.04 / worst regime T 42.8'],
+                         ['48世界順位8 / astra-1', '平均T 49.14 / worst regime T 41.7'],
+                         ['48世界順位9 / astra-2', '平均T 49.02 / worst regime T 42.5'],
+                         ['48世界順位10 / sonnet-2', '平均T 44.70 / worst regime T 36.3'],
+                         ['48世界順位11 / multi-arb', '平均T 35.63 / worst regime T 24.9'],
+                         ['48世界の観測',
+                          '[measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb '
+                          '11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r '
+                          'v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。'],
+                         ['現時点の推測',
+                          '[inferred] xb-r '
+                          'v3とsonnet-1/grok-1/opus-1はこの集計では区別できないとの見立てで、統計検定の結果ではない。決定論ラインxb-rの追加改良より、混成場で強い既存の独自戦略inc-zeta=zeta-a30（Claude+Codex作成の本命）を提出基盤にする案が示唆される。ただしinc-zetaはF_ref契約(Q0)未通過。D0のF_ref診断はcommit不一致でG0 '
+                          'FAIL、性能は診断のみ。'],
+                         ['incz進行中・結果追記欄',
+                          '[進行中・診断] inczはinc-zetaをF_refで12レジーム×seed40005=12世界。10/5 07:20 '
+                          'JST頃開始との本人引継ぎ（旧05:40頃開始見込みを訂正）、約55分・08:15 '
+                          'JST頃完了見込み。走行中・結果未確認・結果待ち。G0・完了数・完了時刻・性能・安全内訳は未確認。結果追記欄: '
+                          '未受領。経過時間で完了としない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。']]},
+ 'h1_table': {'id': 'result-h1',
+              'title': 'H1本人決定・実装の成立範囲・形式確認',
+              'header': ['AIパイロット項目', 'rev 10の事実・境界'],
+              'rows': [['本人決定・仮説',
+                        '[本人決定 2026-10-04] '
+                        'AI-PILOT-DESIGNのH1・推奨案「検査済み方針の選択+ENTRY」を選択。全面コード改訂（executorTs自由）は見送り。決定論の改良で大きな改善が見込めないなら、推論ありモードなど大きく改善される仮説へ切替える（本人提案）。'],
+                       ['実装・安全境界',
+                        '[measured・コード確認の引継ぎ] xb-r-ai '
+                        'a95054aはH1を実装、テスト213・赤対照25。標準runtimeはdecide全体（executorTs）を差し替えるため、(a)固定テンプレ限定・(b)エージェント側検証のどちらも安全境界として成立せず、現状はON起動を拒否する。強制には運営側の受付機構/専用adapterが必要。提出物はruntimeを改変できず、scan-submissionのVENDOREDがBLOCKする。本番の改訂は事実上プロンプト誘導に頼り、機械的な安全保証はない。今回コード・テストの再確認はしていない。'],
+                       ['H1の設定',
+                        '3方針（v5標準 / v5+R11 / v5+R7厳格化）とENTRY 20–60bps・5bps刻み・最大±5bps。初期・復帰v5/50、更新なし120blockで復帰。旧rev '
+                        '6のENTRY単独・初期60の署名契約は履歴として不変。'],
+                       ['形式確認',
+                        '[measured引継ぎ] agy GPT-OSS '
+                        '120B（Medium・無料枠・本番と同系統のモデル）の形式確認はsparse/selection/injection各1回、validator '
+                        'ok=true。sparseとinjectionはnullで期待どおり。selectionは答えを指定した形式試験で能力評価ではない。runtime/haiku/性能へ外挿しない。本人Ollama鍵の疎通確認や本番無料枠の検証ではない。'],
+                       ['推論の費用方針',
+                        '[方針] 課金なし。シミュレーション内の改訂はclaude-cli:haikuを第一、既存サブスクのcodex小型モデルを第二候補とする（利用可能なmodel '
+                        'IDは未確認）。ローカルOllamaと本人のOllama鍵・無料枠（本番と共有）は使わない。追加課金・APIへの暗黙fallbackは認めない。'],
+                       ['パイロット仕様・停止条件',
+                        'H1専用adapterは未実装・標準ON拒否のまま。旧H1の32世界案は未解放。別系統xb-r-live（v3初期コード、標準runtime自由改訂）は同4レジーム×39001/39002・OFF1+ON3=32世界を測定しPILOT-STOP。使用済みseedをH1のfresh '
+                        'seedとして再利用しない。'],
+                       ['本人に残る判断',
+                        '推奨はA: '
+                        '混成場で強いinc-zetaを提出基盤の第一候補とし、Q0（F_ref・対multi-arb）をどう扱うかは本人判断。契約変更は提案のみ。Q0維持・追加起動停止のまま、走行中inczの結果受領と時間精算・受理工程の再計画を行う。 '
+                        '10/4の全面改訂見送りは原記録に保持。sim内の自由改訂結果は、本番で安全保証なしで本番と同条件で測るかという判断や提出承認を代替しない。']],
+              'sources': ['src-rev10', 'src-h1-pilot', 'src-h1-design'],
+              'source_table': {'source': 'src-rev10', 'header_key': 'AIパイロット項目'}},
+ 'morning_ranking': {'header': ['順位', 'mix2 候補', 'mix2 平均T', 'mix2 最悪T', '48世界 候補', '48世界 平均T', '48世界 最悪T'],
+                     'rows': [['1', 'inc-zeta', '61.54', '53.2', 'inc-zeta', '58.26', '46.8'],
+                              ['2', 'venue-arb', '53.07', '39.5', 'venue-arb', '53.71', '42.5'],
+                              ['3', 'sonnet-1', '52.49', '46.1', 'sonnet-1', '52.92', '47.2'],
+                              ['4', 'opus-1', '52.11', '43.6', 'grok-1', '52.80', '45.1'],
+                              ['5', 'grok-1', '52.07', '45.1', 'cand(xb-r v3)', '51.91', '47.6'],
+                              ['6', 'cand(xb-r v3)', '51.63', '46.2', 'opus-1', '51.88', '44.5'],
+                              ['7', 'clean-arb', '49.88', '42.9', 'clean-arb', '50.04', '42.8'],
+                              ['8', 'astra-1', '49.20', '42.1', 'astra-1', '49.14', '41.7'],
+                              ['9', 'astra-2', '49.07', '40.8', 'astra-2', '49.02', '42.5'],
+                              ['10', 'sonnet-2', '44.40', '30.0', 'sonnet-2', '44.70', '36.3'],
+                              ['11', 'multi-arb', '34.54', '23.5', 'multi-arb', '35.63', '24.9']]}}
 
-REV11_OVERNIGHT_NOTE = 'rev 10時点の参考見積。mix2分は含まず、mix1/mix2とも実時間は未精算。OVERNIGHT §2.3: 00:26以降の開始/終了区間の和集合で計測・失敗・検査・非runを一度だけ計上し、p3を3倍しない。xa-1 smoke約13分×2 + live smoke約13分×2 + live本体32世界約150分 = 完了分の単純概算202分（3h22）。mix1約150分見込みを含む352分（5h52）は非重複仮定の参考見積で、確定占有ではない。開始/終了全区間・重複・修理/確認/非run・00:26前の当日分は不明。通常6h/日の残り8分とは認定しない。C_forward + R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止。不明なら追加起動BLOCKED。'
+REV12_OVERNIGHT_NOTE = 'rev 10時点の参考見積。mix2/incz分は含まず、mix1/mix2/inczとも実時間は未精算。OVERNIGHT §2.3: 00:26以降の開始/終了区間の和集合で計測・失敗・検査・非runを一度だけ計上し、p3を3倍しない。xa-1 smoke約13分×2 + live smoke約13分×2 + live本体32世界約150分 = 完了分の単純概算202分（3h22）。mix1約150分見込みを含む352分（5h52）は非重複仮定の参考見積で、確定占有ではない。開始/終了全区間・重複・修理/確認/非run・00:26前の当日分は不明。通常6h/日の残り8分とは認定しない。C_forward + R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止。不明なら追加起動BLOCKED。'
+
+REV11_LOG_DIGEST = '65a4cad0133101af4903ffb5905dcb9da40cab08f55776496f6261ff650ea6e6'
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -894,18 +1081,18 @@ _RESULT_LINES = [
     "PASS AI: ENTRY_BPS 20-60, max step 5; R* ON3/OFF1 + S full = 216 worlds / 17.2 h; no epoch learning carryover",
     "PASS cutover: Oct 17 evidence gates select H480 / S240 / no campaign; no fresh deep exploration",
     "PASS schedule/review: 28 JST dates, 18 findings, five roadmap steps match dashboard",
-    "PASS preservation: all 84 pre-rev11 logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
-    "PASS current: dev4 measured 24-world handoff; dev5 measured, v5 not promoted; xa-1 stopped (3/3); mix1 measured diagnostic, 23 PASS / 1 BLOCKED; mix2 pending",
+    "PASS preservation: all 87 pre-rev12 logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
+    "PASS current: dev4 measured 24-world handoff; dev5 measured, v5 not promoted; xa-1 stopped (3/3); mix1 measured diagnostic, 23 PASS / 1 BLOCKED; mix2 / 48 worlds measured; incz pending",
     "PASS operations: independent completion monitoring, 150/180 minute iterations, max 3, fresh 12x2 screen; not execution approval",
     "LIMIT: static consistency only; raw runs, actual hours, strategy safety, browser layout and acceptance unverified",
     "PASS rev9: H1 selected / standard ON refused / adapter unimplemented; agy format only; xa-1 stopped; H1 pilot gated; separate live pilot STOP",
-    "PASS rev11: xa-1 unhealthy / live all ON dT negative / mix1 measured, mix2 pending / accounting unreconciled / human direction pending",
+    "PASS rev12: xa-1 unhealthy / live all ON dT negative / mix1 / mix2 / 48 worlds measured; incz pending / accounting unreconciled / human direction pending",
     "PASS check-plan-consistency",
 ]
 
 
 def check_documents(document, html, morning, m1, ai, morning_new):
-    require("revision 11" in document.splitlines()[0], "plan revision 11 title")
+    require("revision 12" in document.splitlines()[0], "plan revision 12 title")
     sources = {"d0": source_table(morning, "## 2."),
                "q0": source_table(morning, "## 5."),
                "m1": source_table(m1, "## 結果")}
@@ -971,11 +1158,11 @@ def check_documents(document, html, morning, m1, ai, morning_new):
     require([int(r["順序"]) for r in queue] == list(range(1, len(QUEUE)+1)), "queue numbers")
     require([r["実験ID"] for r in queue] == QUEUE, "queue priority")
     require(all(r["状態"] and r["窓"] and r["依存・停止"] for r in queue), "queue gates missing")
-    expected_queue = [("24", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
+    expected_queue = [("12", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
                       ("60", "143/30"), ("60", "13/3"), ("36", "13/5"),
                       ("0", "未見積"), ("48", "52/15"), ("48", "52/15"), ("60", "13/3")]
     require([(r["世界数"], r["全量見積h"]) for r in queue] == expected_queue, "queue worlds/hours")
-    require(queue[0]["状態"] == "mix2走行中・結果待ち" and queue[1]["状態"] == "証跡精算のみ・再走なし" and
+    require(queue[0]["状態"] == "incz走行中・結果待ち" and queue[1]["状態"] == "証跡精算のみ・再走なし" and
             queue[2]["状態"] == "条件付き決定・実行停止" and queue[5]["状態"] == "不採用・旧未署名記録", "repair/requalification/archive state")
     require(all(queue[i]["状態"] == "停止" for i in (4, 6, 7)), "qualification queue needs Q0 evidence")
     require(queue[11]["状態"] == "不採用・0h配分", "M2 must remain zero allocation")
@@ -1040,8 +1227,8 @@ def check_documents(document, html, morning, m1, ai, morning_new):
                 (int(r["順序"]), r["状態"], int(r["世界数"]), None if r["全量見積h"] == "未見積" else r["全量見積h"], r["窓"], r["依存・停止"]),
                 "dashboard queue row differs: "+r["実験ID"])
     require(dq[0]["active"] is True and all(not q["active"] for q in dq[1:]),
-            "only reported mix2 may be active; Q0 and downstream remain blocked")
-    require(dq[0]['worlds'] == 24 and dq[0]['hours'] is None and '契約・資格とは無関係' in dq[0]['dependency'], 'mix2 known scope, unknown actual cost and qualification boundary')
+            "only reported incz may be active; Q0 and downstream remain blocked")
+    require(dq[0]['worlds'] == 12 and dq[0]['hours'] is None and '契約・資格とは無関係' in dq[0]['dependency'], 'incz known scope, unknown actual cost and qualification boundary')
     require('35001/35002はdev3診断で既見のため再利用不可' in dq[9]['dependency'],
             'D-control cannot silently reuse dev3 development seeds')
     milestones = data["milestones"]["items"]
@@ -1072,7 +1259,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
                 "human-only scope disclosure")
         require("凍結性能は改訂ON性能の代用にならない" in doc, "ON evidence boundary")
         require("17.2h" in doc and "9.7h" in doc and "10/17" in doc, "allocation and cutover prose")
-    require(data["decisions"]["human_only"] == REV11_EXPECTED["human_only"],
+    require(data["decisions"]["human_only"] == REV12_EXPECTED["human_only"],
             "full executor authority remains a pending human decision; registration and cost boundaries retained")
     require(all(decisions[i]["status"] == "decided" for i in ("dec-step1-policy", "dec-q0-keep", "dec-original", "dec-forward")),
             "prior settled decisions must stay decided")
@@ -1218,7 +1405,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
             'v2/dev3 MASTER handoff missing')
     require(data['status']['human_action'] == REV10_EXPECTED['human_action'] and data['budget']['consumed_forward_hours'] is None and
             data['budget']['consumption_status'] == '未精算', 'human action and unknown forward consumption')
-    require(data['plan']['revision'] == 11 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
+    require(data['plan']['revision'] == 12 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
             'revision and submission deadline')
     report = data["decisions"]["ollama_report"]
     require(report["evidence_kind"] == "本人報告" and report["registration"] == "accepted-display-reported" and
@@ -1241,7 +1428,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
             progress['progress-dev4']['state'] == progress['progress-xbr-v5']['state'] == 'done' and
             progress['progress-dev5']['state'] == 'done' and progress['progress-plateau']['state'] == 'running' and
             progress['progress-xa1']['state'] == 'failed' and progress['progress-live']['state'] == 'done' and
-            progress['progress-mix1']['state'] == 'done' and progress['progress-mix2']['state'] == 'running' and
+            progress['progress-mix1']['state'] == 'done' and progress['progress-mix2']['state'] == 'done' and progress['progress-mix48']['state'] == 'done' and progress['progress-incz']['state'] == 'running' and
             progress['progress-xbr-v2']['state'] == 'done' and progress["progress-xbr-requal"]["state"] == "blocked" and
             progress["progress-ollama"]["state"] == "done", "diagnosis/qualification/registration states are separate")
     require([i["id"] for i in data["log"]["items"][:-60]] == [f"log-{i:03}" for i in range(len(data["log"]["items"]), 60, -1)],
@@ -1258,7 +1445,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
     require(any(s["path"] == "ascon-notes/league/DESIGN-AI-LAYER-01-astra.md" for s in data["sources"]["sources"]), "dashboard AI source missing")
     # Visible comparisons use references to exactly these populations, never cross-field T differences.
     comparisons = data['results']['comparison']
-    require([r['scope_ref'] for r in comparisons['diagnostic']] == ['status.dev5','status.dev4','status.dev3','status.dev2','status.dev1','status.xa1.measured_scope','status.live','status.mix1','status.mix2'],
+    require([r['scope_ref'] for r in comparisons['diagnostic']] == ['status.dev5','status.dev4','status.dev3','status.dev2','status.dev1','status.xa1.measured_scope','status.live','status.mix1','status.mix2','status.mix48','status.incz'],
             'diagnostic comparison populations')
     require([r['scope_ref'] for r in comparisons['qualification']] ==
             ['plan.q0_requalification','results.q0.scope','status.q0b'], 'qualification comparison populations')
@@ -1285,12 +1472,12 @@ def check_documents(document, html, morning, m1, ai, morning_new):
     require(data['status']['repair_v5'] == REV10_EXPECTED['repair_v5'], 'v5 not promoted; initial tests inherited')
     require(data['status']['team'] == REV10_EXPECTED['team'], 'team and agy invocation restrictions')
     require(data['status']['plateau'] == {'name': 'PLATEAU-ANALYSIS', 'state': 'reported-creating-unverified', 'owner': 'Codex', 'result': None, 'verified': False, 'note': '構造の異なる独自設計候補の検討をAstraが別ジョブで作成中。結果未確認。新規計測・採用・予算追加を意味しない。', 'sources': ['src-operations']}, 'PLATEAU remains a separate unverified job')
-    require(op['iteration_current'] == 3 and op['current_run_ref'] == 'status.mix2', 'iteration 3/3 stopped; current mix2 is only diagnostic')
+    require(op['iteration_current'] == 3 and op['current_run_ref'] == 'status.incz', 'iteration 3/3 stopped; current incz is only diagnostic')
     for key, marker, expected in [('dev4', 'source-dev4', {'header': ['dev4-xb-r項目', '提示された結果', '判定・範囲'], 'rows': [['母集団・G0', 'v3 d30cbbb・F_ref・seed36001/36002・12レジーム24世界 / G0 PASS / 362ループ', '本人提示measured。原ログ再監査なし'], ['12レジーム等重み平均T', 'cand 49.72 / multi-arb 55.02（差5.3T）', '平均T条件未達・資格合格ではない'], ['レジーム平均(T−Tnoop)', '全12レジームで正 / 最小+7.85', 'レジーム平均の最小値。世界別Pの最小値ではない'], ['noop割れ / violations / cand revert', '0 / 0 / 0', '未提示の安全項目は補完しない'], ['送信 / 送信失敗', 'submitted 1652 / failed 23（1.4%）', '失敗率は23/(1652+23)の丸め。mined revertと別'], ['1世界平均P', 'cand 488.2 / multi-arb 1460.8 / clean-arb 440.0', '同じ24世界'], ['1世界平均取引数', 'cand 68.8 / multi-arb 273.4 / clean-arb 46.3', '同じ24世界']]}), ('dev4_regimes', 'source-dev4-regimes', {'header': ['dev4レジーム', 'cand 平均T', 'multi-arb 平均T', '比較'], 'rows': [['calm', '56.12', '35.90', 'candが上回る'], ['crash', '52.45', '50.31', 'candが上回る'], ['vuln', '54.14', '48.69', 'candが上回る'], ['spike', '50.20', '49.99', 'candが上回る'], ['depeg-persist', '57.02', '50.54', 'candが上回る'], ['launch', '53.46', '49.92', 'candが上回る'], ['whale', '38.86', '62.79', 'candが下回る'], ['cex-drift', '45.67', '63.80', 'candが下回る'], ['depeg', '42.73', '63.85', 'candが下回る'], ['lending-incident', '46.48', '63.61', 'candが下回る'], ['cdp-incident', '47.24', '62.98', 'candが下回る'], ['informed-flow', '52.33', '57.81', 'candが下回る']]})]:
         require(parsed_table(block(document, marker)) == expected, 'exact dev4 MASTER source table: '+key)
         require({k:data['results'][key][k] for k in ('header','rows')} == expected, 'exact dev4 dashboard source table: '+key)
-    require(comparisons['diagnostic'] == REV11_EXPECTED['comparison'], 'all diagnostic scopes, metrics and pending results exact')
-    require([k['ref'] for k in data['ui']['kpis'][:2]] == ['status.mix1.name','status.mix1.result.t_candidate'], 'KPI uses latest completed mixed diagnostic, not qualification')
+    require(comparisons['diagnostic'] == REV12_EXPECTED['comparison'], 'all diagnostic scopes, metrics and pending results exact')
+    require([k['ref'] for k in data['ui']['kpis'][:2]] == ['status.mix48.name','status.mix48.result.t_leader'], 'KPI uses latest completed mixed diagnostic, not qualification')
     require(data['status']['priority']['progress_refs'] == ['progress-dev4','progress-dev5','progress-xa1','progress-live','progress-xbr-requal'], 'current priority progression')
     for phrase in ('v5 = v3 + R9(bundle用在庫余地)ON','7b1448b','2026-10-04 22:07 JST開始','2026-10-05 00:00 JST頃','2/3回目',
                    'Codex(Astra)主・Claude副','利用残高切れ(402)','Gemini 3.8 Flash High','masa-harness#409','Claudeの別エージェント+agy',
@@ -1308,8 +1495,8 @@ def check_documents(document, html, morning, m1, ai, morning_new):
         require(data['plan'][name] == REV9_EXPECTED[name], 'rev9 exact plan contract: '+name)
     for name in ('agy_format',):
         require(data['status'][name] == REV9_EXPECTED[name], 'rev9 inherited evidence, never fresh verification: '+name)
-    require(data['results']['h1'] == REV10_EXPECTED['table'], 'H1 visible facts and evidence boundaries exact')
-    require(parsed_table(block(document, 'h1-current')) == {k:REV10_EXPECTED['table'][k] for k in ('header','rows')}, 'MASTER H1 current contract matches dashboard')
+    require(data['results']['h1'] == REV12_EXPECTED['h1_table'], 'H1 visible facts and evidence boundaries exact')
+    require(parsed_table(block(document, 'h1-current')) == {k:REV12_EXPECTED['h1_table'][k] for k in ('header','rows')}, 'MASTER H1 current contract matches dashboard')
     require([decisions[x['id']] for x in REV9_EXPECTED['decisions']] == REV9_EXPECTED['decisions'], 'rev9 H1/production authority records preserved; live simulation does not change them')
     require(data['plan']['pilot']['worlds'] == len(data['plan']['pilot']['regimes']) * len(data['plan']['pilot']['seeds']) * (data['plan']['pilot']['off_repeats'] + data['plan']['pilot']['on_repeats']), 'pilot world arithmetic')
     for phrase in ('7179efe','時間制限付き単脚往復+lot台帳','テスト39・赤対照39','smoke 38003','38001/38002×12=24世界','約104分+終了確認','第3回はsmokeで打ち切り','H1（xb-r-ai）はON拒否を維持','契約変更は未決定'):
@@ -1327,7 +1514,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
     for name in ('live_contract','production_assessment'):
         require(data['plan'][name] == REV10_EXPECTED[name], 'rev10 stop/safety/authority boundary: '+name)
     night = data['budget']['overnight']
-    require(night == {**REV10_EXPECTED['overnight'], 'note': REV11_OVERNIGHT_NOTE}, 'overnight estimates, union unknown and unchanged accounting formula')
+    require(night == {**REV10_EXPECTED['overnight'], 'note': REV12_OVERNIGHT_NOTE}, 'overnight estimates, union unknown and unchanged accounting formula')
     require(night['xa_smoke_minutes_each'] * night['xa_smoke_count'] +
             night['live_smoke_minutes_each'] * night['live_smoke_count'] + night['live_main_minutes'] ==
             night['completed_estimate_minutes'] == 202, 'completed estimates arithmetic')
@@ -1343,14 +1530,14 @@ def check_documents(document, html, morning, m1, ai, morning_new):
     for key, marker in [('dev5','source-dev5'),('xa1','source-xa1'),('live','source-live'),('live_safety','source-live-safety'),('mix1','source-mix1')]:
         require(parsed_table(block(document,marker)) == {k:data['results'][key][k] for k in ('header','rows')},
                 'rev10 MASTER/dashboard table correspondence: '+key)
-        require({k:data['results'][key][k] for k in ('header','rows')} == (REV11_EXPECTED['mix1_table'] if key == 'mix1' else REV10_TABLES[key]), 'exact displayed table: '+key)
+        require({k:data['results'][key][k] for k in ('header','rows')} == (REV12_EXPECTED['mix1_table'] if key == 'mix1' else REV10_TABLES[key]), 'exact displayed table: '+key)
     expected_live_rows = [[g['group'],g['t'],g['d_t'] or '—',g['d_alpha'] or '—',g['worst'] or '—',
                           ' / '.join(str(g[k]) for k in ('installed','declined','rejected')) if g['group'] != 'OFF' else '—']
                          for g in live['groups']]
     require(data['results']['live']['rows'] == expected_live_rows, 'every ON value and rejected/declined/installed count visible')
-    for name in ('mix1', 'mix2'):
-        require(data['status'][name] == REV11_EXPECTED[name], 'rev11 exact scope, measured values, G0 and uncertainty: '+name)
-    require(data['plan']['next_branch'] == REV11_EXPECTED['next_branch'], 'single A recommendation with mixed-field evidence; contract changes only proposed')
+    for name in ('mix1', 'mix2', 'mix48', 'incz'):
+        require(data['status'][name] == REV12_EXPECTED[name], 'rev11 exact scope, measured values, G0 and uncertainty: '+name)
+    require(data['plan']['next_branch'] == REV12_EXPECTED['next_branch'], 'single A recommendation with mixed-field evidence; contract changes only proposed')
     rev10_logs = [x for x in data['log']['items'] if x['id'] in {f'log-{i:03}' for i in range(1,85)}]
     require(len(rev10_logs) == 84 and digest(rev10_logs) == REV10_LOG_DIGEST, 'all 84 prior logs and every field immutable')
     require(digest(data['decisions']['items']) == REV10_ALL_DECISIONS_DIGEST, 'all 20 prior decision records unchanged, including open rev10 proposal')
@@ -1361,13 +1548,13 @@ def check_documents(document, html, morning, m1, ai, morning_new):
             all(Fraction(a['t']) > Fraction(b['t']) for a,b in zip(mix['ranking'],mix['ranking'][1:])), 'mix1 ranking exact order')
     require(max(Fraction(r['worst_regime_t']) for r in mix['ranking']) == Fraction(mix['worst_regime_t']) and
             mix['ranking'][4]['agent'] == 'cand(xb-r v3)', 'cand best worst regime, not first overall')
-    require(data['status']['mix2']['combined_worlds_planned'] == 2 * 24, '48 worlds planned, not completed')
+    require(data['status']['mix2']['combined_worlds_planned'] == 2 * 24, 'original 48-world scope retained; completion checked separately')
     for phrase in ('23世界PASS', 'crash/40001', 'grok-1', 'telemetry', 'BLOCKEDをPASSとは扱わない',
                    '52.18', '47.6', '36.73', '約2.8T', '[inferred]', '統計検定の結果ではない',
                    '40003/40004', '05:34 JST', '07:20 JST', '48世界', '資格合格・旧Q0mの代用・提出可否',
                    'xb-r-liveのagent.ts=d30cbbbとバイト同一'):
         require(phrase in document and phrase in morning_new, 'rev11 MASTER and morning evidence/boundary: '+phrase)
-    require('結果待ち（結果未確認）' in data['results']['mix1']['rows'][-1][1], 'mix2 visible placeholder remains unknown')
+    require('結果未確認・結果待ち' in data['results']['mix1']['rows'][-1][1], 'incz visible placeholder remains unknown')
     for phrase in ('202分（3h22）','352分（5h52）','C_forward + R_remaining + N_next ≤ 100h','区間和集合',
                    '13×2 = 26','30分で失効','8分ごと','/tmp/night-state.md','全反復でdT>0、dAlpha>0、worst≥−2',
                    '39101/prompt v1','v2/39102','WBTCのslippage許容80→100bps','16取引の固定価格損益+63.34 USDC',
@@ -1375,14 +1562,28 @@ def check_documents(document, html, morning, m1, ai, morning_new):
         require(phrase in document, 'rev10 essential fact/accounting/decision prose: '+phrase)
     require(morning_new is not None, '10/5 morning draft required')
     morning_rows = parsed_table(block(morning_new,'morning-runs'))
-    require(len(morning_rows['rows']) == 5, 'morning report retains four prior runs plus mix2 placeholder')
+    require(len(morning_rows['rows']) == 7, 'morning retains prior runs plus completed mix2 / 48 worlds and incz placeholder')
     for phrase in ('49.72対multi 55.02','50.15対55.73','7179efe→6cd9e70→3ad4f60','264/362','10<30','4/710',
                    '54.74','48.91 / 52.80 / 53.62','−5.83 / −1.93 / −1.11','PILOT-STOP','HEALTHY=no',
-                   '40001/40002=24世界','mix1a/b','03:52 JST','05:34 JST','07:20 JST','**結果待ち**','結果未確認',
+                   '40001/40002=24世界','mix1a/b','03:52 JST','05:34 JST','07:20 JST','結果追記欄','結果未確認',
                    '202分（3h22）','352分（5h52）','不明','C_forward + R_remaining + N_next ≤ 100h',
                    'A（推奨）','B:','C:','推奨の反証条件','10/31 23:59 JST','dec-007は10/28','H1 ON拒否',
                    '80→100bps','+63.34','推測','8分heartbeat','30分で失効','echo "" | …'):
         require(phrase in morning_new, 'morning/current data consistency: '+phrase)
+    rev11_logs = [x for x in data['log']['items'] if x['id'] in {f'log-{i:03}' for i in range(1,88)}]
+    require(len(rev11_logs) == 87 and digest(rev11_logs) == REV11_LOG_DIGEST, 'all 87 prior logs and every field immutable')
+    require(len(data['log']['items']) == 91, 'four rev12 result / inference / correction logs appended')
+    require(parsed_table(block(morning_new,'morning-mixed-ranking')) == REV12_EXPECTED['morning_ranking'], 'all 22 morning ranking rows and values exact')
+    for name in ('mix2','mix48'):
+        scope = data['status'][name]
+        ranking = scope['result']['ranking']
+        require([r['rank'] for r in ranking] == list(range(1,12)) and
+                all(Fraction(a['t']) > Fraction(b['t']) for a,b in zip(ranking,ranking[1:])), name+' exact ranking order')
+    require(data['status']['mix48']['completed_worlds'] == data['status']['mix1']['completed_worlds'] + data['status']['mix2']['completed_worlds'] == 48, '48 worlds measured, not a qualification')
+    for phrase in ('58.26','53.71','51.91','46.8','約4.5T','1T以内','inc-zeta=zeta-a30','Claude+Codex',
+                   'F_ref契約(Q0)未通過','commit不一致でG0 FAIL','07:20 JST頃開始','旧05:40頃開始見込みを訂正',
+                   '約55分','08:15 JST頃','12レジーム×seed40005=12世界','結果追記欄: 未受領','Q0契約は変更しない'):
+        require(phrase in document and phrase in morning_new, 'rev12 result / inference / uncertainty boundary: '+phrase)
     return list(_RESULT_LINES)
 
 
@@ -1411,7 +1612,7 @@ def self_check(documents):
             ds[1] = re.sub(pattern, update, ds[1], count=1, flags=re.S)
         return change
     controls = [
-        lambda ds: ds.__setitem__(0, ds[0].replace("revision 11", "revision 6", 1)),
+        lambda ds: ds.__setitem__(0, ds[0].replace("revision 12", "revision 6", 1)),
         mutate("plan", lambda d: d["ai_contract"].update(status="unsigned")),
         mutate("plan", lambda d: d["ai_contract"].update(on_repeats=1)),
         mutate("plan", lambda d: d["ai_contract"].update(selected_total_hours="12")),
@@ -1637,7 +1838,7 @@ def self_check(documents):
         mutate('budget', lambda d: d['overnight'].update(repair_check_nonrun_minutes=0)),
         mutate('plan', lambda d: d['next_branch'].update(recommendation='C')),
         mutate('decisions', lambda d: next(x for x in d['items'] if x['id']=='dec-rev10-direction').update(status='decided')),
-        lambda ds: ds.__setitem__(5, ds[5].replace('**結果待ち**','**PASS**')),
+        lambda ds: ds.__setitem__(5, ds[5].replace('結果追記欄','**PASS**')),
         lambda ds: ds.__setitem__(5, ds[5].replace('352分（5h52）','352分消費済み')),
         lambda ds: ds.__setitem__(5, ds[5].replace('推奨の反証条件','追加提案')),
     ]
@@ -1657,8 +1858,8 @@ def self_check(documents):
         mutate('status', lambda d: d['mix1'].update(parallelism=4)),
         mutate('status', lambda d: d['mix1'].update(code_identity='unverified other code')),
         mutate('status', lambda d: d['mix2'].update(result='PASS')),
-        mutate('status', lambda d: d['mix2'].update(g0='PASS')),
-        mutate('status', lambda d: d['mix2'].update(completed_worlds=24)),
+        mutate('status', lambda d: d['mix2'].update(g0=None)),
+        mutate('status', lambda d: d['mix2'].update(completed_worlds=None)),
         mutate('status', lambda d: d['mix2'].update(completed_at='2026-10-05T07:20:00+09:00')),
         mutate('status', lambda d: d['mix2'].update(seeds='40001/40002')),
         mutate('status', lambda d: d['mix2'].update(continue_on_g0_blocked=False)),
@@ -1674,6 +1875,26 @@ def self_check(documents):
     for i in range(12):
         for key in ('regime','t','mean_rank'):
             controls.append(mutate('status', lambda d,i=i,k=key: d['mix1']['result']['regime_t'][i].update({k:'999'})))
+    controls += [
+        mutate('log', lambda d: next(x for x in d['items'] if x['id']=='log-087').update(summary='rewritten')),
+        mutate('status', lambda d: d['mix2']['result'].update(violations=1)),
+        mutate('status', lambda d: d['mix2'].update(chunks=['mix2a'])),
+        mutate('status', lambda d: d['mix48'].update(q0_eligible=True)),
+        mutate('status', lambda d: d['mix48'].update(completed_worlds=47)),
+        mutate('status', lambda d: d['mix48'].update(g0='PASS')),
+        mutate('status', lambda d: d['incz'].update(result='PASS')),
+        mutate('status', lambda d: d['incz'].update(completed_worlds=12)),
+        mutate('status', lambda d: d['incz'].update(g0='PASS')),
+        mutate('status', lambda d: d['incz'].update(started_at='2026-10-05T05:40:00+09:00')),
+        mutate('status', lambda d: d['incz'].update(expected_end='2026-10-05T07:20:00+09:00')),
+        mutate('status', lambda d: d['incz'].update(q0_eligible=True)),
+        lambda ds: ds.__setitem__(5, ds[5].replace('61.54','61.55')),
+        lambda ds: ds.__setitem__(5, ds[5].replace('約4.5T','約2.8T')),
+    ]
+    for name in ('mix2','mix48'):
+        for i in range(11):
+            for key in ('agent','rank','t','worst_regime_t'):
+                controls.append(mutate('status', lambda d,n=name,i=i,k=key: d[n]['result']['ranking'][i].update({k:'999'})))
     for number, control in enumerate(controls, 1):
         changed = copy.deepcopy(documents)
         control(changed)

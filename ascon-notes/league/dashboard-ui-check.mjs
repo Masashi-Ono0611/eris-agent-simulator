@@ -77,8 +77,8 @@ check('diagnostic metrics from JSON rather than display constants',()=>{
   app.D.status.dev2.result.p_candidate='149.0';
 });
 check('log count and complete history',()=>{
-  assert.equal(app.filteredLogs().length,87);
-  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,87);
+  assert.equal(app.filteredLogs().length,91);
+  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,91);
   for(const l of app.D.log.items)assert.ok(rendered.log.includes(l.id));
 });
 check('log AND search, kind and date filters compose',()=>{
@@ -151,14 +151,14 @@ check('AA text palette and responsive/reduced-motion provisions',()=>{
   assert.ok(!/@media print|beforeprint|afterprint/.test(html));
 });
 check('a future reported completion renders without a forecast or live guessing',()=>{
-  const before={...app.D.status.mix2};
-  Object.assign(app.D.status.mix2,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-05T00:41:00+09:00',completed_worlds:24,note:'test-only confirmed completion'});
+  const before={...app.D.status.incz};
+  Object.assign(app.D.status.incz,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-05T00:41:00+09:00',completed_worlds:24,note:'test-only confirmed completion'});
   app.state.page='operations';app.render();
   assert.ok(element('page').innerHTML.includes('診断完了の引継ぎ'));
   assert.ok(element('page').innerHTML.includes('00:41'));
   assert.ok(!element('page').innerHTML.includes('NaN'));
   app.state.page='overview';app.render();assert.ok(element('page').innerHTML.includes('確認された完了時刻'));
-  Object.assign(app.D.status.mix2,before);
+  Object.assign(app.D.status.incz,before);
 });
 check('four KPI cards appear on overview only, including qualification view',()=>{
   for(const [page,text] of Object.entries(rendered)){
@@ -174,23 +174,23 @@ check('comparison is the first results content section, before explanatory notic
     assert.ok(t.indexOf('class="comparison"')<t.indexOf('測定の原表・条件'));
   }
 });
-check('dev3a historical figures and mix2 pending results stay distinct in visible pages',()=>{
+check('dev3a historical figures and incz pending results stay distinct in visible pages',()=>{
   const t=rendered.results;
   const operationsText=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   for(const value of ['842.3','2032.9','1050.3','54.4','288.7','61.3','46.83','55.93','980','27'])assert.ok(t.includes(value),value);
   assert.ok(t.includes('9レジーム')&&t.includes('18世界')&&t.includes('比較対象に未達'));
-  assert.ok(operationsText.includes('mix1'));
+  assert.ok(operationsText.includes('incz'));
   assert.ok(operationsText.includes('結果未確認'));
   assert.ok(operationsText.includes('稼働実績・更新成功は本更新で未検証'));
   assert.ok(!operationsText.includes('null'));
 });
-check('historical dev4 facts, current mix2 and team are visible',()=>{
+check('historical dev4 facts, current incz and team are visible',()=>{
   const t=rendered.results;
   for(const value of ['49.72','55.02','488.2','1460.8','440.0','68.8','273.4','46.3','1652','23','+7.85'])assert.ok(t.includes(value),value);
   const op=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
-  for(const value of ['05:34','07:20','結果待ち','3/3回目','Codex(Astra)','Claude','402','agy','masa-harness#409','PLATEAU-ANALYSIS','ツール使用禁止・差分埋め込み・echo &quot;&quot; | …'])assert.ok(op.includes(value),value);
+  for(const value of ['07:20','08:15','結果待ち','3/3回目','Codex(Astra)','Claude','402','agy','masa-harness#409','PLATEAU-ANALYSIS','ツール使用禁止・差分埋め込み・echo &quot;&quot; | …'])assert.ok(op.includes(value),value);
   const overviewText=rendered.overview.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
-  assert.ok(overviewText.includes('mix1')&&overviewText.includes('52.18'));
+  assert.ok(overviewText.includes('mix1+mix2')&&overviewText.includes('58.26'));
 });
 check('dev4 display is sourced from JSON',()=>{
   app.state.page='results';app.state.results='diagnostic';
@@ -234,10 +234,10 @@ check('rev10 live outcomes, xa stop and mix placeholder come from data',()=>{
   const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   for(const value of ['HEALTHY=no','50.15','55.73','54.74','48.91','52.80','53.62','-5.83','-1.93','-1.11','-229.4','+178.7','-19.75','PILOT-STOP','結果待ち'])assert.ok(t.includes(value),value);
   assert.ok(!t.includes('undefined'));
-  const before=app.D.status.mix2.note;
-  app.D.status.mix2.note='REV10-MIX-SENTINEL';app.state.page='operations';app.render();
+  const before=app.D.status.incz.note;
+  app.D.status.incz.note='REV10-MIX-SENTINEL';app.state.page='operations';app.render();
   assert.ok(element('page').innerHTML.includes('REV10-MIX-SENTINEL'));
-  app.D.status.mix2.note=before;
+  app.D.status.incz.note=before;
 });
 check('mix1 ranking, regimes and G0 exception render from measured JSON',()=>{
   const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
@@ -248,6 +248,14 @@ check('mix1 ranking, regimes and G0 exception render from measured JSON',()=>{
   app.D.status.mix1.result.t_candidate='REV11-MIX-SENTINEL';app.state.page='results';app.state.results='diagnostic';app.render();
   assert.ok(element('page').innerHTML.includes('REV11-MIX-SENTINEL'));
   app.D.status.mix1.result.t_candidate=before;
+});
+check('rev12 all mixed rankings and incz pending boundary are rendered',()=>{
+  const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
+  for(const name of ['mix2','mix48'])for(const row of app.D.status[name].result.ranking)
+    for(const key of ['agent','t','worst_regime_t'])assert.ok(t.includes(String(row[key])),`${name} ${row.agent} ${key}`);
+  for(const v of ['40005','07:20','08:15','結果追記欄','commit不一致でG0 FAIL','F_ref契約(Q0)未通過'])assert.ok(t.includes(v),v);
+  assert.equal(app.D.status.incz.result,null);
+  assert.equal(app.D.status.incz.completed_worlds,null);
 });
 console.log(`PASS dashboard UI: ${count} checks; 8 page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
 console.log('LIMIT: minimal DOM adapter, not a browser; visual layout and assistive technology unverified');
