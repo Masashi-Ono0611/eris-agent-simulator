@@ -1,5 +1,8 @@
 # ASCON master plan — 2026-10-04 — revision 3
 
+> **時刻表記の注意（2026-10-04 09:20 JST 追記）**: この Mac のタイムゾーンは Asia/Kuala_Lumpur（UTC+8）で、JST より 1 時間遅い。本資料の「JST」表記の時刻（02:15・06:37・06:41・06:45・11 時など）は実際には Mac の現地時刻で、**JST にするには +1 時間**（例: Q0b 開始 07:37 JST・完了見込み 12:00 JST）。以後の時刻は `TZ=Asia/Tokyo date` に基づく JST で表記する。
+
+
 基準: **MORNINGの06:45 JST引継ぎ**。ライブ状態は再確認していない。revision 2を全面置換する。**sonnet-1 Q0は不合格のまま。opus-1 Q0bを保全し、本人が別契約へ署名しない限り現条件を維持する。** 初回の安全な独自戦略受理を、性能探索より先に確保する。
 
 作業境界: league-v2内の本書・summary HTML・軽量checkerのみ変更。upstream-eval、ascon-notes/eval/out、runs/は読取も書込もしない。example/agentsは指定されたxb-core README/VALIDATIONだけ読取、実装・test/には触れない。backtest / Anvil / npm test / network / browserは実行しない。以下の実走は将来の実行担当用計画であり、この文書更新による起動・委任の許可ではない。

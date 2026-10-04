@@ -1,0 +1,3085 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<meta name="description" content="ASCONの全体計画・進捗・結果・決定・履歴をまとめた更新可能なダッシュボード">
+<title>ASCON · Living Dashboard</title>
+<!-- BEGIN data-sources : editable facts -->
+<script type="application/json" id="data-sources">
+{
+  "sources": [
+    {
+      "id": "src-master",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "MASTER revision 3",
+      "locator": "§1–11 / Appendix A"
+    },
+    {
+      "id": "src-morning",
+      "path": "ascon-notes/league/MORNING-2026-10-04.md",
+      "title": "朝の集計",
+      "locator": "§1–7、07:45 JST 引継ぎ"
+    },
+    {
+      "id": "src-grok-plan",
+      "path": "ascon-notes/league/GROK-REVIEW-MASTER-PLAN.md",
+      "title": "Grok 計画レビュー",
+      "locator": "Critical 1–5 / Warning 6–13 / Suggestion 14–18"
+    },
+    {
+      "id": "src-retro-u1",
+      "path": "ascon-notes/league/RETRO-U1.md",
+      "title": "Astra U1 振り返り",
+      "locator": "§1–8、提案と実測を区別"
+    },
+    {
+      "id": "src-retro-r1",
+      "path": "ascon-notes/league/RETRO-R1.md",
+      "title": "Astra R1 振り返り",
+      "locator": "§1–6、当時の提案"
+    },
+    {
+      "id": "src-u1m",
+      "path": "ascon-notes/league/report-u1m.md",
+      "title": "u1m 生成表",
+      "locator": "冒頭のG0 BLOCKED、全体表・行動指標"
+    },
+    {
+      "id": "src-cards",
+      "path": "ascon-notes/league/STRATEGY-CARDS-U1.md",
+      "title": "戦略カード",
+      "locator": "11プレイヤーの一覧表"
+    },
+    {
+      "id": "src-m1",
+      "path": "ascon-notes/league/m1/M1-RESULT.md",
+      "title": "M1 分類結果",
+      "locator": "クラスタ表・モデル別傾向"
+    },
+    {
+      "id": "src-xb",
+      "path": "ascon-notes/league/GROK-REVIEW-XB-CORE.md",
+      "title": "Grok xb-core レビュー",
+      "locator": "Critical 1–3、Warning 4–8"
+    },
+    {
+      "id": "src-zeta",
+      "path": "ascon-notes/league/ZETA2-REGRESSION.md",
+      "title": "zeta-2 回帰診断",
+      "locator": "Finding / Final scored P"
+    },
+    {
+      "id": "src-g0",
+      "path": "ascon-notes/league/G0-VERIFICATION.md",
+      "title": "G0 実装検証",
+      "locator": "実装と反例、未検証の範囲"
+    },
+    {
+      "id": "src-upstream",
+      "path": "ascon-notes/league/UPSTREAM-EVAL.md",
+      "title": "upstream 適合記録",
+      "locator": "40 commit、331 PASS、別世界の注意"
+    },
+    {
+      "id": "src-v2",
+      "path": "ascon-notes/league/PLAN-MASA-ASCON-V2.md",
+      "title": "V2 探索設計",
+      "locator": "機構分離・モデル生成・封印"
+    },
+    {
+      "id": "src-prior",
+      "path": "ascon-notes/league/MASTER-PLAN-BEFORE-V2-INTEGRATION.md",
+      "title": "旧計画アーカイブ",
+      "locator": "履歴のみ。現行契約はMASTER revision 3"
+    },
+    {
+      "id": "src-checklist",
+      "path": "ascon-notes/submission-checklist.md",
+      "title": "提出チェックリスト",
+      "locator": "C0b / F0、既存の未完欄"
+    },
+    {
+      "id": "src-guide",
+      "path": "docs/competition-start.md",
+      "title": "ローカル競技ガイド",
+      "locator": "§1 / §10、オンライン規約は今回未確認"
+    },
+    {
+      "id": "src-scoring",
+      "path": "docs/guide/scoring.md",
+      "title": "ローカル採点仕様",
+      "locator": "P→T、baseline除外、後半加重"
+    },
+    {
+      "id": "src-rules",
+      "path": "AGENTS.md",
+      "title": "作業ルール",
+      "locator": "資金・秘密・規約・検証の制約"
+    },
+    {
+      "id": "src-handoff",
+      "path": "ascon-notes/league/DASHBOARD-README.md",
+      "title": "本人引継ぎ・移行記録",
+      "locator": "当日引継ぎと旧HTMLの転記。今回の依頼を保存"
+    }
+  ]
+}
+</script>
+<!-- END data-sources -->
+<!-- BEGIN data-status : editable facts -->
+<script type="application/json" id="data-status">
+{
+  "sources": [
+    "src-handoff",
+    "src-morning",
+    "src-master"
+  ],
+  "as_of": "2026-10-04T09:21:32+09:00",
+  "measurement_as_of": "2026-10-04T07:45:00+09:00",
+  "last_update": "既存要約を統合。本人のQ0維持決定・07:37 JST開始の訂正・Q0b後のAstra更新を反映。ライブ結果は再取得していない。",
+  "phase_id": "phase-first",
+  "headline": "現契約を維持。Q0bを待つ。",
+  "subhead": "安全な独自戦略の初回受理を確保し、深いリーグを経て、封印した最終比較へ。",
+  "q0b": {
+    "state": "running",
+    "candidate": "opus-1",
+    "started_at": "2026-10-04T07:37:00+09:00",
+    "expected_end": "2026-10-04T12:00:00+09:00",
+    "seeds": "41101–41105",
+    "worlds": 60,
+    "chunks": 3,
+    "completed_worlds": null,
+    "note": "終了時刻は見込み。時計が過ぎても自動で完了へ変えない。"
+  },
+  "metrics": [
+    {
+      "id": "metric-q0",
+      "label": "sonnet-1 Q0",
+      "value": "FAIL",
+      "note": "競争条件が不成立。旧判定を保持",
+      "tone": "bad",
+      "sources": [
+        "src-morning"
+      ]
+    },
+    {
+      "id": "metric-q0b",
+      "label": "opus-1 Q0b",
+      "value": "RUNNING",
+      "note": "新seed・全量予約、完了数は未読",
+      "tone": "warn",
+      "sources": [
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "metric-accept",
+      "label": "受理済みの独自版",
+      "value": "未確認",
+      "note": "鍵登録・ZIP送信・受理は別状態",
+      "tone": "muted",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "metric-budget",
+      "label": "累積Air消費・実測下限",
+      "value": "≥18.6 h",
+      "note": "forward枠の消費率ではない",
+      "tone": "accent",
+      "sources": [
+        "src-handoff",
+        "src-master"
+      ]
+    }
+  ],
+  "notice": "このページは証拠付きの記録。実行許可・リアルタイム監視・採用認定ではありません。Q0-AMEND-01は未署名・未適用。"
+}
+</script>
+<!-- END data-status -->
+<!-- BEGIN data-plan : editable facts -->
+<script type="application/json" id="data-plan">
+{
+  "sources": [
+    "src-master",
+    "src-guide",
+    "src-rules"
+  ],
+  "goal": "ASCONで優勝する。まず安全で受理済みの独自エージェントを確保する。",
+  "win": "エポック終了時のPを参加者間でTへ標準化し、後半ほど重く集計。対noop・最悪レジーム・混成場・改訂ONの尾部を同時に守る。",
+  "rules": [
+    "独自戦略のみ・提出は1体。参照の改名や設定移植だけへ戻さない。",
+    "公式規約が最優先、ローカルの正本はcompetition-start。今回オンラインの最新版は未確認。",
+    "decide()＋promptのkind/name/description。在庫のあるlegだけをcanFundで確認し、自己コントラクト残資産の0評価を避ける。",
+    "評価価格の歪曲・自己提出間の移転・禁止RPCを使わない。鍵は本人が専用フォームへ入力、記録には残さない。",
+    "p=3・等速・CPU排他・入力固定。既存Q0bの親roundと実行中スクリプトを保全。",
+    "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。"
+  ],
+  "protocol": [
+    {
+      "id": "protocol-first",
+      "title": "初回提出経路",
+      "body": "現Q0b → 同一hash・独自性 → mix smoke → P60 → 最小G3 / cal → G4 → dec-008 → 本人送信 → 受理",
+      "exit": "受理メール・commit・ZIP hashの組"
+    },
+    {
+      "id": "protocol-deep",
+      "title": "深いリーグ",
+      "body": "初回受理と校正の後。E1またはD/E代替 → 固定R* → 新E3 → Q1 → full G3。M2は既定省略。",
+      "exit": "最大20h・2世代。現配分14.9h、再承認ではなく解放条件を確認"
+    },
+    {
+      "id": "protocol-sealed",
+      "title": "封印した最終比較",
+      "body": "S / R*を同slotの別世界で、F_mix改善＋F_ref非劣性＋安全・尾部を確認。一度だけ開封。",
+      "exit": "10/18封印 → 10/25判定・凍結 → 10/28最終確認 → 10/29受理"
+    }
+  ],
+  "gates": [
+    {
+      "id": "gate-g0",
+      "title": "G0 / 計測",
+      "state": "部分的に確認",
+      "resolve": "begin/end・親/chunk/hash・予定集合・有限P・完全ログ・負荷がすべて一致。負荷PASSだけでは不可。",
+      "sources": [
+        "src-master",
+        "src-g0"
+      ]
+    },
+    {
+      "id": "gate-q",
+      "title": "現G2-Q / 初回資格",
+      "state": "Q0 FAIL・Q0b待ち",
+      "resolve": "F_ref全12×新5seed、平均T≥multi-arb、全regimeの平均(T−Tnoop)≥0、安全と世界別P。両候補FAILなら探索実走停止・本人が延期/新契約判断。",
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "gate-g1",
+      "title": "G1 / 探索screen",
+      "state": "未実施",
+      "resolve": "新E3で平均ΔT≥+1、最悪差≥−2、平均Δ(P−noop)≥0、安全適合。次点再選抜なし。",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "gate-g3",
+      "title": "G3 / 改訂ON",
+      "state": "未実施",
+      "resolve": "正常cycle≥3・実変更適用/復帰・遅延/無効出力/枠切れの危険取引0。fullはON/OFF平均≥−1T、最悪≥−3。最大batch時間×1.2で残工程を再予算。",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "gate-final",
+      "title": "G2-final / 採用",
+      "state": "未実施",
+      "resolve": "F_mix下限>0、J=0.5ΔT−1>0、P−noop下限≥0。F_ref下限≥−1T、P−noop平均≥0。両場最悪≥−2T・ES5差下限≥−1T、seed除去で逆転なし。差不明は適合S。",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "gate-g4",
+      "title": "G4 / 提出適合・受理",
+      "state": "未実施",
+      "resolve": "clean release、型/関連検査・strategy・P60・bundle scan・selftest・住所bytes・同一commit/ZIP・ci-local full。本人の鍵登録と受理メール。",
+      "sources": [
+        "src-master",
+        "src-checklist"
+      ]
+    }
+  ],
+  "caution": "最終は独立10seedが上限。480世界を独立480標本にしない。小差の非検出は同等性でも、本番勝率の保証でもない。"
+}
+</script>
+<!-- END data-plan -->
+<!-- BEGIN data-phases : editable facts -->
+<script type="application/json" id="data-phases">
+{
+  "sources": [
+    "src-master"
+  ],
+  "items": [
+    {
+      "id": "phase-first",
+      "title": "初回受理",
+      "start_date": "2026-10-04",
+      "end_date": "2026-10-08",
+      "state": "running",
+      "gate": "現Q → smoke / P60 / G3 / G4 / dec-008"
+    },
+    {
+      "id": "phase-deep",
+      "title": "校正・深いリーグ",
+      "start_date": "2026-10-09",
+      "end_date": "2026-10-17",
+      "state": "pending",
+      "gate": "全工程費・E3 / Q1 / full G3"
+    },
+    {
+      "id": "phase-sealed",
+      "title": "封印・最終比較",
+      "start_date": "2026-10-18",
+      "end_date": "2026-10-25",
+      "state": "pending",
+      "gate": "一回開封・二場・尾部・差不明ならS"
+    },
+    {
+      "id": "phase-release",
+      "title": "最終適合・受理",
+      "start_date": "2026-10-26",
+      "end_date": "2026-10-31",
+      "state": "pending",
+      "gate": "G4 → dec-007 → 受理済み版照合"
+    }
+  ]
+}
+</script>
+<!-- END data-phases -->
+<!-- BEGIN data-milestones : editable facts -->
+<script type="application/json" id="data-milestones">
+{
+  "sources": [
+    "src-master",
+    "src-handoff"
+  ],
+  "items": [
+    {
+      "id": "day-2026-10-04",
+      "date": "2026-10-04",
+      "title": "Q0b保全 → 完了後Astraが計画更新",
+      "dependency": "本人が現Q0契約の維持を決定。Q0bの生成表・G0・区間証跡待ち",
+      "stop": "~12時（JST）までは入力不変。G0不良/資格全滅なら停止",
+      "state": "running",
+      "highlight": true,
+      "decision_refs": [
+        "dec-q0-keep",
+        "dec-astra-update",
+        "dec-original",
+        "dec-deep",
+        "dec-no-contact",
+        "dec-forward"
+      ],
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "day-2026-10-05",
+      "date": "2026-10-05",
+      "title": "選択した資格出口・smoke/P60残chunk",
+      "dependency": "現契約のQ0b PASS。Q0mは未署名のため使わない",
+      "stop": "新F_mix全量前の合格宣言なし。失敗は§4.2",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "day-2026-10-06",
+      "date": "2026-10-06",
+      "title": "初回P60完了、G3/適合準備",
+      "dependency": "候補不変・smoke・資格証跡",
+      "stop": "修理は必要再資格、探索実走0",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-07",
+      "date": "2026-10-07",
+      "title": "最小G3/cal36・G4・dec-008",
+      "dependency": "モデル/本人鍵・正常/障害証跡",
+      "stop": "ON未校正/最新仕様未照合ならREADY不可",
+      "state": "pending",
+      "highlight": true,
+      "decision_refs": [
+        "dec-008"
+      ],
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "day-2026-10-08",
+      "date": "2026-10-08",
+      "title": "初回受理確認、条件成立時だけE1",
+      "dependency": "G4/鍵/受理/cal/全残量・固定xb begin",
+      "stop": "未受理又は改訂列の不足未解決なら探索0",
+      "state": "pending",
+      "highlight": true,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-09",
+      "date": "2026-10-09",
+      "title": "D/E/A準備、親と探索経路を固定",
+      "dependency": "排他・1.9h支援・下流費用",
+      "stop": "未受理なら原因/質問方針を本人判断",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-10",
+      "date": "2026-10-10",
+      "title": "M2既定省略、全残量を再予算",
+      "dependency": "cal完了・受理版・経路凍結",
+      "stop": "M2を足すなら全工程費と20h以内を先に確認",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-11",
+      "date": "2026-10-11",
+      "title": "新E3全12×3×2=72",
+      "dependency": "E1又は代替棚で選抜したR*不変",
+      "stop": "G1未達なら挑戦者終了、次点なし",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-12",
+      "date": "2026-10-12",
+      "title": "Q1 60、現契約F_ref・ON予算再確認",
+      "dependency": "E3・新Q1・最新規約差分",
+      "stop": "ON遅延/資格不良ならSのみへ",
+      "state": "pending",
+      "highlight": true,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-13",
+      "date": "2026-10-13",
+      "title": "Sのfull G3 ON/OFF72",
+      "dependency": "初回資格と受理版固定",
+      "stop": "S不適合なら提出経路再点検",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-14",
+      "date": "2026-10-14",
+      "title": "R* full G3 ON/OFF72（挑戦者がある時）",
+      "dependency": "Q1・実測予算",
+      "stop": "挑戦者なしなら0。未検証でHへ進めない",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-15",
+      "date": "2026-10-15",
+      "title": "3障害・復帰/履歴、遅延時残G3",
+      "dependency": "正常G3とCPU排他",
+      "stop": "危険取引/予算超過なら候補除外",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-16",
+      "date": "2026-10-16",
+      "title": "結論・人間/生成費用を整理",
+      "dependency": "全探索記録",
+      "stop": "第三世代・追加モデル生成なし",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-17",
+      "date": "2026-10-17",
+      "title": "480/240/未実施の容量判定",
+      "dependency": "G3実測・残枠・受理証跡",
+      "stop": "不足なら開始せずS維持を推奨",
+      "state": "pending",
+      "highlight": true,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-18",
+      "date": "2026-10-18",
+      "title": "場/候補/10seed/判定コード封印",
+      "dependency": "正常10seed計画・資格/G3",
+      "stop": "未達ならHを開始しない",
+      "state": "pending",
+      "highlight": true,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-19",
+      "date": "2026-10-19",
+      "title": "H開始、通常最大6h",
+      "dependency": "封印・校正後chunk上限",
+      "stop": "G0/安全/時間のみ監視",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-20",
+      "date": "2026-10-20",
+      "title": "H継続、通常最大6h",
+      "dependency": "前chunk正常・入力不変",
+      "stop": "障害で停止、性能再走禁止",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-21",
+      "date": "2026-10-21",
+      "title": "H継続、通常最大6h",
+      "dependency": "全予定の完了見通し",
+      "stop": "相手/seed/版の交換禁止",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-22",
+      "date": "2026-10-22",
+      "title": "H継続、通常最大6h",
+      "dependency": "残枠とG0",
+      "stop": "model変更は同一試験へプール不可",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-23",
+      "date": "2026-10-23",
+      "title": "H継続、通常最大6h",
+      "dependency": "予定集合を維持",
+      "stop": "欠測の黙示除外禁止",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-24",
+      "date": "2026-10-24",
+      "title": "H継続、通常最大6h",
+      "dependency": "終了検査の時間も確保",
+      "stop": "部分成績で採用禁止",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-25",
+      "date": "2026-10-25",
+      "title": "全予定Hを一回判定、性能凍結",
+      "dependency": "480又は事前指定240全件G0",
+      "stop": "差不明/未完は適合S、比較主張なし",
+      "state": "pending",
+      "highlight": true,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-26",
+      "date": "2026-10-26",
+      "title": "最終P60 60 ON",
+      "dependency": "選定版・実測時間",
+      "stop": "失格/資産喪失/受理不能以外の性能変更なし",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-27",
+      "date": "2026-10-27",
+      "title": "配置/起動順24 ON、G4",
+      "dependency": "事前固定の配置・残枠",
+      "stop": "逆転なら優位主張撤回、無検証差替えなし",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-28",
+      "date": "2026-10-28",
+      "title": "G4照合、最後にdec-007",
+      "dependency": "全技術証跡・本人確認",
+      "stop": "修正なら影響検証とF0を再実施",
+      "state": "pending",
+      "highlight": true,
+      "decision_refs": [
+        "dec-007"
+      ],
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "day-2026-10-29",
+      "date": "2026-10-29",
+      "title": "本人最終送信・受理/hash",
+      "dependency": "READYと鍵登録証跡",
+      "stop": "未受理版を最終扱いしない",
+      "state": "pending",
+      "highlight": true,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-30",
+      "date": "2026-10-30",
+      "title": "受理ZIP/鍵の確認・予備",
+      "dependency": "受理メール/commit/hash",
+      "stop": "探索再開なし",
+      "state": "pending",
+      "highlight": false,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "day-2026-10-31",
+      "date": "2026-10-31",
+      "title": "最後に受理された版の照合",
+      "dependency": "最新締切の確認",
+      "stop": "ローカル資料は23:59 JST、駆込み無検証更新なし",
+      "state": "pending",
+      "highlight": true,
+      "decision_refs": [],
+      "sources": [
+        "src-master"
+      ]
+    }
+  ]
+}
+</script>
+<!-- END data-milestones -->
+<!-- BEGIN data-progress : editable facts -->
+<script type="application/json" id="data-progress">
+{
+  "sources": [
+    "src-master"
+  ],
+  "note": "バーはこの台帳の完了項目数 / 登録項目数。工数達成率・合格率ではない。FAIL/BLOCKEDは完了色に数えない。",
+  "workstreams": [
+    "基盤",
+    "計測",
+    "初回受理",
+    "探索",
+    "最終確認",
+    "計画管理"
+  ],
+  "items": [
+    {
+      "id": "progress-ci",
+      "workstream": "基盤",
+      "title": "CI再発防止・PR #3/#4",
+      "state": "done",
+      "evidence": "ci-local / pre-push導入、merge報告。現commitのCIや提出適合とは別。",
+      "sources": [
+        "src-retro-u1",
+        "src-checklist"
+      ]
+    },
+    {
+      "id": "progress-g0",
+      "workstream": "基盤",
+      "title": "G0共通入口と反例",
+      "state": "done",
+      "evidence": "静的・fixtureの検証記録。実runnerの入口遵守は新roundで確認。",
+      "sources": [
+        "src-g0"
+      ]
+    },
+    {
+      "id": "progress-upstream",
+      "workstream": "基盤",
+      "title": "upstream取り込み・適合",
+      "state": "done",
+      "evidence": "40 commitを取り込み、指定検査331 PASS / 2 SKIP。旧新seedを混ぜない。",
+      "sources": [
+        "src-upstream"
+      ]
+    },
+    {
+      "id": "progress-u1m",
+      "workstream": "計測",
+      "title": "U1 / u1b / u1c / u1m",
+      "state": "blocked",
+      "evidence": "u1mは負荷PASS、begin欠落とtelemetryでG0 BLOCKED。診断のまま。",
+      "sources": [
+        "src-retro-u1"
+      ]
+    },
+    {
+      "id": "progress-d0",
+      "workstream": "計測",
+      "title": "F_ref 六候補 D0",
+      "state": "done",
+      "evidence": "各8世界の診断は完了。inc-zetaはG0 FAIL、順位・資格に使わない。",
+      "sources": [
+        "src-morning"
+      ]
+    },
+    {
+      "id": "progress-q0",
+      "workstream": "初回受理",
+      "title": "sonnet-1 Q0",
+      "state": "failed",
+      "evidence": "全60世界の集計完了。安全の報告は良好、平均T条件FAIL。",
+      "sources": [
+        "src-morning"
+      ]
+    },
+    {
+      "id": "progress-q0b",
+      "workstream": "初回受理",
+      "title": "opus-1 Q0b",
+      "state": "running",
+      "evidence": "07:37 JST開始・60世界・3chunk。完了数/結果は未読、~12:00 JST見込み。",
+      "sources": [
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "progress-smoke",
+      "workstream": "初回受理",
+      "title": "新F_mix smoke / P60",
+      "state": "pending",
+      "evidence": "Q0b PASS・同一候補・ロスター/hash固定が入口。",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "progress-g3",
+      "workstream": "初回受理",
+      "title": "最小G3・ON時間校正",
+      "state": "pending",
+      "evidence": "推論待ち・実変更/復帰・障害・API枠の証跡待ち。",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "progress-g4",
+      "workstream": "初回受理",
+      "title": "G4・鍵登録・受理",
+      "state": "pending",
+      "evidence": "dec-008はopen。送信と受理を分け、受理済み版をまだ指名しない。",
+      "sources": [
+        "src-handoff",
+        "src-master"
+      ]
+    },
+    {
+      "id": "progress-m1",
+      "workstream": "探索",
+      "title": "M1仕様生成・盲検分類",
+      "state": "done",
+      "evidence": "16仕様・6機構、14仕様は重複、外部の利益源0。性能は未測定。",
+      "sources": [
+        "src-m1"
+      ]
+    },
+    {
+      "id": "progress-xb",
+      "workstream": "探索",
+      "title": "xb-core / V0–V7",
+      "state": "done",
+      "evidence": "Grokの3欠陥を修正、73検査の報告。チェーン実測は0。",
+      "sources": [
+        "src-morning",
+        "src-xb"
+      ]
+    },
+    {
+      "id": "progress-factors",
+      "workstream": "探索",
+      "title": "E1 / D・E代替 / E3 / Q1",
+      "state": "pending",
+      "evidence": "初回受理とcal、全工程費の確保後。M2は既定省略。",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "progress-final",
+      "workstream": "最終確認",
+      "title": "二場H / 最終G3・G4 / 受理",
+      "state": "pending",
+      "evidence": "10/18封印・10/25凍結・10/28 dec-007。",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "progress-astra",
+      "workstream": "計画管理",
+      "title": "Q0b後のAstra計画更新",
+      "state": "pending",
+      "evidence": "本人依頼。結果・G0・予算精算を受けて更新する。",
+      "sources": [
+        "src-handoff"
+      ]
+    }
+  ]
+}
+</script>
+<!-- END data-progress -->
+<!-- BEGIN data-blockers : editable facts -->
+<script type="application/json" id="data-blockers">
+{
+  "sources": [
+    "src-master",
+    "src-grok-plan",
+    "src-retro-u1",
+    "src-morning"
+  ],
+  "method": "候補の順位・severity・likelihood・impactは資料からの定性判断（確率の実測ではない）。ownerは責任分担案、Astra更新と本人操作は依頼に基づく。",
+  "likelihood_axis": [
+    "低",
+    "中",
+    "高"
+  ],
+  "impact_axis": [
+    "中",
+    "大",
+    "致命"
+  ],
+  "items": [
+    {
+      "id": "B01",
+      "rank": 1,
+      "title": "初回候補の資格・受理が未確定",
+      "severity": "Critical",
+      "likelihood": "高",
+      "impact": "致命",
+      "owner": "human",
+      "evidence": "sonnet Q0 FAIL。Q0b未完、受理版Sは未確認。",
+      "mitigation": "Q0bを現契約で一度判定。PASSは初回経路、全滅は探索停止と延期/別契約。",
+      "status": "open",
+      "sources": [
+        "src-master",
+        "src-morning",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "B02",
+      "rank": 2,
+      "title": "Q0b後の計画更新待ち",
+      "severity": "Critical",
+      "likelihood": "高",
+      "impact": "大",
+      "owner": "Astra",
+      "evidence": "本人は現Q維持を決定し、完了後のAstra更新を希望。",
+      "mitigation": "生成表・全chunk G0・安全欄・時間区間を受領し、判定/queue/予算/ログを同期。",
+      "status": "waiting",
+      "sources": [
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "B03",
+      "rank": 3,
+      "title": "消費会計と改訂ON容量の不足",
+      "severity": "Critical",
+      "likelihood": "高",
+      "impact": "致命",
+      "owner": "Claude",
+      "evidence": "実測下限≥18.6h、非run占有と境界が未精算。ON速度は未校正。",
+      "mitigation": "区間和集合で精算、forward読みは本人確認待ち。calで再配分、必要なら封印前にS単独へ。",
+      "status": "open",
+      "sources": [
+        "src-master",
+        "src-grok-plan",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "B04",
+      "rank": 4,
+      "title": "Ollama・鍵登録・受理の依存",
+      "severity": "Critical",
+      "likelihood": "中",
+      "impact": "致命",
+      "owner": "human",
+      "evidence": "dec-008 / dec-007がopen。モデル/枠/登録/受理の完了証拠がない。",
+      "mitigation": "初回前の最小確認と本人鍵登録、最後に最終再確認。秘密値は保存しない。",
+      "status": "open",
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "B05",
+      "rank": 5,
+      "title": "G0入口・CPU排他・入力固定の逸脱",
+      "severity": "Critical",
+      "likelihood": "高",
+      "impact": "大",
+      "owner": "Claude",
+      "evidence": "u1m begin欠落。夜間キューを実行中に書換え、末尾構文エラー。",
+      "mitigation": "親/chunk manifest、固定script、排他記録、停止/再開契約。古い結果の事後認証は禁止。",
+      "status": "open",
+      "sources": [
+        "src-retro-u1",
+        "src-morning",
+        "src-master"
+      ]
+    },
+    {
+      "id": "B06",
+      "rank": 6,
+      "title": "相手の構成で順位が逆転する",
+      "severity": "Critical",
+      "likelihood": "高",
+      "impact": "大",
+      "owner": "Astra",
+      "evidence": "F_refではmulti-arb、u1mではsonnetが上。場/単位が異なる診断。",
+      "mitigation": "新F_mix roster/hashを固定。現Qは維持し、最終はF_mix改善＋F_ref非劣性。",
+      "status": "mitigating",
+      "sources": [
+        "src-grok-plan",
+        "src-morning",
+        "src-master"
+      ]
+    },
+    {
+      "id": "B07",
+      "rank": 7,
+      "title": "新F_mixの相手・負荷入口が未確定",
+      "severity": "Warning",
+      "likelihood": "高",
+      "impact": "大",
+      "owner": "Claude",
+      "evidence": "固定高入札対照の存在/適合/hash、財布順、場別G0が未確認。",
+      "mitigation": "結果前に全体登録。smokeで安全/執行を点検し、成績で相手を外さない。",
+      "status": "open",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "B08",
+      "rank": 8,
+      "title": "少数seed・選抜楽観・尾部の不確実性",
+      "severity": "Warning",
+      "likelihood": "高",
+      "impact": "大",
+      "owner": "Astra",
+      "evidence": "上位差CIは0を含む。固定相手・少数クラスタでは小差を識別しにくい。",
+      "mitigation": "E3/Q/H分離、一回開封、保守下限・切替費用・ES5。差不明なら適合S。",
+      "status": "mitigating",
+      "sources": [
+        "src-retro-u1",
+        "src-grok-plan",
+        "src-master"
+      ]
+    },
+    {
+      "id": "B09",
+      "rank": 9,
+      "title": "改訂ON・障害復帰が未検証",
+      "severity": "Critical",
+      "likelihood": "中",
+      "impact": "致命",
+      "owner": "Claude",
+      "evidence": "現行の性能資料はFROZEN。最小/full G3は未実施。",
+      "mitigation": "正常の変更適用/復帰と障害を記録、危険取引時は自由度縮小。必須改訂は止めない。",
+      "status": "open",
+      "sources": [
+        "src-master",
+        "src-retro-u1"
+      ]
+    },
+    {
+      "id": "B10",
+      "rank": 10,
+      "title": "Q0の安全証拠に未回収欄の欠落",
+      "severity": "Warning",
+      "likelihood": "中",
+      "impact": "大",
+      "owner": "Claude",
+      "evidence": "集計末尾 unrecovered/violations=n/a と安全記述が併存。",
+      "mitigation": "一次担当の生成表で未回収自前資産・gas枯渇を明示。n/aを0へ置換しない。",
+      "status": "open",
+      "sources": [
+        "src-morning",
+        "src-master"
+      ]
+    },
+    {
+      "id": "B11",
+      "rank": 11,
+      "title": "xb-core修正と利益機構の実測が未接続",
+      "severity": "Warning",
+      "likelihood": "高",
+      "impact": "中",
+      "owner": "Claude",
+      "evidence": "床・zero bid・検査の欠陥は修正報告。チェーン実測0、固定gas/base feeの制約。",
+      "mitigation": "Q0b終了後の別枠で固定hash、赤対照、因子独立性を確認。BIDは支出節約と表現。",
+      "status": "mitigating",
+      "sources": [
+        "src-xb",
+        "src-morning",
+        "src-master"
+      ]
+    },
+    {
+      "id": "B12",
+      "rank": 12,
+      "title": "独自性・zeta回帰・因果の未確定",
+      "severity": "Warning",
+      "likelihood": "中",
+      "impact": "大",
+      "owner": "Astra",
+      "evidence": "zeta-2の選択/bid不整合。CのD0回復は資格でも安全同等でもない。",
+      "mitigation": "由来と実質差を監査。D/E/Aを分離し、修正済みだけで本命を入替えない。",
+      "status": "open",
+      "sources": [
+        "src-retro-u1",
+        "src-master",
+        "src-zeta"
+      ]
+    },
+    {
+      "id": "B13",
+      "rank": 13,
+      "title": "最新仕様・release住所・ZIPの不整合",
+      "severity": "Warning",
+      "likelihood": "中",
+      "impact": "致命",
+      "owner": "Claude",
+      "evidence": "オンライン規約未確認。旧--submission記載、住所表汚染の履歴。",
+      "mitigation": "提出時に最新規約と固定upstream bytes、clean release、selftest、受理hashを照合。",
+      "status": "open",
+      "sources": [
+        "src-upstream",
+        "src-retro-u1",
+        "src-master"
+      ]
+    },
+    {
+      "id": "B14",
+      "rank": 14,
+      "title": "生成の重複が初回経路を圧迫",
+      "severity": "Warning",
+      "likelihood": "高",
+      "impact": "中",
+      "owner": "Astra",
+      "evidence": "M1の14/16が重複、新利益源0。M2の全実施は予約されていない。",
+      "mitigation": "M2既定省略、D/Eと因子は代替棚。最大2世代・下流資格費を先に予約。",
+      "status": "mitigating",
+      "sources": [
+        "src-m1",
+        "src-grok-plan",
+        "src-master"
+      ]
+    }
+  ]
+}
+</script>
+<!-- END data-blockers -->
+<!-- BEGIN data-queue : editable facts -->
+<script type="application/json" id="data-queue">
+{
+  "sources": [
+    "src-master",
+    "src-handoff"
+  ],
+  "items": [
+    {
+      "id": "queue-q0b",
+      "experiment": "q0b",
+      "priority": 1,
+      "title": "q0b",
+      "state": "実行中",
+      "worlds": 60,
+      "hours": "143/30",
+      "window": "全量予約、残時間は不明",
+      "dependency": "07:37 JST開始・41101–41105・3chunk。結果は未読。~12:00 JSTまで保全し、完了報告を待つ。",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "queue-astra-update",
+      "experiment": "astra-plan-update",
+      "priority": 2,
+      "title": "Astraによる計画更新",
+      "state": "Q0b完了待ち",
+      "worlds": 0,
+      "hours": null,
+      "window": "Q0b完了・証跡受領後",
+      "dependency": "生成表と全G0、安全・時間証拠を受領。現Q判定を保持し、queue/残予算/初回経路を更新。時間は未見積。",
+      "owner": "Astra",
+      "active": true,
+      "sources": [
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "queue-mix-design",
+      "experiment": "mix-design",
+      "priority": 3,
+      "title": "mix-design",
+      "state": "設計待ち",
+      "worlds": 0,
+      "hours": "1/2",
+      "window": "12時（JST）後の新枠",
+      "dependency": "10相手/slot/hash/財布順・smoke判定・begin仕様を固定。G0/CPU排他確認",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "queue-first-mix",
+      "experiment": "first-mix",
+      "priority": 4,
+      "title": "first-mix",
+      "state": "条件付き",
+      "worlds": 12,
+      "hours": "13/15",
+      "window": "12時（JST）後の新枠",
+      "dependency": "現Q0b PASS後の同一opus-1、独自性/ロスター/hash/入口G0が成立した場合だけ。安全点検。",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "queue-q0m",
+      "experiment": "q0m",
+      "priority": 5,
+      "title": "q0m",
+      "state": "未署名・未実施",
+      "worlds": 60,
+      "hours": "143/30",
+      "window": "改訂案のみ、日枠で分割",
+      "dependency": "Q0-AMEND-01は未署名。本人はKEEPを決定したため、現キューでは実行しない。",
+      "owner": "Claude",
+      "active": false,
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "queue-first-p60",
+      "experiment": "first-p60",
+      "priority": 6,
+      "title": "first-p60",
+      "state": "未実施",
+      "worlds": 60,
+      "hours": "13/3",
+      "window": "維持案では4を飛ばし先行",
+      "dependency": "現Q0b PASS・smoke・候補不変。公開回帰、G3/適合費を先に予約。",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "queue-first-g3",
+      "experiment": "first-g3",
+      "priority": 7,
+      "title": "first-g3",
+      "state": "未実施",
+      "worlds": 36,
+      "hours": "13/5",
+      "window": "次窓へ繰越可",
+      "dependency": "P60/smoke・本人モデル/鍵準備。ON/OFF最小校正＋正常/障害。13分見積は仮",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "queue-m1-implementation",
+      "experiment": "m1-implementation",
+      "priority": 8,
+      "title": "m1-implementation",
+      "state": "低優先・準備棚",
+      "worlds": 0,
+      "hours": "19/10",
+      "window": "初回経路を妨げない空き窓のみ",
+      "dependency": "D 0.75h→E 0.75h→A仕様/観測復元0.40h。A本実装見積0.75hは別途再配分後。CPU排他",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "queue-factor-ab",
+      "experiment": "factor-ab",
+      "priority": 9,
+      "title": "factor-ab",
+      "state": "未解放",
+      "worlds": 48,
+      "hours": "52/15",
+      "window": "24h内の確約なし",
+      "dependency": "初回受理/cal/全残量、xb一式を計測用worktreeへ移し固定commit＋begin。E1のV0–V3",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "queue-m1-pair",
+      "experiment": "m1-pair",
+      "priority": 10,
+      "title": "m1-pair",
+      "state": "代替棚",
+      "worlds": 24,
+      "hours": "39/20",
+      "window": "8への追加でなく探索経路の置換",
+      "dependency": "D/E/共通親各8世界、新診断seed34001/34002、単独因子を検証。E3/Q費も先に予約",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "queue-m2",
+      "experiment": "m2",
+      "priority": 11,
+      "title": "m2",
+      "state": "保留",
+      "worlds": 60,
+      "hours": "13/3",
+      "window": "24h内は0h",
+      "dependency": "既定2×2。未使用枠とE3/Q1が確保できた時だけ、維持案の既定は省略",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    }
+  ],
+  "note": "全量の見積・予約順。24h内の全件実行を約束しない。新しいAir占有は通常6hまで。Astra更新は未見積で、空き時間とみなさない。",
+  "day_limit_hours": 6,
+  "bundle": "維持案のdesign＋smoke＋P60は5.7h。入口検査の残0.5hも必要なら6.2hとなるため、P60の最後を次窓へ。G0不良またはQ0b FAILなら後続実走を止める。"
+}
+</script>
+<!-- END data-queue -->
+<!-- BEGIN data-budget : editable facts -->
+<script type="application/json" id="data-budget">
+{
+  "sources": [
+    "src-master",
+    "src-handoff"
+  ],
+  "total_hours": "100",
+  "interpretation": "forward-100hを使用中・本人の確認待ち",
+  "start_at": "2026-10-04T01:00:00+09:00",
+  "consumed_lower_bound_hours": "18.6",
+  "consumed_exact_hours": null,
+  "note": "累積実測は下限のみ。夜間とQ0bは推定予約で、実測消費率は不明。境界前後・非run占有・失敗時間は区間和集合で精算し、重複分を勝手に再解放しない。",
+  "columns": [
+    {
+      "id": "budget-keep",
+      "key": "keep_hours",
+      "title": "現行 KEEP",
+      "state": "適用中"
+    },
+    {
+      "id": "budget-amend",
+      "key": "amend_hours",
+      "title": "AMEND 比較案",
+      "state": "未署名・未適用"
+    }
+  ],
+  "rows": [
+    {
+      "id": "budget-historical",
+      "title": "境界前の実測下限（枠外）",
+      "keep_hours": "0",
+      "amend_hours": "0",
+      "experiments": "historical-consumption",
+      "note": "18.6h以上。履歴を消した意味ではない",
+      "accounting": "枠外の履歴",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "budget-overnight",
+      "title": "完了D0＋Q0の推定予約",
+      "keep_hours": "26/3",
+      "amend_hours": "26/3",
+      "experiments": "d0-completed; q0",
+      "note": "108世界、38–40 batches。上側8.6667hを仮計上",
+      "accounting": "完了分・時間推定",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "budget-q0b",
+      "title": "実行中opus-1全量予約",
+      "keep_hours": "143/30",
+      "amend_hours": "143/30",
+      "experiments": "q0b",
+      "note": "60世界、20–22 batches。完了扱いしない",
+      "accounting": "実行中・全量予約",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "budget-q0m",
+      "title": "署名した場合だけF_mix資格",
+      "keep_hours": "0",
+      "amend_hours": "143/30",
+      "experiments": "q0m",
+      "note": "新60世界。維持案は0、改訂案は上側を予約",
+      "accounting": "未署名",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "budget-g0-support",
+      "title": "場設計・manifest・負荷入口",
+      "keep_hours": "1",
+      "amend_hours": "1",
+      "experiments": "mix-design; g0-calibration",
+      "note": "設計0.5h＋入口/証跡0.5h、実測に置換",
+      "accounting": "将来予約",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "budget-first-next",
+      "title": "残る初回経路",
+      "keep_hours": "35/3",
+      "amend_hours": "35/3",
+      "experiments": "first-mix; first-p60; first-g3; first-g4",
+      "note": "smoke13/15＋P60 13/3＋cal13/5＋検査58/15",
+      "accounting": "将来予約",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "budget-deep",
+      "title": "探索・実装支援（上限20h内）",
+      "keep_hours": "149/10",
+      "amend_hours": "152/15",
+      "experiments": "factor-ab; m1-implementation; m1-pair; m2; e3-full; q1",
+      "note": "維持14.9h／改訂10.1333h。全研究棚の同時実施を約束しない",
+      "accounting": "将来予約",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "budget-final-g3",
+      "title": "両候補ON/OFF・障害",
+      "keep_hours": "12",
+      "amend_hours": "12",
+      "experiments": "g3-fallback; g3-challenger; g3-faults",
+      "note": "144世界10.4h＋障害1.6h、ON実測で再計算",
+      "accounting": "将来予約",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "budget-final-g2",
+      "title": "二場10seed最終確認",
+      "keep_hours": "35",
+      "amend_hours": "35",
+      "experiments": "sealed-final",
+      "note": "480世界104/3h＋1/3h。Sのみなら240世界",
+      "accounting": "将来予約",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "budget-final-g4",
+      "title": "最終P60・配置・適合",
+      "keep_hours": "9",
+      "amend_hours": "9",
+      "experiments": "final-p60; placement; release",
+      "note": "84世界91/15h＋検査44/15h、ON再校正",
+      "accounting": "将来予約",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "budget-reserve",
+      "title": "共通予備",
+      "keep_hours": "3",
+      "amend_hours": "3",
+      "experiments": "recovery",
+      "note": "既決の3hを維持。未知非run占有・失敗も記帳",
+      "accounting": "将来予約",
+      "sources": [
+        "src-master"
+      ]
+    }
+  ],
+  "on_sensitivity": {
+    "header": [
+      "ON倍率（13分比）",
+      "H480全ON",
+      "SのみH240全ON",
+      "G3二候補 / Sのみ"
+    ],
+    "rows": [
+      [
+        "1",
+        "104/3h",
+        "52/3h",
+        "10.4 / 5.2h"
+      ],
+      [
+        "1.5",
+        "52h",
+        "26h",
+        "13 / 6.5h"
+      ],
+      [
+        "2",
+        "208/3h",
+        "104/3h",
+        "15.6 / 7.8h"
+      ]
+    ]
+  },
+  "on_note": "ONが遅ければ探索を削り、封印前にS単独へ切替える。seed削減・場の除外・途中開封で帳尻を合わせない。",
+  "historic_bar_note": "履歴の下限 / forward計画と同じ時間スケール（枠外、差引き禁止）"
+}
+</script>
+<!-- END data-budget -->
+<!-- BEGIN data-results : editable facts -->
+<script type="application/json" id="data-results">
+{
+  "sources": [
+    "src-morning",
+    "src-m1",
+    "src-cards",
+    "src-u1m",
+    "src-zeta"
+  ],
+  "d0": {
+    "id": "result-d0",
+    "title": "F_ref / 六候補の診断",
+    "header": [
+      "候補",
+      "平均 P",
+      "平均 P−noop",
+      "最悪 P−noop",
+      "noop 割れ",
+      "送信",
+      "優先 0 の送信",
+      "優先手数料の中央値 (gwei)",
+      "revert",
+      "送信失敗"
+    ],
+    "rows": [
+      [
+        "inc-zeta",
+        "-4.8",
+        "78.9",
+        "-1388.2",
+        "4/8",
+        "1929",
+        "0 (0.0%)",
+        "0.566",
+        "1",
+        "4"
+      ],
+      [
+        "zeta-2",
+        "-742.1",
+        "-658.4",
+        "-1380.6",
+        "7/8",
+        "1833",
+        "618 (33.7%)",
+        "0.100",
+        "14",
+        "4"
+      ],
+      [
+        "zeta-2a",
+        "-328.3",
+        "-244.6",
+        "-1390.3",
+        "6/8",
+        "1902",
+        "0 (0.0%)",
+        "0.613",
+        "2",
+        "12"
+      ],
+      [
+        "zeta-2c",
+        "205.5",
+        "289.1",
+        "-919.4",
+        "4/8",
+        "949",
+        "0 (0.0%)",
+        "2.031",
+        "0",
+        "10"
+      ],
+      [
+        "sonnet-1",
+        "177.3",
+        "261.0",
+        "63.2",
+        "0/8",
+        "404",
+        "0 (0.0%)",
+        "0.373",
+        "0",
+        "0"
+      ],
+      [
+        "opus-1",
+        "542.7",
+        "626.4",
+        "-93.4",
+        "2/8",
+        "1705",
+        "0 (0.0%)",
+        "0.100",
+        "80",
+        "12"
+      ]
+    ],
+    "sources": [
+      "src-morning"
+    ],
+    "note": "各8世界・既見seed201/202。inc-zeta G0 FAIL、他はPASS報告。P−noopはUSDC。順位/資格には使わない。",
+    "source_table": {
+      "source": "src-morning",
+      "header_key": "候補"
+    }
+  },
+  "q0": {
+    "id": "result-q0",
+    "title": "sonnet-1 Q0 / レジーム別",
+    "header": [
+      "レジーム",
+      "世界数",
+      "平均 P",
+      "平均 P−noop",
+      "最悪 P−noop",
+      "平均(T−T_noop)",
+      "平均 T(候補)",
+      "平均 T(multi-arb)"
+    ],
+    "rows": [
+      [
+        "calm",
+        "5",
+        "382.4",
+        "109.1",
+        "17.8",
+        "6.52",
+        "44.58",
+        "53.37"
+      ],
+      [
+        "cex-drift",
+        "5",
+        "433.8",
+        "599.4",
+        "444.3",
+        "7.98",
+        "46.57",
+        "58.46"
+      ],
+      [
+        "informed-flow",
+        "5",
+        "537.5",
+        "292.0",
+        "96.5",
+        "15.03",
+        "42.73",
+        "51.12"
+      ],
+      [
+        "whale",
+        "5",
+        "1750.8",
+        "1702.5",
+        "546.9",
+        "6.67",
+        "39.32",
+        "49.79"
+      ],
+      [
+        "lending-incident",
+        "5",
+        "-91.9",
+        "590.9",
+        "433.7",
+        "18.18",
+        "46.81",
+        "62.64"
+      ],
+      [
+        "crash",
+        "5",
+        "111.3",
+        "630.0",
+        "307.0",
+        "9.27",
+        "47.42",
+        "58.28"
+      ],
+      [
+        "depeg",
+        "5",
+        "407.1",
+        "147.0",
+        "79.0",
+        "9.56",
+        "46.52",
+        "54.52"
+      ],
+      [
+        "vuln",
+        "5",
+        "75.4",
+        "191.6",
+        "48.0",
+        "10.21",
+        "40.69",
+        "57.74"
+      ],
+      [
+        "spike",
+        "5",
+        "3171.5",
+        "989.5",
+        "550.0",
+        "11.65",
+        "48.50",
+        "58.71"
+      ],
+      [
+        "depeg-persist",
+        "5",
+        "-11.9",
+        "126.3",
+        "62.4",
+        "9.58",
+        "41.50",
+        "60.72"
+      ],
+      [
+        "cdp-incident",
+        "5",
+        "-939.9",
+        "511.3",
+        "147.3",
+        "8.49",
+        "49.50",
+        "52.68"
+      ],
+      [
+        "launch",
+        "5",
+        "363.2",
+        "83.0",
+        "-105.3",
+        "3.63",
+        "40.60",
+        "59.98"
+      ]
+    ],
+    "sources": [
+      "src-morning"
+    ],
+    "note": "新seed41001–41005・60世界。各regimeの対noopは非負でも、平均Tの競争条件がFAIL。未回収欄のn/aは0にしない。",
+    "source_table": {
+      "source": "src-morning",
+      "header_key": "レジーム"
+    }
+  },
+  "m1": {
+    "id": "result-m1",
+    "title": "M1 / モデル別の機構クラスタ",
+    "header": [
+      "クラスタ",
+      "機構",
+      "仕様",
+      "作者（開封後）"
+    ],
+    "rows": [
+      [
+        "D",
+        "払える入札が競合に届かない単腿は送らない（zeta-2c と同型）",
+        "S06 S11 S13 S14 S15 S16",
+        "Astra×2・Sonnet×2・Grok×2（すべて B0）"
+      ],
+      [
+        "E",
+        "無条件の余剰 WETH 掃き出しを条件付きに置換",
+        "S07 S10",
+        "Opus×2（B0）"
+      ],
+      [
+        "A",
+        "自分の約定の事後マークアウトで閾値・サイズ・方向別エントリーを制御",
+        "S01 S02 S05",
+        "Opus×2・Sonnet×1（B1）"
+      ],
+      [
+        "B",
+        "価格経路（下落・ボラ）で在庫増を抑える／現物を減らす",
+        "S03 S04 S12",
+        "Grok×2・Sonnet×1（B1）"
+      ],
+      [
+        "F",
+        "片脚失敗の未解消在庫を残高照合で隔離",
+        "S08",
+        "Astra（B1）"
+      ],
+      [
+        "G",
+        "急落時の GMX ショート保険（初期在庫対象）",
+        "S09",
+        "Astra（B1）"
+      ]
+    ],
+    "sources": [
+      "src-m1"
+    ],
+    "note": "16仕様・6機構。14/16は重複、新しい利益源0。仕様分類の比較であり性能順位ではない。",
+    "source_table": {
+      "source": "src-m1",
+      "header_key": "クラスタ"
+    }
+  },
+  "strategies": {
+    "id": "result-strategies",
+    "title": "u1m / 11プレイヤー比較",
+    "header": [
+      "プレイヤー",
+      "作成者",
+      "戦略の核",
+      "動く閾値",
+      "サイズ",
+      "入札",
+      "専門",
+      "平均T",
+      "最悪レジームT"
+    ],
+    "rows": [
+      [
+        "venue-arb",
+        "参照",
+        "最乖離の池へ単発で回帰（手数料を引かない）。WETH のみ",
+        "乖離 10bps",
+        "保有の 2.5〜25%",
+        "固定",
+        "なし",
+        "54.48",
+        "47.15 lending"
+      ],
+      [
+        "opus-1",
+        "Opus 5",
+        "手持ち在庫を基準点へ戻す。エッジがある時だけ動く",
+        "グロス 35bps（影響控除後も）",
+        "5,000 USDC×clamp(edge/70,0.5,3)・深さの 0.15% 等",
+        "競合×1.2+1・利益の 12% まで",
+        "7（裁定・在庫統制・eUSD 償還・清算・ステーブル・launch・wrap）",
+        "54.33",
+        "45.15 whale"
+      ],
+      [
+        "sonnet-1",
+        "Sonnet 5.5",
+        "公正価格ギャップ。最悪エポックを避ける防御設計",
+        "手数料込み 60bps",
+        "深さの 50%・資産の 8%・在庫帯 ±20%",
+        "利益の 10% を上乗せ",
+        "なし",
+        "53.92",
+        "48.96 whale"
+      ],
+      [
+        "inc-zeta",
+        "Claude+Codex",
+        "multi-arb 派生に Liquity・launch を前段で被せる",
+        "手数料+50bps",
+        "残高の 2.5〜25%",
+        "競合+0.1gwei・利益の 30% まで",
+        "あり",
+        "53.70",
+        "45.03 calm"
+      ],
+      [
+        "grok-1",
+        "Grok",
+        "基礎在庫は売買せず増えた分だけ GMX ショートでヘッジ",
+        "50bps（実行価格）",
+        "残高の 2.5〜25%・basis は別式",
+        "edge 80bps 超で競合×1.1",
+        "GMX・償還・LST",
+        "53.52",
+        "47.25 crash"
+      ],
+      [
+        "clean-arb",
+        "参照",
+        "multi-arb の 2 レッグだけ",
+        "手数料+60bps",
+        "残高の 2.5〜25%",
+        "固定",
+        "なし",
+        "51.51",
+        "42.37 crash"
+      ],
+      [
+        "astra-1",
+        "Astra",
+        "在庫を保ち単脚で回帰。特殊レジームは捨てた",
+        "18bps＋変動項（最大 60bps の在庫罰）",
+        "min(cap, edge×深さ/影響係数)",
+        "競合が強い時だけ +1",
+        "なし",
+        "51.23",
+        "43.67 crash"
+      ],
+      [
+        "astra-2",
+        "Astra",
+        "2 レッグ裁定＋専門 4 系統（清算・償還・DAI・launch）",
+        "145bps（2 レッグ）",
+        "min(1500, 現金 9%)",
+        "固定",
+        "強い",
+        "51.14",
+        "43.04 crash"
+      ],
+      [
+        "sonnet-2",
+        "Sonnet 5.5",
+        "multi-arb と同じ入口＋期待利益から入札額を決める層",
+        "手数料+50bps",
+        "残高の 2.5〜25%（深さを見ない）",
+        "利益の 20%（1 エポック 50 USDC まで）",
+        "なし",
+        "46.30",
+        "39.67 depeg"
+      ],
+      [
+        "zeta-2",
+        "Claude+Codex",
+        "inc-zeta にレビュー修正",
+        "同左",
+        "同左",
+        "保守化で 40.81% が 0",
+        "同左",
+        "40.42",
+        "29.17 cdp"
+      ],
+      [
+        "multi-arb",
+        "参照",
+        "2 レッグ優先・無ければ単発（手数料で損しやすい）",
+        "手数料+50bps",
+        "残高の 2.5〜25%",
+        "固定",
+        "なし",
+        "39.45",
+        "29.82 depeg-persist"
+      ]
+    ],
+    "sources": [
+      "src-cards"
+    ],
+    "note": "全員に公正価格ギャップ裁定の核。閾値・サイズ・入札・専門機構を比較。G0 BLOCKED・3seedの診断、因果ではない。",
+    "source_table": {
+      "source": "src-cards",
+      "header_key": "プレイヤー"
+    }
+  },
+  "ranking": {
+    "id": "result-ranking",
+    "title": "u1m / 平均Tと条件付き区間",
+    "header": [
+      "プレイヤー",
+      "平均 T",
+      "最悪レジーム T",
+      "レジーム別平均 T",
+      "対数",
+      "基準との差 T [区間]"
+    ],
+    "rows": [
+      [
+        "astra-1",
+        "51.23",
+        "43.67",
+        "calm 55.87, cdp-incident 47.06, cex-drift 48.98, crash 43.67, depeg 56.33, depeg-persist 55.27, informed-flow 53.39, launch 51.67, lending-incident 52.10, spike 50.73, vuln 55.23, whale 44.43",
+        "36",
+        "-2.47 [95% CI: -6.34 – 1.47]"
+      ],
+      [
+        "astra-2",
+        "51.14",
+        "43.04",
+        "calm 55.40, cdp-incident 48.63, cex-drift 49.20, crash 43.04, depeg 56.19, depeg-persist 54.80, informed-flow 51.47, launch 51.68, lending-incident 51.86, spike 51.22, vuln 54.12, whale 46.04",
+        "36",
+        "-2.57 [95% CI: -6.51 – 1.49]"
+      ],
+      [
+        "clean-arb",
+        "51.51",
+        "42.37",
+        "calm 55.05, cdp-incident 46.79, cex-drift 47.63, crash 42.37, depeg 55.09, depeg-persist 53.82, informed-flow 50.96, launch 51.77, lending-incident 49.73, spike 48.61, vuln 54.38, whale 61.89",
+        "36",
+        "-2.20 [95% CI: -5.94 – 1.51]"
+      ],
+      [
+        "grok-1",
+        "53.52",
+        "47.25",
+        "calm 55.49, cdp-incident 48.12, cex-drift 50.51, crash 47.25, depeg 58.22, depeg-persist 56.08, informed-flow 55.31, launch 51.98, lending-incident 55.46, spike 57.09, vuln 57.38, whale 49.36",
+        "36",
+        "-0.18 [95% CI: -4.27 – 3.92]"
+      ],
+      [
+        "inc-zeta",
+        "53.70",
+        "45.03",
+        "calm 45.03, cdp-incident 55.64, cex-drift 52.25, crash 58.82, depeg 50.86, depeg-persist 59.86, informed-flow 64.26, launch 46.12, lending-incident 51.10, spike 50.30, vuln 60.73, whale 49.45",
+        "36",
+        "0.00 [縮退（再標本分散なし）: 0.00 – 0.00]"
+      ],
+      [
+        "multi-arb",
+        "39.45",
+        "29.82",
+        "calm 43.48, cdp-incident 51.30, cex-drift 39.14, crash 48.40, depeg 32.07, depeg-persist 29.82, informed-flow 38.02, launch 33.49, lending-incident 32.44, spike 36.40, vuln 31.06, whale 57.75",
+        "36",
+        "-14.25 [95% CI: -18.97 – -9.40]"
+      ],
+      [
+        "opus-1",
+        "54.33",
+        "45.15",
+        "calm 53.95, cdp-incident 62.34, cex-drift 50.55, crash 47.75, depeg 59.60, depeg-persist 56.07, informed-flow 53.04, launch 62.23, lending-incident 51.47, spike 54.01, vuln 55.76, whale 45.15",
+        "36",
+        "0.63 [95% CI: -2.95 – 4.20]"
+      ],
+      [
+        "sonnet-1",
+        "53.92",
+        "48.96",
+        "calm 56.08, cdp-incident 53.66, cex-drift 50.78, crash 51.89, depeg 54.29, depeg-persist 53.94, informed-flow 55.13, launch 49.43, lending-incident 59.51, spike 58.49, vuln 54.94, whale 48.96",
+        "36",
+        "0.22 [95% CI: -3.72 – 4.26]"
+      ],
+      [
+        "sonnet-2",
+        "46.30",
+        "39.67",
+        "calm 44.90, cdp-incident 55.74, cex-drift 46.49, crash 49.54, depeg 39.67, depeg-persist 43.51, informed-flow 43.17, launch 41.50, lending-incident 50.61, spike 43.67, vuln 45.30, whale 51.51",
+        "36",
+        "-7.40 [95% CI: -11.81 – -3.14]"
+      ],
+      [
+        "venue-arb",
+        "54.48",
+        "47.15",
+        "calm 55.56, cdp-incident 51.56, cex-drift 73.70, crash 57.24, depeg 52.48, depeg-persist 51.21, informed-flow 51.38, launch 53.12, lending-incident 47.15, spike 61.14, vuln 49.46, whale 49.79",
+        "36",
+        "0.78 [95% CI: -2.49 – 4.12]"
+      ],
+      [
+        "zeta-2",
+        "40.42",
+        "29.17",
+        "calm 29.20, cdp-incident 29.17, cex-drift 40.76, crash 60.03, depeg 35.19, depeg-persist 35.61, informed-flow 33.87, launch 57.01, lending-incident 48.57, spike 38.33, vuln 31.64, whale 45.66",
+        "36",
+        "-13.28 [95% CI: -17.81 – -8.80]"
+      ]
+    ],
+    "sources": [
+      "src-u1m"
+    ],
+    "note": "上位の対inc-zeta区間は0を含む。生成プレイヤー内の順位確率を本番勝率へ転用しない。",
+    "source_table": {
+      "source": "src-u1m",
+      "header_key": "プレイヤー"
+    }
+  },
+  "zeta": {
+    "id": "result-zeta",
+    "title": "zeta-2 / 同じ設定でも約定が変わる",
+    "header": [
+      "Scenario",
+      "zeta-2",
+      "inc-zeta",
+      "noop",
+      "zeta − incumbent"
+    ],
+    "rows": [
+      [
+        "calm/201",
+        "-1118.67",
+        "-180.99",
+        "-53.89",
+        "-937.68"
+      ],
+      [
+        "calm/202",
+        "-328.08",
+        "-372.13",
+        "443.66",
+        "+44.05"
+      ],
+      [
+        "cdp-incident/201",
+        "-3325.99",
+        "173.67",
+        "351.55",
+        "-3499.65"
+      ],
+      [
+        "informed-flow/201",
+        "-1447.63",
+        "893.03",
+        "-508.55",
+        "-2340.66"
+      ],
+      [
+        "vuln/203",
+        "-1001.80",
+        "401.10",
+        "91.83",
+        "-1402.90"
+      ]
+    ],
+    "sources": [
+      "src-zeta"
+    ],
+    "note": "選択と保守化bid予算の不整合が有力仮説。CはD0で改善、Aは戻らず。寄与率と安全同等性は未確定。",
+    "source_table": {
+      "source": "src-zeta",
+      "header_key": "Scenario | zeta-2"
+    }
+  },
+  "fields": {
+    "id": "result-fields",
+    "title": "場で強さの順序が逆転する",
+    "sources": [
+      "src-morning"
+    ],
+    "note": "左はF_refの8regime×5seed・平均P（USDC）、右はu1m混成場・平均T（G0 BLOCKED）。単位と母集団が異なるため数値差を横断比較しない。",
+    "rows": [
+      [
+        "F_ref",
+        "mean P",
+        "sonnet-1",
+        "450.8"
+      ],
+      [
+        "F_ref",
+        "mean P",
+        "multi-arb",
+        "1,296.9"
+      ],
+      [
+        "u1m",
+        "mean T",
+        "sonnet-1",
+        "53.92"
+      ],
+      [
+        "u1m",
+        "mean T",
+        "multi-arb",
+        "39.45"
+      ]
+    ]
+  },
+  "q0_summary": {
+    "sources": [
+      "src-morning"
+    ],
+    "candidate_t": "44.56",
+    "multi_t": "56.50",
+    "noop_below": "2/60",
+    "min_regime_dt": "3.63",
+    "submit_failed": 35,
+    "mined_reverts": 0,
+    "safety": "違反/failedReads/未記録取引/無効注文は0の報告。未回収欄は証拠待ち。"
+  },
+  "model_order": [
+    "Astra",
+    "Sonnet",
+    "Opus",
+    "Grok"
+  ],
+  "research": [
+    {
+      "id": "research-xb",
+      "title": "xb-core / V0–V7",
+      "text": "共通核と因子は実装済み。Grok指摘の利益床・zero bid・検査の欠陥を修正、73検査の報告。実走0。",
+      "sources": [
+        "src-morning",
+        "src-xb"
+      ]
+    },
+    {
+      "id": "research-bid",
+      "title": "BIDの解釈を訂正",
+      "text": "V0–V3はA×BID。BIDは予算いっぱい対競合の少し上で止める支出節約で、競争を強める因子ではない。floorは追加10%枠の外。",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "research-dea",
+      "title": "次の機構はD / E / A",
+      "text": "D=払えない競合bidの単脚を見送る、E=無条件掃き出しの置換、A=事後markout。D/E各0.75h、A仕様0.40h。因子棚と単純加算しない。",
+      "sources": [
+        "src-master",
+        "src-m1"
+      ]
+    }
+  ],
+  "archive": [
+    {
+      "id": "archive-ci",
+      "title": "CI失敗 → 再発防止",
+      "text": "4回の失敗を受け、clean export・env分離・13GB条件・pre-pushを導入。当時のquick 326件/約20秒、full 1665 PASS / 0 FAIL / 9 SKIP。6条件はBLOCKED、赤→緑の報告。現commitは未再検査。",
+      "sources": [
+        "src-checklist",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "archive-load",
+      "title": "U1 → u1b / u1c → u1m",
+      "text": "p5は21 FAIL / 1 BLOCKED / 14 PASS。p3再測定は中断・残分から合成。u1m負荷36/36、p99最大233msでもbeginとtelemetryによりG0 BLOCKED。",
+      "sources": [
+        "src-retro-u1",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "archive-baseline",
+      "title": "旧世界からの持越しを止める",
+      "text": "inc-zetaはR1 59.68T、u1m 53.70T。upstream・seed stream・相手が変わり、差を改良効果とは呼べない。",
+      "sources": [
+        "src-retro-u1",
+        "src-retro-r1"
+      ]
+    }
+  ]
+}
+</script>
+<!-- END data-results -->
+<!-- BEGIN data-decisions : editable facts -->
+<script type="application/json" id="data-decisions">
+{
+  "sources": [
+    "src-master",
+    "src-handoff"
+  ],
+  "date_note": "日付は本人判断日、原時刻/日付が不明な既存判断は資料記録日として本文に明記。openは実行未完で、方針の再承認待ちとは限らない。",
+  "items": [
+    {
+      "id": "dec-original",
+      "date": "2026-10-03",
+      "due_date": null,
+      "title": "独自戦略のみ・提出は1体",
+      "status": "decided",
+      "note": "参照の改名や設定移植だけの提出へ戻さない。",
+      "sources": [
+        "src-prior",
+        "src-master"
+      ]
+    },
+    {
+      "id": "dec-deep",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "深いリーグ最大20h・2世代、予備15→3h",
+      "status": "decided",
+      "note": "既決の承認上限。実解放は現残枠と初回/cal条件による。原判断時刻は資料未記載。",
+      "sources": [
+        "src-master"
+      ]
+    },
+    {
+      "id": "dec-no-contact",
+      "date": "2026-10-03",
+      "due_date": "2026-10-09",
+      "title": "運営への質問は当面しない",
+      "status": "decided",
+      "note": "10/8未受理なら、翌日に本人が方針を再判断。",
+      "sources": [
+        "src-prior",
+        "src-master"
+      ]
+    },
+    {
+      "id": "dec-008",
+      "date": "2026-10-03",
+      "due_date": "2026-10-07",
+      "title": "初回前Ollama最小確認＋本人鍵登録",
+      "status": "open",
+      "note": "方針は決定済み、実行完了はopen。本人が専用フォームに鍵を貼り付ける。",
+      "sources": [
+        "src-prior",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "dec-007",
+      "date": "2026-10-03",
+      "due_date": "2026-10-28",
+      "title": "最後にOllama・ZIP・枠・鍵を再確認",
+      "status": "open",
+      "note": "初回確認では代替しない。最終G4の後、送信前に本人が確認。原決定日は未記録、日付は資料記録日。",
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "dec-q0-keep",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "現Q0契約を維持しQ0bを待つ",
+      "status": "decided",
+      "note": "今朝の本人決定。sonnet FAILを保存、Q0-AMEND-01は未署名。",
+      "sources": [
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "dec-astra-update",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "Q0b完了後にAstraが計画更新",
+      "status": "open",
+      "note": "本人依頼済み。結果・G0・予算区間の生成表受領が開始条件。",
+      "sources": [
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "dec-forward",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "forward-100hの解釈",
+      "status": "confirmation-pending",
+      "note": "運用は10/4以降の100h。本人の明示確認待ち、確定済みと書かない。18.6h下限の履歴は残す。",
+      "sources": [
+        "src-handoff",
+        "src-master"
+      ]
+    },
+    {
+      "id": "dec-amend",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "Q0-AMEND-01 / F_mix競争条件",
+      "status": "unsigned",
+      "note": "未署名・未適用。KEEPの現契約を変えない。結果閲覧後に同草案を事前登録扱いにしない。",
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ]
+    },
+    {
+      "id": "dec-overnight",
+      "date": "2026-10-04",
+      "due_date": null,
+      "title": "過去の夜間自律枠",
+      "status": "closed",
+      "note": "約8hの過去の許可。M1/Q0が進んだ事実を遡及承認や追加許可へ変えない。",
+      "sources": [
+        "src-master"
+      ]
+    }
+  ]
+}
+</script>
+<!-- END data-decisions -->
+<!-- BEGIN data-log : editable facts -->
+<script type="application/json" id="data-log">
+{
+  "sources": [
+    "src-handoff"
+  ],
+  "allowed_types": [
+    "実測",
+    "決定",
+    "実装",
+    "レビュー",
+    "計画変更",
+    "誤り"
+  ],
+  "note": "追記専用・記録時刻の降順。同時刻は許可。正確な出来事時刻がない履歴は移行時刻で追記し、対象日と時刻根拠を併記。既存entryは訂正せず[誤り]を追加。",
+  "items": [
+    {
+      "id": "log-046",
+      "timestamp": "2026-10-04T09:21:32+09:00",
+      "type": "誤り",
+      "summary": "時刻表記の誤り: Macのタイムゾーンは Asia/Kuala_Lumpur（UTC+8）でJSTより1時間遅い。Claudeの報告・MORNING・MASTERの一部の「JST」表記は現地時刻だった。ダッシュボードは+1hでJSTへ換算（commit時刻はgitのオフセットから正確に換算済み）。今後はJST(+09:00)で表記し、原資料には注記。",
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ],
+      "time_basis": "記録時点の実時刻（JST）",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-045",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "実装",
+      "summary": "要約HTMLを単一のJSON駆動ダッシュボードに統合。旧HTMLを退役し、更新手順と静的checkerを追加。",
+      "sources": [
+        "src-handoff"
+      ],
+      "time_basis": "移行を記録した時刻",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-044",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "誤り",
+      "summary": "18.6hの実測下限、完了分の推定、Q0b全量予約を分離。予算100hの一致を実消費内や追加許可の証明としない。",
+      "sources": [
+        "src-master",
+        "src-handoff"
+      ],
+      "time_basis": "会計表示の訂正を記録した時刻",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-043",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "誤り",
+      "summary": "MORNING/MASTERのQ0b開始07:41 JST（原資料の06:41はMac現地時刻UTC+8）に対し、今回の本人引継ぎ07:37 JST（同06:37）を現行値に採用。原資料は改変しない。",
+      "sources": [
+        "src-handoff",
+        "src-morning",
+        "src-master"
+      ],
+      "time_basis": "訂正を記録した時刻",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-042",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "決定",
+      "summary": "Q0b完了後にAstraが計画を更新する。dec-007/008は実行open、forward読みは本人確認待ち。",
+      "sources": [
+        "src-handoff"
+      ],
+      "time_basis": "移行記録時刻、依頼は10/4朝（分単位未記録）",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-041",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "決定",
+      "summary": "今朝の本人決定：現Q0契約を維持してQ0bを待つ。F_mix改訂Q0-AMEND-01は未署名。",
+      "sources": [
+        "src-handoff"
+      ],
+      "time_basis": "移行記録時刻、判断は10/4朝（分単位未記録）",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-040",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "誤り",
+      "summary": "run_dir空でもexit0、空集計/偽PASS/静的だけのREADYを成果と見なした穴をG0と成果物契約で修正。",
+      "sources": [
+        "src-retro-r1",
+        "src-g0"
+      ],
+      "time_basis": "移行記録時刻。出来事は対象日、正確な時刻は原資料未記録",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-039",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "誤り",
+      "summary": "8体calmのp5成功を重い12体へ一般化しない。並列度・他作業・regimeの因果比率は未識別。",
+      "sources": [
+        "src-retro-u1"
+      ],
+      "time_basis": "移行記録時刻。出来事は対象日、正確な時刻は原資料未記録",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-038",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "決定",
+      "summary": "本人が独自戦略のみ、dec-008で初回前鍵登録、dec-007で最終再確認、当面運営質問なしを決定。",
+      "sources": [
+        "src-prior"
+      ],
+      "time_basis": "移行記録時刻。出来事は対象日、正確な時刻は原資料未記録",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-037",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "実測",
+      "summary": "u1mの負荷は36/36・362loops・最大233ms、begin欠落/telemetryで全体G0 BLOCKED。",
+      "sources": [
+        "src-retro-u1"
+      ],
+      "time_basis": "移行記録時刻。出来事は対象日、正確な時刻は原資料未記録",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-036",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "誤り",
+      "summary": "u1bは背景2h制限で中断。u1c残分とu1mへ合成。復元を正規完走の証跡とみなさない。",
+      "sources": [
+        "src-retro-u1"
+      ],
+      "time_basis": "移行記録時刻。出来事は対象日、正確な時刻は原資料未記録",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-035",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "実測",
+      "summary": "U1 p=5は21 FAIL / 1 BLOCKED / 14 PASS、p99 1.1–2.7秒。性能選抜には使わない。",
+      "sources": [
+        "src-retro-u1",
+        "src-handoff"
+      ],
+      "time_basis": "移行記録時刻。出来事は対象日、正確な時刻は原資料未記録",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-034",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "実装",
+      "summary": "PR #4もmerge済みとの引継ぎ。hosted CIは今回再取得していない。",
+      "sources": [
+        "src-retro-u1"
+      ],
+      "time_basis": "移行記録時刻。出来事は対象日、正確な時刻は原資料未記録",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-033",
+      "timestamp": "2026-10-04T09:15:12+09:00",
+      "type": "実測",
+      "summary": "CI失敗4回：commit漏れ・CI空き13GB・旧テスト回帰・全体検査の並行実行。",
+      "sources": [
+        "src-checklist",
+        "src-handoff"
+      ],
+      "time_basis": "移行記録時刻。出来事は対象日、正確な時刻は原資料未記録",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-032",
+      "timestamp": "2026-10-04T08:45:17+09:00",
+      "type": "誤り",
+      "summary": "旧「M1未実施/Q0未着手/2c running」を更新。BIDを競争強化とした解釈を支出節約へ訂正。",
+      "sources": [
+        "src-master"
+      ],
+      "time_basis": "資料を収録したcommit時刻",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-031",
+      "timestamp": "2026-10-04T08:45:17+09:00",
+      "type": "計画変更",
+      "summary": "MASTER revision 3へ：Q0 FAIL固定、Q0b保全、F_mix別契約は未署名、夜間/Q0bを100hに再配分（f63c3cb）。",
+      "sources": [
+        "src-master"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-030",
+      "timestamp": "2026-10-04T07:45:00+09:00",
+      "type": "誤り",
+      "summary": "実行中の夜間queueを書換え、queue 3末尾で構文エラー。測定G0 PASSと運用遵守は別。",
+      "sources": [
+        "src-morning"
+      ],
+      "time_basis": "朝引継ぎの記録時刻、発生の正確な時刻は未記録",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-029",
+      "timestamp": "2026-10-04T07:45:00+09:00",
+      "type": "実測",
+      "summary": "場による逆転：F_refはmulti-arb、u1mはsonnetが上。PとT、場の差を区別して保存。",
+      "sources": [
+        "src-morning"
+      ],
+      "time_basis": "朝引継ぎの記録時刻",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-028",
+      "timestamp": "2026-10-04T07:45:00+09:00",
+      "type": "実測",
+      "summary": "sonnet Q0全60世界・G0全chunk PASS報告。平均T 44.56対56.50で現契約FAIL、noop割れ2/60。",
+      "sources": [
+        "src-morning"
+      ],
+      "time_basis": "朝引継ぎの集計追記時刻（計測終了時刻ではない）",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-027",
+      "timestamp": "2026-10-04T07:37:00+09:00",
+      "type": "実測",
+      "summary": "opus-1 Q0b開始：41101–41105、60世界、3chunk。~12:00 JST見込み、現時点RUNNING。",
+      "sources": [
+        "src-handoff"
+      ],
+      "time_basis": "本人からの開始時刻",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-026",
+      "timestamp": "2026-10-04T03:15:00+09:00",
+      "type": "実測",
+      "summary": "夜間F_ref D0を朝記録へ：zeta-2の劣化を隔離場でも確認、Cは改善、Aだけでは回復せず。",
+      "sources": [
+        "src-morning"
+      ],
+      "time_basis": "朝記録の作成時刻。個別run時刻は未取得",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-025",
+      "timestamp": "2026-10-04T01:10:20+09:00",
+      "type": "実測",
+      "summary": "M1の16仕様を盲検分類：6機構・14/16重複・別の利益源0。仕様の分類で性能実測ではない（a798a5d）。",
+      "sources": [
+        "src-m1"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-024",
+      "timestamp": "2026-10-04T00:59:34+09:00",
+      "type": "実装",
+      "summary": "xb-coreの3欠陥を修正し赤対照を追加（771055d）。73検査・型OKの報告、チェーン実走は未実施。",
+      "sources": [
+        "src-morning",
+        "src-xb"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-023",
+      "timestamp": "2026-10-04T00:59:34+09:00",
+      "type": "レビュー",
+      "summary": "Grok xb-coreレビュー：利益床が20bps帯を殺す、zero bid送信、検査が検知しない。",
+      "sources": [
+        "src-xb"
+      ],
+      "time_basis": "修正を収録したcommit時刻（レビュー自体の正確な時刻は未記録）",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-022",
+      "timestamp": "2026-10-04T00:52:07+09:00",
+      "type": "計画変更",
+      "summary": "MASTER revision 2で深いリーグ・予算・封印経路を統合。最大20hの再承認扱いはしない。",
+      "sources": [
+        "src-master",
+        "src-v2"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-021",
+      "timestamp": "2026-10-04T00:52:07+09:00",
+      "type": "レビュー",
+      "summary": "Grok計画レビュー18件を記録：場の非移転、検出力、消費時間、初回受理、ON容量（4d333b5）。",
+      "sources": [
+        "src-grok-plan"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-04"
+    },
+    {
+      "id": "log-020",
+      "timestamp": "2026-10-03T23:45:39+09:00",
+      "type": "誤り",
+      "summary": "25人の内訳を27とした記述を訂正。人数現況は未検証。改訂約360回も実測消費ではない。",
+      "sources": [
+        "src-retro-u1"
+      ],
+      "time_basis": "資料を収録したcommit時刻",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-019",
+      "timestamp": "2026-10-03T23:45:39+09:00",
+      "type": "誤り",
+      "summary": "upstreamは13でなく40 commit。旧新paired比較・母集団を跨ぐT差の因果解釈を撤回。",
+      "sources": [
+        "src-upstream",
+        "src-retro-u1"
+      ],
+      "time_basis": "資料を収録したcommit時刻",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-018",
+      "timestamp": "2026-10-03T23:45:39+09:00",
+      "type": "レビュー",
+      "summary": "Astra U1振り返り・V2・11戦略カードを記録（34c45ff）。zeta固定のfallbackを撤回。",
+      "sources": [
+        "src-retro-u1",
+        "src-v2",
+        "src-cards"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-016",
+      "timestamp": "2026-10-03T23:26:56+09:00",
+      "type": "実装",
+      "summary": "manifestはupstream参照のみprompt欠如を許容、独自候補は必須を維持（cf92a06）。",
+      "sources": [
+        "src-master",
+        "src-g0"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-017",
+      "timestamp": "2026-10-03T23:26:08+09:00",
+      "type": "計画変更",
+      "summary": "F_ref診断の夜間queueを設定（d174863）。回帰診断から初回候補sonnet/opusの資格確認へ進んだ履歴を保存。",
+      "sources": [
+        "src-prior",
+        "src-morning"
+      ],
+      "time_basis": "rosterを収録したcommit時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-015",
+      "timestamp": "2026-10-03T23:25:20+09:00",
+      "type": "レビュー",
+      "summary": "zeta-2回帰を診断：選択とbid利益の不整合が有力。A/C変種とu1mレポートを記録（abcdb29）。",
+      "sources": [
+        "src-zeta",
+        "src-u1m"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-014",
+      "timestamp": "2026-10-03T20:32:14+09:00",
+      "type": "実装",
+      "summary": "origin/mainを評価branchへ統合（3d86a35）。後続u1m診断の基準。",
+      "sources": [
+        "src-retro-u1",
+        "src-upstream"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-013",
+      "timestamp": "2026-10-03T20:03:14+09:00",
+      "type": "実装",
+      "summary": "PR #3をmerge（56fa81f）。mergeと戦略選抜・受理を別状態にする。",
+      "sources": [
+        "src-retro-u1"
+      ],
+      "time_basis": "git merge commit記録時刻",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-012",
+      "timestamp": "2026-10-03T19:21:57+09:00",
+      "type": "実装",
+      "summary": "release/verifyで実行済み検査・依存scan・public-60証跡を要求（a25d840）。",
+      "sources": [
+        "src-g0",
+        "src-checklist"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-011",
+      "timestamp": "2026-10-03T18:30:28+09:00",
+      "type": "実装",
+      "summary": "upstream launch trap-pool filterへ適合（7d3855a）。指定検査331 PASS / 2 SKIP、T/Pは別検証。",
+      "sources": [
+        "src-upstream"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-010",
+      "timestamp": "2026-10-03T18:19:06+09:00",
+      "type": "実装",
+      "summary": "G0単一入口・故障反例・ci-local・pre-pushを導入（f70f1db）。",
+      "sources": [
+        "src-g0",
+        "src-checklist"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-009",
+      "timestamp": "2026-10-03T18:02:08+09:00",
+      "type": "実装",
+      "summary": "CIのmodule相対import・load-probe dry-run・古い期待値を修正（dc3ac5a）。",
+      "sources": [
+        "src-retro-u1",
+        "src-checklist"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-008",
+      "timestamp": "2026-10-03T17:59:17+09:00",
+      "type": "実装",
+      "summary": "upstream 879c428を40 commit取り込み（18cbeb9）。採点・stream・launchの変更を別世界として扱う。",
+      "sources": [
+        "src-upstream"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-006",
+      "timestamp": "2026-10-03T17:45:00+09:00",
+      "type": "誤り",
+      "summary": "R1「全362loops」を訂正：launch/201は361。手数料相関を因果と読まない。",
+      "sources": [
+        "src-retro-r1"
+      ],
+      "time_basis": "資料記録時刻",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-005",
+      "timestamp": "2026-10-03T17:45:00+09:00",
+      "type": "レビュー",
+      "summary": "Astra R1振り返り：負荷・G0・初回受理を優先する案を記録。",
+      "sources": [
+        "src-prior",
+        "src-retro-r1"
+      ],
+      "time_basis": "資料記録時刻",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-004",
+      "timestamp": "2026-10-03T17:45:00+09:00",
+      "type": "実測",
+      "summary": "R1完了記録：inc-zetaは総合首位でもnoop未満の局面あり。新しい世界へ成績を流用しない。",
+      "sources": [
+        "src-prior",
+        "src-retro-r1"
+      ],
+      "time_basis": "旧計画の資料記録時刻",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-007",
+      "timestamp": "2026-10-03T17:37:32+09:00",
+      "type": "実装",
+      "summary": "zeta-2とR1台帳・独立振り返りを記録（d7826f7）。修正済みを性能保証としない。",
+      "sources": [
+        "src-prior",
+        "src-retro-r1"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-003",
+      "timestamp": "2026-10-03T16:06:41+09:00",
+      "type": "実装",
+      "summary": "レポート・hash台帳・次世代brief・候補確認のharnessを追加（d610a2d）。偽成功を反例で防ぐ。",
+      "sources": [
+        "src-retro-r1",
+        "src-g0"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-002",
+      "timestamp": "2026-10-03T14:46:22+09:00",
+      "type": "実装",
+      "summary": "初期プレイヤーとツールレビュー修正を記録（0fceb8d）。練習環境へ禁止RPCを送るprobeを削除。",
+      "sources": [
+        "src-retro-r1"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    },
+    {
+      "id": "log-001",
+      "timestamp": "2026-10-03T13:51:09+09:00",
+      "type": "実装",
+      "summary": "リーグ基盤・brief・フィールド観測を記録（edba000）。探索結果と本番の優位性を分ける。",
+      "sources": [
+        "src-prior",
+        "src-retro-r1"
+      ],
+      "time_basis": "commit記録時刻（JSTへ変換）",
+      "event_date": "2026-10-03"
+    }
+  ]
+}
+</script>
+<!-- END data-log -->
+<style>
+@font-face{font-family:"IBM Plex Sans";src:local("IBM Plex Sans");font-display:swap}
+@font-face{font-family:"IBM Plex Mono";src:local("IBM Plex Mono");font-display:swap}
+:root{color-scheme:light;--accent:#0d73bd;--accent-tint:#edf5fb;--ink:#0f1115;--muted:#5b616e;--faint:#72767f;--line:#e5e7eb;--bg:#fff;--surface:#f7f8fa;--good:#0e7e56;--good-tint:#e9f5ef;--bad:#b53a2e;--bad-tint:#fbecea;--warn:#876019;--warn-tint:#fbf1df;--radius:14px;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;--sans:"IBM Plex Sans","Noto Sans JP","Hiragino Sans",-apple-system,Arial,sans-serif;--cluster-d:#0d73bd;--cluster-e:#0e7e56;--cluster-a:#68549c;--cluster-b:#92651e;--cluster-f:#a33f69;--cluster-g:#3a6c77}
+*{box-sizing:border-box}html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;scroll-padding-top:30px}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 var(--sans);overflow-wrap:anywhere}a{color:var(--accent);text-underline-offset:3px}button,select{font:inherit}a:focus-visible,summary:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:4px}h1,h2,h3,p{margin:0}h1{font-size:clamp(34px,5.5vw,62px);line-height:1.12;letter-spacing:-.04em;max-width:950px}h2{font-size:clamp(26px,3vw,36px);line-height:1.3;letter-spacing:-.025em}h3{font-size:17px;line-height:1.45;margin-bottom:12px}p+p{margin-top:10px}.wrap{max-width:1180px;margin:auto;padding:0 30px 70px}.mono,time,.value{font-family:var(--mono);font-variant-numeric:tabular-nums}.kicker,.eyebrow{font:600 12px/1.5 var(--mono);letter-spacing:.12em;color:var(--accent)}header{padding:62px 0 30px}.header-meta{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:20px 0}.tagline{font-size:21px;max-width:850px;margin-top:20px}.note,.source-links,.small{font-size:12px;color:var(--muted)}.note{margin-top:14px}.source-links{display:flex;gap:7px 12px;flex-wrap:wrap;margin-top:10px}.source-links a{font-size:11px}.last-update{padding:12px 16px;border-left:3px solid var(--accent);background:var(--accent-tint);margin:20px 0;font-size:13px}.badge{display:inline-block;padding:3px 9px;border:1px solid var(--line);border-radius:99px;font:600 11px/1.5 var(--mono);white-space:normal;background:var(--surface)}.badge.good{color:var(--good);background:var(--good-tint)}.badge.bad{color:var(--bad);background:var(--bad-tint)}.badge.warn{color:var(--warn);background:var(--warn-tint)}.badge.accent{color:var(--accent);background:var(--accent-tint)}nav{display:flex;flex-wrap:wrap;gap:8px 20px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:15px 0;font-size:13px}nav a{text-decoration:none}section{padding:48px 0;border-bottom:1px solid var(--line)}.section-heading{margin-bottom:24px}.section-heading .eyebrow{margin-bottom:8px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:26px 0}.stat,.card,.figure{border:1px solid var(--line);border-radius:var(--radius);padding:20px;background:var(--bg);min-width:0}.stat .value{font-size:clamp(20px,2.3vw,29px);font-weight:600;margin:8px 0;line-height:1.25}.stat.good .value{color:var(--good)}.stat.bad .value{color:var(--bad)}.stat.warn .value{color:var(--warn)}.stat.accent .value{color:var(--accent)}.figure{background:var(--surface);margin:24px 0}.figure>.grid{margin-top:14px}.card p,.card li{font-size:13px;color:var(--muted)}.card ul{padding-left:20px;margin-bottom:0}.card.accent{border-color:var(--accent);background:var(--accent-tint)}.card.warn{background:var(--warn-tint)}.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.flow .card{position:relative}.flow .card:not(:last-child)::after{content:"→";position:absolute;right:-20px;top:20px;font-size:20px;color:var(--accent)}.phase-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:24px 0}.phase{padding:14px;border-top:4px solid var(--line);background:var(--surface);font-size:12px}.phase.current{border-color:var(--accent);background:var(--accent-tint)}.phase b{display:block;font-size:14px}.phase p{font-size:11px;color:var(--muted);margin-top:5px}.timeline{position:relative;padding-left:28px;display:grid;gap:12px;margin-top:20px}.timeline::before{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--line)}.timeline::after{content:"";position:absolute;left:6px;top:6px;bottom:6px;width:2px;background:var(--accent);transform:scaleY(0);transform-origin:top;transition:transform 1.4s}.in .timeline::after{transform:scaleY(1)}.day{position:relative;padding:14px 16px;background:var(--bg);border:1px solid var(--line);border-radius:10px}.day::before{content:"";position:absolute;left:-28px;top:19px;width:11px;height:11px;border:2px solid var(--accent);border-radius:50%;background:var(--bg);z-index:1}.day.human{border-color:var(--warn);background:var(--warn-tint)}.day time{font-size:12px;color:var(--accent)}.day h3{margin:5px 0;font-size:14px}.day p{font-size:12px;color:var(--muted)}.timeline-details{margin-top:18px}.milestone-top{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.bars{display:grid;gap:10px}.bar{display:grid;grid-template-columns:125px minmax(0,1fr) 82px;gap:10px;align-items:center;font:12px/1.45 var(--mono)}.bar-label{overflow-wrap:anywhere}.track{position:relative;height:18px;border:1px solid var(--line);background:var(--bg);border-radius:4px;overflow:hidden}.fill{position:absolute;top:0;bottom:0;left:var(--left,0%);width:var(--w);background:var(--c,var(--accent));transform:scaleX(0);transform-origin:left;transition:transform 1.1s cubic-bezier(.2,.8,.2,1)}.in .fill{transform:scaleX(1)}.track.signed::after{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:1px solid var(--ink)}.bar-value{text-align:right}.scale{display:flex;justify-content:space-between;color:var(--muted);font:11px var(--mono);margin:9px 0 16px}.swatch{display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--c);margin-right:6px}.stack{display:flex;height:30px;width:100%;border-radius:6px;overflow:hidden;background:var(--line);transform:scaleX(0);transform-origin:left;transition:transform 1.2s}.in .stack{transform:scaleX(1)}.stack i{flex:var(--hours) 1 0;min-width:0;background:var(--c)}.budget-key{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin-top:14px;font-size:12px}.budget-key b{font-family:var(--mono)}.workstream{padding:14px 0;border-bottom:1px solid var(--line)}.workstream:last-child{border:0}.workstream-head{display:flex;justify-content:space-between;gap:15px;font-size:13px;margin-bottom:6px}.workstream .track{height:9px}.table-wrap{width:100%;max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;margin-top:14px}table{border-collapse:collapse;width:100%;font-size:12px;line-height:1.55;text-align:left}th{font-weight:600;color:var(--muted);font-size:11px;border-bottom:2px solid var(--line);padding:10px 8px;vertical-align:bottom}td{padding:12px 8px;vertical-align:top;border-bottom:1px solid var(--line)}td:first-child{font-weight:600;color:var(--ink)}.blocker-table{min-width:1050px}.blocker-table td{min-width:65px}.blocker-table td:nth-child(2){min-width:120px}.blocker-table td:nth-child(8),.blocker-table td:nth-child(9){min-width:180px}.result-table{min-width:720px}.matrix{display:grid;grid-template-columns:45px repeat(3,minmax(0,1fr));gap:5px;font-size:11px;margin:18px 0 8px}.matrix-label{display:flex;align-items:center;justify-content:center;color:var(--muted)}.cell{min-height:54px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px;display:flex;gap:4px;flex-wrap:wrap;align-content:center}.cell.high{background:var(--bad-tint)}.cell a{font:11px var(--mono)}.queue{list-style:none;padding:0;margin:20px 0;display:grid;gap:12px}.queue li{display:grid;grid-template-columns:35px minmax(0,1fr) 85px;gap:12px;border-bottom:1px solid var(--line);padding:14px 0}.queue .number{font:600 18px var(--mono);color:var(--accent)}.queue h3{margin:0 0 6px}.queue p{font-size:13px;color:var(--muted)}.queue .hours{font:13px var(--mono);text-align:right}.queue .inactive{opacity:.78;background:var(--surface)}details{margin-top:18px}summary{cursor:pointer;font-size:13px;color:var(--accent);padding:8px 0}.legend{display:flex;gap:8px 16px;flex-wrap:wrap;font-size:12px;margin:16px 0}.model-row{display:grid;grid-template-columns:70px minmax(0,1fr) 90px;gap:10px;align-items:center;margin:14px 0;font:12px var(--mono)}.model-track{display:flex;gap:3px}.model-cell{flex:var(--count) 1 0;background:var(--c);color:#fff;text-align:center;padding:12px 4px;border-radius:4px;transform:scaleY(0);transform-origin:bottom;transition:transform .8s}.in .model-cell{transform:scaleY(1)}.player-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:22px}.player-card h3{margin-bottom:3px}.player-metrics{display:flex;justify-content:space-between;gap:12px;margin:14px 0;font-size:12px}.player-metrics strong{font:600 23px var(--mono)}.player-card dl{font-size:12px;margin:12px 0 0}.player-card dt{color:var(--muted);float:left;clear:left;width:35px}.player-card dd{margin:0 0 6px 40px}.log-tools{display:flex;gap:10px;align-items:center;margin:22px 0}.log-tools select{border:1px solid var(--line);padding:5px 8px;border-radius:5px;background:white;color:var(--ink);max-width:100%}.log-list{list-style:none;margin:0;padding:0}.log-list li{display:grid;grid-template-columns:178px minmax(0,1fr);gap:18px;border-top:1px solid var(--line);padding:16px 0}.log-list time{font-size:11px;color:var(--muted)}.log-list p{font-size:13px}.log-list .source-links{margin-top:5px}.log-list small{font-size:11px;color:var(--muted);display:block;margin-top:6px}.source-catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0;list-style:none}.source-catalog li{border-bottom:1px solid var(--line);padding:10px 0;font-size:13px}.source-catalog small{display:block;font-size:11px;color:var(--muted)}footer{padding-top:30px;font-size:12px;color:var(--muted)}.skip{position:absolute;top:-100px;left:20px;background:var(--bg);padding:12px;z-index:10}.skip:focus{top:10px}.error{padding:25px;border:2px solid var(--bad);margin-top:20px}.reveal{opacity:1;transform:none}.motion .reveal{opacity:0;transform:translateY(12px);transition:opacity .55s,transform .55s}.motion .reveal.in{opacity:1;transform:none}section:target,.card:target,tr:target{outline:2px solid var(--accent);outline-offset:5px}.wrap,main,section,.grid,.flow,.phase-strip,.card,.figure,.bars,.bar,.track,details{min-width:0;max-width:100%}[hidden]{display:none!important}
+@media(max-width:850px){.grid.three,.player-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.flow{grid-template-columns:1fr}.flow .card:not(:last-child)::after{content:"↓";top:auto;bottom:-24px;right:50%}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.bar{grid-template-columns:110px minmax(0,1fr) 70px}.phase-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}}
+@media(max-width:600px){.wrap{padding:0 16px 45px}header{padding-top:36px}.tagline{font-size:17px}section{padding:35px 0}.figure,.card,.stat{padding:16px}.grid.three,.player-grid,.source-catalog{grid-template-columns:1fr}.budget-key{grid-template-columns:1fr}.bar{grid-template-columns:92px minmax(0,1fr) 65px;gap:6px;font-size:11px}.model-row{grid-template-columns:58px minmax(0,1fr);font-size:11px}.model-row>span:last-child{grid-column:2}.log-list li{grid-template-columns:1fr;gap:8px}.queue li{grid-template-columns:26px minmax(0,1fr)}.queue .hours{grid-column:2;text-align:left}.table-wrap{overflow:visible}table,.result-table,.blocker-table{display:block;min-width:0;width:100%}thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}tbody,tr{display:block;width:100%}tr{border:1px solid var(--line);border-radius:8px;margin:10px 0;padding:8px;background:var(--bg)}td,.blocker-table td,.blocker-table td:nth-child(2),.blocker-table td:nth-child(8),.blocker-table td:nth-child(9){display:grid;grid-template-columns:95px minmax(0,1fr);gap:10px;padding:6px;min-width:0}td::before{content:attr(data-label);font-weight:400;font-size:10px;color:var(--muted)}td:last-child{border:0}.phase{padding:10px}}
+@media(max-width:340px){.stats,.phase-strip{grid-template-columns:1fr}.bar{grid-template-columns:75px minmax(0,1fr) 58px}.figure{padding:12px}.matrix{grid-template-columns:30px repeat(3,minmax(0,1fr))}.cell{padding:5px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.motion .reveal{opacity:1;transform:none}.fill,.stack,.model-cell,.timeline::after{transform:none!important}}
+@media print{@page{size:A4;margin:14mm}body{font-size:10px}.wrap{padding:0;max-width:none}header{padding:10px 0}h1{font-size:30px}h2{font-size:22px}nav,.skip,.log-tools{display:none}section{padding:22px 0}.motion .reveal{opacity:1;transform:none}.fill,.stack,.model-cell,.timeline::after{transform:none!important}*{animation:none!important;transition:none!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}.table-wrap{overflow:visible}table,.result-table,.blocker-table{min-width:0;width:100%;table-layout:fixed;font-size:8px}.blocker-table td,.blocker-table td:nth-child(2),.blocker-table td:nth-child(8),.blocker-table td:nth-child(9){min-width:0}th{font-size:7px}td,th{padding:5px 3px}.card,.day,.stat,.log-list li,tr{break-inside:avoid}.figure{padding:14px;margin:15px 0}.player-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stats{grid-template-columns:repeat(4,minmax(0,1fr))}.stat .value{font-size:17px}.log-list li{grid-template-columns:135px minmax(0,1fr)}details>summary{display:none}details>*:not(summary){display:block!important}details::details-content{content-visibility:visible}.log-list li[hidden]{display:grid!important}a{color:var(--ink)}.source-links a{font-size:8px}}
+</style>
+</head>
+<body>
+<a href="#plan" class="skip">全体計画へ</a>
+<div class="wrap">
+<header id="overview"></header>
+<nav aria-label="ダッシュボード内の移動"><a href="#plan">全体計画</a><a href="#progress">進捗</a><a href="#blockers">ブロッカー候補</a><a href="#next">今後の計画</a><a href="#results">結果の要約</a><a href="#decisions">決定の台帳</a><a href="#log">ログ</a><a href="#sources">出典</a></nav>
+<noscript><p class="error">表示にはJavaScriptが必要です。事実はファイル冒頭の data-* JSON に保存されています。計画と生成表は同じフォルダのMarkdownを参照してください。</p></noscript>
+<div id="render-error" role="alert" hidden></div>
+<main>
+<section id="plan"><div class="section-heading"><p class="eyebrow">01 · PLAN</p><h2>全体計画</h2></div><div id="plan-body"></div></section>
+<section id="progress"><div class="section-heading"><p class="eyebrow">02 · PROGRESS</p><h2>進捗</h2></div><div id="progress-body"></div><div id="budget-body"></div></section>
+<section id="blockers"><div class="section-heading"><p class="eyebrow">03 · BLOCKERS</p><h2>ブロッカー（候補）</h2></div><div id="blockers-body"></div></section>
+<section id="next"><div class="section-heading"><p class="eyebrow">04 · NEXT</p><h2>今後の計画</h2></div><div id="next-body"></div></section>
+<section id="results"><div class="section-heading"><p class="eyebrow">05 · EVIDENCE</p><h2>結果の要約</h2></div><div id="results-body"></div></section>
+<section id="decisions"><div class="section-heading"><p class="eyebrow">06 · DECISIONS</p><h2>決定の台帳</h2></div><div id="decisions-body"></div></section>
+<section id="log"><div class="section-heading"><p class="eyebrow">07 · CHANGELOG</p><h2>ログ</h2></div><div id="log-body"></div></section>
+<section id="sources"><div class="section-heading"><p class="eyebrow">08 · SOURCES</p><h2>出典と更新方法</h2></div><div id="sources-body"></div></section>
+</main>
+<footer>ASCON · Living dashboard · Light / local / data-driven</footer>
+</div>
+<script>
+(() => {
+  'use strict';
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  try {
+    const D = Object.fromEntries([...document.querySelectorAll('script[type="application/json"][id^="data-"]')].map(el => [el.id.slice(5), JSON.parse(el.textContent)]));
+    const {status:S, plan:P, results:R, budget:B} = D;
+    const sourceMap = Object.fromEntries(D.sources.sources.map(s => [s.id,s]));
+    // Source links resolve against the page URL; a data:/about: origin (previews, embedded viewers) cannot, so fall back to the plain relative path instead of failing the whole page.
+    const hrefFor = path => { try { return new URL(path, new URL('../../', location.href)).href; } catch (_) { return '../../' + path; } };
+    const refs = ids => `<div class="source-links">${(ids||[]).map(id => {const s=sourceMap[id];return `<a href="${esc(hrefFor(s.path))}" title="${esc(s.locator)}">${esc(s.title)}</a>`;}).join('')}</div>`;
+    const stateNames = {done:'完了',running:'進行中',pending:'未実施',blocked:'BLOCKED',failed:'FAIL',open:'open',waiting:'証拠待ち',mitigating:'対策中',decided:'決定済み',closed:'終了',unsigned:'未署名','confirmation-pending':'本人確認待ち'};
+    const tone = v => ({done:'good',decided:'good',failed:'bad',blocked:'warn',running:'accent',open:'warn',waiting:'warn',unsigned:'warn','confirmation-pending':'warn'}[v]||'');
+    const badge = v => `<span class="badge ${tone(v)}">${esc(stateNames[v]||v)}</span>`;
+    const date = v => v.slice(5).replace('-','/');
+    const jst = v => v.slice(0,19).replace('T',' ')+' JST';
+    const num = v => Number(String(v).replaceAll(',',''));
+    const frac = v => {if(v===null)return null;const p=String(v).split('/').map(Number);return p.length===2?p[0]/p[1]:p[0];};
+    const hours = v => v===null?'未見積':`${frac(v).toFixed(2)} h`;
+    const put = (id, html) => {document.getElementById(id).innerHTML=html;};
+    const detail = (label,html) => `<details><summary>${esc(label)}</summary>${html}</details>`;
+    const table = (heads,rows,klass='') => `<div class="table-wrap"><table class="${klass}"><thead><tr>${heads.map(h=>`<th scope="col">${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td data-label="${esc(heads[i])}"><div>${c}</div></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    const rawTable = t => table(t.header,t.rows.map(r=>r.map(esc)),'result-table');
+    const card = (title,content,cls='') => `<article class="card ${cls}"><h3>${esc(title)}</h3>${content}</article>`;
+    const figure = (title,content,note='',src=[]) => `<div class="figure reveal"><h3>${esc(title)}</h3>${content}${note?`<p class="note">${esc(note)}</p>`:''}${refs(src)}</div>`;
+    const barChart = (rows,unit='',signed=false) => {
+      const max=Math.max(...rows.map(r=>Math.abs(num(r.value))),1);
+      return `<div class="scale"><span>${signed?esc((-max).toFixed(2)):'0'} ${esc(unit)}</span>${signed?'<span>0</span>':''}<span>${esc(max.toFixed(2))} ${esc(unit)}</span></div><div class="bars">${rows.map(r=>{const v=num(r.value),w=Math.abs(v)/max*(signed?50:100),left=signed?(v<0?50-w:50):0;return `<div class="bar"><span class="bar-label">${esc(r.label)}</span><span class="track ${signed?'signed':''}" aria-hidden="true"><i class="fill" style="--w:${w}%;--left:${left}%;--c:var(--${r.color||(v<0?'bad':'accent')})"></i></span><span class="bar-value">${esc(r.value)}</span></div>`;}).join('')}</div>`;
+    };
+    const dayCard = m => `<article class="day ${m.decision_refs.length?'human':''}"><div class="milestone-top"><time datetime="${esc(m.date)}">${date(m.date)}</time>${badge(m.state)}</div><h3>${esc(m.title)}</h3><p>入口：${esc(m.dependency)}</p><p>停止：${esc(m.stop)}</p>${m.decision_refs.map(id=>`<a class="small" href="#${id}">${id}</a>`).join(' · ')}${refs(m.sources)}</article>`;
+    const phase=D.phases.items.find(p=>p.id===S.phase_id);
+    put('overview',`<p class="kicker">ASCON / LIVING DASHBOARD</p><div class="header-meta"><span class="badge accent">${esc(phase.title)} · ${esc(phase.gate)}</span><time datetime="${esc(S.as_of)}">As of ${esc(jst(S.as_of))}</time></div><h1>${esc(S.headline)}</h1><p class="tagline">${esc(S.subhead)}</p><div class="stats">${S.metrics.map(m=>`<article class="stat ${m.tone}"><p class="small">${esc(m.label)}</p><div class="value">${esc(m.value)}</div><p class="small">${esc(m.note)}</p>${refs(m.sources)}</article>`).join('')}</div><p class="small">測定資料：${esc(jst(S.measurement_as_of))} の引継ぎ。Q0b ${esc(S.q0b.started_at.slice(11,16))}開始 / ${S.q0b.worlds}世界 / ${S.q0b.chunks} chunks / seeds ${esc(S.q0b.seeds)} / 終了見込み ${esc(S.q0b.expected_end.slice(11,16))} JST。</p><p class="note">${esc(S.q0b.note)}</p><div class="last-update"><b>最終更新</b> ${esc(S.last_update)}${refs(S.sources)}</div><p class="note">${esc(S.notice)}</p>`);
+    put('plan-body',`<p class="tagline">${esc(P.goal)}</p><div class="phase-strip">${D.phases.items.map(p=>`<div class="phase ${p.id===S.phase_id?'current':''}"><span class="mono">${date(p.start_date)}–${date(p.end_date)}</span><b>${esc(p.title)}</b>${badge(p.state)}<p>${esc(p.gate)}</p></div>`).join('')}</div><div class="flow reveal">${P.protocol.map(p=>card(p.title,`<p>${esc(p.body)}</p><p><b>出口</b> ${esc(p.exit)}</p>`)).join('')}</div>${refs(P.sources)}<div class="grid" style="margin-top:24px">${card('勝つために守る指標',`<p>${esc(P.win)}</p><p>${esc(P.caution)}</p>`)}${card('ルールと制約',`<ul>${P.rules.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`)}</div>${figure('ロードマップ / 日付は実行許可ではない',`<div class="timeline">${D.milestones.items.filter(m=>m.highlight).map(dayCard).join('')}</div>${detail('全日程を開く',`<div class="timeline">${D.milestones.items.map(dayCard).join('')}</div>`)}`,'既決の判断は決定台帳へリンク。予定は条件付きで、実績と区別する。',D.milestones.sources)}`);
+    put('progress-body',figure('ワークストリーム別',D.progress.workstreams.map(w=>{const rows=D.progress.items.filter(i=>i.workstream===w),done=rows.filter(i=>i.state==='done').length;return `<div class="workstream"><div class="workstream-head"><b>${esc(w)}</b><span class="mono">${done} / ${rows.length} 完了</span></div><div class="track" aria-hidden="true"><i class="fill" style="--w:${done/rows.length*100}%;--c:var(--good)"></i></div><p class="small">${rows.filter(i=>i.state!=='done').map(i=>`${esc(i.title)} ${badge(i.state)}`).join(' / ')||'登録済みの作業は完了'}</p></div>`;}).join(''),D.progress.note,D.progress.sources)+table(['状態','作業','証拠と残る条件'],D.progress.items.map(i=>[badge(i.state),esc(i.title),esc(i.evidence)+refs(i.sources)])));
+    const colors=['faint','good','accent','warn','cluster-g','cluster-a','cluster-b','cluster-e','cluster-d','cluster-f','faint'];
+    const budgetColumn = column => `<h3>${esc(column.title)} · ${esc(column.state)} · ${esc(B.total_hours)} h</h3><div class="stack" aria-hidden="true">${B.rows.map((r,i)=>frac(r[column.key])>0?`<i style="--hours:${frac(r[column.key])};--c:var(--${colors[i%colors.length]})"></i>`:'').join('')}</div><div class="budget-key">${B.rows.filter(r=>frac(r[column.key])>0).map(r=>`<div><span class="swatch" style="--c:var(--${colors[B.rows.indexOf(r)%colors.length]})"></span>${esc(r.title)} <b>${hours(r[column.key])}</b><div class="small">${esc(r.accounting)}</div></div>`).join('')}</div>`;
+    put('budget-body',figure('計算予算 / 実測下限・推定・予約を分ける',`<p><b>${esc(B.interpretation)}</b></p><p class="small">起点 ${esc(jst(B.start_at))}</p><div class="bars" style="margin:20px 0"><div class="bar"><span>履歴の下限</span><span class="track" aria-hidden="true"><i class="fill" style="--w:${Math.min(100,frac(B.consumed_lower_bound_hours)/frac(B.total_hours)*100)}%;--c:var(--good)"></i></span><span>≥${esc(B.consumed_lower_bound_hours)} h</span></div></div><p class="small">${esc(B.historic_bar_note)}</p><p class="note">${esc(B.note)}</p><div style="margin-top:24px">${budgetColumn(B.columns[0])}</div>${detail('未署名AMENDとの配分比較',budgetColumn(B.columns[1]))}${detail('正確な分数・会計区分・根拠を見る',table(['用途','KEEP h','AMEND h','会計','根拠/注記'],B.rows.map(r=>[esc(r.title),esc(r.keep_hours),esc(r.amend_hours),esc(r.accounting),esc(r.note)+refs(r.sources)])))}${detail('ON速度が変わった場合',rawTable(B.on_sensitivity)+`<p class="note">${esc(B.on_note)}</p>`)}`,'予約の100h一致は、実消費が100h以内に収まる保証ではない。',B.sources));
+    const BI=D.blockers;
+    const matrix=`<div class="matrix" role="group" aria-label="影響（横軸）と可能性（縦軸）の定性マトリクス"><div></div>${BI.impact_axis.map(a=>`<div class="matrix-label">影響 ${esc(a)}</div>`).join('')}${[...BI.likelihood_axis].reverse().map(l=>`<div class="matrix-label">${esc(l)}</div>${BI.impact_axis.map(impact=>`<div class="cell ${l==='高'&&impact!=='中'?'high':''}">${BI.items.filter(b=>b.likelihood===l&&b.impact===impact).map(b=>`<a href="#${b.id}" title="${esc(b.title)}">${b.id}</a>`).join(' ')||'—'}</div>`).join('')}`).join('')}</div>`;
+    put('blockers-body',`<div class="grid">${figure('可能性 × 影響',matrix,'縦軸：可能性。定性的な分類で、確率ではない。')}${card('優先する不確実性',`<p>${esc(BI.method)}</p><p>${BI.items.slice(0,3).map(b=>`<a href="#${b.id}">${b.id} ${esc(b.title)}</a>`).join('<br>')}</p>${refs(BI.sources)}`)}</div>`+table(['順位 / ID','候補','severity','likelihood','impact','owner','status','evidence','mitigation / next action'],BI.items.map(b=>[`<span id="${b.id}">${b.rank} / ${b.id}</span>`,esc(b.title),badge(b.severity),esc(b.likelihood),esc(b.impact),esc(b.owner),badge(b.status),esc(b.evidence)+refs(b.sources),esc(b.mitigation)]),'blocker-table'));
+    const q = D.queue;
+    const today=S.as_of.slice(0,10),cutoff=new Date(today+'T00:00:00+09:00');cutoff.setUTCDate(cutoff.getUTCDate()+7);
+    put('next-body',`<p>${esc(q.note)}</p><ol class="queue">${q.items.map(i=>`<li class="${i.active?'':'inactive'}"><span class="number">${i.priority.toString().padStart(2,'0')}</span><div><h3>${esc(i.title)} ${badge(i.state)}</h3><p>${esc(i.dependency)}</p><p class="small">${esc(i.window)} · owner ${esc(i.owner)} · ${i.worlds} 世界</p>${refs(i.sources)}</div><div class="hours">${hours(i.hours)}<div class="small">${i.hours===null?'割当未確定':'全量見積'}</div></div></li>`).join('')}</ol><div class="last-update">${esc(q.bundle)}${refs(q.sources)}</div>${figure('次の7日間',`<div class="grid">${D.milestones.items.filter(m=>m.date>=today&&new Date(m.date+'T00:00:00+09:00')<cutoff).map(dayCard).join('')}</div>`)}<h3>何を見ればゲートが閉じるか</h3><div class="grid">${P.gates.map(g=>card(g.title,`${badge(g.state)}<p>${esc(g.resolve)}</p>${refs(g.sources)}`)).join('')}</div>`);
+    let resultsHtml='';
+    resultsHtml+=figure(R.d0.title,`<div class="grid"><div><h3>P−noop / USDC</h3>${barChart(R.d0.rows.map(r=>({label:r[0],value:r[2]})),'USDC',true)}</div><div><h3>優先手数料0の送信割合</h3>${barChart(R.d0.rows.map(r=>({label:r[0],value:r[6].match(/\(([\d.]+)%\)/)[1],color:'bad'})),'%')}</div></div>${detail('生成表を開く',rawTable(R.d0))}`,R.d0.note,R.d0.sources);
+    resultsHtml+=figure(R.fields.title,`<div class="grid">${[...new Set(R.fields.rows.map(r=>r[0]))].map(field=>`<div><h3>${esc(field)} · ${esc(R.fields.rows.find(r=>r[0]===field)[1])}</h3>${barChart(R.fields.rows.filter(r=>r[0]===field).map(r=>({label:r[2],value:r[3],color:r[2]==='sonnet-1'?'accent':'faint'})),field==='F_ref'?'USDC':'T')}</div>`).join('')}</div>`,R.fields.note,R.fields.sources);
+    const QS=R.q0_summary;
+    resultsHtml+=figure(R.q0.title,`<div class="grid"><div><h3>対noop / レジーム平均ΔT</h3>${barChart(R.q0.rows.map(r=>({label:r[0],value:r[5]})),'ΔT')}</div><div><h3>平均T / sonnet・multi-arb</h3><div class="legend"><span><i class="swatch" style="--c:var(--accent)"></i>sonnet</span><span><i class="swatch" style="--c:var(--faint)"></i>multi-arb</span></div>${barChart(R.q0.rows.flatMap(r=>[{label:r[0]+' / S',value:r[6]},{label:r[0]+' / M',value:r[7],color:'faint'}]))}</div></div><div class="stats"><div class="stat bad"><p class="small">等重み平均T / 候補</p><div class="value">${QS.candidate_t}</div></div><div class="stat"><p class="small">等重み平均T / multi-arb</p><div class="value">${QS.multi_t}</div></div><div class="stat warn"><p class="small">noop割れ世界</p><div class="value">${QS.noop_below}</div></div><div class="stat"><p class="small">送信失敗 / mined revert</p><div class="value">${QS.submit_failed} / ${QS.mined_reverts}</div></div></div><p class="note">${esc(QS.safety)}</p>${detail('全レジームの生成表を開く',rawTable(R.q0))}`,R.q0.note,R.q0.sources);
+    const clusterColor = c => 'cluster-'+c.toLowerCase();
+    const models=R.model_order.map(model=>{const counts=R.m1.rows.map(row=>{const match=row[3].match(new RegExp(model+'(?:×(\\d+))?'));return {cluster:row[0],count:match?Number(match[1]||1):0};}).filter(c=>c.count);const total=counts.reduce((a,c)=>a+c.count,0);return `<div class="model-row"><b>${esc(model)}</b><div class="model-track">${counts.map(c=>`<span class="model-cell" style="--count:${c.count};--c:var(--${clusterColor(c.cluster)})">${esc(c.cluster)} ×${c.count}</span>`).join('')}</div><span>${counts.length}機構 / ${total}仕様</span></div>`;}).join('');
+    resultsHtml+=figure(R.m1.title,models+`<div class="legend">${R.m1.rows.map(r=>`<span><i class="swatch" style="--c:var(--${clusterColor(r[0])})"></i>${esc(r[0])} ${esc(r[1])}</span>`).join('')}</div>${detail('仕様ID・作者の生成表を開く',rawTable(R.m1))}`,R.m1.note,R.m1.sources);
+    resultsHtml+=`<div class="grid three">${R.research.map(r=>card(r.title,`<p>${esc(r.text)}</p>${refs(r.sources)}`)).join('')}</div>`;
+    resultsHtml+=figure(R.strategies.title,`<div class="player-grid">${R.strategies.rows.map(r=>`<article class="card player-card"><h3>${esc(r[0])}</h3><p class="small">${esc(r[1])}</p><div class="player-metrics"><div>平均T<br><strong>${esc(r[7])}</strong></div><div>最悪<br><b class="mono">${esc(r[8])}</b></div></div><div class="track" aria-hidden="true"><i class="fill" style="--w:${num(r[7])/Math.max(...R.strategies.rows.map(s=>num(s[7])))*100}%"></i></div><p style="margin-top:12px">${esc(r[2])}</p><dl>${['入口','size','bid','専門'].map((label,i)=>`<dt>${label}</dt><dd>${esc(r[i+3])}</dd>`).join('')}</dl></article>`).join('')}</div>${detail('元の比較表を開く',rawTable(R.strategies))}`,R.strategies.note,R.strategies.sources);
+    resultsHtml+=figure(R.ranking.title,barChart([...R.ranking.rows].sort((a,b)=>num(b[1])-num(a[1])).map(r=>({label:r[0],value:r[1],color:r[0]==='inc-zeta'?'accent':r[0]==='zeta-2'?'bad':'faint'})),'T')+detail('条件付き区間・レジーム内訳',rawTable(R.ranking)),R.ranking.note,R.ranking.sources);
+    const zr=R.zeta.rows[0];
+    resultsHtml+=figure(R.zeta.title,barChart([{label:'noop / '+zr[0],value:zr[3],color:'faint'},{label:'inc-zeta',value:zr[2],color:'accent'},{label:'zeta-2',value:zr[1],color:'bad'}],'USDC',true)+detail('診断ケースの生成表',rawTable(R.zeta)),R.zeta.note,R.zeta.sources);
+    resultsHtml+=`<h3>過去の実装・測定から残すこと</h3><div class="grid three">${R.archive.map(r=>card(r.title,`<p>${esc(r.text)}</p>${refs(r.sources)}`)).join('')}</div>`;
+    put('results-body',resultsHtml);
+    put('decisions-body',`<p class="note">${esc(D.decisions.date_note)}</p>`+table(['ID / 日付','本人判断','状態 / 期日','運用と証拠'],D.decisions.items.map(d=>[`<span id="${d.id}">${esc(d.id)}</span><br><time datetime="${d.date}">${esc(d.date)}</time>`,esc(d.title),badge(d.status)+(d.due_date?`<br><time datetime="${d.due_date}">${esc(d.due_date)}</time>`:''),esc(d.note)+refs(d.sources)])));
+    put('log-body',`<p class="note">${esc(D.log.note)}</p><div class="log-tools"><label for="log-filter">種類</label><select id="log-filter"><option value="all">すべて</option>${D.log.allowed_types.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select><span id="log-count" class="small"></span></div><ol class="log-list">${D.log.items.map(l=>`<li data-type="${esc(l.type)}" id="${l.id}"><div><time datetime="${esc(l.timestamp)}">${esc(jst(l.timestamp))}</time><small>対象 ${esc(l.event_date)}<br>${esc(l.time_basis)}</small></div><div><p>${badge('['+l.type+']')} ${esc(l.summary)}</p>${refs(l.sources)}</div></li>`).join('')}</ol>`);
+    const filter=document.getElementById('log-filter');
+    function filterLogs(){let count=0;document.querySelectorAll('.log-list li').forEach(el=>{el.hidden=filter.value!=='all'&&el.dataset.type!==filter.value;if(!el.hidden)count++;});document.getElementById('log-count').textContent=`${count} / ${D.log.items.length} 件`;}
+    filter.addEventListener('change',filterLogs);filterLogs();
+    put('sources-body',`<p>更新はファイル冒頭の <span class="mono">data-*</span> JSON。数字は生成済みの表から転記し、訂正はログに追記します。</p>${refs(['src-handoff'])}<ul class="source-catalog">${D.sources.sources.map(s=>`<li><a href="${esc(hrefFor(s.path))}">${esc(s.title)}</a><small>${esc(s.path)} · ${esc(s.locator)}</small></li>`).join('')}</ul>`);
+    const reveals=[...document.querySelectorAll('.reveal')];
+    if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('motion');
+      const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:0,rootMargin:'0px 0px -16px 0px'});
+      reveals.forEach(el=>io.observe(el));
+    } else reveals.forEach(el=>el.classList.add('in'));
+    // Contents inside closed details become visible when opened, including animated charts.
+    document.querySelectorAll('details').forEach(el=>el.addEventListener('toggle',()=>{if(el.open)el.classList.add('in');}));
+    let opened=[];
+    window.addEventListener('beforeprint',()=>{opened=[...document.querySelectorAll('details:not([open])')];opened.forEach(el=>{el.open=true;});});
+    window.addEventListener('afterprint',()=>opened.forEach(el=>{el.open=false;}));
+  } catch (error) {
+    const el=document.getElementById('render-error');el.hidden=false;el.className='error';el.textContent='データを表示できません。dashboard-check.pyでJSONを確認してください。 '+error.message;
+  }
+})();
+</script>
+</body>
+</html>
