@@ -5,12 +5,145 @@ import { readFileSync } from "node:fs";
 import type { AgentContext, AgentObservation } from "@eris/sdk";
 import { loadImproveAgent } from "../example/agents/runtime/improve.js";
 import { bidWei as v0Bid } from "../example/agents/xb-core/agent.js";
+import * as xbR from "../example/agents/xb-r/agent.js";
 import {
   PARAMS, bidWei, createAgent, decide, economicEdge, entryAllowed, enumerateCandidates,
   netProfitUsd, profitUsd, reserveCandidate, selectCandidate, sizeUsd, type Params,
 } from "../example/agents/xb-r/agent.js";
+// Namespace lookup lets the exact a042a70 source run the LIVE replay tests:
+// that version lacks the new live factory, but the regression uses only decide.
+const createLiveAgent = xbR.createLiveAgent;
 
 const action = (o: AgentObservation, p: Params = PARAMS) => createAgent(p)(structuredClone(o));
+const liveFixture = JSON.parse(readFileSync(new URL("./fixtures/xb-r-dev1-calm-31001.json", import.meta.url), "utf8"));
+const { UNISWAP, BALANCER, MARKET_LEGS } = await import("@eris/sdk/constants.js");
+// Logs retain method names, not raw tx.to. Project those names onto this test's
+// SDK deployment; this is an RPC-shape reconstruction, not captured calldata.
+function liveContext(frame: typeof liveFixture.frames[number]): AgentContext {
+  return { publicClient: { getBlock: async (request: { blockNumber: bigint; includeTransactions: boolean }) => {
+    assert.equal(request.blockNumber, BigInt(frame.observation.blockNumber));
+    assert.equal(request.includeTransactions, true);
+    return { number: request.blockNumber, baseFeePerGas: 0n,
+      transactions: frame.transactions.map((tx: { from: string; method: string; priorityFeeWei: string; receiptBase?: string }) => ({
+        from: tx.from, maxPriorityFeePerGas: BigInt(tx.priorityFeeWei),
+        to: tx.method === "exactInputSingle" ? UNISWAP.swapRouter
+          : tx.method === "swap" ? BALANCER.vault
+          : tx.method === "exchange" && tx.receiptBase ? MARKET_LEGS.curve[tx.receiptBase].pool
+          : "0x0000000000000000000000000000000000000099",
+      })) };
+  } } } as unknown as AgentContext;
+}
+for (const frame of liveFixture.frames) {
+  test(`LIVE replay block ${frame.observation.blockNumber} trades when multi-arb traded`, async () => {
+    const o = structuredClone(frame.observation) as AgentObservation;
+    assert.equal(frame.candDecision.action.type, "noop");
+    assert.ok(frame.referenceTrades.some((t: any) => t.submitted.agentId === "multi-arb" && t.receipt.status === "success"));
+    assert.equal(o.competition!.maxCompetitorPriorityFeeWei, "6000000000");
+    assert.equal(o.limits.maxPriorityFeePerGasWei, "5000000000");
+    assert.equal(action(o).type, "noop", "unscoped signal retains the conservative rejection");
+    // A unique run resets the exported instance; cand never traded in this world.
+    o.runId += `:replay:${o.blockNumber}`;
+    const a = await decide(o, liveContext(frame));
+    assert.notEqual(a.type, "noop");
+    safeAction(o, a);
+  });
+}
+function blockContext(o: AgentObservation, transactions: unknown[]): AgentContext {
+  return { publicClient: { getBlock: async () => ({ number: BigInt(o.blockNumber), transactions }) } } as unknown as AgentContext;
+}
+const other = "0x0000000000000000000000000000000000000077";
+const publicTx = (to: string, fee: bigint, from = other) => ({ to, from, maxPriorityFeePerGas: fee });
+function aggregateOracle(o: AgentObservation): AgentObservation {
+  o.competition!.maxCompetitorPriorityFeeWei = "6000000000";
+  o.competition!.maxBlockPriorityFeeWei = "6000000000";
+  o.limits.maxPriorityFeePerGasWei = "5000000000";
+  return o;
+}
+test("LIVE R4 scopes bids to execution targets and ignores own transactions", async () => {
+  for (const target of [UNISWAP.swapRouter, MARKET_LEGS.uniswap.WETH.pool]) {
+    const o = aggregateOracle(single(0.02));
+    const ctx = blockContext(o, [publicTx(other, 6_000_000_000n), publicTx(target, 200_000_000n),
+      publicTx(target, 4_000_000_000n, o.agentAddress)]);
+    const a = await createLiveAgent()(o, ctx);
+    assert.equal(a.type, "swap");
+    assert.equal(a.maxPriorityFeePerGasWei, "300000000");
+    safeAction(o, a);
+    // Missing own history does not establish a low rival fee; it has no effect on routing.
+    o.competition!.recentRevertRate = 1; o.competition!.recentSampleSize = 10; o.competition!.lastTxIndex = 20;
+    assert.deepEqual(await createLiveAgent()(o, ctx), a);
+  }
+});
+test("LIVE R4 actual unaffordable rival remains a skip and keeps the gas reserve", async () => {
+  const o = aggregateOracle(single(0.02));
+  assert.equal((await createLiveAgent()(o, blockContext(o, [publicTx(UNISWAP.swapRouter, 6_000_000_000n)]))).type, "noop");
+  const ctx = blockContext(o, [publicTx(UNISWAP.swapRouter, 200_000_000n)]);
+  o.balances.ethWei = String(W / 20n + 200000n * 300000000n);
+  assert.equal((await createLiveAgent()(o, ctx)).type, "swap");
+  o.balances.ethWei = String(BigInt(o.balances.ethWei) - 1n);
+  assert.equal((await createLiveAgent()(o, ctx)).type, "noop");
+});
+test("LIVE R4 bundle uses the highest rival across both legs", async () => {
+  const o = aggregateOracle(bundle());
+  o.protocols.uniswap!.pool.priceUsdcPerWeth = 2975;
+  Object.assign(o.protocols.balancer!, { priceUsdcPerWeth: 3025, buyPriceUsdcPerWeth: 3034.075, sellPriceUsdcPerWeth: 3015.925 });
+  assert.ok(enumerateCandidates(o).every(c => c.action.type === "bundle"));
+  for (const target of [UNISWAP.swapRouter, BALANCER.vault]) {
+    const a = await createLiveAgent()(o, blockContext(o, [publicTx(target, 200_000_000n)]));
+    assert.equal(a.type, "bundle"); assert.equal(a.maxPriorityFeePerGasWei, "300000000"); safeAction(o, a);
+    assert.equal((await createLiveAgent()(o, blockContext(o, [publicTx(target, 6_000_000_000n)]))).type, "noop");
+  }
+});
+test("LIVE R4 empty block and legacy fees retain positive bids", async () => {
+  const o = aggregateOracle(single(0.02));
+  assert.equal((await createLiveAgent()(o, blockContext(o, []))).maxPriorityFeePerGasWei, "100000000");
+  const ctx = blockContext(o, [{ to: UNISWAP.swapRouter, from: other, gasPrice: 200000000n }]);
+  assert.equal((await createLiveAgent()(o, ctx)).maxPriorityFeePerGasWei, "300000000");
+});
+test("LIVE R4 failed or incomplete block reads preserve aggregate rejection", async () => {
+  const o = aggregateOracle(single(0.02));
+  const contexts = [
+    { publicClient: { getBlock: async () => { throw Error("RPC unavailable"); } } },
+    { publicClient: { getBlock: async () => ({ number: BigInt(o.blockNumber) + 1n, transactions: [] }) } },
+    blockContext(o, ["0xhash-only"]),
+    blockContext(o, [{ to: other, from: other }]),
+    blockContext(o, [publicTx(other, -1n)]),
+    blockContext(o, [{ to: other, from: "invalid", maxPriorityFeePerGas: 1n }]),
+  ];
+  for (const ctx of contexts) assert.equal((await createLiveAgent()(o, ctx as AgentContext)).type, "noop");
+  assert.equal((await createLiveAgent()(o)).type, "noop");
+});
+test("LIVE R4 bid read is bounded and late results cannot affect later decisions", async () => {
+  const o = aggregateOracle(single(0.02));
+  let resolveRead!: (value: unknown) => void;
+  const ctx = { publicClient: { getBlock: () => new Promise(resolve => { resolveRead = resolve; }) } } as unknown as AgentContext;
+  const live = createLiveAgent(), before = performance.now();
+  assert.equal((await live(o, ctx)).type, "noop");
+  assert.ok(performance.now() - before < 4000);
+  resolveRead({ number: BigInt(o.blockNumber), transactions: [] });
+  o.blockNumber = String(Number(o.blockNumber) + 1);
+  assert.equal((await live(o, blockContext(o, [publicTx(UNISWAP.swapRouter, 6_000_000_000n)]))).type, "noop");
+});
+test("LIVE deadline includes block read time and does not consume cooldown", async () => {
+  const o = aggregateOracle(single(0.02));
+  let clock = 0;
+  const live = createLiveAgent(PARAMS, () => clock);
+  const ctx = { publicClient: { getBlock: async () => { clock = 4000;
+    return { number: BigInt(o.blockNumber), transactions: [] }; } } } as unknown as AgentContext;
+  assert.equal((await live(o, ctx)).reason, "decision deadline reserve");
+  o.blockNumber = String(Number(o.blockNumber) + 1);
+  assert.equal((await live(o, blockContext(o, []))).type, "swap");
+});
+test("LIVE replay remains funded with unknown Uniswap depth and conservative native balance", async () => {
+  for (const frame of liveFixture.frames) for (const liquidity of ["0", "1000000000000000000"]) {
+    const o = structuredClone(frame.observation) as AgentObservation;
+    o.balances.ethWei = String(W / 10n); // No reliance on unlogged startup approval gas.
+    o.protocols.uniswap!.pool.liquidity = liquidity;
+    o.protocols.uniswap!.markets!["WBTC/USDC"].liquidity = liquidity;
+    const a = await createLiveAgent()(o, liveContext(frame));
+    assert.notEqual(a.type, "noop"); safeAction(o, a);
+    assert.ok(BigInt(a.maxPriorityFeePerGasWei) > 0n);
+  }
+});
 function restoring(edge = 0.0055, buy = true): AgentObservation {
   const o = single(edge, buy);
   o.balances.wethWei = String((buy ? 75n : 85n) * W / 10n);
@@ -31,12 +164,12 @@ function red(t: TestContext, label: string, check: (p: Params) => void, key: key
   t.diagnostic(`RED-CONTROL ${label}: factor-off failed the same assertion; restored Params passed`);
 }
 
-test("xb-r frozen defaults, decide wrapper and improve prompt", () => {
+test("xb-r frozen defaults, decide wrapper and improve prompt", async () => {
   assert.equal(Object.isFrozen(PARAMS), true);
   assert.equal(PARAMS.ENTRY_BPS, 50);
   assert.equal(PARAMS.SINGLE_EDGE_BPS, 100);
   const o = bundle(); o.runId = "wrapper";
-  assert.deepEqual(decide(o), action(o));
+  assert.deepEqual(await decide(o), action(o));
   assert.equal(loadImproveAgent(new URL("../example/agents/xb-r/", import.meta.url).pathname).name, "xb-r");
 });
 test("R1 selects a funded bundle before a more profitable single", t => {
@@ -363,9 +496,11 @@ test("duplicate guard and run, block and horizon resets preserve independent sta
   const a = createAgent(), b = createAgent();
   a(single(0.02)); assert.equal(b(single(0.02, true, 101)).type, "swap");
 });
-test("source closure has only SDK types and affordable; context and hidden inputs are unused", () => {
+test("source closure uses SDK routing and affordable; pure core and hidden inputs stay isolated", () => {
   const source = readFileSync(new URL("../example/agents/xb-r/agent.ts", import.meta.url), "utf8");
-  assert.doesNotMatch(source, /process\s*[.[]|import\.meta\.env|Math\.random|\bfetch\s*\(|publicClient\s*\.|\bseed\b|\bregime\b|futureEvents|rawTx|approve/);
+  assert.doesNotMatch(source, /process\s*[.[]|import\.meta\.env|Math\.random|\bfetch\s*\(|\bseed\b|\bregime\b|futureEvents|rawTx|approve/);
+  assert.deepEqual([...source.matchAll(/ctx\.publicClient\.(\w+)/g)].map(m => m[1]), ["getBlock"]);
+  assert.doesNotMatch(source, /ctx\.(?:submit|config|agentId|address|latestObservation)/);
   assert.doesNotMatch(source, /from ["'].*(?:multi-arb|clean-arb|xb-core)/);
   let touches = 0;
   const ctx = new Proxy({}, { get() { touches++; throw Error("context access"); } }) as AgentContext;

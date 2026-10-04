@@ -16,6 +16,9 @@ const evidence = mkdtempSync(join(tmpdir(), "xb-r-red-controls-"));
 const digest = s => createHash("sha256").update(s).digest("hex");
 writeFileSync(join(evidence, "agent-original.ts"), original);
 const controls = [
+  ["LIVE-unscoped-oracle", "LIVE replay block", "p, execution?.bids);", "p, undefined);"],
+  ["LIVE-own-bid", "LIVE R4 scopes bids", "tx.from.toLowerCase() === obs.agentAddress.toLowerCase()", "false"],
+  ["LIVE-total-deadline", "LIVE deadline includes", "execution?.started ?? now()", "now()"],
   ["R1-priority", "R1 selects a funded bundle", "const priority = p.R1_BUNDLE_PRIORITY", "const priority = false"],
   ["R1-cooldown", "R1 bundle ignores cooldown", "(!p.R1_BUNDLE_PRIORITY && cooling.has(m.base))", "cooling.has(m.base)"],
   ["R2-size", "R2 balance floor raises size", "floor ? Math.max(depthTarget, balanceTarget) : depthTarget", "depthTarget"],
@@ -42,22 +45,28 @@ function run(label, pattern) {
   writeFileSync(join(evidence, `${label}.log`), log);
   return { result, log };
 }
+function expectRed(label, pattern, mutated) {
+  writeFileSync(sourcePath, mutated);
+  let result, log;
+  try { ({ result, log } = run(label, pattern)); }
+  finally { writeFileSync(sourcePath, original); }
+  assert.equal(result.error, undefined, `${label}: infrastructure error`);
+  assert.equal(result.status, 1, `${label}: mutant must exit 1`);
+  assert.match(log, /ERR_ASSERTION/, `${label}: must fail an assertion, not loading or syntax`);
+  assert.match(log, new RegExp(`not ok \\d+ - ${pattern}`), `${label}: expected named test failed`);
+  const fail = Number(log.match(/^# fail (\d+)/m)?.[1]);
+  const pass = Number(log.match(/^# pass (\d+)/m)?.[1]);
+  assert.equal(digest(readFileSync(sourcePath, "utf8")), digest(original));
+  records.push({ label, exit: result.status, pass, fail, restored: true });
+  console.log(`RED ${label}: exit=${result.status}, pass=${pass}, fail=${fail}; source restored`);
+}
 try {
+  const previous = spawnSync("git", ["show", "a042a70:example/agents/xb-r/agent.ts"], { cwd: root, encoding: "utf8" });
+  assert.equal(previous.status, 0, "load the exact diagnosed source without changing git state");
+  expectRed("LIVE-original-a042a70", "LIVE replay block", previous.stdout);
   for (const [label, pattern, from, to] of controls) {
     assert.equal(original.split(from).length, 2, `${label}: unique mutation anchor`);
-    writeFileSync(sourcePath, original.replace(from, to));
-    let result, log;
-    try { ({ result, log } = run(label, pattern)); }
-    finally { writeFileSync(sourcePath, original); }
-    assert.equal(result.error, undefined, `${label}: infrastructure error`);
-    assert.equal(result.status, 1, `${label}: mutant must exit 1`);
-    assert.match(log, /ERR_ASSERTION/, `${label}: must fail an assertion, not loading or syntax`);
-    assert.match(log, new RegExp(`not ok \\d+ - ${pattern}`), `${label}: expected named test failed`);
-    const fail = Number(log.match(/^# fail (\d+)/m)?.[1]);
-    const pass = Number(log.match(/^# pass (\d+)/m)?.[1]);
-    assert.equal(digest(readFileSync(sourcePath, "utf8")), digest(original));
-    records.push({ label, exit: result.status, pass, fail, restored: true });
-    console.log(`RED ${label}: exit=${result.status}, pass=${pass}, fail=${fail}; source restored`);
+    expectRed(label, pattern, original.replace(from, to));
   }
 } finally {
   writeFileSync(sourcePath, original);

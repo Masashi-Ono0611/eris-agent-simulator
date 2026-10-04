@@ -1,7 +1,8 @@
 # xb-r v1 — Q0 blocker repair candidate
 
-Implementation candidate only. No chain performance has been measured and no
-Q0, F_ref, P or mean-T pass is claimed. The qualification contract, reference
+Implementation candidate only. The a042a70 diagnostic made no trades; this
+repair has only local replay validation. No Q0, F_ref, P or mean-T pass is
+claimed. The qualification contract, reference
 roster and pass criteria are unchanged. Work is confined to league-v2; no
 upstream-eval code, inputs or HEAD were changed. No commit was made.
 
@@ -10,8 +11,8 @@ upstream-eval code, inputs or HEAD were changed. No commit was made.
 The parent is **xb-core V0**, itself derived from sonnet-1. Market decoding,
 WBTC dust normalization, published inventory anchors, the depth model,
 portfolio cap, bundle haircut, sell-leg sizing and fixed gas estimates come
-from that lineage. The only runtime import is the existing
-`../lib/affordable.js` (`balanceOf` and `canFund`); SDK imports are type-only.
+from that lineage. Runtime imports are the existing `../lib/affordable.js`
+(`balanceOf` and `canFund`) and the SDK's public deployment routing constants.
 The copied helpers are local to xb-r so the one-agent bundler need not include
 the sibling xb-core directory. Existing xb-core and V0–V7 are unchanged.
 
@@ -36,8 +37,11 @@ from multi-arb are:
 Only WETH/WBTC on Uniswap, Balancer and Curve are eligible. Liquity, launch,
 GMX, DAI and all other specialty operations are OFF, including inherited eUSD
 recovery and native collateral wrapping. No approval or runtime code is changed.
-There is no agent RPC, environment, random, future-event, regime, seed or
-candidate-ID input. `runId` is compared only to reset state.
+The live wrapper makes one bounded, read-only `getBlock` call at the observed
+block to scope competition bids. There is no direct environment, random,
+future-event, regime, seed or candidate-ID input. The SDK resolves deployment
+addresses exactly as it does when building transactions. `runId` is compared
+only to reset state.
 
 ## Factors and defaults
 
@@ -52,7 +56,7 @@ not equivalent to parent xb-core V0.
 | R1_BUNDLE_PRIORITY | Try admissible bundles before singles; bundles ignore per-base cooldown; singles require restoration or large edge | Rank all candidates by net profit, apply cooldown to both, ordinary entry is enough for singles |
 | R2_BALANCE_FLOOR | Desired size is max(depth target, balance target) | Use the V0 depth target alone |
 | R3_ENTRY_ONLY | Entry uses ENTRY_BPS; never subtract that margin from economic edge | Sonnet-style 60bps entry and another 60bps deduction from sizing/profit edge |
-| R4_COMPETITOR_BID | Competitor + 0.1 gwei, subject to floor and V0 budget; reject unaffordable target | V0 floor-plus-budget bid, still subject to net-profit and native reserve checks |
+| R4_COMPETITOR_BID | Competitor at the candidate's execution targets + 0.1 gwei, subject to floor and V0 budget; reject unaffordable target | V0 floor-plus-budget bid, still subject to net-profit and native reserve checks |
 | R5_PROFITABLE_RESTORE | Last four blocks may restore toward the anchor if profitable, bypassing single cooldown | Hold during the last four blocks |
 | ENTRY_BPS | 50; configurable as 45 or 50, strict fee-adjusted comparison | Independent of the R3-off historical diagnostic |
 | SINGLE_EDGE_BPS | 100, strict comparison for non-restoring singles | Still bounded by the inventory band |
@@ -97,7 +101,16 @@ is 50 USDC and the net-profit dust limit is 0.05 USDC.
 For each candidate, V0's same-input bid bound is the effective default floor
 plus an extra costing at most 10% of estimated gross profit, clipped to the
 runtime ceiling. R4 requires `max(floor, competitor + 0.1 gwei)` to fit that
-bound. If it does not, the candidate is skipped. "No higher than V0" here
+bound. The live wrapper measures that competitor from calls to the candidate's
+router/vault/pools, including direct pool calls and reverted transactions,
+excluding only its own sender. Router/vault bids are conservatively shared
+across bases; bundles take the maximum over both legs. This does not use logged
+owner labels or hard-coded oracle addresses/fees. Other contracts' internal
+calls are not trace-resolved. If the read fails, is incomplete, returns a
+different block, or exceeds 750ms, the original aggregate is retained; an
+unknown candidate route also retains it. No competitor is inferred from a
+zero revert rate or a missing own txIndex. The 4,000ms deadline includes the
+read. If the target does not fit the budget, the candidate is skipped. "No higher than V0" here
 compares the same candidate profit and gas inputs, not different-sized trades.
 The total sent fee, **including the default floor**, is deducted once in the
 net calculation. Under the simulator's zero-base-fee assumption, gas and
@@ -125,7 +138,27 @@ blocks. Even endgame restoration must pass entry, net-profit, bid and funding
 checks. Slippage stays **80bps** for every leg, unchanged from xb-core; no
 zero-profit 150bps forced-sale path exists.
 
-## Local validation record
+## dev1 emergency repair validation (2026-10-04)
+
+The run's aggregate competitor fee was the oracle's 6 gwei, while the actual
+runtime ceiling was 5 gwei (`economicGas: false`). Thus R4's 6.1 gwei target
+could never pass. Synthetic fixtures used a 0.1 gwei rival and 10 gwei ceiling,
+so the original 101 tests did not expose this observation mismatch.
+
+See [the diagnosis and gate values](../../../ascon-notes/league/XB-R-DEV1-DEBUG-2026-10-04.md)
+and [the three-block fixture](../../../test/fixtures/xb-r-dev1-calm-31001.json).
+The full Observation was not logged: the fixture explicitly reconstructs
+available fields, omits unknown Uniswap liquidity, and projects logged methods
+onto the current SDK routing for the RPC stub. It is not a raw snapshot or a
+counterfactual chain replay. Balancer/Curve genuinely omit reserves in observe().
+
+Current local result: typecheck and strategy static check pass; **112 xb tests
+pass** (the original 101 plus 11). The red-control script checks the exact
+`a042a70` source against the replay assertions (3 failures), then 18 mutations
+(15 existing, 3 new), restores source by SHA-256 after every control, and reruns
+all 112 tests green. No full npm test, commit, upstream-eval write or chain run.
+
+## Initial validation record (a042a70)
 
 Commands executed after restoring all source mutations:
 

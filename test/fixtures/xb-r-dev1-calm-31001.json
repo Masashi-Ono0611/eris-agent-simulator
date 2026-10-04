@@ -1,0 +1,1333 @@
+{
+  "source": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/runs/2026-10-04T04-46-54-248Z",
+  "kind": "log-derived observation reconstruction, NOT a captured AgentObservation",
+  "limitations": [
+    "market.json is post-run, pinned by block, rounded to 6 decimals; the original runtime snapshot was not saved",
+    "Uniswap liquidity was not saved; omitted (existing 300000 USD fallback), never substitute total pool depthUsd for in-range liquidity",
+    "Balancer/Curve observe() exposes no reserves: their existing 300000 USD fallback is the runtime behavior",
+    "balances from manifest endowment; cand submitted zero trades; startup approval gas not recorded in these logs",
+    "transactions preserve logged sender, method, bid, and receipt-derived base; test RPC maps these to current SDK destinations, NOT captured raw tx.to/calldata"
+  ],
+  "sha256": {
+    "market.json": "3fca56b38bbc54f8e3d4d207a85bd6f1c871f5a46f1fe72072e1df19b2cfd53e",
+    "blocks.csv": "a1f74da8af8b7f322c651889d02fba9e365ef0f740ebe1cbb1576e484ac4b56b",
+    "manifest.json": "82ec48db47415f78a8a4a8aa99500a77e61e7d4224ea97c5a24b88fe03ee16a0",
+    "agents/cand.jsonl": "5ac291d910a0b34fd85ea71a6cafa64d52303b1ee4a95159ef8de4e736b6ad71",
+    "agents/multi-arb.jsonl": "52fd1874d5ea7251dfbe042522133f09f8d8fddd29a6e5f2f3042039f7ce7d3a",
+    "agents/clean-arb.jsonl": "3bded84437ff94386927c7de189006f021c4daf24cf1abdde7d2c114584a0d04"
+  },
+  "frames": [
+    {
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T04-46-54-248Z",
+        "round": 1302,
+        "blockNumber": "1302",
+        "blocksRemaining": 344,
+        "agentAddress": "0x1c71a3ec70bd251a3ee4d390574e03EcA56dABde",
+        "fairPriceUsdcPerWeth": 3008.001315,
+        "fairPricesUsd": {
+          "WETH": 3008.001315,
+          "WBTC": 59603.235418
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WETH": "8000000000000000000",
+          "WBTC": "40000000"
+        },
+        "oraclePrices": {
+          "wethUsd": 3008.001315,
+          "usdcUsd": 1
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve",
+          "gmx",
+          "aave",
+          "lst",
+          "liquity"
+        ],
+        "balances": {
+          "ethWei": "1000000000000000000",
+          "wethWei": "8000000000000000000",
+          "usdcUnits": "25000000000"
+        },
+        "inventory": {
+          "eth": 1,
+          "weth": 8,
+          "usdc": 25000,
+          "valueUsdc": 75913.3060022
+        },
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000",
+          "maxBlockPriorityFeeWei": "6000000000",
+          "lastTxIndex": null,
+          "recentRevertRate": 0,
+          "recentSampleSize": 0
+        },
+        "protocols": {
+          "uniswap": {
+            "positions": [],
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59944.946131,
+                "pair": "WBTC/USDC",
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "pool": {
+              "priceUsdcPerWeth": 3003.952731,
+              "pair": "WETH/USDC",
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            }
+          },
+          "balancer": {
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 61152.818301,
+                "buyPriceUsdcPerWeth": 61459.994738,
+                "sellPriceUsdcPerWeth": 60847.17713,
+                "effectiveHalfSpreadBps": 50.23095335634275
+              }
+            },
+            "priceUsdcPerWeth": 3005.676689,
+            "buyPriceUsdcPerWeth": 3015.021241,
+            "sellPriceUsdcPerWeth": 2996.3611,
+            "effectiveHalfSpreadBps": 31.089675963780206
+          },
+          "curve": {
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59966.232185,
+                "buyPriceUsdcPerWeth": 60140.997243,
+                "sellPriceUsdcPerWeth": 59791.97498,
+                "effectiveHalfSpreadBps": 29.143911825608715
+              }
+            },
+            "priceUsdcPerWeth": 3000.970457,
+            "buyPriceUsdcPerWeth": 3009.004494,
+            "sellPriceUsdcPerWeth": 2992.95787,
+            "effectiveHalfSpreadBps": 26.7714645983963
+          }
+        }
+      },
+      "candDecision": {
+        "ts": "2026-10-04T04:47:35.918Z",
+        "agentId": "cand",
+        "round": 1302,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "transactions": [
+        {
+          "hash": "0x7823f72554a11612903bfd0a154e4bda96c708ea6fa25e48e94e9218e073695d",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setPrice",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xb6181f8c97b6b5c6732bab1ab6d143d06ab8ff36026f8ff783e7d276eb822769",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setPriceFor",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x6fa9dd86275999297cf329ef9ac7bddb5534ceea3865b1cf58984c26588619da",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xdb52ac363f3b181a6d93f2b822da3e240f07f5673bf4a1905d0dc3a9364ad24b",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x0e2adde141273abe01bb19b3e0374879659ffbfb086933eea2fa547a28fe3aec",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x1403f8dcf00accbf3ef9476429f4e3683d269d7efd6cfd63c36bfe886b8fa446",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x0a627332887ba57a0bc0d297cec586d9dd73f43897324fe675c0a3d8256b7c70",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x25daca74033935ea44b20b4d64d9e536a34f5ec668d35d207e1ab9b6bf53eba0",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x87c212ff530ee6fd9e21ae72493818357fd87ca157deb5bddd85a18bcc2ccb57",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xb6f66b98df66ad38e8a61bdbdb8aa9379aa275f0acc0b26a036683474cb02abe",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "accrueRewards",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xc17e3300dd9e92405435817dcc377e8cb0cad62c4734bc483fcf4b2c7a00c13c",
+          "from": "0x6acec4d3cfd1d72600922262997f5b6a41d5c79a",
+          "priorityFeeWei": "198000000",
+          "method": "exchange",
+          "ownerId": "flow-curve:informed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x6cb3722b4de664c2a03551bc3aa04c1826e95c107a8a063e15a7144c93a368db",
+          "from": "0x8afe08a4416df2da8dbff853e91559de70899d7b",
+          "priorityFeeWei": "188000000",
+          "method": "exactInputSingle",
+          "ownerId": "flow-uniswap:informed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x0bc2d92ec8ca65213e04849f664bdbf197b769d1de90ac7bb309c8d267f4c906",
+          "from": "0xa83e1c929a58857197e2cc31b9ba62844044e885",
+          "priorityFeeWei": "164000000",
+          "method": "swap",
+          "ownerId": "flow-balancer:informed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x75d2c21583fc97053da9d1632027ea2a459b9d9f24489b38bebd9d02d58a0b7a",
+          "from": "0x85669603fa81eba82b44bf9a01f1143208348fe6",
+          "priorityFeeWei": "149000000",
+          "method": "exchange",
+          "ownerId": "flow-curve:uninformed",
+          "receiptBase": "WETH"
+        },
+        {
+          "hash": "0x958086451909a0965af8df9a51d157086225ebe52898f18491ae94790a5f8691",
+          "from": "0x23b04e254a7ede00efa4d87d9047cb7b8c11f0b7",
+          "priorityFeeWei": "144000000",
+          "method": "multicall",
+          "ownerId": "flow-gmx:uninformed"
+        },
+        {
+          "hash": "0xff59619880917043460d6c416ddb74ee7ab6c3e8e8b48189b41b422e75228710",
+          "from": "0x7facd2efe8a8c19290e0909e8c2192b447bd1491",
+          "priorityFeeWei": "140000000",
+          "method": "swap",
+          "ownerId": "flow-balancer:uninformed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x706dd182f7341edaa8b1b70c19a6c89ad02e01b35bc744d14e2cea8e55777331",
+          "from": "0x1a5c37d60423c4137419bcc991a9aa4a3148c9df",
+          "priorityFeeWei": "139000000",
+          "method": "borrow",
+          "ownerId": "flow-aave:actor3"
+        },
+        {
+          "hash": "0x6be3ba2657bb26f439a5f273741994624857a7b10dbeac8abedd21c7faa517ec",
+          "from": "0x1975ede4e151efe2fe1af7cf94a702b2383ae58e",
+          "priorityFeeWei": "130000000",
+          "method": "borrow",
+          "ownerId": "flow-aave:actor2"
+        },
+        {
+          "hash": "0x133608c22cdb95b8a70591b117f07f067252362c9c9c9ba8b4ab91d2f2d2a46f",
+          "from": "0x65297e2278466a03b5f3001b6f01d51335bb335a",
+          "priorityFeeWei": "129000000",
+          "method": "exactInputSingle",
+          "ownerId": "flow-uniswap:uninformed",
+          "receiptBase": "WETH"
+        },
+        {
+          "hash": "0x405c439ae3db7eeb45d23804b310368e66208d74c345047fda2c602cb9bca877",
+          "from": "0x6471e06de0d67450a2567499b7b94d540ca75b86",
+          "priorityFeeWei": "113000000",
+          "method": "borrow",
+          "ownerId": "flow-aave:actor0"
+        },
+        {
+          "hash": "0x392285b395bfcaff524f3aaec97e153b4f72018542d6deca61fd48434ab647fa",
+          "from": "0x85669603fa81eba82b44bf9a01f1143208348fe6",
+          "priorityFeeWei": "101000000",
+          "method": "exchange",
+          "ownerId": "flow-curve:uninformed",
+          "receiptBase": "WBTC"
+        }
+      ],
+      "referenceTrades": [
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:35.926Z",
+            "agentId": "multi-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0xc89d68a37a54c6d7344d3954afa33c037df160b3b4722a9bedd9170506f44c11",
+            "nonce": 32,
+            "priorityFeeWei": "100000000",
+            "actionType": "swap",
+            "protocol": "uniswap",
+            "amount": "2482971300",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1302:605fbc3c",
+            "bundleIndex": 0,
+            "blockSeen": 1302
+          },
+          "receipt": {
+            "round": "1303",
+            "blockNumber": "1303",
+            "txIndex": "24",
+            "hash": "0xc89d68a37a54c6d7344d3954afa33c037df160b3b4722a9bedd9170506f44c11",
+            "from": "0x66dc237aecb7b6678ff3ab5d881b44206c162851",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "multi-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "exactInputSingle",
+            "gasUsed": "103380",
+            "maxFeePerGasWei": "100000000"
+          }
+        },
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:35.938Z",
+            "agentId": "multi-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0x06c8746edb52df61b1370e02d7c04d6ffcb78fef122ff31de1c1ef4e2a50d066",
+            "nonce": 33,
+            "priorityFeeWei": "100000000",
+            "actionType": "balancerSwap",
+            "protocol": "balancer",
+            "amount": "4059244",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1302:605fbc3c",
+            "bundleIndex": 1,
+            "blockSeen": 1302
+          },
+          "receipt": {
+            "round": "1303",
+            "blockNumber": "1303",
+            "txIndex": "26",
+            "hash": "0x06c8746edb52df61b1370e02d7c04d6ffcb78fef122ff31de1c1ef4e2a50d066",
+            "from": "0x66dc237aecb7b6678ff3ab5d881b44206c162851",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "multi-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "swap",
+            "gasUsed": "96254",
+            "maxFeePerGasWei": "100000000"
+          }
+        },
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:35.925Z",
+            "agentId": "clean-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0x34bfb7df7dce384768e150772d8cfab36e78b20717a06d0bd8ae7cffe37c0fb5",
+            "nonce": 30,
+            "priorityFeeWei": "100000000",
+            "actionType": "swap",
+            "protocol": "uniswap",
+            "amount": "3062500000",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1302:7d08f137",
+            "bundleIndex": 0,
+            "blockSeen": 1302
+          },
+          "receipt": {
+            "round": "1303",
+            "blockNumber": "1303",
+            "txIndex": "23",
+            "hash": "0x34bfb7df7dce384768e150772d8cfab36e78b20717a06d0bd8ae7cffe37c0fb5",
+            "from": "0xb74f7ed0b049f6b9230b82dd597b2f45c2e8dcca",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "clean-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "exactInputSingle",
+            "gasUsed": "102398",
+            "maxFeePerGasWei": "100000000"
+          }
+        },
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:35.936Z",
+            "agentId": "clean-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0x1f552f83b2387b45b3073cfd422b1a71aecfbac017c6454e5e99cdc0c2eb29eb",
+            "nonce": 31,
+            "priorityFeeWei": "100000000",
+            "actionType": "balancerSwap",
+            "protocol": "balancer",
+            "amount": "5006677",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1302:7d08f137",
+            "bundleIndex": 1,
+            "blockSeen": 1302
+          },
+          "receipt": {
+            "round": "1303",
+            "blockNumber": "1303",
+            "txIndex": "25",
+            "hash": "0x1f552f83b2387b45b3073cfd422b1a71aecfbac017c6454e5e99cdc0c2eb29eb",
+            "from": "0xb74f7ed0b049f6b9230b82dd597b2f45c2e8dcca",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "clean-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "swap",
+            "gasUsed": "96254",
+            "maxFeePerGasWei": "100000000"
+          }
+        }
+      ]
+    },
+    {
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T04-46-54-248Z",
+        "round": 1303,
+        "blockNumber": "1303",
+        "blocksRemaining": 343,
+        "agentAddress": "0x1c71a3ec70bd251a3ee4d390574e03EcA56dABde",
+        "fairPriceUsdcPerWeth": 3013.136571,
+        "fairPricesUsd": {
+          "WETH": 3013.136571,
+          "WBTC": 59719.528317
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WETH": "8000000000000000000",
+          "WBTC": "40000000"
+        },
+        "oraclePrices": {
+          "wethUsd": 3013.136571,
+          "usdcUsd": 1
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve",
+          "gmx",
+          "aave",
+          "lst",
+          "liquity"
+        ],
+        "balances": {
+          "ethWei": "1000000000000000000",
+          "wethWei": "8000000000000000000",
+          "usdcUnits": "25000000000"
+        },
+        "inventory": {
+          "eth": 1,
+          "weth": 8,
+          "usdc": 25000,
+          "valueUsdc": 76006.0404658
+        },
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000",
+          "maxBlockPriorityFeeWei": "6000000000",
+          "lastTxIndex": null,
+          "recentRevertRate": 0,
+          "recentSampleSize": 0
+        },
+        "protocols": {
+          "uniswap": {
+            "positions": [],
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 60163.807987,
+                "pair": "WBTC/USDC",
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "pool": {
+              "priceUsdcPerWeth": 3006.570267,
+              "pair": "WETH/USDC",
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            }
+          },
+          "balancer": {
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 60880.871383,
+                "buyPriceUsdcPerWeth": 61186.409872,
+                "sellPriceUsdcPerWeth": 60576.85862,
+                "effectiveHalfSpreadBps": 50.186287195381766
+              }
+            },
+            "priceUsdcPerWeth": 3005.676689,
+            "buyPriceUsdcPerWeth": 3015.021241,
+            "sellPriceUsdcPerWeth": 2996.3611,
+            "effectiveHalfSpreadBps": 31.089675963780206
+          },
+          "curve": {
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59965.665613,
+                "buyPriceUsdcPerWeth": 60140.689135,
+                "sellPriceUsdcPerWeth": 59791.15145,
+                "effectiveHalfSpreadBps": 29.187289172598607
+              }
+            },
+            "priceUsdcPerWeth": 3000.979777,
+            "buyPriceUsdcPerWeth": 3009.01659,
+            "sellPriceUsdcPerWeth": 2992.96443,
+            "effectiveHalfSpreadBps": 26.780629657385813
+          }
+        }
+      },
+      "candDecision": {
+        "ts": "2026-10-04T04:47:37.927Z",
+        "agentId": "cand",
+        "round": 1303,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "transactions": [
+        {
+          "hash": "0x0967a3a07736a0200d1de34c59d3ce4401fe71cfd56a0c385908a57948dcf007",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setPrice",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xcc17841fc6dfad0cfcf7d94f3fe5608e07ebe4e94ef2f57cf86ad605ab564b81",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setPriceFor",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xeb9c68d5d3407bfe3dc7a9b1987eba06709c0d60fc7c2824bd6b35351049023f",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xf381b0fde9df46c9b96934bd3eb1871a6ebda717ec7cf8368a26da8ec4ba6ee6",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xdb466c6379f2e8cbf6c2edd1a47f4943994ecc94098fff21fb8cd5f38ad067e3",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x93f29e37fa0ee593761bdf4efa9362e093aaa47b2cb5141f9a3343225a7c4a6c",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xcf1371fb82c881daef69b4af54e843b493aa85fc69da5a21c14a21e4d5e284d6",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x05d1f4b7376b8aecaa665a32bf80d93289418dd598ee01a4f22397bd4a2de12f",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x714bc0ddfaedb605cc74eda8a0e45f23d49452b8392f7c108bc7fafeece1d71a",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x24d5c01009f32baa603c9613f99310a9905f518c34a6c773be8beb6d135b5d82",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "accrueRewards",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x2c7aa1a9ebe55bbf75e306fb7f2e5a11e071373c3dbeebeabbccdf17e96f09b7",
+          "from": "0xfb72a6aafe152a7489da79722ed128bd9df40d74",
+          "priorityFeeWei": "5500000000",
+          "method": "",
+          "ownerId": "keeper"
+        },
+        {
+          "hash": "0x29b7ab0c1bb681538af49d4ff366f8282f96e69befd11b820bab11d933f8f30e",
+          "from": "0x6acec4d3cfd1d72600922262997f5b6a41d5c79a",
+          "priorityFeeWei": "187000000",
+          "method": "exchange",
+          "ownerId": "flow-curve:informed",
+          "receiptBase": "WETH"
+        },
+        {
+          "hash": "0x1c5743f019fc200d3898d2ed24610b6132289f9546d13c5a369bbaf0c30a02d9",
+          "from": "0x6acec4d3cfd1d72600922262997f5b6a41d5c79a",
+          "priorityFeeWei": "179000000",
+          "method": "exchange",
+          "ownerId": "flow-curve:informed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x82a38e8e305f27f85d1033fece8cbb6078b8da0b71017a1ebf0062d8480ff1fa",
+          "from": "0x8afe08a4416df2da8dbff853e91559de70899d7b",
+          "priorityFeeWei": "164000000",
+          "method": "exactInputSingle",
+          "ownerId": "flow-uniswap:informed",
+          "receiptBase": "WETH"
+        },
+        {
+          "hash": "0xc2047fe9e07e0ba284bbdb116e66003650b6e32ef1165ef821d184b3284c2e4d",
+          "from": "0x8afe08a4416df2da8dbff853e91559de70899d7b",
+          "priorityFeeWei": "161000000",
+          "method": "exactInputSingle",
+          "ownerId": "flow-uniswap:informed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0xd6c8999ba0748781de5d259afb9dafc3b75dfb20d1993e29a71411bc601db11a",
+          "from": "0xa83e1c929a58857197e2cc31b9ba62844044e885",
+          "priorityFeeWei": "156000000",
+          "method": "swap",
+          "ownerId": "flow-balancer:informed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x78097acc6309816586cb8ae21d7767e9680577b4f16ee201c5d2f685d21665fa",
+          "from": "0x1a5c37d60423c4137419bcc991a9aa4a3148c9df",
+          "priorityFeeWei": "137000000",
+          "method": "repay",
+          "ownerId": "flow-aave:actor3"
+        },
+        {
+          "hash": "0xecc043cdfad0be901601e8b233e3bcad4078bccf458e7739b8b1d373884714b6",
+          "from": "0x85669603fa81eba82b44bf9a01f1143208348fe6",
+          "priorityFeeWei": "132000000",
+          "method": "exchange",
+          "ownerId": "flow-curve:uninformed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x6637e119271b53ecd4ff8f4ec5354b4d93166ea5df3c9a42fcc0190bb5a93400",
+          "from": "0x6471e06de0d67450a2567499b7b94d540ca75b86",
+          "priorityFeeWei": "127000000",
+          "method": "repay",
+          "ownerId": "flow-aave:actor0"
+        },
+        {
+          "hash": "0xf09628b8da8591ea36cef4958bf33175ee9b4b49dab10e6014c6fb6d66fe0296",
+          "from": "0x85669603fa81eba82b44bf9a01f1143208348fe6",
+          "priorityFeeWei": "121000000",
+          "method": "exchange",
+          "ownerId": "flow-curve:uninformed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x8b02fcddb6850967d49365e4b7d314934ee9a8405b494ee7ba74dd4b50c8c59c",
+          "from": "0x23b04e254a7ede00efa4d87d9047cb7b8c11f0b7",
+          "priorityFeeWei": "117000000",
+          "method": "multicall",
+          "ownerId": "flow-gmx:uninformed"
+        },
+        {
+          "hash": "0xff06f239a1dee6f8fd297a6f59118e6e11c507e1fafd74b4294cf9a6cef13d80",
+          "from": "0x65b9d5e7d2a769e981f8dedd132b80db699751e1",
+          "priorityFeeWei": "112000000",
+          "method": "borrow",
+          "ownerId": "flow-aave:actor1"
+        },
+        {
+          "hash": "0xa3ed2093d0a72825742e3f265174db24280fb34aba85d36c53e381e98a95d5ae",
+          "from": "0x65297e2278466a03b5f3001b6f01d51335bb335a",
+          "priorityFeeWei": "109000000",
+          "method": "exactInputSingle",
+          "ownerId": "flow-uniswap:uninformed",
+          "receiptBase": "WETH"
+        },
+        {
+          "hash": "0x34bfb7df7dce384768e150772d8cfab36e78b20717a06d0bd8ae7cffe37c0fb5",
+          "from": "0xb74f7ed0b049f6b9230b82dd597b2f45c2e8dcca",
+          "priorityFeeWei": "100000000",
+          "method": "exactInputSingle",
+          "ownerId": "clean-arb",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0xc89d68a37a54c6d7344d3954afa33c037df160b3b4722a9bedd9170506f44c11",
+          "from": "0x66dc237aecb7b6678ff3ab5d881b44206c162851",
+          "priorityFeeWei": "100000000",
+          "method": "exactInputSingle",
+          "ownerId": "multi-arb",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x1f552f83b2387b45b3073cfd422b1a71aecfbac017c6454e5e99cdc0c2eb29eb",
+          "from": "0xb74f7ed0b049f6b9230b82dd597b2f45c2e8dcca",
+          "priorityFeeWei": "100000000",
+          "method": "swap",
+          "ownerId": "clean-arb",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x06c8746edb52df61b1370e02d7c04d6ffcb78fef122ff31de1c1ef4e2a50d066",
+          "from": "0x66dc237aecb7b6678ff3ab5d881b44206c162851",
+          "priorityFeeWei": "100000000",
+          "method": "swap",
+          "ownerId": "multi-arb",
+          "receiptBase": "WBTC"
+        }
+      ],
+      "referenceTrades": [
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:37.934Z",
+            "agentId": "multi-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0x5939d60c8829386749ebbab2ceb53b2b5400a27fa4a67fbaee4a8089808a727a",
+            "nonce": 34,
+            "priorityFeeWei": "100000000",
+            "actionType": "curveSwap",
+            "protocol": "curve",
+            "amount": "807699024",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1303:1eeef27f",
+            "bundleIndex": 0,
+            "blockSeen": 1303
+          },
+          "receipt": {
+            "round": "1304",
+            "blockNumber": "1304",
+            "txIndex": "20",
+            "hash": "0x5939d60c8829386749ebbab2ceb53b2b5400a27fa4a67fbaee4a8089808a727a",
+            "from": "0x66dc237aecb7b6678ff3ab5d881b44206c162851",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "multi-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "exchange",
+            "gasUsed": "136462",
+            "maxFeePerGasWei": "100000000"
+          }
+        },
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:37.944Z",
+            "agentId": "multi-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0x2787bfbfa1efda75c9d31f8e475a8be432ac2f24b609f549c2fb0ed763883abc",
+            "nonce": 35,
+            "priorityFeeWei": "100000000",
+            "actionType": "balancerSwap",
+            "protocol": "balancer",
+            "amount": "1319997",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1303:1eeef27f",
+            "bundleIndex": 1,
+            "blockSeen": 1303
+          },
+          "receipt": {
+            "round": "1304",
+            "blockNumber": "1304",
+            "txIndex": "22",
+            "hash": "0x2787bfbfa1efda75c9d31f8e475a8be432ac2f24b609f549c2fb0ed763883abc",
+            "from": "0x66dc237aecb7b6678ff3ab5d881b44206c162851",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "multi-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "swap",
+            "gasUsed": "96254",
+            "maxFeePerGasWei": "100000000"
+          }
+        },
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:37.928Z",
+            "agentId": "clean-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0xb718f2fbb94ac400ca25140c2b39ec78a51c88bde5690550d288303d8eaec08e",
+            "nonce": 32,
+            "priorityFeeWei": "100000000",
+            "actionType": "curveSwap",
+            "protocol": "curve",
+            "amount": "659591425",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1303:c6139d1a",
+            "bundleIndex": 0,
+            "blockSeen": 1303
+          },
+          "receipt": {
+            "round": "1304",
+            "blockNumber": "1304",
+            "txIndex": "19",
+            "hash": "0xb718f2fbb94ac400ca25140c2b39ec78a51c88bde5690550d288303d8eaec08e",
+            "from": "0xb74f7ed0b049f6b9230b82dd597b2f45c2e8dcca",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "clean-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "exchange",
+            "gasUsed": "136462",
+            "maxFeePerGasWei": "100000000"
+          }
+        },
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:37.939Z",
+            "agentId": "clean-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0x25cd6f52a735958a5f75f02232a273786cf764e71b1a7adb9d2a72c69af99935",
+            "nonce": 33,
+            "priorityFeeWei": "100000000",
+            "actionType": "balancerSwap",
+            "protocol": "balancer",
+            "amount": "1077949",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1303:c6139d1a",
+            "bundleIndex": 1,
+            "blockSeen": 1303
+          },
+          "receipt": {
+            "round": "1304",
+            "blockNumber": "1304",
+            "txIndex": "21",
+            "hash": "0x25cd6f52a735958a5f75f02232a273786cf764e71b1a7adb9d2a72c69af99935",
+            "from": "0xb74f7ed0b049f6b9230b82dd597b2f45c2e8dcca",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "clean-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "swap",
+            "gasUsed": "96254",
+            "maxFeePerGasWei": "100000000"
+          }
+        }
+      ]
+    },
+    {
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T04-46-54-248Z",
+        "round": 1304,
+        "blockNumber": "1304",
+        "blocksRemaining": 342,
+        "agentAddress": "0x1c71a3ec70bd251a3ee4d390574e03EcA56dABde",
+        "fairPriceUsdcPerWeth": 3015.291777,
+        "fairPricesUsd": {
+          "WETH": 3015.291777,
+          "WBTC": 59546.51085
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WETH": "8000000000000000000",
+          "WBTC": "40000000"
+        },
+        "oraclePrices": {
+          "wethUsd": 3015.291777,
+          "usdcUsd": 1
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve",
+          "gmx",
+          "aave",
+          "lst",
+          "liquity"
+        ],
+        "balances": {
+          "ethWei": "1000000000000000000",
+          "wethWei": "8000000000000000000",
+          "usdcUnits": "25000000000"
+        },
+        "inventory": {
+          "eth": 1,
+          "weth": 8,
+          "usdc": 25000,
+          "valueUsdc": 75956.230333
+        },
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000",
+          "maxBlockPriorityFeeWei": "6000000000",
+          "lastTxIndex": null,
+          "recentRevertRate": 0,
+          "recentSampleSize": 0
+        },
+        "protocols": {
+          "uniswap": {
+            "positions": [],
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 60130.185606,
+                "pair": "WBTC/USDC",
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "pool": {
+              "priceUsdcPerWeth": 3006.570267,
+              "pair": "WETH/USDC",
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            }
+          },
+          "balancer": {
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 60813.312774,
+                "buyPriceUsdcPerWeth": 61118.444305,
+                "sellPriceUsdcPerWeth": 60509.7046,
+                "effectiveHalfSpreadBps": 50.17512077903241
+              }
+            },
+            "priceUsdcPerWeth": 3005.73696,
+            "buyPriceUsdcPerWeth": 3015.081703,
+            "sellPriceUsdcPerWeth": 2996.42118,
+            "effectiveHalfSpreadBps": 31.0896890150536
+          },
+          "curve": {
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59970.984393,
+                "buyPriceUsdcPerWeth": 60143.588558,
+                "sellPriceUsdcPerWeth": 59798.87558,
+                "effectiveHalfSpreadBps": 28.781279203009547
+              }
+            },
+            "priceUsdcPerWeth": 3000.993875,
+            "buyPriceUsdcPerWeth": 3009.034877,
+            "sellPriceUsdcPerWeth": 2992.97436,
+            "effectiveHalfSpreadBps": 26.79446465426949
+          }
+        }
+      },
+      "candDecision": {
+        "ts": "2026-10-04T04:47:39.934Z",
+        "agentId": "cand",
+        "round": 1304,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "transactions": [
+        {
+          "hash": "0xb862471959df0cead02678e7c4cc7556fb9e8cd3b2f892a196674b1ce818aaeb",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setPrice",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xa885c23114636f904ac188819664bd50673cd1545ff9d96faaedefc1ccda69ff",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setPriceFor",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xd02626878f31c2c47038126e869945ec7e581ac625a1552905d61f01d9cc2ab7",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xe32bca88bda1e515b346866680d3e75b1a5a666ddad6d71bc2649d023b356569",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x018d1968567b63a012bca68b67e3bc01ddc6b4079adb4b45cd39d469574255fd",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x2cc29aaa02b1ec9388c6e1b28fde9ce0022dda2b6810880e929d97715e966328",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "setAnswer",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x3cad8fa90fc752124093988bfbbd7efcd78ab06a9d3cb09139ad70e30c14f47b",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xd75ee8f3c04c38bfe8919b6baa9e1c1d19cebeeeb75196fdd1ce3628bbca2ed6",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0x9bf70d72d3a4d832b6c75d7620076965397431edf827ee2fba10d8e8c58a0805",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xcf81f78f816e29a6e8b4dbb5d6b866d6e56a7d290200ef12c997e7a93e8b03f0",
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "priorityFeeWei": "6000000000",
+          "method": "accrueRewards",
+          "ownerId": "oracle"
+        },
+        {
+          "hash": "0xe1a48fddeab978946e22bf43b2a40bc12353bc4d7e4f1eaa672e9beedd39a16e",
+          "from": "0xfb72a6aafe152a7489da79722ed128bd9df40d74",
+          "priorityFeeWei": "5500000000",
+          "method": "",
+          "ownerId": "keeper"
+        },
+        {
+          "hash": "0xe51486a67876a5465c6c720bb587fb544f73937650ee89e2f728f0e62ee0785d",
+          "from": "0x6acec4d3cfd1d72600922262997f5b6a41d5c79a",
+          "priorityFeeWei": "191000000",
+          "method": "exchange",
+          "ownerId": "flow-curve:informed",
+          "receiptBase": "WETH"
+        },
+        {
+          "hash": "0xc5daf69d886622f884ab2a1c5dcb55580f660ce65b9ec91aea5c1d5503284e65",
+          "from": "0xa83e1c929a58857197e2cc31b9ba62844044e885",
+          "priorityFeeWei": "178000000",
+          "method": "swap",
+          "ownerId": "flow-balancer:informed",
+          "receiptBase": "WETH"
+        },
+        {
+          "hash": "0xac669f0f77798aa46a74a5713e76a226d421e4dea3ff6592388926aa5ffb934a",
+          "from": "0x8afe08a4416df2da8dbff853e91559de70899d7b",
+          "priorityFeeWei": "177000000",
+          "method": "exactInputSingle",
+          "ownerId": "flow-uniswap:informed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x74b667e4670f5831e7424822baa291dee86c2830e831db13cc382b0afaf8e3bb",
+          "from": "0x6acec4d3cfd1d72600922262997f5b6a41d5c79a",
+          "priorityFeeWei": "174000000",
+          "method": "exchange",
+          "ownerId": "flow-curve:informed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x0d9a554b3af2a2a98a68d92f7c396e8202172140d4a02a7426f690a3a110c439",
+          "from": "0xa83e1c929a58857197e2cc31b9ba62844044e885",
+          "priorityFeeWei": "162000000",
+          "method": "swap",
+          "ownerId": "flow-balancer:informed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x4c170c86e6d2f319122a19e08686b1c79042c25ff4d98ed7d87db82f3aa04a1d",
+          "from": "0x1975ede4e151efe2fe1af7cf94a702b2383ae58e",
+          "priorityFeeWei": "127000000",
+          "method": "borrow",
+          "ownerId": "flow-aave:actor2"
+        },
+        {
+          "hash": "0x20494d5a958a4329af6ea78996ddf1c4f08392eb5e80988d90cc16b985915fd2",
+          "from": "0x7facd2efe8a8c19290e0909e8c2192b447bd1491",
+          "priorityFeeWei": "120000000",
+          "method": "swap",
+          "ownerId": "flow-balancer:uninformed",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0xdff615360c6f843a3daf9eb98398b599782ffebbf685f209f1288bb41c1dcc9b",
+          "from": "0x23b04e254a7ede00efa4d87d9047cb7b8c11f0b7",
+          "priorityFeeWei": "116000000",
+          "method": "multicall",
+          "ownerId": "flow-gmx:uninformed"
+        },
+        {
+          "hash": "0xb718f2fbb94ac400ca25140c2b39ec78a51c88bde5690550d288303d8eaec08e",
+          "from": "0xb74f7ed0b049f6b9230b82dd597b2f45c2e8dcca",
+          "priorityFeeWei": "100000000",
+          "method": "exchange",
+          "ownerId": "clean-arb",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x5939d60c8829386749ebbab2ceb53b2b5400a27fa4a67fbaee4a8089808a727a",
+          "from": "0x66dc237aecb7b6678ff3ab5d881b44206c162851",
+          "priorityFeeWei": "100000000",
+          "method": "exchange",
+          "ownerId": "multi-arb",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x25cd6f52a735958a5f75f02232a273786cf764e71b1a7adb9d2a72c69af99935",
+          "from": "0xb74f7ed0b049f6b9230b82dd597b2f45c2e8dcca",
+          "priorityFeeWei": "100000000",
+          "method": "swap",
+          "ownerId": "clean-arb",
+          "receiptBase": "WBTC"
+        },
+        {
+          "hash": "0x2787bfbfa1efda75c9d31f8e475a8be432ac2f24b609f549c2fb0ed763883abc",
+          "from": "0x66dc237aecb7b6678ff3ab5d881b44206c162851",
+          "priorityFeeWei": "100000000",
+          "method": "swap",
+          "ownerId": "multi-arb",
+          "receiptBase": "WBTC"
+        }
+      ],
+      "referenceTrades": [
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:39.949Z",
+            "agentId": "multi-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0xe14fe982cac1d5a7448daed6b5af71e4d8fbdce86b12a1925443bf39f0a3ef09",
+            "nonce": 36,
+            "priorityFeeWei": "100000000",
+            "actionType": "curveSwap",
+            "protocol": "curve",
+            "amount": "435003749",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1304:18c13dcf",
+            "bundleIndex": 0,
+            "blockSeen": 1304
+          },
+          "receipt": {
+            "round": "1305",
+            "blockNumber": "1305",
+            "txIndex": "20",
+            "hash": "0xe14fe982cac1d5a7448daed6b5af71e4d8fbdce86b12a1925443bf39f0a3ef09",
+            "from": "0x66dc237aecb7b6678ff3ab5d881b44206c162851",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "multi-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "exchange",
+            "gasUsed": "136472",
+            "maxFeePerGasWei": "100000000"
+          }
+        },
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:39.960Z",
+            "agentId": "multi-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0x441bfcb0ad992b893426602cdd6bcd74a79855b446ce45e5bfcb4c36b018c3b9",
+            "nonce": 37,
+            "priorityFeeWei": "100000000",
+            "actionType": "balancerSwap",
+            "protocol": "balancer",
+            "amount": "710849",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1304:18c13dcf",
+            "bundleIndex": 1,
+            "blockSeen": 1304
+          },
+          "receipt": {
+            "round": "1305",
+            "blockNumber": "1305",
+            "txIndex": "22",
+            "hash": "0x441bfcb0ad992b893426602cdd6bcd74a79855b446ce45e5bfcb4c36b018c3b9",
+            "from": "0x66dc237aecb7b6678ff3ab5d881b44206c162851",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "multi-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "swap",
+            "gasUsed": "96254",
+            "maxFeePerGasWei": "100000000"
+          }
+        },
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:39.943Z",
+            "agentId": "clean-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0xde3854cf88e3b385d3521b857b0815c51da7774e8b1f1af163704c19a7ff4a61",
+            "nonce": 34,
+            "priorityFeeWei": "100000000",
+            "actionType": "curveSwap",
+            "protocol": "curve",
+            "amount": "624474857",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1304:85963db2",
+            "bundleIndex": 0,
+            "blockSeen": 1304
+          },
+          "receipt": {
+            "round": "1305",
+            "blockNumber": "1305",
+            "txIndex": "19",
+            "hash": "0xde3854cf88e3b385d3521b857b0815c51da7774e8b1f1af163704c19a7ff4a61",
+            "from": "0xb74f7ed0b049f6b9230b82dd597b2f45c2e8dcca",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "clean-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "exchange",
+            "gasUsed": "136462",
+            "maxFeePerGasWei": "100000000"
+          }
+        },
+        {
+          "submitted": {
+            "ts": "2026-10-04T04:47:39.954Z",
+            "agentId": "clean-arb",
+            "kind": "mempool",
+            "event": "submitted",
+            "hash": "0xe21ae9dce251fefe0d8f681bb7002915a2d8c96fbe206f0e37631dcfe0b78c28",
+            "nonce": 35,
+            "priorityFeeWei": "100000000",
+            "actionType": "balancerSwap",
+            "protocol": "balancer",
+            "amount": "1020469",
+            "base": "WBTC",
+            "bundleId": "2026-10-04T04-46-54-248Z:1304:85963db2",
+            "bundleIndex": 1,
+            "blockSeen": 1304
+          },
+          "receipt": {
+            "round": "1305",
+            "blockNumber": "1305",
+            "txIndex": "21",
+            "hash": "0xe21ae9dce251fefe0d8f681bb7002915a2d8c96fbe206f0e37631dcfe0b78c28",
+            "from": "0xb74f7ed0b049f6b9230b82dd597b2f45c2e8dcca",
+            "priorityFeeWei": "100000000",
+            "status": "success",
+            "ownerId": "clean-arb",
+            "role": "agent",
+            "actionType": "direct",
+            "bundleId": "",
+            "bundleIndex": "",
+            "method": "swap",
+            "gasUsed": "96254",
+            "maxFeePerGasWei": "100000000"
+          }
+        }
+      ]
+    }
+  ]
+}

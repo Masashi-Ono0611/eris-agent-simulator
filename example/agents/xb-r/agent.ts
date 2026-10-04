@@ -1,6 +1,7 @@
 // xb-r v1: spot-only repair of the sonnet-derived xb-core V0.
 // Market decoding and funding normalization below are copied from xb-core.
 import type { AgentContext, AgentObservation } from "@eris/sdk";
+import { BALANCER, MARKET_LEGS, UNISWAP } from "@eris/sdk/constants.js";
 import { balanceOf, canFund } from "../lib/affordable.js";
 
 export type Params = Readonly<{
@@ -195,9 +196,63 @@ export function reserveCandidate(obs: AgentObservation, c: Candidate): boolean {
   }
   return true;
 }
-export function selectCandidate(obs: AgentObservation, all: readonly Candidate[], p: Params = PARAMS): Action {
+type SpotBids = ReadonlyMap<string, bigint>;
+function candidateObservation(obs: AgentObservation, c: Candidate, bids?: SpotBids): AgentObservation {
+  if (!bids) return obs;
+  let rival = 0n;
+  for (const leg of c.action.type === "bundle" ? c.action.actions : [c.action]) {
+    // Router/vault calls are conservatively shared across bases. Curve has a
+    // separate pool per market. Count ALL calls to these execution targets,
+    // including direct pool calls, liquidity changes and reverted transactions.
+    const targets = leg.type === "swap" && MARKET_LEGS.uniswap[c.base]
+      ? [UNISWAP.swapRouter, MARKET_LEGS.uniswap[c.base].pool]
+      : leg.type === "balancerSwap" && MARKET_LEGS.balancer[c.base] ? [BALANCER.vault]
+      : leg.type === "curveSwap" && MARKET_LEGS.curve[c.base] ? [MARKET_LEGS.curve[c.base].pool] : undefined;
+    if (!targets) return obs; // Unknown route retains the aggregate conservative signal.
+    for (const target of targets) {
+      const fee = bids.get(target.toLowerCase()) ?? 0n;
+      if (fee > rival) rival = fee;
+    }
+  }
+  return { ...obs, competition: { maxBlockPriorityFeeWei: "0", lastTxIndex: null,
+    recentRevertRate: 0, recentSampleSize: 0, ...obs.competition,
+    maxCompetitorPriorityFeeWei: rival.toString() } };
+}
+
+// The SDK aggregate includes oracle/keeper transactions. Use one public,
+// block-pinned read to measure bids at the candidate's execution targets.
+// Never infer a competitor from sender identity, run metadata or a fixed fee.
+async function readSpotBids(obs: AgentObservation, ctx: AgentContext): Promise<SpotBids | undefined> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const block = await Promise.race([
+      ctx.publicClient.getBlock({ blockNumber: BigInt(obs.blockNumber), includeTransactions: true }),
+      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(Error("bid read deadline")), 750); }),
+    ]);
+    if (block.number !== BigInt(obs.blockNumber)) return undefined;
+    const bids = new Map<string, bigint>();
+    for (const tx of block.transactions) {
+      if (typeof tx === "string" || !/^0x[0-9a-f]{40}$/i.test(tx.from) ||
+          (tx.to !== null && !/^0x[0-9a-f]{40}$/i.test(tx.to))) return undefined;
+      const fee = tx.maxPriorityFeePerGas ?? tx.gasPrice;
+      if (typeof fee !== "bigint" || fee < 0n) return undefined;
+      if (tx.from.toLowerCase() === obs.agentAddress.toLowerCase() || tx.to === null) continue;
+      const target = tx.to.toLowerCase();
+      if (fee > (bids.get(target) ?? 0n)) bids.set(target, fee);
+    }
+    return bids;
+  } catch {
+    return undefined; // Failed/incomplete reads never turn into "no competitors".
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+export function selectCandidate(obs: AgentObservation, all: readonly Candidate[], p: Params = PARAMS,
+  bids?: SpotBids): Action {
   const ranked = all.map(c => {
-    const fee = bidWei(obs, c.profit, c.gas, p.R4_COMPETITOR_BID);
+    const bidObs = candidateObservation(obs, c, bids);
+    const fee = bidWei(bidObs, c.profit, c.gas, p.R4_COMPETITOR_BID);
     return { c, fee, net: netProfitUsd(obs, c, fee) };
   }).sort((a, b) => {
     const priority = p.R1_BUNDLE_PRIORITY
@@ -229,9 +284,10 @@ export function createAgent(params: Params = PARAMS, now: () => number = () => p
   validateParams(p);
   let run = "", lastBlock = -1, lastRemaining = Infinity;
   const lastSent = new Map<Base, number>();
-  return function decide(obs: AgentObservation, _ctx?: AgentContext): Action {
+  return function decide(obs: AgentObservation, _ctx?: AgentContext,
+    execution?: { started: number; bids: SpotBids | undefined }): Action {
     try {
-      const started = now(), block = Number(obs.blockNumber), left = remaining(obs);
+      const started = execution?.started ?? now(), block = Number(obs.blockNumber), left = remaining(obs);
       if (!Number.isSafeInteger(block) || block < 0) return noop("invalid block");
       if (run !== obs.runId || block < lastBlock || left > lastRemaining + 5) {
         run = obs.runId; lastBlock = -1; lastSent.clear();
@@ -242,7 +298,7 @@ export function createAgent(params: Params = PARAMS, now: () => number = () => p
       const cooling = new Set<Base>();
       for (const [base, at] of lastSent) if (block - at < 2) cooling.add(base);
       const all = enumerateCandidates(obs, p, cooling);
-      const action = selectCandidate(obs, all, p);
+      const action = selectCandidate(obs, all, p, execution?.bids);
       if (now() - started >= 4000) return noop("decision deadline reserve");
       if (action.type !== "noop") lastSent.set(action.base, block);
       return action;
@@ -251,4 +307,13 @@ export function createAgent(params: Params = PARAMS, now: () => number = () => p
     }
   };
 }
-export const decide = createAgent(PARAMS);
+export function createLiveAgent(params: Params = PARAMS, now: () => number = () => performance.now()) {
+  const p = Object.freeze({ ...params }), core = createAgent(p, now);
+  return async function decide(obs: AgentObservation, ctx?: AgentContext): Promise<Action> {
+    const started = now();
+    const bids = ctx && p.R4_COMPETITOR_BID && obs && remaining(obs) > 0
+      ? await readSpotBids(obs, ctx) : undefined;
+    return core(obs, undefined, { started, bids });
+  };
+}
+export const decide = createLiveAgent(PARAMS);
