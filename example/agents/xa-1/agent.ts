@@ -7,7 +7,7 @@ export type Params = Readonly<{ ENTRY_BPS: number }>;
 export const PARAMS: Params = Object.freeze({ ENTRY_BPS: 50 });
 export const POLICY = Object.freeze({
   maxHold: 6, entryLag: 2, exitBuffer: 4, minUsd: 50, maxUsd: 1000,
-  confirmationBlocks: 8,
+  confirmationBlocks: 8, recoveryObservations: 3,
   lossBps: 200, lossUsd: 20, epochLossUsd: 60, holdBpsPerBlock: 1,
   gasUnits: 200_000, slippageBps: 20, minProfit: 0.05,
 });
@@ -150,12 +150,19 @@ export type Lot = Plan & {
   id: number; quantity: bigint; entryGasWei: bigint; entryGasUsd: number;
   confirmedBlock: number;
 };
-type Pending = { phase: "entry" | "exit"; action: Action; before: Wallet; sentBlock: number; plan: Plan };
+type Pending = {
+  phase: "entry" | "exit"; action: Action; before: Wallet; sentBlock: number; plan: Plan;
+  match?: { wallet: Wallet; block: number };
+  quiet?: { wallet: Wallet; block: number; count: number; nonce: number };
+};
+// Public chain evidence, never inferred from a timeout or a submit error string.
+type NonceEvidence = { block: number; sentBlock: number; before: number; confirmed: number; pending: number };
 type Close = { id: number; cashIn: bigint; cashOut: bigint; gasWei: bigint; netUsd: number; heldBlocks: number };
 type State = {
   runId: string; lastBlock: number; initial?: Wallet; wallet?: Wallet;
   lot?: Lot; pending?: Pending; unresolved?: Pending; halt?: string; nextId: number;
   closed: number; realizedNet: number; lossSpent: number; lastClose?: Close;
+  recovered?: { sentBlock: number; block: number; phase: "entry" | "exit" };
 };
 function wallet(obs: AgentObservation): Wallet {
   const w = { USDC: balanceOf(obs, "USDC"), WETH: balanceOf(obs, "WETH"),
@@ -273,10 +280,17 @@ function exitLot(obs: AgentObservation, lot: Lot, initial: Wallet, bids?: SpotBi
   return options[0]?.action ?? noop("no budgeted liquid exit; new entries locked");
 }
 
-// Confirm the actual exact-input debit, positive proceeds, paid gas and untouched
-// other base. No tx hash is exposed by decide(); this is balance evidence, not a
-// fabricated receipt. A timeout moves the reservation into recovery-only
-// quarantine, NEVER back into spendable funds. Continue matching late fills.
+const abs = (n: bigint) => n < 0n ? -n : n;
+const sameWallet = (a: Wallet, b: Wallet) => Object.keys(a).every(k => a[k as keyof Wallet] === b[k as keyof Wallet]);
+// One part per million plus one native token unit, NOT the output quote/minOut.
+const debitMatches = (debit: bigint, amount: bigint) => debit > 0n && abs(debit - amount) <= amount / 1_000_000n + 1n;
+function clearConfirmationHalt(s: State): void {
+  if (s.halt === "confirmation deadline; recovery only" || s.halt === "ambiguous settlement or failed transaction") s.halt = undefined;
+}
+
+// Exact fills keep the one-observation fast path. Small debit/other-base dust
+// differences require two identical wallets on consecutive blocks. A split read
+// or missing gas leg waits without poisoning a later complete confirmation.
 function reconcile(s: State, obs: AgentObservation, w: Wallet): void {
   const pending = s.pending ?? s.unresolved;
   if (!pending) {
@@ -286,14 +300,19 @@ function reconcile(s: State, obs: AgentObservation, w: Wallet): void {
   }
   const { before, action, plan } = pending, base = plan.base, other = base === "WETH" ? "WBTC" : "WETH";
   const cash = w.USDC - before.USDC, qty = w[base] - before[base], gas = before.ETH - w.ETH;
-  if (cash === 0n && qty === 0n && gas === 0n && w[other] === before[other]) return;
-  const confirmed = gas > 0n && w[other] === before[other] &&
-    (pending.phase === "entry" ? cash === -BigInt(action.amountIn) && qty > 0n
-      : qty === -BigInt(action.amountIn) && cash > 0n);
-  if (!confirmed) { s.halt = "ambiguous settlement or failed transaction"; return; }
   const block = Number(obs.blockNumber);
+  const debit = pending.phase === "entry" ? -cash : -qty, amount = BigInt(action.amountIn);
+  const otherDust = other === "WBTC" ? 1n : 1000n;
+  const confirmed = gas > 0n && abs(w[other] - before[other]) <= otherDust &&
+    debitMatches(debit, amount) && (pending.phase === "entry" ? qty > 0n : cash > 0n);
+  if (!confirmed) { pending.match = undefined; return; }
+  const exact = debit === amount && w[other] === before[other];
+  const stable = pending.match?.block === block - 1 && sameWallet(pending.match.wallet, w);
+  pending.match = { wallet: { ...w }, block };
+  if (!exact && !stable) return;
+  clearConfirmationHalt(s);
   if (pending.phase === "entry") {
-    s.lot = { ...plan, id: s.nextId++, quantity: qty, entryGasWei: gas,
+    s.lot = { ...plan, cashIn: -cash, id: s.nextId++, quantity: qty, entryGasWei: gas,
       entryGasUsd: gasUsd(obs, gas), confirmedBlock: block,
       deadlineBlock: Math.min(plan.deadlineBlock, block + POLICY.maxHold) };
     if (gas > plan.reservedGas - plan.exitGas || qty > plan.reservedBase)
@@ -307,7 +326,60 @@ function reconcile(s: State, obs: AgentObservation, w: Wallet): void {
     if (netUsd < -lot.lossLimit || gas > lot.exitGas) s.halt = "realized loss or gas exceeded reservation";
     s.lot = undefined;
   }
+  if (BASES.some(b => w[b] < s.initial![b])) s.halt = "initial inventory deficit; recovery only";
   s.pending = undefined; s.unresolved = undefined; s.wallet = w;
+}
+
+// Balance stability alone cannot rule out an accepted but unmined transaction.
+// This uses the standard runtime's single serialized sender and the SAME node's
+// pending nonce: no gaps/second sender are allowed. Missing, stale or advancing
+// nonce evidence never releases funds. The runtime resets its nonce cache on a
+// failed send, so an unconsumed nonce is reused, not skipped, on resumption.
+function recover(s: State, obs: AgentObservation, w: Wallet, evidence?: NonceEvidence): boolean {
+  const p = s.unresolved;
+  if (!p) return false;
+  const block = Number(obs.blockNumber), gas = p.before.ETH - w.ETH;
+  const valid = evidence && evidence.block === block && evidence.sentBlock === p.sentBlock &&
+    [evidence.before, evidence.confirmed, evidence.pending].every(n => Number.isSafeInteger(n) && n >= 0) &&
+    evidence.pending === evidence.confirmed &&
+    ((evidence.confirmed === evidence.before && gas === 0n) ||
+      (evidence.confirmed === evidence.before + 1 && gas > 0n)) &&
+    w.USDC === p.before.USDC && BASES.every(b => w[b] === p.before[b]);
+  if (!valid) { p.quiet = undefined; return false; }
+  const prior = p.quiet;
+  p.quiet = { wallet: { ...w }, block, nonce: evidence.confirmed,
+    count: prior?.block === block - 1 && prior.nonce === evidence.confirmed && sameWallet(prior.wallet, w)
+      ? prior.count + 1 : 1 };
+  if (p.quiet.count < POLICY.recoveryObservations) return false;
+  // No token fill: rebuild the liquid ledger from observed balances. An exit
+  // leaves the unsold lot intact; never manufacture a close or sell its anchor.
+  s.wallet = { ...w }; s.pending = undefined; s.unresolved = undefined;
+  s.recovered = { sentBlock: p.sentBlock, block, phase: p.phase };
+  clearConfirmationHalt(s);
+  const cost = gasUsd(obs, gas);
+  // Failed exit gas belongs to the existing cycle and is booked on close once.
+  if (s.lot) { s.lot.entryGasWei += gas; s.lot.entryGasUsd += cost; }
+  else { s.realizedNet -= cost; s.lossSpent += cost; }
+  if (gas > (p.phase === "entry" ? p.plan.reservedGas - p.plan.exitGas : p.plan.exitGas) ||
+      s.lossSpent + (s.lot?.entryGasUsd ?? 0) >= POLICY.epochLossUsd) s.halt = "failed transaction gas or loss budget exceeded";
+  return true;
+}
+
+async function readRecoveryEvidence(obs: AgentObservation, ctx: AgentContext, p: Pending): Promise<NonceEvidence | undefined> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const address = obs.agentAddress as `0x${string}`;
+    const [before, confirmed, pending] = await Promise.race([
+      Promise.all([
+        ctx.publicClient.getTransactionCount({ address, blockNumber: BigInt(p.sentBlock) }),
+        ctx.publicClient.getTransactionCount({ address, blockNumber: BigInt(obs.blockNumber) }),
+        ctx.publicClient.getTransactionCount({ address, blockTag: "pending" }),
+      ]),
+      new Promise<never>((_, reject) => { timer = setTimeout(() => reject(Error("nonce read deadline")), 750); }),
+    ]);
+    return { block: Number(obs.blockNumber), sentBlock: p.sentBlock, before, confirmed, pending };
+  } catch { return undefined; }
+  finally { if (timer !== undefined) clearTimeout(timer); }
 }
 
 const freshState = (runId = ""): State => ({ runId, lastBlock: -1, nextId: 1, closed: 0, realizedNet: 0, lossSpent: 0 });
@@ -315,7 +387,7 @@ export function createAgent(params: Params = PARAMS) {
   const p = Object.freeze({ ...params }); validateParams(p);
   let s = freshState();
   const inspect = () => structuredClone(s);
-  const decide = (obs: AgentObservation, bids?: SpotBids): Action => {
+  const decide = (obs: AgentObservation, bids?: SpotBids, evidence?: NonceEvidence): Action => {
     try {
       const block = Number(obs.blockNumber);
       if (!Number.isSafeInteger(block) || block < 0 || !positive(ethPrice(obs))) return noop("invalid observation");
@@ -326,15 +398,16 @@ export function createAgent(params: Params = PARAMS) {
       if (!s.initial) { s.initial = { ...w }; s.wallet = { ...w }; }
       reconcile(s, obs, w);
       if (s.pending && block - s.pending.sentBlock >= POLICY.confirmationBlocks) {
-        // A failed RPC response is not proof that no tx exists. Keep its exact
-        // debit/proceeds baseline until a late fill can be identified. No new
-        // entry for this run; a confirmed late entry can still be liquidated.
+        // Quarantine first. Only a complete fill or repeated public nonce and
+        // balance evidence below can release it, never the clock alone.
         s.unresolved = s.pending; s.pending = undefined;
-        s.halt = "confirmation deadline; recovery only";
+        s.halt ??= "confirmation deadline; recovery only";
       }
+      const recovered = recover(s, obs, w, evidence);
       s.lastBlock = block;
       // Reconcile final-block fills before returning; no post-valuation orders.
       if (horizon(obs) <= 0) return noop("valuation boundary or unknown horizon");
+      if (recovered) return noop("confirmation recovered; ledger rebuilt; retry next block");
       if (s.pending) return noop("pending confirmation; both legs reserved");
       // In particular, never resell a lot whose exit may still be in flight.
       if (s.unresolved) return noop("confirmation unresolved; recovery only; both legs reserved");
@@ -357,8 +430,14 @@ export function createLiveAgent(params: Params = PARAMS) {
   const core = createAgent(params);
   let lastWallet = "";
   const decide = async (obs: AgentObservation, ctx?: AgentContext): Promise<Action> => {
-    const bids = ctx && obs && horizon(obs) > 0 ? await readSpotBids(obs, ctx) : undefined;
-    const action = core.decide(obs, bids);
+    const prior = core.inspect(), waiting = prior.pending ?? prior.unresolved;
+    const [bids, evidence] = await Promise.all([
+      ctx && obs && horizon(obs) > 0 ? readSpotBids(obs, ctx) : undefined,
+      ctx && waiting && prior.runId === obs.runId && Number(obs.blockNumber) > prior.lastBlock &&
+        Number(obs.blockNumber) - waiting.sentBlock >= POLICY.confirmationBlocks
+        ? readRecoveryEvidence(obs, ctx, waiting) : undefined,
+    ]);
+    const action = core.decide(obs, bids, evidence);
     // The runtime owns agentId and runtime_start. Every action row needs an
     // integer absolute block, just like the runtime's xb-r/noop rows. Do not
     // repeat the full plan, initial wallet and before wallet on every block.
@@ -377,6 +456,7 @@ export function createLiveAgent(params: Params = PARAMS) {
           ...(pending ? { pending: { phase: pending.phase, sentBlock: pending.sentBlock, base: pending.plan.base } } : {}),
           ...(s.lot ? { lot: { id: s.lot.id, base: s.lot.base, quantity: String(s.lot.quantity), deadlineBlock: s.lot.deadlineBlock } } : {}),
           closed: s.closed, realizedNet: s.realizedNet,
+          ...(s.recovered?.block === round ? { recovered: s.recovered } : {}),
           ...(serialized !== lastWallet ? { observed } : {}),
         } });
         lastWallet = serialized;

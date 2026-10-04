@@ -110,16 +110,17 @@ test("XA dev6s rejected entry leaves bounded waiting and recovers a late fill on
   assert.equal(c.inspect().unresolved, undefined);
   assert.equal(c.decide(at(late, 1322)).type, "noop", "no duplicate recovery exit");
   const closed = execute(late, recovery, 1323); closed.blocksRemaining = 323;
-  assert.equal(c.decide(closed).type, "noop", "new entry stays disabled after recovery");
+  const resumed = c.decide(closed);
+  assert.equal(resumed.tokenIn, "USDC", "only a fully recovered cycle may admit a fresh entry");
   assert.equal(c.inspect().closed, 1); assert.equal(c.inspect().lot, undefined);
-  assert.equal(c.inspect().pending, undefined);
+  assert.equal(c.inspect().pending?.phase, "entry");
 });
 
 test("XA recovery timeout never unlocks unchanged partial or gas-only entry funds", () => {
   for (const kind of ["unchanged", "partial", "gas-only", "other-base"] as const) {
     const c = createAgent(), o = obs(), entry = c.decide(o), next = at(o, 108);
     if (kind === "partial") Object.assign(next.balances, execute(o, entry, 108).balances,
-      { usdcUnits: String(BigInt(o.balances.usdcUnits) - BigInt(entry.amountIn) + 1n) });
+      { usdcUnits: String(BigInt(o.balances.usdcUnits) - BigInt(entry.amountIn) + 100_000n) });
     if (kind === "gas-only") next.balances.ethWei = String(W - 1n);
     if (kind === "other-base") next.baseBalances!.WBTC = "39999999";
     for (const b of [108, 109, 125, 300]) {
@@ -154,6 +155,236 @@ test("XA recovery WBTC late fill uses eight decimal proceeds and preserves ETH g
   assert.equal(exit.tokenIn, "WBTC");
   assert.equal(BigInt(exit.amountIn), baseOf(late, "WBTC") - baseOf(o, "WBTC"));
   assert.equal(c.inspect().lot!.entryGasWei, BigInt(o.balances.ethWei) - BigInt(late.balances.ethWei));
+});
+
+
+const dev7 = JSON.parse(readFileSync(new URL("./fixtures/xa-1-dev7.json", import.meta.url), "utf8"));
+const dev7Frame = (block: number) => dev7.frames.find((f: any) => f.block === block);
+function nonceEvidence(block: number, sentBlock = 100, confirmed = 48, pending = confirmed) {
+  return { block, sentBlock, before: 48, confirmed, pending };
+}
+function nonceContext(o: AgentObservation, sentBlock: number, confirmed = 48, pending = confirmed,
+  log = (_x: any) => {}) {
+  const ctx = context(o, [], log);
+  (ctx.publicClient as any).getTransactionCount = async (args: any) => {
+    assert.equal(args.address, o.agentAddress);
+    if (args.blockTag) { assert.equal(args.blockTag, "pending"); return pending; }
+    assert.ok(args.blockNumber === BigInt(sentBlock) || args.blockNumber === BigInt(o.blockNumber));
+    return args.blockNumber === BigInt(sentBlock) ? 48 : confirmed;
+  };
+  return ctx;
+}
+
+test("XA dev7 all nine measured round trips reconcile native balances and gas", () => {
+  for (let i = 0; i < 18; i += 2) {
+    const buy = dev7.trades[i], sell = dev7.trades[i + 1], base = buy.action.base;
+    const make = (block: number, funds: any, exit = false) => {
+      const o = dev6Obs(block, funds);
+      o.protocols.uniswap!.pool.priceUsdcPerWeth = base === "WETH" ? (exit ? 3100 : 2876.3) : 3000;
+      if (base === "WBTC") o.protocols.uniswap!.markets = { "WBTC/USDC": {
+        ...o.protocols.uniswap!.pool, pair: "WBTC/USDC", priceUsdcPerWeth: exit ? 62000 : 57526,
+      } };
+      return o;
+    };
+    const c = createAgent(), entry = c.decide(make(buy.event.blockSeen, buy.before));
+    assert.equal(entry.base, base); assert.equal(entry.amountIn, buy.action.amountIn);
+    const onFill = c.decide(make(buy.observedBlock, buy.after, buy.observedBlock === sell.event.blockSeen));
+    const lot = c.inspect().lot!;
+    assert.equal(lot.quantity, BigInt(buy.delta[base]));
+    assert.equal(lot.entryGasWei, -BigInt(buy.delta.ETH));
+    assert.notEqual(lot.quantity, lot.expectedQuantity, "proceeds are not the model quote/minOut");
+    const exit = buy.observedBlock === sell.event.blockSeen ? onFill : c.decide(make(sell.event.blockSeen, sell.before, true));
+    assert.equal(exit.amountIn, sell.action.amountIn);
+    c.decide(make(sell.observedBlock, sell.after, true));
+    assert.equal(c.inspect().closed, 1);
+    assert.equal(c.inspect().lastClose!.cashOut, BigInt(sell.delta.USDC));
+    assert.equal(c.inspect().lastClose!.gasWei, -BigInt(buy.delta.ETH) - BigInt(sell.delta.ETH));
+    for (const t of [buy, sell]) {
+      assert.equal(-BigInt(t.delta.ETH), BigInt(t.mined.gasUsed) * BigInt(t.mined.priorityFeeWei));
+      assert.equal(t.observedBlock, t.event.blockSeen + 1);
+    }
+  }
+});
+
+test("XA dev7 failed submit resumes after stable nonce drain and wallet reconstruction", async () => {
+  const failed = dev7.trades[18], funds = dev7Frame(1374).wallet;
+  assert.match(failed.event.error, /Too little received/);
+  assert.deepEqual(failed.delta, { USDC: "0", WETH: "0", WBTC: "0", ETH: "0" });
+  assert.deepEqual(dev7Frame(1645).wallet, funds);
+  const c = createLiveAgent(), rows: any[] = [];
+  const step = async (b: number) => {
+    const o = dev6Obs(b, funds);
+    return c.decide(o, nonceContext(o, 1374, 48, 48, x => rows.push(x)));
+  };
+  assert.equal((await step(1374)).amountIn, failed.action.amountIn);
+  for (let b = 1375; b <= 1383; b++) assert.equal((await step(b)).type, "noop");
+  assert.ok(c.inspect().unresolved);
+  assert.match((await step(1384)).reason, /ledger rebuilt/);
+  assert.equal(c.inspect().unresolved, undefined); assert.equal(c.inspect().pending, undefined);
+  assert.equal(c.inspect().halt, undefined); assert.deepEqual(c.inspect().wallet, initial(dev6Obs(1384, funds)));
+  const again = await step(1385); assert.equal(again.tokenIn, "USDC"); safeAction(dev6Obs(1385, funds), again);
+  assert.equal(c.inspect().pending!.sentBlock, 1385);
+  assert.equal((await step(1385)).type, "noop");
+  assert.equal(rows.find(x => x.round === 1384).state.recovered.sentBlock, 1374);
+});
+
+test("XA dev7 tolerant debit uses actual cost and requires consecutive stable observations", () => {
+  const buy = dev7.trades[0];
+  for (const correction of [-1001n, 1n, 1001n]) {
+    const c = createAgent(), o = dev6Obs(1298, buy.before); c.decide(o);
+    const funds = { ...buy.after, USDC: String(BigInt(buy.after.USDC) + correction) };
+    c.decide(dev6Obs(1299, funds)); assert.ok(c.inspect().pending); assert.equal(c.inspect().lot, undefined);
+    c.decide(dev6Obs(1299, funds)); assert.equal(c.inspect().lot, undefined, "duplicate is not a second observation");
+    c.decide(dev6Obs(1300, funds));
+    assert.ok(c.inspect().lot, "stable bounded debit must settle");
+    assert.equal(c.inspect().lot!.cashIn, 1_000_000_000n - correction);
+    assert.equal(c.inspect().lot!.quantity, BigInt(buy.delta.WETH));
+    assert.equal(c.inspect().lot!.entryGasWei, -BigInt(buy.delta.ETH));
+    assert.equal(c.inspect().halt, undefined);
+  }
+});
+
+test("XA dev7 split balance reads across blocks do not permanently poison confirmation", () => {
+  const buy = dev7.trades[0], c = createAgent(); c.decide(dev6Obs(1298, buy.before));
+  c.decide(dev6Obs(1299, { ...buy.before, USDC: buy.after.USDC }));
+  assert.ok(c.inspect().pending); assert.equal(c.inspect().lot, undefined);
+  c.decide(dev6Obs(1300, { ...buy.after, ETH: buy.before.ETH }));
+  assert.ok(c.inspect().pending);
+  c.decide(dev6Obs(1301, buy.after));
+  assert.equal(c.inspect().lot!.quantity, BigInt(buy.delta.WETH));
+  assert.equal(c.inspect().halt, undefined); assert.equal(c.inspect().pending, undefined);
+});
+
+test("XA tolerant bounds reject partial fills and tolerate other-base dust only after stability", () => {
+  for (const delta of [-1002n, 1002n, 500_000_000n]) {
+    const c = createAgent(), o = obs(), a = c.decide(o), filled = execute(o, a);
+    filled.balances.usdcUnits = String(BigInt(filled.balances.usdcUnits) + delta);
+    for (const b of [101, 102, 108, 109, 110]) {
+      assert.equal(c.decide(at(filled, b), undefined, nonceEvidence(b, 100, 49)).type, "noop");
+      assert.equal(c.inspect().lot, undefined);
+    }
+    assert.ok(c.inspect().unresolved);
+  }
+  const c = createAgent(), o = obs(), a = c.decide(o), filled = execute(o, a);
+  filled.baseBalances!.WBTC = "40000001";
+  c.decide(filled); assert.ok(c.inspect().pending);
+  c.decide(at(filled, 102)); assert.ok(c.inspect().lot); assert.equal(c.inspect().halt, undefined);
+  const bad = createAgent(), start = obs(), entry = bad.decide(start), unrelated = execute(start, entry);
+  unrelated.baseBalances!.WBTC = "40000002";
+  bad.decide(unrelated); bad.decide(at(unrelated, 102));
+  assert.equal(bad.inspect().lot, undefined); assert.ok(bad.inspect().pending);
+});
+
+test("XA tolerant exit books actual proceeds once without selling residual or initial inventory", () => {
+  for (const base of ["WETH", "WBTC"]) {
+    const o = obs();
+    if (base === "WBTC") {
+      o.protocols.uniswap!.pool.priceUsdcPerWeth = 3000;
+      o.protocols.uniswap!.markets = { "WBTC/USDC": { ...o.protocols.uniswap!.pool, pair: "WBTC/USDC", priceUsdcPerWeth: 57526 } };
+    }
+    const { c, next } = entered(o), x = fairExit(next, 102);
+    if (base === "WBTC") x.protocols.uniswap!.markets!["WBTC/USDC"]!.priceUsdcPerWeth = 62000;
+    const a = c.decide(x), closed = execute(x, a, 103);
+    putBase(closed, base, baseOf(closed, base) + 1n);
+    c.decide(closed); assert.equal(c.inspect().closed, 0);
+    c.decide(at(closed, 104)); assert.equal(c.inspect().closed, 1);
+    assert.equal(c.inspect().lastClose!.cashOut, 1030n * U);
+    assert.equal(c.inspect().initial![base as "WETH" | "WBTC"], baseOf(o, base));
+    c.decide(at(closed, 105)); assert.equal(c.inspect().closed, 1);
+  }
+});
+
+test("XA recovery requires matching pinned nonce evidence and no in-flight debit", () => {
+  for (const mode of ["missing", "pending", "backwards", "jump", "stale", "wrong-send", "fraction", "gas-without-nonce", "token-change"]) {
+    const c = createAgent(), o = obs(); c.decide(o);
+    for (let b = 108; b <= 113; b++) {
+      let proof: any = nonceEvidence(b); const x = at(o, b);
+      if (mode === "missing") proof = undefined;
+      if (mode === "pending") proof.pending = 49;
+      if (mode === "backwards") proof.confirmed = proof.pending = 47;
+      if (mode === "jump") proof.confirmed = proof.pending = 50;
+      if (mode === "stale") proof.block--;
+      if (mode === "wrong-send") proof.sentBlock--;
+      if (mode === "fraction") proof.before = 48.5;
+      if (mode === "gas-without-nonce") x.balances.ethWei = String(W - 1n);
+      if (mode === "token-change") x.balances.usdcUnits = String(BigInt(o.balances.usdcUnits) - 1n);
+      assert.equal(c.decide(x, undefined, proof).type, "noop", mode);
+      assert.ok(c.inspect().unresolved, mode); assert.equal(c.inspect().recovered, undefined, mode);
+    }
+  }
+});
+
+test("XA recovery consecutive observations reset on missing proof gap or wallet movement", () => {
+  const c = createAgent(), o = obs(); c.decide(o);
+  for (const b of [108, 109, 109, 111, 112]) {
+    c.decide(at(o, b), undefined, nonceEvidence(b)); assert.ok(c.inspect().unresolved);
+  }
+  c.decide(at(o, 113)); assert.ok(c.inspect().unresolved);
+  assert.equal(c.inspect().unresolved!.quiet, undefined, "failed proof invalidates the quiet streak immediately");
+  for (const b of [114, 115]) { c.decide(at(o, b), undefined, nonceEvidence(b)); assert.ok(c.inspect().unresolved); }
+  assert.match(c.decide(at(o, 116), undefined, nonceEvidence(116)).reason, /ledger rebuilt/);
+  assert.equal(c.inspect().unresolved, undefined);
+});
+
+test("XA recovery late fill wins over release and never duplicates an in-flight exit", () => {
+  const c = createAgent(), o = obs(), entry = c.decide(o);
+  for (const b of [108, 109]) c.decide(at(o, b), undefined, nonceEvidence(b));
+  const late = execute(o, entry, 110), exit = c.decide(late, undefined, nonceEvidence(110, 100, 49));
+  assert.equal(exit.tokenIn, "WETH"); assert.equal(exit.amountIn, String(c.inspect().lot!.quantity));
+  for (const b of [118, 119, 120, 121]) {
+    const proof = { ...nonceEvidence(b, 110, 49, 50), before: 49 };
+    assert.equal(c.decide(at(late, b), undefined, proof).type, "noop");
+    assert.ok(c.inspect().unresolved);
+  }
+  const closed = execute(late, exit, 122); closed.protocols.uniswap!.pool.priceUsdcPerWeth = 3000;
+  c.decide(closed); assert.equal(c.inspect().closed, 1); assert.equal(c.inspect().halt, undefined);
+  c.decide(at(closed, 123)); assert.equal(c.inspect().closed, 1);
+});
+
+test("XA recovery failed exit retains the lot and charges retry gas once on actual close", () => {
+  const { c, next } = entered(), x = fairExit(next, 102), exit = c.decide(x);
+  const reverted = at(x, 110), gas = 30_000_000_000_000n;
+  reverted.balances.ethWei = String(BigInt(x.balances.ethWei) - gas);
+  for (const b of [110, 111, 112]) c.decide(at(reverted, b), undefined, nonceEvidence(b, 102, 49));
+  assert.equal(c.inspect().unresolved, undefined); assert.ok(c.inspect().lot);
+  assert.equal(c.inspect().closed, 0); assert.equal(c.inspect().realizedNet, 0);
+  const retryObs = at(reverted, 113), retry = c.decide(retryObs);
+  assert.equal(retry.amountIn, exit.amountIn); safeAction(retryObs, retry);
+  const closed = execute(retryObs, retry, 114);
+  c.decide(closed); assert.equal(c.inspect().closed, 1);
+  assert.equal(c.inspect().lastClose!.gasWei, 40_000_000_000_000n + gas + 40_000_000_000_000n);
+  assert.equal(c.inspect().realizedNet, c.inspect().lastClose!.netUsd);
+});
+
+test("XA recovery gas-only failed entry charges loss once and preserves hard halts", () => {
+  for (const expensive of [false, true]) {
+    const c = createAgent(), o = obs(); c.decide(o);
+    const failed = at(o, 108), gas = expensive ? W / 100n : 30_000_000_000_000n;
+    failed.balances.ethWei = String(W - gas);
+    for (const b of [108, 109, 110]) c.decide(at(failed, b), undefined, nonceEvidence(b, 100, 49));
+    assert.equal(c.inspect().unresolved, undefined);
+    const loss = Number(gas) / 1e18 * 3000;
+    assert.equal(c.inspect().lossSpent, loss); assert.equal(c.inspect().realizedNet, -loss);
+    assert.deepEqual(c.inspect().wallet, initial(failed));
+    const again = c.decide(at(failed, 111));
+    assert.equal(again.type === "noop", expensive);
+    assert.equal(c.inspect().lossSpent, loss);
+  }
+  const c = createAgent(), o = obs(); c.decide(o); c.decide(at(o, 99));
+  for (const b of [108, 109, 110]) c.decide(at(o, b), undefined, nonceEvidence(b));
+  assert.equal(c.inspect().unresolved, undefined); assert.match(c.inspect().halt!, /rewind/);
+  assert.equal(c.decide(at(o, 111)).type, "noop");
+});
+
+test("XA LIVE failed nonce reads retain reservations and later healthy reads can recover", async () => {
+  const c = createLiveAgent(), o = obs(); await c.decide(o, context(o, []));
+  for (const b of [108, 109, 110]) {
+    const x = at(o, b), ctx = nonceContext(x, 100);
+    (ctx.publicClient as any).getTransactionCount = async () => { throw Error("RPC unavailable"); };
+    assert.equal((await c.decide(x, ctx)).type, "noop"); assert.ok(c.inspect().unresolved);
+  }
+  for (const b of [111, 112, 113]) { const x = at(o, b); await c.decide(x, nonceContext(x, 100)); }
+  assert.equal(c.inspect().unresolved, undefined);
 });
 
 // Execute the production gate, not a duplicated TypeScript interpretation.
@@ -436,11 +667,12 @@ test("XA final block reconciles fills but sends no action", () => {
 test("XA exit settlement requires full debit and positive cash proceeds", () => {
   for (const mode of ["partial", "noCash", "noGas", "other"]) {
     const { c, next } = entered(), x = fairExit(next, 102), a = c.decide(x), y = execute(x, a, 103);
-    if (mode === "partial") y.balances.wethWei = String(BigInt(y.balances.wethWei) + 1n);
+    if (mode === "partial") y.balances.wethWei = String(BigInt(y.balances.wethWei) + BigInt(a.amountIn) / 1_000_000n + 2n);
     if (mode === "noCash") y.balances.usdcUnits = x.balances.usdcUnits;
     if (mode === "noGas") y.balances.ethWei = x.balances.ethWei;
     if (mode === "other") y.baseBalances!.WBTC = "40000001";
     assert.equal(c.decide(y).type, "noop"); assert.equal(c.inspect().closed, 0);
+    if (mode === "partial") { c.decide(at(y, 104)); assert.equal(c.inspect().closed, 0); }
     assert.equal(c.inspect().pending!.phase, "exit"); assert.ok(c.inspect().lot);
   }
 });
