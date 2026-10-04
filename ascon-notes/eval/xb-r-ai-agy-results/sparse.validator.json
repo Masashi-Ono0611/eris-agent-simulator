@@ -1,0 +1,8 @@
+{
+  "ok": true,
+  "result": {
+    "kind": "declined",
+    "notes": "insufficient closed-window evidence"
+  },
+  "scope": "format + initial ENTRY=50 delta only; no performance/runtime claim"
+}

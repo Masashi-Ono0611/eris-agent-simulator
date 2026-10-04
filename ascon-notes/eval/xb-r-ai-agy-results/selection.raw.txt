@@ -1,0 +1,1 @@
+{"notes":"Lost single-leg opportunity tradeoff observed; select v5-r11 with ENTRY_BPS=45","executorTs":"return {\"policyId\":\"v5-r11\",\"ENTRY_BPS\":45};"}
