@@ -1,0 +1,241 @@
+// xb-r v1: spot-only repair of the sonnet-derived xb-core V0.
+// Market decoding and funding normalization below are copied from xb-core.
+import type { AgentContext, AgentObservation } from "@eris/sdk";
+import { balanceOf, canFund } from "../lib/affordable.js";
+
+export type Params = Readonly<{
+  R1_BUNDLE_PRIORITY: boolean;
+  R2_BALANCE_FLOOR: boolean;
+  R3_ENTRY_ONLY: boolean;
+  R4_COMPETITOR_BID: boolean;
+  R5_PROFITABLE_RESTORE: boolean;
+  ENTRY_BPS: 45 | 50;
+  SINGLE_EDGE_BPS: number;
+}>;
+export const PARAMS: Params = Object.freeze({
+  R1_BUNDLE_PRIORITY: true, R2_BALANCE_FLOOR: true, R3_ENTRY_ONLY: true,
+  R4_COMPETITOR_BID: true, R5_PROFITABLE_RESTORE: true,
+  ENTRY_BPS: 50, SINGLE_EDGE_BPS: 100,
+});
+export type Action = Record<string, any>;
+const W = 10n ** 18n;
+const BASES = ["WETH", "WBTC"] as const;
+type Base = typeof BASES[number];
+const INITIAL = { WETH: 8n * W, WBTC: 40_000_000n };
+const GAS_RESERVE = W / 20n;
+const INV_BAND = 0.2;
+const SLIPPAGE_BPS = 80; // xb-core unchanged, including every bundle leg.
+const MIN_PROFIT_USDC = 0.05;
+const SWAPS = { uniswap: "swap", balancer: "balancerSwap", curve: "curveSwap" } as const;
+type Venue = { protocol: keyof typeof SWAPS; mid: number; cost: number; depth: number };
+type Market = { base: Base; fair: number; decimals: number; held: bigint; venues: Venue[] };
+export type Candidate = {
+  action: Action; base: Base; profit: number; gas: number; usd: number;
+  edge: number; slope: number; restoring: boolean;
+};
+const positive = (n: number) => Number.isFinite(n) && n > 0;
+const min = (...ns: bigint[]) => ns.reduce((a, b) => a < b ? a : b);
+const units = (n: number, decimals = 6) => BigInt(Math.floor(n * 10 ** decimals));
+const noop = (reason: string): Action => ({ type: "noop", reason });
+
+export function funded(obs: AgentObservation, token: string, amount: bigint): boolean {
+  const held = balanceOf(obs, token);
+  // Preserve xb-core's WBTC dust normalization, but check the real 8-decimal amount.
+  const normalized = token === "WBTC" ? { ...obs, baseBalances: {
+    ...obs.baseBalances, WBTC: (held * 10n ** 10n).toString(),
+  } } : obs;
+  return amount > 0n && amount <= held && canFund(normalized, token);
+}
+
+function markets(obs: AgentObservation): Market[] {
+  return BASES.flatMap(base => {
+    const fair = obs.fairPricesUsd?.[base] ?? (base === "WETH" ? obs.fairPriceUsdcPerWeth : NaN);
+    const decimals = base === "WETH" ? 18 : 8;
+    if (!positive(fair) || (obs.baseDecimals?.[base] ?? decimals) !== decimals) return [];
+    const venues: Venue[] = [];
+    for (const protocol of ["uniswap", "balancer", "curve"] as const) {
+      if (!obs.enabledProtocols.includes(protocol)) continue;
+      const q: any = protocol === "uniswap"
+        ? (base === "WETH" ? obs.protocols.uniswap?.pool : obs.protocols.uniswap?.markets?.[`${base}/USDC`])
+        : (base === "WETH" ? obs.protocols[protocol] : obs.protocols[protocol]?.markets?.[`${base}/USDC`]);
+      if (!q || !positive(Number(q.priceUsdcPerWeth))) continue;
+      let mid = Number(q.priceUsdcPerWeth), cost: number, depth: number;
+      if (protocol === "uniswap") {
+        cost = Number(q.fee ?? 3000) / 1e6;
+        depth = q.liquidity === undefined ? 300_000
+          : Number(BigInt(q.liquidity)) * Math.sqrt(mid * 10 ** (6 - decimals)) / 1e6;
+      } else {
+        const twoSided = Number(q.effectiveHalfSpreadBps) >= 0 &&
+          positive(Number(q.buyPriceUsdcPerWeth)) && positive(Number(q.sellPriceUsdcPerWeth));
+        cost = twoSided ? Number(q.effectiveHalfSpreadBps) / 10000 : 0.003;
+        if (!twoSided) mid /= 1 - cost;
+        depth = q.reserves?.usdc === undefined ? 300_000 : Number(BigInt(q.reserves.usdc)) / 1e6;
+      }
+      if (positive(mid) && Number.isFinite(cost) && cost >= 0 && cost < 0.2 && positive(depth) && depth >= 20_000)
+        venues.push({ protocol, mid, cost, depth });
+    }
+    return [{ base, fair, decimals, held: balanceOf(obs, base), venues }];
+  });
+}
+
+export const entryAllowed = (edge: number, p: Params) =>
+  edge * 10000 > (p.R3_ENTRY_ONLY ? p.ENTRY_BPS : 60);
+// The factor-off diagnostic recreates sonnet's margin subtraction, not xb-v0 equivalence.
+export const economicEdge = (edge: number, p: Params) => edge - (p.R3_ENTRY_ONLY ? 0 : 0.006);
+export function sizeUsd(edge: number, slope: number, balance: number, cap: number, floor: boolean): number {
+  if (![edge, slope, balance, cap].every(positive)) return 0;
+  const depthTarget = 0.5 * edge / (2 * slope); // xb-core V0 desired size
+  const balanceTarget = balance * Math.max(0.025, Math.min(0.25, edge * 10));
+  const desired = floor ? Math.max(depthTarget, balanceTarget) : depthTarget;
+  // Hard depth ceiling is the edge-closing size; the floor is a target, not an override.
+  return Math.min(desired, edge / (2 * slope), cap, balance * 0.9);
+}
+export const profitUsd = (usd: number, edge: number, slope: number, legs: number) =>
+  usd * (edge - usd * slope) * (legs === 2 ? 0.8 : 1);
+
+function priorityFloor(obs: AgentObservation): bigint {
+  const configured = BigInt(obs.limits.defaultPriorityFeePerGasWei);
+  return min(configured > 0n ? configured : 1n, BigInt(obs.limits.maxPriorityFeePerGasWei));
+}
+// Same profit/gas inputs as V0: its floor-plus-10%-extra bid is a hard upper bound.
+export function bidWei(obs: AgentObservation, profit: number, gas: number, competitive: boolean): bigint {
+  const ethPrice = obs.fairPricesUsd?.WETH ?? obs.fairPriceUsdcPerWeth;
+  if (![profit, gas, ethPrice].every(positive)) return 0n;
+  const floor = priorityFloor(obs), ceiling = BigInt(obs.limits.maxPriorityFeePerGasWei);
+  if (floor <= 0n) return 0n;
+  const extra = BigInt(Math.floor(0.1 * profit / ethPrice / gas * 1e18));
+  const budget = min(floor + extra, ceiling);
+  if (!competitive) return budget;
+  const rival = BigInt(obs.competition?.maxCompetitorPriorityFeeWei ?? "0");
+  if (rival < 0n) return 0n;
+  const target = rival + 100_000_000n;
+  const wanted = target > floor ? target : floor;
+  // An unaffordable target is a rejection, never a clipped or zero-fee submission.
+  return wanted <= budget ? wanted : 0n;
+}
+export function netProfitUsd(obs: AgentObservation, c: Candidate, fee: bigint): number {
+  // Base fee = 0 in the target simulator. The total sent fee includes the default floor.
+  const ethPrice = obs.fairPricesUsd?.WETH ?? obs.fairPriceUsdcPerWeth;
+  return c.profit - Number(fee) * c.gas * ethPrice / 1e18;
+}
+function swap(m: Market, v: Venue, token: string, amount: bigint): Action {
+  return { type: SWAPS[v.protocol], ...(m.base === "WETH" ? {} : { base: m.base }),
+    tokenIn: token, amountIn: amount.toString(), slippageBps: SLIPPAGE_BPS };
+}
+function remaining(obs: AgentObservation): number {
+  const values = [obs.blocksRemaining, obs.dayBlocksRemaining].filter((v): v is number =>
+    v !== undefined && Number.isFinite(v));
+  return values.length ? Math.min(...values) : 0;
+}
+
+// No capital is reserved during enumeration. Every venue and ordered pair sees the same wallet.
+export function enumerateCandidates(obs: AgentObservation, p: Params = PARAMS,
+  cooling: ReadonlySet<string> = new Set()): Candidate[] {
+  const out: Candidate[] = [], ms = markets(obs);
+  const cash = Number(BigInt(obs.balances.usdcUnits)) / 1e6;
+  const cap = 0.08 * (cash + ms.reduce((sum, m) => sum + Number(m.held) / 10 ** m.decimals * m.fair, 0));
+  const left = remaining(obs);
+  if (left <= 0) return out;
+  const endgame = left <= 4;
+  for (const m of ms) {
+    const held = Number(m.held) / 10 ** m.decimals, initial = Number(INITIAL[m.base]) / 10 ** m.decimals;
+    const upper = initial * (1 + INV_BAND), lower = initial * (1 - INV_BAND);
+    // Singles retain the two-block cooldown. Endgame only admits profitable restoration.
+    if (!cooling.has(m.base) && (!endgame || p.R5_PROFITABLE_RESTORE)) {
+      for (const v of m.venues) for (const buy of [true, false]) {
+        const restoring = buy ? held < initial : held > initial;
+        if (endgame && !restoring) continue;
+        const rawEdge = buy ? m.fair / v.mid - 1 - v.cost : v.mid / m.fair - 1 - v.cost;
+        if (!entryAllowed(rawEdge, p)) continue;
+        if (p.R1_BUNDLE_PRIORITY && !restoring && rawEdge * 10000 <= p.SINGLE_EDGE_BPS) continue;
+        const edge = economicEdge(rawEdge, p), slope = 1 / v.depth;
+        // A restoration candidate stops at the anchor, instead of crossing it into new risk.
+        const room = Math.max(0, restoring ? Math.abs(held - initial) : buy ? upper - held : held - lower);
+        const usd = Math.min(sizeUsd(edge, slope, buy ? cash : held * v.mid, cap, p.R2_BALANCE_FLOOR),
+          room * v.mid / (buy ? 1.008 : 1), cap * Math.min(1, v.mid / m.fair));
+        if (!(usd >= 50)) continue;
+        const amount = units(buy ? usd : usd / v.mid, buy ? 6 : m.decimals);
+        const actualUsd = Number(amount) / 10 ** (buy ? 6 : m.decimals) * (buy ? 1 : v.mid);
+        out.push({ action: swap(m, v, buy ? "USDC" : m.base, amount), base: m.base,
+          usd: actualUsd, edge, slope, restoring, profit: profitUsd(actualUsd, edge, slope, 1), gas: 200_000 });
+      }
+    }
+    if (endgame || (!p.R1_BUNDLE_PRIORITY && cooling.has(m.base))) continue;
+    for (const cheap of m.venues) for (const rich of m.venues) {
+      if (cheap.protocol === rich.protocol) continue;
+      const rawEdge = rich.mid / cheap.mid - 1 - cheap.cost - rich.cost;
+      if (!entryAllowed(rawEdge, p)) continue;
+      const edge = economicEdge(rawEdge, p), slope = 1 / cheap.depth + 1 / rich.depth;
+      const usd = Math.min(sizeUsd(edge, slope, cash, cap, p.R2_BALANCE_FLOOR),
+        held * cheap.mid / 1.008, Math.max(0, upper - held) * cheap.mid / 1.008,
+        Math.max(0, held - lower) * cheap.mid, cap * Math.min(1, cheap.mid / m.fair));
+      if (!(usd >= 50)) continue;
+      const spend = units(usd), actualUsd = Number(spend) / 1e6;
+      const bought = actualUsd / (cheap.mid * (1 + cheap.cost)) * (1 - actualUsd / cheap.depth);
+      const sell = units(bought * 0.985, m.decimals);
+      out.push({ action: { type: "bundle", actions: [swap(m, cheap, "USDC", spend), swap(m, rich, m.base, sell)] },
+        base: m.base, usd: actualUsd, edge, slope, restoring: false,
+        profit: profitUsd(actualUsd, edge, slope, 2), gas: 350_000 });
+    }
+  }
+  return out;
+}
+
+// Transactional, candidate-local reservation: a rejected candidate cannot consume another's funds.
+// Each bundle leg must be funded from the observation; no credit for predicted buy proceeds.
+export function reserveCandidate(obs: AgentObservation, c: Candidate): boolean {
+  const spent = new Map<string, bigint>();
+  for (const leg of c.action.type === "bundle" ? c.action.actions : [c.action]) {
+    const token = leg.tokenIn as string, amount = BigInt(leg.amountIn);
+    if (amount <= 0n) return false;
+    const total = (spent.get(token) ?? 0n) + amount;
+    if (!funded(obs, token, total)) return false;
+    spent.set(token, total);
+  }
+  return true;
+}
+export function selectCandidate(obs: AgentObservation, all: readonly Candidate[], p: Params = PARAMS): Action {
+  const ranked = all.map(c => {
+    const fee = bidWei(obs, c.profit, c.gas, p.R4_COMPETITOR_BID);
+    return { c, fee, net: netProfitUsd(obs, c, fee) };
+  }).sort((a, b) => {
+    const priority = p.R1_BUNDLE_PRIORITY
+      ? Number(b.c.action.type === "bundle") - Number(a.c.action.type === "bundle") : 0;
+    return priority || b.net - a.net;
+  });
+  for (const { c, fee, net } of ranked) {
+    if (fee <= 0n || !Number.isFinite(net) || net < MIN_PROFIT_USDC) continue;
+    if (!reserveCandidate(obs, c)) continue;
+    if (BigInt(obs.balances.ethWei) - BigInt(c.gas) * fee < GAS_RESERVE) continue;
+    return { ...c.action, maxPriorityFeePerGasWei: fee.toString() };
+  }
+  return noop("no funded positive net edge at an affordable bid");
+}
+
+export function createAgent(params: Params = PARAMS, now: () => number = () => performance.now()) {
+  const p = Object.freeze({ ...params });
+  let run = "", lastBlock = -1, lastRemaining = Infinity;
+  const lastSent = new Map<Base, number>();
+  return function decide(obs: AgentObservation, _ctx?: AgentContext): Action {
+    try {
+      const started = now(), block = Number(obs.blockNumber), left = remaining(obs);
+      if (!Number.isSafeInteger(block) || block < 0) return noop("invalid block");
+      if (run !== obs.runId || block < lastBlock || left > lastRemaining + 5) {
+        run = obs.runId; lastBlock = -1; lastSent.clear();
+      }
+      if (block === lastBlock) return noop("duplicate observation");
+      lastBlock = block; lastRemaining = left;
+      if (left <= 0) return noop("valuation boundary or unknown horizon");
+      const cooling = new Set<Base>();
+      for (const [base, at] of lastSent) if (block - at < 2) cooling.add(base);
+      const all = enumerateCandidates(obs, p, cooling);
+      const action = selectCandidate(obs, all, p);
+      if (now() - started >= 4000) return noop("decision deadline reserve");
+      if (action.type !== "noop") lastSent.set(action.base ?? action.actions?.[0]?.base ?? "WETH", block);
+      return action;
+    } catch {
+      return noop("invalid observation");
+    }
+  };
+}
+export const decide = createAgent(PARAMS);

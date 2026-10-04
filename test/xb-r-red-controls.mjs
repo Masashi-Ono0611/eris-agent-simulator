@@ -1,0 +1,65 @@
+// Run manually, with no concurrent evaluation: node test/xb-r-red-controls.mjs
+// Temporarily mutates ONLY xb-r/agent.ts, restores after each run and in finally,
+// then reruns the complete xb test subset. Evidence stays in a unique temp directory.
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { resolve, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { spawnSync } from "node:child_process";
+
+const root = fileURLToPath(new URL("../", import.meta.url));
+const sourcePath = resolve(root, "example/agents/xb-r/agent.ts");
+const original = readFileSync(sourcePath, "utf8");
+const evidence = mkdtempSync(join(tmpdir(), "xb-r-red-controls-"));
+const digest = s => createHash("sha256").update(s).digest("hex");
+writeFileSync(join(evidence, "agent-original.ts"), original);
+const controls = [
+  ["R1-priority", "R1 selects a funded bundle", "const priority = p.R1_BUNDLE_PRIORITY", "const priority = false"],
+  ["R1-cooldown", "R1 bundle ignores cooldown", "(!p.R1_BUNDLE_PRIORITY && cooling.has(m.base))", "cooling.has(m.base)"],
+  ["R2-size", "R2 balance floor raises size", "floor ? Math.max(depthTarget, balanceTarget) : depthTarget", "depthTarget"],
+  ["R3-double-margin", "R3 an extra 60bps deduction", "p.R3_ENTRY_ONLY ? 0 : 0.006", "p.R3_ENTRY_ONLY ? 0.006 : 0.006"],
+  ["R4-budget-bid", "R4 pays competitor plus", "p.R4_COMPETITOR_BID);", "false);"],
+  ["R4-zero-send", "R4 unaffordable competitor", "fee <= 0n || !Number.isFinite(net)", "!Number.isFinite(net)"],
+  ["R5-restore-off", "R5 endgame restores only", "R5_PROFITABLE_RESTORE: true", "R5_PROFITABLE_RESTORE: false"],
+  ["R5-net-guard", "R5 restoration cannot pass", "net < MIN_PROFIT_USDC", "false"],
+  ["R5-loose-slippage", "R5 single and bundle slippage", "const SLIPPAGE_BPS = 80;", "const SLIPPAGE_BPS = 150;"],
+];
+const records = [];
+function run(label, pattern) {
+  const args = ["--import", "tsx", "--test", "--test-reporter=tap"];
+  if (pattern) args.push(`--test-name-pattern=${pattern}`);
+  args.push(...(pattern ? ["test/xb-r.test.ts"] : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts"]));
+  const result = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8", timeout: 60000 });
+  const log = (result.stdout ?? "") + (result.stderr ?? "");
+  writeFileSync(join(evidence, `${label}.log`), log);
+  return { result, log };
+}
+try {
+  for (const [label, pattern, from, to] of controls) {
+    assert.equal(original.split(from).length, 2, `${label}: unique mutation anchor`);
+    writeFileSync(sourcePath, original.replace(from, to));
+    let result, log;
+    try { ({ result, log } = run(label, pattern)); }
+    finally { writeFileSync(sourcePath, original); }
+    assert.equal(result.error, undefined, `${label}: infrastructure error`);
+    assert.equal(result.status, 1, `${label}: mutant must exit 1`);
+    assert.match(log, /ERR_ASSERTION/, `${label}: must fail an assertion, not loading or syntax`);
+    assert.match(log, new RegExp(`not ok \\d+ - ${pattern}`), `${label}: expected named test failed`);
+    const fail = Number(log.match(/^# fail (\d+)/m)?.[1]);
+    const pass = Number(log.match(/^# pass (\d+)/m)?.[1]);
+    assert.equal(digest(readFileSync(sourcePath, "utf8")), digest(original));
+    records.push({ label, exit: result.status, pass, fail, restored: true });
+    console.log(`RED ${label}: exit=${result.status}, pass=${pass}, fail=${fail}; source restored`);
+  }
+} finally {
+  writeFileSync(sourcePath, original);
+  writeFileSync(join(evidence, "mutations.json"), JSON.stringify(records, null, 2) + "\n");
+}
+const { result, log } = run("restored-xb-tests");
+assert.equal(result.status, 0, "restored complete xb suite must pass");
+assert.equal(digest(readFileSync(sourcePath, "utf8")), digest(original));
+console.log(log.match(/^# (?:tests|pass|fail|skipped) .*$/gm)?.join("\n"));
+console.log(`RESTORED sha256=${digest(original)}`);
+console.log(`Evidence: ${evidence}`);
