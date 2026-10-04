@@ -1,0 +1,381 @@
+{
+  "scope": "All visible sibling worktrees: runs/**/index.tsv and ascon-notes/eval/out/**/index.tsv; exact seed column, not filename/text search.",
+  "ledgerCount": 42,
+  "rowCount": 564,
+  "ledgers": [
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/guardtest/index.tsv",
+      "sha256": "1581a1c00f3b5f2ef23e6e12765a5a490165569146a2fd9ac4805e360bc84113",
+      "rows": 1
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/guardtest2/index.tsv",
+      "sha256": "1581a1c00f3b5f2ef23e6e12765a5a490165569146a2fd9ac4805e360bc84113",
+      "rows": 1
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-delta-bid/index.tsv",
+      "sha256": "19d0399a8bee925e509ee3a4af35c2ca8ebc05561459aa10bb61b734692aa4e1",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-delta-bid-s102_103/index.tsv",
+      "sha256": "b995e2dd841c781713067f5ec220c58be9a3c34855efc9e8de212a0bc9328499",
+      "rows": 24
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-eps-bid10000/index.tsv",
+      "sha256": "2e7154b666621fcc71a59f7c5bacb05a64acdd05b1359ae4ff013fc94ed522d5",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-eps-bid10000-s102_103/index.tsv",
+      "sha256": "34b123ab769b6db1251ba25576c5d9be713859a67277bc56cade3ef288d1bdf1",
+      "rows": 24
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-eps-bid5000/index.tsv",
+      "sha256": "5ded52faee0b3e8b90d7fa599598c84bcc61b7e3a72f7f26381ec568ff84b7c1",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-eps-bid5000-s102_103/index.tsv",
+      "sha256": "d25c4484c8c4c64c5f6294e92b46b5bdbaebae5af86ec77187254eaebf9ea817",
+      "rows": 24
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-zeta-a30/index.tsv",
+      "sha256": "5467aab1ab37c08a7fca72ab7a83e827d46e23955b1ce3ec9f461c4884c91e5a",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-zeta-a30-s102_103/index.tsv",
+      "sha256": "c35e742ca7190d0cbe5157b61e88b1675c30a8f3a3950442d5f213b6a75fb29c",
+      "rows": 24
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/league-r1/index.tsv",
+      "sha256": "f5f0f6237dd1b2927115dff928de44571e3d33edee767ae698b9df2df48e2440",
+      "rows": 36
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/load-probe-20261003-132631/index.tsv",
+      "sha256": "2442174980fedc9461e0f483c57d3ed76ae064cd796071101a186ad22f3652d4",
+      "rows": 3
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/load-probe-20261003-162005/index.tsv",
+      "sha256": "7ebf34d2303c2d5cf07efab742ad2847c7c386fcb4196e9203552109f5273c7b",
+      "rows": 5
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/r1/index.tsv",
+      "sha256": "740d7ce42e5c70fc0c415426dc2534778e559c92c5522069c5f7565f11d4534a",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/smoke/index.tsv",
+      "sha256": "d4b95703e5338edc3d4fac1c1b39c916bf1f8644abbc555ceb4b0e0fdfeace07",
+      "rows": 1
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/spec/index.tsv",
+      "sha256": "e1c22ba459a6e59ef9ae7368d461547ed8cce1c842a2a5faaf531ee5c5f34214",
+      "rows": 6
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/sweep1/index.tsv",
+      "sha256": "ef4c2866baaa7719a1fbf6fcc795c91b52f5e44060a1a5153d6a4d5396fcbc55",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/sweep3/index.tsv",
+      "sha256": "8636e7157172f2d6f7296db8402e816c32f7f5a41e3bf2420aa1d7a30b2f19b9",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/sweep4b/index.tsv",
+      "sha256": "988b745cf22f15f8f489221560ed58eb0057bca609bc43134f06c153b22191af",
+      "rows": 9
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev1-xb-r/index.tsv",
+      "sha256": "8ec9fbf6f8ed17fdd151c543de40aef0f583ae0fd0ff099ebbf9039651d7c652",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev2-xb-r/index.tsv",
+      "sha256": "40eb46b5c1683fb68573fe973ad354dbbaceaccb25f77cad800a661d746f1941",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev3a-xb-r/index.tsv",
+      "sha256": "0a8f4c3a3d40c2ecf6c656f31bda4e60e379398b8a10a5b3a40a6ac0b31d7833",
+      "rows": 18
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev3b-xb-r/index.tsv",
+      "sha256": "2e82712ef042c88aa57f87a12275f4f3ed7c9829d3c304723ffe5c555f51e8c4",
+      "rows": 6
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+      "sha256": "7ae02b628eb8b57b00b34a1b35aebb6520bfb07bddf00c170af97b6dba43f119",
+      "rows": 18
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+      "sha256": "5dcd35ae81a24f77632e252065b70fec2d9411f9e8040bc61b4ca09e04b45398",
+      "rows": 6
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4s-xb-r/index.tsv",
+      "sha256": "d2e6c69a37c42363fd45eab3b12fb273f3031ea6ceac2ed8a47a38a07d2029a1",
+      "rows": 1
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-inc-zeta/index.tsv",
+      "sha256": "03604880714ad97b203c492cbd27f881d50e7db758992fa4d7a93a83e3a77cc3",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-opus-1/index.tsv",
+      "sha256": "5aca7a43e3a350caab397eaa0d012a4863d891836971436950ec958814e8d7c1",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-sonnet-1/index.tsv",
+      "sha256": "c372a63eb6cc048f2228b9b02d3dece8b8ceb5b45925217ca9a61510efd44180",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-zeta-2/index.tsv",
+      "sha256": "ce384d3c17f3b1c549165a3b10945e29e9e6fb8c30aac47533e4854e0a3f478f",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-zeta-2a/index.tsv",
+      "sha256": "7d680d709fd3f671a06a4953f24b06eab8048c4bf4b6c516cd33b16145e933f8",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-zeta-2c/index.tsv",
+      "sha256": "d94ab683ef95048f9e07c79af2e52ebe51ff7eacce1457f39338273bfa4c4b79",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0a-sonnet-1/index.tsv",
+      "sha256": "a7c81c0eb234f3bd6064174413fd9873055a11ca7d28f9b83f8753170a5e26c7",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0b-sonnet-1/index.tsv",
+      "sha256": "715588af6919f8e240139d3fb527e0d6976bf8863cc2b69ede69ec60ce8b386c",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0ba-opus-1/index.tsv",
+      "sha256": "dde307cc8cc43e1cc131b60ed80703fc68f4b4f8bad1353c62735d13b7491c77",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0bb-opus-1/index.tsv",
+      "sha256": "d42af852a690bf5ae9ff24c9a7fb97f03f772784646f7a4cda85e0b5d07d61e3",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0bc-opus-1/index.tsv",
+      "sha256": "adaf5e539d85b684152aa47a27c0793a29206e854e3e84e546f23d1e8c9940c6",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0c-sonnet-1/index.tsv",
+      "sha256": "e8ce8e3a5b71c1fc74ecad910fc38f79ed47a31ab41a5e04ce5c8b4ff882ec5c",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1/index.tsv",
+      "sha256": "991d26cae429deb15c9c386ed8a2e610efed26b29e71104c8ab89e1852082fe6",
+      "rows": 36
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1b/.matrix-tmp-91878/index.tsv",
+      "sha256": "542f70da52d3d9a3d1a2c334eab14d751e6f8d91adf9183be8b339ba42401abe",
+      "rows": 0
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1c/index.tsv",
+      "sha256": "33853272a07d555cb196b49520db1905df11922bbaafadf43da1a59f9c751e72",
+      "rows": 9
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1m/index.tsv",
+      "sha256": "5a894edd3b8a72052ef414a332d4ef0c8574e9145726a33dac0290afebdaf748",
+      "rows": 36
+    }
+  ],
+  "candidates": {
+    "36001": [
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "calm",
+        "run_dir": "runs/2026-10-04T11-16-18-511Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "cex-drift",
+        "run_dir": "runs/2026-10-04T11-16-24-527Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "informed-flow",
+        "run_dir": "runs/2026-10-04T11-28-53-645Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "whale",
+        "run_dir": "runs/2026-10-04T11-41-22-131Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "lending-incident",
+        "run_dir": "runs/2026-10-04T11-41-28-283Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "crash",
+        "run_dir": "runs/2026-10-04T11-53-57-096Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "depeg",
+        "run_dir": "runs/2026-10-04T12-06-26-084Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "vuln",
+        "run_dir": "runs/2026-10-04T12-06-31-994Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "spike",
+        "run_dir": "runs/2026-10-04T12-18-59-414Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "regime": "depeg-persist",
+        "run_dir": "runs/2026-10-04T12-31-28-760Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "regime": "cdp-incident",
+        "run_dir": "runs/2026-10-04T12-31-34-645Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "regime": "launch",
+        "run_dir": "runs/2026-10-04T12-44-02-267Z"
+      }
+    ],
+    "36002": [
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "calm",
+        "run_dir": "runs/2026-10-04T11-16-21-411Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "cex-drift",
+        "run_dir": "runs/2026-10-04T11-28-50-803Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "informed-flow",
+        "run_dir": "runs/2026-10-04T11-28-56-848Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "whale",
+        "run_dir": "runs/2026-10-04T11-41-24-908Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "lending-incident",
+        "run_dir": "runs/2026-10-04T11-53-54-318Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "crash",
+        "run_dir": "runs/2026-10-04T11-54-00-209Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "depeg",
+        "run_dir": "runs/2026-10-04T12-06-28-894Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "vuln",
+        "run_dir": "runs/2026-10-04T12-18-56-633Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "regime": "spike",
+        "run_dir": "runs/2026-10-04T12-19-02-489Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "regime": "depeg-persist",
+        "run_dir": "runs/2026-10-04T12-31-31-550Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "regime": "cdp-incident",
+        "run_dir": "runs/2026-10-04T12-43-59-475Z"
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "regime": "launch",
+        "run_dir": "runs/2026-10-04T12-44-05-321Z"
+      }
+    ],
+    "36003": [
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4s-xb-r/index.tsv",
+        "regime": "calm",
+        "run_dir": "runs/2026-10-04T11-03-53-626Z"
+      }
+    ],
+    "37001": [],
+    "37002": [],
+    "37003": [],
+    "37004": []
+  },
+  "usedSeeds": [
+    "101",
+    "102",
+    "103",
+    "104",
+    "105",
+    "201",
+    "202",
+    "203",
+    "31001",
+    "31002",
+    "35001",
+    "35002",
+    "36001",
+    "36002",
+    "36003",
+    "41001",
+    "41002",
+    "41003",
+    "41004",
+    "41005",
+    "41101",
+    "41102",
+    "41103",
+    "41104",
+    "41105"
+  ]
+}

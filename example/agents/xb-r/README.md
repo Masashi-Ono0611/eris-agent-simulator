@@ -1,12 +1,15 @@
-# xb-r — v4 preparation, v3 defaults
+# xb-r — v5 R9-only diagnostic
 
-The current implementation keeps `d30cbbb` behavior by default. R10 full-depth
-sizing, R11 4% single-leg cap and R12 unconfirmed-single backoff are all OFF;
-R9 bundle headroom remains OFF. ENTRY_BPS alone retains the AI-reserved 20–60
-range in 5bps steps. The frozen experiment does not enable live AI edits.
-See [the dev3/v4 report](../../../ascon-notes/league/DEV3-XB-R-V4-PREP.md)
-for measured decomposition, specialist risks, activation rules and validation.
-v4 has no measured chain performance or qualification result.
+The default enables only R9 bundle headroom relative to frozen `d30cbbb`.
+Singles use the initial ±10% band; independently funded bundle legs retain
+±20%. `V3_PARAMS`, or `{ ...PARAMS, R9_BUNDLE_HEADROOM: false }`, restores v3.
+R10–R13 remain OFF; ENTRY_BPS remains 50, with sole AI-reserved authority
+20–60 in 5bps steps. Inference must be disabled for the frozen experiment.
+
+See [the dev4/v5 decision](../../../ascon-notes/league/DEV4-XB-R-V5.md)
+for trigger evidence, paired comparison, fresh seeds and iteration limits.
+This default selects a diagnostic ablation; v5 performance and qualification
+are unmeasured. The following records describe earlier versions.
 
 ## Historical v1 design and validation record
 

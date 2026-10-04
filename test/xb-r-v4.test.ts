@@ -7,7 +7,8 @@ import * as xb from '../example/agents/xb-r/agent.js';
 const { UNISWAP, BALANCER, MARKET_LEGS } = await import('@eris/sdk/constants.js');
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/xb-r-dev3-v4.json', import.meta.url), 'utf8'));
 const keys = ['R10_FULL_DEPTH_SIZE', 'R11_SMALL_SINGLE_CAP', 'R12_UNCONFIRMED_BACKOFF'] as const;
-const profile = (overrides: Partial<xb.Params> = {}): xb.Params => ({ ...xb.PARAMS, ...overrides });
+const historical = (xb as any).V3_PARAMS ?? xb.PARAMS;
+const profile = (overrides: Partial<xb.Params> = {}): xb.Params => ({ ...historical, ...overrides });
 
 function replay(f: any, p = profile()): xb.Action {
   const bids = new Map<string, bigint>(), cooling = new Set<string>(f.cooling);
@@ -30,11 +31,11 @@ for (const f of fixture.frames) test(`V4 golden d30cbbb ${f.name}`, () => {
 });
 
 test('V4 defaults freeze v3 and all new factors are OFF', () => {
-  for (const key of keys) assert.equal(xb.PARAMS[key], false, key);
-  assert.equal(xb.PARAMS.R9_BUNDLE_HEADROOM, false);
-  assert.equal(xb.PARAMS.R7_SINGLE_ENTRY, true);
-  assert.equal(xb.PARAMS.R8_SETTLED_COOLDOWN, true);
-  assert.equal(xb.PARAMS.ENTRY_BPS, 50);
+  for (const key of keys) assert.equal(historical[key], false, key);
+  assert.equal(historical.R9_BUNDLE_HEADROOM, false);
+  assert.equal(historical.R7_SINGLE_ENTRY, true);
+  assert.equal(historical.R8_SETTLED_COOLDOWN, true);
+  assert.equal(historical.ENTRY_BPS, 50);
   for (const key of keys) for (const value of [undefined, null, 1, 'true'])
     assert.throws(() => xb.createAgent({ ...profile(), [key]: value }), new RegExp(key));
 });

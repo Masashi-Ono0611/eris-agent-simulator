@@ -1,10 +1,11 @@
 ---
 kind: improve
 name: xb-r
-description: Spot-only xb-r v4 probes with frozen v3 defaults and independently switchable R1-R13 factors.
+description: Spot-only xb-r v5 R9-only diagnostic and independently switchable R1-R13 factors.
 ---
 
-This is the xb-r v4 preparation candidate, with exactly the v3 default behavior.
+This is the xb-r v5 diagnostic candidate. Only R9 differs from frozen v3.
+It is an ablation setting, not a measured improvement or promotion.
 Return `"executorTs": null`. Keep the baked Params and safety invariants unchanged
 throughout this fixed experiment. The runner must disable inference explicitly;
 this prompt alone cannot enforce frozen execution. This is not a completed live
@@ -15,10 +16,11 @@ admission only. It is the sole parameter reserved for future AI authority.
 R6_ANCHOR_CROSS, R7_SINGLE_ENTRY, R8_SETTLED_COOLDOWN and R9_BUNDLE_HEADROOM
 are fixed diagnostic factors, not AI controls. R8 is ON: only a next-block
 single with exact input debit, positive proceeds and gas payment visible in the
-wallet may release cooldown. R9 is OFF: the optional half-band reservation for
-bundles needs a separate diagnostic. Unconfirmed and bundle attempts retain
+wallet may release cooldown. R9 is ON for this single-factor diagnostic: singles use the initial ±10%
+band, reserving room for bundles whose independent ±20% bounds are unchanged.
+R9 OFF (V3_PARAMS) reproduces frozen d30cbbb behavior. Unconfirmed and bundle attempts retain
 the original single cooldown; bundle priority itself is unchanged.
-The new v4 factors are all OFF and are not AI controls:
+R10–R13 are all OFF and are not AI controls:
 - R10_FULL_DEPTH_SIZE: use the existing edge/(2*slope) depth ceiling as the
   size target, still bounded by current funds, 8% asset cap and ±20% inventory.
 - R11_SMALL_SINGLE_CAP: halve only the single-leg asset cap to 4%; bundles

@@ -68,14 +68,19 @@ const controls = [
   ["R13-double-budget", "R13 bundle legs", "legs * c.usd + Math.max(0, c.profit)", "c.usd + Math.max(0, c.profit)"],
   ["R13-zero-room-bypass", "R13 sub-bps room", "if (slippageBps < 1) continue;", "if (false) continue;"],
   ["R13-profit-reserve-bypass", "R13 retains the minimum", "(net - MIN_PROFIT_USDC) / exposure", "net / exposure"],
+  ["V5-default-off", "V5 defaults enable only", "...V3_PARAMS, R9_BUNDLE_HEADROOM: true", "...V3_PARAMS, R9_BUNDLE_HEADROOM: false"],
+  ["V5-v3-profile-leak", "V5 logged headroom-buy", "R8_SETTLED_COOLDOWN: true, R9_BUNDLE_HEADROOM: false", "R8_SETTLED_COOLDOWN: true, R9_BUNDLE_HEADROOM: true"],
+  ["V5-headroom-sell-off", "V5 logged headroom-sell", "p.R9_BUNDLE_HEADROOM ? initial * (1 - INV_BAND / 2)", "false ? initial * (1 - INV_BAND / 2)"],
+  ["V5-bundle-band-halved", "V5 R9 keeps bundle room", "const upper = initial * (1 + INV_BAND),", "const upper = initial * (1 + INV_BAND / 2),"],
+  ["V5-buy-cushion-off", "V5 logged headroom-buy", "room * v.mid / (buy ? 1.008 : 1)", "room * v.mid"],
 
 ];
 const records = [];
 function run(label, pattern) {
   const args = ["--import", "tsx", "--test", "--test-concurrency=1", "--test-reporter=tap"];
   if (pattern) args.push(`--test-name-pattern=${pattern}`);
-  args.push(...(pattern ? [pattern.startsWith("R13") ? "test/xb-r-slippage.test.ts" : pattern.startsWith("V4") ? "test/xb-r-v4.test.ts" : pattern.startsWith("DEV3") ? "test/xb-r-dev3a.test.ts" : pattern.startsWith("DEV2") ? "test/xb-r-dev2.test.ts" : "test/xb-r.test.ts"]
-    : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts", "test/xb-r-dev2.test.ts", "test/xb-r-dev3a.test.ts", "test/xb-r-v4.test.ts", "test/xb-r-slippage.test.ts"]));
+  args.push(...(pattern ? [pattern.startsWith("V5") ? "test/xb-r-v5.test.ts" : pattern.startsWith("R13") ? "test/xb-r-slippage.test.ts" : pattern.startsWith("V4") ? "test/xb-r-v4.test.ts" : pattern.startsWith("DEV3") ? "test/xb-r-dev3a.test.ts" : pattern.startsWith("DEV2") ? "test/xb-r-dev2.test.ts" : "test/xb-r.test.ts"]
+    : ["test/xb-core.test.ts", "test/xb-variants.test.ts", "test/xb-r.test.ts", "test/xb-r-dev2.test.ts", "test/xb-r-dev3a.test.ts", "test/xb-r-v4.test.ts", "test/xb-r-slippage.test.ts", "test/xb-r-v5.test.ts"]));
   const result = spawnSync(process.execPath, args, { cwd: root, encoding: "utf8", timeout: 60000 });
   const log = (result.stdout ?? "") + (result.stderr ?? "");
   writeFileSync(join(evidence, `${label}.log`), log);

@@ -7,6 +7,7 @@ import * as xb from '../example/agents/xb-r/agent.js';
 const { UNISWAP, BALANCER, MARKET_LEGS } = await import('@eris/sdk/constants.js');
 
 const fixture = JSON.parse(readFileSync(new URL('./fixtures/xb-r-dev3a.json', import.meta.url), 'utf8'));
+const historical = (xb as any).V3_PARAMS ?? xb.PARAMS;
 const profile = (entry = 50, settled = true, headroom = false) => ({ ...xb.PARAMS,
   ENTRY_BPS: entry, R8_SETTLED_COOLDOWN: settled, R9_BUNDLE_HEADROOM: headroom });
 // Historical-source red control must fail assertions, not a missing export.
@@ -68,7 +69,7 @@ for (const side of ['buy', 'sell']) {
 test('DEV3 defaults and historical profiles freeze separate experiments', () => {
   assert.equal(xb.PARAMS.ENTRY_BPS, 50);
   assert.equal((xb.PARAMS as any).R8_SETTLED_COOLDOWN, true);
-  assert.equal((xb.PARAMS as any).R9_BUNDLE_HEADROOM, false);
+  assert.equal(historical.R9_BUNDLE_HEADROOM, false);
   assert.equal((xb as any).DEV3A_PARAMS?.ENTRY_BPS, 60);
   assert.equal((xb as any).DEV3A_PARAMS?.R8_SETTLED_COOLDOWN, false);
 });

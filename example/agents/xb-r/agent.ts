@@ -1,4 +1,4 @@
-// xb-r v4 preparation: v3 defaults, independently disabled spot-only probes.
+// xb-r v5 diagnostic: R9 only ON after dev4; no measured performance claim.
 // Market decoding and funding normalization below are copied from xb-core.
 import type { AgentContext, AgentObservation } from "@eris/sdk";
 import { BALANCER, MARKET_LEGS, UNISWAP } from "@eris/sdk/constants.js";
@@ -21,7 +21,7 @@ export type Params = Readonly<{
   ENTRY_BPS: number;
   SINGLE_EDGE_BPS: number;
 }>;
-export const PARAMS: Params = Object.freeze({
+export const V3_PARAMS: Params = Object.freeze({
   R1_BUNDLE_PRIORITY: true, R2_BALANCE_FLOOR: true, R3_ENTRY_ONLY: true,
   R4_COMPETITOR_BID: true, R5_PROFITABLE_RESTORE: true,
   R6_ANCHOR_CROSS: true, R7_SINGLE_ENTRY: true,
@@ -30,8 +30,11 @@ export const PARAMS: Params = Object.freeze({
   R13_EDGE_SLIPPAGE: false,
   ENTRY_BPS: 50, SINGLE_EDGE_BPS: 100,
 });
+// One-factor ablation, not promotion to a qualified/performance-proven policy.
+// R9 OFF returns the frozen d30cbbb policy; other probes remain independent.
+export const PARAMS: Params = Object.freeze({ ...V3_PARAMS, R9_BUNDLE_HEADROOM: true });
 // v2 replay profile; v3 factors are independently switchable and not AI controls.
-export const DEV3A_PARAMS: Params = Object.freeze({ ...PARAMS,
+export const DEV3A_PARAMS: Params = Object.freeze({ ...V3_PARAMS,
   R8_SETTLED_COOLDOWN: false, R9_BUNDLE_HEADROOM: false, ENTRY_BPS: 60,
 });
 // Historical diagnostic profile. All factors are baked, never read from environment.
