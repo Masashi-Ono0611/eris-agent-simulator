@@ -1,3 +1,4 @@
+import { installLaunchArtifactFixture, launchEntries, LAUNCH_RUNTIME } from "./fixtures/ascon-launch.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -17,8 +18,8 @@ function observation(overrides: Record<string, unknown> = {}): any {
 const allOff = { launch: false, redemption: false, stabilityPool: false };
 const launchPool = "0x0000000000000000000000000000000000000100";
 const token = "0x0000000000000000000000000000000000000200";
-const registry = { entries: [{ kind: "uniswapV3Pool", market: launchPool, token0: token, token1: TOKENS.USDC.address,
-  creator: "0x0000000000000000000000000000000000000003", mine: false, registeredAtBlock: "1" }] };
+installLaunchArtifactFixture();
+const registry = { entries: launchEntries(launchPool, token, "0x0000000000000000000000000000000000000003") };
 
 test("zeta is self-contained from other agent directories", async () => {
   const { readdir } = await import("node:fs/promises");
@@ -83,15 +84,25 @@ test("launch RPC timeout is contained and zeta falls through to delta", async ()
     fairPricesUsd: { WETH: 3000 }, protocols: {
       uniswap: { pool: { priceUsdcPerWeth: 2800, fee: 3000 } }, balancer: { priceUsdcPerWeth: 3000, effectiveHalfSpreadBps: 30 },
     } });
+  let hashStarts = 0, readStarts = 0;
   const ctx: any = { address: "0x0000000000000000000000000000000000000004",
-    publicClient: { readContract: () => new Promise(() => {}) }, log() {} };
+    publicClient: {
+      call: () => { hashStarts++; return new Promise(() => {}); },
+      readContract: () => { readStarts++; return new Promise(() => {}); },
+    }, log() {} };
+  const began = Date.now();
   const action: any = await decide(obs, ctx);
   assert.equal(action.type, "bundle");
+  assert.equal(hashStarts, 1);
+  assert.equal(readStarts, 1, "shape-only fallback must reach the hanging pool read");
+  assert.ok(Date.now() - began < 4500);
 });
 
 test("launch confirms consecutive buying, then exits on selling, max hold, and endgame", async () => {
-  let logs: any[] = [], held = 0n, failQuote = false;
+  resetLaunchState();
+  let logs: any[] = [], held = 0n, failQuote = false, hashStarts = 0;
   const client: any = {
+    call: async () => { hashStarts++; return { data: LAUNCH_RUNTIME }; },
     readContract: async ({ functionName, address }: any) => functionName === "fee" ? 3000n : functionName === "slot0" ? [2n ** 96n] : functionName === "liquidity" ? 100000n : address.toLowerCase() === token.toLowerCase() ? held : 1_000_000_000_000n,
     getLogs: async () => logs,
     simulateContract: async () => { if (failQuote) throw new Error("mock quote unavailable"); return { result: [2_000_000_000n] }; },
@@ -106,6 +117,7 @@ test("launch confirms consecutive buying, then exits on selling, max hold, and e
   await decide(obsAt(2), ctx); buyFlow(); await decide(obsAt(3), ctx); buyFlow(); await decide(obsAt(4), ctx); buyFlow();
   const buy: any = await decide(obsAt(5), ctx);
   assert.equal(buy.type, "rawBundle"); assert.match(buy.reason, /entry/);
+  assert.equal(hashStarts, 1, "hash lookup recovers from the previous timeout and caches success");
   logs = [];
   const fallbackWhileUnfilled: any = await decide(obsAt(6), ctx);
   assert.equal(fallbackWhileUnfilled.type, "bundle", "unfilled launch reservation must not stop delta");
@@ -119,6 +131,27 @@ test("launch confirms consecutive buying, then exits on selling, max hold, and e
   held = 0n; // simulated confirmation that the exit settled
   const released: any = await decide(obsAt(9, 12), ctx);
   assert.equal(released.type, "bundle", "confirmed exit must release the launch reservation to delta");
+
+  // Keep the original test's promised max-hold and ordinary endgame exits explicit.
+  failQuote = false; buyFlow();
+  await decide(obsAt(100), ctx); await decide(obsAt(101), ctx);
+  const heldEntry: any = await decide(obsAt(102), ctx);
+  assert.match(heldEntry.reason, /entry/);
+  held = 5n * 10n ** 18n; logs = [];
+  for (let block = 103; block < 162; block++)
+    assert.equal((await decide(obsAt(block), ctx))?.type, "bundle");
+  const maxHold: any = await decide(obsAt(162), ctx);
+  assert.equal(maxHold.type, "rawBundle"); assert.match(maxHold.reason, /exit/);
+  assert.ok(messages.some(reason => reason.includes("held 60 blocks")));
+
+  held = 0n; buyFlow();
+  await decide(obsAt(200), ctx); await decide(obsAt(201), ctx);
+  const finalEntry: any = await decide(obsAt(202), ctx);
+  assert.match(finalEntry.reason, /entry/);
+  held = 5n * 10n ** 18n; logs = [];
+  const endgame: any = await decide(obsAt(203, 12), ctx);
+  assert.equal(endgame.type, "rawBundle"); assert.match(endgame.reason, /exit/);
+  assert.doesNotMatch(endgame.reason, /forced/);
 });
 
 function bidObs(cheap = 2800, rich = 3300, competitor = "2000000000", fair = 3000): any {

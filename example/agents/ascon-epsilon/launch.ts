@@ -22,6 +22,7 @@ import {
   bpsOf,
   launchPoolState,
   launchPools,
+  launchTokenCodehash,
   numberEnv,
   poolFee,
   poolFlow,
@@ -63,6 +64,7 @@ type Watch = {
 };
 
 const watches = new Map<string, Watch>();
+let shapeOnlyNoted = false;
 let lastBlock: number | undefined;
 export function resetLaunchState(): void { watches.clear(); lastBlock = undefined; }
 function timed<T>(work: Promise<T>, deadline: number): Promise<T> {
@@ -90,7 +92,17 @@ export async function decide(
       : Number.POSITIVE_INFINITY;
 
   // ---- register every launch pool the registry shows ----
-  for (const pool of launchPools(obs)) {
+  // Match upstream launch-confirm, including its explicit shape-only fallback.
+  // Time out the call itself so the shared helper can clear its failed cache and retry.
+  const hashClient = { ...ctx.publicClient,
+    call: (args: Parameters<typeof ctx.publicClient.call>[0]) => timed(ctx.publicClient.call(args), deadline),
+  } as typeof ctx.publicClient;
+  const tokenCodehash = await launchTokenCodehash(hashClient);
+  if (tokenCodehash === null && !shapeOnlyNoted) {
+    shapeOnlyNoted = true;
+    ctx.log({ round: obs.round, reason: "AgentERC20 artifact or node unavailable: launch pools are matched by listing shape only" });
+  }
+  for (const pool of launchPools(obs, { tokenCodehash })) {
     if (pool.mine) continue;
     const key = pool.pool.toLowerCase();
     if (watches.has(key)) continue;

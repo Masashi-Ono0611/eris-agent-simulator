@@ -6,7 +6,7 @@
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 
 export const STATE_DIR_DEFAULT = "backtest/state";
 export const STATE_FILE_NAME = "venues-state.json";
@@ -102,6 +102,10 @@ export type StateManifest = {
   deploymentsFingerprint: string;
   // The full deployer/deployments/deployments.json embedded.
   deployments: Record<string, unknown>;
+  // anvil's public test accounts the dump carries, measured from it (roleKeyGuard.ts
+  // publicTestAccountsInDump). Empty for a dump deployed from a secret mnemonic; absent in a
+  // manifest written before the field existed. The live week refuses both non-empty and absent.
+  publicTestAccounts?: Array<{ address: string; balanceWei: string; nonce: number }>;
 };
 
 // Canonical JSON independent of key order (stabilizes the fingerprint input).
@@ -151,6 +155,8 @@ export function validateStateManifest(
     fail(
       `deploymentsFingerprint mismatch (manifest ${m.deploymentsFingerprint} != computed ${fp})`,
     );
+  if (m.publicTestAccounts !== undefined && !Array.isArray(m.publicTestAccounts))
+    fail("publicTestAccounts is not an array");
   return m as StateManifest;
 }
 
@@ -214,6 +220,13 @@ export function missingVenues(
     const key = VENUE_TO_DEPLOYMENT_KEY[p];
     return key === undefined || !deployed[key];
   });
+}
+
+// The regime's name: the resolved file's basename without .yaml/.yml. A scenario's regime label --
+// and the stream id it feeds (issue #186) -- is this, never the string the set or the flag happened
+// to spell it with, so `config/regimes/calm.yaml` and `calm` are one regime and draw one world.
+export function regimeName(regimePath: string): string {
+  return basename(regimePath).replace(/\.ya?ml$/, "");
 }
 
 // Resolve --regime: a path form (contains / or ends in .yaml/.yml) is used as-is, a name looks up

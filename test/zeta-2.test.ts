@@ -1,3 +1,4 @@
+import { installLaunchArtifactFixture, launchEntries, LAUNCH_RUNTIME } from "./fixtures/ascon-launch.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
@@ -104,13 +105,15 @@ test("7 endgame withdraws all SP principal before liquidation and attempts dust 
   }
 });
 const address = (n: number) => `0x${n.toString(16).padStart(40, "0")}`;
+installLaunchArtifactFixture();
 function harness(count = 1) {
   resetLaunchState();
   const tokens = Array.from({ length: count }, (_, i) => address(0x200 + i));
   const pools = Array.from({ length: count }, (_, i) => address(0x100 + i));
   const h = { held: new Map<string, bigint>(), flow: 3000000000n, failState: false, failFlow: false, failQuote: false,
-    quote: 2000000000n, calls: [] as string[], entries: pools.map((market, i) => ({ kind: "uniswapV3Pool", market, token0: tokens[i], token1: TOKENS.USDC.address, creator: address(3), mine: false, registeredAtBlock: "1" })) };
+    quote: 2000000000n, calls: [] as string[], entries: pools.flatMap((market, i) => launchEntries(market, tokens[i], address(3))) };
   const ctx: any = { address: address(4), log() {}, publicClient: {
+    call: async () => ({ data: LAUNCH_RUNTIME }),
     readContract: async ({ address: addr, functionName }: any) => {
       h.calls.push(functionName);
       if (functionName === "fee") return 3000n;
@@ -126,6 +129,48 @@ function harness(count = 1) {
   const enter = async () => { await run(2); await run(3); const a = await run(4); assert.match(a.reason, /entry/); h.held.set(tokens[0], 5n * 10n ** 18n); };
   return { h, ctx, at, run, enter, tokens };
 }
+test("launch codehash RPC timeout is bounded and retries on the next decision", async () => {
+  const f = harness(); let starts = 0;
+  f.ctx.publicClient.call = () => { starts++; return new Promise(() => {}); };
+  const began = Date.now();
+  await f.run(2);
+  assert.equal(starts, 1, "the artifact's creation call was attempted");
+  assert.ok(Date.now() - began < 2500, "codehash discovery must share the RPC timeout");
+  f.ctx.publicClient.call = async () => { starts++; return { data: LAUNCH_RUNTIME }; };
+  await f.run(3);
+  assert.equal(starts, 2, "failed hash lookup must not poison the next decision");
+});
+
+for (const trap of ["missing token", "other creator", "changed code", "foreign code", "own pool"]) {
+  for (const mixed of [false, true]) test(`launch excludes ${trap}, mixed=${mixed}`, async () => {
+    const f = harness(mixed ? 2 : 1);
+    const pool = f.h.entries[0], token = f.h.entries[1];
+    if (trap === "missing token") f.h.entries.splice(1, 1);
+    if (trap === "other creator") token.creator = address(99);
+    if (trap === "changed code") token.codehashNow = `0x${"f".repeat(64)}`;
+    if (trap === "foreign code") token.codehashAtRegistration = token.codehashNow = `0x${"f".repeat(64)}`;
+    if (trap === "own pool") pool.mine = true;
+    const read = f.ctx.publicClient.readContract;
+    const readAddresses: string[] = [];
+    f.ctx.publicClient.readContract = (args: any) => {
+      readAddresses.push(args.address);
+      return read(args);
+    };
+    assert.equal((await f.run(2)).type, "noop");
+    assert.equal((await f.run(3)).type, "noop");
+    const action = await f.run(4);
+    assert.ok(!readAddresses.includes(pool.market), "rejected pool must not even be watched");
+    if (mixed) {
+      assert.equal(action.type, "rawBundle");
+      assert.match(action.reason, /entry/);
+      assert.equal(swapToken(action), f.tokens[1], "only the environment-shaped token is bought");
+    } else {
+      assert.equal(action.type, "noop");
+      assert.equal(f.h.calls.length, 0, "trap-only registry starts no trading RPCs");
+    }
+  });
+}
+
 for (const block of [4, 8]) test(`8 launch tracks held positions across same/missing block ${block}`, async () => {
   const f = harness(); await f.enter(); f.h.flow = 0n;
   const a = await f.run(block, 3); assert.equal(a.type, "rawBundle"); assert.match(a.reason, /exit/);
@@ -414,7 +459,7 @@ test("G2 quote timeout releases its key and never forces a nonterminal sale", as
 
 function captureWatchCount(f: ReturnType<typeof harness>) {
   let count = -1;
-  f.ctx.log = (event: any) => { if (event.signals.launchPools !== undefined) count = event.signals.launchPools; };
+  f.ctx.log = (event: any) => { if (event.signals?.launchPools !== undefined) count = event.signals.launchPools; };
   return () => count;
 }
 test("G3 idle zero-balance watch is pruned at 30 blocks and not immediately rediscovered", async () => {
@@ -424,9 +469,9 @@ test("G3 idle zero-balance watch is pruned at 30 blocks and not immediately redi
   f.h.calls.length = 0; await f.run(33); assert.equal(count(), 0); assert.equal(f.h.calls.length, 0);
 });
 test("G3 fresh discovery is protected and precedes old optional reads", async () => {
-  const f = harness(2); const fresh = f.h.entries.pop()!; f.h.flow = 0n;
+  const f = harness(2); const fresh = f.h.entries.splice(2); f.h.flow = 0n;
   await f.run(2); const count = captureWatchCount(f);
-  f.h.entries.push(fresh); const read = f.ctx.publicClient.readContract; const order: string[] = [];
+  f.h.entries.push(...fresh); const read = f.ctx.publicClient.readContract; const order: string[] = [];
   f.ctx.publicClient.readContract = (args: any) => { order.push(args.functionName); return read(args); };
   await f.run(32); assert.equal(count(), 1); assert.equal(order[0], "fee");
   await f.run(33); assert.equal(count(), 1);
@@ -450,7 +495,7 @@ for (const mode of ["held", "exiting", "untracked", "unknown"])
     f.h.flow = 0n; await f.run(32); assert.equal(count(), 1);
   });
 test("G3 watch cap preserves holdings and prevents unbounded discovery", async () => {
-  const f = harness(100); const entries = f.h.entries.splice(1); await f.enter();
+  const f = harness(100); const entries = f.h.entries.splice(2); await f.enter();
   f.h.flow = 0n; f.h.entries.push(...entries); const count = captureWatchCount(f);
   await f.run(5); assert.equal(count(), 32);
   f.h.failState = true; assert.match((await f.run(6, 12)).reason, /exit/);
