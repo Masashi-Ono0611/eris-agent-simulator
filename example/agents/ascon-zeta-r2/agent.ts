@@ -1,6 +1,7 @@
+// Three bounded fixes: launch allowance (1), independent bundle funding (2), attributable WETH recovery (4).
 import type { AgentAction, AgentContext, AgentObservation } from "@eris/sdk";
 import { TOKENS } from "@eris/sdk/constants.js";
-import { decide as deltaDecide, bidFee } from "./delta.js";
+import { decide as deltaDecide, recoveryBidFee } from "./delta.js";
 import { quoteLaunch } from "./launchSwap.js";
 import { decide as launchDecide, resetLaunchState } from "./launch.js";
 
@@ -70,7 +71,7 @@ export async function decideWithParams(obs: AgentObservation, params: Params, ct
           const fairValue = Number(excessWeth) / 1e18 * obs.fairPriceUsdcPerWeth;
           // Keep recovery execution within the existing 35bps exit-cost reserve.
           const remainingEdge = Number(quoted) / 1e6 / fairValue - 1 + EXIT_COST_BPS / 10000;
-          const priority = bidFee(obs, remainingEdge, fairValue, false);
+          const priority = recoveryBidFee(obs, remainingEdge, fairValue, false);
           if (quoted <= 0n || priority === null) return noop("recovery quote/cost not competitive");
           recoverySellPending = { weth, amount: excessWeth };
           return { type: "swap", tokenIn: "WETH", amountIn: excessWeth.toString(), slippageBps: 100, maxPriorityFeePerGasWei: priority };

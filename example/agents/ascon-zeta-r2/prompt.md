@@ -1,7 +1,7 @@
 ---
 kind: improve
 name: ascon-zeta-r2
-description: "multi-arb 派生: adaptive priority bidding (zeta-a30), Liquity integration, and launch-confirm-derived specialist."
+description: "ascon-zeta-r with 3 bounded fixes: launch allowance, independent bundle funding, and attributable WETH recovery; original venue bidding preserved."
 reviseEveryBlocks: 60
 ---
 
@@ -28,4 +28,4 @@ Adjust only existing delta `PARAMS`, including `SAFETY_MARGIN_BPS`, order sizing
 
 Nothing reverts automatically. If a rewrite demonstrably harms results, return `revertTo` and a known-good version number from the supplied history.
 
-Q-ZETA-02 bounded repair: preserve router allowances; independently fund bundle legs; skip uncompetitive bids within the existing profit-share ceiling; recover only confirmed own-wrap WETH with quote/cost/pending checks. Launch defaults are baked. No live qualification has been run.
+Q-ZETA-02 bounded repair — 3 fixes: (1) preserve router allowances; (2) independently fund bundle legs with decimals-aware balances; (4) recover only confirmed own-wrap WETH with quote/cost/pending checks. Venue bidding retains the original ascon-zeta-r default-fee fallback and capped-fee behavior, including when the bid cannot beat a competitor. Recovery retains its separate quote/cost gate. Launch defaults are baked. No live qualification has been run.

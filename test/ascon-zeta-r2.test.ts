@@ -8,7 +8,6 @@ import type { AgentContext, AgentObservation } from "@eris/sdk";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const fixture = JSON.parse(readFileSync(new URL("./fixtures/ascon-zeta-r-logs.json", import.meta.url), "utf8"));
-const measured = '{"bidMode":2,"bidProfitShareBps":3000,"gasPerSwap":140000}';
 const bakedParams = 'const PARAMS: Params = { ...DEFAULTS };';
 const envParams = 'const PARAMS = parseZetaParams(process.env.ASCON_ZETA_PARAMS);';
 let serial = 0;
@@ -46,16 +45,7 @@ const ctx = { publicClient: new Proxy({}, { get() { throw new Error("offline rep
 
 
 const candidate = "ascon-zeta-r2";
-const read = (file: string) => readFileSync(resolve(root, `example/agents/${candidate}/${file}.ts`), "utf8");
-const bidStart = read("delta").indexOf("export function bidFee");
-const bidEnd = read("delta").indexOf("/** Pure decision core. */");
-const oldDelta = readFileSync(resolve(root, "example/agents/ascon-zeta-r/delta.ts"), "utf8");
-const oldBid = oldDelta.slice(oldDelta.indexOf("    const bidFee ="), oldDelta.indexOf("    if (bestTwo &&"))
-  .replace("    const bidFee = (edge: number, amountUsdc: number, bundle: boolean): string => {",
-    "export function bidFee(obs: AgentObservation, edge: number, amountUsdc: number, bundle: boolean, params: DeltaParams = PARAMS): string { const fee = obs.limits.defaultPriorityFeePerGasWei;");
-const bidMutation: [string, string] = [read("delta").slice(bidStart, bidEnd), oldBid.replace(/;\s*$/, "\n")];
 const fundingMutation: [string, string] = ["const sellFunded = canFund(fundedObs, bestTwo.base) && held >= baseSell;", "const sellFunded = true;"];
-const recoveryMutation: [string, string] = ["const excessWeth = recoveryWeth < weth ? recoveryWeth : weth;", "const excessWeth = weth > initialWeth! ? weth - initialWeth! : 0n;"];
 
 function probe(base = "WETH"): any {
   const o = structuredClone(fixture.windows[0].frames[0].observation);
@@ -73,25 +63,23 @@ function probe(base = "WETH"): any {
   return o;
 }
 
-test("32 real-log frames: every changed decision has a bounded-fix witness", async t => {
+test("32 real-log frames: original decisions preserved except witnessed fixes 1/2/4", async t => {
   let compared = 0, identical = 0;
   const differences: unknown[] = [];
   for (const window of fixture.windows) {
     const old = await loadAgent("ascon-zeta-r"), fixed = await loadAgent(candidate);
-    const bidRestored = await loadAgent(candidate, bidMutation);
     const fundingRestored = await loadAgent(candidate, fundingMutation);
     for (const { observation: o } of window.frames) {
+      // These fixtures have no launch or Liquity observations: fixes 1 and 4 cannot apply.
+      assert.ok(!o.registry?.entries?.some((e: any) => e.kind === "uniswapV3Pool"));
+      assert.ok(!o.protocols.liquity);
       const expected = await old.decide(structuredClone(o), ctx);
       const actual = await fixed.decide(structuredClone(o), ctx);
-      const oldBidAction = await bidRestored.decide(structuredClone(o), ctx);
       const oldFundingAction = await fundingRestored.decide(structuredClone(o), ctx);
       compared++;
       if (JSON.stringify(actual) === JSON.stringify(expected)) { identical++; continue; }
       const reasons = [];
-      if (actual?.reason === "uncompetitive venue bid") {
-        assert.deepEqual(oldBidAction, expected, "restoring fee policy alone explains this frame");
-        reasons.push("fix3: competitive bid exceeds existing fee/profit ceiling");
-      } else if (expected?.type === "bundle" && actual?.type !== "bundle") {
+      if (expected?.type === "bundle" && actual?.type !== "bundle") {
         assert.deepEqual(oldFundingAction, expected);
         reasons.push("fix2: sell leg not independently funded");
       }
@@ -99,8 +87,9 @@ test("32 real-log frames: every changed decision has a bounded-fix witness", asy
       differences.push({ run: window.run, regime: window.regime, block: o.blockNumber, reasons });
     }
   }
-  assert.equal(compared, 32); assert.ok(identical > 0); assert.ok(differences.length > 0);
-  t.diagnostic(JSON.stringify({ compared, identical, differences }));
+  assert.equal(compared, 32); assert.ok(identical > 0); assert.equal(identical + differences.length, 32);
+  t.diagnostic(JSON.stringify({ compared, identical, differences,
+    ...(differences.length === 0 ? { result: "No differing frames; fixes 1/2/4 do not change these decisions" } : {}) }));
 });
 
 test("fix1 allowance: preserve normal router allowance, confirm approval before swap; old exact approve is red", async () => {
@@ -147,19 +136,6 @@ test("fix2 independent confirmed funding, including WBTC decimals; dependent bun
     o.blockNumber = "3";
     assert.equal((await fixed.decide(o, ctx)).type, "bundle", "confirmed WBTC raw units fund a leg");
   }
-});
-
-test("fix3 insufficient profit budget skips; restoring low default fee is red", async () => {
-  const fixed = await loadAgent(candidate), broken = await loadAgent(candidate, bidMutation);
-  const o = probe(); o.balances.usdcUnits = "1000000";
-  const invariant = async (agent: any) => assert.equal((await agent.decide(o, ctx)).type, "noop", "must skip uncompetitive venue send");
-  await invariant(fixed); await assert.rejects(invariant(broken), { code: "ERR_ASSERTION" });
-  o.balances.usdcUnits = "20000000000"; o.blockNumber = "2";
-  const a = await fixed.decide(o, ctx);
-  assert.equal(a.type, "bundle"); assert.equal(a.maxPriorityFeePerGasWei, "200000000");
-  assert.ok(a.actions.every((leg: any) => leg.slippageBps === 120));
-  o.limits.maxPriorityFeePerGasWei = "100000000";
-  assert.equal((await fixed.decide(o, ctx)).type, "noop", "hard ceiling must not yield an uncompetitive capped bid");
 });
 
 async function recoverySequence(agent: any, quoted = 3000000000n, pending = false): Promise<any> {

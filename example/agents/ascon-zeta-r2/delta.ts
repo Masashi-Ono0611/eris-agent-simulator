@@ -68,7 +68,52 @@ function inventoryCap(current: bigint, desired: bigint, base: string, buy: boole
   return current <= limit ? 0n : (desired < current - limit ? desired : current - limit);
 }
 
-export function bidFee(obs: AgentObservation, edge: number, amountUsdc: number, bundle: boolean, params: DeltaParams = PARAMS): string | null {
+/** Original zeta-r venue bidding: default fallback and capped fees, without a bid-based skip. */
+export function bidFee(obs: AgentObservation, edge: number, amountUsdc: number, bundle: boolean, params: DeltaParams = PARAMS): string {
+  const fee = obs.limits.defaultPriorityFeePerGasWei;
+  if (params.bidMode === 0 || edge <= 0 || amountUsdc <= 0) return fee;
+  if (params.bidMode === 2) {
+    try {
+      if (!obs.competition || !Number.isFinite(obs.fairPriceUsdcPerWeth) || obs.fairPriceUsdcPerWeth <= 0) return fee;
+      const defaultFee = BigInt(fee);
+      const maximum = BigInt(obs.limits.maxPriorityFeePerGasWei ?? fee);
+      if (maximum < defaultFee) return fee;
+      const competitor = BigInt(obs.competition.maxCompetitorPriorityFeeWei ?? "0");
+      const target = competitor + BigInt(params.bidBumpWei);
+      const desired = target > defaultFee ? target : defaultFee;
+      const gas = BigInt(params.gasPerSwap) * (bundle ? 2n : 1n);
+      // Profit edge uses net edge for bundles; for a single leg remove the
+      // observed venue cost and configured safety margin from its gross gap.
+      const netEdge = bundle ? edge : Math.max(0, edge);
+      if (!Number.isSafeInteger(params.gasPerSwap) || params.gasPerSwap <= 0) return fee;
+      const profitUsdc = amountUsdc * netEdge;
+      if (!Number.isFinite(profitUsdc) || profitUsdc <= 0 || profitUsdc * 1e6 > Number.MAX_SAFE_INTEGER) return fee;
+      const profitMicro = BigInt(Math.floor(profitUsdc * 1e6));
+      const fairMicroNum = obs.fairPriceUsdcPerWeth * 1e6;
+      if (!Number.isSafeInteger(Math.floor(fairMicroNum)) || fairMicroNum <= 0) return fee;
+      const fairMicro = BigInt(Math.floor(fairMicroNum));
+      // fee * gas * fairMicro / 1e24 <= profitMicro * share / 1e6
+      // Rearranged entirely in integers to avoid a lossy wei-sized Number.
+      const budgetFee = profitMicro * BigInt(params.bidProfitShareBps) * 10n ** 14n / (gas * fairMicro);
+      if (budgetFee < defaultFee) return fee;
+      const capped = desired < maximum ? desired : maximum;
+      return (capped < budgetFee ? capped : budgetFee).toString();
+    } catch { return fee; }
+  }
+  if (params.bidExtraBps <= 0) return fee;
+  // bidExtraBps scales how much of the headroom (default fee -> maxPriorityFeePerGasWei) is bid:
+  // a 100 bps edge with bidExtraBps=10000 bids the ceiling; smaller edges bid proportionally less.
+  // (A wei-sized add-on, as first written, is ~1e-6 of the 0.1 gwei default and changes nothing.)
+  const ceiling = BigInt(obs.limits.maxPriorityFeePerGasWei ?? fee);
+  const base = BigInt(fee);
+  if (ceiling <= base) return fee;
+  const share = Math.min(1, (edge / 0.01) * (params.bidExtraBps / 10000));
+  const extra = ((ceiling - base) * BigInt(Math.floor(share * 1_000_000))) / 1_000_000n;
+  return (base + extra).toString();
+}
+
+/** Fix 4 only: retain the recovery quote/cost gate and competitive fee budget. */
+export function recoveryBidFee(obs: AgentObservation, edge: number, amountUsdc: number, bundle: boolean, params: DeltaParams = PARAMS): string | null {
       const fee = obs.limits.defaultPriorityFeePerGasWei;
       if (params.bidMode === 0 || edge <= 0 || amountUsdc <= 0) return null;
       if (params.bidMode === 2) {
@@ -168,7 +213,6 @@ export function chooseAction(obs: AgentObservation, params: DeltaParams = PARAMS
         if (!canFund(obs, "USDC") || usdcBal < usdcIn) return { type: "noop", reason: "unfunded buy" };
         const priority = bidFee(obs, bestTwo.spread - (bestTwo.cheap.feeBps + bestTwo.rich.feeBps + params.SAFETY_MARGIN_BPS) / 10000,
           bestTwo.usdcIn <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(bestTwo.usdcIn) / 1e6 : NaN, true, params);
-        if (priority === null) return { type: "noop", reason: "uncompetitive venue bid" };
         const actions = [
           withBase({ type: bestTwo.cheap.swapType, tokenIn: "USDC", amountIn: usdcIn.toString(), slippageBps: params.LEG_SLIPPAGE_BPS }),
           withBase({ type: bestTwo.rich.swapType, tokenIn: bestTwo.base, amountIn: baseSell.toString(), slippageBps: params.LEG_SLIPPAGE_BPS }),
@@ -213,7 +257,6 @@ export function chooseAction(obs: AgentObservation, params: DeltaParams = PARAMS
     const singleProfitEdge = bestOne.gapAbs - (bestOne.venue.feeBps + params.SAFETY_MARGIN_BPS) / 10000;
     const amountUsdc = bestOne.tokenIn === "USDC" ? (bestOne.amountIn <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(bestOne.amountIn) / 1e6 : NaN) : baseToFloat(bestOne.amountIn, viewDecimals(views, bestOne.base)) * (obs.fairPricesUsd?.[bestOne.base] ?? obs.fairPriceUsdcPerWeth);
     const priority = bidFee(obs, singleProfitEdge, amountUsdc, false, params);
-    if (priority === null) return { type: "noop", reason: "uncompetitive venue bid" };
     const action: Record<string, unknown> = { type: bestOne.venue.swapType, tokenIn: bestOne.tokenIn,
       amountIn: bestOne.amountIn.toString(), maxPriorityFeePerGasWei: priority, slippageBps: params.SINGLE_SLIPPAGE_BPS };
     if (bestOne.base !== "WETH") action.base = bestOne.base;
