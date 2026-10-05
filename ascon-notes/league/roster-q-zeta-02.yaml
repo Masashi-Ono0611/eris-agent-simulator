@@ -1,0 +1,16 @@
+# Q-ZETA-02 registered-pending-start; no launch authorization from this file. Fixed F_ref slot order.
+# No ASCON_DELTA_PARAMS: zeta-a30 defaults are baked into ascon-zeta-r2.
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: clean-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: cand
+    dir: ascon-zeta-r2
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
