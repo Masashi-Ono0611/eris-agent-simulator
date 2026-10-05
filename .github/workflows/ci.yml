@@ -27,7 +27,10 @@ jobs:
           node-version: 22
           cache: npm
 
+      # AGENTS.md: install scripts of dependencies must not run (supply-chain rule).
       - run: npm ci
+        env:
+          NPM_CONFIG_IGNORE_SCRIPTS: 'true'
 
       - uses: actions/setup-python@v5
         with:
