@@ -22,7 +22,12 @@ const fixture = JSON.parse(readFileSync('test/fixtures/xb-r-dev3-v4.json', 'utf8
 
 test('live shipped source is byte-identical to d30cbbb v3, not current v5 defaults', () => {
   const source = readFileSync(`${dir}/agent.ts`);
-  assert.deepEqual(source, execFileSync('git', ['show', `${commit}:example/agents/xb-r/agent.ts`]));
+  // The pinned sha256 below is the byte-identity guard. The git object is an extra cross-check that
+  // exists only where history is available (a shallow CI checkout does not contain it).
+  let historical: Buffer | undefined;
+  try { historical = execFileSync('git', ['show', `${commit}:example/agents/xb-r/agent.ts`], { stdio: ['ignore', 'pipe', 'ignore'] }); }
+  catch { historical = undefined; }
+  if (historical) assert.deepEqual(source, historical);
   assert.equal(createHash('sha256').update(source).digest('hex'),
     '78d8fa43156cee872e1bcbcaf86c1da00f1aa1646c6b210e7af4b499edea4d04');
   assert.equal(live.PARAMS.ENTRY_BPS, 50);

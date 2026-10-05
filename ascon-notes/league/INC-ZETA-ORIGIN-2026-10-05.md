@@ -37,7 +37,7 @@ NyxFoundation/eris-agent-simulator（MIT）の multi-arb → ascon-delta → asc
 - Liquity統合: eUSD割引購入/償還、Stability Pool、観測可能なriskiest trove清算、ETH/WETH回収とdelta fallbackの優先順位。SDK/上流プロトコル部品を利用している。
 - launch統合: **launch-confirm由来**の需要確認/exitロジックを再利用し、fallbackの継続、保有時exit、待ち時間上限、trap filterへの適応を加えた。launch全体を独自発明とは記載しない。
 - 状態管理: 初期ETH/WETHアンカー、block逆行/gap時のreset、watch/pending/max-hold/endgame、persistenceなど。常に実効ONとは限らず、zeta-a30のdelta persistence/inventory band/endgameNoNewBlocksは0。
-- releaseの再現性: ascon-zeta-rのdelta環境変数依存を除去。ascon-zeta自体は変更しない。promptの「delta endgame guardは有効」と読める旧記載を実際の既定0に合わせた。Liquity/launchの既存guardは変更していない。
+- releaseの再現性: ascon-zeta-rのdeltaおよびspecialist環境変数依存を除去。specialistは `launch=true`, `redemption=true`, `stabilityPool=true` に固定（元agentの既定値、測定 `roster-league-u1.yaml` にZETA overrideなし）。agent.tsはPARAMS行のみ差分、launch.tsはbyte一致。ascon-zeta自体は変更しない。promptの「delta endgame guardは有効」と読める旧記載を実際の既定0に合わせた。Liquity/launchの既存guardは変更していない。
 
 ## 提出規約について確認できた範囲
 
@@ -54,3 +54,7 @@ description: "multi-arb 派生: adaptive priority bidding (zeta-a30), Liquity in
 提出時の日本語補足案: 「MIT公開参照multi-arbを基礎に、適応優先入札・Liquity統合・launch-confirm由来の専門処理と状態管理を追加した派生戦略です。採用設定は提出物に固定しています。」
 
 本人決定: **2026-10-05チャット承認済み — 独自戦略と認め、条件付き第一候補とする。** 条件は [Q-ZETA-01](Q-ZETA-01.md) の独立資格試験、安全・提出適合、費用枠等。性能の保証はしない。
+
+## 環境非依存化の再ロック
+
+候補tree SHA256: `b4e295aeef419ea00b1ae00d9c63672d3142d64676ae3b764ace121aeec75a56`。詳細は [Q-ZETA-01](Q-ZETA-01.md) と [固定表](q-zeta-01-lock.json)。未指定時の32実ログフレーム一致、delta/zeta/両方のpoison各32フレーム一致、既存3赤対照を維持。実ログにはspecialist観測がないため、env読み取り復元の第4赤対照は別の合成SP観測で判断一致assertionが失敗することを確認した。型検査・指定関連13testsはPASS。新規計測・シミュレーション・資格試験は未実行。

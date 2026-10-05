@@ -15,7 +15,7 @@ export function parseZetaParams(raw: string | undefined): Params {
   } catch { /* retain safe defaults */ }
   return out;
 }
-const PARAMS = parseZetaParams(process.env.ASCON_ZETA_PARAMS);
+const PARAMS: Params = { ...DEFAULTS };
 const MIN_USDC = 200n * 10n ** 6n, MIN_EUSD = 200n * 10n ** 18n;
 const EXIT_COST_BPS = 35, ENDGAME_BLOCKS = 20;
 let initialEth: bigint | undefined, initialWeth: bigint | undefined;

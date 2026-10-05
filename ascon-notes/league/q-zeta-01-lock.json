@@ -6,12 +6,12 @@
   "recommended": "B: ascon-zeta-r, no repair",
   "candidate": {
     "files": {
-      "agent.ts": "fc2585219af27b01ceac76af642d98d485f39681a2c214d2a636eb84e6d4d80b",
+      "agent.ts": "fd8364db8d0be2f72fa70d7089852da2fb73e908754b38f2e69462250f125620",
       "delta.ts": "fcb3b167d6b6f1fa593b3b972c90a8d65727079c806f0f61b380491ba4b89ac4",
       "launch.ts": "79d5e2f69612d554f9579591b8a8d7110c434be2179218a7f594c340bf09b7cc",
       "prompt.md": "56b1e6a1fd2b0d6f0ae86d62a9a5e09f66f8b537e92d5662546e50716fcafab9"
     },
-    "sha256": "75b740fbf951f472a076ad47c69cd691162bcd4b8287e1a3aea938779a4b4a61"
+    "sha256": "b4e295aeef419ea00b1ae00d9c63672d3142d64676ae3b764ace121aeec75a56"
   },
   "original": {
     "sha256": "3a9f3cc0076f6e64625be4150967af8d7e693268d6951446587c75061f0ebe3b",
@@ -224,7 +224,10 @@
   "parameters": {
     "bidMode": 2,
     "bidProfitShareBps": 3000,
-    "gasPerSwap": 140000
+    "gasPerSwap": 140000,
+    "launch": true,
+    "redemption": true,
+    "stabilityPool": true
   },
   "environment": {
     "ERIS_AGENT_FROZEN": "1",
@@ -241,7 +244,7 @@
   ],
   "tests": {
     "typecheck": "PASS",
-    "relatedTests": 31,
+    "relatedTests": 13,
     "logDerivedFrames": 32,
     "activeFrames": 19,
     "redControlMismatches": {
@@ -249,7 +252,20 @@
       "gasPerSwap": 13,
       "bidProfitShare": 17
     },
-    "strategyScan": "PASS via node --import tsx; npm tsx CLI blocked by sandbox IPC EPERM"
+    "strategyScan": "Previously PASS via node --import tsx; not rerun for this env-only fix; npm tsx CLI blocked by sandbox IPC EPERM",
+    "relatedTestFiles": [
+      "test/ascon-zeta-r.test.ts",
+      "test/ascon-zeta.test.ts"
+    ],
+    "hostileEnvFrames": 96,
+    "framesPerPoison": 32,
+    "hostileEnvCases": [
+      "delta",
+      "zeta",
+      "both"
+    ],
+    "restoredEnvRedControl": "PASS: same decision assertion rejects restored env read on separate synthetic SP probe; real-log frames have no specialist observations",
+    "sourceIdentity": "launch.ts byte-identical; agent.ts differs only in PARAMS line; no process.env under candidate"
   },
   "unverified": [
     "F_ref 60 worlds",

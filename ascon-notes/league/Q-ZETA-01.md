@@ -9,7 +9,8 @@ Masashi本人は2026-10-05のチャットで「inc-zetaを独自戦略と認め�
 対象は `example/agents/ascon-zeta-r/`、**B（修理なし）**。Cは診断のみで修理因子を実装していない。採用理由は測定設定との同一性を保ち、1seedの弱点に合わせた未検証の入札/在庫/回収変更を持ち込まないため。[診断](INC-ZETA-DIAGNOSIS-2026-10-05.md)の弱点を受け入れて資格条件で判定する。結果を見て修理ON/OFFを選ばない。
 
 - delta設定: `bidMode=2`, `bidProfitShareBps=3000`, `gasPerSwap=140000`。`ASCON_DELTA_PARAMS` は不使用。入口手数料+50bps、サイズ2.5〜25%等は現行通り。
-- tree SHA256: **`75b740fbf951f472a076ad47c69cd691162bcd4b8287e1a3aea938779a4b4a61`**。
+- specialist設定: `launch=true`, `redemption=true`, `stabilityPool=true` を `DEFAULTS` から焼き込み。元 `ascon-zeta/agent.ts` の既定値と一致し、測定 `roster-league-u1.yaml` のinc-zetaには `ASCON_ZETA_PARAMS` 指定がない。未指定時の動作を保持し、候補内の `process.env` 読み取りは0件。
+- tree SHA256: **`b4e295aeef419ea00b1ae00d9c63672d3142d64676ae3b764ace121aeec75a56`**。
 - hash方式: ディレクトリ内の全ファイルの相対path→SHA256 mapをキー順に並べ、空白なしJSON (`sort_keys=True,separators=(',',':')`) のUTF-8をSHA256化。既存 `league_harness.tree_hash` と同じ方式。
 - 詳細固定表: [q-zeta-01-lock.json](q-zeta-01-lock.json)。agent/launch/prompt/deltaの全hash、参照3体、SDK・共通lib・runtime・core/scorer・G0/runner・package-lock等を含む。元ascon-zetaのtree hashも保存。
 - roster: [roster-q-zeta-01.yaml](roster-q-zeta-01.yaml)、SHA256 `323f489c53f27e46f7ca4b1d4c53738928b40a087e9d23f4e169e1404d767e30`。
@@ -68,7 +69,7 @@ Masashi本人は2026-10-05のチャットで「inc-zetaを独自戦略と認め�
 
 ## 6. 入口証跡・署名
 
-- 済: [独自性開示](INC-ZETA-ORIGIN-2026-10-05.md)、4世界の会計/過去照合、B固定hash、32再構成フレームの判断一致、3赤対照、元専門コードのbyte一致、型検査・関連31tests、静的戦略検査、可視seed衝突0。
+- 済: [独自性開示](INC-ZETA-ORIGIN-2026-10-05.md)、4世界の会計/過去照合、B固定hash、32再構成フレームの判断一致、既存3赤対照（不一致19/13/17件）、delta/zeta/両方のpoisonそれぞれ32フレーム一致、env読取復元の第4赤対照。32実ログフレームはLiquity/launch観測を含まないため、第4対照は別の合成SP観測で同じ判断一致assertionが失敗することを確認。launch.tsは元とbyte一致、agent.tsはPARAMS行のみ差分。今回の型検査・指定関連13testsはPASS。前回の静的戦略検査・可視seed衝突0は今回再検証していない。
 - 未検証: 実行先統合commitと依存照合、正式run-start manifest/リース、直前seed監査、費用残量、全60世界、Docker selftest/bundle/public backtest、LLM改訂ON/実提出受理。既見診断の安全/性能を新資格の証明にしない。
 - 提出直前のrepo所定順序（typecheck→strategy check→public60→bundle→selftest）は別の未完了工程。この準備で完了したとしない。
 
