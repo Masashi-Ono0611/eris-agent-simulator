@@ -20,7 +20,9 @@ OUTPUT = ROOT / 'ascon-notes/eval/q-zeta-02-seed-audit.json'
 # Only the exact local contract package and marked local plan addendum are self reservations.
 SELF_FILES = {ROOT / p for p in ['ascon-notes/league/Q-ZETA-02.md',
                                 'ascon-notes/league/q-zeta-02-lock.json',
-                                'ascon-notes/eval/q-zeta-02-seed-audit.json']}
+                                'ascon-notes/eval/q-zeta-02-seed-audit.json',
+                                # Overnight plan: refers to the registered Q-ZETA-02 seeds themselves (planned use, written before any run).
+                                'ascon-notes/league/OVERNIGHT-2026-10-06.md']}
 START, END = '<!-- q-zeta-02-registration:start -->', '<!-- q-zeta-02-registration:end -->'
 
 

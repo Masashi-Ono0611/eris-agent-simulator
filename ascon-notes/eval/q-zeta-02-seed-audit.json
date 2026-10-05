@@ -1,5 +1,5 @@
 {
-  "checkedAtUtc": "2026-10-05T16:40:05.655937+00:00",
+  "checkedAtUtc": "2026-10-05T17:01:21.265961+00:00",
   "scope": "All locally visible registered and sibling worktrees; recursive index.tsv, manifests, ledgers, ascon-notes Markdown and seed/lock reservation JSON/YAML. Remote/private sources not accessible; re-audit before start.",
   "worktrees": [
     "/Users/masashi_mac_ssd/Developer/ascon",
@@ -236,6 +236,7 @@
   "diagnosticsRecordedAndNotReused": true,
   "selfReservationExclusions": [
     "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/eval/q-zeta-02-seed-audit.json",
+    "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/OVERNIGHT-2026-10-06.md",
     "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/Q-ZETA-02.md",
     "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/q-zeta-02-lock.json"
   ],
@@ -17404,6 +17405,42 @@
       "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/upstream-eval/runs/2026-10-05T16-34-21-503Z/manifest.json",
       "kind": "manifest",
       "sha256": "58aeea2e8a71ebe4fc6fb148ebbc5c2ae9835957864b9378ac7d159a4244fa16",
+      "seedFields": []
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/upstream-eval/runs/2026-10-05T16-46-48-887Z/manifest.json",
+      "kind": "manifest",
+      "sha256": "660178c66b26076c5f7d9e015a655f499d436d477ee27a6d4fb9d397c1479262",
+      "seedFields": []
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/upstream-eval/runs/2026-10-05T16-46-51-767Z/manifest.json",
+      "kind": "manifest",
+      "sha256": "07138d01bd2ec48bc916c620cc263d4a892c70e050dab53e74b0006686bbbb68",
+      "seedFields": []
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/upstream-eval/runs/2026-10-05T16-46-54-924Z/manifest.json",
+      "kind": "manifest",
+      "sha256": "c8f0e0708ebb00573b4a414b17715280b21c6c4a66736a94193023a4753ce3d3",
+      "seedFields": []
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/upstream-eval/runs/2026-10-05T16-59-21-002Z/manifest.json",
+      "kind": "manifest",
+      "sha256": "14e59f1df541b401178909fa57ee905ece3316ff9dae6573a95183e99e05b7db",
+      "seedFields": []
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/upstream-eval/runs/2026-10-05T16-59-23-816Z/manifest.json",
+      "kind": "manifest",
+      "sha256": "54e5aea083284a7271059a12f46737d16a78132a3579786737dc3c9b2d99f920",
+      "seedFields": []
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/upstream-eval/runs/2026-10-05T16-59-26-902Z/manifest.json",
+      "kind": "manifest",
+      "sha256": "c23f4b6f7886ef0cdb826c3f0fba5d8842b48267386c90343d1460255e3b7963",
       "seedFields": []
     }
   ],

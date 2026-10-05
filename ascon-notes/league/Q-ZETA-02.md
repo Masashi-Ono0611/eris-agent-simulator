@@ -94,5 +94,5 @@
 | 本人方針承認（2026-10-05） | “limited repair then new contract” |
 | 本人実行指示（2026-10-06 JST） | “start quickly and run Air and mini in parallel” |
 | 承認文脈の扱い | 上2行は本人提示の原文。限定修理・新契約への承認を保持し、host選定済み/開始前確認済みとは代署しない。本紙の単一host条件を適用する。 |
-| 実行担当Claudeの開始前照合 |  |
+| 実行担当Claudeの開始前照合 | **Claude（実行担当）、2026-10-06 JST 起動前**: 候補hash ddd7c718…786c の lock検証 PASS（174ファイル・コミット済みツリー）、seed再監査 PASS（47001–47005 hits=[]、1310資料・index67・770行、48001/48002 は使用済み記録のみ・再利用なし。夜間計画文書の自己参照は自己予約として許可リストに追加）。**実行host=Mac mini（確定・以後変更しない）**: mini 自機の正式G0スモーク PASS（calm 48004–48006・ascon-zeta-r2・本番と同じmanifest→run-league→g0.py・p99 379/390/429ms・360blocks/362loops）、anvil 1.2.3（commit a813a2ce・x86_64・Airと同コミット）、状態ダンプはAirから転送しsha256一致。起動時の空きディスク44GiB（≥39.5GiB）。keep-awake: caffeinate -ims をチェーン全期間で使用。miniはIntel/Airはarm64でanvilビルド・CPUが異なる＝Air校正との差を逸脱事項として記録（G0判定は各chunkで実測）。Airは別scope（診断seed 48003、別出力）で並行し、本試験の同一hostには含めない。予算の実消化精算は未確認（forward100h内数）。 |
 | 合否報告・本人受領 | 未起動・結果なし |
