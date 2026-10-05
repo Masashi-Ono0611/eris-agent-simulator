@@ -11,7 +11,7 @@ while [ "$#" -gt 0 ]; do
     *) echo "usage: $0 [--install-foundry] [--npm-ci]" >&2; exit 2 ;;
   esac
 done
-export PATH="$HOME/.homebrew/bin:$HOME/.foundry/bin:$PATH"
+export PATH="$HOME/ascon-run/bin:$HOME/.homebrew/bin:$HOME/.foundry/bin:$PATH"
 export NVM_DIR="$HOME/.nvm"
 if [ -f "$NVM_DIR/nvm.sh" ]; then
   # shellcheck disable=SC1091
@@ -33,6 +33,11 @@ for tool in brew forge anvil node npm python3 git rsync; do
   if command -v "$tool" >/dev/null 2>&1; then echo "OK: $tool";
   else echo "MISSING: $tool"; MISSING=1; fi
 done
+# The Air state dump and calibration use anvil 1.2.3 (commit a813a2ce); another version cannot load that dump.
+if command -v anvil >/dev/null 2>&1; then
+  if anvil --version 2>/dev/null | grep -q 'a813a2cee7dd4926e7c56fd8a785b54f32e0d10f'; then echo 'OK: anvil 1.2.3 (a813a2ce)';
+  else echo 'MISSING: anvil must be 1.2.3 commit a813a2ce (see README-RUNBOOK)'; MISSING=1; fi
+fi
 if command -v node >/dev/null 2>&1; then
   NODE_PATH=$(command -v node)
   case "$NODE_PATH" in "$NVM_DIR"/versions/node/*/bin/node) echo 'OK: node via nvm' ;; *) echo 'MISSING: active nvm node'; MISSING=1 ;; esac

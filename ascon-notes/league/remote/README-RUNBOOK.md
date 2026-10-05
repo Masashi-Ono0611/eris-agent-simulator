@@ -42,3 +42,11 @@
 | mini の G0 | **未検証** |
 | launchd 読み込み・自動再開 | **未検証** |
 | 実 rsync 取り込み | **未検証** |
+
+## 6. mini 環境の作り方（2026-10-06 に実施した手順・実績）
+mini は Intel (x86_64) で、Air は Apple シリコン。次の差があるので、Air の成果物をそのまま持ち込めない。
+1. foundry: `brew install foundry`（1.8.4）。ただし Air の状態ダンプ（anvil 1.2.3 で生成）は 1.8.4 で読めない（`data did not match any variant`）。
+2. anvil 1.2.3: 公式リリース v1.2.3 の darwin_amd64 を取得し、`anvil` だけを `~/ascon-run/bin/` に置く。コミットが Air と同じ `a813a2ce` であることを確認。libusb の参照が `/usr/local/opt/...` なので、`install_name_tool -change` で `~/.homebrew/opt/libusb/lib/...` に直し、`codesign --force -s -` で署名し直した（元は `anvil.orig`）。環境変数 `DYLD_*` は /bin/sh 経由で落ちるため使えない。
+3. 状態ダンプ: Air の `backtest/state/{manifest.json,venues-state.json}` を scp で mini の `~/ascon-run/ascon/backtest/state/` へ（sha256 一致を確認）。大きいファイルは `.part` に送ってから sha256 照合後に rename。`rsync -e 'tailscale ssh'` は固まったので使わない。
+4. `PATH` は `~/ascon-run/bin` を先頭に、nvm の default node、`NPM_CONFIG_IGNORE_SCRIPTS=true`。`npm ci` は `mini-bringup.sh --npm-ci`、コントラクトは `npm run build:contracts`。
+5. 注意: Air と anvil のビルド（x86_64/arm64）・CPU が違うので、mini の結果は Air の結果と数値を直接比較しない（相対 T は同一ホスト・同一場の中だけで意味を持つ）。G0 は mini 固有の確認が必要。
