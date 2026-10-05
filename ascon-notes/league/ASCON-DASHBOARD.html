@@ -285,6 +285,12 @@
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
       "title": "rev 13 incz診断の本人提示measured引継ぎ",
       "locator": "§1.7/7.1/9/10。原ログ再監査なし・契約変更未決定"
+    },
+    {
+      "id": "src-rev14",
+      "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
+      "title": "rev 14 本人承認・移管・進行中作業",
+      "locator": "§2/4/8/9/10。2026-10-05 JSTの本人チャット引継ぎ。作成中の結果は未確認"
     }
   ]
 }
@@ -298,14 +304,15 @@
     "src-ai",
     "src-xbr-debug",
     "src-ollama-report",
-    "src-rev10"
+    "src-rev10",
+    "src-rev14"
   ],
-  "as_of": "2026-10-05T08:10:21+09:00",
+  "as_of": "2026-10-05T09:52:03+09:00",
   "measurement_as_of": null,
-  "last_update": "rev 13: incz完了・対noop4レジームの弱点・朝08:30 JSTの判断材料と条件付き日程を本文へ統合。全計測終了。",
+  "last_update": "rev 14: 本人承認3点・移管実績・分割PR/zeta-prep進行中・夜間heartbeat取消を本文に統合。作成中の結果は未確認。",
   "phase_id": "phase-first",
-  "headline": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix2・48世界集計を受領、混成場はinc-zetaが1位、candは48世界で5位。inczも診断完了、平均T56.30対44.44・noop割れ4/12。全計測終了・走行中なし。",
-  "subhead": "推奨はA: 混成場で強く、F_ref診断でも平均Tがmulti-arbを上回ったinc-zetaを提出基盤の第一候補とする。本人が(a)新契約・回数枠でF_ref 60世界の資格試験（約4.5h）を行うか、(b)契約の場を見直すかを決める。noop割れ4レジームを明示し、契約変更は提案のみ。Q0維持・追加起動停止のまま、時間精算と受理工程を優先する。 [measured] inc-zetaは混成場48世界で明確に1位。F_refの1 seed診断でも平均Tがmulti-arbを上回り、Q0の「平均T≥multi-arb」は満たす方向。一方「全12レジームで平均(T−Tnoop)≥0」は8/12のみで、4レジームのnoop割れは契約の安全/対noop条件に反する方向。[inferred] 各レジーム1世界でノイズが大きく、資格の合否判定にはならない。inc-zetaの資格試験は5 seed×12=60世界・約4.5hの見込み。第1・第2候補sonnet-1/opus-1で初回資格枠は使用済みのため、新しい契約・回数の枠が必要で本人判断。既決の修理済み1候補1回枠をinc-zetaへ自動転用しない。",
+  "headline": "inc-zetaを条件付き第一候補とし、新契約Q-ZETA-01へ進むことを本人承認済み。移管完了、分割PRとzeta-prepは進行中・結果未確認。既報の全計測終了・走行中なし（プロセス再照会なし）。",
+  "subhead": "承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -323,7 +330,7 @@
     "regimes": 12,
     "name": "Q0b"
   },
-  "notice": "10/8の初回受理目標は延期済み。rev 11も既決契約・最大3回を維持、第3回は打ち切り。H1は標準ON拒否、登録の再操作は不要。",
+  "notice": "10/8の旧受理目標は延期済み。3点の再承認は不要。H1標準ON拒否・旧資格FAILを維持。受理済み版は未確保。",
   "measurement_note": "本人提示measured引継ぎ。mix1/mix2/48世界集計は診断のみ。inczも本人提示measured集計を受領・全計測終了。原ログ/プロセスの再監査なし。",
   "dev1": {
     "name": "dev1-xb-r",
@@ -479,64 +486,63 @@
       "src-dev2-repair"
     ]
   },
-  "human_action": "Q0契約の扱い・提出へ向けた次方針を決める",
+  "human_action": "分割PRの進行を報告し、レビュー・CI後に統合を進める",
   "priority": {
-    "title": "第3回未達を受け、Q0と提出方針を本人が決める",
+    "title": "inc-zetaの弱点診断・設定固定・新契約登録をそろえ、資格から初回受理へ進む",
     "blocker_ref": "B01",
-    "note": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix2・48世界集計を受領、混成場はinc-zetaが1位、candは48世界で5位。inczも診断完了、平均T56.30対44.44・noop割れ4/12。全計測終了・走行中なし。 推奨はA: 混成場で強く、F_ref診断でも平均Tがmulti-arbを上回ったinc-zetaを提出基盤の第一候補とする。本人が(a)新契約・回数枠でF_ref 60世界の資格試験（約4.5h）を行うか、(b)契約の場を見直すかを決める。noop割れ4レジームを明示し、契約変更は提案のみ。Q0維持・追加起動停止のまま、時間精算と受理工程を優先する。",
+    "note": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。 承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。",
     "progress_refs": [
-      "progress-dev4",
-      "progress-dev5",
-      "progress-xa1",
-      "progress-live",
-      "progress-xbr-requal"
+      "progress-rev14-approval",
+      "progress-zeta-prep",
+      "progress-zeta-qualification",
+      "progress-pr-split"
     ],
     "sources": [
-      "src-rev12"
+      "src-rev14"
     ],
     "state": "blocked",
-    "state_label": "資格試験はブロック"
+    "state_label": "準備進行中・資格証跡待ち"
   },
   "recent": [
     {
       "kind": "warning",
-      "title": "mix2: 両chunk G0 PASS・違反0",
-      "text": "[measured] mix2はmix1と同じroster（u1の11体、zeta-2をcand=xb-r v3凍結に置換）。fresh seed40003/40004・12レジーム24世界、mix2a/mix2bともG0 PASS、violations 0。candは平均T51.63・6位・最悪46.2、inc-zetaは61.54・1位・最悪53.2。05:34 JST開始の引継ぎを保持し、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+      "title": "本人承認: 3点を進める",
+      "text": "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。",
       "date": "2026-10-05",
-      "time_note": "本人引継ぎ。更新時刻は測定完了時刻ではない",
+      "time_note": "本人引継ぎ。記録時刻は実施/完了時刻ではない",
       "sources": [
-        "src-rev12"
+        "src-rev14"
       ]
     },
     {
       "kind": "warning",
-      "title": "48世界: inc-zeta 1位・cand 5位",
-      "text": "[measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb 11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。",
+      "title": "ASCONの移管は実施済み",
+      "text": "[measured/実施済み・本人引継ぎ 2026-10-05 JST] ローカル~/Developer/majisuke/ascon→~/Developer/asconへ移管（旧パスは相対symlink）。11 worktreeのbranch/HEAD/tracked変更数が前後一致、worktree repair・node_modulesの絶対symlink張り直し済み。GitHubはMajisuke-dev/ascon→Masashi-Ono0611/ascon（private・ADMIN）へ本人が画面からtransfer実施（auto modeの判定はgh apiのtransferを拒否）。旧URLはredirect、open PR #2も移動。ローカルremote URL更新・fetch/push確認済み。league/v2（cca4005）とeval/upstream-merge（8303d85）を新しい場所へpush、pre-push ci-local quick PASS。mainへ直pushなし。本更新で移管・ネットワークの再検証はしていない。",
       "date": "2026-10-05",
-      "time_note": "本人引継ぎ。更新時刻は測定完了時刻ではない",
+      "time_note": "本人引継ぎ。記録時刻は実施/完了時刻ではない",
       "sources": [
-        "src-rev12"
+        "src-rev14"
       ]
     },
     {
       "kind": "warning",
-      "title": "incz完了: 平均Tは上・noop割れ4/12",
-      "text": "[measured] inczはinc-zeta（ascon-zetaのzeta-a30パラメータ・frozen）をF_ref(cand+noop+multi-arb+clean-arb)で12レジーム×seed40005=12世界。全計測終了・走行中なし。G0 PASS・362ループ・違反0。12レジーム等重み平均T cand 56.30 / multi-arb 44.44（candが上）。1世界平均P 1343.6 / 730.0 / 281.1、取引数254.2 / 253.0 / 42.2（cand/multi/clean）。noop割れ4/12世界、平均(T−Tnoop)<0のレジーム4（最悪informed-flow −8.12）。cand mined revert平均0.2/世界（multi-arb 8.4）、submitted3057/failed90（2.9%）。07:20 JST頃開始との引継ぎ（旧05:40頃開始見込みを訂正）、約55分。旧08:15 JST頃の完了見込みは実績ではなく、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。",
+      "title": "分割PR・zeta-prep進行中",
+      "text": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。 [進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。",
       "date": "2026-10-05",
-      "time_note": "本人引継ぎ。更新時刻は測定完了時刻ではない",
+      "time_note": "本人引継ぎ。記録時刻は実施/完了時刻ではない",
       "sources": [
-        "src-rev13"
+        "src-rev14"
       ]
     }
   ],
   "next_milestone": {
-    "title": "提出基盤・新資格契約/場の本人判断",
-    "note": "推奨はA: 混成場で強く、F_ref診断でも平均Tがmulti-arbを上回ったinc-zetaを提出基盤の第一候補とする。本人が(a)新契約・回数枠でF_ref 60世界の資格試験（約4.5h）を行うか、(b)契約の場を見直すかを決める。noop割れ4レジームを明示し、契約変更は提案のみ。Q0維持・追加起動停止のまま、時間精算と受理工程を優先する。 10/31 23:59 JST締切、dec-007は10/28。受理済み版の確保は未完了。",
+    "title": "10/5〜6: 診断・設定固定・Q-ZETA-01登録",
+    "note": "[日程案・JST] 10/5〜6 診断・設定固定・契約登録、10/6〜8 資格試験、10/9〜12 P60/最小G3/G4・本人送信・初回受理、10/13〜17は受理Sと全残費がある時だけ既決AI工程。10/17 18:00 H480/S240/Hなし分岐、10/18〜25 最終確認、10/26〜28 G4照合と10/28 dec-007、10/29 最終受理目標・10/30 予備・10/31 23:59 JST 照合。初回受理は未確保、日付を理由にゲートを緩めない。",
     "sources": [
-      "src-rev12"
+      "src-rev14"
     ],
-    "state": "blocked",
-    "state_label": "本人判断待ち・全計測終了"
+    "state": "pending",
+    "state_label": "本人承認済み・準備結果未確認"
   },
   "dev3b": {
     "name": "dev3b-xb-r",
@@ -1122,10 +1128,11 @@
     "heartbeat_minutes": 8,
     "monitor_expiry_minutes": 30,
     "state_file": "/tmp/night-state.md",
-    "note": "[本人引継ぎ] 8分ごとのハートビートと/tmp/night-state.mdで夜間の自動進行を管理。監視は30分で失効するため、各ハートビートで監視の有効期限・再登録/更新・次回起床・状態表を確認し、失効前に更新する。失効/未受領なら新規起動を止める。8分は進行管理用で、既決の60秒以下監視・2分検知/5分受領/10分次着手を置換しない。稼働実績・更新成功は本更新で未検証。",
+    "note": "[本人報告 2026-10-05 JST] 夜間のハートビートは取消済み。記憶(ASCON)は移管・体制・教訓を更新済み。decisions.jsonのdec-007参照先文字列は追跡ファイルのため未更新（次にハーネスを触る時にPR）。ASCON repo内ドキュメント18件の旧パス/旧オーナー文字列は未更新（symlink/redirectで動く）。本更新はこれらの一括置換や記憶更新を行わない。 旧運用は8分ごと・/tmp/night-state.md・監視30分で失効という履歴。既決の60秒以下監視・2分検知/5分受領/10分次着手は将来の実走入口として維持する。",
     "sources": [
-      "src-rev10"
-    ]
+      "src-rev14"
+    ],
+    "state": "cancelled-reported"
   },
   "mix2": {
     "name": "mix2",
@@ -1464,7 +1471,23 @@
       "src-rev13"
     ],
     "loops": 362,
-    "interpretation": "[measured] inc-zetaは混成場48世界で明確に1位。F_refの1 seed診断でも平均Tがmulti-arbを上回り、Q0の「平均T≥multi-arb」は満たす方向。一方「全12レジームで平均(T−Tnoop)≥0」は8/12のみで、4レジームのnoop割れは契約の安全/対noop条件に反する方向。[inferred] 各レジーム1世界でノイズが大きく、資格の合否判定にはならない。inc-zetaの資格試験は5 seed×12=60世界・約4.5hの見込み。第1・第2候補sonnet-1/opus-1で初回資格枠は使用済みのため、新しい契約・回数の枠が必要で本人判断。既決の修理済み1候補1回枠をinc-zetaへ自動転用しない。"
+    "interpretation": "[measured] inc-zetaは混成場48世界で明確に1位。F_refの1 seed診断でも平均Tがmulti-arbを上回り、Q0の「平均T≥multi-arb」は満たす方向。一方「全12レジームで平均(T−Tnoop)≥0」は8/12のみで、4レジームのnoop割れは契約の安全/対noop条件に反する方向。[inferred] 各レジーム1世界でノイズが大きく、資格の合否判定にはならない。inc-zetaの資格試験は5 seed×12=60世界・約4.5hの見込み。第1・第2候補sonnet-1/opus-1で初回資格枠は使用済みのため、新しい契約・回数の枠Q-ZETA-01へ進むことを2026-10-05の本人チャットで承認済み。契約下書き・結果は未確認。既決の修理済み1候補1回枠をinc-zetaへ自動転用しない。"
+  },
+  "migration": {
+    "evidence": "measured/実施済み・本人引継ぎ",
+    "verified": false,
+    "note": "[measured/実施済み・本人引継ぎ 2026-10-05 JST] ローカル~/Developer/majisuke/ascon→~/Developer/asconへ移管（旧パスは相対symlink）。11 worktreeのbranch/HEAD/tracked変更数が前後一致、worktree repair・node_modulesの絶対symlink張り直し済み。GitHubはMajisuke-dev/ascon→Masashi-Ono0611/ascon（private・ADMIN）へ本人が画面からtransfer実施（auto modeの判定はgh apiのtransferを拒否）。旧URLはredirect、open PR #2も移動。ローカルremote URL更新・fetch/push確認済み。league/v2（cca4005）とeval/upstream-merge（8303d85）を新しい場所へpush、pre-push ci-local quick PASS。mainへ直pushなし。本更新で移管・ネットワークの再検証はしていない。",
+    "sources": [
+      "src-rev14"
+    ]
+  },
+  "review_handoff": {
+    "evidence": "独立意見の本人引継ぎ",
+    "verified": false,
+    "note": "[独立意見・引継ぎ] Codex(Astra)は賛成。ただし「今のまま merge/提出してよいとは判断しない」。分割点候補は3d86a35。提出物混入は確認範囲で重大なしだが、直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認。現行CIのnpm ciにNPM_CONFIG_IGNORE_SCRIPTS=trueが無く作業ルールと不整合のため修正対象。inc-zetaの測定設定（bidMode:2等はrosterの環境変数）はコード既定値（bidMode:0）と違い、そのままbundleすると再現しないため焼き込み候補を固定する。noop割れ4レジームを先に診断する。契約の場を混成場へ変える案は結果を見たあとの基準変更になるため推奨しない。",
+    "sources": [
+      "src-rev14"
+    ]
   }
 }
 </script>
@@ -1476,9 +1499,10 @@
     "src-master",
     "src-guide",
     "src-rules",
-    "src-ai"
+    "src-ai",
+    "src-rev14"
   ],
-  "goal": "ASCONで優勝する。独自戦略の資格試験と初回受理を優先し、その後にAI改訂の効果を検証する。",
+  "goal": "ASCONで優勝する。条件付き第一候補inc-zetaの診断・設定固定・新契約資格を経て初回受理を確保する。",
   "win": "エポック終了時のPを参加者間でTへ標準化し、後半ほど重く集計。対noop・最悪レジーム・混成場・改訂ONの尾部を同時に守る。",
   "rules": [
     "独自戦略のみ・提出は1体。参照の改名や設定移植だけへ戻さない。",
@@ -1488,14 +1512,15 @@
     "p=3・等速・CPU排他・入力固定。Q0b全60世界とG0/平均Tの旧FAIL保持、資格救済再走なし。",
     "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。",
     "本人決定H1: 検査済み3方針+ENTRY 20–60bps・初期/復帰50・刻み5・最大±5、120block復帰。全面executorTs改訂は見送り。標準ON拒否、専用adapter未実装。旧rev 6署名契約は履歴として保持。",
-    "dev4/dev5はF_ref平均T未達、第3回xa-1は2回修理後も不健全で打ち切り。Q0契約を維持し、扱いと提出方針は本人判断。mix1は5/11位・最悪値1位の診断。"
+    "dev4/dev5はF_ref平均T未達、第3回xa-1は2回修理後も不健全で打ち切り。Q0契約を維持し、扱いと提出方針は本人判断。mix1は5/11位・最悪値1位の診断。",
+    "[未確認] 規約は「10/20 発効版」表示との引継ぎで、今日（2026-10-05）の適用版との一致は未確認。本更新ではオンライン再取得なし。"
   ],
   "protocol": [
     {
       "id": "protocol-first",
       "title": "Step1 決定論Q0・受理",
-      "body": "10/4以降、受理日未定。入口: xb-r修理/再診断・現Q0・hash/G0/新seed/費用",
-      "exit": "凍結Q0→mix/P60→最小改訂適合/G3/G4→本人受理S。Q0追加1回5hはdeep内優先留保。first-next35/3h、旧FAIL保持・延期は既決",
+      "body": "10/5〜6準備、10/6〜8資格、10/9〜12初回受理目標。入口: inc-zeta弱点診断・設定固定・Q-ZETA-01登録・hash/G0/新seed/費用",
+      "exit": "凍結Q0→mix/P60→最小改訂適合/G3/G4→本人受理S。新枠約4.5hは未精算・全費用確認待ち。旧Q0追加1回5hの自動転用なし。旧FAIL保持・延期は既決",
       "label": "まず提出できる独自版を作る",
       "period": "10/4〜・受理日未定",
       "state": "blocked",
@@ -1726,7 +1751,7 @@
       "src-delegation"
     ]
   },
-  "revision": 13,
+  "revision": 14,
   "deadline_at": "2026-10-31T23:59:00+09:00",
   "continuous_operation": {
     "status": "defined-not-verified",
@@ -1897,13 +1922,13 @@
     "full_executor_decision": "本番自由改訂の安全保証なし・継続方針は本人判断",
     "recommendation": "A",
     "options": [
-      "A: inc-zetaを提出基盤の第一候補にする（推奨・未決）。(a)新契約・回数枠でF_ref 5 seed×12=60世界・約4.5hの資格試験、または(b)契約の場の見直しを本人が決める。初回の第1・第2候補sonnet-1/opus-1枠は使用済み。4レジームのnoop割れを診断し、決定・全費用・安全・受理日程が揃うまで追加起動しない",
-      "B: 現Q0を維持し、提出基盤の選定を保留する。inc-zetaのF_ref適性・資格証跡が不足したままなら新規実走を止め、残工程と期限から継続可否を本人が決める",
-      "C: xb-rの追加改良または別系統設計を再検討する。混成場での優位を示す反証可能な仮説と新たな回数・全費用・受理日程を本人が決めるまで起動しない。第3回打ち切りを自動解除しない"
+      "承認済み: inc-zetaを独自戦略の条件付き第一候補とする（multi-arb派生開示）",
+      "承認済み: 診断後、現行閾値のQ-ZETA-01でF_ref 60世界の資格試験へ進む",
+      "承認済み: 分割PR・独立レビュー・CI後にmerge commitで統合"
     ],
-    "falsification": "noop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）は既に観測した弱点。新契約の独立60世界でも全12レジーム平均(T−Tnoop)≥0・平均T≥multi-arb・G0/安全条件を満たせない場合、または場の見直しの独立した根拠・提出適合・全残費・受理日程が成立しない場合はAを撤回/保留する。別候補の優位には独立した比較証拠を要する。inczは1seedの12世界診断で、全12×2のscreenや60世界Q0の代用にならない。",
+    "falsification": "反証条件: 独立60世界で平均T<multi-arb、いずれかのレジーム平均(T−Tnoop)<0、mined revert>1件または包含取引比>0.1%、原因不明の失敗、未回収自前資産損失/gas枯渇/無効注文>0のいずれかで停止する。G0・既決安全条件も維持し、閾値緩和・結果後の場変更・救済再走で合格にしない。",
     "sources": [
-      "src-rev12"
+      "src-rev14"
     ]
   },
   "live_contract": {
@@ -1943,6 +1968,42 @@
     "sources": [
       "src-rev10"
     ]
+  },
+  "zeta_qualification": {
+    "contract": "Q-ZETA-01",
+    "approval": "本人決定・チャット承認 2026-10-05 JST",
+    "status": "draft-in-progress-unverified",
+    "field": "F_ref",
+    "regimes": 12,
+    "new_seed_count": 5,
+    "worlds": 60,
+    "estimated_hours": "4.5",
+    "attempt_limit": null,
+    "seeds": null,
+    "release_candidate": "ascon-zeta-r",
+    "frozen_hash": null,
+    "result": null,
+    "qualified": false,
+    "thresholds_changed": false,
+    "execution_status": "blocked-pending-evidence",
+    "note": "承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。",
+    "sources": [
+      "src-rev14"
+    ]
+  },
+  "integration": {
+    "split": "3d86a35",
+    "pr1": "pr/upstream-integration → main",
+    "pr2": "league/v2 → pr/upstream-integration; PR1 merge後mainへbase変更",
+    "reviewers": "Claudeの別エージェント+agy",
+    "merge_method": "merge commit",
+    "ci_fix": "npm ciにNPM_CONFIG_IGNORE_SCRIPTS=true",
+    "state": "in-progress-reported",
+    "merged": false,
+    "note": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+    "sources": [
+      "src-rev14"
+    ]
   }
 }
 </script>
@@ -1960,7 +2021,7 @@
       "start_date": "2026-10-04",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "第3回xa-1まで未達・停止。Q0のF_ref平均T≥multi契約を維持し本人判断待ち。受理S未確保、10/8延期済み。"
+      "gate": "本人承認済みのQ-ZETA-01: 弱点診断・設定/hash・新seed・契約登録・全残費待ち。条件付き第一候補は未資格、受理S未確保。"
     },
     {
       "id": "phase-deep",
@@ -2018,22 +2079,22 @@
     {
       "id": "day-2026-10-05",
       "date": "2026-10-05",
-      "title": "incz診断完了・提出基盤/新契約の本人方針判断",
-      "dependency": "混成場inc-zeta 1位・incz平均T56.30対44.44。noop割れ4/12、資格未判定・新契約/回数枠は本人判断",
-      "stop": "Q0維持・追加計測停止。時間未精算、契約変更は本人決定のみ",
+      "title": "本人承認3点・移管完了、zeta-prepと分割PR進行中",
+      "dependency": "noop割れ4レジーム診断・測定設定焼き込み・由来/新契約下書き。結果は未確認",
+      "stop": "閾値維持、今のままmerge/提出可とはしない。実消費は未精算",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-rev14"
       ]
     },
     {
       "id": "day-2026-10-06",
       "date": "2026-10-06",
-      "title": "Q0追加1候補1回の実行条件を照合",
-      "dependency": "修理再診断・41301–41305未使用性・hash・5h枠",
-      "stop": "現行閾値維持。未予約費/校正超過なら開始しない",
+      "title": "診断・設定/hash固定・Q-ZETA-01登録、資格入口を照合",
+      "dependency": "F_ref 12×5新seed=60世界・約4.5h、試行上限/独立性/全残費を登録",
+      "stop": "旧41301–41305/5h枠の自動転用なし、証跡不足なら開始不可",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [
@@ -2042,37 +2103,37 @@
         "dec-revert-limit"
       ],
       "sources": [
-        "src-master"
+        "src-rev14"
       ]
     },
     {
       "id": "day-2026-10-07",
       "date": "2026-10-07",
-      "title": "dec-008: 10/4本人報告でresolved（旧期日）",
-      "dependency": "受理表示・Cloud鍵/代表者メール一致・無料枠画面の本人確認",
-      "stop": "鍵/登録の本人作業はなし。未確認のモデル照合/無料枠量/鍵疎通は10/28 dec-007へ",
+      "title": "条件成立時Q-ZETA-01資格試験。dec-008はresolved（旧期日）",
+      "dependency": "固定候補・新seed・全費用/G0。初回登録は10/4本人報告済み",
+      "stop": "結果未確認、閾値緩和なし。モデル/無料枠/疎通は10/28 dec-007へ",
       "state": "done",
       "highlight": true,
       "decision_refs": [
         "dec-008"
       ],
       "sources": [
-        "src-master"
+        "src-rev14"
       ]
     },
     {
       "id": "day-2026-10-08",
       "date": "2026-10-08",
-      "title": "延期済み旧目標の照合、新受理日は証拠から再見積",
-      "dependency": "Q0/最小改訂適合/G3/G4",
-      "stop": "延期の再承認なし、日付で条件緩和しない",
+      "title": "資格結果を全量判定、延期済み旧受理目標も照合",
+      "dependency": "独立60世界・G0/安全/平均T/全レジーム対noop",
+      "stop": "不合格なら停止。10/8延期の再承認なし",
       "state": "pending",
       "highlight": true,
       "decision_refs": [
         "dec-step1-policy"
       ],
       "sources": [
-        "src-master"
+        "src-rev14"
       ]
     },
     {
@@ -2091,35 +2152,35 @@
     {
       "id": "day-2026-10-10",
       "date": "2026-10-10",
-      "title": "最小G3/cal・残量を再予算",
-      "dependency": "資格・最小改訂受付・model/usage証拠",
+      "title": "資格成立後P60・最小G3/G4・受理準備を優先",
+      "dependency": "資格・最小改訂受付・model/usage証拠と全残費",
       "stop": "未受理なら探索窓を受理修復へ振替",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-rev14"
       ]
     },
     {
       "id": "day-2026-10-11",
       "date": "2026-10-11",
-      "title": "S受理時だけStep2の限定AI最小版",
-      "dependency": "S/cal・H1専用adapter/受付・全残費",
-      "stop": "機械的固定/epoch resetが不成立なら停止",
+      "title": "P60・最小G3/G4、本人送信・初回受理Sを優先",
+      "dependency": "資格・改訂適合・全残費。S受理後だけStep2",
+      "stop": "H1標準ON拒否・受付未成立なら停止",
       "state": "pending",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-rev14"
       ]
     },
     {
       "id": "day-2026-10-12",
       "date": "2026-10-12",
-      "title": "規約適用版・決定済みAI契約の実行条件照合",
-      "dependency": "model/hash/reset・全費用・本人API承認",
-      "stop": "契約決定と実装/資格証明を混同しない",
+      "title": "初回受理Sの証跡照合・規約適用版を確認",
+      "dependency": "本人送信/受理メール/ZIP hash・最小G3/G4",
+      "stop": "資格/適合/受理を混同しない。未受理ならAI探索を削る",
       "state": "pending",
       "highlight": true,
       "decision_refs": [
@@ -2127,7 +2188,7 @@
         "dec-ai-contract"
       ],
       "sources": [
-        "src-master"
+        "src-rev14"
       ]
     },
     {
@@ -2807,6 +2868,51 @@
       "sources": [
         "src-rev13"
       ]
+    },
+    {
+      "id": "progress-rev14-approval",
+      "title": "3点の本人チャット承認",
+      "state": "done",
+      "evidence": "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。",
+      "sources": [
+        "src-rev14"
+      ]
+    },
+    {
+      "id": "progress-migration",
+      "title": "ASCON移管",
+      "state": "done",
+      "evidence": "[measured/実施済み・本人引継ぎ 2026-10-05 JST] ローカル~/Developer/majisuke/ascon→~/Developer/asconへ移管（旧パスは相対symlink）。11 worktreeのbranch/HEAD/tracked変更数が前後一致、worktree repair・node_modulesの絶対symlink張り直し済み。GitHubはMajisuke-dev/ascon→Masashi-Ono0611/ascon（private・ADMIN）へ本人が画面からtransfer実施（auto modeの判定はgh apiのtransferを拒否）。旧URLはredirect、open PR #2も移動。ローカルremote URL更新・fetch/push確認済み。league/v2（cca4005）とeval/upstream-merge（8303d85）を新しい場所へpush、pre-push ci-local quick PASS。mainへ直pushなし。本更新で移管・ネットワークの再検証はしていない。",
+      "sources": [
+        "src-rev14"
+      ]
+    },
+    {
+      "id": "progress-zeta-prep",
+      "title": "zeta-prepの診断・release候補・契約下書き",
+      "state": "running",
+      "evidence": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。",
+      "sources": [
+        "src-rev14"
+      ]
+    },
+    {
+      "id": "progress-zeta-qualification",
+      "title": "Q-ZETA-01の資格証跡",
+      "state": "blocked",
+      "evidence": "承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。",
+      "sources": [
+        "src-rev14"
+      ]
+    },
+    {
+      "id": "progress-pr-split",
+      "title": "分割PRと独立レビュー・CI",
+      "state": "running",
+      "evidence": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+      "sources": [
+        "src-rev14"
+      ]
     }
   ]
 }
@@ -2836,17 +2942,18 @@
     {
       "id": "B01",
       "rank": 1,
-      "title": "資格試験に必要な収益性が不足",
+      "title": "inc-zetaの弱点・設定再現・新資格証跡が未解消",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
       "owner": "Codex",
       "evidence": "dev4 v3: 49.72対55.02、dev5 v5: 50.15対55.73で昇格せず。[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。 [measured] inczはF_ref平均T56.30対44.44だがnoop割れ4/12、全12レジームの対noop条件には反する方向。1 seed診断で資格合否は未判定。",
-      "mitigation": "推奨はA: 混成場で強く、F_ref診断でも平均Tがmulti-arbを上回ったinc-zetaを提出基盤の第一候補とする。本人が(a)新契約・回数枠でF_ref 60世界の資格試験（約4.5h）を行うか、(b)契約の場を見直すかを決める。noop割れ4レジームを明示し、契約変更は提案のみ。Q0維持・追加起動停止のまま、時間精算と受理工程を優先する。",
+      "mitigation": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。 反証条件: 独立60世界で平均T<multi-arb、いずれかのレジーム平均(T−Tnoop)<0、mined revert>1件または包含取引比>0.1%、原因不明の失敗、未回収自前資産損失/gas枯渇/無効注文>0のいずれかで停止する。G0・既決安全条件も維持し、閾値緩和・結果後の場変更・救済再走で合格にしない。",
       "status": "mitigating",
       "sources": [
         "src-rev10",
-        "src-rev13"
+        "src-rev13",
+        "src-rev14"
       ],
       "impact_note": "初回提出の受理まで進めない"
     },
@@ -3088,6 +3195,38 @@
         "src-ai"
       ],
       "impact_note": "計画更新は完了。実装と実測の証拠は別"
+    },
+    {
+      "id": "B17",
+      "rank": 16,
+      "title": "分割PRのレビュー・CI・統合は未完了",
+      "severity": "Critical",
+      "likelihood": "高",
+      "impact": "大",
+      "owner": "human",
+      "evidence": "[独立意見・引継ぎ] Codex(Astra)は賛成。ただし「今のまま merge/提出してよいとは判断しない」。分割点候補は3d86a35。提出物混入は確認範囲で重大なしだが、直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認。現行CIのnpm ciにNPM_CONFIG_IGNORE_SCRIPTS=trueが無く作業ルールと不整合のため修正対象。inc-zetaの測定設定（bidMode:2等はrosterの環境変数）はコード既定値（bidMode:0）と違い、そのままbundleすると再現しないため焼き込み候補を固定する。noop割れ4レジームを先に診断する。契約の場を混成場へ変える案は結果を見たあとの基準変更になるため推奨しない。",
+      "mitigation": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+      "status": "open",
+      "sources": [
+        "src-rev14"
+      ],
+      "impact_note": "統合または適合受理を完了と判断できない"
+    },
+    {
+      "id": "B18",
+      "rank": 17,
+      "title": "今日の適用規約・提出物一致は未確認",
+      "severity": "Critical",
+      "likelihood": "高",
+      "impact": "大",
+      "owner": "Codex",
+      "evidence": "[未確認] 規約は「10/20 発効版」表示との引継ぎで、今日（2026-10-05）の適用版との一致は未確認。本更新ではオンライン再取得なし。",
+      "mitigation": "適用版照合・提出物監査・実ZIP検査・運営配布版との一致を受理工程で確認する。今のままmerge/提出可とはしない。",
+      "status": "open",
+      "sources": [
+        "src-rev14"
+      ],
+      "impact_note": "統合または適合受理を完了と判断できない"
     }
   ]
 }
@@ -3102,16 +3241,64 @@
   ],
   "items": [
     {
+      "id": "queue-zeta-prep",
+      "priority": 1,
+      "experiment": "zeta-prep",
+      "title": "弱点診断・設定焼き込み・由来/新契約下書き",
+      "state": "進行中・結果未確認",
+      "worlds": 0,
+      "hours": null,
+      "window": "10/5〜6",
+      "dependency": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。 [独立意見・引継ぎ] Codex(Astra)は賛成。ただし「今のまま merge/提出してよいとは判断しない」。分割点候補は3d86a35。提出物混入は確認範囲で重大なしだが、直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認。現行CIのnpm ciにNPM_CONFIG_IGNORE_SCRIPTS=trueが無く作業ルールと不整合のため修正対象。inc-zetaの測定設定（bidMode:2等はrosterの環境変数）はコード既定値（bidMode:0）と違い、そのままbundleすると再現しないため焼き込み候補を固定する。noop割れ4レジームを先に診断する。契約の場を混成場へ変える案は結果を見たあとの基準変更になるため推奨しない。",
+      "owner": "Codex",
+      "active": false,
+      "sources": [
+        "src-rev14"
+      ]
+    },
+    {
+      "id": "queue-pr-split",
+      "priority": 2,
+      "experiment": "pr-split",
+      "title": "分割PR・CI修正・独立レビュー",
+      "state": "進行中・本人報告待ち",
+      "worlds": 0,
+      "hours": null,
+      "window": "10/5以降",
+      "dependency": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+      "owner": "human",
+      "active": false,
+      "sources": [
+        "src-rev14"
+      ]
+    },
+    {
+      "id": "queue-q-zeta-01",
+      "priority": 3,
+      "experiment": "q-zeta-01",
+      "title": "Q-ZETA-01の独立60世界資格試験",
+      "state": "本人承認済み・実行条件待ち",
+      "worlds": 60,
+      "hours": "9/2",
+      "window": "10/6〜8・約4.5h見積",
+      "dependency": "承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。 反証条件: 独立60世界で平均T<multi-arb、いずれかのレジーム平均(T−Tnoop)<0、mined revert>1件または包含取引比>0.1%、原因不明の失敗、未回収自前資産損失/gas枯渇/無効注文>0のいずれかで停止する。G0・既決安全条件も維持し、閾値緩和・結果後の場変更・救済再走で合格にしない。",
+      "owner": "Claude",
+      "active": false,
+      "sources": [
+        "src-rev14"
+      ]
+    },
+    {
       "id": "queue-dev1-evidence",
-      "title": "incz診断完了・本人方針待ち",
+      "title": "incz診断の確定証拠（完了）",
       "owner": "Codex",
       "active": false,
       "sources": [
         "src-rev13"
       ],
       "experiment": "dev1-evidence",
-      "priority": 1,
-      "state": "incz診断完了・本人判断待ち",
+      "priority": 4,
+      "state": "incz診断完了・履歴",
       "worlds": 12,
       "hours": null,
       "window": "全12世界完了（本人引継ぎ）、約55分・実完了時刻未提示",
@@ -3120,7 +3307,7 @@
     {
       "id": "queue-q0b-evidence",
       "experiment": "q0b-evidence",
-      "priority": 2,
+      "priority": 5,
       "title": "Q0b安全・G0履歴・時間証跡の補完",
       "state": "証跡精算のみ・再走なし",
       "worlds": 0,
@@ -3142,7 +3329,7 @@
         "src-delegation"
       ],
       "experiment": "q0-requal",
-      "priority": 3,
+      "priority": 6,
       "state": "条件付き決定・実行停止",
       "worlds": 60,
       "hours": "5",
@@ -3154,7 +3341,7 @@
     {
       "id": "queue-mix-design",
       "experiment": "mix-design",
-      "priority": 4,
+      "priority": 7,
       "title": "F_mixと最小改訂受付の設計",
       "state": "設計のみ",
       "worlds": 0,
@@ -3171,7 +3358,7 @@
     {
       "id": "queue-first-mix",
       "experiment": "first-mix",
-      "priority": 5,
+      "priority": 8,
       "title": "混成の対戦相手で動作を確認",
       "state": "停止",
       "worlds": 12,
@@ -3188,7 +3375,7 @@
     {
       "id": "queue-q0m",
       "experiment": "q0m",
-      "priority": 6,
+      "priority": 9,
       "title": "混成場での資格試験案（不採用）",
       "state": "不採用・旧未署名記録",
       "worlds": 60,
@@ -3205,7 +3392,7 @@
     {
       "id": "queue-first-p60",
       "experiment": "first-p60",
-      "priority": 7,
+      "priority": 10,
       "title": "公開60シナリオで回帰確認",
       "state": "停止",
       "worlds": 60,
@@ -3222,7 +3409,7 @@
     {
       "id": "queue-first-g3",
       "experiment": "first-g3",
-      "priority": 8,
+      "priority": 11,
       "title": "AI改訂の最小動作確認",
       "state": "停止",
       "worlds": 36,
@@ -3244,7 +3431,7 @@
         "src-delegation"
       ],
       "experiment": "ai-implementation",
-      "priority": 9,
+      "priority": 12,
       "state": "全費用待ち",
       "worlds": 0,
       "hours": null,
@@ -3261,7 +3448,7 @@
         "src-delegation"
       ],
       "experiment": "ai-d-control",
-      "priority": 10,
+      "priority": 13,
       "state": "未解放",
       "worlds": 48,
       "hours": "52/15",
@@ -3273,7 +3460,7 @@
     {
       "id": "queue-factor-ab",
       "experiment": "factor-ab",
-      "priority": 11,
+      "priority": 14,
       "title": "機能を切り替えて効果を比較",
       "state": "保留",
       "worlds": 48,
@@ -3290,7 +3477,7 @@
     {
       "id": "queue-m2",
       "experiment": "m2",
-      "priority": 12,
+      "priority": 15,
       "title": "新案の再生成（不採用）",
       "state": "不採用・0h配分",
       "worlds": 60,
@@ -3305,10 +3492,28 @@
       ]
     }
   ],
-  "note": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix2・48世界集計を受領、混成場はinc-zetaが1位、candは48世界で5位。inczも診断完了、平均T56.30対44.44・noop割れ4/12。全計測終了・走行中なし。 推奨はA: 混成場で強く、F_ref診断でも平均Tがmulti-arbを上回ったinc-zetaを提出基盤の第一候補とする。本人が(a)新契約・回数枠でF_ref 60世界の資格試験（約4.5h）を行うか、(b)契約の場を見直すかを決める。noop割れ4レジームを明示し、契約変更は提案のみ。Q0維持・追加起動停止のまま、時間精算と受理工程を優先する。",
+  "note": "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。 承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。",
   "day_limit_hours": 6,
-  "bundle": "Q0再資格5hをdeep内優先留保。AI G3は17.2hへ振替済み、追加実装/D/下流費は全量成立まで未解放。",
+  "bundle": "Q0再資格5hをdeep内優先留保。AI G3は17.2hへ振替済み、追加実装/D/下流費は全量成立まで未解放。 Q-ZETA-01の約4.5hは別契約の見積。旧5h予約の自動転用・予算再起算なし、診断/終了検査を含む全費用の登録待ち。",
   "side_jobs": [
+    {
+      "title": "zeta-prep（Astra）",
+      "owner": "Codex",
+      "state": "進行中・結果未確認",
+      "note": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。",
+      "sources": [
+        "src-rev14"
+      ]
+    },
+    {
+      "title": "PR分割（本人）",
+      "owner": "human",
+      "state": "進行中・結果未確認",
+      "note": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+      "sources": [
+        "src-rev14"
+      ]
+    },
     {
       "title": "PLATEAU-ANALYSIS",
       "owner": "Codex",
@@ -5133,7 +5338,7 @@
       ],
       [
         "本人に残る判断",
-        "推奨はA: 混成場で強く、F_ref診断でも平均Tがmulti-arbを上回ったinc-zetaを提出基盤の第一候補とする。本人が(a)新契約・回数枠でF_ref 60世界の資格試験（約4.5h）を行うか、(b)契約の場を見直すかを決める。noop割れ4レジームを明示し、契約変更は提案のみ。Q0維持・追加起動停止のまま、時間精算と受理工程を優先する。 10/4の全面改訂見送りは原記録に保持。sim内の自由改訂結果は、本番で安全保証なしで本番と同条件で測るかという判断や提出承認を代替しない。"
+        "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。 10/4の全面改訂見送りは原記録に保持。sim内の自由改訂結果は、本番で安全保証なしで本番と同条件で測るかという判断や提出承認を代替しない。"
       ]
     ],
     "sources": [
@@ -5507,7 +5712,7 @@
       ],
       [
         "incz解釈・資格境界",
-        "[measured] inc-zetaは混成場48世界で明確に1位。F_refの1 seed診断でも平均Tがmulti-arbを上回り、Q0の「平均T≥multi-arb」は満たす方向。一方「全12レジームで平均(T−Tnoop)≥0」は8/12のみで、4レジームのnoop割れは契約の安全/対noop条件に反する方向。[inferred] 各レジーム1世界でノイズが大きく、資格の合否判定にはならない。inc-zetaの資格試験は5 seed×12=60世界・約4.5hの見込み。第1・第2候補sonnet-1/opus-1で初回資格枠は使用済みのため、新しい契約・回数の枠が必要で本人判断。既決の修理済み1候補1回枠をinc-zetaへ自動転用しない。"
+        "[measured] inc-zetaは混成場48世界で明確に1位。F_refの1 seed診断でも平均Tがmulti-arbを上回り、Q0の「平均T≥multi-arb」は満たす方向。一方「全12レジームで平均(T−Tnoop)≥0」は8/12のみで、4レジームのnoop割れは契約の安全/対noop条件に反する方向。[inferred] 各レジーム1世界でノイズが大きく、資格の合否判定にはならない。inc-zetaの資格試験は5 seed×12=60世界・約4.5hの見込み。第1・第2候補sonnet-1/opus-1で初回資格枠は使用済みのため、新しい契約・回数の枠Q-ZETA-01へ進むことを2026-10-05の本人チャットで承認済み。契約下書き・結果は未確認。既決の修理済み1候補1回枠をinc-zetaへ自動転用しない。"
       ],
       [
         "incz noop割れ P−noop",
@@ -5619,7 +5824,7 @@
     "src-master",
     "src-handoff"
   ],
-  "date_note": "6論点の本人委任によるAstra決定・署名は維持。dec-008は今回の本人報告でresolved（旧期日10/7）、dec-007は10/28 open。現在の本人作業なし。本人報告は本更新の画面/API監査ではない。",
+  "date_note": "2026-10-05の3点は本人チャット承認済み。既存20判断は全フィールドを原記録として保持（dec-rev10-directionのopenは当時の状態）。現方針は以下のrev14本人決定を参照。署名/金銭/APIの委任範囲は不変。",
   "items": [
     {
       "id": "dec-original",
@@ -5920,28 +6125,65 @@
       "sources": [
         "src-rev10"
       ]
+    },
+    {
+      "id": "dec-zeta-original",
+      "date": "2026-10-05",
+      "due_date": null,
+      "title": "inc-zetaを独自戦略の条件付き第一候補にする",
+      "status": "decided",
+      "note": "[本人決定・チャット承認] 実質的改変を独自戦略と認める。multi-arb派生は開示し、由来はINC-ZETA-ORIGINへ記録予定。[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-rev14"
+      ]
+    },
+    {
+      "id": "dec-zeta-qualification",
+      "date": "2026-10-05",
+      "due_date": null,
+      "title": "弱点診断後、新契約Q-ZETA-01へ進む",
+      "status": "decided",
+      "note": "[本人決定・チャット承認] 承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。 反証条件: 独立60世界で平均T<multi-arb、いずれかのレジーム平均(T−Tnoop)<0、mined revert>1件または包含取引比>0.1%、原因不明の失敗、未回収自前資産損失/gas枯渇/無効注文>0のいずれかで停止する。G0・既決安全条件も維持し、閾値緩和・結果後の場変更・救済再走で合格にしない。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-rev14"
+      ]
+    },
+    {
+      "id": "dec-pr-split",
+      "date": "2026-10-05",
+      "due_date": null,
+      "title": "分割PR・独立レビュー・CI後にmerge commit",
+      "status": "decided",
+      "note": "[本人決定・チャット承認] [進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-rev14"
+      ]
     }
   ],
   "human_only": {
-    "status": "Q0契約と提出方針は本人判断待ち",
+    "status": "3点は本人承認済み・分割PRの進行を本人報告へ",
     "items": [
-      "A: inc-zetaを提出基盤の第一候補にする（推奨・未決）。(a)新契約・回数枠でF_ref 5 seed×12=60世界・約4.5hの資格試験、または(b)契約の場の見直しを本人が決める。初回の第1・第2候補sonnet-1/opus-1枠は使用済み。4レジームのnoop割れを診断し、決定・全費用・安全・受理日程が揃うまで追加起動しない",
-      "B: 現Q0を維持し、提出基盤の選定を保留する。inc-zetaのF_ref適性・資格証跡が不足したままなら新規実走を止め、残工程と期限から継続可否を本人が決める",
-      "C: xb-rの追加改良または別系統設計を再検討する。混成場での優位を示す反証可能な仮説と新たな回数・全費用・受理日程を本人が決めるまで起動しない。第3回打ち切りを自動解除しない",
-      "10/28 dec-007再確認",
-      "無料枠不足時の前払い判断（G3見積もり後）"
+      "分割PRの進行を報告し、独立レビュー・CI後にmerge commitで統合する",
+      "資格・P60・最小G3/G4成立後の本人送信と受理確認",
+      "10/28 dec-007、10/29最終受理目標、10/31 23:59 JST照合",
+      "無料枠不足時の前払い判断はG3見積もり後（未承認）"
     ],
     "decision_refs": [
-      "dec-008",
-      "dec-007",
-      "dec-h1-authority",
-      "dec-full-executor",
-      "dec-rev10-direction"
+      "dec-zeta-original",
+      "dec-zeta-qualification",
+      "dec-pr-split",
+      "dec-007"
     ],
     "sources": [
-      "src-rev12"
+      "src-rev14"
     ],
-    "note": "推奨はA: 混成場で強く、F_ref診断でも平均Tがmulti-arbを上回ったinc-zetaを提出基盤の第一候補とする。本人が(a)新契約・回数枠でF_ref 60世界の資格試験（約4.5h）を行うか、(b)契約の場を見直すかを決める。noop割れ4レジームを明示し、契約変更は提案のみ。Q0維持・追加起動停止のまま、時間精算と受理工程を優先する。 [measured] inc-zetaは混成場48世界で明確に1位。F_refの1 seed診断でも平均Tがmulti-arbを上回り、Q0の「平均T≥multi-arb」は満たす方向。一方「全12レジームで平均(T−Tnoop)≥0」は8/12のみで、4レジームのnoop割れは契約の安全/対noop条件に反する方向。[inferred] 各レジーム1世界でノイズが大きく、資格の合否判定にはならない。inc-zetaの資格試験は5 seed×12=60世界・約4.5hの見込み。第1・第2候補sonnet-1/opus-1で初回資格枠は使用済みのため、新しい契約・回数の枠が必要で本人判断。既決の修理済み1候補1回枠をinc-zetaへ自動転用しない。 反証条件: noop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）は既に観測した弱点。新契約の独立60世界でも全12レジーム平均(T−Tnoop)≥0・平均T≥multi-arb・G0/安全条件を満たせない場合、または場の見直しの独立した根拠・提出適合・全残費・受理日程が成立しない場合はAを撤回/保留する。別候補の優位には独立した比較証拠を要する。inczは1seedの12世界診断で、全12×2のscreenや60世界Q0の代用にならない。"
+    "note": "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。 [独立意見・引継ぎ] Codex(Astra)は賛成。ただし「今のまま merge/提出してよいとは判断しない」。分割点候補は3d86a35。提出物混入は確認範囲で重大なしだが、直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認。現行CIのnpm ciにNPM_CONFIG_IGNORE_SCRIPTS=trueが無く作業ルールと不整合のため修正対象。inc-zetaの測定設定（bidMode:2等はrosterの環境変数）はコード既定値（bidMode:0）と違い、そのままbundleすると再現しないため焼き込み候補を固定する。noop割れ4レジームを先に診断する。契約の場を混成場へ変える案は結果を見たあとの基準変更になるため推奨しない。 承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。"
   },
   "ollama_report": {
     "evidence_kind": "本人報告",
@@ -5990,6 +6232,61 @@
   ],
   "note": "追記専用・記録時刻の降順。同時刻は許可。正確な出来事時刻がない履歴は移行時刻で追記し、対象日と時刻根拠を併記。既存entryは訂正せず[誤り]を追加。",
   "items": [
+    {
+      "id": "log-100",
+      "timestamp": "2026-10-05T09:52:03+09:00",
+      "type": "誤り",
+      "summary": "[本人報告 2026-10-05 JST] 夜間のハートビートは取消済み。記憶(ASCON)は移管・体制・教訓を更新済み。decisions.jsonのdec-007参照先文字列は追跡ファイルのため未更新（次にハーネスを触る時にPR）。ASCON repo内ドキュメント18件の旧パス/旧オーナー文字列は未更新（symlink/redirectで動く）。本更新はこれらの一括置換や記憶更新を行わない。",
+      "sources": [
+        "src-rev14"
+      ],
+      "time_basis": "2026-10-05 JSTの本人チャット引継ぎを記録した文書更新時刻。出来事の時分秒は未提示",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-099",
+      "timestamp": "2026-10-05T09:52:03+09:00",
+      "type": "計画変更",
+      "summary": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。 [独立意見・引継ぎ] Codex(Astra)は賛成。ただし「今のまま merge/提出してよいとは判断しない」。分割点候補は3d86a35。提出物混入は確認範囲で重大なしだが、直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認。現行CIのnpm ciにNPM_CONFIG_IGNORE_SCRIPTS=trueが無く作業ルールと不整合のため修正対象。inc-zetaの測定設定（bidMode:2等はrosterの環境変数）はコード既定値（bidMode:0）と違い、そのままbundleすると再現しないため焼き込み候補を固定する。noop割れ4レジームを先に診断する。契約の場を混成場へ変える案は結果を見たあとの基準変更になるため推奨しない。",
+      "sources": [
+        "src-rev14"
+      ],
+      "time_basis": "2026-10-05 JSTの本人チャット引継ぎを記録した文書更新時刻。出来事の時分秒は未提示",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-098",
+      "timestamp": "2026-10-05T09:52:03+09:00",
+      "type": "計画変更",
+      "summary": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+      "sources": [
+        "src-rev14"
+      ],
+      "time_basis": "2026-10-05 JSTの本人チャット引継ぎを記録した文書更新時刻。出来事の時分秒は未提示",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-097",
+      "timestamp": "2026-10-05T09:52:03+09:00",
+      "type": "実測",
+      "summary": "[measured/実施済み・本人引継ぎ 2026-10-05 JST] ローカル~/Developer/majisuke/ascon→~/Developer/asconへ移管（旧パスは相対symlink）。11 worktreeのbranch/HEAD/tracked変更数が前後一致、worktree repair・node_modulesの絶対symlink張り直し済み。GitHubはMajisuke-dev/ascon→Masashi-Ono0611/ascon（private・ADMIN）へ本人が画面からtransfer実施（auto modeの判定はgh apiのtransferを拒否）。旧URLはredirect、open PR #2も移動。ローカルremote URL更新・fetch/push確認済み。league/v2（cca4005）とeval/upstream-merge（8303d85）を新しい場所へpush、pre-push ci-local quick PASS。mainへ直pushなし。本更新で移管・ネットワークの再検証はしていない。",
+      "sources": [
+        "src-rev14"
+      ],
+      "time_basis": "2026-10-05 JSTの本人チャット引継ぎを記録した文書更新時刻。出来事の時分秒は未提示",
+      "event_date": "2026-10-05"
+    },
+    {
+      "id": "log-096",
+      "timestamp": "2026-10-05T09:52:03+09:00",
+      "type": "決定",
+      "summary": "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。",
+      "sources": [
+        "src-rev14"
+      ],
+      "time_basis": "2026-10-05 JSTの本人チャット引継ぎを記録した文書更新時刻。出来事の時分秒は未提示",
+      "event_date": "2026-10-05"
+    },
     {
       "id": "log-095",
       "timestamp": "2026-10-05T08:10:21+09:00",
@@ -7702,7 +7999,7 @@
     {
       "label": "本人が今やること",
       "ref": "status.human_action",
-      "note": "登録済み・最終確認は10/28",
+      "note": "3点は承認済み。再承認待ちではない",
       "route": "decisions"
     },
     {
@@ -7728,17 +8025,17 @@
     }
   ],
   "copy": {
-    "action_note": "推奨はA: 混成場で強く、F_ref診断でも平均Tがmulti-arbを上回ったinc-zetaを提出基盤の第一候補とする。本人が(a)新契約・回数枠でF_ref 60世界の資格試験（約4.5h）を行うか、(b)契約の場を見直すかを決める。noop割れ4レジームを明示し、契約変更は提案のみ。Q0維持・追加起動停止のまま、時間精算と受理工程を優先する。 [measured] inc-zetaは混成場48世界で明確に1位。F_refの1 seed診断でも平均Tがmulti-arbを上回り、Q0の「平均T≥multi-arb」は満たす方向。一方「全12レジームで平均(T−Tnoop)≥0」は8/12のみで、4レジームのnoop割れは契約の安全/対noop条件に反する方向。[inferred] 各レジーム1世界でノイズが大きく、資格の合否判定にはならない。inc-zetaの資格試験は5 seed×12=60世界・約4.5hの見込み。第1・第2候補sonnet-1/opus-1で初回資格枠は使用済みのため、新しい契約・回数の枠が必要で本人判断。既決の修理済み1候補1回枠をinc-zetaへ自動転用しない。",
-    "action_next": "推奨はA: 混成場で強く、F_ref診断でも平均Tがmulti-arbを上回ったinc-zetaを提出基盤の第一候補とする。本人が(a)新契約・回数枠でF_ref 60世界の資格試験（約4.5h）を行うか、(b)契約の場を見直すかを決める。noop割れ4レジームを明示し、契約変更は提案のみ。Q0維持・追加起動停止のまま、時間精算と受理工程を優先する。",
-    "diagnostic_notice": "決定論ラインは第3回xa-1で打ち切り、Q0のF_ref平均T≥multiに未達。自由改訂はPILOT-STOP。mix2・48世界集計を受領、混成場はinc-zetaが1位、candは48世界で5位。inczも診断完了、平均T56.30対44.44・noop割れ4/12。全計測終了・走行中なし。 診断を資格合格や契約変更へ読み替えません。",
-    "qualification_notice": "資格条件は維持しています。旧2候補は不合格、xb-rの新しい資格試験は未実施です。",
+    "action_note": "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。",
+    "action_next": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+    "diagnostic_notice": "inc-zetaを条件付き第一候補とし、新契約Q-ZETA-01へ進むことを本人承認済み。移管完了、分割PRとzeta-prepは進行中・結果未確認。既報の全計測終了・走行中なし（プロセス再照会なし）。 診断結果は資格合格ではありません。",
+    "qualification_notice": "旧2候補は不合格。旧xb-r再資格枠は未実施・停止を維持。新Q-ZETA-01は本人承認済み、下書き作成中で資格結果は未確認。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
     "diagnostic_criteria": "Pは損益、Tは同じ相手の中での相対スコア。取引が増えることと、資格を満たすことは別です。",
-    "plan_state": "第3回未達・方針判断待ち",
-    "plan_note": "初回受理の旧目標は延期済み。[提案・未決] 10/5〜6に新契約/回数枠または場を本人判断、10/6〜8に条件成立時だけ資格試験約4.5h、10/9〜12は適合/受理Sを優先。10/17既決分岐→10/28 dec-007→10/29送信/受理目標→10/30予備→10/31 23:59 JST締切。未受理なら探索を削り、ゲートを緩めない。",
+    "plan_state": "条件付き第一候補を承認・準備中",
+    "plan_note": "[日程案・JST] 10/5〜6 診断・設定固定・契約登録、10/6〜8 資格試験、10/9〜12 P60/最小G3/G4・本人送信・初回受理、10/13〜17は受理Sと全残費がある時だけ既決AI工程。10/17 18:00 H480/S240/Hなし分岐、10/18〜25 最終確認、10/26〜28 G4照合と10/28 dec-007、10/29 最終受理目標・10/30 予備・10/31 23:59 JST 照合。初回受理は未確保、日付を理由にゲートを緩めない。",
     "registration": "受理表示を本人が確認済み",
     "provider_remaining": "運営モデル一覧・無料枠量・鍵の疎通",
-    "decisions_note": "契約の決定と、実装・資格・受理の完了は別です。金銭・自動チャージの承認は含みません。"
+    "decisions_note": "2026-10-05の3点は本人チャット承認済み。既存20判断は全フィールドを原記録として保持（dec-rev10-directionのopenは当時の状態）。現方針は以下のrev14本人決定を参照。署名/金銭/APIの委任範囲は不変。"
   },
   "roadmap_axis": [
     "10/4",

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static revision-13 plan/dashboard checks. Never reads run data or network."""
+"""Static revision-14 plan/dashboard checks. Never reads run data or network."""
 
 from datetime import date, timedelta
 from fractions import Fraction
@@ -11,7 +11,7 @@ import re
 import sys
 
 
-QUEUE = ["dev1-evidence", "q0b-evidence", "q0-requal", "mix-design", "first-mix", "q0m",
+QUEUE = ["zeta-prep", "pr-split", "q-zeta-01", "dev1-evidence", "q0b-evidence", "q0-requal", "mix-design", "first-mix", "q0m",
          "first-p60", "first-g3", "ai-implementation", "ai-d-control", "factor-ab", "m2"]
 DECISION_IDS = ["dec-ai-scope", "dec-ai-contract", "dec-ai-budget", "dec-q0-failure-branch", "dec-q0b-g0", "dec-revert-limit"]
 ORIGIN = "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定"
@@ -1128,6 +1128,57 @@ REV13_OVERNIGHT = {'sources': ['src-overnight', 'src-rev10'],
  'incz_estimate_minutes': 55,
  'historical_rev10': {'completed_estimate_minutes': 202, 'mix1_estimate_minutes': 150, 'total_projected_minutes': 352}}
 
+
+# rev 14: current approvals replace stale pending states; prior evidence remains immutable.
+REV13_LOG_DIGEST = 'd858ca41aa7e9ae8d863bfb3d86e5af785261db26f2b33d082ef22ba9e963001'
+REV13_DECISION_IDS = ['dec-original', 'dec-deep', 'dec-no-contact', 'dec-008', 'dec-007', 'dec-q0-keep', 'dec-astra-update', 'dec-forward', 'dec-amend', 'dec-overnight', 'dec-q0-failure-branch', 'dec-q0b-g0', 'dec-step1-policy', 'dec-ai-scope', 'dec-ai-contract', 'dec-ai-budget', 'dec-revert-limit', 'dec-h1-authority', 'dec-full-executor', 'dec-rev10-direction']
+REV14_EXPECTED = {'human_action': '分割PRの進行を報告し、レビュー・CI後に統合を進める',
+ 'blocker_title': 'inc-zetaの弱点・設定再現・新資格証跡が未解消',
+ 'zeta_qualification': {'contract': 'Q-ZETA-01',
+                        'approval': '本人決定・チャット承認 2026-10-05 JST',
+                        'status': 'draft-in-progress-unverified',
+                        'field': 'F_ref',
+                        'regimes': 12,
+                        'new_seed_count': 5,
+                        'worlds': 60,
+                        'estimated_hours': '4.5',
+                        'attempt_limit': None,
+                        'seeds': None,
+                        'release_candidate': 'ascon-zeta-r',
+                        'frozen_hash': None,
+                        'result': None,
+                        'qualified': False,
+                        'thresholds_changed': False,
+                        'execution_status': 'blocked-pending-evidence',
+                        'note': '承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。',
+                        'sources': ['src-rev14']},
+ 'integration': {'split': '3d86a35',
+                 'pr1': 'pr/upstream-integration → main',
+                 'pr2': 'league/v2 → pr/upstream-integration; PR1 merge後mainへbase変更',
+                 'reviewers': 'Claudeの別エージェント+agy',
+                 'merge_method': 'merge commit',
+                 'ci_fix': 'npm ciにNPM_CONFIG_IGNORE_SCRIPTS=true',
+                 'state': 'in-progress-reported',
+                 'merged': False,
+                 'note': '[進行中・本人報告] '
+                         '分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 '
+                         'merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge '
+                         'commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。',
+                 'sources': ['src-rev14']}}
+REV14_INCZ = copy.deepcopy(REV13_EXPECTED['incz'])
+REV14_INCZ['interpretation'] = REV14_INCZ['interpretation'].replace('新しい契約・回数の枠が必要で本人判断。', '新しい契約・回数の枠Q-ZETA-01へ進むことを2026-10-05の本人チャットで承認済み。契約下書き・結果は未確認。')
+REV14_H1_TABLE_DIGEST = 'e0ff13f21d46e4891eed1a0fc6f7669b01049d7da1a4fc045114515ce103bab6'
+REV14_MIX1_TABLE_DIGEST = '8e05920997952db870b677a2642bb8a0f416637302eeb1b8a96d53d687f0c877'
+REV14_DIGESTS = {'human_only': '220e05ef2c4208ceab9f30c9d7c727b6b4cf5c21df2b080095eb479c8817757e',
+ 'next_branch': '84774d1139046353238f9d9c4eefe402816f1faed520d204dbd1db1557b781d6',
+ 'night_operation': 'f6ca4e14ae873469ffeecc9b0f8f326e4746933ad63100fa29d9bbd17a405b1a',
+ 'new_decisions': 'f1922db071bff055cf30e2e6cbfab1c64848103ffc7ac44bfd34450b2ee967a5',
+ 'new_queue': '4c8267c5ae230697fe86eb8d8795d31bd31a9a7008a262fa25dd3ab7722759ed',
+ 'migration': '57992ca3a0a28d22983a08751bfd93ba47eb31d8c6a6c7e5c6598ac48f558140',
+ 'review_handoff': '2cfa574979bb7ed66ac33062f8f3c3fe8e4b0d42bb8e4e87ba8a99f92842b2f6',
+ 'new_logs': '4b63768a1d85ed58cba0add103ca3a4723b885ab7a22f925ae56003703e8ab37',
+ 'schedule': 'b16169d3079f753f49e286c9d9d5705c25ca7718ee96c06c75711f50e98a0ab4'}
+
 def digest(value):
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
@@ -1172,24 +1223,24 @@ _RESULT_LINES = [
     "PASS sources: D0/Q0/M1/Q0b tables retained; dev1/dev2 handoffs match plan/dashboard",
     "PASS Q0b: old 60-world result, G0 2-world FAIL and mean-T FAIL retained; no rescue rerun",
     "PASS budget: KEEP 100 h (G3 17.2, deep 9.7); archived unsigned AMEND 100 h; Q0 priority 5 h",
-    "PASS queue: repair/rediagnosis -> Q0 -> acceptance; AI execution blocked by full-cost/evidence gates",
+    "PASS queue: zeta preparation / split PRs -> Q-ZETA-01 -> acceptance; old queues and full-cost gates retained",
     "PASS decisions: 6 delegated Astra decisions with origin/signer/JST; Ollama registration/settings are user-reported; prepayment deferred",
-    "PASS Q0: A unchanged; 1 new 60-world attempt; extra P/u1m conditions rejected; revert cap prospective only",
+    "PASS Q0: old A/requalification contract unchanged; new Q-ZETA-01 draft/result unverified; revert cap prospective only",
     "PASS AI: ENTRY_BPS 20-60, max step 5; R* ON3/OFF1 + S full = 216 worlds / 17.2 h; no epoch learning carryover",
     "PASS cutover: Oct 17 evidence gates select H480 / S240 / no campaign; no fresh deep exploration",
     "PASS schedule/review: 28 JST dates, 18 findings, five roadmap steps match dashboard",
-    "PASS preservation: all 91 pre-rev13 logs unchanged; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
+    "PASS preservation: all 95 pre-rev14 logs unchanged; 20 old decisions retained; dec-008 resolved / dec-007 open with original dates; old safety nulls retained",
     "PASS current: dev4 measured 24-world handoff; dev5 measured, v5 not promoted; xa-1 stopped (3/3); mix1 measured diagnostic, 23 PASS / 1 BLOCKED; mix2 / 48 worlds measured; incz measured diagnostic; noop-below 4/12",
     "PASS operations: independent completion monitoring, 150/180 minute iterations, max 3, fresh 12x2 screen; not execution approval",
     "LIMIT: static consistency only; raw runs, actual hours, strategy safety, browser layout and acceptance unverified",
     "PASS rev9: H1 selected / standard ON refused / adapter unimplemented; agy format only; xa-1 stopped; H1 pilot gated; separate live pilot STOP",
-    "PASS rev13: xa-1 unhealthy / live all ON dT negative / mix1 / mix2 / 48 worlds measured; incz measured diagnostic; noop-below 4/12 / accounting unreconciled / human direction pending",
+    "PASS rev14: 3 user approvals / migration reported complete / zeta-prep and split PRs in progress / Q-ZETA-01 unverified / heartbeat cancelled",
     "PASS check-plan-consistency",
 ]
 
 
 def check_documents(document, html, morning, m1, ai, morning_new):
-    require("revision 13" in document.splitlines()[0], "plan revision 13 title")
+    require("revision 14" in document.splitlines()[0], "plan revision 14 title")
     sources = {"d0": source_table(morning, "## 2."),
                "q0": source_table(morning, "## 5."),
                "m1": source_table(m1, "## 結果")}
@@ -1210,7 +1261,9 @@ def check_documents(document, html, morning, m1, ai, morning_new):
                 f"budget {reading}: expected exactly 100 h")
     experiment_ids = [i.strip() for row in b for i in row["実験ID"].split(";")]
     require(len(experiment_ids) == len(set(experiment_ids)), "budget duplicate experiment")
-    require(set(QUEUE[2:]) <= set(experiment_ids), "reserved experiments missing from budget")
+    # First three rev14 rows are preparation / unreserved Q-ZETA-01, with execution blocked below.
+    # Keep the exact original budget mapping for all formerly reserved experiments.
+    require(set(QUEUE[5:]) <= set(experiment_ids), "reserved experiments missing from budget")
     for reading in amounts:
         a = amounts[reading]
         require(a["historical"] == 0 and a["overnight"] == Fraction(26, 3), "history/overnight accounting")
@@ -1255,14 +1308,14 @@ def check_documents(document, html, morning, m1, ai, morning_new):
     require([int(r["順序"]) for r in queue] == list(range(1, len(QUEUE)+1)), "queue numbers")
     require([r["実験ID"] for r in queue] == QUEUE, "queue priority")
     require(all(r["状態"] and r["窓"] and r["依存・停止"] for r in queue), "queue gates missing")
-    expected_queue = [("12", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
+    expected_queue = [("0", "未見積"), ("0", "未見積"), ("60", "9/2"), ("12", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
                       ("60", "143/30"), ("60", "13/3"), ("36", "13/5"),
                       ("0", "未見積"), ("48", "52/15"), ("48", "52/15"), ("60", "13/3")]
     require([(r["世界数"], r["全量見積h"]) for r in queue] == expected_queue, "queue worlds/hours")
-    require(queue[0]["状態"] == "incz診断完了・本人判断待ち" and queue[1]["状態"] == "証跡精算のみ・再走なし" and
-            queue[2]["状態"] == "条件付き決定・実行停止" and queue[5]["状態"] == "不採用・旧未署名記録", "repair/requalification/archive state")
-    require(all(queue[i]["状態"] == "停止" for i in (4, 6, 7)), "qualification queue needs Q0 evidence")
-    require(queue[11]["状態"] == "不採用・0h配分", "M2 must remain zero allocation")
+    require(queue[3]["状態"] == "incz診断完了・履歴" and queue[4]["状態"] == "証跡精算のみ・再走なし" and
+            queue[5]["状態"] == "条件付き決定・実行停止" and queue[8]["状態"] == "不採用・旧未署名記録", "repair/requalification/archive state")
+    require(all(queue[i]["状態"] == "停止" for i in (7, 9, 10)), "qualification queue needs Q0 evidence")
+    require(queue[14]["状態"] == "不採用・0h配分", "M2 must remain zero allocation")
     require(3 * ((8 + 2) // 3) * batch == Fraction(39, 20), "D/E/parent independent-chunk cost")
 
     schedule = table(document, "schedule")
@@ -1325,8 +1378,8 @@ def check_documents(document, html, morning, m1, ai, morning_new):
                 "dashboard queue row differs: "+r["実験ID"])
     require(all(q["active"] is False for q in dq),
             "all measurement runs finished; Q0 and downstream remain blocked")
-    require(dq[0]['worlds'] == 12 and dq[0]['hours'] is None and '契約・資格とは無関係' in dq[0]['dependency'], 'incz known scope, unknown actual cost and qualification boundary')
-    require('35001/35002はdev3診断で既見のため再利用不可' in dq[9]['dependency'],
+    require(dq[3]['worlds'] == 12 and dq[3]['hours'] is None and '契約・資格とは無関係' in dq[3]['dependency'], 'incz known scope, unknown actual cost and qualification boundary')
+    require('35001/35002はdev3診断で既見のため再利用不可' in dq[12]['dependency'],
             'D-control cannot silently reuse dev3 development seeds')
     milestones = data["milestones"]["items"]
     require([(m["date"], m["title"], m["dependency"], m["stop"]) for m in milestones] ==
@@ -1356,7 +1409,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
                 "human-only scope disclosure")
         require("凍結性能は改訂ON性能の代用にならない" in doc, "ON evidence boundary")
         require("17.2h" in doc and "9.7h" in doc and "10/17" in doc, "allocation and cutover prose")
-    require(data["decisions"]["human_only"] == REV13_EXPECTED["human_only"],
+    require(digest(data["decisions"]["human_only"]) == REV14_DIGESTS["human_only"],
             "full executor authority remains a pending human decision; registration and cost boundaries retained")
     require(all(decisions[i]["status"] == "decided" for i in ("dec-step1-policy", "dec-q0-keep", "dec-original", "dec-forward")),
             "prior settled decisions must stay decided")
@@ -1500,9 +1553,9 @@ def check_documents(document, html, morning, m1, ai, morning_new):
             ('a646e9b',123,25,False,'measured引継ぎ'), 'v2 implementation/test evidence cannot become fresh verification')
     require('123' in document and '赤対照25' in document and '16:24 JST開始' in document and '17:39 JST完了' in document,
             'v2/dev3 MASTER handoff missing')
-    require(data['status']['human_action'] == REV10_EXPECTED['human_action'] and data['budget']['consumed_forward_hours'] is None and
+    require(data['status']['human_action'] == REV14_EXPECTED['human_action'] and data['budget']['consumed_forward_hours'] is None and
             data['budget']['consumption_status'] == '未精算', 'human action and unknown forward consumption')
-    require(data['plan']['revision'] == 13 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
+    require(data['plan']['revision'] == 14 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
             'revision and submission deadline')
     report = data["decisions"]["ollama_report"]
     require(report["evidence_kind"] == "本人報告" and report["registration"] == "accepted-display-reported" and
@@ -1516,7 +1569,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
             "unverified provider checks cannot become confirmed")
     require(report["clipboard_cleared"] == "reported-by-user" and report["attentionctl_status"] == "resolved-reported",
             "clipboard/attentionctl are user reports")
-    require(data["blockers"]["items"][0]["title"] == "資格試験に必要な収益性が不足" and
+    require(data["blockers"]["items"][0]["title"] == REV14_EXPECTED["blocker_title"] and
             data['status']['priority']['blocker_ref'] == data['blockers']['items'][0]['id'],
             "Q0 contract is first blocker")
     progress = {i["id"]: i for i in data["progress"]["items"]}
@@ -1575,7 +1628,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
         require({k:data['results'][key][k] for k in ('header','rows')} == expected, 'exact dev4 dashboard source table: '+key)
     require(comparisons['diagnostic'] == REV13_EXPECTED['comparison'], 'all diagnostic scopes, metrics and pending results exact')
     require([k['ref'] for k in data['ui']['kpis'][:2]] == ['status.mix48.name','status.mix48.result.t_leader'], 'KPI uses latest completed mixed diagnostic, not qualification')
-    require(data['status']['priority']['progress_refs'] == ['progress-dev4','progress-dev5','progress-xa1','progress-live','progress-xbr-requal'], 'current priority progression')
+    require(data['status']['priority']['progress_refs'] == ['progress-rev14-approval','progress-zeta-prep','progress-zeta-qualification','progress-pr-split'], 'current priority progression')
     for phrase in ('v5 = v3 + R9(bundle用在庫余地)ON','7b1448b','2026-10-04 22:07 JST開始','2026-10-05 00:00 JST頃','2/3回目',
                    'Codex(Astra)主・Claude副','利用残高切れ(402)','Gemini 3.8 Flash High','masa-harness#409','Claudeの別エージェント+agy',
                    'ツール使用禁止・差分埋め込み・`echo "" | …`','PLATEAU-ANALYSIS','Astraが作成中、結果未確認',
@@ -1592,21 +1645,21 @@ def check_documents(document, html, morning, m1, ai, morning_new):
         require(data['plan'][name] == REV9_EXPECTED[name], 'rev9 exact plan contract: '+name)
     for name in ('agy_format',):
         require(data['status'][name] == REV9_EXPECTED[name], 'rev9 inherited evidence, never fresh verification: '+name)
-    require(data['results']['h1'] == REV13_EXPECTED['h1_table'], 'H1 visible facts and evidence boundaries exact')
-    require(parsed_table(block(document, 'h1-current')) == {k:REV13_EXPECTED['h1_table'][k] for k in ('header','rows')}, 'MASTER H1 current contract matches dashboard')
+    require(digest(data['results']['h1']) == REV14_H1_TABLE_DIGEST, 'H1 visible facts and evidence boundaries exact')
+    require(parsed_table(block(document, 'h1-current')) == {k:data['results']['h1'][k] for k in ('header','rows')}, 'MASTER H1 current contract matches dashboard')
     require([decisions[x['id']] for x in REV9_EXPECTED['decisions']] == REV9_EXPECTED['decisions'], 'rev9 H1/production authority records preserved; live simulation does not change them')
     require(data['plan']['pilot']['worlds'] == len(data['plan']['pilot']['regimes']) * len(data['plan']['pilot']['seeds']) * (data['plan']['pilot']['off_repeats'] + data['plan']['pilot']['on_repeats']), 'pilot world arithmetic')
     for phrase in ('7179efe','時間制限付き単脚往復+lot台帳','テスト39・赤対照39','smoke 38003','38001/38002×12=24世界','約104分+終了確認','第3回はsmokeで打ち切り','H1（xb-r-ai）はON拒否を維持','契約変更は未決定'):
         require(phrase in document, 'rev9 current prose missing: '+phrase)
-    require('第3回xa-1' in dq[0]['dependency'] and '専用adapter/受付' in dq[0]['dependency'], 'next branch visible in queue')
-    require('H1' in dq[3]['dependency'] and '標準ON拒否' in dq[3]['dependency'] and '本人判断' in dq[3]['dependency'], 'acceptance boundary in queue')
-    require('専用adapter接続・検査は未実装' in dq[8]['dependency'] and not dq[8]['active'], 'adapter work not pilot execution')
+    require('第3回xa-1' in dq[3]['dependency'] and '専用adapter/受付' in dq[3]['dependency'], 'next branch visible in queue')
+    require('H1' in dq[6]['dependency'] and '標準ON拒否' in dq[6]['dependency'] and '本人判断' in dq[6]['dependency'], 'acceptance boundary in queue')
+    require('専用adapter接続・検査は未実装' in dq[11]['dependency'] and not dq[11]['active'], 'adapter work not pilot execution')
     rev9_logs = [x for x in data['log']['items'] if x['id'] in {f'log-{i:03}' for i in range(1,79)}]
     require(len(rev9_logs) == 78 and digest(rev9_logs) == REV9_LOG_DIGEST, 'all 78 existing logs and all fields immutable')
     require(digest([x for x in data['decisions']['items'] if x['id'] in REV9_DECISION_IDS]) == REV9_DECISIONS_DIGEST,
             'all 19 existing decisions/signatures/dates immutable')
     require(decisions['dec-rev10-direction'] == REV10_EXPECTED['new_decision'], 'contract change is proposal only; human decision pending')
-    for name in ('xa1','live','night_operation'):
+    for name in ('xa1','live'):
         require(data['status'][name] == REV10_EXPECTED[name], 'rev10 supplied status and uncertainty: '+name)
     for name in ('live_contract','production_assessment'):
         require(data['plan'][name] == REV10_EXPECTED[name], 'rev10 stop/safety/authority boundary: '+name)
@@ -1627,17 +1680,17 @@ def check_documents(document, html, morning, m1, ai, morning_new):
     for key, marker in [('dev5','source-dev5'),('xa1','source-xa1'),('live','source-live'),('live_safety','source-live-safety'),('mix1','source-mix1')]:
         require(parsed_table(block(document,marker)) == {k:data['results'][key][k] for k in ('header','rows')},
                 'rev10 MASTER/dashboard table correspondence: '+key)
-        require({k:data['results'][key][k] for k in ('header','rows')} == (REV13_EXPECTED['mix1_table'] if key == 'mix1' else REV10_TABLES[key]), 'exact displayed table: '+key)
+        require((digest({k:data['results'][key][k] for k in ('header','rows')}) == REV14_MIX1_TABLE_DIGEST if key == 'mix1' else {k:data['results'][key][k] for k in ('header','rows')} == REV10_TABLES[key]), 'exact displayed table: '+key)
     expected_live_rows = [[g['group'],g['t'],g['d_t'] or '—',g['d_alpha'] or '—',g['worst'] or '—',
                           ' / '.join(str(g[k]) for k in ('installed','declined','rejected')) if g['group'] != 'OFF' else '—']
                          for g in live['groups']]
     require(data['results']['live']['rows'] == expected_live_rows, 'every ON value and rejected/declined/installed count visible')
     for name in ('mix1', 'mix2', 'mix48', 'incz'):
-        require(data['status'][name] == REV13_EXPECTED[name], 'rev11 exact scope, measured values, G0 and uncertainty: '+name)
-    require(data['plan']['next_branch'] == REV13_EXPECTED['next_branch'], 'single A recommendation with mixed-field evidence; contract changes only proposed')
+        require(data['status'][name] == (REV14_INCZ if name == 'incz' else REV13_EXPECTED[name]), 'rev11 exact scope, measured values, G0 and uncertainty: '+name)
+    require(digest(data['plan']['next_branch']) == REV14_DIGESTS['next_branch'], 'approved conditional inc-zeta path; full executor authority and automatic launch remain gated')
     rev10_logs = [x for x in data['log']['items'] if x['id'] in {f'log-{i:03}' for i in range(1,85)}]
     require(len(rev10_logs) == 84 and digest(rev10_logs) == REV10_LOG_DIGEST, 'all 84 prior logs and every field immutable')
-    require(digest(data['decisions']['items']) == REV10_ALL_DECISIONS_DIGEST, 'all 20 prior decision records unchanged, including open rev10 proposal')
+    require(digest([x for x in data['decisions']['items'] if x['id'] in REV13_DECISION_IDS]) == REV10_ALL_DECISIONS_DIGEST, 'all 20 prior decision records unchanged, including open rev10 proposal')
     mix = data['status']['mix1']['result']
     require(mix['g0_pass_worlds'] + mix['g0_blocked_worlds'] == data['status']['mix1']['completed_worlds'] == 24,
             'all 24 diagnostic worlds retained, including one BLOCKED')
@@ -1669,7 +1722,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
         require(phrase in morning_new, 'morning/current data consistency: '+phrase)
     rev11_logs = [x for x in data['log']['items'] if x['id'] in {f'log-{i:03}' for i in range(1,88)}]
     require(len(rev11_logs) == 87 and digest(rev11_logs) == REV11_LOG_DIGEST, 'all 87 prior logs and every field immutable')
-    require(len(data['log']['items']) == 95, 'four rev13 result / inference / correction logs appended')
+    require(len(data['log']['items']) == 100, 'five rev14 approval / migration / preparation / operations logs prepended')
     require(parsed_table(block(morning_new,'morning-mixed-ranking')) == REV13_EXPECTED['morning_ranking'], 'all 22 morning ranking rows and values exact')
     for name in ('mix2','mix48'):
         scope = data['status'][name]
@@ -1692,6 +1745,36 @@ def check_documents(document, html, morning, m1, ai, morning_new):
     require(data['status']['incz']['q0_eligible'] is False and data['status']['incz']['contract_effect'] == 'none-diagnostic-only',
             'incz never qualifies or changes contract')
     require('全計測終了・走行中なし' in data['status']['headline'], 'current overview has no running measurement')
+    rev13_logs = [x for x in data['log']['items'] if x['id'] in {f'log-{i:03}' for i in range(1,96)}]
+    require(len(rev13_logs) == 95 and digest(rev13_logs) == REV13_LOG_DIGEST, 'all 95 pre-rev14 logs and every field immutable')
+    require(len(data['decisions']['items']) == 23, '20 preserved and 3 newly approved decisions')
+    for name in ('zeta_qualification', 'integration'):
+        require(data['plan'][name] == REV14_EXPECTED[name], 'rev14 exact approved contract and unverified execution: '+name)
+    values = dict(human_only=data['decisions']['human_only'], next_branch=data['plan']['next_branch'],
+                  night_operation=data['status']['night_operation'], migration=data['status']['migration'],
+                  review_handoff=data['status']['review_handoff'], new_decisions=data['decisions']['items'][20:],
+                  new_queue=data['queue']['items'][:3], new_logs=data['log']['items'][:5], schedule=data['milestones']['items'])
+    for name, value in values.items():
+        require(digest(value) == REV14_DIGESTS[name], 'rev14 exact handoff/approval/uncertainty: '+name)
+    for phrase in ('本人決定・チャット承認', 'multi-arb派生', 'Q-ZETA-01', '12レジーム×5新seed=60世界',
+                   '3d86a35', 'pr/upstream-integration', 'PR1 merge後', 'merge commit', 'Claudeの別エージェント+agy',
+                   'NPM_CONFIG_IGNORE_SCRIPTS=true', 'bidMode:2', 'bidMode:0', '今のまま merge/提出してよいとは判断しない',
+                   '直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認', '結果を見たあとの基準変更',
+                   '平均T<multi-arb', 'mined revert>1件', '包含取引比>0.1%', '原因不明の失敗',
+                   '未回収自前資産損失/gas枯渇/無効注文>0', 'INC-ZETA-ORIGIN-2026-10-05.md',
+                   'example/agents/ascon-zeta-r/', '結果は未確認', '11 worktree', 'cca4005', '8303d85',
+                   'Masashi-Ono0611/ascon', 'private・ADMIN', '相対symlink', 'gh apiのtransferを拒否',
+                   'open PR #2', 'mainへ直pushなし', '夜間のハートビートは取消済み',
+                   'decisions.jsonのdec-007参照先文字列', 'ドキュメント18件', '10/20 発効版',
+                   '今日（2026-10-05）の適用版との一致は未確認'):
+        require(phrase in document, 'rev14 essential body fact: '+phrase)
+    for key in ('subhead', 'human_action', 'priority', 'next_milestone', 'recent'):
+        current = json.dumps(data['status'][key], ensure_ascii=False)
+        require('契約変更は提案のみ' not in current and '推奨・未決' not in current, 'stale current approval: '+key)
+    require(data['status']['night_operation']['state'] == 'cancelled-reported', 'cancelled heartbeat is not active')
+    require(all(x['state'] == state for x,state in [(progress['progress-rev14-approval'],'done'),
+                (progress['progress-zeta-prep'],'running'),(progress['progress-pr-split'],'running'),
+                (progress['progress-zeta-qualification'],'blocked')]), 'approval/preparation/qualification separate')
     return list(_RESULT_LINES)
 
 
@@ -1720,7 +1803,7 @@ def self_check(documents):
             ds[1] = re.sub(pattern, update, ds[1], count=1, flags=re.S)
         return change
     controls = [
-        lambda ds: ds.__setitem__(0, ds[0].replace("revision 13", "revision 6", 1)),
+        lambda ds: ds.__setitem__(0, ds[0].replace("revision 14", "revision 6", 1)),
         mutate("plan", lambda d: d["ai_contract"].update(status="unsigned")),
         mutate("plan", lambda d: d["ai_contract"].update(on_repeats=1)),
         mutate("plan", lambda d: d["ai_contract"].update(selected_total_hours="12")),
@@ -1766,7 +1849,7 @@ def self_check(documents):
         mutate("log", lambda d: d["items"][0].update(id="log-999")),
         mutate("budget", lambda d: d["rows"][6].update(keep_hours="14.9")),
         mutate("results", lambda d: d["q0b_summary"].update(reverts=0)),
-        mutate("queue", lambda d: d["items"][2].update(active=True)),
+        mutate("queue", lambda d: d["items"][5].update(active=True)),
         mutate("plan", lambda d: d["ai_contract"].update(d_control_base_hours="0")),
         mutate("plan", lambda d: d["ai_parameters"]["rows"][0].__setitem__(4, "±40 bps")),
         mutate("plan", lambda d: d["q0_requalification"].update(option="B")),
@@ -2005,7 +2088,7 @@ def self_check(documents):
                 controls.append(mutate('status', lambda d,n=name,i=i,k=key: d[n]['result']['ranking'][i].update({k:'999'})))
     controls += [
         mutate('log', lambda d: next(x for x in d['items'] if x['id']=='log-091').update(summary='rewritten')),
-        mutate('queue', lambda d: d['items'][0].update(active=True)),
+        mutate('queue', lambda d: d['items'][3].update(active=True)),
         mutate('status', lambda d: d['incz'].update(state='reported-running-unverified')),
         mutate('status', lambda d: d['incz'].update(completed_at='2026-10-05T08:15:00+09:00')),
         mutate('status', lambda d: d['incz'].update(contract_effect='qualified')),
@@ -2022,6 +2105,24 @@ def self_check(documents):
     for i in range(4):
         for key in ('regime','p_minus_noop'):
             controls.append(mutate('status', lambda d,i=i,k=key: d['incz']['result']['noop_losses'][i].update({k:'999'})))
+    for name in ('zeta_qualification', 'integration'):
+        for key, value in REV14_EXPECTED[name].items():
+            controls.append(mutate('plan', lambda d,n=name,k=key: d[n].update({k:'unsafe-change'})))
+    controls += [
+        mutate('status', lambda d: d['night_operation'].update(state='active')),
+        mutate('status', lambda d: d['migration'].update(verified=True)),
+        mutate('status', lambda d: d['review_handoff'].update(verified=True)),
+        mutate('decisions', lambda d: d['items'][20].update(status='open')),
+        mutate('decisions', lambda d: d['items'][21].update(status='open')),
+        mutate('decisions', lambda d: d['items'][22].update(status='open')),
+        mutate('log', lambda d: next(x for x in d['items'] if x['id']=='log-095').update(summary='changed')),
+        mutate('queue', lambda d: d['items'][2].update(active=True)),
+        mutate('queue', lambda d: d['items'][2].update(hours='1')),
+        mutate('status', lambda d: d['priority'].update(note='推奨・未決')),
+        lambda ds: ds.__setitem__(0, ds[0].replace('bidMode:0','bidMode:2')),
+        lambda ds: ds.__setitem__(0, ds[0].replace('夜間のハートビートは取消済み','夜間のハートビートは稼働中')),
+        lambda ds: ds.__setitem__(0, ds[0].replace('mined revert>1件','mined revert>2件')),
+    ]
     for number, control in enumerate(controls, 1):
         changed = copy.deepcopy(documents)
         control(changed)

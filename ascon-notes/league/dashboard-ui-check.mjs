@@ -58,9 +58,9 @@ for(const page of app.D.ui.pages){
 check('overview snapshot and no fake run percentage',()=>{
   const t=rendered.overview;
   assert.ok(t.includes(app.D.status.headline));
-  assert.ok(t.includes('value="3" max="5"'));
+  assert.ok(t.includes('value="1" max="4"'));
   assert.ok(t.includes('本人が今やること'));
-  assert.ok(t.includes('07:20 JST'));
+  assert.ok(t.includes('Q-ZETA-01'));
   assert.ok(!t.includes('17:40 JST'));
   assert.ok(!/log-\d+/.test(t));
 });
@@ -77,8 +77,8 @@ check('diagnostic metrics from JSON rather than display constants',()=>{
   app.D.status.dev2.result.p_candidate='149.0';
 });
 check('log count and complete history',()=>{
-  assert.equal(app.filteredLogs().length,95);
-  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,95);
+  assert.equal(app.filteredLogs().length,100);
+  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,100);
   for(const l of app.D.log.items)assert.ok(rendered.log.includes(l.id));
 });
 check('log AND search, kind and date filters compose',()=>{
@@ -181,7 +181,7 @@ check('dev3a historical figures and incz completed results stay distinct in visi
   assert.ok(t.includes('9レジーム')&&t.includes('18世界')&&t.includes('比較対象に未達'));
   assert.ok(operationsText.includes('incz'));
   assert.ok(operationsText.includes('全計測終了・走行中なし'));
-  assert.ok(operationsText.includes('稼働実績・更新成功は本更新で未検証'));
+  assert.ok(operationsText.includes('夜間のハートビートは取消済み'));
   assert.ok(!operationsText.includes('null'));
 });
 check('historical dev4 facts, current incz and team are visible',()=>{
@@ -190,7 +190,7 @@ check('historical dev4 facts, current incz and team are visible',()=>{
   const op=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   for(const value of ['07:20','08:15','診断完了','3/3回目','Codex(Astra)','Claude','402','agy','masa-harness#409','PLATEAU-ANALYSIS','ツール使用禁止・差分埋め込み・echo &quot;&quot; | …'])assert.ok(op.includes(value),value);
   const overviewText=rendered.overview.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
-  assert.ok(overviewText.includes('mix1+mix2')&&overviewText.includes('58.26'));
+  assert.ok(overviewText.includes('条件付き第一候補')&&overviewText.includes('58.26'));
 });
 check('dev4 display is sourced from JSON',()=>{
   app.state.page='results';app.state.results='diagnostic';
@@ -228,7 +228,7 @@ check('rev9 authority, runtime limit, no-cost provider and next branch are visib
   const plain=page=>rendered[page].replace(/<[^>]*>/g,'');
   for(const value of ['a95054a','検査済み方針の選択+ENTRY','ON起動を拒否','VENDORED','プロンプト誘導','validator ok=true','能力評価ではない','claude-cli:haiku','39001/39002','OFF1+ON3=32世界','安全保証なしで本番と同条件で測るか'])assert.ok(plain('decisions').includes(value),value);
   for(const value of ['7179efe','38003','第3回xa-1は打ち切り','専用adapter','PILOT-STOP','202分','352分'])assert.ok(plain('operations').includes(value),value);
-  for(const value of ['本人判断','第3回xa-1で打ち切り','全計測終了・走行中なし'])assert.ok(plain('overview').includes(value),value);
+  for(const value of ['本人承認済み','Q-ZETA-01','全計測終了・走行中なし'])assert.ok(plain('overview').includes(value),value);
 });
 check('rev10 live outcomes, xa stop and mix placeholder come from data',()=>{
   const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
@@ -268,6 +268,20 @@ check('rev13 incz measured values, all regimes and accounting visible without qu
   assert.ok(plain('overview').includes('全計測終了・走行中なし'));
   assert.ok(app.D.queue.items.every(q=>q.active===false));
   assert.equal(app.D.status.incz.q0_eligible,false);
+});
+check('rev14 approved direction, split PR, unverified prep and cancellation visible',()=>{
+  const plain=page=>rendered[page].replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
+  for(const v of ['multi-arb派生','Q-ZETA-01','ascon-zeta-r','3d86a35','pr/upstream-integration','merge commit','結果は未確認']){
+    assert.ok(plain('overview').includes(v),v);
+    assert.ok(plain('operations').includes(v),v);
+  }
+  for(const v of ['Masashi-Ono0611/ascon','11 worktree','cca4005','8303d85'])assert.ok(plain('overview').includes(v),v);
+  for(const v of ['NPM_CONFIG_IGNORE_SCRIPTS=true','bidMode:2','bidMode:0','夜間のハートビートは取消済み','ドキュメント18件'])assert.ok(plain('operations').includes(v),v);
+  assert.equal(app.D.decisions.items.length,23);
+  assert.equal(app.D.plan.zeta_qualification.result,null);
+  assert.equal(app.D.plan.zeta_qualification.qualified,false);
+  assert.ok(!plain('overview').includes('推奨・未決'));
+  assert.ok(!plain('overview').includes('契約変更は提案のみ'));
 });
 console.log(`PASS dashboard UI: ${count} checks; 8 page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
 console.log('LIMIT: minimal DOM adapter, not a browser; visual layout and assistive technology unverified');

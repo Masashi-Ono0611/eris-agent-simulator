@@ -13,8 +13,8 @@
 | 進捗・結果 | 比較表を最初の内容セクションに表示。診断／資格試験の切替、run・母集団・出所、原表、進捗台帳と過去の記録 |
 | ブロッカー・リスク | 優先順位、原因、影響、対応、担当。未解消／解消済み／全件の切替 |
 | 判断 | 本人の予定、登録報告、委任決定、署名・原判断・旧案の詳細 |
-| 実行キュー・予算 | 全計測終了・incz診断結果・本人判断待ち、夜間消費の概算/未精算、体制・別ジョブ、連続稼働の段階・待ち時間・Q0準備screen、依存付きキュー、100h枠の予約と実消化の区別 |
-| 更新ログ | 95件（既存91件を全件保持し4件追加）。全文検索＋種類＋記録日（JST）の絞り込み。IDは小さな注記だけ |
+| 実行キュー・予算 | 本人承認3点・分割PR/zeta-prep進行中・資格結果未確認、夜間消費の概算/未精算、体制・別ジョブ、連続稼働の段階・待ち時間・Q0準備screen、依存付きキュー、100h枠の予約と実消化の区別 |
+| 更新ログ | 100件（既存95件を全件保持し5件追加）。全文検索＋種類＋記録日（JST）の絞り込み。IDは小さな注記だけ |
 | 用語集 | 53語。名前・略語・説明検索、分類フィルタ、参照資料 |
 
 本文の専門語はページ内の初出に `ⓘ` を付け、クリック／キーボードで説明を開きます。Escapeで閉じ、元のボタンへフォーカスを戻します。図表の原語・署名のAstra表記は保存し、現担当はCodexで統一しています。
@@ -50,7 +50,7 @@ KPIの `ref`、比較表の `scope_ref` / `run_ref` / `candidate_ref` / `baselin
 
 1. 秘密値を含まない担当者の引継ぎ／生成表で事実を確認する。本人が確認した設定は「本人報告」、提示計測値は「measured引継ぎ」、推定と未確認は別にする。
 2. 該当するJSONを更新し、数値・run・seed・レジーム・場・G0・時刻根拠・出所をそろえる。要約、比較判定、進捗、ブロッカー、キュー、重要イベントに旧状態が残っていないか確認する。
-3. 計画や新しい引継ぎの原表をMASTERへ反映する。現在はrevision 13、最新値は§1.7/5、夜間会計は§7.1、連続稼働は§8、用語はAppendix B。revision 6の既決契約を維持する。ロードマップの期間や最大3回という上限は開始を許可するものではない。
+3. 計画や新しい引継ぎの原表をMASTERへ反映する。現在はrevision 14、最新値は§1.7/5、夜間会計は§7.1、連続稼働は§8、用語はAppendix B。revision 6の既決契約を維持する。ロードマップの期間や最大3回という上限は開始を許可するものではない。
 4. `status.as_of` と `last_update` を更新する。時刻はJSTで取得する。測定開始／完了時刻へ更新時刻を代入しない。
 5. 下記の軽量検査を実行し、未検証の境界を引き継ぐ。commitは今回の依頼では行わない。
 
@@ -58,9 +58,14 @@ JSTは `TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z'`、またはPython `ZoneInfo('
 
 IDは全ブロックで一意。progressは `done/running/pending/failed/blocked`、担当は `human/Claude/Codex`。署名の原記録にあるAstraは改名しません。出所は既存ファイルに限り、絶対path・`..`・外部URL・symlink・`upstream-eval`・生の測定出力・秘密への参照を入れません。
 
-ログは追記のみ。訂正は新しい `誤り` エントリにし、時刻を降順に保ちます。既存91件を全件・全フィールド保持し、rev 13ではincz結果・資格解釈・提出基盤の推奨・夜間時間概算の4件を追加しました。rev 10/11の結果待ちは当時の履歴として残します。旧60件/65件/rev 7の68件/rev 8の73件/rev 9の78件/rev 10の84件/rev 11の87件/rev 12の91件のdigestをすべて検査します。既存20判断レコード（rev 10の未決提案を含む）も全フィールド不変です。本文は該当節へ統合し、末尾の追補で現況を上書きしません。原時刻が不明なら記録時刻と `time_basis` を明示し、出来事の時刻を作りません。dev3aの17:39 JSTは本人提示の分精度で、ISO形式の秒00は保存表現です。
+ログは追記のみ。訂正は新しい `誤り` エントリにし、時刻を降順に保ちます。既存95件を全件・全フィールド保持し、rev 14では本人承認・移管実績・分割PR・zeta-prepと独立意見・夜間運用訂正の5件を新しい順に追加しました。rev 10/11の結果待ちは当時の履歴として残します。旧60件/65件/rev 7の68件/rev 8の73件/rev 9の78件/rev 10の84件/rev 11の87件/rev 12の91件/rev 13の95件のdigestをすべて検査します。既存20判断レコード（rev 10の未決提案を含む）も全フィールド不変です。本人承認3件を追加し23件。旧未決レコードは当時の履歴であり、現在の方針を再承認待ちへ戻しません。本文は該当節へ統合し、末尾の追補で現況を上書きしません。原時刻が不明なら記録時刻と `time_basis` を明示し、出来事の時刻を作りません。dev3aの17:39 JSTは本人提示の分精度で、ISO形式の秒00は保存表現です。
 
 ## 現在の証拠・計画境界
+
+- 2026-10-05 JSTの本人承認3点は `dec-zeta-original` / `dec-zeta-qualification` / `dec-pr-split` に記録。inc-zetaはmulti-arb派生を開示する条件付き第一候補。診断後、現行閾値を維持したQ-ZETA-01（F_ref 12×5新seed=60世界・約4.5h）へ進みます。
+- zeta-prepの `INC-ZETA-ORIGIN-2026-10-05.md` / `Q-ZETA-01.md` / `example/agents/ascon-zeta-r/` は存在する/作成中として参照のみ、結果は未確認。sourceの実在検査対象リンクにはせず、本人引継ぎのMASTERを出所にします。由来・bidMode等の焼き込み・seed/hash/試行枠/全費用の登録は準備担当の証跡待ちです。
+- 移管は本人引継ぎの実施済み記録。11 worktreeの一致、GitHub移管、PR #2移動と2ブランチpushをMASTER §8へ保存しました。分割PR（3d86a35→PR1、league/v2→PR2）は本人作業中。独立レビュー・CIのignore-scripts修正・merge commitの結果は未確認です。
+- 夜間ハートビートは取消済み、記憶更新済みという本人報告を記録。decisions.jsonのdec-007参照先とrepoドキュメント18件の旧文字列は未更新のまま。規約「10/20 発効版」と今日の適用版の一致、秘密の全件監査・実ZIP・運営配布版の一致は未確認です。
 
 - dev2-xb-rはmeasured引継ぎ。F_ref、31001/31002、6レジーム12世界、G0 PASS。平均P 149.0/1352.2、平均取引数44.8/300.9、診断平均T44.36/56.84。全世界P−noop正・最小+147.7、noop割れ／違反／revertは0。原表の細かい桁は `DEV2-XB-R-REPAIR.md` の別表を維持。資格合格にはしない。
 - a646e9bの123テスト・赤対照25件は既存の検査記録の引継ぎ。今回の再実行結果ではない。
@@ -74,15 +79,15 @@ IDは全ブロックで一意。progressは `done/running/pending/failed/blocked
 - agy GPT-OSS 120B（Medium・無料枠・本番と同系統）はsparse/selection/injection各1回、validator ok=true、sparse/injectionは期待どおりnull。selectionは答えを指定した形式確認で能力評価ではない。runtime/haiku/性能へ外挿しない。
 - 課金なし・claude-cli:haiku、v3初期コード/prompt v2のxb-r-liveはH1と別系統。F_ref・calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界・全群G0 PASS/安全OK。OFF54.74、ON48.91/52.80/53.62、全反復dT>0を満たさずPILOT-STOP。全反復のdAlpha/worst/installed/declined/rejectedをMASTER §5と正本JSONに保持。校正39101/v1はcompile failed/installed0、39102/v2はinstalled1（WBTC slippage80→100bps、安全節違反・sim内のみ）。WBTC16取引の固定価格損益+63.34 USDCは除外理由を支持しない。
 - xa-1は7179efe→6cd9e70→3ad4f60。dev6 G0 BLOCKED（round無し+停止）→修理1→dev7（提出18・回収264/362）→修理2→xas2（calm/38005、G0 PASS、提出10<30・回収4/710、violations0/revert0）。HEALTHY=no、2回修理後も不健全で第3回打ち切り。決定論ラインはQ0のF_ref平均T≥multiに未達。契約を緩めず本人報告。
-- `plan.continuous_operation`の60秒以下監視/2分検知/5分受領/10分次着手、150分目標/180分上限、最大3回、fresh全12×2と費用条件は不変。夜間は8分heartbeatと`/tmp/night-state.md`で進行管理との本人引継ぎ。監視30分失効を各heartbeatで確認/更新し、失効なら新規起動停止。8分heartbeatは60秒監視の代替ではなく、実稼働は未再検証。
+- `plan.continuous_operation`の60秒以下監視/2分検知/5分受領/10分次着手、150分目標/180分上限、最大3回、fresh全12×2と費用条件は不変。夜間ハートビートは10/5の本人報告で取消済み。旧8分heartbeat・監視30分失効は履歴で、将来の実走入口には既決の独立監視契約を維持します。
 - Q0/Q0bの旧不合格・Q0bの2世界G0 FAIL・安全nullスナップショットを保持。救済再走なし。新Q0は1候補1回60世界・41301–41305・5h上限。ゲートやrevert上限の緩和なし。
-- 委任済み6決定と旧H1/全面改訂判断を含む既存19レコード・署名を保持。KEY/金銭への委任拡張なし。dec-008 resolved、dec-007は10/28 open。現本人判断はQ0の扱いと提出方針（10/31 23:59 JST締切、受理済み版未確保）。朝報告に3選択肢・A推奨・反証条件を記す。契約変更は未決定。
+- 委任済み6決定と旧H1/全面改訂判断を含む既存19レコード・署名を保持。KEY/金銭への委任拡張なし。dec-008 resolved、dec-007は10/28 open。10/5にinc-zeta条件付き第一候補・Q-ZETA-01へ進む・分割PRの3点は本人承認済み。朝報告の未決提案はrev 13時点の履歴。現在の反証条件と準備状態はMASTER rev 14を参照。受理済み版は未確保。
 - mix1は本人提示measured引継ぎ。u1の11体、zeta-2をcand=xb-r v3凍結（xb-r-liveのagent.ts=d30cbbbとバイト同一との報告）に置換。12×40001/40002=24世界、p=3。G0は23 PASS/1 BLOCKED（crash/40001、grok-1 telemetry、cand原因ではない）、全24世界を診断として保持。violations 0。平均T52.18・5/11位、worst regime T47.6は全員で最良。multi-arbは36.73で最下位。全11体順位とcand全12レジーム値をMASTER原表/JSONの厳密期待値で照合。約2.8Tの首位差や既存候補との非有意の見立てはinferredで、統計検定結果ではない。資格/旧Q0m/提出可否へ転用しない。
 - [measured] mix2はmix1と同じroster（u1の11体、zeta-2をcand=xb-r v3凍結に置換）。fresh seed40003/40004・12レジーム24世界、mix2a/mix2bともG0 PASS、violations 0。candは平均T51.63・6位・最悪46.2、inc-zetaは61.54・1位・最悪53.2。05:34 JST開始の引継ぎを保持し、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。
 - [measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb 11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。 mix1のcrash/40001（grok-1 telemetry）BLOCKEDを保持し、PASSへ変更しない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。
 - [inferred] xb-r v3とsonnet-1/grok-1/opus-1はこの集計では区別できないとの見立てで、統計検定の結果ではない。決定論ラインxb-rの追加改良より、混成場で強い既存の独自戦略inc-zeta=zeta-a30（Claude+Codex作成の本命）を提出基盤にする案が示唆される。ただしinc-zetaはF_ref契約(Q0)未通過。D0のF_ref診断はcommit不一致でG0 FAIL、性能は診断のみ。
 - [measured] inczはinc-zeta（ascon-zetaのzeta-a30パラメータ・frozen）をF_ref(cand+noop+multi-arb+clean-arb)で12レジーム×seed40005=12世界。全計測終了・走行中なし。G0 PASS・362ループ・違反0。12レジーム等重み平均T cand 56.30 / multi-arb 44.44（candが上）。1世界平均P 1343.6 / 730.0 / 281.1、取引数254.2 / 253.0 / 42.2（cand/multi/clean）。noop割れ4/12世界、平均(T−Tnoop)<0のレジーム4（最悪informed-flow −8.12）。cand mined revert平均0.2/世界（multi-arb 8.4）、submitted3057/failed90（2.9%）。07:20 JST頃開始との引継ぎ（旧05:40頃開始見込みを訂正）、約55分。旧08:15 JST頃の完了見込みは実績ではなく、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。 `status.incz.result`・G0 PASS・完了12世界を提示値で保持し、実完了時刻は未提示のためnull。1 seedで資格合否は判定しない。
-- 推奨はA: 混成場で強く、F_ref診断でも平均Tがmulti-arbを上回ったinc-zetaを提出基盤の第一候補とする。本人が(a)新契約・回数枠でF_ref 60世界の資格試験（約4.5h）を行うか、(b)契約の場を見直すかを決める。noop割れ4レジームを明示し、契約変更は提案のみ。Q0維持・追加起動停止のまま、時間精算と受理工程を優先する。 選択肢と反証条件は朝報告とMASTER §10。
+- [本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。 現方針と反証条件はMASTER §4/10。朝報告はrev 13時点の履歴として変更しません。
 - 本番gpt-oss:120bがHaikuより弱い可能性が高いという見立ては推測。標準runtimeでは安全枠を強制できず提出物はruntime改変不可。H1 ON拒否を維持。
 - OVERNIGHT §2.3会計: [本人提示概算] 00:26 JST以降: xa-1 smoke約13分×2 + live smoke約13分×2 + live本計測32世界約150分 + mix1約100分 + mix2約100分 + incz約55分 = 単純和457分（7h37）。非重複を仮定した単純和で、確定値・区間和集合ではない。修理/検査/非run・重複・当日/forward消費は未精算。p3を3倍しない。C_forward + R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止。不明なら追加起動BLOCKED。旧rev 10の202分（3h22）・352分（5h52）は当時の部分見積として保持し、現行合計や残量には使わない。
 - KEEP配分は100h、G3 17.2h・deep 9.7h（Q0 5h優先）・M2 0h。旧AMENDも100hの履歴として保存。全費用未確保を実行許可や残り時間へ読み替えない。10/17 18:00の分岐、10/31 23:59 JST締切を保持。
@@ -100,7 +105,7 @@ git diff --check
 
 `dashboard-check.py` はJSON重複キー・有限数・一意ID・JST・日付・ログ降順・出所の実在と安全・元表一致・正確な分数和・担当／状態／依存・HTML構造を検査します。追加で8ページ、KPI／比較の参照、53語と必須語、外部CSS／ネットワーク呼出しの禁止を確認します。`--rendered` はNodeで生成した各画面のタグ、ID、出典リンクとID露出を検査します。
 
-`check-plan-consistency.py` は旧表、全28日、18件のレビュー判断、予算・署名・Q0・AI反復・切替条件の照合を維持し、91ログの完全保持と既存20判断レコードの不変性、dev2/dev3a/dev4/dev5/xa-1/liveの正確な提示値、dev3b/PLATEAUの未確認履歴、mix1の全測定値とG0例外、mix2/48世界の全順位・提示値、incz全提示値・12レジーム・4世界のnoop割れ・資格不可、実消化のnull、表示比較の母集団と数値参照、連続稼働の上限・独立seed・screenも検査します。
+`check-plan-consistency.py` は旧表、全28日、18件のレビュー判断、予算・署名・Q0・AI反復・切替条件の照合を維持し、95ログの完全保持と既存20判断レコードの不変性、dev2/dev3a/dev4/dev5/xa-1/liveの正確な提示値、dev3b/PLATEAUの未確認履歴、mix1の全測定値とG0例外、mix2/48世界の全順位・提示値、incz全提示値・12レジーム・4世界のnoop割れ・資格不可、実消化のnull、表示比較の母集団と数値参照、連続稼働の上限・独立seed・screenも検査します。
 
 `dashboard-ui-check.mjs` は実際のインラインJSを小さなDOMアダプターで実行します。8ページ＋資格ビューの生成、検索／複合フィルタ、空結果、ハッシュ遷移、用語の開閉とEscape、エスケープ、JSON変更の表示反映、主要文字色のAA比とレスポンシブ指定を検査します。DOMアダプターはブラウザではなく、レイアウトの検証にはなりません。
 
@@ -116,7 +121,9 @@ git diff --check
 
 **rev 12のチェッカー更新（履歴）**: mix2結果待ちの旧固定値を全11体の提示値・24世界・両chunk G0 PASS・violations 0との厳密一致へ更新。48世界全11体と朝報告原表の照合、inczの07:20 JST頃開始/08:15頃見込み/12世界/結果null、既存87ログのdigestを追加。旧344反例の意図を保持し、確定したmix2を未確認へ戻す改変も拒否する。102反例を加え446件、UIは31項目・91ログ。Q0/予算/署名/回数上限を緩めず、20判断レコードは不変。CSS/renderer・戦略実装は変更しない。
 
-**rev 13のチェッカー更新**: inczの未確認固定値を、本人提示のF_ref 12世界・G0 PASS・362ループ・全数値・12レジーム別T・noop割れ4世界との厳密一致へ更新。実完了時刻null・資格不可・新契約/回数枠の本人判断を検査する。旧446反例は削除せず、完了数/G0を捏造する旧反例は確定値を未確認へ戻す反例に更新。既存91ログdigestと20判断の不変性を保持し、全計測停止・457分の概算/確定値の分離・数値改変・日程欠落を拒否する71反例を追加して517件、UIは32項目。合否閾値・予算・回数上限は不変。HTMLのCSS/renderer・戦略実装は変更しない。
+**rev 13のチェッカー更新（履歴）**: inczの未確認固定値を、本人提示のF_ref 12世界・G0 PASS・362ループ・全数値・12レジーム別T・noop割れ4世界との厳密一致へ更新。実完了時刻null・資格不可・新契約/回数枠の本人判断を検査する。旧446反例は削除せず、完了数/G0を捏造する旧反例は確定値を未確認へ戻す反例に更新。既存91ログdigestと20判断の不変性を保持し、全計測停止・457分の概算/確定値の分離・数値改変・日程欠落を拒否する71反例を追加して517件、UIは32項目。合否閾値・予算・回数上限は不変。HTMLのCSS/renderer・戦略実装は変更しない。
+
+**rev 14のチェッカー更新**: rev 13の「本人判断待ち」を本人承認3件と新契約の未検証状態へ置換。既存95ログ・20判断の全フィールドdigest、全測定値・既決契約・旧517反例の意図を維持します。新契約の場/世界数/費用/未確認項目、分割PR、移管の証拠区分、夜間取消、旧95件目の改変を拒否する41反例を追加して558件。UIは概要の確認項目1/4・100ログ・承認済み表示・未確認境界に更新し33項目。KPIは概要のみ、CSS/renderer・戦略実装は変更なし。新3件は準備と未解放資格のキューで、旧予算の予約対応は従来どおり保持します。
 
 ## 省いた表示と保存先
 
@@ -130,19 +137,19 @@ git diff --check
 
 静的検査・Nodeの画面ロジック検査は実行済み。375pxを対象に、左右余白、長語の折返し、flex/grid子の最小幅0、見出しの折返し、表の縦配置、フォーム/ポップアップの幅制限を検査しました。overflowを隠す処理で代用していません。ブラウザ／ヘッドレスChrome／描画エンジンは起動せず、実際の横スクロール量・見た目・支援技術・実ブラウザ操作は未検証です。
 
-本人指定の重い処理禁止を優先し、依存を読む `npm run typecheck`、戦略テスト、Docker、backtestは今回未実行です。xb-r/xa-1/xb-r-ai/xb-r-liveの実装・テスト、保護領域・鍵・`.env`・測定原ログへアクセスせず、型検査済みとは報告しません。新規計測・外部サービス照会・commitも行っていません。
+本人指定の重い処理禁止を優先し、依存を読む `npm run typecheck`、戦略テスト、Docker、backtestは今回未実行です。xb-r/xa-1/xb-r-ai/xb-r-liveの実装・テスト、保護領域・鍵・`.env`・測定原ログへアクセスせず、型検査済みとは報告しません。新規計測・外部サービス照会・commitも行っていません。別ジョブのINC-ZETA-ORIGIN・Q-ZETA-01・ascon-zeta-rの内容を開いたり変更したりしていません。
 
 最終確認結果（ブラウザ未起動）:
 
 ```text
-PASS check-plan-consistency: rev 13 facts, unchanged contracts, 91 preserved logs / 20 decisions
-PASS plan controls: 517 unsafe/stale mutations rejected in memory
-PASS dashboard-check: 14 blocks / 95 logs / 19 source tables / 53 terms
+PASS check-plan-consistency: rev 14 facts, unchanged contracts, 95 preserved logs / 20 preserved decisions + 3 approvals
+PASS plan controls: 558 unsafe/stale mutations rejected in memory
+PASS dashboard-check: 14 blocks / 100 logs / 19 source tables / 53 terms
 PASS checker controls: 23 invalid cases rejected in memory
-PASS dashboard UI: 32 checks / 8 pages + qualification / 375px static containment
+PASS dashboard UI: 33 checks / 8 pages + qualification / KPI only on overview / 375px static containment
 PASS rendered HTML: 9 views / balanced tags / safe links / unique IDs
 PASS git diff --check
-LIMIT: static consistency only; raw runs, actual hours, runtime monitoring, browser layout and acceptance unverified
+LIMIT: static consistency only; zeta-prep results, PR review/CI/merge, raw runs, actual hours, current rules, ZIP, browser layout and acceptance unverified
 ```
 
 ## 初回の当日引継ぎ・移行証拠
