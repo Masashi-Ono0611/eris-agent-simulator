@@ -1,0 +1,21 @@
+# Local process-sandbox pilot only. Same candidate/field as OFF, only flag differs.
+# Explicit "0" overrides an inherited "1"; omission alone does not.
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: clean-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: cand
+    dir: xb-r-live
+    wallet: AUTO
+    env:
+      ERIS_AGENT_FROZEN: "0"
+      ERIS_IMPROVE_LOG_CALLS: "1"
+      ERIS_LLM_CALL_TIMEOUT_MS: "120000"
+      ERIS_CLAUDE_BIN: "./ascon-notes/league/xb-r-live-claude-timed.sh"

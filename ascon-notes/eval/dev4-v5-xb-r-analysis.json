@@ -1,0 +1,4000 @@
+{
+  "sourceCommit": "d30cbbb46ca472b5a7a72fc1b99deab96dc97bf3",
+  "sourceSha256": "78d8fa43156cee872e1bcbcaf86c1da00f1aa1646c6b210e7af4b499edea4d04",
+  "scriptSha256": "c351a40b965d2bf7d3409c684c9c845f368fe31166566293ddae083ccdee9ead",
+  "worlds": [
+    {
+      "regime": "calm",
+      "seed": "36001",
+      "run": "runs/2026-10-04T11-16-18-511Z",
+      "elapsedMs": 721861,
+      "attempts": 90,
+      "loggedNoops": 272,
+      "frames": 361,
+      "agreement": 341,
+      "factors": {},
+      "sha256": {
+        "summary.json": "80eb8c255f07165b0c8f186e44068c80fcfed71b7688553c8f659235f9e28b76",
+        "market.json": "b2fdb550f4b691ead9e7ac58e7e95c514bb3d23fbcf8f68043f5f4c538c301f2",
+        "blocks.csv": "d86c8aab310b616590f540b45d4e199c9d6f90c1453f4efd8134853f8d1462bf",
+        "agents/cand.jsonl": "d2a905598e6e429acdd8579cfe6d9d901a2c0c583a924ad10f0bf40ca608b703",
+        "agents/multi-arb.jsonl": "32cde944ca3335afa0b5f4d6241a6fddc4881dfe4bc67a2989c214ce36f0b37d",
+        "agents/clean-arb.jsonl": "054c6318fd58d1f0547e5cdbc05b526d4de49f964fbba751f2e18038e9611b3d"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 663.3244708358689,
+          "excess": 590.9647455731465,
+          "included": 98,
+          "reverts": 0,
+          "submitted": 98,
+          "failed": 3,
+          "actions": {
+            "swap": 41,
+            "curveSwap": 24,
+            "balancerSwap": 33
+          },
+          "nonSpot": 0,
+          "E": 1334.205372303307,
+          "M": -734.0984239171147,
+          "G": 9.142202513188048,
+          "turnover": 208041.91211199993,
+          "legs": 98,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 76,
+              "turnover": 175853.645084,
+              "E": 1146.8141639007451,
+              "M": -731.4737969436558,
+              "finalContribution": 415.340366957089,
+              "quotedEdgeBpsSum": 5402.589855804249,
+              "quotedEdgeSamples": 76
+            },
+            "bundle": {
+              "legs": 22,
+              "turnover": 32188.26702799999,
+              "E": 187.3912084025617,
+              "M": -2.624626973459004,
+              "finalContribution": 184.76658142910267,
+              "quotedEdgeBpsSum": 1206.9308749994325,
+              "quotedEdgeSamples": 22
+            }
+          },
+          "X": -2.998578079171921e-7,
+          "execEdgeBps": 64.13156650785992,
+          "averageLegUsd": 2122.8766542040808,
+          "bundleCount": 11,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -113.42055942666775,
+          "excess": -185.7802846893901,
+          "included": 254,
+          "reverts": 0,
+          "submitted": 255,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 152,
+            "swap": 55,
+            "balancerSwap": 48
+          },
+          "nonSpot": 0,
+          "E": 1995.8224268385597,
+          "M": -2172.350052593726,
+          "G": 9.252657730434365,
+          "turnover": 483113.3480030002,
+          "legs": 254,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 168,
+              "turnover": 390112.147939,
+              "E": 1687.50411340392,
+              "M": -2178.4162675417047,
+              "finalContribution": -490.9121541377852,
+              "quotedEdgeBpsSum": 14254.226642464178,
+              "quotedEdgeSamples": 168
+            },
+            "bundle": {
+              "legs": 86,
+              "turnover": 93001.20006400003,
+              "E": 308.31831343463966,
+              "M": 6.066214947978278,
+              "finalContribution": 314.38452838261804,
+              "quotedEdgeBpsSum": 3631.121501430635,
+              "quotedEdgeSamples": 86
+            }
+          },
+          "X": -0.0000012037893810656897,
+          "execEdgeBps": 41.311680480129596,
+          "averageLegUsd": 1902.021055129922,
+          "bundleCount": 43,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 715.0018721804372,
+          "excess": 642.6421469177149,
+          "included": 48,
+          "reverts": 0,
+          "submitted": 48,
+          "failed": 0,
+          "actions": {
+            "swap": 17,
+            "curveSwap": 16,
+            "balancerSwap": 15
+          },
+          "nonSpot": 0,
+          "E": 644.3602168714,
+          "M": -0.08912455509963912,
+          "G": 1.6289453643760061,
+          "turnover": 111573.67889000001,
+          "legs": 48,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 48,
+              "turnover": 111573.67889000001,
+              "E": 644.3602168714,
+              "M": -0.08912455509963912,
+              "finalContribution": 644.2710923163003,
+              "quotedEdgeBpsSum": 2591.6014208466195,
+              "quotedEdgeSamples": 48
+            }
+          },
+          "X": -3.4209485466618617e-8,
+          "execEdgeBps": 57.751991623998684,
+          "averageLegUsd": 2324.4516435416667,
+          "bundleCount": 24,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 122,
+        "inventoryBlocked": 102,
+        "entry45OtherGatesPass": 1
+      },
+      "T": {
+        "noop": 40.78256859435909,
+        "multi-arb": 35.879800279748764,
+        "clean-arb": 57.74198687067992,
+        "cand": 56.37821284957131
+      }
+    },
+    {
+      "regime": "calm",
+      "seed": "36002",
+      "run": "runs/2026-10-04T11-16-21-411Z",
+      "elapsedMs": 721920,
+      "attempts": 74,
+      "loggedNoops": 288,
+      "frames": 361,
+      "agreement": 329,
+      "factors": {},
+      "sha256": {
+        "summary.json": "da7c78fcc693c7107d908e434ffa5e27c3383ad7d46edb6805de6a135a713fbe",
+        "market.json": "6f5fc7bf9f6195877b9625be587ea097f8d7371b4c669879afb9917042f3719e",
+        "blocks.csv": "fdb9b82190c09785ba8ba1985dd98948cf17858ba56a660046007e468b2b79bc",
+        "agents/cand.jsonl": "fbde1e9516bee259234a9d21ef67fa42a0282ea28307b5b1b9ef020198a76ddb",
+        "agents/multi-arb.jsonl": "896f531352381e51f24bef343cc08c770294f66bd91616cf2e0bde51c1aee44f",
+        "agents/clean-arb.jsonl": "3477101da84486d4a85e7653603e84120f5e4bedb5939c7ba42522f021bafd13"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 186.34076400042977,
+          "excess": 212.64347385428846,
+          "included": 78,
+          "reverts": 0,
+          "submitted": 78,
+          "failed": 0,
+          "actions": {
+            "swap": 28,
+            "balancerSwap": 23,
+            "curveSwap": 27
+          },
+          "nonSpot": 0,
+          "E": 912.0109907809554,
+          "M": -691.7822532984974,
+          "G": 7.585263153798555,
+          "turnover": 155074.872474,
+          "legs": 78,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 8,
+              "turnover": 13629.66355,
+              "E": 83.3674983260452,
+              "M": -0.3278288219150589,
+              "finalContribution": 83.03966950413013,
+              "quotedEdgeBpsSum": 499.23845170977927,
+              "quotedEdgeSamples": 8
+            },
+            "single": {
+              "legs": 70,
+              "turnover": 141445.208924,
+              "E": 828.6434924549103,
+              "M": -691.4544244765823,
+              "finalContribution": 137.18906797832793,
+              "quotedEdgeBpsSum": 5004.7163120477935,
+              "quotedEdgeSamples": 70
+            }
+          },
+          "X": -4.743709594023926e-7,
+          "execEdgeBps": 58.81101020630302,
+          "averageLegUsd": 1988.1393906923076,
+          "bundleCount": 4,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -268.168436861597,
+          "excess": -241.86572700773831,
+          "included": 191,
+          "reverts": 0,
+          "submitted": 191,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 106,
+            "balancerSwap": 55,
+            "swap": 30
+          },
+          "nonSpot": 0,
+          "E": 2362.02240580416,
+          "M": -2597.0350786229606,
+          "G": 6.853052052330607,
+          "turnover": 501178.88395500014,
+          "legs": 191,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 34,
+              "turnover": 83476.00347099999,
+              "E": 293.2380920292357,
+              "M": 2.181361580141304,
+              "finalContribution": 295.41945360937706,
+              "quotedEdgeBpsSum": 1495.76436605222,
+              "quotedEdgeSamples": 34
+            },
+            "single": {
+              "legs": 157,
+              "turnover": 417702.880484,
+              "E": 2068.7843137749255,
+              "M": -2599.2164402031012,
+              "finalContribution": -530.432126428176,
+              "quotedEdgeBpsSum": 13648.390472050838,
+              "quotedEdgeSamples": 157
+            }
+          },
+          "X": -0.0000021366070690476135,
+          "execEdgeBps": 47.129328098672275,
+          "averageLegUsd": 2623.9732144240847,
+          "bundleCount": 17,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 240.16287286946317,
+          "excess": 266.46558272332186,
+          "included": 20,
+          "reverts": 0,
+          "submitted": 20,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 6,
+            "balancerSwap": 10,
+            "swap": 4
+          },
+          "nonSpot": 0,
+          "E": 266.0784574797683,
+          "M": 1.0473128764590185,
+          "G": 0.6601876413663189,
+          "turnover": 53293.421424,
+          "legs": 20,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 20,
+              "turnover": 53293.421424,
+              "E": 266.0784574797683,
+              "M": 1.0473128764590185,
+              "finalContribution": 267.12577035622735,
+              "quotedEdgeBpsSum": 1119.922138479016,
+              "quotedEdgeSamples": 20
+            }
+          },
+          "X": 8.460855682734802e-9,
+          "execEdgeBps": 49.927073618122655,
+          "averageLegUsd": 2664.6710712,
+          "bundleCount": 10,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 100,
+        "entry45OtherGatesPass": 1,
+        "inventoryBlocked": 94
+      },
+      "T": {
+        "noop": 46.53160497152403,
+        "multi-arb": 35.92368752280226,
+        "clean-arb": 58.218440222738046,
+        "cand": 55.85787225445969
+      }
+    },
+    {
+      "regime": "cex-drift",
+      "seed": "36001",
+      "run": "runs/2026-10-04T11-16-24-527Z",
+      "elapsedMs": 721784,
+      "attempts": 62,
+      "loggedNoops": 300,
+      "frames": 361,
+      "agreement": 325,
+      "factors": {},
+      "sha256": {
+        "summary.json": "71379ec47777bd46c0ca3015da17f21ba8e89da7b89b57e9e58317e7883a9b5d",
+        "market.json": "6e274793c8305373bcc9b4f34dda81c08c70104d5c7b02ae00d77d28954fd20c",
+        "blocks.csv": "e63e1f59e611a8580a99a91e725c08e5ee2b3cc62ab0184be5befb07a7483f9d",
+        "agents/cand.jsonl": "de5d9463696a4d5889c91ccfcaaac78f7531fc8b2968ae81cc5a7f8be59e0a45",
+        "agents/multi-arb.jsonl": "962b34fefb521cc9513fabd7afc59c2291370bc0eda4fa04774437587c4de5a3",
+        "agents/clean-arb.jsonl": "587180cb3c075c7c77bba50280f8206ce4dec4b6bdbbedda50c67fb8b6445ee3"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -1012.0775471089582,
+          "excess": 599.1848521903594,
+          "included": 62,
+          "reverts": 0,
+          "submitted": 62,
+          "failed": 0,
+          "actions": {
+            "swap": 27,
+            "balancerSwap": 8,
+            "curveSwap": 27
+          },
+          "nonSpot": 0,
+          "E": 768.8475675431848,
+          "M": -163.7422580963962,
+          "G": 5.920456542731736,
+          "turnover": 134502.76083800002,
+          "legs": 62,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 62,
+              "turnover": 134502.76083800002,
+              "E": 768.8475675431848,
+              "M": -163.7422580963962,
+              "finalContribution": 605.1053094467886,
+              "quotedEdgeBpsSum": 4260.149559156915,
+              "quotedEdgeSamples": 62
+            }
+          },
+          "X": -7.136975090915598e-7,
+          "execEdgeBps": 57.16221457113528,
+          "averageLegUsd": 2169.3993683548388,
+          "bundleCount": 0,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 290.74354161307565,
+          "excess": 1902.0059409123933,
+          "included": 253,
+          "reverts": 0,
+          "submitted": 254,
+          "failed": 1,
+          "actions": {
+            "swap": 38,
+            "balancerSwap": 92,
+            "curveSwap": 124
+          },
+          "nonSpot": 0,
+          "E": 2637.009599863929,
+          "M": -726.6212158813918,
+          "G": 8.38244026257739,
+          "turnover": 499870.0279279998,
+          "legs": 253,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 223,
+              "turnover": 427316.73442699976,
+              "E": 2508.556643253913,
+              "M": -726.9010340628245,
+              "finalContribution": 1781.6556091910884,
+              "quotedEdgeBpsSum": 26080.25989355185,
+              "quotedEdgeSamples": 223
+            },
+            "bundle": {
+              "legs": 30,
+              "turnover": 72553.29350100002,
+              "E": 128.4529566100151,
+              "M": 0.2798181814319889,
+              "finalContribution": 128.73277479144707,
+              "quotedEdgeBpsSum": 1173.0318185531441,
+              "quotedEdgeSamples": 30
+            }
+          },
+          "X": -0.000002807566559681618,
+          "execEdgeBps": 52.75390506597363,
+          "averageLegUsd": 1975.7708613754933,
+          "bundleCount": 15,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -1503.463512410206,
+          "excess": 107.7988868891116,
+          "included": 14,
+          "reverts": 0,
+          "submitted": 14,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 5,
+            "curveSwap": 4,
+            "swap": 5
+          },
+          "nonSpot": 0,
+          "E": 107.93604358093835,
+          "M": 0.30204601357113603,
+          "G": 0.4392027274838934,
+          "turnover": 25257.322514000003,
+          "legs": 14,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 14,
+              "turnover": 25257.322514000003,
+              "E": 107.93604358093835,
+              "M": 0.30204601357113603,
+              "finalContribution": 108.23808959450947,
+              "quotedEdgeBpsSum": 688.7539186982895,
+              "quotedEdgeSamples": 14
+            }
+          },
+          "X": 2.208601118658393e-8,
+          "execEdgeBps": 42.73455490822907,
+          "averageLegUsd": 1804.0944652857145,
+          "bundleCount": 7,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 178,
+        "inventoryBlocked": 176
+      },
+      "T": {
+        "noop": 38.512316705230205,
+        "multi-arb": 63.636573088690106,
+        "clean-arb": 39.936269603481634,
+        "cand": 46.42715730782825
+      }
+    },
+    {
+      "regime": "cex-drift",
+      "seed": "36002",
+      "run": "runs/2026-10-04T11-28-50-803Z",
+      "elapsedMs": 721767,
+      "attempts": 65,
+      "loggedNoops": 297,
+      "frames": 361,
+      "agreement": 333,
+      "factors": {},
+      "sha256": {
+        "summary.json": "ebdf16a23930a76e49829c16ce9e39a831435614b497fcfd7b0e7da40e24de34",
+        "market.json": "a2b98d1a492b5167e02e6dfd1d8fcf6763710998e1aa08890238b45926cf1d90",
+        "blocks.csv": "9ec200b7601157aca7bbafa1a7512910400b409de8d3e92f68c3d88f9a0347a1",
+        "agents/cand.jsonl": "2ade3e72e72aef14f8994eef62450af6c30aeb4b4b9c2824d8b2f055efc2cc71",
+        "agents/multi-arb.jsonl": "c0146dc60fc620dc9e59146e70c4d0bb8ab567d6c659f905c97d54a98501076f",
+        "agents/clean-arb.jsonl": "37922cf2ecade47f3f4c3e0de7540ae5b9a020e4ed6d6e77b0ecda015a822470"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 1489.8982300162606,
+          "excess": 779.6564409198327,
+          "included": 67,
+          "reverts": 0,
+          "submitted": 67,
+          "failed": 2,
+          "actions": {
+            "curveSwap": 21,
+            "swap": 29,
+            "balancerSwap": 17
+          },
+          "nonSpot": 0,
+          "E": 909.4764625409501,
+          "M": -123.03095209412373,
+          "G": 6.789069611426983,
+          "turnover": 147420.62467899994,
+          "legs": 67,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 60,
+              "turnover": 137891.76514699994,
+              "E": 891.2777975160905,
+              "M": -139.98211099513628,
+              "finalContribution": 751.2956865209541,
+              "quotedEdgeBpsSum": 4139.392503242934,
+              "quotedEdgeSamples": 60
+            },
+            "bundle": {
+              "legs": 7,
+              "turnover": 9528.859531999999,
+              "E": 18.19866502485961,
+              "M": 16.95115890101261,
+              "finalContribution": 35.14982392587222,
+              "quotedEdgeBpsSum": 219.18462005289794,
+              "quotedEdgeSamples": 7
+            }
+          },
+          "X": 8.443325505425037e-8,
+          "execEdgeBps": 61.69262031830917,
+          "averageLegUsd": 2200.3078310298497,
+          "bundleCount": 4,
+          "partialBundles": 1
+        },
+        "multi-arb": {
+          "P": 3398.9766054683714,
+          "excess": 2688.7348163719435,
+          "included": 330,
+          "reverts": 1,
+          "submitted": 330,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 181,
+            "swap": 58,
+            "balancerSwap": 91
+          },
+          "nonSpot": 0,
+          "E": 2876.7639554410907,
+          "M": -175.86577831994805,
+          "G": 12.16336305493871,
+          "turnover": 524120.48213999945,
+          "legs": 329,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 225,
+              "turnover": 394581.9760119996,
+              "E": 2403.699649394395,
+              "M": -183.95857276373934,
+              "finalContribution": 2219.7410766306534,
+              "quotedEdgeBpsSum": 27206.617681772248,
+              "quotedEdgeSamples": 225
+            },
+            "bundle": {
+              "legs": 104,
+              "turnover": 129538.50612800007,
+              "E": 473.06430604669436,
+              "M": 8.092794443790968,
+              "finalContribution": 481.15710049048533,
+              "quotedEdgeBpsSum": 3830.5506561679304,
+              "quotedEdgeSamples": 104
+            }
+          },
+          "X": 0.000002305739482011404,
+          "execEdgeBps": 54.88745533651305,
+          "averageLegUsd": 1593.0713742857126,
+          "bundleCount": 52,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 1109.8756097736186,
+          "excess": 399.63382067719067,
+          "included": 54,
+          "reverts": 0,
+          "submitted": 54,
+          "failed": 0,
+          "actions": {
+            "swap": 19,
+            "curveSwap": 23,
+            "balancerSwap": 12
+          },
+          "nonSpot": 0,
+          "E": 402.4560902187074,
+          "M": -0.8780725477069437,
+          "G": 1.9441970201149466,
+          "turnover": 92568.83799000003,
+          "legs": 54,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 54,
+              "turnover": 92568.83799000003,
+              "E": 402.4560902187074,
+              "M": -0.8780725477069437,
+              "finalContribution": 401.57801767100034,
+              "quotedEdgeBpsSum": 2494.949550941348,
+              "quotedEdgeSamples": 54
+            }
+          },
+          "X": 2.6305158051798117e-8,
+          "execEdgeBps": 43.476411604322365,
+          "averageLegUsd": 1714.237740555556,
+          "bundleCount": 27,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 212,
+        "inventoryBlocked": 210,
+        "entry45OtherGatesPass": 3
+      },
+      "T": {
+        "noop": 37.12729205043072,
+        "multi-arb": 63.97145465071712,
+        "clean-arb": 41.11721147182902,
+        "cand": 44.911333877453856
+      }
+    },
+    {
+      "regime": "informed-flow",
+      "seed": "36001",
+      "run": "runs/2026-10-04T11-28-53-645Z",
+      "elapsedMs": 721882,
+      "attempts": 55,
+      "loggedNoops": 307,
+      "frames": 361,
+      "agreement": 338,
+      "factors": {},
+      "sha256": {
+        "summary.json": "778eaea22242e1c2ea08c47a814e5a1bf08e58932ac279863a3d8757d971fda1",
+        "market.json": "f9eb9f7dda0ae315c08cecd9d4ddf48ae43a30e5184b7021a9a14a2f313571f7",
+        "blocks.csv": "70473a9a0bab3c02a13668fa994fe6561b1b88d9bff03b6ed9231b9dd446879e",
+        "agents/cand.jsonl": "d14f11fa662928e8f8a1c00940163be4b907e09075bdbd3c594f6beb37bef068",
+        "agents/multi-arb.jsonl": "0a6835d69980012e57139a7f35a3dcee9e5c2cfca6dec812c0b4069fdccfe4bd",
+        "agents/clean-arb.jsonl": "175d392a15a5e01b2f18d581abbe391910cba11812555c82212786e6923ff752"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 181.89146786992205,
+          "excess": 572.977376752664,
+          "included": 62,
+          "reverts": 0,
+          "submitted": 62,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 16,
+            "swap": 28,
+            "balancerSwap": 18
+          },
+          "nonSpot": 0,
+          "E": 808.82325902586,
+          "M": -229.95458753296018,
+          "G": 5.891294091396249,
+          "turnover": 130631.47626599998,
+          "legs": 62,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 48,
+              "turnover": 114132.39936699998,
+              "E": 723.5512451182898,
+              "M": -228.66516800705944,
+              "finalContribution": 494.8860771112302,
+              "quotedEdgeBpsSum": 3415.9610989869793,
+              "quotedEdgeSamples": 48
+            },
+            "bundle": {
+              "legs": 14,
+              "turnover": 16499.076899,
+              "E": 85.27201390757006,
+              "M": -1.289419525900704,
+              "finalContribution": 83.98259438166934,
+              "quotedEdgeBpsSum": 687.2506426793623,
+              "quotedEdgeSamples": 14
+            }
+          },
+          "X": -6.488396007142683e-7,
+          "execEdgeBps": 61.916414186339246,
+          "averageLegUsd": 2106.959294612903,
+          "bundleCount": 7,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 1891.883597779437,
+          "excess": 2282.969506662179,
+          "included": 305,
+          "reverts": 0,
+          "submitted": 306,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 170,
+            "balancerSwap": 85,
+            "swap": 51
+          },
+          "nonSpot": 0,
+          "E": 2686.8334672894193,
+          "M": -393.02699157083174,
+          "G": 10.836965833160905,
+          "turnover": 493415.58565499977,
+          "legs": 305,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 183,
+              "turnover": 322349.189668,
+              "E": 1902.9742997168366,
+              "M": -389.5162715700375,
+              "finalContribution": 1513.4580281467986,
+              "quotedEdgeBpsSum": 19545.847215552658,
+              "quotedEdgeSamples": 183
+            },
+            "bundle": {
+              "legs": 122,
+              "turnover": 171066.39598700003,
+              "E": 783.8591675725816,
+              "M": -3.5107200007945005,
+              "finalContribution": 780.3484475717873,
+              "quotedEdgeBpsSum": 4871.703088813159,
+              "quotedEdgeSamples": 122
+            }
+          },
+          "X": -0.0000032232477860105746,
+          "execEdgeBps": 54.453761603875954,
+          "averageLegUsd": 1617.756018540983,
+          "bundleCount": 61,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 135.64662953100924,
+          "excess": 526.7325384137512,
+          "included": 58,
+          "reverts": 0,
+          "submitted": 58,
+          "failed": 0,
+          "actions": {
+            "swap": 21,
+            "curveSwap": 25,
+            "balancerSwap": 12
+          },
+          "nonSpot": 0,
+          "E": 540.6869925442937,
+          "M": -11.941365431029805,
+          "G": 2.013088752560504,
+          "turnover": 120615.977513,
+          "legs": 58,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 58,
+              "turnover": 120615.977513,
+              "E": 540.6869925442937,
+              "M": -11.941365431029805,
+              "finalContribution": 528.7456271132638,
+              "quotedEdgeBpsSum": 3096.5704402546025,
+              "quotedEdgeSamples": 58
+            }
+          },
+          "X": 5.304775063663669e-8,
+          "execEdgeBps": 44.82714510074077,
+          "averageLegUsd": 2079.5858191896555,
+          "bundleCount": 29,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 190,
+        "inventoryBlocked": 180,
+        "entry45OtherGatesPass": 3
+      },
+      "T": {
+        "noop": 36.20242854122467,
+        "multi-arb": 64.1383612546019,
+        "clean-arb": 42.647878078825684,
+        "cand": 43.21376066657241
+      }
+    },
+    {
+      "regime": "informed-flow",
+      "seed": "36002",
+      "run": "runs/2026-10-04T11-28-56-848Z",
+      "elapsedMs": 721914,
+      "attempts": 70,
+      "loggedNoops": 292,
+      "frames": 361,
+      "agreement": 340,
+      "factors": {},
+      "sha256": {
+        "summary.json": "8c27ac1b83aad06feb6678354dff04b0090f7740240ca68e0e9f2bcf67f2aae8",
+        "market.json": "35d58b25917de903075b70a0f66b836cf6754d771cf923e370baba1b4f944131",
+        "blocks.csv": "cf8cd254ba71252583e9fa714621b4f4388336f9ab5595715f02281c3c767c7c",
+        "agents/cand.jsonl": "95b605cd4bc6ccbd648ecb43b767d40eeab917b891bcc79759402619be879d3b",
+        "agents/multi-arb.jsonl": "5a9157cac1fe23bd0990e0f842f2f3e879087c98ca3368644e9f5eafd2c2a68c",
+        "agents/clean-arb.jsonl": "42e13e0a0fee7bba4da4300c8134bfefb633d88682ecf46630f7636fcdf36765"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 1015.141828652675,
+          "excess": 505.1517913892749,
+          "included": 75,
+          "reverts": 0,
+          "submitted": 75,
+          "failed": 0,
+          "actions": {
+            "swap": 28,
+            "balancerSwap": 24,
+            "curveSwap": 23
+          },
+          "nonSpot": 0,
+          "E": 942.2137116941568,
+          "M": -429.70821903672106,
+          "G": 7.353701227219605,
+          "turnover": 157196.15974999996,
+          "legs": 75,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 65,
+              "turnover": 147617.18239799995,
+              "E": 905.7515025404609,
+              "M": -430.25890895714565,
+              "finalContribution": 475.4925935833155,
+              "quotedEdgeBpsSum": 4556.052756845595,
+              "quotedEdgeSamples": 65
+            },
+            "bundle": {
+              "legs": 10,
+              "turnover": 9578.977352,
+              "E": 36.46220915369575,
+              "M": 0.5506899204245808,
+              "finalContribution": 37.01289907412034,
+              "quotedEdgeBpsSum": 404.83787655505427,
+              "quotedEdgeSamples": 10
+            }
+          },
+          "X": -4.09412708179957e-8,
+          "execEdgeBps": 59.9387232609642,
+          "averageLegUsd": 2095.948796666666,
+          "bundleCount": 5,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 880.1661933929718,
+          "excess": 370.1761561295716,
+          "included": 340,
+          "reverts": 0,
+          "submitted": 341,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 219,
+            "balancerSwap": 66,
+            "swap": 56
+          },
+          "nonSpot": 0,
+          "E": 1945.0841011544646,
+          "M": -1562.3637411250124,
+          "G": 12.543562301402044,
+          "turnover": 348728.8514650002,
+          "legs": 338,
+          "missing": 2,
+          "modes": {
+            "single": {
+              "legs": 252,
+              "turnover": 270181.4712420001,
+              "E": 1773.8358935194742,
+              "M": -1572.5558536662363,
+              "finalContribution": 201.28003985323897,
+              "quotedEdgeBpsSum": 26895.412461464235,
+              "quotedEdgeSamples": 252
+            },
+            "bundle": {
+              "legs": 86,
+              "turnover": 78547.380223,
+              "E": 171.2482076349902,
+              "M": 10.192112541222752,
+              "finalContribution": 181.44032017621288,
+              "quotedEdgeBpsSum": 2856.8430953606257,
+              "quotedEdgeSamples": 86
+            }
+          },
+          "X": -0.0006415984785412832,
+          "execEdgeBps": 55.776403156298095,
+          "averageLegUsd": 1031.7421640976338,
+          "bundleCount": 43,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 684.7035662694107,
+          "excess": 174.7135290060105,
+          "included": 42,
+          "reverts": 0,
+          "submitted": 42,
+          "failed": 0,
+          "actions": {
+            "swap": 13,
+            "balancerSwap": 14,
+            "curveSwap": 15
+          },
+          "nonSpot": 0,
+          "E": 172.43749048076938,
+          "M": 3.7134174746328217,
+          "G": 1.437378919264781,
+          "turnover": 49691.29069400001,
+          "legs": 42,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 42,
+              "turnover": 49691.29069400001,
+              "E": 172.43749048076938,
+              "M": 3.7134174746328217,
+              "finalContribution": 176.15090795540223,
+              "quotedEdgeBpsSum": 1669.3371685926627,
+              "quotedEdgeSamples": 42
+            }
+          },
+          "X": -3.012692095794023e-8,
+          "execEdgeBps": 34.70175317897114,
+          "averageLegUsd": 1183.1259689047622,
+          "bundleCount": 21,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 227,
+        "inventoryBlocked": 221,
+        "entry45OtherGatesPass": 8
+      },
+      "T": {
+        "noop": 24.197690610539983,
+        "multi-arb": 51.48632612425388,
+        "clean-arb": 37.07721765033906,
+        "cand": 61.43645622540706
+      }
+    },
+    {
+      "regime": "whale",
+      "seed": "36001",
+      "run": "runs/2026-10-04T11-41-22-131Z",
+      "elapsedMs": 722051,
+      "attempts": 51,
+      "loggedNoops": 311,
+      "frames": 361,
+      "agreement": 335,
+      "factors": {},
+      "sha256": {
+        "summary.json": "822104e808a40f7a43f06d0ba5df01effb144eaf8bf287878c4cc0dc45eca6e4",
+        "market.json": "fbfb62184553802852f0d03d66e6371dd0522350b844d71f0b95d9e7187cafc1",
+        "blocks.csv": "a56e6e72a9160ad6a83dec4dd1547535fdff3edff0a95f78272af7998273ec2a",
+        "agents/cand.jsonl": "ee533b722af7c652c5cec6759e217df47307fa92c9cf136049d834685292d38b",
+        "agents/multi-arb.jsonl": "43535907b7165a8c99ec5fd760b4d50a594a9d96ef57c43e3b01a8630da2c5cc",
+        "agents/clean-arb.jsonl": "cedce441168e873e514bed904c11146799cc610fca1274e742c89bc8a72f517b"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 1846.5198557010008,
+          "excess": 1918.7802948542085,
+          "included": 60,
+          "reverts": 0,
+          "submitted": 60,
+          "failed": 0,
+          "actions": {
+            "swap": 31,
+            "curveSwap": 15,
+            "balancerSwap": 14
+          },
+          "nonSpot": 0,
+          "E": 2275.5780724988954,
+          "M": -351.1212174116225,
+          "G": 5.676560315582491,
+          "turnover": 164524.18138000002,
+          "legs": 60,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 42,
+              "turnover": 113790.57039600001,
+              "E": 1226.6567174214822,
+              "M": -352.222248503974,
+              "finalContribution": 874.4344689175086,
+              "quotedEdgeBpsSum": 3953.4223081009777,
+              "quotedEdgeSamples": 42
+            },
+            "bundle": {
+              "legs": 18,
+              "turnover": 50733.61098399999,
+              "E": 1048.9213550774132,
+              "M": 1.1010310923514206,
+              "finalContribution": 1050.022386169765,
+              "quotedEdgeBpsSum": 2877.672458268598,
+              "quotedEdgeSamples": 18
+            }
+          },
+          "X": 8.25181123431662e-8,
+          "execEdgeBps": 138.3126816624611,
+          "averageLegUsd": 2742.0696896666673,
+          "bundleCount": 9,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 6236.837002211178,
+          "excess": 6309.097441364385,
+          "included": 377,
+          "reverts": 2,
+          "submitted": 378,
+          "failed": 1,
+          "actions": {
+            "balancerSwap": 61,
+            "curveSwap": 253,
+            "swap": 64
+          },
+          "nonSpot": 0,
+          "E": 8289.792125763453,
+          "M": -1966.6308405768543,
+          "G": 14.063845202855193,
+          "turnover": 748311.583639,
+          "legs": 375,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 254,
+              "turnover": 300643.8986370001,
+              "E": 2717.0249517685183,
+              "M": -2003.4277347879877,
+              "finalContribution": 713.5972169805294,
+              "quotedEdgeBpsSum": 31154.3578441118,
+              "quotedEdgeSamples": 254
+            },
+            "bundle": {
+              "legs": 121,
+              "turnover": 447667.685002,
+              "E": 5572.767173994938,
+              "M": 36.79689421113473,
+              "finalContribution": 5609.564068206072,
+              "quotedEdgeBpsSum": 12034.038264705063,
+              "quotedEdgeSamples": 121
+            }
+          },
+          "X": 0.0000013806413807770923,
+          "execEdgeBps": 110.77995192123886,
+          "averageLegUsd": 1995.4975563706666,
+          "bundleCount": 61,
+          "partialBundles": 1
+        },
+        "clean-arb": {
+          "P": 4277.5549065958185,
+          "excess": 4349.815345749026,
+          "included": 85,
+          "reverts": 6,
+          "submitted": 85,
+          "failed": 1,
+          "actions": {
+            "swap": 37,
+            "curveSwap": 34,
+            "balancerSwap": 14
+          },
+          "nonSpot": 0,
+          "E": 4197.506678721699,
+          "M": 155.20265613688449,
+          "G": 2.8939886866067424,
+          "turnover": 275920.3330579999,
+          "legs": 79,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 79,
+              "turnover": 275920.3330579999,
+              "E": 4197.506678721699,
+              "M": 155.20265613688449,
+              "finalContribution": 4352.709334858585,
+              "quotedEdgeBpsSum": 9722.375226936558,
+              "quotedEdgeSamples": 79
+            }
+          },
+          "X": -4.229508236974766e-7,
+          "execEdgeBps": 152.12748666258537,
+          "averageLegUsd": 3492.6624437721507,
+          "bundleCount": 40,
+          "partialBundles": 1
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 264,
+        "inventoryBlocked": 258
+      },
+      "T": {
+        "noop": 26.653309016709642,
+        "multi-arb": 61.78611454481834,
+        "clean-arb": 50.87566697609706,
+        "cand": 37.3382184790846
+      }
+    },
+    {
+      "regime": "whale",
+      "seed": "36002",
+      "run": "runs/2026-10-04T11-41-24-908Z",
+      "elapsedMs": 721928,
+      "attempts": 73,
+      "loggedNoops": 289,
+      "frames": 361,
+      "agreement": 330,
+      "factors": {},
+      "sha256": {
+        "summary.json": "ce37258dd5ffb83c0ad6391363661f29e85c776890b5a6e63976267a8b7b692c",
+        "market.json": "1eac339e65256c738b7f2ca30ab30da98abebb60d1ddc4b900e7dd02599dbc16",
+        "blocks.csv": "e018d3eb86fc0f7c5c9f7f96d5e3fadfa37e3695798c962055b4192c96ab4aa6",
+        "agents/cand.jsonl": "ee077983a412c931d0dd6fa3369389f1bb4c145c69c27c5f1524ca7ddb06a99a",
+        "agents/multi-arb.jsonl": "d8a80e17dc9a92cb4e536d9a7b127626910d6d6b81e7fe6d7dbd1b018010431b",
+        "agents/clean-arb.jsonl": "68d36b70dddc2990c68c9bfcd567ca24d3611a9dd33f982176b878e695322633"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 1359.488300067198,
+          "excess": 1291.8927811560134,
+          "included": 86,
+          "reverts": 0,
+          "submitted": 86,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 22,
+            "swap": 36,
+            "curveSwap": 28
+          },
+          "nonSpot": 0,
+          "E": 1879.6095765777554,
+          "M": -579.1803035901361,
+          "G": 8.536492517936946,
+          "turnover": 187607.62702500002,
+          "legs": 86,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 60,
+              "turnover": 136228.47721199997,
+              "E": 924.6931136529646,
+              "M": -584.4060455371111,
+              "finalContribution": 340.2870681158535,
+              "quotedEdgeBpsSum": 4312.095558427555,
+              "quotedEdgeSamples": 60
+            },
+            "bundle": {
+              "legs": 26,
+              "turnover": 51379.149812999996,
+              "E": 954.9164629247916,
+              "M": 5.225741946974818,
+              "finalContribution": 960.1422048717662,
+              "quotedEdgeBpsSum": 3926.3251268811496,
+              "quotedEdgeSamples": 26
+            }
+          },
+          "X": 6.863309600646517e-7,
+          "execEdgeBps": 100.18833489788155,
+          "averageLegUsd": 2181.4840351744188,
+          "bundleCount": 13,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 5553.4768643066345,
+          "excess": 5485.88134539545,
+          "included": 257,
+          "reverts": 0,
+          "submitted": 258,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 91,
+            "curveSwap": 111,
+            "swap": 56
+          },
+          "nonSpot": 0,
+          "E": 7149.465766762841,
+          "M": -1654.6520668072621,
+          "G": 8.932355351358904,
+          "turnover": 865949.4456930003,
+          "legs": 257,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 163,
+              "turnover": 382448.024585,
+              "E": 1923.4429156446192,
+              "M": -1675.3128097470783,
+              "finalContribution": 248.13010589754106,
+              "quotedEdgeBpsSum": 15107.60449706287,
+              "quotedEdgeSamples": 163
+            },
+            "bundle": {
+              "legs": 94,
+              "turnover": 483501.421108,
+              "E": 5226.022851118224,
+              "M": 20.660742939816497,
+              "finalContribution": 5246.683594058039,
+              "quotedEdgeBpsSum": 8870.089319425273,
+              "quotedEdgeSamples": 94
+            }
+          },
+          "X": 7.912301889234641e-7,
+          "execEdgeBps": 82.5621611321811,
+          "averageLegUsd": 3369.4530960817133,
+          "bundleCount": 47,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 2338.053785016891,
+          "excess": 2270.4582661057066,
+          "included": 64,
+          "reverts": 5,
+          "submitted": 64,
+          "failed": 0,
+          "actions": {
+            "swap": 23,
+            "curveSwap": 22,
+            "balancerSwap": 19
+          },
+          "nonSpot": 0,
+          "E": 2180.9854413111943,
+          "M": 91.61204814036395,
+          "G": 2.1392220503795514,
+          "turnover": 191660.168715,
+          "legs": 59,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 59,
+              "turnover": 191660.168715,
+              "E": 2180.9854413111943,
+              "M": 91.61204814036395,
+              "finalContribution": 2272.597489451558,
+              "quotedEdgeBpsSum": 6241.007251466041,
+              "quotedEdgeSamples": 59
+            }
+          },
+          "X": -0.0000012954721668734237,
+          "execEdgeBps": 113.79440266247155,
+          "averageLegUsd": 3248.477435847458,
+          "bundleCount": 31,
+          "partialBundles": 3
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 137,
+        "inventoryBlocked": 125,
+        "entry45OtherGatesPass": 2
+      },
+      "T": {
+        "noop": 33.16475383138092,
+        "multi-arb": 63.786037268967,
+        "clean-arb": 45.83807680764034,
+        "cand": 40.37588592339266
+      }
+    },
+    {
+      "regime": "lending-incident",
+      "seed": "36001",
+      "run": "runs/2026-10-04T11-41-28-283Z",
+      "elapsedMs": 721870,
+      "attempts": 68,
+      "loggedNoops": 294,
+      "frames": 361,
+      "agreement": 322,
+      "factors": {},
+      "sha256": {
+        "summary.json": "0c0beab4a397dc0d84874382ec7d11558fcd0671536d133cd67dfea76b852824",
+        "market.json": "870fdaa8c12de52407eb27e124636e865ae26f4b71ff3df1356f859fb3f34e5d",
+        "blocks.csv": "e36052d42cdc3eecbde52a12cc1f9d1fded1a1e427a169d3b7611b88a0702542",
+        "agents/cand.jsonl": "690ed77eafa954f67c9d38b972108a33bfacc7fe506919a1397c906ffeb7e9b1",
+        "agents/multi-arb.jsonl": "db71380aa385aef40aef6c0292b501692d508cde8c3490d124e1a784ce78f1e9",
+        "agents/clean-arb.jsonl": "81b02d71bb4375f90567597faea457759fcb37fa422fab8b90b08c681f5dfe92"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -328.50939963932615,
+          "excess": 1152.395281616933,
+          "included": 76,
+          "reverts": 0,
+          "submitted": 76,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 26,
+            "swap": 28,
+            "balancerSwap": 22
+          },
+          "nonSpot": 0,
+          "E": 811.2331653811976,
+          "M": 348.1252036013617,
+          "G": 6.9630870160002925,
+          "turnover": 143027.4430869999,
+          "legs": 76,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 60,
+              "turnover": 124078.20115799995,
+              "E": 707.5188502870594,
+              "M": 347.28051211007397,
+              "finalContribution": 1054.7993623971333,
+              "quotedEdgeBpsSum": 4258.529332551626,
+              "quotedEdgeSamples": 60
+            },
+            "bundle": {
+              "legs": 16,
+              "turnover": 18949.241929,
+              "E": 103.71431509413816,
+              "M": 0.8446914912876996,
+              "finalContribution": 104.55900658542589,
+              "quotedEdgeBpsSum": 794.2010314315705,
+              "quotedEdgeSamples": 16
+            }
+          },
+          "X": -3.4962598682852786e-7,
+          "execEdgeBps": 56.71870711467207,
+          "averageLegUsd": 1881.9400406184197,
+          "bundleCount": 8,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 1187.8897569382825,
+          "excess": 2668.7944381945417,
+          "included": 312,
+          "reverts": 1,
+          "submitted": 313,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 166,
+            "balancerSwap": 88,
+            "swap": 59
+          },
+          "nonSpot": 0,
+          "E": 1553.7561642133805,
+          "M": 1125.3954057156634,
+          "G": 10.357132168720312,
+          "turnover": 275403.41572800005,
+          "legs": 311,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 218,
+              "turnover": 233506.57461299998,
+              "E": 1346.8844317121439,
+              "M": 1126.5076237925573,
+              "finalContribution": 2473.392055504706,
+              "quotedEdgeBpsSum": 24703.260429454444,
+              "quotedEdgeSamples": 218
+            },
+            "bundle": {
+              "legs": 93,
+              "turnover": 41896.841114999996,
+              "E": 206.87173250123692,
+              "M": -1.1122180768937948,
+              "finalContribution": 205.75951442434305,
+              "quotedEdgeBpsSum": 4538.657634435142,
+              "quotedEdgeSamples": 93
+            }
+          },
+          "X": 4.3421809436949843e-7,
+          "execEdgeBps": 56.4174616391808,
+          "averageLegUsd": 885.5415296720258,
+          "bundleCount": 47,
+          "partialBundles": 1
+        },
+        "clean-arb": {
+          "P": -1049.2371700620715,
+          "excess": 431.6675111941877,
+          "included": 60,
+          "reverts": 1,
+          "submitted": 60,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 16,
+            "swap": 30,
+            "balancerSwap": 14
+          },
+          "nonSpot": 0,
+          "E": 402.85964462180493,
+          "M": 30.659325717990168,
+          "G": 1.8514590948432543,
+          "turnover": 108797.76274199999,
+          "legs": 59,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 59,
+              "turnover": 108797.76274199999,
+              "E": 402.85964462180493,
+              "M": 30.659325717990168,
+              "finalContribution": 433.518970339795,
+              "quotedEdgeBpsSum": 3596.1579767362155,
+              "quotedEdgeSamples": 59
+            }
+          },
+          "X": -5.076416353944069e-8,
+          "execEdgeBps": 37.02830228017971,
+          "averageLegUsd": 1844.0298769830506,
+          "bundleCount": 30,
+          "partialBundles": 1
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 197,
+        "inventoryBlocked": 195,
+        "entry45OtherGatesPass": 3
+      },
+      "T": {
+        "noop": 34.79536333151312,
+        "multi-arb": 63.41944890846853,
+        "clean-arb": 39.42520203485393,
+        "cand": 47.15534905667754
+      }
+    },
+    {
+      "regime": "lending-incident",
+      "seed": "36002",
+      "run": "runs/2026-10-04T11-53-54-318Z",
+      "elapsedMs": 721946,
+      "attempts": 50,
+      "loggedNoops": 312,
+      "frames": 361,
+      "agreement": 344,
+      "factors": {},
+      "sha256": {
+        "summary.json": "a235c6af085633534862aa93faa9273506b3c15042abb35f64a2fb17b438ab3b",
+        "market.json": "8af14278272772f16c6ef179ab6742e0cb6f53324041c2df339f31840aa3c587",
+        "blocks.csv": "5b9106211b66eacc3c3cf3755f6928e216d3e346489173489ba32378c38fdda0",
+        "agents/cand.jsonl": "933c52bfa624006c553f0615b6bbd75193defc42fe8832d962d3a1214ede3b5a",
+        "agents/multi-arb.jsonl": "45da59f9b8a9207927f5f7b9b7cbfe35ae613e72d48206a9a5067a0a2618fb57",
+        "agents/clean-arb.jsonl": "d42e46934f01abab26e5e1e1bb7208ddf8fb42f397df15c076d2f7ac6c5b86c3"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -455.19846036235685,
+          "excess": 537.5218687754386,
+          "included": 50,
+          "reverts": 0,
+          "submitted": 50,
+          "failed": 1,
+          "actions": {
+            "balancerSwap": 13,
+            "curveSwap": 14,
+            "swap": 23
+          },
+          "nonSpot": 0,
+          "E": 862.8958931572186,
+          "M": -320.70901662072737,
+          "G": 4.665007895988925,
+          "turnover": 121498.41518099999,
+          "legs": 50,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 48,
+              "turnover": 118304.35781599999,
+              "E": 842.5247335894912,
+              "M": -320.15449723430646,
+              "finalContribution": 522.3702363551844,
+              "quotedEdgeBpsSum": 3416.9766237346776,
+              "quotedEdgeSamples": 48
+            },
+            "bundle": {
+              "legs": 2,
+              "turnover": 3194.057365,
+              "E": 20.371159567727357,
+              "M": -0.5545193864209992,
+              "finalContribution": 19.816640181306358,
+              "quotedEdgeBpsSum": 117.98766963651119,
+              "quotedEdgeSamples": 2
+            }
+          },
+          "X": 1.349363749625354e-7,
+          "execEdgeBps": 71.02116450422301,
+          "averageLegUsd": 2429.96830362,
+          "bundleCount": 1,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 419.4113830904098,
+          "excess": 1412.1317122282053,
+          "included": 252,
+          "reverts": 2,
+          "submitted": 253,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 98,
+            "curveSwap": 108,
+            "swap": 47
+          },
+          "nonSpot": 0,
+          "E": 2800.881108286127,
+          "M": -1380.3352759001548,
+          "G": 8.414119972132683,
+          "turnover": 444191.3082630002,
+          "legs": 250,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 181,
+              "turnover": 372747.14529999986,
+              "E": 2625.9142049950474,
+              "M": -1422.4969368984862,
+              "finalContribution": 1203.4172680965605,
+              "quotedEdgeBpsSum": 20316.443328536272,
+              "quotedEdgeSamples": 181
+            },
+            "bundle": {
+              "legs": 69,
+              "turnover": 71444.162963,
+              "E": 174.96690329107935,
+              "M": 42.1616609983318,
+              "finalContribution": 217.12856428941114,
+              "quotedEdgeBpsSum": 3117.358496628853,
+              "quotedEdgeSamples": 69
+            }
+          },
+          "X": -1.8563431858353852e-7,
+          "execEdgeBps": 63.05573873651215,
+          "averageLegUsd": 1776.765233052001,
+          "bundleCount": 35,
+          "partialBundles": 1
+        },
+        "clean-arb": {
+          "P": -717.6386466752156,
+          "excess": 275.0816824625799,
+          "included": 50,
+          "reverts": 1,
+          "submitted": 50,
+          "failed": 0,
+          "actions": {
+            "swap": 19,
+            "balancerSwap": 17,
+            "curveSwap": 14
+          },
+          "nonSpot": 0,
+          "E": 247.68748158437464,
+          "M": 28.99529552188419,
+          "G": 1.6010946551631664,
+          "turnover": 60544.339613,
+          "legs": 49,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 49,
+              "turnover": 60544.339613,
+              "E": 247.68748158437464,
+              "M": 28.99529552188419,
+              "finalContribution": 276.6827771062589,
+              "quotedEdgeBpsSum": 2520.5822369887715,
+              "quotedEdgeSamples": 49
+            }
+          },
+          "X": 1.1484257322891267e-8,
+          "execEdgeBps": 40.91009715649645,
+          "averageLegUsd": 1235.5987676122447,
+          "bundleCount": 25,
+          "partialBundles": 1
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 169,
+        "inventoryBlocked": 159,
+        "entry45OtherGatesPass": 3
+      },
+      "T": {
+        "noop": 34.74454296227121,
+        "multi-arb": 63.79435624290497,
+        "clean-arb": 40.40341418742867,
+        "cand": 45.80222956966636
+      }
+    },
+    {
+      "regime": "crash",
+      "seed": "36001",
+      "run": "runs/2026-10-04T11-53-57-096Z",
+      "elapsedMs": 721717,
+      "attempts": 59,
+      "loggedNoops": 303,
+      "frames": 361,
+      "agreement": 334,
+      "factors": {},
+      "sha256": {
+        "summary.json": "d32f2610ab739d26aedbfd4e385ee2457b8f8410bea9a4eb0359de0adebeb4ab",
+        "market.json": "f63c743f19c051ca1155b2df2f993ff4e09e13fc3d51a0ae0e4351391d394123",
+        "blocks.csv": "87f3b300aaeea5d4af9a50e928b5f4edb809dad4a6bde085e406f0eca7f20552",
+        "agents/cand.jsonl": "f813c27543dbc6b84b693eb9fcaa6c5fc889dde98d39c8882516832a716515d3",
+        "agents/multi-arb.jsonl": "cf7d55c83ec2d718b11059bc33293ec52439ee82bf378baabca4434fd37d99e9",
+        "agents/clean-arb.jsonl": "5027dc94318a65bbf8e1a98f35b541f813b26e342957bd91864c9e28066d8f1a"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -809.8337313955126,
+          "excess": 774.7810783169407,
+          "included": 60,
+          "reverts": 0,
+          "submitted": 60,
+          "failed": 1,
+          "actions": {
+            "swap": 27,
+            "balancerSwap": 23,
+            "curveSwap": 10
+          },
+          "nonSpot": 0,
+          "E": 1824.1815494397954,
+          "M": -1044.2715310143349,
+          "G": 5.128940108120315,
+          "turnover": 131379.00159800003,
+          "legs": 60,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 56,
+              "turnover": 126088.56495700005,
+              "E": 1797.307019434951,
+              "M": -1041.5070619583385,
+              "finalContribution": 755.7999574766123,
+              "quotedEdgeBpsSum": 5240.192427386795,
+              "quotedEdgeSamples": 56
+            },
+            "bundle": {
+              "legs": 4,
+              "turnover": 5290.436641,
+              "E": 26.874530004844328,
+              "M": -2.764469055996585,
+              "finalContribution": 24.110060948847753,
+              "quotedEdgeBpsSum": 193.70031485327232,
+              "quotedEdgeSamples": 4
+            }
+          },
+          "X": -3.9951242314373303e-10,
+          "execEdgeBps": 138.84879069347141,
+          "averageLegUsd": 2189.6500266333337,
+          "bundleCount": 2,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -1785.0324906692404,
+          "excess": -200.41768095678708,
+          "included": 287,
+          "reverts": 3,
+          "submitted": 288,
+          "failed": 0,
+          "actions": {
+            "swap": 81,
+            "curveSwap": 108,
+            "balancerSwap": 99
+          },
+          "nonSpot": 0,
+          "E": 7092.199076638292,
+          "M": -7283.553092803139,
+          "G": 9.063664551825195,
+          "turnover": 502964.64874399983,
+          "legs": 284,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 199,
+              "turnover": 405848.1257080001,
+              "E": 6781.203047250989,
+              "M": -7292.530059236612,
+              "finalContribution": -511.32701198562046,
+              "quotedEdgeBpsSum": 28208.62014854049,
+              "quotedEdgeSamples": 199
+            },
+            "bundle": {
+              "legs": 85,
+              "turnover": 97116.523036,
+              "E": 310.99602938730294,
+              "M": 8.976966433475473,
+              "finalContribution": 319.9729958207785,
+              "quotedEdgeBpsSum": 4507.445190932649,
+              "quotedEdgeSamples": 85
+            }
+          },
+          "X": -2.4011483290564684e-7,
+          "execEdgeBps": 141.00790372343042,
+          "averageLegUsd": 1771.0022843098586,
+          "bundleCount": 43,
+          "partialBundles": 1
+        },
+        "clean-arb": {
+          "P": -1120.6268781502586,
+          "excess": 463.9879315621947,
+          "included": 52,
+          "reverts": 1,
+          "submitted": 52,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 14,
+            "swap": 20,
+            "curveSwap": 18
+          },
+          "nonSpot": 0,
+          "E": 481.1438702917289,
+          "M": -15.508323450971305,
+          "G": 1.647615215644615,
+          "turnover": 99331.10201400002,
+          "legs": 51,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 51,
+              "turnover": 99331.10201400002,
+              "E": 481.1438702917289,
+              "M": -15.508323450971305,
+              "finalContribution": 465.6355468407576,
+              "quotedEdgeBpsSum": 3187.3613977324353,
+              "quotedEdgeSamples": 51
+            }
+          },
+          "X": -6.291825016546682e-8,
+          "execEdgeBps": 48.43839044732586,
+          "averageLegUsd": 1947.6686669411768,
+          "bundleCount": 26,
+          "partialBundles": 1
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 184,
+        "inventoryBlocked": 167,
+        "entry45OtherGatesPass": 4
+      },
+      "T": {
+        "noop": 41.490752270924744,
+        "multi-arb": 36.56350756372717,
+        "clean-arb": 52.89784005419427,
+        "cand": 60.538652382078574
+      }
+    },
+    {
+      "regime": "crash",
+      "seed": "36002",
+      "run": "runs/2026-10-04T11-54-00-209Z",
+      "elapsedMs": 722064,
+      "attempts": 53,
+      "loggedNoops": 309,
+      "frames": 361,
+      "agreement": 330,
+      "factors": {},
+      "sha256": {
+        "summary.json": "07c4b2d1b1b1f38b5989aa9a03dee44549d5b427cbc044dfb5c3c2cdcf68229d",
+        "market.json": "3fc150727df1c5745d7627ebc0118a8f0443e0734887932ecf867d5cda6d2c32",
+        "blocks.csv": "9c542f8525cc4ff802087610235d93535cb2f2eb802cc32b403f13cb5a26f022",
+        "agents/cand.jsonl": "99284231cf0494832c62792b098130a844753f7e15f008886fa11441a0897770",
+        "agents/multi-arb.jsonl": "d2431d11a745aad7b52f04e17c8930dbe117f7e14009e0ccd8f6a9599e512ffd",
+        "agents/clean-arb.jsonl": "4d49f0b28a41a4b1d12ac9d8e0c4d2108a7ee1c03bda8c59fcd1c4b375f0c92a"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 276.7504490441934,
+          "excess": 941.3316909504938,
+          "included": 57,
+          "reverts": 0,
+          "submitted": 57,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 21,
+            "swap": 24,
+            "balancerSwap": 12
+          },
+          "nonSpot": 0,
+          "E": 854.0076065730307,
+          "M": 92.83553338251691,
+          "G": 5.511449261749645,
+          "turnover": 118186.64091300001,
+          "legs": 57,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 49,
+              "turnover": 108868.532897,
+              "E": 803.5567779895225,
+              "M": 92.53139191827186,
+              "finalContribution": 896.0881699077945,
+              "quotedEdgeBpsSum": 3579.945497466471,
+              "quotedEdgeSamples": 49
+            },
+            "bundle": {
+              "legs": 8,
+              "turnover": 9318.108016,
+              "E": 50.45082858350833,
+              "M": 0.30414146424500554,
+              "finalContribution": 50.75497004775333,
+              "quotedEdgeBpsSum": 367.5609071565067,
+              "quotedEdgeSamples": 8
+            }
+          },
+          "X": 2.56695853906308e-7,
+          "execEdgeBps": 72.2592333596896,
+          "averageLegUsd": 2073.4498405789477,
+          "bundleCount": 4,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 2883.8048294365435,
+          "excess": 3548.386071342844,
+          "included": 282,
+          "reverts": 1,
+          "submitted": 282,
+          "failed": 1,
+          "actions": {
+            "curveSwap": 156,
+            "balancerSwap": 70,
+            "swap": 56
+          },
+          "nonSpot": 0,
+          "E": 4231.347979649448,
+          "M": -673.2321287143906,
+          "G": 9.72751111622599,
+          "turnover": 427095.42785500025,
+          "legs": 265,
+          "missing": 16,
+          "modes": {
+            "single": {
+              "legs": 156,
+              "turnover": 349740.4868849999,
+              "E": 4022.41014363053,
+              "M": -740.9558900614682,
+              "finalContribution": 3281.454253569065,
+              "quotedEdgeBpsSum": 20861.25539317326,
+              "quotedEdgeSamples": 156
+            },
+            "bundle": {
+              "legs": 109,
+              "turnover": 77354.94097,
+              "E": 208.93783601891678,
+              "M": 67.72376134707783,
+              "finalContribution": 276.66159736599457,
+              "quotedEdgeBpsSum": 5062.065561647983,
+              "quotedEdgeSamples": 109
+            }
+          },
+          "X": -0.0022684759870585935,
+          "execEdgeBps": 99.07265926260392,
+          "averageLegUsd": 1611.6808598301895,
+          "bundleCount": 55,
+          "partialBundles": 1
+        },
+        "clean-arb": {
+          "P": -92.04290408705128,
+          "excess": 572.5383378192491,
+          "included": 70,
+          "reverts": 0,
+          "submitted": 70,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 18,
+            "swap": 29,
+            "curveSwap": 23
+          },
+          "nonSpot": 0,
+          "E": 560.1065929001094,
+          "M": 14.730311324796862,
+          "G": 2.2985664515637603,
+          "turnover": 110017.75347999997,
+          "legs": 70,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 70,
+              "turnover": 110017.75347999997,
+              "E": 560.1065929001094,
+              "M": 14.730311324796862,
+              "finalContribution": 574.8369042249063,
+              "quotedEdgeBpsSum": 3657.352884788565,
+              "quotedEdgeSamples": 70
+            }
+          },
+          "X": 4.590665847459263e-8,
+          "execEdgeBps": 50.91056444830339,
+          "averageLegUsd": 1571.6821925714282,
+          "bundleCount": 35,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 174,
+        "inventoryBlocked": 165
+      },
+      "T": {
+        "noop": 37.25983938133982,
+        "multi-arb": 64.05046845574736,
+        "clean-arb": 41.58255453436955,
+        "cand": 44.36697700988308
+      }
+    },
+    {
+      "regime": "depeg",
+      "seed": "36001",
+      "run": "runs/2026-10-04T12-06-26-084Z",
+      "elapsedMs": 721903,
+      "attempts": 72,
+      "loggedNoops": 290,
+      "frames": 361,
+      "agreement": 334,
+      "factors": {},
+      "sha256": {
+        "summary.json": "04c7cfde3b55c833d38f28885ac52f4dbbc51674cabed83f3c6fdd1f4de72f01",
+        "market.json": "03e5efc6eec53437b172c0aff8d0d794c171cede84c9f857f0af4200a4955fb2",
+        "blocks.csv": "a2bb124647e8d3019122df80da6d490e9206348fc235b981653e31405faaeeef",
+        "agents/cand.jsonl": "a9f7c1977f4de454928ad49b432b0b9ef603959f63379327da0315485940e017",
+        "agents/multi-arb.jsonl": "6ae7c2bfcfe29d90a4b395abf3ca2fe87b9da05408dab25149db7b5d362ed550",
+        "agents/clean-arb.jsonl": "4f80945af3e0c1666562587b6b5ae7da06ca8e8948eadfbeef447342beddd107"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 373.6495475854608,
+          "excess": 73.76388801782741,
+          "included": 74,
+          "reverts": 0,
+          "submitted": 74,
+          "failed": 1,
+          "actions": {
+            "balancerSwap": 11,
+            "swap": 29,
+            "curveSwap": 34
+          },
+          "nonSpot": 0,
+          "E": 780.5850770517186,
+          "M": -699.21028255114,
+          "G": 7.610906996123061,
+          "turnover": 150224.33936600003,
+          "legs": 74,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 68,
+              "turnover": 140321.57199000003,
+              "E": 709.2497148583311,
+              "M": -699.267863587662,
+              "finalContribution": 9.981851270669129,
+              "quotedEdgeBpsSum": 4641.720318416234,
+              "quotedEdgeSamples": 68
+            },
+            "bundle": {
+              "legs": 6,
+              "turnover": 9902.767376,
+              "E": 71.33536219338758,
+              "M": 0.05758103652192759,
+              "finalContribution": 71.39294322990952,
+              "quotedEdgeBpsSum": 360.57026945186976,
+              "quotedEdgeSamples": 6
+            }
+          },
+          "X": 5.133719138683546e-7,
+          "execEdgeBps": 51.96129204801728,
+          "averageLegUsd": 2030.0586400810814,
+          "bundleCount": 3,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 666.0238233326818,
+          "excess": 366.1381637650484,
+          "included": 225,
+          "reverts": 0,
+          "submitted": 226,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 42,
+            "swap": 34,
+            "curveSwap": 150
+          },
+          "nonSpot": 0,
+          "E": 1952.1727055509798,
+          "M": -1577.7010438519715,
+          "G": 8.333501726509574,
+          "turnover": 397185.9867809998,
+          "legs": 225,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 193,
+              "turnover": 291861.04944199993,
+              "E": 1402.3141789254405,
+              "M": -1592.0466169851156,
+              "finalContribution": -189.7324380596761,
+              "quotedEdgeBpsSum": 21804.857266350493,
+              "quotedEdgeSamples": 193
+            },
+            "bundle": {
+              "legs": 32,
+              "turnover": 105324.93733899998,
+              "E": 549.8585266255398,
+              "M": 14.345573133144725,
+              "finalContribution": 564.2040997586846,
+              "quotedEdgeBpsSum": 1422.6167799807376,
+              "quotedEdgeSamples": 32
+            }
+          },
+          "X": 0.000003792549613024221,
+          "execEdgeBps": 49.15009014724801,
+          "averageLegUsd": 1765.2710523599992,
+          "bundleCount": 16,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 442.9576895280625,
+          "excess": 143.07202996042906,
+          "included": 16,
+          "reverts": 1,
+          "submitted": 16,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 5,
+            "swap": 6,
+            "curveSwap": 5
+          },
+          "nonSpot": 0,
+          "E": -15.804475542603695,
+          "M": 159.40218887346188,
+          "G": 0.5256834006254302,
+          "turnover": 39579.781684,
+          "legs": 15,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 15,
+              "turnover": 39579.781684,
+              "E": -15.804475542603695,
+              "M": 159.40218887346188,
+              "finalContribution": 143.59771333085817,
+              "quotedEdgeBpsSum": 769.9751954938206,
+              "quotedEdgeSamples": 15
+            }
+          },
+          "X": 3.019629490896847e-8,
+          "execEdgeBps": -3.9930678922851675,
+          "averageLegUsd": 2638.652112266667,
+          "bundleCount": 8,
+          "partialBundles": 1
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 137,
+        "inventoryBlocked": 132,
+        "entry45OtherGatesPass": 3
+      },
+      "T": {
+        "noop": 34.421856581015916,
+        "multi-arb": 63.77351905581638,
+        "clean-arb": 45.89130267699245,
+        "cand": 40.335178267191175
+      }
+    },
+    {
+      "regime": "depeg",
+      "seed": "36002",
+      "run": "runs/2026-10-04T12-06-28-894Z",
+      "elapsedMs": 721799,
+      "attempts": 77,
+      "loggedNoops": 285,
+      "frames": 361,
+      "agreement": 332,
+      "factors": {},
+      "sha256": {
+        "summary.json": "ffb7499d418469be1731fba88f78ceeb88ab586068037653c09e22806111d87e",
+        "market.json": "c438dc6ec194f4e30e83dfcda454643b992bfb3853ffa5dd97894cb97ac87ee5",
+        "blocks.csv": "d9292c4eb8057c939a24f0843fd1588c29b8ddc069acf565062ef4cab35cf20b",
+        "agents/cand.jsonl": "5d210f79fd6d0afe094f928f1ac6519b4e3d9a3697ef315fdf94972dba020541",
+        "agents/multi-arb.jsonl": "795c943459c761e3bc1beaac3046e9d1d468eda36d32b8669229a3b4b65e76f5",
+        "agents/clean-arb.jsonl": "d2c243e4dfc8cfcf8dbe9b68661b216343d4e2ad96766f823a1d2a8f3d444c27"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 281.05755957448855,
+          "excess": 369.3725395972724,
+          "included": 72,
+          "reverts": 0,
+          "submitted": 72,
+          "failed": 6,
+          "actions": {
+            "balancerSwap": 15,
+            "curveSwap": 33,
+            "swap": 24
+          },
+          "nonSpot": 0,
+          "E": 834.7713844814075,
+          "M": -458.26911329744286,
+          "G": 7.1297315378400015,
+          "turnover": 143787.92677299993,
+          "legs": 72,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 70,
+              "turnover": 141749.23601699993,
+              "E": 827.3433065304824,
+              "M": -458.4262746985285,
+              "finalContribution": 368.91703183195403,
+              "quotedEdgeBpsSum": 4793.664720769412,
+              "quotedEdgeSamples": 70
+            },
+            "bundle": {
+              "legs": 2,
+              "turnover": 2038.690756,
+              "E": 7.4280779509250205,
+              "M": 0.1571614010857214,
+              "finalContribution": 7.585239352010744,
+              "quotedEdgeBpsSum": 74.47932413827685,
+              "quotedEdgeSamples": 2
+            }
+          },
+          "X": -4.885222892880847e-8,
+          "execEdgeBps": 58.05573549991253,
+          "averageLegUsd": 1997.0545385138878,
+          "bundleCount": 1,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 812.0081748546509,
+          "excess": 900.3231548774347,
+          "included": 289,
+          "reverts": 4,
+          "submitted": 290,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 48,
+            "curveSwap": 191,
+            "swap": 51
+          },
+          "nonSpot": 0,
+          "E": 2779.03079711787,
+          "M": -1868.2034902553532,
+          "G": 10.504151688431707,
+          "turnover": 561024.305172,
+          "legs": 285,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 217,
+              "turnover": 487303.5460010003,
+              "E": 2513.786704772469,
+              "M": -1878.122119402519,
+              "finalContribution": 635.6645853699483,
+              "quotedEdgeBpsSum": 18248.495322625957,
+              "quotedEdgeSamples": 217
+            },
+            "bundle": {
+              "legs": 68,
+              "turnover": 73720.75917100001,
+              "E": 265.24409234539945,
+              "M": 9.918629147166763,
+              "finalContribution": 275.16272149256616,
+              "quotedEdgeBpsSum": 2662.1609062757097,
+              "quotedEdgeSamples": 68
+            }
+          },
+          "X": -2.966502830048512e-7,
+          "execEdgeBps": 49.53494476974343,
+          "averageLegUsd": 1968.5063339368419,
+          "bundleCount": 34,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 163.38105581258424,
+          "excess": 251.6960358353681,
+          "included": 38,
+          "reverts": 0,
+          "submitted": 38,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 14,
+            "balancerSwap": 10,
+            "swap": 14
+          },
+          "nonSpot": 0,
+          "E": 257.0957915683223,
+          "M": -4.104636749230361,
+          "G": 1.2951189848511924,
+          "turnover": 69554.94090399999,
+          "legs": 38,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 38,
+              "turnover": 69554.94090399999,
+              "E": 257.0957915683223,
+              "M": -4.104636749230361,
+              "finalContribution": 252.99115481909203,
+              "quotedEdgeBpsSum": 1859.3940864625656,
+              "quotedEdgeSamples": 38
+            }
+          },
+          "X": 1.1273624256347148e-9,
+          "execEdgeBps": 36.962980375925696,
+          "averageLegUsd": 1830.3931816842103,
+          "bundleCount": 19,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 176,
+        "inventoryBlocked": 164,
+        "entry45OtherGatesPass": 3
+      },
+      "T": {
+        "noop": 32.0261547186643,
+        "multi-arb": 63.93562701283722,
+        "clean-arb": 40.946826855698475,
+        "cand": 45.1175461314643
+      }
+    },
+    {
+      "regime": "vuln",
+      "seed": "36001",
+      "run": "runs/2026-10-04T12-06-31-994Z",
+      "elapsedMs": 721962,
+      "attempts": 59,
+      "loggedNoops": 303,
+      "frames": 361,
+      "agreement": 324,
+      "factors": {},
+      "sha256": {
+        "summary.json": "a4f95c90008796d6448dde57336955ecfee37d2b653751af674c8d03cf3a2303",
+        "market.json": "b01ec5d7fcb8be67616d3cf784da4a049408fdc4cae791c2569151a885b5d775",
+        "blocks.csv": "a281a993eb1d14bff92ec755d2b0fd7556d5881d394c16c0d0c56a4319ecb2a5",
+        "agents/cand.jsonl": "d5afd1c21b550f3364577d57890bbf99838c5d9b4e2f469af81cf364b84e7883",
+        "agents/multi-arb.jsonl": "f0fd1900e115355d4b09e66ae406d4f144c590aa8e00f036cbfff08306d9c341",
+        "agents/clean-arb.jsonl": "06b58508b6d0c993cb9d21dc8a6537924497057b88d097fdd4246bc536ff9d82"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 361.6559731019661,
+          "excess": 380.4351067469688,
+          "included": 63,
+          "reverts": 0,
+          "submitted": 63,
+          "failed": 0,
+          "actions": {
+            "swap": 27,
+            "curveSwap": 23,
+            "balancerSwap": 13
+          },
+          "nonSpot": 0,
+          "E": 979.9681896083098,
+          "M": -593.2530880817947,
+          "G": 6.279994858684525,
+          "turnover": 138706.24484200001,
+          "legs": 63,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 55,
+              "turnover": 128892.20928500003,
+              "E": 912.7782909747418,
+              "M": -591.4906368520873,
+              "finalContribution": 321.2876541226542,
+              "quotedEdgeBpsSum": 4006.4859810728376,
+              "quotedEdgeSamples": 55
+            },
+            "bundle": {
+              "legs": 8,
+              "turnover": 9814.035557,
+              "E": 67.1898986335681,
+              "M": -1.7624512297074055,
+              "finalContribution": 65.4274474038607,
+              "quotedEdgeBpsSum": 397.99657037276506,
+              "quotedEdgeSamples": 8
+            }
+          },
+          "X": 7.913821065130833e-8,
+          "execEdgeBps": 70.65061783804971,
+          "averageLegUsd": 2201.6864260634925,
+          "bundleCount": 4,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -199.2667856135813,
+          "excess": -180.48765196857858,
+          "included": 287,
+          "reverts": 0,
+          "submitted": 288,
+          "failed": 0,
+          "actions": {
+            "swap": 55,
+            "curveSwap": 144,
+            "balancerSwap": 89
+          },
+          "nonSpot": 0,
+          "E": 2147.500735428806,
+          "M": -2317.838531301039,
+          "G": 10.14985592358059,
+          "turnover": 359214.0126400001,
+          "legs": 287,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 179,
+              "turnover": 317653.213733,
+              "E": 2026.7758195285192,
+              "M": -2320.4862934987063,
+              "finalContribution": -293.71047397018884,
+              "quotedEdgeBpsSum": 18691.446196429333,
+              "quotedEdgeSamples": 179
+            },
+            "bundle": {
+              "legs": 108,
+              "turnover": 41560.798907,
+              "E": 120.72491590028775,
+              "M": 2.6477621976689347,
+              "finalContribution": 123.37267809795667,
+              "quotedEdgeBpsSum": 3906.697222491079,
+              "quotedEdgeSamples": 108
+            }
+          },
+          "X": -1.7276491171003272e-7,
+          "execEdgeBps": 59.783323029243995,
+          "averageLegUsd": 1251.6167687804882,
+          "bundleCount": 54,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 368.1701661207626,
+          "excess": 386.9492997657653,
+          "included": 58,
+          "reverts": 0,
+          "submitted": 58,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 18,
+            "swap": 21,
+            "curveSwap": 19
+          },
+          "nonSpot": 0,
+          "E": 392.20488938769466,
+          "M": -3.2827002760148236,
+          "G": 1.9728893519288793,
+          "turnover": 83862.82916900002,
+          "legs": 58,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 58,
+              "turnover": 83862.82916900002,
+              "E": 392.20488938769466,
+              "M": -3.2827002760148236,
+              "finalContribution": 388.92218911167976,
+              "quotedEdgeBpsSum": 2495.903445622318,
+              "quotedEdgeSamples": 58
+            }
+          },
+          "X": 6.014357012418259e-9,
+          "execEdgeBps": 46.76742882085757,
+          "averageLegUsd": 1445.9108477413797,
+          "bundleCount": 29,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 174,
+        "inventoryBlocked": 154,
+        "entry45OtherGatesPass": 1
+      },
+      "T": {
+        "noop": 42.644580885185235,
+        "multi-arb": 35.858571344330784,
+        "clean-arb": 57.19317527043753,
+        "cand": 56.94825338523169
+      }
+    },
+    {
+      "regime": "vuln",
+      "seed": "36002",
+      "run": "runs/2026-10-04T12-18-56-633Z",
+      "elapsedMs": 721984,
+      "attempts": 65,
+      "loggedNoops": 297,
+      "frames": 361,
+      "agreement": 339,
+      "factors": {},
+      "sha256": {
+        "summary.json": "04abf3d0c492903655707fc5c2ff00b289cac85e13068dca05848f833fadc19a",
+        "market.json": "435f3320956ee02ca3ac0214348c6ce134e50de99d5aaa187b75860d9e8a38cf",
+        "blocks.csv": "7bbc3f3038b2e9e081faf145d621aec5288cb82edf6979fb7e19f196c74f9c86",
+        "agents/cand.jsonl": "23132c1b9558e41d2cead30f1eb96b9e9048f65e142b4ace4330d674a77203f4",
+        "agents/multi-arb.jsonl": "6986e4c67d68a097786e332e2c833bffefb5e0a6965a03afa7d016af88f7e3b3",
+        "agents/clean-arb.jsonl": "2e961783167d8f01e7c5c59c9e923631a8534d0bca3ea9d4bfc5787c67add39a"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -110.98263895539276,
+          "excess": 311.6827454209997,
+          "included": 66,
+          "reverts": 0,
+          "submitted": 66,
+          "failed": 1,
+          "actions": {
+            "swap": 26,
+            "curveSwap": 25,
+            "balancerSwap": 15
+          },
+          "nonSpot": 0,
+          "E": 793.8055060202361,
+          "M": -475.6043596917827,
+          "G": 6.518400856716238,
+          "turnover": 140855.33363700006,
+          "legs": 66,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 62,
+              "turnover": 135919.66934500006,
+              "E": 771.2156747414376,
+              "M": -475.5561805073192,
+              "finalContribution": 295.6594942341184,
+              "quotedEdgeBpsSum": 4163.067750132544,
+              "quotedEdgeSamples": 62
+            },
+            "bundle": {
+              "legs": 4,
+              "turnover": 4935.664292,
+              "E": 22.58983127879837,
+              "M": -0.04817918446355307,
+              "finalContribution": 22.54165209433482,
+              "quotedEdgeBpsSum": 181.1360438700427,
+              "quotedEdgeSamples": 4
+            }
+          },
+          "X": -5.0737429369007714e-8,
+          "execEdgeBps": 56.35608432591992,
+          "averageLegUsd": 2134.1717217727282,
+          "bundleCount": 2,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 10.341187300306046,
+          "excess": 433.0065716766985,
+          "included": 247,
+          "reverts": 0,
+          "submitted": 247,
+          "failed": 0,
+          "actions": {
+            "swap": 66,
+            "curveSwap": 131,
+            "balancerSwap": 50
+          },
+          "nonSpot": 0,
+          "E": 2377.483337008677,
+          "M": -1935.6727364911173,
+          "G": 8.804028516718894,
+          "turnover": 439658.3737899999,
+          "legs": 247,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 209,
+              "turnover": 386505.7233429999,
+              "E": 2277.146476091342,
+              "M": -1938.1454482810711,
+              "finalContribution": 339.0010278102705,
+              "quotedEdgeBpsSum": 17623.442057796583,
+              "quotedEdgeSamples": 209
+            },
+            "bundle": {
+              "legs": 38,
+              "turnover": 53152.650447000015,
+              "E": 100.33686091733519,
+              "M": 2.4727117899535003,
+              "finalContribution": 102.8095727072887,
+              "quotedEdgeBpsSum": 1477.992785862864,
+              "quotedEdgeSamples": 38
+            }
+          },
+          "X": -3.2414239825584445e-7,
+          "execEdgeBps": 54.07569783134092,
+          "averageLegUsd": 1779.9934161538458,
+          "bundleCount": 19,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -280.1020009989006,
+          "excess": 142.56338337749185,
+          "included": 30,
+          "reverts": 0,
+          "submitted": 30,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 6,
+            "swap": 14,
+            "balancerSwap": 10
+          },
+          "nonSpot": 0,
+          "E": 144.42695577048167,
+          "M": -0.890981661250013,
+          "G": 0.9725907263740692,
+          "turnover": 40334.93730799999,
+          "legs": 30,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 30,
+              "turnover": 40334.93730799999,
+              "E": 144.42695577048167,
+              "M": -0.890981661250013,
+              "finalContribution": 143.53597410923166,
+              "quotedEdgeBpsSum": 1259.8543981150688,
+              "quotedEdgeSamples": 30
+            }
+          },
+          "X": -5.36574118470412e-9,
+          "execEdgeBps": 35.806912173342134,
+          "averageLegUsd": 1344.4979102666664,
+          "bundleCount": 15,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 164,
+        "inventoryBlocked": 163,
+        "entry45OtherGatesPass": 5
+      },
+      "T": {
+        "noop": 25.16928835005989,
+        "multi-arb": 61.523738389179975,
+        "clean-arb": 37.138652644777025,
+        "cand": 51.337608966043
+      }
+    },
+    {
+      "regime": "spike",
+      "seed": "36001",
+      "run": "runs/2026-10-04T12-18-59-414Z",
+      "elapsedMs": 722062,
+      "attempts": 59,
+      "loggedNoops": 303,
+      "frames": 361,
+      "agreement": 334,
+      "factors": {},
+      "sha256": {
+        "summary.json": "8312b15d655c9eb5e046e35a062c0b1bf0e55c7080d8d9872827db4987997e78",
+        "market.json": "828bd30f2d06ae2287615ec07e5372ff2a6e29b1ff6a7d194667bd0a5dabba1c",
+        "blocks.csv": "6ec0d6310469226416a965e98ba7618bd7daebfdcf903b696a19cbf898b3e703",
+        "agents/cand.jsonl": "005ebd34eb41b31935a7b7c174dc7910a4f0c566b8e967dc2cf43fd2b5e5bc8c",
+        "agents/multi-arb.jsonl": "8c1329fed22ced509cadb51f78c2ea6ef2e311be24348ef49a1a8fdaa0308235",
+        "agents/clean-arb.jsonl": "0bee7f24a9fa753dfc04fc0d12350037276be3eba69fbe1cfc889f5644c2868d"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 2197.0726039705332,
+          "excess": 714.4488246115216,
+          "included": 61,
+          "reverts": 0,
+          "submitted": 61,
+          "failed": 1,
+          "actions": {
+            "balancerSwap": 16,
+            "swap": 29,
+            "curveSwap": 16
+          },
+          "nonSpot": 0,
+          "E": 1648.9199548607808,
+          "M": -928.3471529943037,
+          "G": 6.12397717114676,
+          "turnover": 138989.34332499997,
+          "legs": 61,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 55,
+              "turnover": 130795.40028799998,
+              "E": 1599.6707314764922,
+              "M": -931.0427008467377,
+              "finalContribution": 668.6280306297538,
+              "quotedEdgeBpsSum": 4713.780848047992,
+              "quotedEdgeSamples": 55
+            },
+            "bundle": {
+              "legs": 6,
+              "turnover": 8193.943037000001,
+              "E": 49.249223384288726,
+              "M": 2.69554785243413,
+              "finalContribution": 51.94477123672286,
+              "quotedEdgeBpsSum": 300.1290432994908,
+              "quotedEdgeSamples": 6
+            }
+          },
+          "X": -8.380878835367866e-8,
+          "execEdgeBps": 118.63643034884316,
+          "averageLegUsd": 2278.5138249999995,
+          "bundleCount": 3,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 1415.6742545743036,
+          "excess": -66.94952478470805,
+          "included": 258,
+          "reverts": 0,
+          "submitted": 259,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 77,
+            "swap": 60,
+            "curveSwap": 122
+          },
+          "nonSpot": 0,
+          "E": 3101.924067188984,
+          "M": -3159.3756977062335,
+          "G": 9.497893889023326,
+          "turnover": 391695.46381400013,
+          "legs": 258,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 170,
+              "turnover": 286486.93710199994,
+              "E": 2752.7659511668335,
+              "M": -3159.9992822053864,
+              "finalContribution": -407.2333310385537,
+              "quotedEdgeBpsSum": 21290.287339054834,
+              "quotedEdgeSamples": 170
+            },
+            "bundle": {
+              "legs": 88,
+              "turnover": 105208.52671199998,
+              "E": 349.15811602214893,
+              "M": 0.6235844991516606,
+              "finalContribution": 349.7817005213006,
+              "quotedEdgeBpsSum": 5976.723745961144,
+              "quotedEdgeSamples": 88
+            }
+          },
+          "X": -3.7843505218404516e-7,
+          "execEdgeBps": 79.19223870976352,
+          "averageLegUsd": 1518.1994721472875,
+          "bundleCount": 44,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 2211.680840554094,
+          "excess": 729.0570611950825,
+          "included": 64,
+          "reverts": 0,
+          "submitted": 64,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 21,
+            "swap": 23,
+            "curveSwap": 20
+          },
+          "nonSpot": 0,
+          "E": 759.192936289309,
+          "M": -27.874398080645037,
+          "G": 2.261476997144721,
+          "turnover": 137928.122762,
+          "legs": 64,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 64,
+              "turnover": 137928.122762,
+              "E": 759.192936289309,
+              "M": -27.874398080645037,
+              "finalContribution": 731.3185382086637,
+              "quotedEdgeBpsSum": 5327.048735596789,
+              "quotedEdgeSamples": 64
+            }
+          },
+          "X": -1.6436791039353693e-8,
+          "execEdgeBps": 55.04264982996426,
+          "averageLegUsd": 2155.12691815625,
+          "bundleCount": 32,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 155,
+        "inventoryBlocked": 148,
+        "entry45OtherGatesPass": 5
+      },
+      "T": {
+        "noop": 37.660148409117326,
+        "multi-arb": 35.85968337190637,
+        "clean-arb": 57.26658703634609,
+        "cand": 56.87372959174755
+      }
+    },
+    {
+      "regime": "spike",
+      "seed": "36002",
+      "run": "runs/2026-10-04T12-19-02-489Z",
+      "elapsedMs": 722059,
+      "attempts": 58,
+      "loggedNoops": 304,
+      "frames": 361,
+      "agreement": 332,
+      "factors": {},
+      "sha256": {
+        "summary.json": "a2077c0c8ffbea725f63e8366fece21ad975876e9934d87a33941210ace9698d",
+        "market.json": "50a3d6c41fca465ffd8369708581c2b41d4a95476f8d4ef2a884a41722d291b9",
+        "blocks.csv": "4fa277e75b3ccb46cb82eb19a5b1fb33a2368109e0735312c8279935d67a9e1b",
+        "agents/cand.jsonl": "f22a7f1b7404d205285954a4b7e715cb0fa7c4d0cde4d3b345680545c083c3ce",
+        "agents/multi-arb.jsonl": "7d4df536e1277ef2c75314d9916aeb7093d74d901e09461e0f30283cd89f928f",
+        "agents/clean-arb.jsonl": "2fc2b0808b1e6c8bfd2aefe8cfc14632984217a09de60287886839d2ae0a9de4"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 7465.776727819306,
+          "excess": 1531.6599680565414,
+          "included": 65,
+          "reverts": 0,
+          "submitted": 65,
+          "failed": 1,
+          "actions": {
+            "curveSwap": 22,
+            "swap": 31,
+            "balancerSwap": 12
+          },
+          "nonSpot": 0,
+          "E": 2039.8513412585303,
+          "M": -500.21386185746667,
+          "G": 7.9775109094802215,
+          "turnover": 140682.711401,
+          "legs": 65,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 50,
+              "turnover": 122847.0375,
+              "E": 1922.075850998421,
+              "M": -30.924917691314675,
+              "finalContribution": 1891.150933307106,
+              "quotedEdgeBpsSum": 7691.987866467599,
+              "quotedEdgeSamples": 50
+            },
+            "bundle": {
+              "legs": 15,
+              "turnover": 17835.673901000002,
+              "E": 117.77549026010891,
+              "M": -469.28894416615213,
+              "finalContribution": -351.5134539060432,
+              "quotedEdgeBpsSum": 847.5641711019022,
+              "quotedEdgeSamples": 15
+            }
+          },
+          "X": -4.350419917642512e-7,
+          "execEdgeBps": 144.99658991104934,
+          "averageLegUsd": 2164.349406169231,
+          "bundleCount": 8,
+          "partialBundles": 1
+        },
+        "multi-arb": {
+          "P": 13905.801522504262,
+          "excess": 7971.684762741497,
+          "included": 304,
+          "reverts": 0,
+          "submitted": 304,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 157,
+            "balancerSwap": 90,
+            "swap": 57
+          },
+          "nonSpot": 0,
+          "E": 8967.966081983559,
+          "M": -982.9048321658311,
+          "G": 13.376484152976372,
+          "turnover": 524867.8042970002,
+          "legs": 304,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 196,
+              "turnover": 348890.96329900017,
+              "E": 8463.564711920253,
+              "M": -1036.935878597333,
+              "finalContribution": 7426.628833322915,
+              "quotedEdgeBpsSum": 31198.165223801945,
+              "quotedEdgeSamples": 196
+            },
+            "bundle": {
+              "legs": 108,
+              "turnover": 175976.84099800012,
+              "E": 504.40137006330707,
+              "M": 54.031046431501814,
+              "finalContribution": 558.432416494809,
+              "quotedEdgeBpsSum": 7256.734104277249,
+              "quotedEdgeSamples": 108
+            }
+          },
+          "X": -0.0000029232542875234913,
+          "execEdgeBps": 170.8614246971219,
+          "averageLegUsd": 1726.5388299243427,
+          "bundleCount": 54,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 7093.273892056066,
+          "excess": 1159.1571322933014,
+          "included": 80,
+          "reverts": 0,
+          "submitted": 80,
+          "failed": 0,
+          "actions": {
+            "swap": 30,
+            "curveSwap": 27,
+            "balancerSwap": 23
+          },
+          "nonSpot": 0,
+          "E": 1114.2159596866666,
+          "M": 48.3273699979634,
+          "G": 3.3861973195052073,
+          "turnover": 182143.07980599997,
+          "legs": 80,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 80,
+              "turnover": 182143.07980599997,
+              "E": 1114.2159596866666,
+              "M": 48.3273699979634,
+              "finalContribution": 1162.54332968463,
+              "quotedEdgeBpsSum": 6229.568229274109,
+              "quotedEdgeSamples": 80
+            }
+          },
+          "X": -7.18233579277694e-8,
+          "execEdgeBps": 61.17256614269477,
+          "averageLegUsd": 2276.7884975749994,
+          "bundleCount": 40,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 192,
+        "inventoryBlocked": 180,
+        "entry45OtherGatesPass": 1
+      },
+      "T": {
+        "noop": 38.63523348105325,
+        "multi-arb": 64.12540565297246,
+        "clean-arb": 42.341741672968126,
+        "cand": 43.532852674059406
+      }
+    },
+    {
+      "regime": "depeg-persist",
+      "seed": "36001",
+      "run": "runs/2026-10-04T12-31-28-760Z",
+      "elapsedMs": 721838,
+      "attempts": 59,
+      "loggedNoops": 303,
+      "frames": 361,
+      "agreement": 337,
+      "factors": {},
+      "sha256": {
+        "summary.json": "1555b37d0c0c76b2c6f43c14c0b3d30ab49e5f69e50f3469cacf43976a7f756c",
+        "market.json": "e4ccdc0babaa45dd544487bb18a8c38a6a246587d70e03cb7d3229f9aae1e239",
+        "blocks.csv": "a694e86e48841fa2f44aaf9cfbe078e50aab4892ef2887dbceb269cfd936c4ac",
+        "agents/cand.jsonl": "514f993623aa6dc87c40e7c7b77b20a79625698a046be8342c47613220505964",
+        "agents/multi-arb.jsonl": "b818a317392c35c601180e3746eea7c539970b43ed9f93831b74622e19328cf2",
+        "agents/clean-arb.jsonl": "78eb31abff7b3bea9779b726c2f3dcb40b72cde883be08f3ecc408a96cf50b0c"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -221.4874767086876,
+          "excess": 345.68522243667394,
+          "included": 63,
+          "reverts": 0,
+          "submitted": 63,
+          "failed": 0,
+          "actions": {
+            "swap": 27,
+            "curveSwap": 15,
+            "balancerSwap": 21
+          },
+          "nonSpot": 0,
+          "E": 721.7114740104381,
+          "M": -370.1004972195163,
+          "G": 5.925754167844826,
+          "turnover": 140053.07251699996,
+          "legs": 63,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 55,
+              "turnover": 131355.561424,
+              "E": 666.8210909447366,
+              "M": -370.3816910380796,
+              "finalContribution": 296.4393999066572,
+              "quotedEdgeBpsSum": 3776.794545022181,
+              "quotedEdgeSamples": 55
+            },
+            "bundle": {
+              "legs": 8,
+              "turnover": 8697.511093,
+              "E": 54.89038306570155,
+              "M": 0.28119381856327796,
+              "finalContribution": 55.17157688426483,
+              "quotedEdgeBpsSum": 487.5639022971334,
+              "quotedEdgeSamples": 8
+            }
+          },
+          "X": -1.8640306009842789e-7,
+          "execEdgeBps": 51.53128460804279,
+          "averageLegUsd": 2223.0646431269834,
+          "bundleCount": 4,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -36.42300503066508,
+          "excess": 530.7496941146965,
+          "included": 224,
+          "reverts": 1,
+          "submitted": 225,
+          "failed": 0,
+          "actions": {
+            "swap": 40,
+            "curveSwap": 139,
+            "balancerSwap": 46
+          },
+          "nonSpot": 0,
+          "E": 2324.3275341827148,
+          "M": -1785.4176239216822,
+          "G": 8.160214903876476,
+          "turnover": 431642.682263,
+          "legs": 223,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 175,
+              "turnover": 345443.7823080001,
+              "E": 1955.876327481915,
+              "M": -1783.8587356494668,
+              "finalContribution": 172.0175918324475,
+              "quotedEdgeBpsSum": 16314.04839336295,
+              "quotedEdgeSamples": 175
+            },
+            "bundle": {
+              "legs": 48,
+              "turnover": 86198.89995500002,
+              "E": 368.45120670079893,
+              "M": -1.5588882722152309,
+              "finalContribution": 366.89231842858374,
+              "quotedEdgeBpsSum": 1834.0708058890425,
+              "quotedEdgeSamples": 48
+            }
+          },
+          "X": -0.0000012424596214088979,
+          "execEdgeBps": 53.84841744557831,
+          "averageLegUsd": 1935.617409251121,
+          "bundleCount": 24,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -442.67740077039343,
+          "excess": 124.49529837496812,
+          "included": 32,
+          "reverts": 0,
+          "submitted": 32,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 5,
+            "swap": 12,
+            "curveSwap": 15
+          },
+          "nonSpot": 0,
+          "E": 125.17630598164243,
+          "M": 0.4464513912892043,
+          "G": 1.127459022606113,
+          "turnover": 48028.475347999985,
+          "legs": 32,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 32,
+              "turnover": 48028.475347999985,
+              "E": 125.17630598164243,
+              "M": 0.4464513912892043,
+              "finalContribution": 125.62275737293164,
+              "quotedEdgeBpsSum": 1403.9882750078145,
+              "quotedEdgeSamples": 32
+            }
+          },
+          "X": 2.4642595075619056e-8,
+          "execEdgeBps": 26.06293559698748,
+          "averageLegUsd": 1500.8898546249995,
+          "bundleCount": 16,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 142,
+        "inventoryBlocked": 131
+      },
+      "T": {
+        "noop": 29.909603992633485,
+        "multi-arb": 61.86878968772498,
+        "clean-arb": 37.40611016691986,
+        "cand": 50.725100145355164
+      }
+    },
+    {
+      "regime": "depeg-persist",
+      "seed": "36002",
+      "run": "runs/2026-10-04T12-31-31-550Z",
+      "elapsedMs": 721929,
+      "attempts": 62,
+      "loggedNoops": 300,
+      "frames": 361,
+      "agreement": 340,
+      "factors": {},
+      "sha256": {
+        "summary.json": "763c8b190eda95690219d351a1ddd4c88d0a7f0dbba7c506f9041b628bd65cf5",
+        "market.json": "573fb5d229e8072683031d70e283ea59ef924985cc9af94c6be4aa889c34bce8",
+        "blocks.csv": "9084f2620e4373e075e1a0b6988ce9933c1c80b46218de64a086602c69e4c8fe",
+        "agents/cand.jsonl": "e7245a051132ecca82a096adf31da12c8eb29c08092a9290586fc33a6f7244d8",
+        "agents/multi-arb.jsonl": "6bd39c5c660940bf643f0aa3f75b94e9e722640e05f3b84f6399394d6f07f047",
+        "agents/clean-arb.jsonl": "633aa457e5b4efa1ff3d7c5fd78cd096e292b0546abaaa3adcce7a7867d6c20a"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -23.273612214790774,
+          "excess": 431.98552641984134,
+          "included": 63,
+          "reverts": 0,
+          "submitted": 63,
+          "failed": 2,
+          "actions": {
+            "swap": 32,
+            "balancerSwap": 16,
+            "curveSwap": 15
+          },
+          "nonSpot": 0,
+          "E": 804.6285125089004,
+          "M": -366.7827599862891,
+          "G": 5.860226086031296,
+          "turnover": 151114.98286499997,
+          "legs": 63,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 57,
+              "turnover": 143276.24394,
+              "E": 759.3730387856468,
+              "M": -366.4066484444188,
+              "finalContribution": 392.9663903412283,
+              "quotedEdgeBpsSum": 3717.140500623656,
+              "quotedEdgeSamples": 57
+            },
+            "bundle": {
+              "legs": 6,
+              "turnover": 7838.738925,
+              "E": 45.25547372325355,
+              "M": -0.3761115418702916,
+              "finalContribution": 44.87936218138326,
+              "quotedEdgeBpsSum": 338.0210243561654,
+              "quotedEdgeSamples": 6
+            }
+          },
+          "X": -1.6738661123838483e-8,
+          "execEdgeBps": 53.24611082593465,
+          "averageLegUsd": 2398.650521666666,
+          "bundleCount": 3,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -525.5948724215268,
+          "excess": -70.3357337868947,
+          "included": 229,
+          "reverts": 1,
+          "submitted": 230,
+          "failed": 0,
+          "actions": {
+            "swap": 43,
+            "balancerSwap": 70,
+            "curveSwap": 117
+          },
+          "nonSpot": 0,
+          "E": 2317.9653431115294,
+          "M": -2380.397778616975,
+          "G": 7.903298272485338,
+          "turnover": 466646.9195620001,
+          "legs": 228,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 182,
+              "turnover": 422901.66277800006,
+              "E": 2198.4919819682686,
+              "M": -2380.692860134052,
+              "finalContribution": -182.20087816578425,
+              "quotedEdgeBpsSum": 16040.063332385032,
+              "quotedEdgeSamples": 182
+            },
+            "bundle": {
+              "legs": 46,
+              "turnover": 43745.25678399999,
+              "E": 119.47336114326107,
+              "M": 0.29508151707663033,
+              "finalContribution": 119.76844266033768,
+              "quotedEdgeBpsSum": 1555.0155921097855,
+              "quotedEdgeSamples": 46
+            }
+          },
+          "X": -8.963886521939912e-9,
+          "execEdgeBps": 49.67278783897678,
+          "averageLegUsd": 2046.6970156228074,
+          "bundleCount": 23,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -353.66142025525915,
+          "excess": 101.59771837937296,
+          "included": 18,
+          "reverts": 0,
+          "submitted": 18,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 6,
+            "curveSwap": 7,
+            "swap": 5
+          },
+          "nonSpot": 0,
+          "E": 103.71075590260358,
+          "M": -1.508447640145981,
+          "G": 0.6045898827185868,
+          "turnover": 27358.881997000004,
+          "legs": 18,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 18,
+              "turnover": 27358.881997000004,
+              "E": 103.71075590260358,
+              "M": -1.508447640145981,
+              "finalContribution": 102.20230826245759,
+              "quotedEdgeBpsSum": 793.75731949941,
+              "quotedEdgeSamples": 18
+            }
+          },
+          "X": -3.660486358469939e-10,
+          "execEdgeBps": 37.90752703782845,
+          "averageLegUsd": 1519.9378887222224,
+          "bundleCount": 9,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 143,
+        "inventoryBlocked": 137,
+        "entry45OtherGatesPass": 5
+      },
+      "T": {
+        "noop": 42.59201052422799,
+        "multi-arb": 39.217703939015735,
+        "clean-arb": 47.46608848876234,
+        "cand": 63.31620757222193
+      }
+    },
+    {
+      "regime": "cdp-incident",
+      "seed": "36001",
+      "run": "runs/2026-10-04T12-31-34-645Z",
+      "elapsedMs": 721669,
+      "attempts": 52,
+      "loggedNoops": 310,
+      "frames": 361,
+      "agreement": 333,
+      "factors": {},
+      "sha256": {
+        "summary.json": "7d43e66ec466a9afdc5c3256cb3ab52b697cdc1cf3ec7f14f6ba8700961790cb",
+        "market.json": "460d1721c089e9bf145bfe63c9a9b3f81499a804769d780bce56078eca47d62f",
+        "blocks.csv": "716a34b922e499ec62db474db40d575f6cb281cf598a522ce495ba51ffc7b745",
+        "agents/cand.jsonl": "dc205776dead6a5f7ff0b3ba19897ed268640427e90052cb5ee0253d9d67c114",
+        "agents/multi-arb.jsonl": "d3f8f64e88dc50950f8ec928e405134a7478f9a23c69d99a195eb2a5b6eccc2d",
+        "agents/clean-arb.jsonl": "edb3037e4ac779a5784e125d411c65977909e8a205f89cf434b12e924aabd7e5"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -1477.5073287933046,
+          "excess": 441.7745658921194,
+          "included": 55,
+          "reverts": 0,
+          "submitted": 55,
+          "failed": 3,
+          "actions": {
+            "swap": 27,
+            "curveSwap": 18,
+            "balancerSwap": 10
+          },
+          "nonSpot": 0,
+          "E": 981.9262811859605,
+          "M": -535.0692045432047,
+          "G": 5.082511185004284,
+          "turnover": 105924.23843900004,
+          "legs": 55,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 43,
+              "turnover": 95697.33159800002,
+              "E": 931.5523656012793,
+              "M": -534.3078498104451,
+              "finalContribution": 397.24451579083444,
+              "quotedEdgeBpsSum": 3110.276457678291,
+              "quotedEdgeSamples": 43
+            },
+            "bundle": {
+              "legs": 12,
+              "turnover": 10226.906841000002,
+              "E": 50.373915584681114,
+              "M": -0.7613547327597541,
+              "finalContribution": 49.612560851921366,
+              "quotedEdgeBpsSum": 569.4178490093304,
+              "quotedEdgeSamples": 12
+            }
+          },
+          "X": 4.343678821072672e-7,
+          "execEdgeBps": 92.70081103782823,
+          "averageLegUsd": 1925.8952443454552,
+          "bundleCount": 6,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -229.3735620080115,
+          "excess": 1689.9083326774125,
+          "included": 271,
+          "reverts": 0,
+          "submitted": 272,
+          "failed": 0,
+          "actions": {
+            "swap": 50,
+            "curveSwap": 151,
+            "balancerSwap": 71
+          },
+          "nonSpot": 0,
+          "E": 4364.618165617473,
+          "M": -2665.6588612929595,
+          "G": 9.050973394037566,
+          "turnover": 570911.794776,
+          "legs": 271,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 207,
+              "turnover": 350980.75956500013,
+              "E": 3763.5451115930664,
+              "M": -2674.31320711789,
+              "finalContribution": 1089.2319044751787,
+              "quotedEdgeBpsSum": 25431.667035654875,
+              "quotedEdgeSamples": 207
+            },
+            "bundle": {
+              "legs": 64,
+              "turnover": 219931.035211,
+              "E": 601.0730540244041,
+              "M": 8.654345824931411,
+              "finalContribution": 609.7273998493354,
+              "quotedEdgeBpsSum": 3481.0663632124974,
+              "quotedEdgeSamples": 64
+            }
+          },
+          "X": 0.0000017469365154454408,
+          "execEdgeBps": 76.44995611502391,
+          "averageLegUsd": 2106.6855895793356,
+          "bundleCount": 32,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -1570.9735462124809,
+          "excess": 348.3083484729432,
+          "included": 50,
+          "reverts": 0,
+          "submitted": 50,
+          "failed": 2,
+          "actions": {
+            "swap": 21,
+            "balancerSwap": 18,
+            "curveSwap": 11
+          },
+          "nonSpot": 0,
+          "E": 355.51256173219747,
+          "M": -5.690422525633949,
+          "G": 1.513790697450944,
+          "turnover": 85029.835844,
+          "legs": 50,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 50,
+              "turnover": 85029.835844,
+              "E": 355.51256173219747,
+              "M": -5.690422525633949,
+              "finalContribution": 349.82213920656324,
+              "quotedEdgeBpsSum": 2645.15299867782,
+              "quotedEdgeSamples": 50
+            }
+          },
+          "X": -3.616939570072475e-8,
+          "execEdgeBps": 41.81033142113065,
+          "averageLegUsd": 1700.59671688,
+          "bundleCount": 25,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 187,
+        "inventoryBlocked": 182,
+        "entry45OtherGatesPass": 2
+      },
+      "T": {
+        "noop": 36.483534567739284,
+        "multi-arb": 64.11458478563432,
+        "clean-arb": 42.17859227108817,
+        "cand": 43.7068229432775
+      }
+    },
+    {
+      "regime": "cdp-incident",
+      "seed": "36002",
+      "run": "runs/2026-10-04T12-43-59-475Z",
+      "elapsedMs": 721943,
+      "attempts": 75,
+      "loggedNoops": 287,
+      "frames": 361,
+      "agreement": 323,
+      "factors": {},
+      "sha256": {
+        "summary.json": "65963681ccb858caa980754d426602f5ea692631409e222a34cf3b0bda61b511",
+        "market.json": "b436fd591016ad06e4080d8fb1fe3400dae30607fb142c1670fd10d59b7013d6",
+        "blocks.csv": "df7cb0d49ab2a736b8680eefe7e1f4fa1187ae1c247cb5ac53fc30b04949c86f",
+        "agents/cand.jsonl": "1f222f8062a689cbf73410602cd892e0d4f0f566b58ad9198edb917a39257252",
+        "agents/multi-arb.jsonl": "59c443b973f351c3b3070805f89535c37bfb97e2111508b18fd3186fa60a40dd",
+        "agents/clean-arb.jsonl": "52b370a94f2a661587d77733e3968a2e047b00d5733e2b25a92491bca7152d54"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -1763.0637886118056,
+          "excess": 391.02424361799785,
+          "included": 80,
+          "reverts": 0,
+          "submitted": 80,
+          "failed": 0,
+          "actions": {
+            "curveSwap": 29,
+            "balancerSwap": 17,
+            "swap": 34
+          },
+          "nonSpot": 0,
+          "E": 1166.5938742467642,
+          "M": -768.1790941688855,
+          "G": 7.390535943618498,
+          "turnover": 163203.323512,
+          "legs": 80,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 70,
+              "turnover": 151699.597632,
+              "E": 1111.3063818244073,
+              "M": -763.7746825863987,
+              "finalContribution": 347.5316992380089,
+              "quotedEdgeBpsSum": 4719.404483630919,
+              "quotedEdgeSamples": 70
+            },
+            "bundle": {
+              "legs": 10,
+              "turnover": 11503.725879999998,
+              "E": 55.2874924223572,
+              "M": -4.404411582486993,
+              "finalContribution": 50.8830808398702,
+              "quotedEdgeBpsSum": 509.776145330464,
+              "quotedEdgeSamples": 10
+            }
+          },
+          "X": -5.162623795129662e-7,
+          "execEdgeBps": 71.48101209844462,
+          "averageLegUsd": 2040.0415439,
+          "bundleCount": 5,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -1583.8573678479006,
+          "excess": 570.2306643819029,
+          "included": 253,
+          "reverts": 3,
+          "submitted": 253,
+          "failed": 1,
+          "actions": {
+            "curveSwap": 156,
+            "balancerSwap": 53,
+            "swap": 44
+          },
+          "nonSpot": 0,
+          "E": 3461.49586003065,
+          "M": -2882.652116111703,
+          "G": 8.613080314951196,
+          "turnover": 433241.030558,
+          "legs": 250,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 197,
+              "turnover": 407158.51243700006,
+              "E": 3361.8715255686066,
+              "M": -2892.331054997597,
+              "finalContribution": 469.54047057101087,
+              "quotedEdgeBpsSum": 19406.38598719843,
+              "quotedEdgeSamples": 197
+            },
+            "bundle": {
+              "legs": 53,
+              "turnover": 26082.51812100001,
+              "E": 99.62433446204429,
+              "M": 9.678938885893718,
+              "finalContribution": 109.30327334793797,
+              "quotedEdgeBpsSum": 3059.320736237153,
+              "quotedEdgeSamples": 53
+            }
+          },
+          "X": 7.779071093949597e-7,
+          "execEdgeBps": 79.89769241321301,
+          "averageLegUsd": 1732.9641222320001,
+          "bundleCount": 27,
+          "partialBundles": 1
+        },
+        "clean-arb": {
+          "P": -1980.1294882780494,
+          "excess": 173.9585439517541,
+          "included": 32,
+          "reverts": 1,
+          "submitted": 32,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 6,
+            "swap": 15,
+            "curveSwap": 11
+          },
+          "nonSpot": 0,
+          "E": 175.48697210446556,
+          "M": -0.5177757898496385,
+          "G": 1.010652296713355,
+          "turnover": 47316.508827000005,
+          "legs": 31,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 31,
+              "turnover": 47316.508827000005,
+              "E": 175.48697210446556,
+              "M": -0.5177757898496385,
+              "finalContribution": 174.96919631461594,
+              "quotedEdgeBpsSum": 2333.6307351293085,
+              "quotedEdgeSamples": 31
+            }
+          },
+          "X": -6.614846226327131e-8,
+          "execEdgeBps": 37.08789520927804,
+          "averageLegUsd": 1526.338994419355,
+          "bundleCount": 16,
+          "partialBundles": 1
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 150,
+        "inventoryBlocked": 146,
+        "entry45OtherGatesPass": 3
+      },
+      "T": {
+        "noop": 26.645062782205795,
+        "multi-arb": 61.839416786920964,
+        "clean-arb": 37.38169790269536,
+        "cand": 50.778885310383664
+      }
+    },
+    {
+      "regime": "launch",
+      "seed": "36001",
+      "run": "runs/2026-10-04T12-44-02-267Z",
+      "elapsedMs": 721619,
+      "attempts": 72,
+      "loggedNoops": 290,
+      "frames": 361,
+      "agreement": 325,
+      "factors": {},
+      "sha256": {
+        "summary.json": "81dad52a81089a3c01710d37b836e7657be0a20a57eb3af244fdf72270f673a7",
+        "market.json": "c32abbd879a0bff74c0e57b61ca2093be7c50a4c8b0ce0fb55bde331066ad569",
+        "blocks.csv": "05ebaced6d5d5d604028ae91309c0fa69949a199afa4e0937acd16c0a417a944",
+        "agents/cand.jsonl": "229dc40a7203aa3069496f03a41244730b41debe1222181ebb625864185d3ca7",
+        "agents/multi-arb.jsonl": "8ec44323375157cf753642cb3869a20e4b0723eb65b8c55f32cf92fb06cfb1f2",
+        "agents/clean-arb.jsonl": "1979b98b129876eefb67c0b25fb11cd1a4104104af362f1ec9756eab881802ac"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 152.0558951125713,
+          "excess": 151.74428356693534,
+          "included": 73,
+          "reverts": 0,
+          "submitted": 73,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 24,
+            "swap": 25,
+            "curveSwap": 24
+          },
+          "nonSpot": 0,
+          "E": 766.4537853922711,
+          "M": -607.6992513426916,
+          "G": 7.010250731902687,
+          "turnover": 142850.454382,
+          "legs": 73,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 71,
+              "turnover": 141601.199408,
+              "E": 761.3794228643702,
+              "M": -607.713661214203,
+              "finalContribution": 153.665761650167,
+              "quotedEdgeBpsSum": 4443.496616410947,
+              "quotedEdgeSamples": 71
+            },
+            "bundle": {
+              "legs": 2,
+              "turnover": 1249.254974,
+              "E": 5.074362527900926,
+              "M": 0.014409871511431138,
+              "finalContribution": 5.088772399412358,
+              "quotedEdgeBpsSum": 82.88581558663299,
+              "quotedEdgeSamples": 2
+            }
+          },
+          "X": 2.4925847696977144e-7,
+          "execEdgeBps": 53.65427703454675,
+          "averageLegUsd": 1956.855539479452,
+          "bundleCount": 1,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -293.77527844496944,
+          "excess": -294.0868899906054,
+          "included": 207,
+          "reverts": 0,
+          "submitted": 208,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 48,
+            "curveSwap": 124,
+            "swap": 36
+          },
+          "nonSpot": 0,
+          "E": 2725.772026596925,
+          "M": -3012.3354283917724,
+          "G": 7.523487230248654,
+          "turnover": 529730.239225,
+          "legs": 207,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 181,
+              "turnover": 502080.88051000016,
+              "E": 2653.4304220714075,
+              "M": -3013.4276967564774,
+              "finalContribution": -359.997274685071,
+              "quotedEdgeBpsSum": 14210.381961845804,
+              "quotedEdgeSamples": 181
+            },
+            "bundle": {
+              "legs": 26,
+              "turnover": 27649.358715000002,
+              "E": 72.34160452551791,
+              "M": 1.092268364704628,
+              "finalContribution": 73.43387289022255,
+              "quotedEdgeBpsSum": 808.5021161887474,
+              "quotedEdgeSamples": 26
+            }
+          },
+          "X": -9.655094368454797e-7,
+          "execEdgeBps": 51.455851011729166,
+          "averageLegUsd": 2559.083281280193,
+          "bundleCount": 13,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 32.25589921823121,
+          "excess": 31.944287672595237,
+          "included": 8,
+          "reverts": 0,
+          "submitted": 8,
+          "failed": 0,
+          "actions": {
+            "swap": 2,
+            "balancerSwap": 4,
+            "curveSwap": 2
+          },
+          "nonSpot": 0,
+          "E": 32.242644957166796,
+          "M": -0.03893649874677685,
+          "G": 0.25942078858040923,
+          "turnover": 9899.9586,
+          "legs": 8,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 8,
+              "turnover": 9899.9586,
+              "E": 32.242644957166796,
+              "M": -0.03893649874677685,
+              "finalContribution": 32.203708458420024,
+              "quotedEdgeBpsSum": 330.1642159272655,
+              "quotedEdgeSamples": 8
+            }
+          },
+          "X": 2.7556275594697865e-9,
+          "execEdgeBps": 32.56846443495915,
+          "averageLegUsd": 1237.494825,
+          "bundleCount": 4,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 122,
+        "inventoryBlocked": 111,
+        "entry45OtherGatesPass": 3
+      },
+      "T": {
+        "noop": 51.953374975444724,
+        "multi-arb": 36.3427575852658,
+        "clean-arb": 53.64903047601676,
+        "cand": 60.00821193871744
+      }
+    },
+    {
+      "regime": "launch",
+      "seed": "36002",
+      "run": "runs/2026-10-04T12-44-05-321Z",
+      "elapsedMs": 721948,
+      "attempts": 81,
+      "loggedNoops": 281,
+      "frames": 361,
+      "agreement": 316,
+      "factors": {},
+      "sha256": {
+        "summary.json": "7fa47c636c766e16168aa5c7305b276d64bea27eb0b50d6aeeca28585b8d545f",
+        "market.json": "5b173dbe1174cd4a64dcb258a0b64537df060db3a65cdd10406a18fb1416796f",
+        "blocks.csv": "cb4cab57e2a8522e429e9d12624bb246dc9833970828ec1141e633f84f25bdb8",
+        "agents/cand.jsonl": "46206f27e93afad2bd98f9122194a19bcaa464f12c8f8426beb7ec0f1c9ef8fc",
+        "agents/multi-arb.jsonl": "142b17a8929f1220189860bb098d037c416bd1c2b40ee268ba8f273656bfb918",
+        "agents/clean-arb.jsonl": "e590a0212696210fb3b2f4b88981f484d4676c5730dddeab0e126747e7c08a52"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 67.2629319516418,
+          "excess": 432.0710884098662,
+          "included": 86,
+          "reverts": 0,
+          "submitted": 86,
+          "failed": 1,
+          "actions": {
+            "swap": 33,
+            "curveSwap": 31,
+            "balancerSwap": 22
+          },
+          "nonSpot": 0,
+          "E": 770.7438236998116,
+          "M": -330.1884782173937,
+          "G": 8.484257225488115,
+          "turnover": 164634.37507699995,
+          "legs": 86,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 74,
+              "turnover": 154174.24819,
+              "E": 733.8578392934114,
+              "M": -329.13061675009874,
+              "finalContribution": 404.7272225433127,
+              "quotedEdgeBpsSum": 4536.058273143416,
+              "quotedEdgeSamples": 74
+            },
+            "bundle": {
+              "legs": 12,
+              "turnover": 10460.126887,
+              "E": 36.885984406400055,
+              "M": -1.057861467295039,
+              "finalContribution": 35.828122939105015,
+              "quotedEdgeBpsSum": 415.7663758576046,
+              "quotedEdgeSamples": 12
+            }
+          },
+          "X": 1.5293640132085784e-7,
+          "execEdgeBps": 46.81548572947373,
+          "averageLegUsd": 1914.3531985697668,
+          "bundleCount": 6,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 541.1840281053301,
+          "excess": 905.9921845635545,
+          "included": 327,
+          "reverts": 1,
+          "submitted": 327,
+          "failed": 0,
+          "actions": {
+            "balancerSwap": 84,
+            "curveSwap": 174,
+            "swap": 69
+          },
+          "nonSpot": 0,
+          "E": 2139.7523685280585,
+          "M": -1222.2692345017438,
+          "G": 11.490948611693044,
+          "turnover": 437126.58156599983,
+          "legs": 326,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 194,
+              "turnover": 383232.5169910001,
+              "E": 2021.0437146407526,
+              "M": -1222.2305203251674,
+              "finalContribution": 798.8131943155848,
+              "quotedEdgeBpsSum": 16538.462177070385,
+              "quotedEdgeSamples": 194
+            },
+            "bundle": {
+              "legs": 132,
+              "turnover": 53894.064574999975,
+              "E": 118.70865388730617,
+              "M": -0.03871417657700256,
+              "finalContribution": 118.66993971072917,
+              "quotedEdgeBpsSum": 4241.362035845072,
+              "quotedEdgeSamples": 132
+            }
+          },
+          "X": -8.510671829498051e-7,
+          "execEdgeBps": 48.950406101189856,
+          "averageLegUsd": 1340.8790845582816,
+          "bundleCount": 66,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -141.93619395958376,
+          "excess": 222.87196249864064,
+          "included": 68,
+          "reverts": 0,
+          "submitted": 68,
+          "failed": 0,
+          "actions": {
+            "swap": 25,
+            "curveSwap": 28,
+            "balancerSwap": 15
+          },
+          "nonSpot": 0,
+          "E": 232.04812549646394,
+          "M": -6.842245619083361,
+          "G": 2.333917384884696,
+          "turnover": 63440.06131200003,
+          "legs": 68,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 68,
+              "turnover": 63440.06131200003,
+              "E": 232.04812549646394,
+              "M": -6.842245619083361,
+              "finalContribution": 225.20587987738057,
+              "quotedEdgeBpsSum": 2499.6159500077524,
+              "quotedEdgeSamples": 68
+            }
+          },
+          "X": 6.144759367998631e-9,
+          "execEdgeBps": 36.577538025262086,
+          "averageLegUsd": 932.9420781176475,
+          "bundleCount": 34,
+          "partialBundles": 0
+        }
+      },
+      "factorsVsV3": {},
+      "matchedGateBlocks": {
+        "denominator": 180,
+        "inventoryBlocked": 158,
+        "entry45OtherGatesPass": 5
+      },
+      "T": {
+        "noop": 31.793113500241898,
+        "multi-arb": 63.495832163700065,
+        "clean-arb": 39.59190828617148,
+        "cand": 46.91225955012845
+      }
+    }
+  ],
+  "coverage": {
+    "frames": 8664,
+    "balanceConfirmedSingles": 1426,
+    "noopWithMultiSuccess": 4076,
+    "inventoryBlocked": 3858,
+    "entry45OtherGatesPass": 64
+  },
+  "confusion": {
+    "noop_noop": 7098,
+    "attempt_trade": 872,
+    "attempt_noop": 689,
+    "noop_trade": 5
+  },
+  "factors": {
+    "R9": {
+      "added": 0,
+      "removed": 180,
+      "changed": 75,
+      "modelNetDelta": -1113.4338565876358
+    },
+    "R10": {
+      "added": 0,
+      "removed": 0,
+      "changed": 0,
+      "modelNetDelta": 0
+    },
+    "R11": {
+      "added": 0,
+      "removed": 0,
+      "changed": 12,
+      "modelNetDelta": -359.0403871095672
+    },
+    "ENTRY45": {
+      "added": 185,
+      "removed": 0,
+      "changed": 0,
+      "modelNetDelta": 278.6919632777154
+    },
+    "R7": {
+      "added": 0,
+      "removed": 286,
+      "changed": 36,
+      "modelNetDelta": -783.4235278940921
+    }
+  },
+  "failures": {
+    "Execution reverted with reason: Too little received.": 8,
+    "Execution reverted with reason: BAL#507.": 11,
+    "Execution reverted with reason: Slippage.": 4
+  },
+  "defaultV3StatefulMatches": 8664,
+  "defaultV3StatelessMatches": 8664,
+  "R10": {
+    "positiveCandidates": 1326,
+    "depthOnlyLimited": 0
+  },
+  "R7": {
+    "successSingles50to75": 1103,
+    "inclusionEdgeLessGas": 12491.235176592201,
+    "missingQuote": 0
+  },
+  "R12": {
+    "retryFailuresWithin4": 1,
+    "retryRevertsWithin4": 0,
+    "examples": [
+      {
+        "run": "runs/2026-10-04T12-06-28-894Z",
+        "base": "WETH",
+        "previous": 1272,
+        "block": 1275,
+        "event": "submit_failed"
+      }
+    ]
+  },
+  "indexSha256": {
+    "ascon-notes/eval/out/dev4a-xb-r/index.tsv": "7ae02b628eb8b57b00b34a1b35aebb6520bfb07bddf00c170af97b6dba43f119",
+    "ascon-notes/eval/out/dev4b-xb-r/index.tsv": "5dcd35ae81a24f77632e252065b70fec2d9411f9e8040bc61b4ca09e04b45398"
+  },
+  "aggregate": {
+    "cand": {
+      "T": 49.72478175324571,
+      "P": 488.16469256305754,
+      "submitted": 1652,
+      "failed": 23,
+      "bundles": 114,
+      "partialBundles": 2,
+      "singleCashMean": 2261.1836617495933,
+      "singleCashPooled": 2242.027330161992
+    },
+    "multi": {
+      "T": 55.01632357003137,
+      "P": 1460.804600274345,
+      "submitted": 6578,
+      "failed": 4,
+      "bundles": 925,
+      "partialBundles": 6,
+      "singleCashMean": 1920.1806694033812,
+      "singleCashPooled": 1880.2475321669165
+    }
+  },
+  "triggerMetrics": {
+    "Tgap": -5.29154181678566,
+    "bundleRatio": 0.12324324324324325,
+    "completeBundleRatio": 0.12187159956474429,
+    "inventoryBlockRate": 0.9465161923454367,
+    "singleSizeRatio": 1.177589014294246,
+    "singleSizePooledRatio": 1.1924107288034238,
+    "depthLimitedRate": 0,
+    "failedRate": 0.01373134328358209,
+    "entry45Rate": 0.015701668302257114
+  },
+  "limitations": [
+    "Post-run reconstructed observations, not runtime snapshots.",
+    "Uniswap active liquidity missing: historical 300000 USD fallback. Output units rounded; logged input debits exact.",
+    "Raw tx.to missing: bids reconstructed by receipt method/base; agreement is reported, not assumed.",
+    "First-gate inventory blocks include routes whose downstream bid/profit gates may also fail.",
+    "No alternate wallet trajectory or realized factor performance is measured. G0 PASS is user-reported, full G0 checker not rerun."
+  ]
+}

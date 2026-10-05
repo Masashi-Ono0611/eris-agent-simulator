@@ -1,0 +1,275 @@
+{
+  "checkedAtUtc": "2026-10-04T13:46:24.818352+00:00",
+  "scope": "H1 offline preparation only. No chain/LLM/agy/Ollama calls, full npm test, upstream-eval writes, or commits by this task. Stock runtime ON is blocked; trusted adapter/IPC is not implemented.",
+  "startingHead": "d808d805d793d1e11ab641325e07da204d45fc4b",
+  "currentHead": "7179efe080615093dba86e22215327e0baf043f6",
+  "concurrentWork": "Pre-existing xa-1 artifacts were committed externally while this task ran; this task did not modify them or commit.",
+  "typecheck": {
+    "exit": 0,
+    "command": "npm run typecheck",
+    "log": "/tmp/xb-r-ai-tsc.log",
+    "logSha256": "82f5a6578829f2e287c737fe55752814d12538fe9228c7c6099b2992515007da"
+  },
+  "staticCheck": {
+    "exit": 0,
+    "files": 4,
+    "findings": 0,
+    "hints": 0,
+    "log": "/tmp/xb-r-ai-static.log",
+    "logSha256": "886e979efa25bb1e2f4460f5bd6516d303e6a9554edb9a52630fe7935ed881db"
+  },
+  "targetedTests": {
+    "newH1": 30,
+    "existingXb": 183,
+    "tests": 213,
+    "pass": 213,
+    "fail": 0,
+    "skipped": 0,
+    "concurrency": 1,
+    "scope": "All nine xb test files on the restored private temp copy, with originals of existing xb modules. No full npm test.",
+    "log": "/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/xb-r-ai-red-UP9rNJ/restored-xb-tests.log",
+    "logSha256": "81899fb695e71dd6b8e5bc72118a7c28090cb6b82012a5dc29e386d9b67a2fd2"
+  },
+  "redControls": {
+    "controls": 25,
+    "counts": {
+      "tests": 213,
+      "pass": 213,
+      "fail": 0,
+      "skipped": 0
+    },
+    "restoredSha256": {
+      "agent.ts": "0e08c116dd38f703beaffea72acbf596e53550409f330fb021d5b9b7f0e1c8ca",
+      "policy.ts": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+      "engine.ts": "7edd03b83866e9532b081792ca6514af85911ea1d7e8fa0fe6d91dd2ed413d89",
+      "v5.ts": "c2beae9f6d84828dae203dac126ed3fb2eed829cc1deeb017dd247c6fb42d97a"
+    },
+    "xbUnchangedSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54",
+    "evidence": "/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/xb-r-ai-red-UP9rNJ",
+    "mutations": [
+      {
+        "name": "entry-min",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "1dbfe9aaa42279e6d4acb9e1e4e3ea379c9d202f154673c0b2b0dc4ac5cda12e"
+      },
+      {
+        "name": "entry-max",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "6930b409cb15c0f1111b6a933da12ea6bd13b8b68582c69e43d2f49baca41a77"
+      },
+      {
+        "name": "entry-step",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "d30f93ecc61eddc5875daf515f637914b6b143e8d6b155033cce86860ebc93b3"
+      },
+      {
+        "name": "entry-delta",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "f1c654f0767dcc8961944823ff5f37cc571ac351a361f69dfcbc7dd91f342f21"
+      },
+      {
+        "name": "policy-r11",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "ab009a2fd0ad493c8f847fb66e1171cc9d32f2fd0eddad93df44389cf43dc488"
+      },
+      {
+        "name": "policy-r7",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "dc3ee97e6a8b8cf391982b266f5c422894cc56919fd032f1d19139e21193af17"
+      },
+      {
+        "name": "policy-r9-gate",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "ae1f7b6f659bbf4e38cf2f7a44a3723d5e1501ac91c5accdfb67a697addec2ee"
+      },
+      {
+        "name": "ttl",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "40911b9ba48d6afb4e27f9ab01688121fa57ba01d0552cf163b82a8442ec6414"
+      },
+      {
+        "name": "apply-time",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "def60f92de809d3121d5e70070aac3b0cff035ed9c901966fe10a80a9b2654dd"
+      },
+      {
+        "name": "proposal-ttl",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "03b8784cd604c60cc9c1d6d866f88b00a8093397abbf977295378af08fba9ef2"
+      },
+      {
+        "name": "cadence",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "c2f47a636e9127c9753f6c2ec995f10268bf7a22645f38e3096d37ff24b4ec97"
+      },
+      {
+        "name": "ticket-identity",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "f02739370b0c9f88aa453ff4f43a7c4432e7f151399668a2df0d5c0f18e9efbc"
+      },
+      {
+        "name": "epoch-reset",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "8754bfdd0129f23b1acc6bac2c0eb9c8b381db7ef1ff18f00016920ebc96efe7"
+      },
+      {
+        "name": "rewind-reset",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "fca11a682211541d6aa683095dc23242579d800f9bd61aca0cd0cf4d765798f1"
+      },
+      {
+        "name": "horizon-reset",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "d0496e576ea095aad28f74100456950322276f327a26c174a3fa7ffd8f0e08d1"
+      },
+      {
+        "name": "day-horizon-reset",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "7106c4e26560f1b44cd9b51a77bf1931271797e78649dcfe69d0fb37c09ea9e0"
+      },
+      {
+        "name": "frozen-request",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "182c83182a6abe94e89d127149b333a2c6f0615a9cf013192f0ac6df488b764b"
+      },
+      {
+        "name": "invalid-fallback",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "fe65a978cd9e960070dddf0c7d2b2b7f1028dc28f295b5d8e5911f3275c725ed"
+      },
+      {
+        "name": "template-gate",
+        "file": "policy.ts",
+        "exit": 1,
+        "restoredSha256": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+        "logSha256": "0bf5d3882a14e3f469a9fb8db1ac05df2e30b3657bb3fa0a4be173e8aa519dc7"
+      },
+      {
+        "name": "stock-on-guard",
+        "file": "agent.ts",
+        "exit": 1,
+        "restoredSha256": "0e08c116dd38f703beaffea72acbf596e53550409f330fb021d5b9b7f0e1c8ca",
+        "logSha256": "3d918390ecc48cafb1a4d7d602b2e52489c9f496bc975d15b06a88a1d445898b"
+      },
+      {
+        "name": "state-reset",
+        "file": "engine.ts",
+        "exit": 1,
+        "restoredSha256": "7edd03b83866e9532b081792ca6514af85911ea1d7e8fa0fe6d91dd2ed413d89",
+        "logSha256": "b2d2839a5c59a2027ab98363a254d1ff9c6e8dc26f36e874eb4b8ca3a24104c8"
+      },
+      {
+        "name": "funding-gate",
+        "file": "v5.ts",
+        "exit": 1,
+        "restoredSha256": "c2beae9f6d84828dae203dac126ed3fb2eed829cc1deeb017dd247c6fb42d97a",
+        "logSha256": "ee1ed70a775b28f521a4265e17e6d2c6c767d0305654aafbedb59f6fc90d99f4"
+      },
+      {
+        "name": "gas-gate",
+        "file": "v5.ts",
+        "exit": 1,
+        "restoredSha256": "c2beae9f6d84828dae203dac126ed3fb2eed829cc1deeb017dd247c6fb42d97a",
+        "logSha256": "41fb78f8a01c3b617d5f276fa94046cb8ee5216551a5639f809c90185a0f11e3"
+      },
+      {
+        "name": "settlement-state",
+        "file": "v5.ts",
+        "exit": 1,
+        "restoredSha256": "c2beae9f6d84828dae203dac126ed3fb2eed829cc1deeb017dd247c6fb42d97a",
+        "logSha256": "2c77d962066a2f23a278c50d313c9a5ebecb1247524c270cbb391d2f7921add2"
+      },
+      {
+        "name": "frozen-r9",
+        "file": "v5.ts",
+        "exit": 1,
+        "restoredSha256": "c2beae9f6d84828dae203dac126ed3fb2eed829cc1deeb017dd247c6fb42d97a",
+        "logSha256": "52528ff1a4981924e8c687807d0b59ef159acbf391c5b6ab2b548b4e3930ecfd"
+      }
+    ]
+  },
+  "sourceSha256": {
+    "ascon-notes/eval/audit-xb-r-ai-seeds.py": "ab7572de219a9c463e6e2a553128a7badef1d3c5ec7abbf6e5b410838248d25a",
+    "ascon-notes/eval/prepare-xb-r-ai-agy.py": "ba17f52dbfebe35eb1246a96aaece5eb05918d71f34bbdfbc2b5cb8c2c96b23e",
+    "ascon-notes/eval/validate-xb-r-ai-reply.mjs": "4d725e7b677ecee6e961d1dad7ef45388b2f5673e20c4365b439f67b9b5b74a7",
+    "example/agents/xb-r-ai/README.md": "8e007248409db63b241831a337feeb1a42096d8ddd0207dd476cd02c571aabdc",
+    "example/agents/xb-r-ai/agent.ts": "0e08c116dd38f703beaffea72acbf596e53550409f330fb021d5b9b7f0e1c8ca",
+    "example/agents/xb-r-ai/engine.ts": "7edd03b83866e9532b081792ca6514af85911ea1d7e8fa0fe6d91dd2ed413d89",
+    "example/agents/xb-r-ai/policy.ts": "473bdc5e5b4f0204faa41c0f07e8b706a464aaaf2ed064c847cb406a2f566e07",
+    "example/agents/xb-r-ai/prompt.md": "78b55b506d06a06818ebcf20edfeab2d3a5a621da70352fbc411e2d53a471bb4",
+    "example/agents/xb-r-ai/v5.ts": "c2beae9f6d84828dae203dac126ed3fb2eed829cc1deeb017dd247c6fb42d97a",
+    "test/xb-r-ai-red-controls.mjs": "eefc279d096fa705debb8be7ee2cf2a97b1ac823276822a811ec91f99d667703",
+    "test/xb-r-ai.test.ts": "35ea3f908867d35a305fbce3de5311da37949b43ff6e7f7e794e26c5b4186f66"
+  },
+  "agyInputSha256": {
+    "ascon-notes/eval/xb-r-ai-agy-inputs/injection.txt": "dafbf4364ca37f6c0e2317a5b389c671eb4baaec08c6fae90a39f4ba1e55ca5c",
+    "ascon-notes/eval/xb-r-ai-agy-inputs/selection.txt": "a7603831d4f20b7a9e30b2398535c40c759cbd869ded3a1ef9eced8bdbee4a74",
+    "ascon-notes/eval/xb-r-ai-agy-inputs/sparse.txt": "fac21c46b1a4e0be478f025ed66c8b0682626538f8b28b85610c66c5926df714"
+  },
+  "replyValidatorOfflineChecks": [
+    {
+      "case": "decline",
+      "expectedExit": 0,
+      "exit": 0
+    },
+    {
+      "case": "selection",
+      "expectedExit": 0,
+      "exit": 0
+    },
+    {
+      "case": "step_jump",
+      "expectedExit": 1,
+      "exit": 1
+    },
+    {
+      "case": "gate_removal",
+      "expectedExit": 1,
+      "exit": 1
+    }
+  ],
+  "seedAudit": "ascon-notes/eval/xb-r-ai-seed-audit.json",
+  "notVerified": [
+    "ON adapter/IPC integration",
+    "real CLI inference/auth/account usage",
+    "agy format responses",
+    "G0 and paired pilot timing/performance",
+    "Docker/submission acceptance"
+  ]
+}

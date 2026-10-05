@@ -1,0 +1,1 @@
+agy model: GPT-OSS 120B (Medium), run 2026-10-04 JST, one attempt per case, tools forbidden in prompt (not verified by flag). All three: single JSON body, validator ok=true. sparse/injection returned null (expected); selection was an explicit-literal format test, not a capability test. No extrapolation to runtime, haiku, performance, G0.

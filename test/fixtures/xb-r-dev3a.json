@@ -1,0 +1,1281 @@
+{
+  "sourceCommit": "a646e9b1f57ecd342c9f3810805798c55df7a0cf",
+  "method": "Post-run market/receipt reconstruction, not runtime snapshots. Exact logged input debits; rounded receipt outputs; 300000 USD missing-depth fallback. Only dev3a seeds 35001/35002.",
+  "sourceHashes": {
+    "runs/2026-10-04T07-23-53-218Z": {
+      "summary.json": "e72736795c48d1f629676749f5e32b7aa377856f0768d79ba6b11d65f22f3e89",
+      "market.json": "7be980a7d763e8ffe82f01efa507fa72d7192e2ddb320a6998c7791050b64e29",
+      "blocks.csv": "0baf4b15de0762b4b991c22cd97cb5af3c3638ef398eb7c40c42860a4d1e37de",
+      "agents/cand.jsonl": "e7ae61ad816d8e406b35aacb5157b572152a040ab64c1e59f176487a8b4e60da",
+      "agents/multi-arb.jsonl": "63dfb60144b0cf42e9d36b6bd3582f1023e61240d1474a639844c8eddd48bf57",
+      "agents/clean-arb.jsonl": "1408388ae00eab955139905703df46fcb05283b13f39a68f5d0bf29118342700"
+    }
+  },
+  "frames": [
+    {
+      "regime": "calm",
+      "seed": "35001",
+      "source": "runs/2026-10-04T07-23-53-218Z",
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T07-23-53-218Z",
+        "round": 1297,
+        "blockNumber": "1297",
+        "blocksRemaining": 349,
+        "agentAddress": "0x1790296d3b32f96260F37707Cf619D205Be56A43",
+        "fairPriceUsdcPerWeth": 3025.640188,
+        "fairPricesUsd": {
+          "WETH": 3025.640188,
+          "WBTC": 59865.188351
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WBTC": "40000000"
+        },
+        "balances": {
+          "ethWei": "1000000000000000000",
+          "wethWei": "8000000000000000000",
+          "usdcUnits": "25000000000"
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve"
+        ],
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000"
+        },
+        "protocols": {
+          "uniswap": {
+            "pool": {
+              "pair": "WETH/USDC",
+              "priceUsdcPerWeth": 3017.340355,
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            },
+            "markets": {
+              "WBTC/USDC": {
+                "pair": "WBTC/USDC",
+                "priceUsdcPerWeth": 59488.076889,
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "positions": []
+          },
+          "balancer": {
+            "priceUsdcPerWeth": 3002.932627,
+            "buyPriceUsdcPerWeth": 3012.268509,
+            "sellPriceUsdcPerWeth": 2993.62568,
+            "effectiveHalfSpreadBps": 31.089214921109498,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 60003.792103,
+                "buyPriceUsdcPerWeth": 60304.057839,
+                "sellPriceUsdcPerWeth": 59705.02145,
+                "effectiveHalfSpreadBps": 50.04112656519677
+              }
+            }
+          },
+          "curve": {
+            "priceUsdcPerWeth": 3000.098408,
+            "buyPriceUsdcPerWeth": 3007.93651,
+            "sellPriceUsdcPerWeth": 2992.28073,
+            "effectiveHalfSpreadBps": 26.126150632694856,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59992.960724,
+                "buyPriceUsdcPerWeth": 60157.947554,
+                "sellPriceUsdcPerWeth": 59828.42638,
+                "effectiveHalfSpreadBps": 27.501031490693162
+              }
+            }
+          }
+        }
+      },
+      "cooling": [],
+      "bids": [
+        [
+          "0xba12222222228d8ba445958a75a0704d566bf2c8",
+          "188000000"
+        ],
+        [
+          "0x960ea3e3c7fb317332d990873d354e18d7645590",
+          "181000000"
+        ],
+        [
+          "0xe592427a0aece92de3edee1f18e0157c05861564",
+          "184000000"
+        ]
+      ],
+      "referenceTrades": [
+        {
+          "agent": "multi-arb",
+          "base": "WETH",
+          "protocol": "curve",
+          "side": "buy",
+          "actionType": "curveSwap",
+          "receiptBlock": 1298
+        }
+      ],
+      "candDecision": {
+        "ts": "2026-10-04T07:24:28.665Z",
+        "agentId": "cand",
+        "round": 1297,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "baseline": {
+        "action": {
+          "type": "noop",
+          "reason": "no funded positive net edge at an affordable bid"
+        },
+        "net": 0,
+        "usd": 0
+      },
+      "matched": true,
+      "loggedNoop": true,
+      "name": "entry_buy",
+      "expected": {
+        "action": {
+          "type": "curveSwap",
+          "tokenIn": "USDC",
+          "amountIn": "885154849",
+          "slippageBps": 80,
+          "base": "WETH",
+          "maxPriorityFeePerGasWei": "281000000"
+        },
+        "net": 2.4416227161204214,
+        "usd": 885.154849
+      },
+      "transactions": [
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setPrice",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setPriceFor",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "accrueRewards",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0xfb72a6aafe152a7489da79722ed128bd9df40d74",
+          "method": "",
+          "priorityFeeWei": "5500000000"
+        },
+        {
+          "from": "0xea52bbb5c7f3b4c8a2c27914b1ce88826780cae8",
+          "method": "swap",
+          "priorityFeeWei": "188000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xbda1f5b41c6c430b6b3a8b572077be7610a7b083",
+          "method": "exchange",
+          "priorityFeeWei": "181000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xda90168d08097bef7e73ccb061f7f1840cfc9436",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "175000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xda90168d08097bef7e73ccb061f7f1840cfc9436",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "184000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0x13a89c17a24d708b9f335cff33b104accef47243",
+          "method": "borrow",
+          "priorityFeeWei": "131000000"
+        },
+        {
+          "from": "0x0896c746b5b9c9dc050c99ca00b4386638e23b09",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "117000000",
+          "receiptBase": "WETH"
+        }
+      ]
+    },
+    {
+      "regime": "calm",
+      "seed": "35001",
+      "source": "runs/2026-10-04T07-23-53-218Z",
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T07-23-53-218Z",
+        "round": 1335,
+        "blockNumber": "1335",
+        "blocksRemaining": 311,
+        "agentAddress": "0x1790296d3b32f96260F37707Cf619D205Be56A43",
+        "fairPriceUsdcPerWeth": 2999.03014,
+        "fairPricesUsd": {
+          "WETH": 2999.03014,
+          "WBTC": 58742.015597
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WBTC": "32000001"
+        },
+        "balances": {
+          "ethWei": "999735422780000000",
+          "wethWei": "8072512923603935232",
+          "usdcUnits": "29540359752"
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve"
+        ],
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000"
+        },
+        "protocols": {
+          "uniswap": {
+            "pool": {
+              "pair": "WETH/USDC",
+              "priceUsdcPerWeth": 3025.533972,
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            },
+            "markets": {
+              "WBTC/USDC": {
+                "pair": "WBTC/USDC",
+                "priceUsdcPerWeth": 59297.790538,
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "positions": []
+          },
+          "balancer": {
+            "priceUsdcPerWeth": 3025.835276,
+            "buyPriceUsdcPerWeth": 3035.243504,
+            "sellPriceUsdcPerWeth": 3016.45621,
+            "effectiveHalfSpreadBps": 31.092995172503635,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59241.966251,
+                "buyPriceUsdcPerWeth": 59537.665034,
+                "sellPriceUsdcPerWeth": 58947.73608,
+                "effectiveHalfSpreadBps": 49.91373549191103
+              }
+            }
+          },
+          "curve": {
+            "priceUsdcPerWeth": 3020.082494,
+            "buyPriceUsdcPerWeth": 3030.428831,
+            "sellPriceUsdcPerWeth": 3009.77148,
+            "effectiveHalfSpreadBps": 34.25845980796538,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59644.140752,
+                "buyPriceUsdcPerWeth": 59915.803736,
+                "sellPriceUsdcPerWeth": 59373.70951,
+                "effectiveHalfSpreadBps": 45.54730444259691
+              }
+            }
+          }
+        }
+      },
+      "cooling": [],
+      "bids": [
+        [
+          "0xe592427a0aece92de3edee1f18e0157c05861564",
+          "197000000"
+        ],
+        [
+          "0xba12222222228d8ba445958a75a0704d566bf2c8",
+          "184000000"
+        ],
+        [
+          "0x960ea3e3c7fb317332d990873d354e18d7645590",
+          "157000000"
+        ]
+      ],
+      "referenceTrades": [
+        {
+          "agent": "multi-arb",
+          "base": "WBTC",
+          "protocol": "curve",
+          "side": "sell",
+          "actionType": "curveSwap",
+          "receiptBlock": 1336
+        }
+      ],
+      "candDecision": {
+        "ts": "2026-10-04T07:25:45.055Z",
+        "agentId": "cand",
+        "round": 1335,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "baseline": {
+        "action": {
+          "type": "noop",
+          "reason": "no funded positive net edge at an affordable bid"
+        },
+        "net": 0,
+        "usd": 0
+      },
+      "matched": true,
+      "loggedNoop": true,
+      "name": "entry_sell",
+      "expected": {
+        "action": {
+          "type": "balancerSwap",
+          "tokenIn": "WETH",
+          "amountIn": "288943455257366336",
+          "slippageBps": 80,
+          "base": "WETH",
+          "maxPriorityFeePerGasWei": "284000000"
+        },
+        "net": 2.377629324897659,
+        "usd": 874.2952996870666
+      },
+      "transactions": [
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setPrice",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setPriceFor",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "accrueRewards",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0xfb72a6aafe152a7489da79722ed128bd9df40d74",
+          "method": "",
+          "priorityFeeWei": "5500000000"
+        },
+        {
+          "from": "0xda90168d08097bef7e73ccb061f7f1840cfc9436",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "189000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xda90168d08097bef7e73ccb061f7f1840cfc9436",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "197000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0xea52bbb5c7f3b4c8a2c27914b1ce88826780cae8",
+          "method": "swap",
+          "priorityFeeWei": "177000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xea52bbb5c7f3b4c8a2c27914b1ce88826780cae8",
+          "method": "swap",
+          "priorityFeeWei": "184000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0xbda1f5b41c6c430b6b3a8b572077be7610a7b083",
+          "method": "exchange",
+          "priorityFeeWei": "157000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xbda1f5b41c6c430b6b3a8b572077be7610a7b083",
+          "method": "exchange",
+          "priorityFeeWei": "163000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0x248032b050440f1aecc545c40adfdaaa8ec4db69",
+          "method": "multicall",
+          "priorityFeeWei": "146000000"
+        },
+        {
+          "from": "0x4e1d9bab39bb382c70e5ff12041cdfe4f88c98c5",
+          "method": "swap",
+          "priorityFeeWei": "141000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0x0896c746b5b9c9dc050c99ca00b4386638e23b09",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "125000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0x13a89c17a24d708b9f335cff33b104accef47243",
+          "method": "borrow",
+          "priorityFeeWei": "125000000"
+        },
+        {
+          "from": "0xc164461302e0a3ad832d4ca45080babd214a0306",
+          "method": "repay",
+          "priorityFeeWei": "116000000"
+        },
+        {
+          "from": "0x4e1d9bab39bb382c70e5ff12041cdfe4f88c98c5",
+          "method": "swap",
+          "priorityFeeWei": "109000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0x80227efa42b4ff4fdc7d2174002f447645f4f906",
+          "method": "borrow",
+          "priorityFeeWei": "105000000"
+        },
+        {
+          "from": "0xb0c74d30abc009bc890291d74d0d1b09b843a32c",
+          "method": "exchange",
+          "priorityFeeWei": "100000000",
+          "receiptBase": "WBTC"
+        }
+      ]
+    },
+    {
+      "regime": "calm",
+      "seed": "35001",
+      "source": "runs/2026-10-04T07-23-53-218Z",
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T07-23-53-218Z",
+        "round": 1300,
+        "blockNumber": "1300",
+        "blocksRemaining": 346,
+        "agentAddress": "0x1790296d3b32f96260F37707Cf619D205Be56A43",
+        "fairPriceUsdcPerWeth": 3044.668072,
+        "fairPricesUsd": {
+          "WETH": 3044.668072,
+          "WBTC": 59810.617953
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WBTC": "47658502"
+        },
+        "balances": {
+          "ethWei": "999933689155000000",
+          "wethWei": "8458465348588204800",
+          "usdcUnits": "19046111174"
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve"
+        ],
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000"
+        },
+        "protocols": {
+          "uniswap": {
+            "pool": {
+              "pair": "WETH/USDC",
+              "priceUsdcPerWeth": 3019.529871,
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            },
+            "markets": {
+              "WBTC/USDC": {
+                "pair": "WBTC/USDC",
+                "priceUsdcPerWeth": 59802.574712,
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "positions": []
+          },
+          "balancer": {
+            "priceUsdcPerWeth": 3005.603994,
+            "buyPriceUsdcPerWeth": 3014.948319,
+            "sellPriceUsdcPerWeth": 2996.28863,
+            "effectiveHalfSpreadBps": 31.089674822970537,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59993.247395,
+                "buyPriceUsdcPerWeth": 60293.451229,
+                "sellPriceUsdcPerWeth": 59694.53829,
+                "effectiveHalfSpreadBps": 50.03960392208073
+              }
+            }
+          },
+          "curve": {
+            "priceUsdcPerWeth": 3001.588123,
+            "buyPriceUsdcPerWeth": 3009.804103,
+            "sellPriceUsdcPerWeth": 2993.39457,
+            "effectiveHalfSpreadBps": 27.37211071488499,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 59993.413307,
+                "buyPriceUsdcPerWeth": 60158.325769,
+                "sellPriceUsdcPerWeth": 59828.95292,
+                "effectiveHalfSpreadBps": 27.48842802662077
+              }
+            }
+          }
+        }
+      },
+      "cooling": [
+        "WETH"
+      ],
+      "bids": [
+        [
+          "0xba12222222228d8ba445958a75a0704d566bf2c8",
+          "186000000"
+        ],
+        [
+          "0xe592427a0aece92de3edee1f18e0157c05861564",
+          "159000000"
+        ],
+        [
+          "0x960ea3e3c7fb317332d990873d354e18d7645590",
+          "158000000"
+        ]
+      ],
+      "referenceTrades": [
+        {
+          "agent": "multi-arb",
+          "base": "WETH",
+          "protocol": "curve",
+          "side": "buy",
+          "actionType": "curveSwap",
+          "receiptBlock": 1301
+        }
+      ],
+      "candDecision": {
+        "ts": "2026-10-04T07:24:34.698Z",
+        "agentId": "cand",
+        "round": 1300,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "baseline": {
+        "action": {
+          "type": "noop",
+          "reason": "no funded positive net edge at an affordable bid"
+        },
+        "net": 0,
+        "usd": 0
+      },
+      "settledFrame": {
+        "observation": {
+          "kind": "observation",
+          "runId": "2026-10-04T07-23-53-218Z",
+          "round": 1299,
+          "blockNumber": "1299",
+          "blocksRemaining": 347,
+          "agentAddress": "0x1790296d3b32f96260F37707Cf619D205Be56A43",
+          "fairPriceUsdcPerWeth": 3036.120311,
+          "fairPricesUsd": {
+            "WETH": 3036.120311,
+            "WBTC": 59872.673523
+          },
+          "baseDecimals": {
+            "WETH": 18,
+            "WBTC": 8
+          },
+          "baseBalances": {
+            "WBTC": "47658502"
+          },
+          "balances": {
+            "ethWei": "999970921700000000",
+            "wethWei": "8000000000000000000",
+            "usdcUnits": "20425465548"
+          },
+          "enabledProtocols": [
+            "uniswap",
+            "balancer",
+            "curve"
+          ],
+          "history": [],
+          "limits": {
+            "defaultPriorityFeePerGasWei": "100000000",
+            "maxPriorityFeePerGasWei": "5000000000",
+            "defaultSlippageBps": 50
+          },
+          "competition": {
+            "maxCompetitorPriorityFeeWei": "6000000000"
+          },
+          "protocols": {
+            "uniswap": {
+              "pool": {
+                "pair": "WETH/USDC",
+                "priceUsdcPerWeth": 3018.190043,
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              },
+              "markets": {
+                "WBTC/USDC": {
+                  "pair": "WBTC/USDC",
+                  "priceUsdcPerWeth": 59802.574712,
+                  "fee": 3000,
+                  "tick": 0,
+                  "tickSpacing": 60
+                }
+              },
+              "positions": []
+            },
+            "balancer": {
+              "priceUsdcPerWeth": 3004.386948,
+              "buyPriceUsdcPerWeth": 3013.727424,
+              "sellPriceUsdcPerWeth": 2995.07542,
+              "effectiveHalfSpreadBps": 31.089459117363827,
+              "markets": {
+                "WBTC/USDC": {
+                  "priceUsdcPerWeth": 59994.444214,
+                  "buyPriceUsdcPerWeth": 60294.654037,
+                  "sellPriceUsdcPerWeth": 59695.72915,
+                  "effectiveHalfSpreadBps": 50.0396039344797
+                }
+              }
+            },
+            "curve": {
+              "priceUsdcPerWeth": 3000.599389,
+              "buyPriceUsdcPerWeth": 3008.527712,
+              "sellPriceUsdcPerWeth": 2992.69196,
+              "effectiveHalfSpreadBps": 26.42246317929864,
+              "markets": {
+                "WBTC/USDC": {
+                  "priceUsdcPerWeth": 59992.960724,
+                  "buyPriceUsdcPerWeth": 60157.947554,
+                  "sellPriceUsdcPerWeth": 59828.42638,
+                  "effectiveHalfSpreadBps": 27.501031490693162
+                }
+              }
+            }
+          }
+        },
+        "action": {
+          "type": "curveSwap",
+          "base": "WETH",
+          "tokenIn": "USDC",
+          "amountIn": "1379354374"
+        },
+        "receiptBlock": 1300,
+        "status": "success"
+      },
+      "matched": true,
+      "loggedNoop": true,
+      "name": "settled_buy",
+      "expected": {
+        "action": {
+          "type": "curveSwap",
+          "tokenIn": "USDC",
+          "amountIn": "1742276121",
+          "slippageBps": 80,
+          "base": "WETH",
+          "maxPriorityFeePerGasWei": "258000000"
+        },
+        "net": 9.961315407415295,
+        "usd": 1742.276121
+      },
+      "transactions": [
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setPrice",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setPriceFor",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "accrueRewards",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0xea52bbb5c7f3b4c8a2c27914b1ce88826780cae8",
+          "method": "swap",
+          "priorityFeeWei": "185000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xea52bbb5c7f3b4c8a2c27914b1ce88826780cae8",
+          "method": "swap",
+          "priorityFeeWei": "186000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0xda90168d08097bef7e73ccb061f7f1840cfc9436",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "159000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xbda1f5b41c6c430b6b3a8b572077be7610a7b083",
+          "method": "exchange",
+          "priorityFeeWei": "158000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xbda1f5b41c6c430b6b3a8b572077be7610a7b083",
+          "method": "exchange",
+          "priorityFeeWei": "198000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0x80227efa42b4ff4fdc7d2174002f447645f4f906",
+          "method": "borrow",
+          "priorityFeeWei": "137000000"
+        },
+        {
+          "from": "0xc164461302e0a3ad832d4ca45080babd214a0306",
+          "method": "repay",
+          "priorityFeeWei": "124000000"
+        },
+        {
+          "from": "0x248032b050440f1aecc545c40adfdaaa8ec4db69",
+          "method": "multicall",
+          "priorityFeeWei": "117000000"
+        },
+        {
+          "from": "0x13a89c17a24d708b9f335cff33b104accef47243",
+          "method": "repay",
+          "priorityFeeWei": "113000000"
+        },
+        {
+          "from": "0xe45309a88ed5032c78c526156faec2b058305a8b",
+          "method": "exchange",
+          "priorityFeeWei": "105000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0xb0c74d30abc009bc890291d74d0d1b09b843a32c",
+          "method": "exchange",
+          "priorityFeeWei": "100000000",
+          "receiptBase": "WETH"
+        }
+      ]
+    },
+    {
+      "regime": "calm",
+      "seed": "35001",
+      "source": "runs/2026-10-04T07-23-53-218Z",
+      "observation": {
+        "kind": "observation",
+        "runId": "2026-10-04T07-23-53-218Z",
+        "round": 1394,
+        "blockNumber": "1394",
+        "blocksRemaining": 252,
+        "agentAddress": "0x1790296d3b32f96260F37707Cf619D205Be56A43",
+        "fairPriceUsdcPerWeth": 2981.620977,
+        "fairPricesUsd": {
+          "WETH": 2981.620977,
+          "WBTC": 59117.344798
+        },
+        "baseDecimals": {
+          "WETH": 18,
+          "WBTC": 8
+        },
+        "baseBalances": {
+          "WBTC": "32000001"
+        },
+        "balances": {
+          "ethWei": "999576124702000000",
+          "wethWei": "7079155995565813504",
+          "usdcUnits": "32485023674"
+        },
+        "enabledProtocols": [
+          "uniswap",
+          "balancer",
+          "curve"
+        ],
+        "history": [],
+        "limits": {
+          "defaultPriorityFeePerGasWei": "100000000",
+          "maxPriorityFeePerGasWei": "5000000000",
+          "defaultSlippageBps": 50
+        },
+        "competition": {
+          "maxCompetitorPriorityFeeWei": "6000000000"
+        },
+        "protocols": {
+          "uniswap": {
+            "pool": {
+              "pair": "WETH/USDC",
+              "priceUsdcPerWeth": 3007.070462,
+              "fee": 3000,
+              "tick": 0,
+              "tickSpacing": 60
+            },
+            "markets": {
+              "WBTC/USDC": {
+                "pair": "WBTC/USDC",
+                "priceUsdcPerWeth": 58773.666295,
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              }
+            },
+            "positions": []
+          },
+          "balancer": {
+            "priceUsdcPerWeth": 2994.973343,
+            "buyPriceUsdcPerWeth": 3004.284071,
+            "sellPriceUsdcPerWeth": 2985.69147,
+            "effectiveHalfSpreadBps": 31.087849899436026,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 58786.302528,
+                "buyPriceUsdcPerWeth": 59079.276413,
+                "sellPriceUsdcPerWeth": 58494.7815,
+                "effectiveHalfSpreadBps": 49.83710014639931
+              }
+            }
+          },
+          "curve": {
+            "priceUsdcPerWeth": 3015.398558,
+            "buyPriceUsdcPerWeth": 3025.250891,
+            "sellPriceUsdcPerWeth": 3005.57831,
+            "effectiveHalfSpreadBps": 32.6734040556409,
+            "markets": {
+              "WBTC/USDC": {
+                "priceUsdcPerWeth": 58922.484045,
+                "buyPriceUsdcPerWeth": 59256.353468,
+                "sellPriceUsdcPerWeth": 58590.49575,
+                "effectiveHalfSpreadBps": 56.662482660372326
+              }
+            }
+          }
+        }
+      },
+      "cooling": [
+        "WETH"
+      ],
+      "bids": [
+        [
+          "0xba12222222228d8ba445958a75a0704d566bf2c8",
+          "198000000"
+        ],
+        [
+          "0xe592427a0aece92de3edee1f18e0157c05861564",
+          "170000000"
+        ],
+        [
+          "0x960ea3e3c7fb317332d990873d354e18d7645590",
+          "151000000"
+        ]
+      ],
+      "referenceTrades": [
+        {
+          "agent": "multi-arb",
+          "base": "WETH",
+          "protocol": "curve",
+          "side": "sell",
+          "actionType": "curveSwap",
+          "receiptBlock": 1395
+        }
+      ],
+      "candDecision": {
+        "ts": "2026-10-04T07:27:42.744Z",
+        "agentId": "cand",
+        "round": 1394,
+        "action": {
+          "type": "noop"
+        },
+        "reason": "no funded positive net edge at an affordable bid"
+      },
+      "baseline": {
+        "action": {
+          "type": "noop",
+          "reason": "no funded positive net edge at an affordable bid"
+        },
+        "net": 0,
+        "usd": 0
+      },
+      "settledFrame": {
+        "observation": {
+          "kind": "observation",
+          "runId": "2026-10-04T07-23-53-218Z",
+          "round": 1393,
+          "blockNumber": "1393",
+          "blocksRemaining": 253,
+          "agentAddress": "0x1790296d3b32f96260F37707Cf619D205Be56A43",
+          "fairPriceUsdcPerWeth": 2991.543824,
+          "fairPricesUsd": {
+            "WETH": 2991.543824,
+            "WBTC": 58954.717961
+          },
+          "baseDecimals": {
+            "WETH": 18,
+            "WBTC": 8
+          },
+          "baseBalances": {
+            "WBTC": "32000001"
+          },
+          "balances": {
+            "ethWei": "999606693326000000",
+            "wethWei": "8818333312168109056",
+            "usdcUnits": "27255131596"
+          },
+          "enabledProtocols": [
+            "uniswap",
+            "balancer",
+            "curve"
+          ],
+          "history": [],
+          "limits": {
+            "defaultPriorityFeePerGasWei": "100000000",
+            "maxPriorityFeePerGasWei": "5000000000",
+            "defaultSlippageBps": 50
+          },
+          "competition": {
+            "maxCompetitorPriorityFeeWei": "6000000000"
+          },
+          "protocols": {
+            "uniswap": {
+              "pool": {
+                "pair": "WETH/USDC",
+                "priceUsdcPerWeth": 3021.403864,
+                "fee": 3000,
+                "tick": 0,
+                "tickSpacing": 60
+              },
+              "markets": {
+                "WBTC/USDC": {
+                  "pair": "WBTC/USDC",
+                  "priceUsdcPerWeth": 58556.233714,
+                  "fee": 3000,
+                  "tick": 0,
+                  "tickSpacing": 60
+                }
+              },
+              "positions": []
+            },
+            "balancer": {
+              "priceUsdcPerWeth": 3023.851946,
+              "buyPriceUsdcPerWeth": 3033.253904,
+              "sellPriceUsdcPerWeth": 3014.47913,
+              "effectiveHalfSpreadBps": 31.09265418637097,
+              "markets": {
+                "WBTC/USDC": {
+                  "priceUsdcPerWeth": 58780.462856,
+                  "buyPriceUsdcPerWeth": 59073.404654,
+                  "sellPriceUsdcPerWeth": 58488.97374,
+                  "effectiveHalfSpreadBps": 49.836592633634154
+                }
+              }
+            },
+            "curve": {
+              "priceUsdcPerWeth": 3015.677918,
+              "buyPriceUsdcPerWeth": 3025.592999,
+              "sellPriceUsdcPerWeth": 3005.79533,
+              "effectiveHalfSpreadBps": 32.87844715679,
+              "markets": {
+                "WBTC/USDC": {
+                  "priceUsdcPerWeth": 58921.538627,
+                  "buyPriceUsdcPerWeth": 59255.993001,
+                  "sellPriceUsdcPerWeth": 58588.97199,
+                  "effectiveHalfSpreadBps": 56.762668079446414
+                }
+              }
+            }
+          }
+        },
+        "action": {
+          "type": "swap",
+          "base": "WETH",
+          "tokenIn": "WETH",
+          "amountIn": "1739177316602295552"
+        },
+        "receiptBlock": 1394,
+        "status": "success"
+      },
+      "matched": true,
+      "loggedNoop": true,
+      "name": "settled_sell",
+      "expected": {
+        "action": {
+          "type": "curveSwap",
+          "tokenIn": "WETH",
+          "amountIn": "401004508259743360",
+          "slippageBps": 80,
+          "base": "WETH",
+          "maxPriorityFeePerGasWei": "251000000"
+        },
+        "net": 4.724111377910753,
+        "usd": 1209.1884159579292
+      },
+      "transactions": [
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setPrice",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setPriceFor",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "setAnswer",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0x38d481a41652a19e6a77db90674c74f0100b854e",
+          "method": "accrueRewards",
+          "priorityFeeWei": "6000000000"
+        },
+        {
+          "from": "0xea52bbb5c7f3b4c8a2c27914b1ce88826780cae8",
+          "method": "swap",
+          "priorityFeeWei": "198000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xea52bbb5c7f3b4c8a2c27914b1ce88826780cae8",
+          "method": "swap",
+          "priorityFeeWei": "194000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0xda90168d08097bef7e73ccb061f7f1840cfc9436",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "170000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xda90168d08097bef7e73ccb061f7f1840cfc9436",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "169000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0xbda1f5b41c6c430b6b3a8b572077be7610a7b083",
+          "method": "exchange",
+          "priorityFeeWei": "151000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0xbda1f5b41c6c430b6b3a8b572077be7610a7b083",
+          "method": "exchange",
+          "priorityFeeWei": "165000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0x0896c746b5b9c9dc050c99ca00b4386638e23b09",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "129000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0x0896c746b5b9c9dc050c99ca00b4386638e23b09",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "148000000",
+          "receiptBase": "WETH"
+        },
+        {
+          "from": "0x0896c746b5b9c9dc050c99ca00b4386638e23b09",
+          "method": "exactInputSingle",
+          "priorityFeeWei": "125000000",
+          "receiptBase": "WBTC"
+        },
+        {
+          "from": "0x248032b050440f1aecc545c40adfdaaa8ec4db69",
+          "method": "multicall",
+          "priorityFeeWei": "107000000"
+        },
+        {
+          "from": "0x248032b050440f1aecc545c40adfdaaa8ec4db69",
+          "method": "multicall",
+          "priorityFeeWei": "122000000"
+        },
+        {
+          "from": "0xb0c74d30abc009bc890291d74d0d1b09b843a32c",
+          "method": "swap",
+          "priorityFeeWei": "100000000",
+          "receiptBase": "WETH"
+        }
+      ]
+    }
+  ]
+}

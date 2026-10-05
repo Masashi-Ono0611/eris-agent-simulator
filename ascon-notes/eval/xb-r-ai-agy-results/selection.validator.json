@@ -1,0 +1,12 @@
+{
+  "ok": true,
+  "result": {
+    "kind": "selection",
+    "selection": {
+      "policyId": "v5-r11",
+      "ENTRY_BPS": 45
+    },
+    "notes": "Lost single-leg opportunity tradeoff observed; select v5-r11 with ENTRY_BPS=45"
+  },
+  "scope": "format + initial ENTRY=50 delta only; no performance/runtime claim"
+}

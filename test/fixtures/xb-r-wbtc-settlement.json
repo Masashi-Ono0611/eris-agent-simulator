@@ -1,0 +1,7 @@
+{
+  "caveat": "Synthetic exact-input WBTC settlement; 8-decimal base units, not live fills.",
+  "cases": [
+    { "side": "buy", "tokenIn": "USDC", "amountIn": "60000000", "cashDelta": "-60000000", "baseDelta": "100001" },
+    { "side": "sell", "tokenIn": "WBTC", "amountIn": "100000", "cashDelta": "60000001", "baseDelta": "-100000" }
+  ]
+}

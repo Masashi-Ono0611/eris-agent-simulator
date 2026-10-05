@@ -139,6 +139,18 @@ class G0Tests(unittest.TestCase):
             (agents/'a/prompt.md').write_text('changed')
             self.assertEqual(g0.evaluate(self.index,self.roster,['calm'],['1'],manifest='g0-fixture')['status'],'FAIL')
 
+    def test_manifest_prompt_required_except_for_reference_agents(self):
+        import round_manifest as m
+        agents=self.root/'src2'
+        for aid in ['noop','a']:
+            (agents/aid).mkdir(parents=True); (agents/aid/'agent.ts').write_text('fixture')
+        roster=self.root/'roster2.yaml'
+        roster.write_text('agents:\n  - {id: noop, wallet: AUTO, baseline: true}\n  - {id: a, wallet: AUTO}\n')
+        with self.assertRaisesRegex(ValueError,'missing prompt.md: a'): m.snapshot(roster,agents)
+        (agents/'a/prompt.md').write_text('fixture')
+        snap=m.snapshot(roster,agents)
+        self.assertIn('noop',snap['agents']); self.assertNotIn('prompt.md',snap['agents']['noop']['files'])
+
     def test_baseline_comparison_is_called(self):
         import g0
         import shutil

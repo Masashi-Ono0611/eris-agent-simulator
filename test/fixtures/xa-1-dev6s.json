@@ -1,0 +1,262 @@
+{
+  "runId": "2026-10-04T15-00-28-261Z",
+  "seed": 38003,
+  "regime": "calm",
+  "sourceCommit": "7179efe",
+  "sources": [
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/runs/2026-10-04T15-00-28-261Z/agents/cand.jsonl",
+      "sha256": "d41c7e9ef7be9cc97270648ed088a2a7d55b180ea4f006d8e3b9de3c67447569"
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/runs/2026-10-04T15-00-28-261Z/blocks.csv",
+      "sha256": "1b6f2b4acdd1f9052633e32ae5c99c8f7462008b05febe8863fc9b70a652b073"
+    }
+  ],
+  "caveat": "Wallet is the agent ledger, NOT raw observations. 1299/1306 were updated by exact balance confirmation; after 1312 it stays frozen. An unchanged post-rejection observation in tests is inferred from submit_failed and no further mined cand tx. Markets, late fills, WBTC cases and RPC context in tests are synthetic, not a historical strategy/performance replay.",
+  "counts": {
+    "rows": 725,
+    "decisions": 362,
+    "pendingDecisions": 333,
+    "bytes": 516009
+  },
+  "runtime": [
+    {
+      "agentId": "cand",
+      "kind": "mempool",
+      "event": "runtime_start"
+    },
+    {
+      "agentId": "cand",
+      "kind": "mempool",
+      "event": "submitted",
+      "hash": "0xd3ab0c93f8b26ce7db789220c4778bee8f0329df2e6ac6c60531ca6afcafd84d",
+      "nonce": 30,
+      "priorityFeeWei": "298000000",
+      "amount": "1000000000",
+      "blockSeen": 1298
+    },
+    {
+      "agentId": "cand",
+      "kind": "mempool",
+      "event": "submitted",
+      "hash": "0xf1226bb8602c07e74aab091ff2497f54227145e7dbb11f796f4c0dde23007870",
+      "nonce": 31,
+      "priorityFeeWei": "252000000",
+      "amount": "332580878762405375",
+      "blockSeen": 1305
+    },
+    {
+      "agentId": "cand",
+      "kind": "mempool",
+      "event": "submit_failed",
+      "amount": "1000000000",
+      "blockSeen": 1312,
+      "error": "Execution reverted with reason: Too little received."
+    }
+  ],
+  "frames": [
+    {
+      "block": 1298,
+      "action": {
+        "type": "swap",
+        "base": "WETH",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "298000000"
+      },
+      "wallet": {
+        "USDC": "25000000000",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998646705000000000"
+      },
+      "pending": {
+        "phase": "entry",
+        "sentBlock": 1298
+      },
+      "lot": null,
+      "closed": 0
+    },
+    {
+      "block": 1299,
+      "action": {
+        "type": "noop",
+        "reason": "no budgeted liquid exit; new entries locked"
+      },
+      "wallet": {
+        "USDC": "24000000000",
+        "WETH": "8332580878762405375",
+        "WBTC": "40000000",
+        "ETH": "998614691754000000"
+      },
+      "pending": null,
+      "lot": {
+        "quantity": "332580878762405375",
+        "entryGasWei": "32013246000000",
+        "confirmedBlock": 1299
+      },
+      "closed": 0
+    },
+    {
+      "block": 1305,
+      "action": {
+        "type": "swap",
+        "base": "WETH",
+        "tokenIn": "WETH",
+        "amountIn": "332580878762405375",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "252000000"
+      },
+      "wallet": {
+        "USDC": "24000000000",
+        "WETH": "8332580878762405375",
+        "WBTC": "40000000",
+        "ETH": "998614691754000000"
+      },
+      "pending": {
+        "phase": "exit",
+        "sentBlock": 1305
+      },
+      "lot": {
+        "quantity": "332580878762405375",
+        "entryGasWei": "32013246000000",
+        "confirmedBlock": 1299
+      },
+      "closed": 0
+    },
+    {
+      "block": 1306,
+      "action": {
+        "type": "noop",
+        "reason": "no admissible round-trip plan"
+      },
+      "wallet": {
+        "USDC": "24996298130",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998587574538000000"
+      },
+      "pending": null,
+      "lot": null,
+      "closed": 1
+    },
+    {
+      "block": 1312,
+      "action": {
+        "type": "swap",
+        "base": "WETH",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "269000000"
+      },
+      "wallet": {
+        "USDC": "24996298130",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998587574538000000"
+      },
+      "pending": {
+        "phase": "entry",
+        "sentBlock": 1312
+      },
+      "lot": null,
+      "closed": 1
+    },
+    {
+      "block": 1313,
+      "action": {
+        "type": "noop",
+        "reason": "pending confirmation; both legs reserved"
+      },
+      "wallet": {
+        "USDC": "24996298130",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998587574538000000"
+      },
+      "pending": {
+        "phase": "entry",
+        "sentBlock": 1312
+      },
+      "lot": null,
+      "closed": 1
+    },
+    {
+      "block": 1320,
+      "action": {
+        "type": "noop",
+        "reason": "pending confirmation; both legs reserved"
+      },
+      "wallet": {
+        "USDC": "24996298130",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998587574538000000"
+      },
+      "pending": {
+        "phase": "entry",
+        "sentBlock": 1312
+      },
+      "lot": null,
+      "closed": 1
+    },
+    {
+      "block": 1645,
+      "action": {
+        "type": "noop",
+        "reason": "pending confirmation; both legs reserved"
+      },
+      "wallet": {
+        "USDC": "24996298130",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998587574538000000"
+      },
+      "pending": {
+        "phase": "entry",
+        "sentBlock": 1312
+      },
+      "lot": null,
+      "closed": 1
+    }
+  ],
+  "mined": [
+    {
+      "round": "1299",
+      "blockNumber": "1299",
+      "txIndex": "11",
+      "hash": "0xd3ab0c93f8b26ce7db789220c4778bee8f0329df2e6ac6c60531ca6afcafd84d",
+      "from": "0xad1c9d9a923f5563effc454707c978d46e5afa05",
+      "priorityFeeWei": "298000000",
+      "status": "success",
+      "ownerId": "cand",
+      "role": "agent",
+      "actionType": "direct",
+      "bundleId": "",
+      "bundleIndex": "",
+      "method": "exactInputSingle",
+      "gasUsed": "107427",
+      "maxFeePerGasWei": "298000000"
+    },
+    {
+      "round": "1306",
+      "blockNumber": "1306",
+      "txIndex": "10",
+      "hash": "0xf1226bb8602c07e74aab091ff2497f54227145e7dbb11f796f4c0dde23007870",
+      "from": "0xad1c9d9a923f5563effc454707c978d46e5afa05",
+      "priorityFeeWei": "252000000",
+      "status": "success",
+      "ownerId": "cand",
+      "role": "agent",
+      "actionType": "direct",
+      "bundleId": "",
+      "bundleIndex": "",
+      "method": "exactInputSingle",
+      "gasUsed": "107608",
+      "maxFeePerGasWei": "252000000"
+    }
+  ]
+}

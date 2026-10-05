@@ -1,0 +1,18 @@
+{
+ "S01": "sonnet-B1-r2",
+ "S02": "opus-B1-r1",
+ "S03": "sonnet-B1-r1",
+ "S04": "grok-B1-r2",
+ "S05": "opus-B1-r2",
+ "S06": "astra-B0-r2",
+ "S07": "opus-B0-r2",
+ "S08": "astra-B1-r1",
+ "S09": "astra-B1-r2",
+ "S10": "opus-B0-r1",
+ "S11": "sonnet-B0-r2",
+ "S12": "grok-B1-r1",
+ "S13": "grok-B0-r1",
+ "S14": "sonnet-B0-r1",
+ "S15": "astra-B0-r1",
+ "S16": "grok-B0-r2"
+}

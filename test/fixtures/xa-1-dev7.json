@@ -1,0 +1,1507 @@
+{
+  "runId": "2026-10-04T15-26-26-620Z",
+  "seed": 38004,
+  "regime": "calm",
+  "sourceCommit": "6cd9e70",
+  "sources": [
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/runs/2026-10-04T15-26-26-620Z/agents/cand.jsonl",
+      "sha256": "c059dc20496307b7f193856047f59bec5401765cc58bde58edcdc2723d30f1e3"
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/runs/2026-10-04T15-26-26-620Z/blocks.csv",
+      "sha256": "a45e284fc0b6fba5cf590c88a93a924c5d074e5b4b40c270119f95f49a8336a1"
+    }
+  ],
+  "caveat": "state.observed is the raw wallet emitted only on change by 6cd9e70; carried forward between changes. Markets and public nonce RPC evidence in tests are synthetic. Block inclusion/gas are cross-checked against blocks.csv. No historical nonce RPC replay or performance claim.",
+  "counts": {
+    "rows": 725,
+    "decisions": 362,
+    "submitted": 18,
+    "submitFailed": 1
+  },
+  "trades": [
+    {
+      "line": 29,
+      "event": {
+        "event": "submitted",
+        "hash": "0x6610e1de6b231a0ba1c2e2d259388b60466993d98656d19148e24b4fbb38d1cf",
+        "nonce": 30,
+        "priorityFeeWei": "290000000",
+        "amount": "1000000000",
+        "blockSeen": 1298
+      },
+      "action": {
+        "type": "curveSwap",
+        "base": "WETH",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "290000000"
+      },
+      "before": {
+        "USDC": "25000000000",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998646705000000000"
+      },
+      "after": {
+        "USDC": "24000000000",
+        "WETH": "8332129559965785961",
+        "WBTC": "40000000",
+        "ETH": "998605019530000000"
+      },
+      "observedBlock": 1299,
+      "delta": {
+        "USDC": "-1000000000",
+        "WETH": "332129559965785961",
+        "WBTC": "0",
+        "ETH": "-41685470000000"
+      },
+      "mined": {
+        "blockNumber": "1299",
+        "status": "success",
+        "gasUsed": "143743",
+        "priorityFeeWei": "290000000"
+      }
+    },
+    {
+      "line": 39,
+      "event": {
+        "event": "submitted",
+        "hash": "0x8b3ab1436c623ca198e0bedd5203912ff0462f8ad31d22b0ac70dc7b715b6532",
+        "nonce": 31,
+        "priorityFeeWei": "263000000",
+        "amount": "332129559965785961",
+        "blockSeen": 1303
+      },
+      "action": {
+        "type": "swap",
+        "base": "WETH",
+        "tokenIn": "WETH",
+        "amountIn": "332129559965785961",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "263000000"
+      },
+      "before": {
+        "USDC": "24000000000",
+        "WETH": "8332129559965785961",
+        "WBTC": "40000000",
+        "ETH": "998605019530000000"
+      },
+      "after": {
+        "USDC": "25002391628",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998576984782000000"
+      },
+      "observedBlock": 1304,
+      "delta": {
+        "USDC": "1002391628",
+        "WETH": "-332129559965785961",
+        "WBTC": "0",
+        "ETH": "-28034748000000"
+      },
+      "mined": {
+        "blockNumber": "1304",
+        "status": "success",
+        "gasUsed": "106596",
+        "priorityFeeWei": "263000000"
+      }
+    },
+    {
+      "line": 87,
+      "event": {
+        "event": "submitted",
+        "hash": "0xd9c8f27373d99900f132cddd4f25fe525f261bfcb1dda209406f170dbdea1213",
+        "nonce": 32,
+        "priorityFeeWei": "290000000",
+        "amount": "1000000000",
+        "blockSeen": 1327
+      },
+      "action": {
+        "type": "curveSwap",
+        "base": "WBTC",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "290000000"
+      },
+      "before": {
+        "USDC": "25002391628",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998576984782000000"
+      },
+      "after": {
+        "USDC": "24002391628",
+        "WETH": "8000000000000000000",
+        "WBTC": "41656956",
+        "ETH": "998535335272000000"
+      },
+      "observedBlock": 1328,
+      "delta": {
+        "USDC": "-1000000000",
+        "WETH": "0",
+        "WBTC": "1656956",
+        "ETH": "-41649510000000"
+      },
+      "mined": {
+        "blockNumber": "1328",
+        "status": "success",
+        "gasUsed": "143619",
+        "priorityFeeWei": "290000000"
+      }
+    },
+    {
+      "line": 89,
+      "event": {
+        "event": "submitted",
+        "hash": "0x2187fc0d3180873ee2d0bc3e06f471a8a962fd7d5dea3f6acd4e36a9d1c3e46d",
+        "nonce": 33,
+        "priorityFeeWei": "297000000",
+        "amount": "1656956",
+        "blockSeen": 1328
+      },
+      "action": {
+        "type": "swap",
+        "base": "WBTC",
+        "tokenIn": "WBTC",
+        "amountIn": "1656956",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "297000000"
+      },
+      "before": {
+        "USDC": "24002391628",
+        "WETH": "8000000000000000000",
+        "WBTC": "41656956",
+        "ETH": "998535335272000000"
+      },
+      "after": {
+        "USDC": "25005984452",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998503701802000000"
+      },
+      "observedBlock": 1329,
+      "delta": {
+        "USDC": "1003592824",
+        "WETH": "0",
+        "WBTC": "-1656956",
+        "ETH": "-31633470000000"
+      },
+      "mined": {
+        "blockNumber": "1329",
+        "status": "success",
+        "gasUsed": "106510",
+        "priorityFeeWei": "297000000"
+      }
+    },
+    {
+      "line": 95,
+      "event": {
+        "event": "submitted",
+        "hash": "0xb56cd2027192339db0730627816e93cc59c6c98be13044086089bedcee8eae34",
+        "nonce": 34,
+        "priorityFeeWei": "291000000",
+        "amount": "1000000000",
+        "blockSeen": 1331
+      },
+      "action": {
+        "type": "curveSwap",
+        "base": "WBTC",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "291000000"
+      },
+      "before": {
+        "USDC": "25005984452",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998503701802000000"
+      },
+      "after": {
+        "USDC": "24005984452",
+        "WETH": "8000000000000000000",
+        "WBTC": "41654840",
+        "ETH": "998461908673000000"
+      },
+      "observedBlock": 1332,
+      "delta": {
+        "USDC": "-1000000000",
+        "WETH": "0",
+        "WBTC": "1654840",
+        "ETH": "-41793129000000"
+      },
+      "mined": {
+        "blockNumber": "1332",
+        "status": "success",
+        "gasUsed": "143619",
+        "priorityFeeWei": "291000000"
+      }
+    },
+    {
+      "line": 97,
+      "event": {
+        "event": "submitted",
+        "hash": "0x5d4664bc2a910f19624438c59dbc5a092afe30b2ff3b26939d8ab296f232ac39",
+        "nonce": 35,
+        "priorityFeeWei": "294000000",
+        "amount": "1654840",
+        "blockSeen": 1332
+      },
+      "action": {
+        "type": "swap",
+        "base": "WBTC",
+        "tokenIn": "WBTC",
+        "amountIn": "1654840",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "294000000"
+      },
+      "before": {
+        "USDC": "24005984452",
+        "WETH": "8000000000000000000",
+        "WBTC": "41654840",
+        "ETH": "998461908673000000"
+      },
+      "after": {
+        "USDC": "25010031601",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998430594733000000"
+      },
+      "observedBlock": 1333,
+      "delta": {
+        "USDC": "1004047149",
+        "WETH": "0",
+        "WBTC": "-1654840",
+        "ETH": "-31313940000000"
+      },
+      "mined": {
+        "blockNumber": "1333",
+        "status": "success",
+        "gasUsed": "106510",
+        "priorityFeeWei": "294000000"
+      }
+    },
+    {
+      "line": 99,
+      "event": {
+        "event": "submitted",
+        "hash": "0x289277004d2217582f7bded387409dfae6bfc846dca34f1fb61db47e5ea0b1ed",
+        "nonce": 36,
+        "priorityFeeWei": "254000000",
+        "amount": "1000000000",
+        "blockSeen": 1333
+      },
+      "action": {
+        "type": "curveSwap",
+        "base": "WBTC",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "254000000"
+      },
+      "before": {
+        "USDC": "25010031601",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998430594733000000"
+      },
+      "after": {
+        "USDC": "24010031601",
+        "WETH": "8000000000000000000",
+        "WBTC": "41652993",
+        "ETH": "998394118047000000"
+      },
+      "observedBlock": 1334,
+      "delta": {
+        "USDC": "-1000000000",
+        "WETH": "0",
+        "WBTC": "1652993",
+        "ETH": "-36476686000000"
+      },
+      "mined": {
+        "blockNumber": "1334",
+        "status": "success",
+        "gasUsed": "143609",
+        "priorityFeeWei": "254000000"
+      }
+    },
+    {
+      "line": 101,
+      "event": {
+        "event": "submitted",
+        "hash": "0xa3ed431ec35c5a5a3e5b31e91df4424176c1d867c02b9910e0335c694b84eba0",
+        "nonce": 37,
+        "priorityFeeWei": "299000000",
+        "amount": "1652993",
+        "blockSeen": 1334
+      },
+      "action": {
+        "type": "swap",
+        "base": "WBTC",
+        "tokenIn": "WBTC",
+        "amountIn": "1652993",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "299000000"
+      },
+      "before": {
+        "USDC": "24010031601",
+        "WETH": "8000000000000000000",
+        "WBTC": "41652993",
+        "ETH": "998394118047000000"
+      },
+      "after": {
+        "USDC": "25013267959",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998361961195000000"
+      },
+      "observedBlock": 1335,
+      "delta": {
+        "USDC": "1003236358",
+        "WETH": "0",
+        "WBTC": "-1652993",
+        "ETH": "-32156852000000"
+      },
+      "mined": {
+        "blockNumber": "1335",
+        "status": "success",
+        "gasUsed": "107548",
+        "priorityFeeWei": "299000000"
+      }
+    },
+    {
+      "line": 105,
+      "event": {
+        "event": "submitted",
+        "hash": "0x45b3dd62bafe96e2165e7f11263766da1d3a8bf9cb2d5f3b614299f68d3bff8c",
+        "nonce": 38,
+        "priorityFeeWei": "251000000",
+        "amount": "1000000000",
+        "blockSeen": 1336
+      },
+      "action": {
+        "type": "curveSwap",
+        "base": "WBTC",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "251000000"
+      },
+      "before": {
+        "USDC": "25013267959",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998361961195000000"
+      },
+      "after": {
+        "USDC": "24013267959",
+        "WETH": "8000000000000000000",
+        "WBTC": "41649976",
+        "ETH": "998325915336000000"
+      },
+      "observedBlock": 1337,
+      "delta": {
+        "USDC": "-1000000000",
+        "WETH": "0",
+        "WBTC": "1649976",
+        "ETH": "-36045859000000"
+      },
+      "mined": {
+        "blockNumber": "1337",
+        "status": "success",
+        "gasUsed": "143609",
+        "priorityFeeWei": "251000000"
+      }
+    },
+    {
+      "line": 107,
+      "event": {
+        "event": "submitted",
+        "hash": "0x9433a502d3c895143757f7d9e6d7ddfc4531fd98a8c32956bf780b82aa626f69",
+        "nonce": 39,
+        "priorityFeeWei": "277000000",
+        "amount": "1649976",
+        "blockSeen": 1337
+      },
+      "action": {
+        "type": "swap",
+        "base": "WBTC",
+        "tokenIn": "WBTC",
+        "amountIn": "1649976",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "277000000"
+      },
+      "before": {
+        "USDC": "24013267959",
+        "WETH": "8000000000000000000",
+        "WBTC": "41649976",
+        "ETH": "998325915336000000"
+      },
+      "after": {
+        "USDC": "25016318002",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998296136728000000"
+      },
+      "observedBlock": 1338,
+      "delta": {
+        "USDC": "1003050043",
+        "WETH": "0",
+        "WBTC": "-1649976",
+        "ETH": "-29778608000000"
+      },
+      "mined": {
+        "blockNumber": "1338",
+        "status": "success",
+        "gasUsed": "107504",
+        "priorityFeeWei": "277000000"
+      }
+    },
+    {
+      "line": 109,
+      "event": {
+        "event": "submitted",
+        "hash": "0x13268a365e1bf3f427f57a7eddcf42fa03a9772708a3dd406b40aaea3452568a",
+        "nonce": 40,
+        "priorityFeeWei": "256000000",
+        "amount": "1000000000",
+        "blockSeen": 1338
+      },
+      "action": {
+        "type": "curveSwap",
+        "base": "WBTC",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "256000000"
+      },
+      "before": {
+        "USDC": "25016318002",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998296136728000000"
+      },
+      "after": {
+        "USDC": "24016318002",
+        "WETH": "8000000000000000000",
+        "WBTC": "41652795",
+        "ETH": "998259370264000000"
+      },
+      "observedBlock": 1339,
+      "delta": {
+        "USDC": "-1000000000",
+        "WETH": "0",
+        "WBTC": "1652795",
+        "ETH": "-36766464000000"
+      },
+      "mined": {
+        "blockNumber": "1339",
+        "status": "success",
+        "gasUsed": "143619",
+        "priorityFeeWei": "256000000"
+      }
+    },
+    {
+      "line": 111,
+      "event": {
+        "event": "submitted",
+        "hash": "0x6621aa747142a9f0e9d9428e138d84121033e2652ebdcb18c7592a57310fa909",
+        "nonce": 41,
+        "priorityFeeWei": "296000000",
+        "amount": "1652795",
+        "blockSeen": 1339
+      },
+      "action": {
+        "type": "swap",
+        "base": "WBTC",
+        "tokenIn": "WBTC",
+        "amountIn": "1652795",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "296000000"
+      },
+      "before": {
+        "USDC": "24016318002",
+        "WETH": "8000000000000000000",
+        "WBTC": "41652795",
+        "ETH": "998259370264000000"
+      },
+      "after": {
+        "USDC": "25022761318",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998227547896000000"
+      },
+      "observedBlock": 1340,
+      "delta": {
+        "USDC": "1006443316",
+        "WETH": "0",
+        "WBTC": "-1652795",
+        "ETH": "-31822368000000"
+      },
+      "mined": {
+        "blockNumber": "1340",
+        "status": "success",
+        "gasUsed": "107508",
+        "priorityFeeWei": "296000000"
+      }
+    },
+    {
+      "line": 113,
+      "event": {
+        "event": "submitted",
+        "hash": "0x5625c96ecbb8bbbb2e08d947fe6e1d6876133d9f627e5553eaff9d96cd4ee44a",
+        "nonce": 42,
+        "priorityFeeWei": "282000000",
+        "amount": "1000000000",
+        "blockSeen": 1340
+      },
+      "action": {
+        "type": "curveSwap",
+        "base": "WBTC",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "282000000"
+      },
+      "before": {
+        "USDC": "25022761318",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998227547896000000"
+      },
+      "after": {
+        "USDC": "24022761318",
+        "WETH": "8000000000000000000",
+        "WBTC": "41649964",
+        "ETH": "998187047338000000"
+      },
+      "observedBlock": 1341,
+      "delta": {
+        "USDC": "-1000000000",
+        "WETH": "0",
+        "WBTC": "1649964",
+        "ETH": "-40500558000000"
+      },
+      "mined": {
+        "blockNumber": "1341",
+        "status": "success",
+        "gasUsed": "143619",
+        "priorityFeeWei": "282000000"
+      }
+    },
+    {
+      "line": 115,
+      "event": {
+        "event": "submitted",
+        "hash": "0xcca8b34718c8b095098c9b5e752934a84aa2eb42da19c3484f664dd7c3859ca5",
+        "nonce": 43,
+        "priorityFeeWei": "260000000",
+        "amount": "1649964",
+        "blockSeen": 1341
+      },
+      "action": {
+        "type": "swap",
+        "base": "WBTC",
+        "tokenIn": "WBTC",
+        "amountIn": "1649964",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "260000000"
+      },
+      "before": {
+        "USDC": "24022761318",
+        "WETH": "8000000000000000000",
+        "WBTC": "41649964",
+        "ETH": "998187047338000000"
+      },
+      "after": {
+        "USDC": "25027704620",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998159095258000000"
+      },
+      "observedBlock": 1342,
+      "delta": {
+        "USDC": "1004943302",
+        "WETH": "0",
+        "WBTC": "-1649964",
+        "ETH": "-27952080000000"
+      },
+      "mined": {
+        "blockNumber": "1342",
+        "status": "success",
+        "gasUsed": "107508",
+        "priorityFeeWei": "260000000"
+      }
+    },
+    {
+      "line": 119,
+      "event": {
+        "event": "submitted",
+        "hash": "0x8a90223c6165c4faa7ad09f846497660f6d358f4ece482ee344e84e4f3c600eb",
+        "nonce": 44,
+        "priorityFeeWei": "292000000",
+        "amount": "1000000000",
+        "blockSeen": 1343
+      },
+      "action": {
+        "type": "curveSwap",
+        "base": "WBTC",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "292000000"
+      },
+      "before": {
+        "USDC": "25027704620",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998159095258000000"
+      },
+      "after": {
+        "USDC": "24027704620",
+        "WETH": "8000000000000000000",
+        "WBTC": "41646294",
+        "ETH": "998117163766000000"
+      },
+      "observedBlock": 1344,
+      "delta": {
+        "USDC": "-1000000000",
+        "WETH": "0",
+        "WBTC": "1646294",
+        "ETH": "-41931492000000"
+      },
+      "mined": {
+        "blockNumber": "1344",
+        "status": "success",
+        "gasUsed": "143601",
+        "priorityFeeWei": "292000000"
+      }
+    },
+    {
+      "line": 121,
+      "event": {
+        "event": "submitted",
+        "hash": "0xf559113fdf839ae808a0d3018c162c141c9f8014d53382f8f7ad73f09683da8e",
+        "nonce": 45,
+        "priorityFeeWei": "292000000",
+        "amount": "1646294",
+        "blockSeen": 1344
+      },
+      "action": {
+        "type": "swap",
+        "base": "WBTC",
+        "tokenIn": "WBTC",
+        "amountIn": "1646294",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "292000000"
+      },
+      "before": {
+        "USDC": "24027704620",
+        "WETH": "8000000000000000000",
+        "WBTC": "41646294",
+        "ETH": "998117163766000000"
+      },
+      "after": {
+        "USDC": "25031625616",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998085775518000000"
+      },
+      "observedBlock": 1345,
+      "delta": {
+        "USDC": "1003920996",
+        "WETH": "0",
+        "WBTC": "-1646294",
+        "ETH": "-31388248000000"
+      },
+      "mined": {
+        "blockNumber": "1345",
+        "status": "success",
+        "gasUsed": "107494",
+        "priorityFeeWei": "292000000"
+      }
+    },
+    {
+      "line": 123,
+      "event": {
+        "event": "submitted",
+        "hash": "0x78746862a0d9a80b31239051a5b9aaa607f1d26a5840cb47995032f3022126fb",
+        "nonce": 46,
+        "priorityFeeWei": "256000000",
+        "amount": "1000000000",
+        "blockSeen": 1345
+      },
+      "action": {
+        "type": "curveSwap",
+        "base": "WBTC",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "256000000"
+      },
+      "before": {
+        "USDC": "25031625616",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998085775518000000"
+      },
+      "after": {
+        "USDC": "24031625616",
+        "WETH": "8000000000000000000",
+        "WBTC": "41651176",
+        "ETH": "998049011614000000"
+      },
+      "observedBlock": 1346,
+      "delta": {
+        "USDC": "-1000000000",
+        "WETH": "0",
+        "WBTC": "1651176",
+        "ETH": "-36763904000000"
+      },
+      "mined": {
+        "blockNumber": "1346",
+        "status": "success",
+        "gasUsed": "143609",
+        "priorityFeeWei": "256000000"
+      }
+    },
+    {
+      "line": 125,
+      "event": {
+        "event": "submitted",
+        "hash": "0x3b7d83235dfe5ce9858e7f16b2628745a16d43a3c82f156f6ed1e2d542e66da3",
+        "nonce": 47,
+        "priorityFeeWei": "285000000",
+        "amount": "1651176",
+        "blockSeen": 1346
+      },
+      "action": {
+        "type": "swap",
+        "base": "WBTC",
+        "tokenIn": "WBTC",
+        "amountIn": "1651176",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "285000000"
+      },
+      "before": {
+        "USDC": "24031625616",
+        "WETH": "8000000000000000000",
+        "WBTC": "41651176",
+        "ETH": "998049011614000000"
+      },
+      "after": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "observedBlock": 1347,
+      "delta": {
+        "USDC": "1006418930",
+        "WETH": "0",
+        "WBTC": "-1651176",
+        "ETH": "-30646620000000"
+      },
+      "mined": {
+        "blockNumber": "1347",
+        "status": "success",
+        "gasUsed": "107532",
+        "priorityFeeWei": "285000000"
+      }
+    },
+    {
+      "line": 181,
+      "event": {
+        "event": "submit_failed",
+        "amount": "1000000000",
+        "blockSeen": 1374,
+        "error": "Execution reverted with reason: Too little received."
+      },
+      "action": {
+        "type": "swap",
+        "base": "WETH",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "251000000"
+      },
+      "before": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "after": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "observedBlock": 1382,
+      "delta": {
+        "USDC": "0",
+        "WETH": "0",
+        "WBTC": "0",
+        "ETH": "0"
+      },
+      "mined": null
+    }
+  ],
+  "frames": [
+    {
+      "line": 28,
+      "block": 1298,
+      "action": {
+        "type": "curveSwap",
+        "base": "WETH",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "290000000"
+      },
+      "state": {
+        "mode": "normal",
+        "pending": {
+          "phase": "entry",
+          "sentBlock": 1298,
+          "base": "WETH"
+        },
+        "closed": 0,
+        "realizedNet": 0
+      },
+      "wallet": {
+        "USDC": "25000000000",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998646705000000000"
+      },
+      "walletSourceLine": 2
+    },
+    {
+      "line": 30,
+      "block": 1299,
+      "action": {
+        "type": "noop",
+        "reason": "no budgeted liquid exit; new entries locked"
+      },
+      "state": {
+        "mode": "normal",
+        "lot": {
+          "id": 1,
+          "base": "WETH",
+          "quantity": "332129559965785961",
+          "deadlineBlock": 1305
+        },
+        "closed": 0,
+        "realizedNet": 0,
+        "observed": {
+          "USDC": "24000000000",
+          "WETH": "8332129559965785961",
+          "WBTC": "40000000",
+          "ETH": "998605019530000000"
+        }
+      },
+      "wallet": {
+        "USDC": "24000000000",
+        "WETH": "8332129559965785961",
+        "WBTC": "40000000",
+        "ETH": "998605019530000000"
+      },
+      "walletSourceLine": 30
+    },
+    {
+      "line": 38,
+      "block": 1303,
+      "action": {
+        "type": "swap",
+        "base": "WETH",
+        "tokenIn": "WETH",
+        "amountIn": "332129559965785961",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "263000000"
+      },
+      "state": {
+        "mode": "normal",
+        "pending": {
+          "phase": "exit",
+          "sentBlock": 1303,
+          "base": "WETH"
+        },
+        "lot": {
+          "id": 1,
+          "base": "WETH",
+          "quantity": "332129559965785961",
+          "deadlineBlock": 1305
+        },
+        "closed": 0,
+        "realizedNet": 0
+      },
+      "wallet": {
+        "USDC": "24000000000",
+        "WETH": "8332129559965785961",
+        "WBTC": "40000000",
+        "ETH": "998605019530000000"
+      },
+      "walletSourceLine": 30
+    },
+    {
+      "line": 40,
+      "block": 1304,
+      "action": {
+        "type": "noop",
+        "reason": "no admissible round-trip plan"
+      },
+      "state": {
+        "mode": "normal",
+        "closed": 1,
+        "realizedNet": 2.178915511788046,
+        "observed": {
+          "USDC": "25002391628",
+          "WETH": "8000000000000000000",
+          "WBTC": "40000000",
+          "ETH": "998576984782000000"
+        }
+      },
+      "wallet": {
+        "USDC": "25002391628",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998576984782000000"
+      },
+      "walletSourceLine": 40
+    },
+    {
+      "line": 126,
+      "block": 1347,
+      "action": {
+        "type": "noop",
+        "reason": "no admissible round-trip plan"
+      },
+      "state": {
+        "mode": "normal",
+        "closed": 9,
+        "realizedNet": 36.13184662720762,
+        "observed": {
+          "USDC": "25038044546",
+          "WETH": "8000000000000000000",
+          "WBTC": "40000000",
+          "ETH": "998018364994000000"
+        }
+      },
+      "wallet": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "walletSourceLine": 126
+    },
+    {
+      "line": 180,
+      "block": 1374,
+      "action": {
+        "type": "swap",
+        "base": "WETH",
+        "tokenIn": "USDC",
+        "amountIn": "1000000000",
+        "slippageBps": 20,
+        "maxPriorityFeePerGasWei": "251000000"
+      },
+      "state": {
+        "mode": "normal",
+        "pending": {
+          "phase": "entry",
+          "sentBlock": 1374,
+          "base": "WETH"
+        },
+        "closed": 9,
+        "realizedNet": 36.13184662720762
+      },
+      "wallet": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "walletSourceLine": 126
+    },
+    {
+      "line": 182,
+      "block": 1375,
+      "action": {
+        "type": "noop",
+        "reason": "pending confirmation; both legs reserved"
+      },
+      "state": {
+        "mode": "normal",
+        "pending": {
+          "phase": "entry",
+          "sentBlock": 1374,
+          "base": "WETH"
+        },
+        "closed": 9,
+        "realizedNet": 36.13184662720762
+      },
+      "wallet": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "walletSourceLine": 126
+    },
+    {
+      "line": 194,
+      "block": 1381,
+      "action": {
+        "type": "noop",
+        "reason": "pending confirmation; both legs reserved"
+      },
+      "state": {
+        "mode": "normal",
+        "pending": {
+          "phase": "entry",
+          "sentBlock": 1374,
+          "base": "WETH"
+        },
+        "closed": 9,
+        "realizedNet": 36.13184662720762
+      },
+      "wallet": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "walletSourceLine": 126
+    },
+    {
+      "line": 196,
+      "block": 1382,
+      "action": {
+        "type": "noop",
+        "reason": "confirmation unresolved; recovery only; both legs reserved"
+      },
+      "state": {
+        "mode": "recovery_wait",
+        "halt": "confirmation deadline; recovery only",
+        "pending": {
+          "phase": "entry",
+          "sentBlock": 1374,
+          "base": "WETH"
+        },
+        "closed": 9,
+        "realizedNet": 36.13184662720762
+      },
+      "wallet": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "walletSourceLine": 126
+    },
+    {
+      "line": 198,
+      "block": 1383,
+      "action": {
+        "type": "noop",
+        "reason": "confirmation unresolved; recovery only; both legs reserved"
+      },
+      "state": {
+        "mode": "recovery_wait",
+        "halt": "confirmation deadline; recovery only",
+        "pending": {
+          "phase": "entry",
+          "sentBlock": 1374,
+          "base": "WETH"
+        },
+        "closed": 9,
+        "realizedNet": 36.13184662720762
+      },
+      "wallet": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "walletSourceLine": 126
+    },
+    {
+      "line": 200,
+      "block": 1384,
+      "action": {
+        "type": "noop",
+        "reason": "confirmation unresolved; recovery only; both legs reserved"
+      },
+      "state": {
+        "mode": "recovery_wait",
+        "halt": "confirmation deadline; recovery only",
+        "pending": {
+          "phase": "entry",
+          "sentBlock": 1374,
+          "base": "WETH"
+        },
+        "closed": 9,
+        "realizedNet": 36.13184662720762
+      },
+      "wallet": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "walletSourceLine": 126
+    },
+    {
+      "line": 212,
+      "block": 1390,
+      "action": {
+        "type": "noop",
+        "reason": "confirmation unresolved; recovery only; both legs reserved"
+      },
+      "state": {
+        "mode": "recovery_wait",
+        "halt": "confirmation deadline; recovery only",
+        "pending": {
+          "phase": "entry",
+          "sentBlock": 1374,
+          "base": "WETH"
+        },
+        "closed": 9,
+        "realizedNet": 36.13184662720762
+      },
+      "wallet": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "walletSourceLine": 126
+    },
+    {
+      "line": 722,
+      "block": 1645,
+      "action": {
+        "type": "noop",
+        "reason": "confirmation unresolved; recovery only; both legs reserved"
+      },
+      "state": {
+        "mode": "recovery_wait",
+        "halt": "confirmation deadline; recovery only",
+        "pending": {
+          "phase": "entry",
+          "sentBlock": 1374,
+          "base": "WETH"
+        },
+        "closed": 9,
+        "realizedNet": 36.13184662720762
+      },
+      "wallet": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "walletSourceLine": 126
+    },
+    {
+      "line": 724,
+      "block": 1646,
+      "action": {
+        "type": "noop",
+        "reason": "valuation boundary or unknown horizon"
+      },
+      "state": {
+        "mode": "recovery_wait",
+        "halt": "confirmation deadline; recovery only",
+        "pending": {
+          "phase": "entry",
+          "sentBlock": 1374,
+          "base": "WETH"
+        },
+        "closed": 9,
+        "realizedNet": 36.13184662720762
+      },
+      "wallet": {
+        "USDC": "25038044546",
+        "WETH": "8000000000000000000",
+        "WBTC": "40000000",
+        "ETH": "998018364994000000"
+      },
+      "walletSourceLine": 126
+    }
+  ],
+  "seedAudit": {
+    "roots": [
+      "/Users/masashi_mac_ssd/Developer/majisuke/ascon",
+      "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval",
+      "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/league-v2"
+    ],
+    "areas": [
+      "runs",
+      "ascon-notes/eval/out"
+    ],
+    "indexes": [
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev1-xb-r/index.tsv",
+        "sha256": "8ec9fbf6f8ed17fdd151c543de40aef0f583ae0fd0ff099ebbf9039651d7c652",
+        "seeds": [
+          "31001",
+          "31002"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev2-xb-r/index.tsv",
+        "sha256": "40eb46b5c1683fb68573fe973ad354dbbaceaccb25f77cad800a661d746f1941",
+        "seeds": [
+          "31001",
+          "31002"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev3a-xb-r/index.tsv",
+        "sha256": "0a8f4c3a3d40c2ecf6c656f31bda4e60e379398b8a10a5b3a40a6ac0b31d7833",
+        "seeds": [
+          "35001",
+          "35002"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev3b-xb-r/index.tsv",
+        "sha256": "2e82712ef042c88aa57f87a12275f4f3ed7c9829d3c304723ffe5c555f51e8c4",
+        "seeds": [
+          "35001",
+          "35002"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "sha256": "7ae02b628eb8b57b00b34a1b35aebb6520bfb07bddf00c170af97b6dba43f119",
+        "seeds": [
+          "36001",
+          "36002"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "sha256": "5dcd35ae81a24f77632e252065b70fec2d9411f9e8040bc61b4ca09e04b45398",
+        "seeds": [
+          "36001",
+          "36002"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4s-xb-r/index.tsv",
+        "sha256": "d2e6c69a37c42363fd45eab3b12fb273f3031ea6ceac2ed8a47a38a07d2029a1",
+        "seeds": [
+          "36003"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "sha256": "47ffd0dc601d952acee0ed22d855b6c263a0a7341b6743a0c533895c8dbdd820",
+        "seeds": [
+          "36001",
+          "36002"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5b-xb-r/index.tsv",
+        "sha256": "b27528b52ddd26399c1781f96c73e1d49f163fed2088da9907864d78f3972cf6",
+        "seeds": [
+          "36001",
+          "36002"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5s-xb-r/index.tsv",
+        "sha256": "c5950b16f01dabb978b04ccb89b9868b1b2d83feb28f7ef2c33a78f1e240a0fc",
+        "seeds": [
+          "36004"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev6s-xa-1/index.tsv",
+        "sha256": "e0489da70e7f60146106938c7d14343d70dc5b3490c9594fcc91ac191ff59c44",
+        "seeds": [
+          "38003"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev7a-xa-1/.matrix-tmp-71394/index.tsv",
+        "sha256": "542f70da52d3d9a3d1a2c334eab14d751e6f8d91adf9183be8b339ba42401abe",
+        "seeds": []
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev7s-xa-1/index.tsv",
+        "sha256": "15f589b3a98b9130707409bfb4093d14e69c574b94a012d851c09b55b06c442f",
+        "seeds": [
+          "38004"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-inc-zeta/index.tsv",
+        "sha256": "03604880714ad97b203c492cbd27f881d50e7db758992fa4d7a93a83e3a77cc3",
+        "seeds": [
+          "201",
+          "202"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-opus-1/index.tsv",
+        "sha256": "5aca7a43e3a350caab397eaa0d012a4863d891836971436950ec958814e8d7c1",
+        "seeds": [
+          "201",
+          "202"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-sonnet-1/index.tsv",
+        "sha256": "c372a63eb6cc048f2228b9b02d3dece8b8ceb5b45925217ca9a61510efd44180",
+        "seeds": [
+          "201",
+          "202"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-zeta-2/index.tsv",
+        "sha256": "ce384d3c17f3b1c549165a3b10945e29e9e6fb8c30aac47533e4854e0a3f478f",
+        "seeds": [
+          "201",
+          "202"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-zeta-2a/index.tsv",
+        "sha256": "7d680d709fd3f671a06a4953f24b06eab8048c4bf4b6c516cd33b16145e933f8",
+        "seeds": [
+          "201",
+          "202"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-zeta-2c/index.tsv",
+        "sha256": "d94ab683ef95048f9e07c79af2e52ebe51ff7eacce1457f39338273bfa4c4b79",
+        "seeds": [
+          "201",
+          "202"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/livesmoke-xb-r-live-on/.matrix-tmp-82015/index.tsv",
+        "sha256": "542f70da52d3d9a3d1a2c334eab14d751e6f8d91adf9183be8b339ba42401abe",
+        "seeds": []
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0a-sonnet-1/index.tsv",
+        "sha256": "a7c81c0eb234f3bd6064174413fd9873055a11ca7d28f9b83f8753170a5e26c7",
+        "seeds": [
+          "41001",
+          "41002",
+          "41003",
+          "41004",
+          "41005"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0b-sonnet-1/index.tsv",
+        "sha256": "715588af6919f8e240139d3fb527e0d6976bf8863cc2b69ede69ec60ce8b386c",
+        "seeds": [
+          "41001",
+          "41002",
+          "41003",
+          "41004",
+          "41005"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0ba-opus-1/index.tsv",
+        "sha256": "dde307cc8cc43e1cc131b60ed80703fc68f4b4f8bad1353c62735d13b7491c77",
+        "seeds": [
+          "41101",
+          "41102",
+          "41103",
+          "41104",
+          "41105"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0bb-opus-1/index.tsv",
+        "sha256": "d42af852a690bf5ae9ff24c9a7fb97f03f772784646f7a4cda85e0b5d07d61e3",
+        "seeds": [
+          "41101",
+          "41102",
+          "41103",
+          "41104",
+          "41105"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0bc-opus-1/index.tsv",
+        "sha256": "adaf5e539d85b684152aa47a27c0793a29206e854e3e84e546f23d1e8c9940c6",
+        "seeds": [
+          "41101",
+          "41102",
+          "41103",
+          "41104",
+          "41105"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0c-sonnet-1/index.tsv",
+        "sha256": "e8ce8e3a5b71c1fc74ecad910fc38f79ed47a31ab41a5e04ce5c8b4ff882ec5c",
+        "seeds": [
+          "41001",
+          "41002",
+          "41003",
+          "41004",
+          "41005"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1/index.tsv",
+        "sha256": "991d26cae429deb15c9c386ed8a2e610efed26b29e71104c8ab89e1852082fe6",
+        "seeds": [
+          "201",
+          "202",
+          "203"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1b/.matrix-tmp-91878/index.tsv",
+        "sha256": "542f70da52d3d9a3d1a2c334eab14d751e6f8d91adf9183be8b339ba42401abe",
+        "seeds": []
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1c/index.tsv",
+        "sha256": "33853272a07d555cb196b49520db1905df11922bbaafadf43da1a59f9c751e72",
+        "seeds": [
+          "201",
+          "202",
+          "203"
+        ]
+      },
+      {
+        "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1m/index.tsv",
+        "sha256": "5a894edd3b8a72052ef414a332d4ef0c8574e9145726a33dac0290afebdaf748",
+        "seeds": [
+          "201",
+          "202",
+          "203"
+        ]
+      }
+    ],
+    "proposed": 38005,
+    "unused": true,
+    "reserved": [
+      38001,
+      38002
+    ],
+    "scope": "seed column of all discovered index.tsv files; no seed field exists in this run-start.json"
+  }
+}

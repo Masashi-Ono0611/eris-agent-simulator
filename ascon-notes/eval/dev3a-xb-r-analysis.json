@@ -1,0 +1,2898 @@
+{
+  "sourceCommit": "a646e9b1f57ecd342c9f3810805798c55df7a0cf",
+  "scriptSha256": "06cd487086536751704cd162760898d71dd5ff2eee7c2b14cc0799143d2fbe89",
+  "implementationSha256": "78d8fa43156cee872e1bcbcaf86c1da00f1aa1646c6b210e7af4b499edea4d04",
+  "worlds": [
+    {
+      "regime": "calm",
+      "seed": "35001",
+      "run": "runs/2026-10-04T07-23-53-218Z",
+      "elapsedMs": 721998,
+      "attempts": 47,
+      "loggedNoops": 315,
+      "frames": 361,
+      "agreement": 340,
+      "factors": {
+        "entry45": 26,
+        "entry20": 34,
+        "combined50": 28,
+        "entry50": 21,
+        "headroom10entry50": 16,
+        "settled60": 5,
+        "cooldown0": 7,
+        "band40": 72,
+        "bidBudget": 27
+      },
+      "sha256": {
+        "summary.json": "e72736795c48d1f629676749f5e32b7aa377856f0768d79ba6b11d65f22f3e89",
+        "market.json": "7be980a7d763e8ffe82f01efa507fa72d7192e2ddb320a6998c7791050b64e29",
+        "blocks.csv": "0baf4b15de0762b4b991c22cd97cb5af3c3638ef398eb7c40c42860a4d1e37de",
+        "agents/cand.jsonl": "e7ae61ad816d8e406b35aacb5157b572152a040ab64c1e59f176487a8b4e60da",
+        "agents/multi-arb.jsonl": "63dfb60144b0cf42e9d36b6bd3582f1023e61240d1474a639844c8eddd48bf57",
+        "agents/clean-arb.jsonl": "1408388ae00eab955139905703df46fcb05283b13f39a68f5d0bf29118342700"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -750.916832060364,
+          "excess": 160.4690810100874,
+          "included": 53,
+          "reverts": 0,
+          "submitted": 53,
+          "failed": 0,
+          "E": 690.9431589548057,
+          "M": -525.5052814416363,
+          "G": 4.968796233270897,
+          "turnover": 130927.91940199996,
+          "legs": 53,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 41,
+              "turnover": 120367.25033099994,
+              "E": 650.4264576339287,
+              "M": -525.1577550660855,
+              "finalContribution": 125.26870256784314,
+              "quotedEdgeBpsSum": 3026.168089977277,
+              "quotedEdgeSamples": 41
+            },
+            "bundle": {
+              "legs": 12,
+              "turnover": 10560.669070999998,
+              "E": 40.516701320876884,
+              "M": -0.34752637555092614,
+              "finalContribution": 40.16917494532597,
+              "quotedEdgeBpsSum": 427.2593300981087,
+              "quotedEdgeSamples": 12
+            }
+          },
+          "X": -2.6981109257917524e-07,
+          "execEdgeBps": 52.772789952717396,
+          "averageLegUsd": 2470.3381019245276,
+          "bundleCount": 6,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -308.8163704293838,
+          "excess": 602.5695426410675,
+          "included": 212,
+          "reverts": 0,
+          "submitted": 213,
+          "failed": 0,
+          "E": 2528.5050277174246,
+          "M": -1918.6024212719537,
+          "G": 7.333062439383534,
+          "turnover": 460425.5016519999,
+          "legs": 212,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 186,
+              "turnover": 435597.16757199995,
+              "E": 2445.790425202118,
+              "M": -1917.982646388631,
+              "finalContribution": 527.8077788134888,
+              "quotedEdgeBpsSum": 16411.83495291097,
+              "quotedEdgeSamples": 186
+            },
+            "bundle": {
+              "legs": 26,
+              "turnover": 24828.334080000004,
+              "E": 82.7146025153062,
+              "M": -0.6197748833226231,
+              "finalContribution": 82.09482763198359,
+              "quotedEdgeBpsSum": 920.3352057911508,
+              "quotedEdgeSamples": 26
+            }
+          },
+          "X": -1.3650197754344617e-06,
+          "execEdgeBps": 54.91670245555874,
+          "averageLegUsd": 2171.8184040188676,
+          "bundleCount": 13,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -850.1580149294023,
+          "excess": 61.22789814104908,
+          "included": 18,
+          "reverts": 0,
+          "submitted": 18,
+          "failed": 0,
+          "E": 63.63851605917597,
+          "M": -1.825745263191515,
+          "G": 0.5848726601527775,
+          "turnover": 19676.627952,
+          "legs": 18,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 18,
+              "turnover": 19676.627952,
+              "E": 63.63851605917597,
+              "M": -1.825745263191515,
+              "finalContribution": 61.81277079598445,
+              "quotedEdgeBpsSum": 702.8235747465561,
+              "quotedEdgeSamples": 18
+            }
+          },
+          "X": 5.217403953317046e-09,
+          "execEdgeBps": 32.34218597537061,
+          "averageLegUsd": 1093.1459973333333,
+          "bundleCount": 9,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "calm",
+      "seed": "35002",
+      "run": "runs/2026-10-04T07-23-56-184Z",
+      "elapsedMs": 721783,
+      "attempts": 44,
+      "loggedNoops": 318,
+      "frames": 361,
+      "agreement": 347,
+      "factors": {
+        "settled60": 12,
+        "combined50": 27,
+        "cooldown0": 12,
+        "band40": 59,
+        "bidBudget": 45,
+        "entry20": 31,
+        "entry50": 11,
+        "entry45": 20,
+        "headroom10entry50": 11
+      },
+      "sha256": {
+        "summary.json": "f6c909450b0788b94662a9bcc8da3ed0660df4a01b06abbc744549fa657a9526",
+        "market.json": "37db24931991247a058c7a49ea2a330171632fbd7d966f251070e2d5aff6d032",
+        "blocks.csv": "98fb5f08c0bfc0f2bac7cb3c94e68defad7f67a544da93e794452253da515744",
+        "agents/cand.jsonl": "d1a084f1315890e98a496a3871cf1fd5a166f6abca5b031efe0f2a6fe742a3ea",
+        "agents/multi-arb.jsonl": "93f3ca5bcc593b941b9926fddff90a23928e5ddf0e4af03f3a8efde73c86fa64",
+        "agents/clean-arb.jsonl": "6b8e07199bb7f4414c901cf1abea4da4b35c7128a54441aef32c022c758cab2a"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -223.6263349342771,
+          "excess": 356.2758552072628,
+          "included": 47,
+          "reverts": 0,
+          "submitted": 47,
+          "failed": 0,
+          "E": 524.7770206843882,
+          "M": -163.5006516014055,
+          "G": 5.000513867820137,
+          "turnover": 96374.47039499997,
+          "legs": 47,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 41,
+              "turnover": 89661.58213699999,
+              "E": 494.71567801855406,
+              "M": -162.5356642478627,
+              "finalContribution": 332.1800137706913,
+              "quotedEdgeBpsSum": 3236.137368923731,
+              "quotedEdgeSamples": 41
+            },
+            "bundle": {
+              "legs": 6,
+              "turnover": 6712.888257999999,
+              "E": 30.061342665834015,
+              "M": -0.9649873535427416,
+              "finalContribution": 29.096355312291273,
+              "quotedEdgeBpsSum": 244.63621852452098,
+              "quotedEdgeSamples": 6
+            }
+          },
+          "X": -7.899723541981984e-09,
+          "execEdgeBps": 54.45187076344383,
+          "averageLegUsd": 2050.520646702127,
+          "bundleCount": 3,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 937.7139329806087,
+          "excess": 1517.6161231221486,
+          "included": 259,
+          "reverts": 1,
+          "submitted": 260,
+          "failed": 0,
+          "E": 2021.538093125491,
+          "M": -494.52212546044746,
+          "G": 9.399845695733918,
+          "turnover": 379157.9536580001,
+          "legs": 258,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 204,
+              "turnover": 301527.073465,
+              "E": 1742.7150979436913,
+              "M": -492.80950661650763,
+              "finalContribution": 1249.905591327184,
+              "quotedEdgeBpsSum": 18724.6776246986,
+              "quotedEdgeSamples": 204
+            },
+            "bundle": {
+              "legs": 54,
+              "turnover": 77630.880193,
+              "E": 278.82299518179985,
+              "M": -1.7126188439395653,
+              "finalContribution": 277.1103763378604,
+              "quotedEdgeBpsSum": 2304.5681772478947,
+              "quotedEdgeSamples": 54
+            }
+          },
+          "X": 1.1528388785819743e-06,
+          "execEdgeBps": 53.316515547737005,
+          "averageLegUsd": 1469.604471542636,
+          "bundleCount": 27,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -131.05576252176252,
+          "excess": 448.8464276197774,
+          "included": 32,
+          "reverts": 0,
+          "submitted": 32,
+          "failed": 0,
+          "E": 453.49835769704373,
+          "M": -3.5181240556199267,
+          "G": 1.133806049489142,
+          "turnover": 74412.057128,
+          "legs": 32,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 32,
+              "turnover": 74412.057128,
+              "E": 453.49835769704373,
+              "M": -3.5181240556199267,
+              "finalContribution": 449.9802336414238,
+              "quotedEdgeBpsSum": 1705.9176032086311,
+              "quotedEdgeSamples": 32
+            }
+          },
+          "X": 2.784272590261594e-08,
+          "execEdgeBps": 60.944203829354954,
+          "averageLegUsd": 2325.37678525,
+          "bundleCount": 16,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "cex-drift",
+      "seed": "35001",
+      "run": "runs/2026-10-04T07-23-59-557Z",
+      "elapsedMs": 721741,
+      "attempts": 45,
+      "loggedNoops": 317,
+      "frames": 361,
+      "agreement": 335,
+      "factors": {
+        "entry20": 21,
+        "combined50": 11,
+        "entry50": 6,
+        "entry45": 15,
+        "headroom10entry50": 6,
+        "bidBudget": 40,
+        "settled60": 5,
+        "cooldown0": 6,
+        "band40": 117
+      },
+      "sha256": {
+        "summary.json": "9cf3ec11b722c065582bf0e07596a377587d36bfd11e3ee9e8889ab8f7d2c0fe",
+        "market.json": "472939740a928c7dac094805227451d0d14d41dec2cc713d2c548d86b577a24d",
+        "blocks.csv": "9b3ecf29b94e37bb4a9ac89b59dff3af3ecbd3496bd7ce97b2d2399e133fb2ae",
+        "agents/cand.jsonl": "04669cef757e9a03ccd32ca7feb3d729d26ae464505759e8df927ad96d9cac14",
+        "agents/multi-arb.jsonl": "e6dfba3f5c87a600568cfcac03788715326d0857e6f0de6970847213366d83d0",
+        "agents/clean-arb.jsonl": "7c8b26ce4fe675ddbcc5dc2dc340ed656a8eb8bbdc34a4035d62496ee22ecfbb"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 1892.5503703687427,
+          "excess": 598.5254900818545,
+          "included": 45,
+          "reverts": 0,
+          "submitted": 45,
+          "failed": 2,
+          "E": 599.5540493982169,
+          "M": 3.621261664595014,
+          "G": 4.649820886532134,
+          "turnover": 91943.97441199998,
+          "legs": 45,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 41,
+              "turnover": 88007.321655,
+              "E": 579.4562482643079,
+              "M": 3.6065928693556266,
+              "finalContribution": 583.0628411336637,
+              "quotedEdgeBpsSum": 3036.18709378123,
+              "quotedEdgeSamples": 41
+            },
+            "bundle": {
+              "legs": 4,
+              "turnover": 3936.652757,
+              "E": 20.09780113390892,
+              "M": 0.014668795239357824,
+              "finalContribution": 20.112469929148276,
+              "quotedEdgeBpsSum": 183.88007352081237,
+              "quotedEdgeSamples": 4
+            }
+          },
+          "X": -9.442524184777312e-08,
+          "execEdgeBps": 65.20862875816326,
+          "averageLegUsd": 2043.1994313777773,
+          "bundleCount": 2,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 3051.160662331313,
+          "excess": 1757.1357820444246,
+          "included": 358,
+          "reverts": 0,
+          "submitted": 359,
+          "failed": 0,
+          "E": 2267.7502737874984,
+          "M": -496.55315401240154,
+          "G": 14.061337304742347,
+          "turnover": 365346.0923980001,
+          "legs": 358,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 186,
+              "turnover": 307595.3889270001,
+              "E": 2092.2470921939653,
+              "M": -517.6045062643814,
+              "finalContribution": 1574.642585929582,
+              "quotedEdgeBpsSum": 21271.070597253638,
+              "quotedEdgeSamples": 186
+            },
+            "bundle": {
+              "legs": 172,
+              "turnover": 57750.70347100001,
+              "E": 175.50318159353358,
+              "M": 21.0513522519791,
+              "finalContribution": 196.55453384551257,
+              "quotedEdgeBpsSum": 5663.488808099316,
+              "quotedEdgeSamples": 172
+            }
+          },
+          "X": -4.259299313247311e-07,
+          "execEdgeBps": 62.071288593859116,
+          "averageLegUsd": 1020.5198111675982,
+          "bundleCount": 86,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 1658.0455224716716,
+          "excess": 364.02064218478336,
+          "included": 90,
+          "reverts": 0,
+          "submitted": 90,
+          "failed": 0,
+          "E": 357.50960281583446,
+          "M": 9.88407897291903,
+          "G": 3.3730395987640422,
+          "turnover": 86095.654805,
+          "legs": 90,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 90,
+              "turnover": 86095.654805,
+              "E": 357.50960281583446,
+              "M": 9.88407897291903,
+              "finalContribution": 367.3936817887534,
+              "quotedEdgeBpsSum": 3380.9922991919134,
+              "quotedEdgeSamples": 90
+            }
+          },
+          "X": -5.206087116960134e-09,
+          "execEdgeBps": 41.52469757336373,
+          "averageLegUsd": 956.6183867222222,
+          "bundleCount": 45,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "cex-drift",
+      "seed": "35002",
+      "run": "runs/2026-10-04T07-36-30-419Z",
+      "elapsedMs": 721775,
+      "attempts": 49,
+      "loggedNoops": 313,
+      "frames": 361,
+      "agreement": 329,
+      "factors": {
+        "combined50": 14,
+        "entry50": 7,
+        "entry45": 13,
+        "entry20": 18,
+        "headroom10entry50": 7,
+        "settled60": 5,
+        "cooldown0": 5,
+        "bidBudget": 57,
+        "band40": 177,
+        "min10": 22
+      },
+      "sha256": {
+        "summary.json": "a73ac77a52877a5c34b2959a6596a71be286e2d3e3a46b490b1c145624945a29",
+        "market.json": "d37ae8a3abca426f951183b44f0efc5e4dabeb37d9cf142bfd1585250252c09c",
+        "blocks.csv": "47821fc13e19e7c481389c31f8ed13f7bdecdc61f8f5639a95eba643d79a5e42",
+        "agents/cand.jsonl": "276b39817a249f2c3cad77fcdd8bd90e1b8b583f5adfb28de9d06e8fb8ad81ea",
+        "agents/multi-arb.jsonl": "7cec4fa7fa406e2b5873e11c01ba170412601d7d8e74a5488e61d7a606bf73bb",
+        "agents/clean-arb.jsonl": "b5834bcf781a9bc6fef07940f350c4e5b7deffd216aa87bb1be33ae5be038bb9"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 2809.637023332878,
+          "excess": 1123.9210804692702,
+          "included": 52,
+          "reverts": 0,
+          "submitted": 52,
+          "failed": 2,
+          "E": 786.5797153282416,
+          "M": 342.94565828274665,
+          "G": 5.6042931859346155,
+          "turnover": 108814.43722900002,
+          "legs": 52,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 42,
+              "turnover": 92553.68361400002,
+              "E": 671.1298035797885,
+              "M": 340.76554068063473,
+              "finalContribution": 1011.8953442604234,
+              "quotedEdgeBpsSum": 3544.053904605372,
+              "quotedEdgeSamples": 42
+            },
+            "bundle": {
+              "legs": 10,
+              "turnover": 16260.753615,
+              "E": 115.44991174845298,
+              "M": 2.18011760211202,
+              "finalContribution": 117.63002935056501,
+              "quotedEdgeBpsSum": 591.5742442910222,
+              "quotedEdgeSamples": 10
+            }
+          },
+          "X": 4.4216598382718075e-08,
+          "execEdgeBps": 72.28633767345453,
+          "averageLegUsd": 2092.5853313269236,
+          "bundleCount": 5,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 6421.772021196593,
+          "excess": 4736.056078332986,
+          "included": 376,
+          "reverts": 0,
+          "submitted": 377,
+          "failed": 0,
+          "E": 4812.721003641516,
+          "M": -62.89667647559134,
+          "G": 13.768248358711011,
+          "turnover": 530386.6469010003,
+          "legs": 376,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 216,
+              "turnover": 425320.6961689999,
+              "E": 4441.399365546385,
+              "M": -89.77116625963174,
+              "finalContribution": 4351.628199286746,
+              "quotedEdgeBpsSum": 27198.15395979086,
+              "quotedEdgeSamples": 216
+            },
+            "bundle": {
+              "legs": 160,
+              "turnover": 105065.950732,
+              "E": 371.3216380951331,
+              "M": 26.87448978404042,
+              "finalContribution": 398.1961278791736,
+              "quotedEdgeBpsSum": 6133.28582820591,
+              "quotedEdgeSamples": 160
+            }
+          },
+          "X": -4.742283028491556e-07,
+          "execEdgeBps": 90.73985990714125,
+          "averageLegUsd": 1410.602784311171,
+          "bundleCount": 80,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 2167.5416462841094,
+          "excess": 481.82570342050167,
+          "included": 92,
+          "reverts": 0,
+          "submitted": 94,
+          "failed": 2,
+          "E": 474.3821663603707,
+          "M": 10.729889872063445,
+          "G": 3.2863528087889593,
+          "turnover": 122331.53649000003,
+          "legs": 92,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 92,
+              "turnover": 122331.53649000003,
+              "E": 474.3821663603707,
+              "M": 10.729889872063445,
+              "finalContribution": 485.1120562324345,
+              "quotedEdgeBpsSum": 4076.626346749217,
+              "quotedEdgeSamples": 92
+            }
+          },
+          "X": -3.143536098093591e-09,
+          "execEdgeBps": 38.77840334320897,
+          "averageLegUsd": 1329.6906140217395,
+          "bundleCount": 46,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "informed-flow",
+      "seed": "35001",
+      "run": "runs/2026-10-04T07-36-33-185Z",
+      "elapsedMs": 721906,
+      "attempts": 51,
+      "loggedNoops": 311,
+      "frames": 361,
+      "agreement": 336,
+      "factors": {
+        "bidBudget": 53,
+        "entry20": 53,
+        "entry45": 32,
+        "combined50": 28,
+        "entry50": 16,
+        "headroom10entry50": 16,
+        "settled60": 12,
+        "cooldown0": 13,
+        "band40": 55
+      },
+      "sha256": {
+        "summary.json": "a8e1e5fe701167144cf7ed649c0f1e18c79b7f4cf905c7fb7adc1c69c8eb5d4a",
+        "market.json": "5034e53a9570510ae35a11662712ebbe8f92556aaed67b1be0daa2ade5afa595",
+        "blocks.csv": "bca8965014a178865bc1b858795af3fb97f4a4a1a1712aef9052de033d33d9c0",
+        "agents/cand.jsonl": "d2d3480b764e0b275ba87a8165f31c1fe5be8f6e6a2fff6f3c2693f51c3a582f",
+        "agents/multi-arb.jsonl": "fce239b24e27b8d830cc3e57be551fef3dba0944cff7b524dd904abad67fd5d3",
+        "agents/clean-arb.jsonl": "b3674b4f0c53f303d37a1e34b6b947f7a720e3b2c3b2c99c19e9067298f6ad0f"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 775.4196309765975,
+          "excess": 205.76215430768207,
+          "included": 58,
+          "reverts": 0,
+          "submitted": 58,
+          "failed": 0,
+          "E": 843.3685084133375,
+          "M": -632.0726909869533,
+          "G": 5.533663165376734,
+          "turnover": 130122.36746600003,
+          "legs": 58,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 44,
+              "turnover": 106565.454625,
+              "E": 663.412313501306,
+              "M": -633.0013925640192,
+              "finalContribution": 30.410920937286978,
+              "quotedEdgeBpsSum": 3456.293132852706,
+              "quotedEdgeSamples": 44
+            },
+            "bundle": {
+              "legs": 14,
+              "turnover": 23556.912840999998,
+              "E": 179.95619491203135,
+              "M": 0.9287015770658504,
+              "finalContribution": 180.88489648909714,
+              "quotedEdgeBpsSum": 858.1438617683013,
+              "quotedEdgeSamples": 14
+            }
+          },
+          "X": 4.667455488771566e-08,
+          "execEdgeBps": 64.81349247151557,
+          "averageLegUsd": 2243.48909424138,
+          "bundleCount": 7,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 272.6752035808313,
+          "excess": -296.9822730880842,
+          "included": 191,
+          "reverts": 0,
+          "submitted": 191,
+          "failed": 0,
+          "E": 1410.5827076599235,
+          "M": -1700.7043343382418,
+          "G": 6.856833916111362,
+          "turnover": 285235.40933899995,
+          "legs": 174,
+          "missing": 17,
+          "modes": {
+            "single": {
+              "legs": 141,
+              "turnover": 269943.7973299999,
+              "E": 1362.4891125425504,
+              "M": -1701.3570392773875,
+              "finalContribution": -338.8679267348362,
+              "quotedEdgeBpsSum": 11756.720271864886,
+              "quotedEdgeSamples": 141
+            },
+            "bundle": {
+              "legs": 33,
+              "turnover": 15291.612009,
+              "E": 48.093595117372374,
+              "M": 0.6527049391454929,
+              "finalContribution": 48.74630005651788,
+              "quotedEdgeBpsSum": 1710.4615951491107,
+              "quotedEdgeSamples": 33
+            }
+          },
+          "X": -0.0038124936545154142,
+          "execEdgeBps": 49.45328179726303,
+          "averageLegUsd": 1639.2839617183904,
+          "bundleCount": 18,
+          "partialBundles": 3
+        },
+        "clean-arb": {
+          "P": 886.8919700138067,
+          "excess": 317.23449334489123,
+          "included": 22,
+          "reverts": 0,
+          "submitted": 22,
+          "failed": 0,
+          "E": 316.09467017633034,
+          "M": 1.9236806907430575,
+          "G": 0.7838575132400739,
+          "turnover": 54620.273999,
+          "legs": 22,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 22,
+              "turnover": 54620.273999,
+              "E": 316.09467017633034,
+              "M": 1.9236806907430575,
+              "finalContribution": 318.0183508670734,
+              "quotedEdgeBpsSum": 1256.132093797625,
+              "quotedEdgeSamples": 22
+            }
+          },
+          "X": -8.94208873614133e-09,
+          "execEdgeBps": 57.87130803886437,
+          "averageLegUsd": 2482.7397272272724,
+          "bundleCount": 11,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "informed-flow",
+      "seed": "35002",
+      "run": "runs/2026-10-04T07-36-36-256Z",
+      "elapsedMs": 721770,
+      "attempts": 63,
+      "loggedNoops": 299,
+      "frames": 361,
+      "agreement": 336,
+      "factors": {
+        "bidBudget": 29,
+        "cooldown0": 15,
+        "combined50": 17,
+        "entry50": 7,
+        "entry45": 17,
+        "entry20": 26,
+        "headroom10entry50": 7,
+        "band40": 20,
+        "settled60": 8
+      },
+      "sha256": {
+        "summary.json": "3258214f639b4213506cd0bde9807fbc00b647902b6d06144ca3df1afc8ec7f3",
+        "market.json": "b01689209bf5fd9f94ce700f52ff7f7351d9e1dda61b5de705bb1ead53338c56",
+        "blocks.csv": "39c0f230fc49e1df557ea5c72a8d1d408b8f4de6e43e8bbd4bc10c2f7c5e4558",
+        "agents/cand.jsonl": "2625480e6d1604636a74d27edfd17f9c8314840055a1ec7eb11850248ab5a172",
+        "agents/multi-arb.jsonl": "9c03b388da33ae7c0d80acdbf59596a561ebb1d34ab343241f05915776defe25",
+        "agents/clean-arb.jsonl": "2db41eb3a02a025cec55ccf9371ee05b6c607bf8310c33cf5a6af3f621af7abe"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 1177.933858496268,
+          "excess": 485.56143899237213,
+          "included": 74,
+          "reverts": 0,
+          "submitted": 74,
+          "failed": 2,
+          "E": 1099.8977478561085,
+          "M": -606.9843125288833,
+          "G": 7.351996157960266,
+          "turnover": 154145.98332300002,
+          "legs": 74,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 50,
+              "turnover": 124512.93865599998,
+              "E": 907.6217709086676,
+              "M": -609.8456518897272,
+              "finalContribution": 297.7761190189403,
+              "quotedEdgeBpsSum": 4134.124264341839,
+              "quotedEdgeSamples": 50
+            },
+            "bundle": {
+              "legs": 24,
+              "turnover": 29633.044667,
+              "E": 192.27597694744085,
+              "M": 2.861339360843907,
+              "finalContribution": 195.13731630828482,
+              "quotedEdgeBpsSum": 1444.3539932880356,
+              "quotedEdgeSamples": 24
+            }
+          },
+          "X": -1.768928177270368e-07,
+          "execEdgeBps": 71.3542918307099,
+          "averageLegUsd": 2083.0538286891897,
+          "bundleCount": 12,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 827.5245679567015,
+          "excess": 135.1521484528057,
+          "included": 193,
+          "reverts": 1,
+          "submitted": 194,
+          "failed": 0,
+          "E": 2795.1065837842793,
+          "M": -2653.1907267893453,
+          "G": 6.763708039704613,
+          "turnover": 491774.9196719999,
+          "legs": 192,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 52,
+              "turnover": 103039.91970400003,
+              "E": 544.965408157629,
+              "M": 8.554959290058983,
+              "finalContribution": 553.5203674476879,
+              "quotedEdgeBpsSum": 2833.403393641634,
+              "quotedEdgeSamples": 52
+            },
+            "single": {
+              "legs": 140,
+              "turnover": 388734.9999679998,
+              "E": 2250.1411756266502,
+              "M": -2661.745686079404,
+              "finalContribution": -411.60451045275283,
+              "quotedEdgeBpsSum": 10862.438258977778,
+              "quotedEdgeSamples": 140
+            }
+          },
+          "X": -5.024237568207468e-07,
+          "execEdgeBps": 56.837111287589394,
+          "averageLegUsd": 2561.3277066249993,
+          "bundleCount": 26,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 1229.79092011982,
+          "excess": 537.4185006159241,
+          "included": 38,
+          "reverts": 0,
+          "submitted": 38,
+          "failed": 0,
+          "E": 530.8409853128669,
+          "M": 7.878634483672396,
+          "G": 1.301119152932757,
+          "turnover": 111039.34307200002,
+          "legs": 38,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 38,
+              "turnover": 111039.34307200002,
+              "E": 530.8409853128669,
+              "M": 7.878634483672396,
+              "finalContribution": 538.7196197965394,
+              "quotedEdgeBpsSum": 2448.8658772397807,
+              "quotedEdgeSamples": 38
+            }
+          },
+          "X": -2.7682413694662955e-08,
+          "execEdgeBps": 47.80656753063277,
+          "averageLegUsd": 2922.087975578948,
+          "bundleCount": 19,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "whale",
+      "seed": "35001",
+      "run": "runs/2026-10-04T07-49-00-964Z",
+      "elapsedMs": 721627,
+      "attempts": 53,
+      "loggedNoops": 309,
+      "frames": 361,
+      "agreement": 337,
+      "factors": {
+        "combined50": 16,
+        "entry50": 8,
+        "entry45": 11,
+        "entry20": 20,
+        "headroom10entry50": 8,
+        "bidBudget": 27,
+        "band40": 140,
+        "settled60": 8,
+        "cooldown0": 13
+      },
+      "sha256": {
+        "summary.json": "a6fdd1ad77da034405d1d7d55e47bc746c1c5fb5813a18634896dc435e720859",
+        "market.json": "8a66499ee2d51d83bee4dfddb0171b575f9a4548e38efa9a2a9882301dbf5292",
+        "blocks.csv": "a949ac52651841a30e5339e4ce5bb2b88a4e05149662dea43eb66bebc2e0f027",
+        "agents/cand.jsonl": "04ee4402f2ded38ccd0faf8db8499dc4f430940ea197a9459a2d3186992eb390",
+        "agents/multi-arb.jsonl": "5320b16d566866abfa892adae0e733557a7f19af5997702c1461e9cfa0947259",
+        "agents/clean-arb.jsonl": "2340036b707923f9c4dc82af91caab411ffd2a675a6aa435ef024c6c5294a80c"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 1952.4307610778778,
+          "excess": 2146.899134199586,
+          "included": 68,
+          "reverts": 0,
+          "submitted": 68,
+          "failed": 0,
+          "E": 2656.4540463936455,
+          "M": -502.99881232767336,
+          "G": 6.55609949329346,
+          "turnover": 174589.83031400002,
+          "legs": 68,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 38,
+              "turnover": 106932.55673899998,
+              "E": 1244.368652198685,
+              "M": -496.3592553050203,
+              "finalContribution": 748.0093968936646,
+              "quotedEdgeBpsSum": 3914.385410382879,
+              "quotedEdgeSamples": 38
+            },
+            "bundle": {
+              "legs": 30,
+              "turnover": 67657.273575,
+              "E": 1412.0853941949608,
+              "M": -6.639557022653102,
+              "finalContribution": 1405.4458371723076,
+              "quotedEdgeBpsSum": 6003.380552247952,
+              "quotedEdgeSamples": 30
+            }
+          },
+          "X": -3.7309257461259904e-07,
+          "execEdgeBps": 152.15399669133132,
+          "averageLegUsd": 2567.4975046176473,
+          "bundleCount": 15,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 7343.808604420032,
+          "excess": 7538.27697754174,
+          "included": 319,
+          "reverts": 1,
+          "submitted": 319,
+          "failed": 0,
+          "E": 9595.148619023596,
+          "M": -2045.6220991483613,
+          "G": 11.249540398995105,
+          "turnover": 781354.7140399993,
+          "legs": 318,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 222,
+              "turnover": 470526.59646200004,
+              "E": 3270.8261063573796,
+              "M": -2053.5017242369995,
+              "finalContribution": 1217.324382120383,
+              "quotedEdgeBpsSum": 23616.85680753661,
+              "quotedEdgeSamples": 222
+            },
+            "bundle": {
+              "legs": 96,
+              "turnover": 310828.117578,
+              "E": 6324.322512666215,
+              "M": 7.8796250886393615,
+              "finalContribution": 6332.202137754856,
+              "quotedEdgeBpsSum": 12255.42406162321,
+              "quotedEdgeSamples": 96
+            }
+          },
+          "X": -1.9344991137870693e-06,
+          "execEdgeBps": 122.80144275846013,
+          "averageLegUsd": 2457.0902957232684,
+          "bundleCount": 48,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 3634.6713887827063,
+          "excess": 3829.1397619044146,
+          "included": 60,
+          "reverts": 1,
+          "submitted": 60,
+          "failed": 0,
+          "E": 3920.1958421507397,
+          "M": -89.09194309687747,
+          "G": 1.9641377080330964,
+          "turnover": 216056.98988999997,
+          "legs": 59,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 59,
+              "turnover": 216056.98988999997,
+              "E": 3920.1958421507397,
+              "M": -89.09194309687747,
+              "finalContribution": 3831.1038990538614,
+              "quotedEdgeBpsSum": 10486.035793123248,
+              "quotedEdgeSamples": 59
+            }
+          },
+          "X": 5.585854589984507e-07,
+          "execEdgeBps": 181.44267603406905,
+          "averageLegUsd": 3661.9828794915247,
+          "bundleCount": 30,
+          "partialBundles": 1
+        }
+      }
+    },
+    {
+      "regime": "whale",
+      "seed": "35002",
+      "run": "runs/2026-10-04T07-49-03-748Z",
+      "elapsedMs": 721902,
+      "attempts": 66,
+      "loggedNoops": 296,
+      "frames": 361,
+      "agreement": 346,
+      "factors": {
+        "entry20": 32,
+        "settled60": 14,
+        "combined50": 27,
+        "cooldown0": 21,
+        "band40": 73,
+        "entry50": 12,
+        "entry45": 18,
+        "headroom10entry50": 12,
+        "bidBudget": 47
+      },
+      "sha256": {
+        "summary.json": "789da8d2d77a4c2fd5c90c8e4a7f3dc469a8ac6f1d571604cb4dbc302f33508c",
+        "market.json": "66c7237bc6fca4df416fcf9b36486ab12f4a5c5febb22b55eb904a848e998a40",
+        "blocks.csv": "707020e1593c39f960dc1c8dc38d2472ceb5df21a8cabc7a4d9dc9b00b81ed93",
+        "agents/cand.jsonl": "4551c4a1e184b4f36c8177e07737dfde1e8f428da2588d64aed7c68d49868b38",
+        "agents/multi-arb.jsonl": "6dc733cfa3927c2bda23d824cc00974e68b4f82e80016e2ba56e86bd5295d42d",
+        "agents/clean-arb.jsonl": "2d099097353d75552a7eaba982f90fd63793c6107f8c6f78bef853c5d9e36c58"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 4597.918765645285,
+          "excess": 4283.4907366902335,
+          "included": 83,
+          "reverts": 0,
+          "submitted": 83,
+          "failed": 5,
+          "E": 4622.821968542944,
+          "M": -331.4498886461749,
+          "G": 7.881342665696091,
+          "turnover": 213479.43073299996,
+          "legs": 83,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 42,
+              "turnover": 103534.79842899999,
+              "E": 2178.4134495585913,
+              "M": -319.9136925966435,
+              "finalContribution": 1858.4997569619475,
+              "quotedEdgeBpsSum": 6233.794061564816,
+              "quotedEdgeSamples": 42
+            },
+            "bundle": {
+              "legs": 41,
+              "turnover": 109944.63230400001,
+              "E": 2444.408518984353,
+              "M": -11.536196049531421,
+              "finalContribution": 2432.8723229348234,
+              "quotedEdgeBpsSum": 7141.641119802296,
+              "quotedEdgeSamples": 41
+            }
+          },
+          "X": -5.408395411521383e-07,
+          "execEdgeBps": 216.5464819102284,
+          "averageLegUsd": 2572.0413341325298,
+          "bundleCount": 21,
+          "partialBundles": 1
+        },
+        "multi-arb": {
+          "P": 6387.8821736026875,
+          "excess": 6073.454144647636,
+          "included": 316,
+          "reverts": 0,
+          "submitted": 317,
+          "failed": 0,
+          "E": 6815.28990483626,
+          "M": -730.7929778778159,
+          "G": 11.042779585475852,
+          "turnover": 642161.374166,
+          "legs": 316,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 178,
+              "turnover": 396300.3375519997,
+              "E": 2406.716018689817,
+              "M": -737.4514283220199,
+              "finalContribution": 1669.2645903677974,
+              "quotedEdgeBpsSum": 15338.510511470398,
+              "quotedEdgeSamples": 178
+            },
+            "bundle": {
+              "legs": 138,
+              "turnover": 245861.03661399998,
+              "E": 4408.5738861464415,
+              "M": 6.658450444203747,
+              "finalContribution": 4415.232336590642,
+              "quotedEdgeBpsSum": 19263.875898502865,
+              "quotedEdgeSamples": 138
+            }
+          },
+          "X": -2.7253318997111364e-06,
+          "execEdgeBps": 106.13048649473103,
+          "averageLegUsd": 2032.1562473607596,
+          "bundleCount": 69,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 8630.219980813243,
+          "excess": 8315.791951858191,
+          "included": 110,
+          "reverts": 4,
+          "submitted": 110,
+          "failed": 0,
+          "E": 8331.064858906844,
+          "M": -11.54581868094853,
+          "G": 3.7270866019022377,
+          "turnover": 476014.95765700017,
+          "legs": 106,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 106,
+              "turnover": 476014.95765700017,
+              "E": 8331.064858906844,
+              "M": -11.54581868094853,
+              "finalContribution": 8319.5190402259,
+              "quotedEdgeBpsSum": 16536.72387125863,
+              "quotedEdgeSamples": 106
+            }
+          },
+          "X": -1.765802228437252e-06,
+          "execEdgeBps": 175.01687131667657,
+          "averageLegUsd": 4490.707147707549,
+          "bundleCount": 54,
+          "partialBundles": 2
+        }
+      }
+    },
+    {
+      "regime": "lending-incident",
+      "seed": "35001",
+      "run": "runs/2026-10-04T07-49-06-805Z",
+      "elapsedMs": 721613,
+      "attempts": 51,
+      "loggedNoops": 311,
+      "frames": 361,
+      "agreement": 340,
+      "factors": {
+        "entry45": 31,
+        "entry20": 48,
+        "bidBudget": 21,
+        "settled60": 10,
+        "combined50": 28,
+        "cooldown0": 13,
+        "entry50": 18,
+        "headroom10entry50": 9,
+        "band40": 69
+      },
+      "sha256": {
+        "summary.json": "2f19d7298239ae22d30f12c9fc3229e0534f526ad7b3af4211b8733752889f25",
+        "market.json": "29c0670ba6f2253492e8b1cd01e79270418d1bf0b55e2470218bf1fcde438990",
+        "blocks.csv": "2af06777b91222f18cc4d67f089f30399c5b6cb6d68957e7cde60aa3203d3dc5",
+        "agents/cand.jsonl": "302b4d5a7cdd3ca3c5946d61df0de5388d6dc77e456ce7ff54701cab21de2718",
+        "agents/multi-arb.jsonl": "ddc791ee568b83eb4aa92626bfbf3c64dedfa739024710d5406d13a78601a9c2",
+        "agents/clean-arb.jsonl": "341539353b9869745b0aea2eacf2a85e34a5e1f6c45f5c4f0f6295e8f69d76e7"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -1861.0929786480992,
+          "excess": 631.2099403302709,
+          "included": 52,
+          "reverts": 0,
+          "submitted": 52,
+          "failed": 4,
+          "E": 921.1311539955526,
+          "M": -284.95327382793397,
+          "G": 4.96793927032503,
+          "turnover": 97902.21440800001,
+          "legs": 52,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 42,
+              "turnover": 86259.11444599999,
+              "E": 862.3524468331955,
+              "M": -281.81089554551045,
+              "finalContribution": 580.5415512876853,
+              "quotedEdgeBpsSum": 3743.8733475960494,
+              "quotedEdgeSamples": 42
+            },
+            "bundle": {
+              "legs": 10,
+              "turnover": 11643.099961999998,
+              "E": 58.77870716235719,
+              "M": -3.1423782824234934,
+              "finalContribution": 55.6363288799337,
+              "quotedEdgeBpsSum": 479.41286333117785,
+              "quotedEdgeSamples": 10
+            }
+          },
+          "X": -5.67022698128028e-07,
+          "execEdgeBps": 94.08685590673248,
+          "averageLegUsd": 1882.7348924615387,
+          "bundleCount": 5,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -813.3578388915485,
+          "excess": 1678.9450800868217,
+          "included": 296,
+          "reverts": 0,
+          "submitted": 297,
+          "failed": 0,
+          "E": 6765.648501284786,
+          "M": -5076.963464072028,
+          "G": 9.739957934405416,
+          "turnover": 586238.1379380001,
+          "legs": 296,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 218,
+              "turnover": 435862.55487800034,
+              "E": 6180.2323819055455,
+              "M": -5089.6347453237095,
+              "finalContribution": 1090.5976365818376,
+              "quotedEdgeBpsSum": 30962.575596587663,
+              "quotedEdgeSamples": 218
+            },
+            "bundle": {
+              "legs": 78,
+              "turnover": 150375.58306000006,
+              "E": 585.4161193792428,
+              "M": 12.671281251680938,
+              "finalContribution": 598.0874006309238,
+              "quotedEdgeBpsSum": 3656.4208661914454,
+              "quotedEdgeSamples": 78
+            }
+          },
+          "X": 8.084688172260712e-07,
+          "execEdgeBps": 115.40785328436466,
+          "averageLegUsd": 1980.534249790541,
+          "bundleCount": 39,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -2893.9547840602318,
+          "excess": -401.6518650818616,
+          "included": 34,
+          "reverts": 1,
+          "submitted": 34,
+          "failed": 0,
+          "E": -813.6927581028853,
+          "M": 413.0855694362532,
+          "G": 1.044677161492115,
+          "turnover": 44971.491843,
+          "legs": 33,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 33,
+              "turnover": 44971.491843,
+              "E": -813.6927581028853,
+              "M": 413.0855694362532,
+              "finalContribution": -400.60718866663217,
+              "quotedEdgeBpsSum": 329.5070702700011,
+              "quotedEdgeSamples": 33
+            }
+          },
+          "X": 7.46262555084698e-07,
+          "execEdgeBps": -180.93523802669662,
+          "averageLegUsd": 1362.772480090909,
+          "bundleCount": 17,
+          "partialBundles": 1
+        }
+      }
+    },
+    {
+      "regime": "lending-incident",
+      "seed": "35002",
+      "run": "runs/2026-10-04T08-01-33-133Z",
+      "elapsedMs": 721931,
+      "attempts": 77,
+      "loggedNoops": 284,
+      "frames": 360,
+      "agreement": 330,
+      "factors": {
+        "combined50": 23,
+        "entry50": 10,
+        "entry45": 19,
+        "entry20": 26,
+        "headroom10entry50": 8,
+        "bidBudget": 43,
+        "settled60": 10,
+        "cooldown0": 18,
+        "band40": 138
+      },
+      "sha256": {
+        "summary.json": "b30731c8d75a315a1683eeacbfb94d8a14ca95f9079f9a8765818c5b2fa97db3",
+        "market.json": "c270a8c121aa09703ccd81dd92e8c1a129b986c341eb0b194960f56798f1e377",
+        "blocks.csv": "76dddb9aec4ebb7785b53dc998ecdfc1340a022caf23dc83b8ceccca5b04c9e0",
+        "agents/cand.jsonl": "444b848fd58bce9fd87193e3baa60702a2309c1da46ffb685540a57d52aecefc",
+        "agents/multi-arb.jsonl": "27a30d6a5f148ec9a1b4acae320486db88797d448241d82526144b8725cf9e49",
+        "agents/clean-arb.jsonl": "62ae1a7e97365df0790d24c9f3231000e8488cb3a0e36936db6e96bed4f78bec"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 873.5729634962627,
+          "excess": 1088.716356939738,
+          "included": 102,
+          "reverts": 0,
+          "submitted": 102,
+          "failed": 0,
+          "E": 2417.265778891858,
+          "M": -1318.8011236723748,
+          "G": 9.748298189568374,
+          "turnover": 211140.33944900005,
+          "legs": 102,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 52,
+              "turnover": 139489.33006,
+              "E": 2017.3288921062021,
+              "M": -1348.1193455193495,
+              "finalContribution": 669.209546586853,
+              "quotedEdgeBpsSum": 6996.044302120917,
+              "quotedEdgeSamples": 52
+            },
+            "bundle": {
+              "legs": 50,
+              "turnover": 71651.00938899998,
+              "E": 399.93688678565604,
+              "M": 29.318221846974435,
+              "finalContribution": 429.2551086326304,
+              "quotedEdgeBpsSum": 4519.294623252502,
+              "quotedEdgeSamples": 50
+            }
+          },
+          "X": -9.017693969326501e-08,
+          "execEdgeBps": 114.48621259206308,
+          "averageLegUsd": 2070.003327931373,
+          "bundleCount": 25,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": -355.94543805469584,
+          "excess": -140.80204461122048,
+          "included": 395,
+          "reverts": 1,
+          "submitted": 395,
+          "failed": 0,
+          "E": 1388.5713408951226,
+          "M": -1516.047244394335,
+          "G": 13.324145383436566,
+          "turnover": 224556.25908900003,
+          "legs": 367,
+          "missing": 27,
+          "modes": {
+            "single": {
+              "legs": 208,
+              "turnover": 188590.017026,
+              "E": 1242.3210015177817,
+              "M": -1518.4924021965141,
+              "finalContribution": -276.17140067873083,
+              "quotedEdgeBpsSum": 22341.98393861892,
+              "quotedEdgeSamples": 208
+            },
+            "bundle": {
+              "legs": 159,
+              "turnover": 35966.24206300002,
+              "E": 146.25033937734173,
+              "M": 2.4451578021796845,
+              "finalContribution": 148.69549717952137,
+              "quotedEdgeBpsSum": 7432.924706854917,
+              "quotedEdgeSamples": 159
+            }
+          },
+          "X": -0.0019957285715790363,
+          "execEdgeBps": 61.83623411471153,
+          "averageLegUsd": 611.8699157738421,
+          "bundleCount": 80,
+          "partialBundles": 1
+        },
+        "clean-arb": {
+          "P": 1117.0668672225147,
+          "excess": 1332.21026066599,
+          "included": 138,
+          "reverts": 1,
+          "submitted": 138,
+          "failed": 0,
+          "E": 600.2499401907401,
+          "M": 736.5415251499473,
+          "G": 4.581204578050908,
+          "turnover": 228457.56983700002,
+          "legs": 137,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 137,
+              "turnover": 228457.56983700002,
+              "E": 600.2499401907401,
+              "M": 736.5415251499473,
+              "finalContribution": 1336.7914653406879,
+              "quotedEdgeBpsSum": 7372.382409302665,
+              "quotedEdgeSamples": 137
+            }
+          },
+          "X": -9.664643840778808e-08,
+          "execEdgeBps": 26.27402281390836,
+          "averageLegUsd": 1667.5735024598541,
+          "bundleCount": 69,
+          "partialBundles": 1
+        }
+      }
+    },
+    {
+      "regime": "crash",
+      "seed": "35001",
+      "run": "runs/2026-10-04T08-01-35-929Z",
+      "elapsedMs": 721721,
+      "attempts": 43,
+      "loggedNoops": 318,
+      "frames": 360,
+      "agreement": 328,
+      "factors": {
+        "entry20": 14,
+        "bidBudget": 51,
+        "entry45": 9,
+        "combined50": 10,
+        "entry50": 5,
+        "settled60": 5,
+        "cooldown0": 5,
+        "headroom10entry50": 4,
+        "band40": 137,
+        "min10": 2
+      },
+      "sha256": {
+        "summary.json": "0b835e0cd416d6f2b96816f52524082a39a651741face7fd10fd9c41e436f528",
+        "market.json": "547875c3f20cb8eedc38ff812c407131644ee0e5885a955c8059f450f44b0915",
+        "blocks.csv": "856abe7526b933c5190accaac075ff4b5faf9a1b4c1b9fb139b09aa2e1bc93ed",
+        "agents/cand.jsonl": "8d46db536422476170a357e4099000afb6639cbe8cd0ba629fe841d0182946d0",
+        "agents/multi-arb.jsonl": "fe0cd34cc1460f2685289c357c2552298f9d7d9dd21e68d1f2fd84ffeb083491",
+        "agents/clean-arb.jsonl": "ea6d97fa1c9124c3870923761cd64f7e9d6ce5fc2c6ef724b853a9d4e0cc75eb"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 194.7706725729804,
+          "excess": 488.79411555294064,
+          "included": 43,
+          "reverts": 0,
+          "submitted": 43,
+          "failed": 0,
+          "E": 968.3570158715956,
+          "M": -475.23323049621416,
+          "G": 4.32966973814508,
+          "turnover": 102239.44137299998,
+          "legs": 43,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 43,
+              "turnover": 102239.44137299998,
+              "E": 968.3570158715956,
+              "M": -475.23323049621416,
+              "finalContribution": 493.12378537538143,
+              "quotedEdgeBpsSum": 3640.6823872310642,
+              "quotedEdgeSamples": 43
+            }
+          },
+          "X": -8.429576858759447e-08,
+          "execEdgeBps": 94.71462313049426,
+          "averageLegUsd": 2377.6614272790694,
+          "bundleCount": 0,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 1260.0251705312548,
+          "excess": 1554.048613511215,
+          "included": 270,
+          "reverts": 3,
+          "submitted": 270,
+          "failed": 0,
+          "E": 3171.119924491036,
+          "M": -1607.803720398987,
+          "G": 9.267590263456293,
+          "turnover": 406302.98601399997,
+          "legs": 267,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 191,
+              "turnover": 321145.43188599986,
+              "E": 2968.001490691065,
+              "M": -1642.5225545376625,
+              "finalContribution": 1325.4789361534004,
+              "quotedEdgeBpsSum": 26175.70478088292,
+              "quotedEdgeSamples": 191
+            },
+            "bundle": {
+              "legs": 76,
+              "turnover": 85157.55412799996,
+              "E": 203.11843379997114,
+              "M": 34.71883413867645,
+              "finalContribution": 237.8372679386477,
+              "quotedEdgeBpsSum": 4003.283107758726,
+              "quotedEdgeSamples": 76
+            }
+          },
+          "X": -3.173774185682987e-07,
+          "execEdgeBps": 78.04815700718893,
+          "averageLegUsd": 1521.734030014981,
+          "bundleCount": 38,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -58.49909507686971,
+          "excess": 235.52434790309053,
+          "included": 44,
+          "reverts": 0,
+          "submitted": 44,
+          "failed": 0,
+          "E": 229.5850536359712,
+          "M": 7.402121284836157,
+          "G": 1.4628270126351515,
+          "turnover": 73028.13653,
+          "legs": 44,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 44,
+              "turnover": 73028.13653,
+              "E": 229.5850536359712,
+              "M": 7.402121284836157,
+              "finalContribution": 236.98717492080738,
+              "quotedEdgeBpsSum": 2969.1510860403273,
+              "quotedEdgeSamples": 44
+            }
+          },
+          "X": -5.081682630247997e-09,
+          "execEdgeBps": 31.437890181088974,
+          "averageLegUsd": 1659.7303756818183,
+          "bundleCount": 22,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "crash",
+      "seed": "35002",
+      "run": "runs/2026-10-04T08-01-39-171Z",
+      "elapsedMs": 721673,
+      "attempts": 43,
+      "loggedNoops": 318,
+      "frames": 360,
+      "agreement": 342,
+      "factors": {
+        "bidBudget": 21,
+        "entry20": 24,
+        "entry45": 16,
+        "combined50": 18,
+        "settled60": 8,
+        "cooldown0": 16,
+        "entry50": 9,
+        "headroom10entry50": 8,
+        "band40": 95
+      },
+      "sha256": {
+        "summary.json": "b7ab476992cf8aa32896a628e9eaf62aaac02f1e24f87ffd50688fb279b96984",
+        "market.json": "7adb8af798a6b7df2116be1a3c11355940f488e6486c065c687df7d7e567a33b",
+        "blocks.csv": "3a5e63f7bc1d2bd58faaf4dbbb7a7526cffc627da84d3f3c5ca00e3ef46dd3d2",
+        "agents/cand.jsonl": "54b399e77f87c08e7cdf85d26e86db07432b5f90827285095dacb80b6f24e2f7",
+        "agents/multi-arb.jsonl": "e619221d2fba6d8fbadf414891ba46cbdbca1271a1f2f1c4fdca3c1fb51a721c",
+        "agents/clean-arb.jsonl": "595d0babfcdc48d98c8f1eb51d6d84b0b280bd0ab7fa009f7d0f253c55d3933c"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 563.8157265510235,
+          "excess": 909.4634960636322,
+          "included": 45,
+          "reverts": 0,
+          "submitted": 45,
+          "failed": 4,
+          "E": 1234.6495208062167,
+          "M": -320.81992501321935,
+          "G": 4.366100193694051,
+          "turnover": 72714.979344,
+          "legs": 45,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 33,
+              "turnover": 59359.18760200001,
+              "E": 1164.7422486950347,
+              "M": -316.6779103999264,
+              "finalContribution": 848.0643382951079,
+              "quotedEdgeBpsSum": 4322.102248186632,
+              "quotedEdgeSamples": 33
+            },
+            "bundle": {
+              "legs": 12,
+              "turnover": 13355.791742,
+              "E": 69.90727211118222,
+              "M": -4.142014613292882,
+              "finalContribution": 65.76525749788932,
+              "quotedEdgeBpsSum": 621.5702996752359,
+              "quotedEdgeSamples": 12
+            }
+          },
+          "X": 4.6432884825975407e-07,
+          "execEdgeBps": 169.7930099058871,
+          "averageLegUsd": 1615.888429866667,
+          "bundleCount": 6,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 4605.106821905356,
+          "excess": 4950.754591417965,
+          "included": 285,
+          "reverts": 2,
+          "submitted": 285,
+          "failed": 3,
+          "E": 6168.237304472179,
+          "M": -1208.0251445274641,
+          "G": 9.457569948242636,
+          "turnover": 523280.80970100005,
+          "legs": 283,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 172,
+              "turnover": 328639.5933620001,
+              "E": 5559.295926287562,
+              "M": -1336.0992158393358,
+              "finalContribution": 4223.196710448228,
+              "quotedEdgeBpsSum": 30105.81170320512,
+              "quotedEdgeSamples": 172
+            },
+            "bundle": {
+              "legs": 111,
+              "turnover": 194641.216339,
+              "E": 608.9413781846199,
+              "M": 128.07407131187412,
+              "finalContribution": 737.0154494964944,
+              "quotedEdgeBpsSum": 6125.157753289352,
+              "quotedEdgeSamples": 111
+            }
+          },
+          "X": 1.4214923709232608e-06,
+          "execEdgeBps": 117.87623757876155,
+          "averageLegUsd": 1849.0487975300355,
+          "bundleCount": 56,
+          "partialBundles": 1
+        },
+        "clean-arb": {
+          "P": -23.341197417437797,
+          "excess": 322.30657209517085,
+          "included": 73,
+          "reverts": 1,
+          "submitted": 73,
+          "failed": 1,
+          "E": 342.97110634511944,
+          "M": -18.278866864065844,
+          "G": 2.385667335406424,
+          "turnover": 99879.06888999997,
+          "legs": 72,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 72,
+              "turnover": 99879.06888999997,
+              "E": 342.97110634511944,
+              "M": -18.278866864065844,
+              "finalContribution": 324.69223948105366,
+              "quotedEdgeBpsSum": 5479.753606819084,
+              "quotedEdgeSamples": 72
+            }
+          },
+          "X": -5.047632001264901e-08,
+          "execEdgeBps": 34.33863672906728,
+          "averageLegUsd": 1387.2092901388885,
+          "bundleCount": 36,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "depeg",
+      "seed": "35001",
+      "run": "runs/2026-10-04T08-14-05-738Z",
+      "elapsedMs": 721936,
+      "attempts": 38,
+      "loggedNoops": 324,
+      "frames": 361,
+      "agreement": 339,
+      "factors": {
+        "bidBudget": 22,
+        "entry20": 31,
+        "settled60": 6,
+        "combined50": 10,
+        "cooldown0": 9,
+        "band40": 90,
+        "entry50": 4,
+        "entry45": 14,
+        "headroom10entry50": 4
+      },
+      "sha256": {
+        "summary.json": "7ec564d01de01e11b05a7f64e64db070aee78981b27c19dbd4d1fdfe887d7521",
+        "market.json": "74f8974f27b5ba71ece02f7c1f93dcc846816d8b9caf39d05949f8b6e535e7f8",
+        "blocks.csv": "b59edfb31196f2d70d6479693ffabdd68b6206e45450a43fedefbc752fbb07f3",
+        "agents/cand.jsonl": "f6f3c53783b8ea3f6e9ef6bfa3e963e29d4f647a19c8ba827046503c6c01c637",
+        "agents/multi-arb.jsonl": "b56bd7ebfea45c9de56c8f08561483dfc88402f59aed44b5682861add10b33da",
+        "agents/clean-arb.jsonl": "14e1ea64cc532f14be4939e5a235e6ddcaa5ca56f313abef62b9c1599f3d055b"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 239.54197335941717,
+          "excess": 479.96220595229534,
+          "included": 40,
+          "reverts": 0,
+          "submitted": 40,
+          "failed": 3,
+          "E": 499.2293170034018,
+          "M": -15.479320849029405,
+          "G": 3.787790202834379,
+          "turnover": 84495.698363,
+          "legs": 40,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 10,
+              "turnover": 15050.516265,
+              "E": 91.0327764645743,
+              "M": 0.3360726922138735,
+              "finalContribution": 91.36884915678817,
+              "quotedEdgeBpsSum": 580.5045907727012,
+              "quotedEdgeSamples": 10
+            },
+            "single": {
+              "legs": 30,
+              "turnover": 69445.18209799999,
+              "E": 408.19654053882743,
+              "M": -15.815393541243278,
+              "finalContribution": 392.3811469975843,
+              "quotedEdgeBpsSum": 2300.775957531549,
+              "quotedEdgeSamples": 30
+            }
+          },
+          "X": 7.573435212293589e-10,
+          "execEdgeBps": 59.08340030029391,
+          "averageLegUsd": 2112.3924590750003,
+          "bundleCount": 5,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 495.7712679732067,
+          "excess": 736.1915005660849,
+          "included": 265,
+          "reverts": 1,
+          "submitted": 265,
+          "failed": 0,
+          "E": 3041.8026253706544,
+          "M": -2295.9308190394413,
+          "G": 9.680305886538509,
+          "turnover": 529741.3713669998,
+          "legs": 264,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 52,
+              "turnover": 94330.71049800001,
+              "E": 391.362349696856,
+              "M": -7.864385889152606,
+              "finalContribution": 383.49796380770334,
+              "quotedEdgeBpsSum": 1997.8727058738218,
+              "quotedEdgeSamples": 52
+            },
+            "single": {
+              "legs": 212,
+              "turnover": 435410.66086899996,
+              "E": 2650.440275673798,
+              "M": -2288.0664331502894,
+              "finalContribution": 362.3738425235079,
+              "quotedEdgeBpsSum": 21590.359048432398,
+              "quotedEdgeSamples": 212
+            }
+          },
+          "X": 1.2141031291434956e-07,
+          "execEdgeBps": 57.42052234888263,
+          "averageLegUsd": 2006.596103662878,
+          "bundleCount": 26,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -249.6244722586125,
+          "excess": -9.204239665734349,
+          "included": 20,
+          "reverts": 1,
+          "submitted": 20,
+          "failed": 0,
+          "E": 139.49617996448933,
+          "M": -148.02104477251024,
+          "G": 0.6793748993969851,
+          "turnover": 34805.564360000004,
+          "legs": 19,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 19,
+              "turnover": 34805.564360000004,
+              "E": 139.49617996448933,
+              "M": -148.02104477251024,
+              "finalContribution": -8.52486480802088,
+              "quotedEdgeBpsSum": 935.630464681858,
+              "quotedEdgeSamples": 19
+            }
+          },
+          "X": 4.16835442829111e-08,
+          "execEdgeBps": 40.07870078521241,
+          "averageLegUsd": 1831.871808421053,
+          "bundleCount": 10,
+          "partialBundles": 1
+        }
+      }
+    },
+    {
+      "regime": "depeg",
+      "seed": "35002",
+      "run": "runs/2026-10-04T08-14-08-540Z",
+      "elapsedMs": 721749,
+      "attempts": 34,
+      "loggedNoops": 328,
+      "frames": 361,
+      "agreement": 343,
+      "factors": {
+        "settled60": 2,
+        "combined50": 6,
+        "cooldown0": 2,
+        "entry45": 6,
+        "entry20": 14,
+        "band40": 176,
+        "bidBudget": 19,
+        "entry50": 4,
+        "headroom10entry50": 3
+      },
+      "sha256": {
+        "summary.json": "2aea9a3b03557a8362e41394c107edee507524a1820270a3b4c95ff36bd0d0da",
+        "market.json": "665eb47a5b57ad55050f50188a80d75d7a57b30fa438e22e4435d4ab6a48b182",
+        "blocks.csv": "8e7eceec98a5db67f0d20beaca49070c9dd4db7076aa3e04f209f30e0cb9eddc",
+        "agents/cand.jsonl": "8e950b84baf3c574a403946b5e0df298598d1666f637738efd8c134376e1eda7",
+        "agents/multi-arb.jsonl": "f68ed274de22e4fab40032b86b98b2dd07c486bc2e34135bbbd92cb542851412",
+        "agents/clean-arb.jsonl": "51fc5386833136d2f4fe767e17a2d7b671aa409cc62ca52fcecd64325daed79b"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 796.7611712987273,
+          "excess": 509.8265679252654,
+          "included": 35,
+          "reverts": 0,
+          "submitted": 35,
+          "failed": 0,
+          "E": 563.3006881180995,
+          "M": -49.9740636178161,
+          "G": 3.5000570053228146,
+          "turnover": 86454.82781700001,
+          "legs": 35,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 33,
+              "turnover": 84122.849415,
+              "E": 551.8756333579487,
+              "M": -49.96701161205354,
+              "finalContribution": 501.908621745895,
+              "quotedEdgeBpsSum": 2586.9627188906707,
+              "quotedEdgeSamples": 33
+            },
+            "bundle": {
+              "legs": 2,
+              "turnover": 2331.9784019999997,
+              "E": 11.425054760150914,
+              "M": -0.007052005762561486,
+              "finalContribution": 11.41800275438835,
+              "quotedEdgeBpsSum": 85.40293295526303,
+              "quotedEdgeSamples": 2
+            }
+          },
+          "X": 4.303048073417415e-07,
+          "execEdgeBps": 65.15549245097624,
+          "averageLegUsd": 2470.1379376285718,
+          "bundleCount": 1,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 1099.279442954954,
+          "excess": 812.3448395814921,
+          "included": 266,
+          "reverts": 1,
+          "submitted": 268,
+          "failed": 0,
+          "E": 1999.3867249348473,
+          "M": -1177.3037953842206,
+          "G": 9.737244540341159,
+          "turnover": 388245.9229329999,
+          "legs": 258,
+          "missing": 7,
+          "modes": {
+            "single": {
+              "legs": 200,
+              "turnover": 314422.90382199985,
+              "E": 1743.398892077678,
+              "M": -1191.1249509609013,
+              "finalContribution": 552.2739411167777,
+              "quotedEdgeBpsSum": 19886.99215603239,
+              "quotedEdgeSamples": 200
+            },
+            "bundle": {
+              "legs": 58,
+              "turnover": 73823.01911099999,
+              "E": 255.98783285716837,
+              "M": 13.821155576681004,
+              "finalContribution": 269.80898843384944,
+              "quotedEdgeBpsSum": 2040.030815059132,
+              "quotedEdgeSamples": 58
+            }
+          },
+          "X": -0.0008454287933759019,
+          "execEdgeBps": 51.49794516399555,
+          "averageLegUsd": 1504.8291586550383,
+          "bundleCount": 29,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 448.1071791212016,
+          "excess": 161.17257574773976,
+          "included": 22,
+          "reverts": 0,
+          "submitted": 24,
+          "failed": 0,
+          "E": 155.90454713203758,
+          "M": 6.03504050683784,
+          "G": 0.7670119110491981,
+          "turnover": 42567.863489999996,
+          "legs": 22,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 22,
+              "turnover": 42567.863489999996,
+              "E": 155.90454713203758,
+              "M": 6.03504050683784,
+              "finalContribution": 161.93958763887537,
+              "quotedEdgeBpsSum": 1097.6590443336531,
+              "quotedEdgeSamples": 22
+            }
+          },
+          "X": 1.9913536708493496e-08,
+          "execEdgeBps": 36.62494058896391,
+          "averageLegUsd": 1934.9028859090906,
+          "bundleCount": 11,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "vuln",
+      "seed": "35001",
+      "run": "runs/2026-10-04T08-14-11-649Z",
+      "elapsedMs": 721824,
+      "attempts": 42,
+      "loggedNoops": 320,
+      "frames": 361,
+      "agreement": 349,
+      "factors": {
+        "bidBudget": 14,
+        "entry45": 30,
+        "entry20": 43,
+        "combined50": 23,
+        "entry50": 10,
+        "headroom10entry50": 8,
+        "band40": 66,
+        "cooldown0": 12,
+        "settled60": 10
+      },
+      "sha256": {
+        "summary.json": "9cdcc4b65ff3ca502735de72f0e3d92353d0b4179fc1a22be1841a94072402df",
+        "market.json": "cbbabe790dd223e8256a353f0e8da4e7639d1508bc453410935ef69374c79a05",
+        "blocks.csv": "431916a765fec89bf6d2a0f62881657aa8163ee10e9e0dcfc3ee0abcef8bd33f",
+        "agents/cand.jsonl": "7a56859edba1e45f69acc4a63f9e9fd0fcb8f7da90815aae962cbd37964a0d64",
+        "agents/multi-arb.jsonl": "86e9a9138c22bdfe35916cbbfc3bb8e7801638d283880ab85702d9ad0b6e3d08",
+        "agents/clean-arb.jsonl": "3619eb2edcfadcc8186dab03ce266ffb089d2c555a45a149240c9809a15070a4"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 639.3200527588488,
+          "excess": 335.275938234161,
+          "included": 43,
+          "reverts": 0,
+          "submitted": 43,
+          "failed": 2,
+          "E": 732.9507249721898,
+          "M": -393.41431491863983,
+          "G": 4.260471804159822,
+          "turnover": 104752.35172599998,
+          "legs": 43,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 37,
+              "turnover": 95465.10444899996,
+              "E": 655.6387024838751,
+              "M": -394.3499660907964,
+              "finalContribution": 261.28873639307864,
+              "quotedEdgeBpsSum": 2804.9194788678556,
+              "quotedEdgeSamples": 37
+            },
+            "bundle": {
+              "legs": 6,
+              "turnover": 9287.247277,
+              "E": 77.31202248831508,
+              "M": 0.9356511721566392,
+              "finalContribution": 78.24767366047173,
+              "quotedEdgeBpsSum": 441.8960936341209,
+              "quotedEdgeSamples": 6
+            }
+          },
+          "X": -1.5229188576881825e-08,
+          "execEdgeBps": 69.96985870917382,
+          "averageLegUsd": 2436.101202930232,
+          "bundleCount": 3,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 883.8995148658432,
+          "excess": 579.8554003411555,
+          "included": 289,
+          "reverts": 1,
+          "submitted": 290,
+          "failed": 0,
+          "E": 1948.2120867722228,
+          "M": -1357.9111789624644,
+          "G": 10.445504872296702,
+          "turnover": 372578.69021399977,
+          "legs": 288,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 154,
+              "turnover": 365525.38249599986,
+              "E": 1929.5045696669722,
+              "M": -1357.8164242394737,
+              "finalContribution": 571.6881454274971,
+              "quotedEdgeBpsSum": 12770.038856758056,
+              "quotedEdgeSamples": 154
+            },
+            "bundle": {
+              "legs": 134,
+              "turnover": 7053.307718000006,
+              "E": 18.70751710524994,
+              "M": -0.09475472299069919,
+              "finalContribution": 18.612762382259245,
+              "quotedEdgeBpsSum": 4408.235582424145,
+              "quotedEdgeSamples": 134
+            }
+          },
+          "X": -2.5963062526557223e-06,
+          "execEdgeBps": 52.289949423924895,
+          "averageLegUsd": 1293.6760076874991,
+          "bundleCount": 67,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 611.962363892846,
+          "excess": 307.9182493681583,
+          "included": 54,
+          "reverts": 0,
+          "submitted": 54,
+          "failed": 0,
+          "E": 311.3201694483303,
+          "M": -1.4828181400952691,
+          "G": 1.9191019155300941,
+          "turnover": 66106.370191,
+          "legs": 54,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 54,
+              "turnover": 66106.370191,
+              "E": 311.3201694483303,
+              "M": -1.4828181400952691,
+              "finalContribution": 309.837351308235,
+              "quotedEdgeBpsSum": 2203.9666751589098,
+              "quotedEdgeSamples": 54
+            }
+          },
+          "X": -2.4546669807889998e-08,
+          "execEdgeBps": 47.09382296272482,
+          "averageLegUsd": 1224.1920405740739,
+          "bundleCount": 27,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "vuln",
+      "seed": "35002",
+      "run": "runs/2026-10-04T08-26-37-296Z",
+      "elapsedMs": 721676,
+      "attempts": 35,
+      "loggedNoops": 327,
+      "frames": 361,
+      "agreement": 344,
+      "factors": {
+        "bidBudget": 24,
+        "combined50": 26,
+        "entry50": 20,
+        "entry45": 32,
+        "entry20": 46,
+        "headroom10entry50": 16,
+        "band40": 47,
+        "settled60": 4,
+        "cooldown0": 4
+      },
+      "sha256": {
+        "summary.json": "22e2d8d23b28774a5dfabdcf74e7785c3a1299d3b60ea1f07d6dae3ee889a251",
+        "market.json": "43b81e3717cb55c2d73f79f895174f9761f46f939e816db4e1acc8742aa22058",
+        "blocks.csv": "71c1f1cafc0050c794c3afb43dbc6e65ae35659563637bcee0e259811145e3dc",
+        "agents/cand.jsonl": "a8764cb4cb84c86ce9cedaed07405e3d8636c99e0c7037412dfdefdeeb93139e",
+        "agents/multi-arb.jsonl": "9cbffe7c6e2cb9423bf71ffbc31b159be3ea02a7b710ba179aad340eb1f88b95",
+        "agents/clean-arb.jsonl": "cc8ca9f17da10815d4502ff0aaf858e3e624d750b887303a3c76d07f4336d0d7"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 493.87448976477026,
+          "excess": 133.42646826141572,
+          "included": 36,
+          "reverts": 0,
+          "submitted": 36,
+          "failed": 0,
+          "E": 620.2169456821739,
+          "M": -483.2342012755098,
+          "G": 3.5562763967432462,
+          "turnover": 88080.033603,
+          "legs": 36,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 34,
+              "turnover": 86735.37067099998,
+              "E": 614.2931441605156,
+              "M": -483.40227584131134,
+              "finalContribution": 130.8908683192042,
+              "quotedEdgeBpsSum": 2617.0010623545763,
+              "quotedEdgeSamples": 34
+            },
+            "bundle": {
+              "legs": 2,
+              "turnover": 1344.6629320000002,
+              "E": 5.923801521658309,
+              "M": 0.16807456580151303,
+              "finalContribution": 6.0918760874598235,
+              "quotedEdgeBpsSum": 89.8818959799741,
+              "quotedEdgeSamples": 2
+            }
+          },
+          "X": 2.514948707066367e-07,
+          "execEdgeBps": 70.41515770505443,
+          "averageLegUsd": 2446.6676000833336,
+          "bundleCount": 1,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 77.32310118000896,
+          "excess": -283.1249203233456,
+          "included": 253,
+          "reverts": 0,
+          "submitted": 254,
+          "failed": 0,
+          "E": 2200.5403446244895,
+          "M": -2474.648717600597,
+          "G": 9.016545707618057,
+          "turnover": 381590.6619420001,
+          "legs": 253,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 151,
+              "turnover": 337867.6666160001,
+              "E": 2068.6473763859995,
+              "M": -2480.6042433143775,
+              "finalContribution": -411.9568669283759,
+              "quotedEdgeBpsSum": 13376.084554502804,
+              "quotedEdgeSamples": 151
+            },
+            "bundle": {
+              "legs": 102,
+              "turnover": 43722.99532600002,
+              "E": 131.8929682384884,
+              "M": 5.95552571377992,
+              "finalContribution": 137.84849395226843,
+              "quotedEdgeBpsSum": 3648.3800746846273,
+              "quotedEdgeSamples": 102
+            }
+          },
+          "X": -1.6396199171708759e-06,
+          "execEdgeBps": 57.667562760195665,
+          "averageLegUsd": 1508.2634859367593,
+          "bundleCount": 51,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": 598.5060441445385,
+          "excess": 238.05802264118392,
+          "included": 68,
+          "reverts": 0,
+          "submitted": 68,
+          "failed": 0,
+          "E": 246.08167443766433,
+          "M": -5.642657894234832,
+          "G": 2.3809938891125437,
+          "turnover": 71701.82728299996,
+          "legs": 68,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 68,
+              "turnover": 71701.82728299996,
+              "E": 246.08167443766433,
+              "M": -5.642657894234832,
+              "finalContribution": 240.43901654342952,
+              "quotedEdgeBpsSum": 2703.96061114695,
+              "quotedEdgeSamples": 68
+            }
+          },
+          "X": -1.3133032439327508e-08,
+          "execEdgeBps": 34.3201399130882,
+          "averageLegUsd": 1054.4386365147054,
+          "bundleCount": 34,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "spike",
+      "seed": "35001",
+      "run": "runs/2026-10-04T08-26-40-075Z",
+      "elapsedMs": 721765,
+      "attempts": 45,
+      "loggedNoops": 317,
+      "frames": 361,
+      "agreement": 337,
+      "factors": {
+        "entry20": 23,
+        "combined50": 19,
+        "entry50": 9,
+        "entry45": 11,
+        "bidBudget": 49,
+        "headroom10entry50": 8,
+        "settled60": 9,
+        "cooldown0": 9,
+        "band40": 168,
+        "min10": 9
+      },
+      "sha256": {
+        "summary.json": "d23a300ccde88ef9f76ac14af0e55f4d42b1a9acff788c0371d6924b076a3ec6",
+        "market.json": "5ee1f1257b03a5dd10efcd93faba35e2fb30ead6785d5e8adef188b43d927dab",
+        "blocks.csv": "2237e7acb37cf82caee7cefad7473e5dc3dccdd97fa83d1620504188b654775c",
+        "agents/cand.jsonl": "6d8dafaec000c3ebed3de9e0bd02e0865deec3ad948eec9712c67a0c75214a79",
+        "agents/multi-arb.jsonl": "fe3ccd0a79b02fed7303df06b3765d6aefab118f6cffd513a71c691c2e3b121c",
+        "agents/clean-arb.jsonl": "b1bf297d09bf848bd45b4fc9d66936a379b27f093e5d8a7458392e69c808f3b9"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": 3287.3892608125752,
+          "excess": 766.5920149986487,
+          "included": 50,
+          "reverts": 0,
+          "submitted": 50,
+          "failed": 0,
+          "E": 2062.3116143973675,
+          "M": -1290.2013574290645,
+          "G": 5.518242272441223,
+          "turnover": 100723.278007,
+          "legs": 50,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 40,
+              "turnover": 87366.71333199998,
+              "E": 1991.1204356706196,
+              "M": -1291.7523906858416,
+              "finalContribution": 699.3680449847783,
+              "quotedEdgeBpsSum": 5811.786391121955,
+              "quotedEdgeSamples": 40
+            },
+            "bundle": {
+              "legs": 10,
+              "turnover": 13356.564675000001,
+              "E": 71.19117872674795,
+              "M": 1.551033256777166,
+              "finalContribution": 72.74221198352512,
+              "quotedEdgeBpsSum": 487.5990928841633,
+              "quotedEdgeSamples": 10
+            }
+          },
+          "X": 3.027868684668533e-07,
+          "execEdgeBps": 204.75024792720134,
+          "averageLegUsd": 2014.46556014,
+          "bundleCount": 5,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 4382.722029042983,
+          "excess": 1861.9247832290566,
+          "included": 388,
+          "reverts": 4,
+          "submitted": 389,
+          "failed": 0,
+          "E": 1318.7967105412645,
+          "M": 557.9535958234025,
+          "G": 14.825526023292433,
+          "turnover": 178247.80985600007,
+          "legs": 384,
+          "missing": 0,
+          "modes": {
+            "single": {
+              "legs": 181,
+              "turnover": 143237.5292509999,
+              "E": 1252.404863536744,
+              "M": 530.0098169281218,
+              "finalContribution": 1782.4146804648676,
+              "quotedEdgeBpsSum": 18580.674198578672,
+              "quotedEdgeSamples": 181
+            },
+            "bundle": {
+              "legs": 203,
+              "turnover": 35010.28060500001,
+              "E": 66.39184700452027,
+              "M": 27.943778895281433,
+              "finalContribution": 94.33562589980173,
+              "quotedEdgeBpsSum": 7878.161356079652,
+              "quotedEdgeSamples": 203
+            }
+          },
+          "X": 2.887682136076819e-06,
+          "execEdgeBps": 73.98669928156045,
+          "averageLegUsd": 464.1870048333335,
+          "bundleCount": 103,
+          "partialBundles": 3
+        },
+        "clean-arb": {
+          "P": 4872.680628827686,
+          "excess": 2351.883383013759,
+          "included": 144,
+          "reverts": 0,
+          "submitted": 144,
+          "failed": 0,
+          "E": 2179.9119651226347,
+          "M": 177.46114286055882,
+          "G": 5.48972510396783,
+          "turnover": 339856.6150330001,
+          "legs": 144,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 144,
+              "turnover": 339856.6150330001,
+              "E": 2179.9119651226347,
+              "M": 177.46114286055882,
+              "finalContribution": 2357.3731079831946,
+              "quotedEdgeBpsSum": 10285.699464106474,
+              "quotedEdgeSamples": 144
+            }
+          },
+          "X": 1.3453348124414788e-07,
+          "execEdgeBps": 64.14210783894747,
+          "averageLegUsd": 2360.115382173612,
+          "bundleCount": 72,
+          "partialBundles": 0
+        }
+      }
+    },
+    {
+      "regime": "spike",
+      "seed": "35002",
+      "run": "runs/2026-10-04T08-26-43-128Z",
+      "elapsedMs": 722009,
+      "attempts": 51,
+      "loggedNoops": 311,
+      "frames": 361,
+      "agreement": 338,
+      "factors": {
+        "bidBudget": 24,
+        "combined50": 24,
+        "entry50": 13,
+        "entry45": 24,
+        "entry20": 32,
+        "headroom10entry50": 12,
+        "band40": 87,
+        "cooldown0": 11,
+        "settled60": 9
+      },
+      "sha256": {
+        "summary.json": "ecfbc1a62c8fa245473ef9e3bf1980fe52ccd2b212d521911cb11134e6b21ee7",
+        "market.json": "83f69a5b547dbd2ad7efa5a4f8a8348873069475d5adc3cd83f77194a59acfbe",
+        "blocks.csv": "5a1336ef73372665bb110f9ae93c2044915c0f77437472ecb8500dab67798320",
+        "agents/cand.jsonl": "cc9699102e5415d027b91591e32623ac3a38d4af311c076fb6cddf40cd3740e5",
+        "agents/multi-arb.jsonl": "e4580f7da346a9166a4b476090dddfc2212e85f9baf8e2526d0d3f56d50112fc",
+        "agents/clean-arb.jsonl": "1a0882b3803d7f1b2e6fe1eaed1cbadb7e307ce8f31190dc021ca180cc815984"
+      },
+      "loops": 362,
+      "violations": [],
+      "failedReads": 0,
+      "accounts": {
+        "cand": {
+          "P": -2298.5361379750684,
+          "excess": 564.7029552724853,
+          "included": 54,
+          "reverts": 0,
+          "submitted": 54,
+          "failed": 3,
+          "E": 775.6657985474914,
+          "M": -206.02109075022216,
+          "G": 4.941752515543516,
+          "turnover": 124640.700778,
+          "legs": 54,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 12,
+              "turnover": 12691.418453999999,
+              "E": 57.82744286640043,
+              "M": -3.4095168247445384,
+              "finalContribution": 54.417926041655896,
+              "quotedEdgeBpsSum": 536.7049709033046,
+              "quotedEdgeSamples": 12
+            },
+            "single": {
+              "legs": 42,
+              "turnover": 111949.28232399999,
+              "E": 717.8383556810911,
+              "M": -202.61157392547753,
+              "finalContribution": 515.2267817556135,
+              "quotedEdgeBpsSum": 3361.518747409982,
+              "quotedEdgeSamples": 42
+            }
+          },
+          "X": -9.240420872913546e-09,
+          "execEdgeBps": 62.232143569943894,
+          "averageLegUsd": 2308.1611255185185,
+          "bundleCount": 6,
+          "partialBundles": 0
+        },
+        "multi-arb": {
+          "P": 23.187565357089625,
+          "excess": 2886.4266586046433,
+          "included": 265,
+          "reverts": 0,
+          "submitted": 265,
+          "failed": 1,
+          "E": 2526.5980670913787,
+          "M": 368.2847825013184,
+          "G": 8.456190456407436,
+          "turnover": 504147.6898359998,
+          "legs": 265,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 66,
+              "turnover": 193222.58585200002,
+              "E": 591.8367949190095,
+              "M": 55.80622528256821,
+              "finalContribution": 647.6430202015777,
+              "quotedEdgeBpsSum": 5827.708785107575,
+              "quotedEdgeSamples": 66
+            },
+            "single": {
+              "legs": 199,
+              "turnover": 310925.103984,
+              "E": 1934.761272172369,
+              "M": 312.47855721875203,
+              "finalContribution": 2247.239829391118,
+              "quotedEdgeBpsSum": 33988.96680005567,
+              "quotedEdgeSamples": 199
+            }
+          },
+          "X": -5.316462843296677e-07,
+          "execEdgeBps": 50.116228201170294,
+          "averageLegUsd": 1902.4441125886785,
+          "bundleCount": 33,
+          "partialBundles": 0
+        },
+        "clean-arb": {
+          "P": -2744.064687653503,
+          "excess": 119.17440559405077,
+          "included": 44,
+          "reverts": 0,
+          "submitted": 44,
+          "failed": 0,
+          "E": 115.87800664551614,
+          "M": 4.653324576633277,
+          "G": 1.3569256467802109,
+          "turnover": 79552.410194,
+          "legs": 44,
+          "missing": 0,
+          "modes": {
+            "bundle": {
+              "legs": 44,
+              "turnover": 79552.410194,
+              "E": 115.87800664551614,
+              "M": 4.653324576633277,
+              "finalContribution": 120.53133122214935,
+              "quotedEdgeBpsSum": 4377.8262113305,
+              "quotedEdgeSamples": 44
+            }
+          },
+          "X": 1.8681564517564198e-08,
+          "execEdgeBps": 14.566247127262512,
+          "averageLegUsd": 1808.009322590909,
+          "bundleCount": 22,
+          "partialBundles": 0
+        }
+      }
+    }
+  ],
+  "reasons": {
+    "no funded positive net edge at an affordable bid": 5621,
+    "valuation boundary or unknown horizon": 15
+  },
+  "failures": {
+    "Execution reverted with reason: Too little received.": 9,
+    "Execution reverted with reason: BAL#507.": 11,
+    "Execution reverted with reason: Slippage.": 7
+  },
+  "gates": {
+    "no_edge": 119130,
+    "entry_positive": 21767,
+    "eligible": 767,
+    "bid": 973,
+    "cooldown": 5244,
+    "inventory_band": 6340,
+    "endgame_new_risk": 432,
+    "endgame_bundle": 144,
+    "horizon": 15,
+    "anchor_dust": 3
+  },
+  "matchedGates": {
+    "no_edge": 59870,
+    "entry_positive": 12039,
+    "cooldown": 3348,
+    "inventory_band": 5765,
+    "bid": 310,
+    "endgame_new_risk": 288,
+    "endgame_bundle": 96,
+    "eligible": 1,
+    "anchor_dust": 3
+  },
+  "matchedRouteGates": {
+    "entry_positive": 3051,
+    "no_edge": 5048,
+    "cooldown": 382,
+    "inventory_band": 2686,
+    "bid": 184,
+    "endgame_new_risk": 40,
+    "eligible": 1,
+    "anchor_dust": 3
+  },
+  "matchedGateBlocks": {
+    "no_edge": 3424,
+    "entry_positive": 3310,
+    "cooldown": 558,
+    "inventory_band": 2417,
+    "bid": 205,
+    "endgame_new_risk": 48,
+    "endgame_bundle": 48,
+    "eligible": 1,
+    "anchor_dust": 3
+  },
+  "factors": {
+    "baseline": {
+      "trades": 480,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 7554.898345119955,
+      "addedNet": 0,
+      "usd": 641907.410310845,
+      "removed": 0,
+      "changed": 0,
+      "addedUsd": 0,
+      "addedLegs": 0,
+      "maxAddedUsd": 0,
+      "addedBundle": 0,
+      "addedGasUsd": 0
+    },
+    "settled60": {
+      "trades": 622,
+      "added": 142,
+      "addedOnLoggedNoop": 133,
+      "addedOnMatchedNoop": 132,
+      "modelNet": 8477.209010714023,
+      "addedNet": 922.3106655940591,
+      "usd": 811446.8569159103,
+      "removed": 0,
+      "changed": 0,
+      "addedUsd": 169539.44660506552,
+      "addedLegs": 142,
+      "maxAddedUsd": 3597.706319,
+      "addedBundle": 0,
+      "addedGasUsd": 23.640543168284392
+    },
+    "combined50": {
+      "trades": 835,
+      "added": 355,
+      "addedOnLoggedNoop": 330,
+      "addedOnMatchedNoop": 326,
+      "modelNet": 8915.543458450315,
+      "addedNet": 1360.6451133303547,
+      "usd": 984246.2518038399,
+      "removed": 0,
+      "changed": 0,
+      "addedUsd": 342338.84149299614,
+      "addedLegs": 355,
+      "maxAddedUsd": 3597.706319,
+      "addedBundle": 0,
+      "addedGasUsd": 59.20927775562821
+    },
+    "entry50": {
+      "trades": 670,
+      "added": 190,
+      "addedOnLoggedNoop": 176,
+      "addedOnMatchedNoop": 173,
+      "modelNet": 7944.566755892504,
+      "addedNet": 389.66841077254975,
+      "usd": 795687.3472217482,
+      "removed": 0,
+      "changed": 0,
+      "addedUsd": 153779.9369109036,
+      "addedLegs": 190,
+      "maxAddedUsd": 898.790134,
+      "addedBundle": 0,
+      "addedGasUsd": 31.703869769302212
+    },
+    "entry45": {
+      "trades": 824,
+      "added": 344,
+      "addedOnLoggedNoop": 319,
+      "addedOnMatchedNoop": 228,
+      "modelNet": 8180.753539687343,
+      "addedNet": 625.8551945673871,
+      "usd": 905486.9141830395,
+      "removed": 0,
+      "changed": 0,
+      "addedUsd": 263579.50387219415,
+      "addedLegs": 344,
+      "maxAddedUsd": 898.790134,
+      "addedBundle": 0,
+      "addedGasUsd": 57.3762000936406
+    },
+    "entry20": {
+      "trades": 1016,
+      "added": 536,
+      "addedOnLoggedNoop": 502,
+      "addedOnMatchedNoop": 302,
+      "modelNet": 8390.395026672408,
+      "addedNet": 835.496681552448,
+      "usd": 1023095.5199264743,
+      "removed": 0,
+      "changed": 0,
+      "addedUsd": 381188.1096156285,
+      "addedLegs": 536,
+      "maxAddedUsd": 898.790134,
+      "addedBundle": 0,
+      "addedGasUsd": 88.82638233255337
+    },
+    "sizeMax": {
+      "trades": 480,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 7554.898345119955,
+      "addedNet": 0,
+      "usd": 641907.410310845,
+      "removed": 0,
+      "changed": 0,
+      "addedUsd": 0,
+      "addedLegs": 0,
+      "maxAddedUsd": 0,
+      "addedBundle": 0,
+      "addedGasUsd": 0
+    },
+    "cap16": {
+      "trades": 480,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 8129.864558436043,
+      "addedNet": 0,
+      "usd": 656124.6522966385,
+      "removed": 0,
+      "changed": 7,
+      "addedUsd": 0,
+      "addedLegs": 0,
+      "maxAddedUsd": 0,
+      "addedBundle": 0,
+      "addedGasUsd": 0
+    },
+    "band40": {
+      "trades": 2266,
+      "added": 1786,
+      "addedOnLoggedNoop": 1660,
+      "addedOnMatchedNoop": 1644,
+      "modelNet": 71246.45633180926,
+      "addedNet": 62030.03971609057,
+      "usd": 4158665.911990774,
+      "removed": 0,
+      "changed": 76,
+      "addedUsd": 3457326.4902742957,
+      "addedLegs": 1900,
+      "maxAddedUsd": 5182.707927,
+      "addedBundle": 114,
+      "addedGasUsd": 310.6318076222738
+    },
+    "min10": {
+      "trades": 513,
+      "added": 33,
+      "addedOnLoggedNoop": 33,
+      "addedOnMatchedNoop": 33,
+      "modelNet": 7068.5246404221725,
+      "addedNet": 38.88441305180929,
+      "usd": 637269.9230006053,
+      "removed": 0,
+      "changed": 1,
+      "addedUsd": 1253.8054129999998,
+      "addedLegs": 33,
+      "maxAddedUsd": 48.193208,
+      "addedBundle": 0,
+      "addedGasUsd": 5.818619910802198
+    },
+    "profit01": {
+      "trades": 480,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 7554.898345119955,
+      "addedNet": 0,
+      "usd": 641907.410310845,
+      "removed": 0,
+      "changed": 0,
+      "addedUsd": 0,
+      "addedLegs": 0,
+      "maxAddedUsd": 0,
+      "addedBundle": 0,
+      "addedGasUsd": 0
+    },
+    "cooldown0": {
+      "trades": 671,
+      "added": 191,
+      "addedOnLoggedNoop": 172,
+      "addedOnMatchedNoop": 171,
+      "modelNet": 10549.66991317608,
+      "addedNet": 2994.771568056106,
+      "usd": 893696.2421041641,
+      "removed": 0,
+      "changed": 0,
+      "addedUsd": 251788.83179331917,
+      "addedLegs": 191,
+      "maxAddedUsd": 5729.256106336929,
+      "addedBundle": 0,
+      "addedGasUsd": 31.78691191599608
+    },
+    "bidBudget": {
+      "trades": 1093,
+      "added": 613,
+      "addedOnLoggedNoop": 215,
+      "addedOnMatchedNoop": 205,
+      "modelNet": 8684.139457179977,
+      "addedNet": 1668.5045002915801,
+      "usd": 1068880.3568538895,
+      "removed": 0,
+      "changed": 480,
+      "addedUsd": 437430.9929851203,
+      "addedLegs": 701,
+      "maxAddedUsd": 2535.9972137389664,
+      "addedBundle": 88,
+      "addedGasUsd": 230.6769175313957
+    },
+    "headroom10": {
+      "trades": 398,
+      "added": 0,
+      "addedOnLoggedNoop": 0,
+      "addedOnMatchedNoop": 0,
+      "modelNet": 6785.6518424919395,
+      "addedNet": 0,
+      "usd": 529793.2600862518,
+      "removed": 82,
+      "changed": 48,
+      "addedUsd": 0,
+      "addedLegs": 0,
+      "maxAddedUsd": 0,
+      "addedBundle": 0,
+      "addedGasUsd": 0
+    },
+    "headroom10entry50": {
+      "trades": 561,
+      "added": 163,
+      "addedOnLoggedNoop": 150,
+      "addedOnMatchedNoop": 148,
+      "modelNet": 7114.909097296948,
+      "addedNet": 329.2572548050092,
+      "usd": 658647.0020513518,
+      "removed": 82,
+      "changed": 48,
+      "addedUsd": 128853.7419651002,
+      "addedLegs": 163,
+      "maxAddedUsd": 898.790134,
+      "addedBundle": 0,
+      "addedGasUsd": 27.31062213810521
+    }
+  },
+  "coverage": {
+    "loggedNoopFrames": 5618,
+    "noopWithReferenceSuccess": 3425,
+    "noopWith_multi-arb": 3423,
+    "attemptFrames": 877,
+    "balanceConfirmedSingles": 725,
+    "noopWith_clean-arb": 352
+  },
+  "confusion": {
+    "noop_noop": 5617,
+    "attempted_trade": 479,
+    "attempted_noop": 398,
+    "noop_trade": 1
+  },
+  "repairedMatches": 6495,
+  "seedAudit": {
+    "checkedAtUtc": "2026-10-04T10:45:22.689312+00:00",
+    "roots": {
+      "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/league-v2/runs": {
+        "exists": false
+      },
+      "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/league-v2/ascon-notes/eval/out": {
+        "exists": false
+      },
+      "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/runs": {
+        "exists": true,
+        "contentExit": 1,
+        "contentMatches": [],
+        "errors": "",
+        "filenameMatches": [],
+        "excluded": "market.json, values.csv, blocks.csv and agent jsonl (price/hash numeric coincidences, no seed config)"
+      },
+      "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out": {
+        "exists": true,
+        "contentExit": 1,
+        "contentMatches": [],
+        "errors": "",
+        "filenameMatches": [],
+        "excluded": "market.json, values.csv, blocks.csv and agent jsonl (price/hash numeric coincidences, no seed config)"
+      }
+    },
+    "seeds": [
+      36001,
+      36002
+    ]
+  }
+}

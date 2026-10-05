@@ -1,0 +1,592 @@
+{
+  "candidate": "xb-r v5 R9-only diagnostic, uncommitted",
+  "baseHead": "71aafe1",
+  "sourceSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54",
+  "tests": {
+    "baseline": 173,
+    "added": 10,
+    "pass": 183,
+    "fail": 0,
+    "skipped": 0,
+    "concurrency": 1
+  },
+  "typecheck": {
+    "command": "npm run typecheck",
+    "exit": 0
+  },
+  "strategy": {
+    "command": "TSX_DISABLE_CACHE=1 node --import tsx scripts/checkStrategyCode.ts example/agents/xb-r/agent.ts",
+    "exit": 0,
+    "findings": 0
+  },
+  "red": {
+    "command": "TSX_DISABLE_CACHE=1 node test/xb-r-red-controls.mjs",
+    "exit": 0,
+    "existing": 54,
+    "added": 5,
+    "intendedRed": 59,
+    "allExit1WithNamedAssertion": true,
+    "everySourceRestored": true,
+    "restoredSuitePass": 183,
+    "evidenceDirectory": "/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/xb-r-red-controls-5h2uW5",
+    "records": [
+      {
+        "label": "LIVE-original-a042a70",
+        "exit": 1,
+        "pass": 0,
+        "fail": 3,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV2-original-2ae0d59",
+        "exit": 1,
+        "pass": 0,
+        "fail": 4,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-original-a646e9b",
+        "exit": 1,
+        "pass": 0,
+        "fail": 3,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "LIVE-unscoped-oracle",
+        "exit": 1,
+        "pass": 0,
+        "fail": 3,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "LIVE-own-bid",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "LIVE-total-deadline",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R1-priority",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R1-cooldown",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R2-size",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R3-double-margin",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R4-budget-bid",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R4-zero-send",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R5-restore-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R5-net-guard",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R5-loose-slippage",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "W2-restore-cooldown",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "W2-ordinary-cooldown",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "S1-selected-base",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "S5-validation-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "S5-negative-edge",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "S5-nonfinite-edge",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV2-anchor-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 2,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV2-duplicate-single-gate",
+        "exit": 1,
+        "pass": 0,
+        "fail": 2,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV2-endgame-cross",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV2-cross-without-entry",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV2-entry-step",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-default-entry",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-settlement-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-no-input-confirmation",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-no-proceeds-confirmation",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-no-gas-confirmation",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-other-base-ambiguity",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-no-next-block",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-no-run-id",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-no-previous-reset",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-no-bundle-exclusion",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "DEV3-headroom-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V4-default-on",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V4-depth-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V4-depth-cap-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V4-single-cap-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V4-bundle-cap-shrunk",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V4-backoff-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V4-confirmation-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V4-blind-release",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V4-funding-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V4-gas-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R13-default-on",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R13-factor-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R13-entry-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R13-gas-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R13-double-budget",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R13-zero-room-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "R13-profit-reserve-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V5-default-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V5-v3-profile-leak",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V5-headroom-sell-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V5-bundle-band-halved",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      },
+      {
+        "label": "V5-buy-cushion-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true,
+        "restoredSha256": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54"
+      }
+    ]
+  },
+  "offlineParity": {
+    "frozenCommit": "d30cbbb46ca472b5a7a72fc1b99deab96dc97bf3",
+    "statefulFrames": 8664,
+    "statelessFrames": 8664,
+    "note": "Observed/reconstructed fixed wallets; not counterfactual chain trajectories."
+  },
+  "fileSha256": {
+    "example/agents/xb-r/agent.ts": "a4ab7664cf87155ad193cc79ae038ecf4d2e6289d71179b3bc356b52c4a36b54",
+    "example/agents/xb-r/prompt.md": "960a8b02cc801ddcde0143fbf63382fa650aa7b6d3ce648b62fbc77393cfac64",
+    "example/agents/lib/affordable.ts": "d4901933d70f496a6adcf23cff56134251bf37b151d3f53f2a51794b5c87253d",
+    "sdk/src/constants.ts": "4db6dfd182dd8a616dfb98f6b323d81412ccad17e1faaf5a4aea11c97bd58e54",
+    "test/xb-r-v5.test.ts": "a97dc7ebfa1972335bf46cc6aac88d8ae6ee5f122e0d85915b433e9781967db3",
+    "test/fixtures/xb-r-dev4-v5.json": "4dfd1f18b881a0f5cd10edd67d12bf6d6cf6daaa40af7527f2303e94343aa79c",
+    "test/xb-r-red-controls.mjs": "f6572a1cb671e52b72657b8a09adf16930e0d32b1007bcb6f9459819e0325659",
+    "ascon-notes/eval/diagnose-xb-r-dev4-v5.mjs": "c351a40b965d2bf7d3409c684c9c845f368fe31166566293ddae083ccdee9ead",
+    "ascon-notes/eval/dev4-v5-xb-r-analysis.json": "c8380828609ce901d29416c9d38da3f76626f91349b65a978976bbbf7dbe67e1",
+    "ascon-notes/eval/audit-xb-r-v5-seeds.py": "1df16d8d6caa234a966891f348740a27819e97867a3952eed8101e34b0c9d5c9",
+    "ascon-notes/eval/dev4-v5-seed-audit.json": "c740aebf596814f46cee392b49d5c83a197e9d9fe9900b250930b21f5c9fc7ae"
+  },
+  "logSha256": {
+    "DEV3-original-a646e9b.log": "ecb537440d9678d7db383851cfcbc7396e72fa66b63bc119e19f0d235e42459e",
+    "DEV3-no-run-id.log": "efb6bfab870205d986fc662bf92db1b8c76c59bf1682553d44590221239e67dc",
+    "LIVE-original-a042a70.log": "c687fb5903b2bdd49d20b745177085a3677cec5c44a0d55edc4e8bbead5c11b3",
+    "LIVE-unscoped-oracle.log": "56a6b534aa873ce535c4b95d68b4fc8e8ba0ceda1770e9ab13c97e2cc685fe16",
+    "W2-restore-cooldown.log": "5a9953932e28506a81fcd610213a824881c20f5a51abcf608617137f04e7bdd7",
+    "R13-factor-bypass.log": "a1fd6fa7ad1b0c95b192c93b4c4900019b61fe6964743f4fc8ea0cea5bc68ec2",
+    "R2-size.log": "253df7b03c6de468bd7eeae0ac752418743309a09c21a188a790819542aa4e9a",
+    "LIVE-total-deadline.log": "4d469fb790481fddeac48192295bcb30b306d08ff396f3369941954d75265af4",
+    "V4-blind-release.log": "c7884b68116514c52c1d05cf2b4bc60ca3ee176db6ca3ba84faa1f97d0091d48",
+    "DEV3-no-next-block.log": "abee4731d28625a359ea13655d2af6f33928c82e2150224871c2482e1e1d6916",
+    "R5-loose-slippage.log": "36bbaac4d8ed8490cf89f820275a4f9b9dd5e9eeeecfc6e77e34fcf202f33c1a",
+    "V4-funding-bypass.log": "b37b7e604d0df6f478c223f4a2ed5bedf5ae3a2be16c5234e3e3fbcf6ba250b0",
+    "V5-v3-profile-leak.log": "5d9cb60e9ceb5fa031a07b567cd3b8c96d6541843439b16d6cc8adf151b7b7d0",
+    "V4-depth-off.log": "b8b6ccd5e046029db782a3c8031f5a722ed2ed51d9b452045ff5aaf0a66116da",
+    "R13-entry-bypass.log": "37f130ce86474bb962c4597b274a3d184649cd0693fba5989a730117e0480e97",
+    "DEV2-entry-step.log": "251cda63193cc572311418d5ef646455014767dab6ea5ef2cab10102eaedf58b",
+    "R1-cooldown.log": "e32a3813bb81b00881daf3ebbd084211fc1b4600c1ba7ed2d4c62ec4f35c412d",
+    "R13-profit-reserve-bypass.log": "f976f45b2979f012ef87641576d9ca7d4440ca76dd2500cba3b3523bf44188e4",
+    "DEV2-anchor-off.log": "3587f95ff582f98105437f7e7a56e9fc316f9fb543a27e6cf281725d600b0a98",
+    "R13-zero-room-bypass.log": "7cd388d7f782aa7350afddce74e7e4ca657a108f8ffb00350b911ce9eca62fd6",
+    "R3-double-margin.log": "01dc2fa79dc01c412e9f4242508a142336ba4317573a211957c7137798f619d3",
+    "R1-priority.log": "89953ba7fead781576b653067283dd7418b7cc33b6c292df4d3b7f2edbea3df1",
+    "V4-confirmation-off.log": "4f11648875ac6c43d07b9745f9de9c582da93ab5970df913dc2a98757ebc81e3",
+    "V5-bundle-band-halved.log": "a6da7d95ddfa15f80429fb82eccd88e8fb9d9493ae557546c10d0da1f8c9de49",
+    "R5-net-guard.log": "4459f121d8e9577618e18da3900212ea3cb17eea531aaf8a2ed7d470c4dd75cc",
+    "V4-depth-cap-bypass.log": "c0afc102c12cd912434956214b076071b3af482b97d67f6d4ddbad92c5be0de9",
+    "R5-restore-off.log": "8252f50c5932da4fd3a934d6928e32a713d2a27c7fc57d46aaf61f1443dabd49",
+    "S1-selected-base.log": "51a1ee243e11a3655588041f065f00f355212a140b7b79a62d6beb4723f99246",
+    "DEV3-no-bundle-exclusion.log": "8b2725a09dc1bbd69264e5409aa1e8f3d71a47436408281b6fed5f2f5d23fb05",
+    "DEV2-duplicate-single-gate.log": "c8e56180c90fdbf1fb434914aadd9155d39129df3683bf0ec55226850c08115a",
+    "V4-gas-bypass.log": "a3774d64c5230fcc9d10ce66eb5551e447a30cddca908be4b36f725aecceb88f",
+    "DEV3-no-gas-confirmation.log": "098aef6d0c77a321faeab4b354ec47a7aa2f2d4d2c53b50b8a9736911a8a9924",
+    "S5-nonfinite-edge.log": "904afa519a8b8d4d43359c51bffd9a50159432937c1c7f30936e9077d5a60ff7",
+    "R4-zero-send.log": "d7d1eb08c540e1dfcfb1d73f8804a5445b1c2de41bf01e973d32cbf75c3bf46a",
+    "V4-backoff-off.log": "b94f8450312162911afcab12eb2d0fbeeeb2f47ed4f5089555aedcf8230320b9",
+    "restored-xb-tests.log": "43fa66a5d11e533de2af80fbcc0e54b613105d133e3f4157d30415866286df1a",
+    "R13-double-budget.log": "4bb6e11b1d92ca3ae222232997e161b65be74fed9b41df05cf7276d242e0e970",
+    "DEV2-original-2ae0d59.log": "99c6a35405bb649918f9b7bb5e28b5b87b6707fb3f19362606211071c5f58638",
+    "W2-ordinary-cooldown.log": "311a1f92719bc064e7bcdb90d9194fb88009fbb6b57125d02a8e41a7fad8e935",
+    "V5-default-off.log": "39ed2f6cc66d56bb35d5e02bb1e4d63d5c7efdb01b1fb3cb5d09bbb4825e23a6",
+    "DEV3-no-proceeds-confirmation.log": "80c5587d1a5fde8f814d4fb6fcba28f5cba29fd28a091a5462c98bd1047c7f05",
+    "DEV3-other-base-ambiguity.log": "e35fd67d7e7e3515c92c20bc2edffe20f41bd3f6dca55d80ec32df4f7c807eb9",
+    "DEV3-settlement-off.log": "8b8a4d1bfc41ef493f8fa6b8fa0ccb985db5f62c897ab735aeb09fdfb14f6175",
+    "V4-default-on.log": "21fafe8bbb3d593b8556a41feb98160a94cafdc527eebdf4e436e9888c15cdf4",
+    "S5-negative-edge.log": "115416f1d009dfeac019142e3f917a5578702276f66627472ff2d90b9f333bb0",
+    "DEV3-headroom-off.log": "d0e051263237c544c2e391c8b82a862c6fb781e782d8455c83b184c8bb11590e",
+    "R4-budget-bid.log": "eba01e67397809c98433a427f1f312a174d377228b5242cb6bab77ea19385093",
+    "R13-gas-bypass.log": "70e9307c8c35c32fdc6014b4e8f63cac112f88607ef06ed8c1dfa42ffffc978d",
+    "V4-single-cap-off.log": "8b9fa5111c75cb7d439ce6603eb90eddbc50750513b6ee1ed0edbd4b0cde4f6c",
+    "DEV3-default-entry.log": "66a18cafae387cafa9dad7324afefc6a0a7ca13da247f0b424e7024962e97b66",
+    "DEV2-endgame-cross.log": "b6734ab0c3f793543ea11ab3814567db897f95b640560523d71e277ede4d2083",
+    "V4-bundle-cap-shrunk.log": "c6b4a0d756e59a560353d189e1395861f2d502e1fbf4e96cc4dbf20d6beeb7f8",
+    "V5-buy-cushion-off.log": "5570312fabfd16a1d90951599c1eed4cd31047892e90b35bdb892cc4cb7c7a7b",
+    "R13-default-on.log": "774cf968b3416a779a34464866806363c5a1109689d00b93f5dfe54fb19d9eb0",
+    "S5-validation-off.log": "b9e89aa4fc378c1a61079bc23ee52546c46436b58b79bc655c73a9baee905bff",
+    "V5-headroom-sell-off.log": "a531af997ee27952a8ff2f169b438f458b8bc1bef8fed925778c2baf083576fd",
+    "LIVE-own-bid.log": "88ceb92c1de65151ba85a7a23a576ea2ad816af9d3f1c6d342abe0054470ec65",
+    "DEV2-cross-without-entry.log": "7aa4bf2436215dcada17af9ddc48abc34f3c44e0be9d99a3488930067cbf2bee",
+    "DEV3-no-previous-reset.log": "8ff575346ce8acb1c62043d9952d26f65eda05f399583e6230c34cb61ee0f24c",
+    "DEV3-no-input-confirmation.log": "38a2c55ae120f75922a56b1cf8e16a8e1e2bf8ec1f766fdcb9001c5f9e60d9ab"
+  },
+  "limits": [
+    "No chain run/smoke/public60/bundle/selftest or full npm test.",
+    "No performance claim, no commit, upstream-eval read-only, no key/environment files accessed."
+  ]
+}

@@ -1,0 +1,403 @@
+{
+  "checkedAtUtc": "2026-10-04T15:34:41.286777+00:00",
+  "scope": "Read-only seed-column audit of visible sibling/main runs and eval out ledgers. Active ledgers may grow; this does not establish a global reservation or inspect performance.",
+  "ledgerCount": 47,
+  "rowCount": 590,
+  "candidates": {
+    "36001": [
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 2
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 4
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 6
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 8
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 10
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 12
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 14
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 16
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 18
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "row": 2
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "row": 4
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "row": 6
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 2
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 4
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 6
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 8
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 10
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 12
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 14
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 16
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 18
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5b-xb-r/index.tsv",
+        "row": 2
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5b-xb-r/index.tsv",
+        "row": 4
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5b-xb-r/index.tsv",
+        "row": 6
+      }
+    ],
+    "36002": [
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 3
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 5
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 7
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 9
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 11
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 13
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 15
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 17
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+        "row": 19
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "row": 3
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "row": 5
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+        "row": 7
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 3
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 5
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 7
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 9
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 11
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 13
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 15
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 17
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+        "row": 19
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5b-xb-r/index.tsv",
+        "row": 3
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5b-xb-r/index.tsv",
+        "row": 5
+      },
+      {
+        "index": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5b-xb-r/index.tsv",
+        "row": 7
+      }
+    ],
+    "37001": [],
+    "37002": [],
+    "38001": [],
+    "38002": [],
+    "39001": [],
+    "39002": [],
+    "39101": [],
+    "39102": [],
+    "39103": []
+  },
+  "ledgers": [
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/guardtest/index.tsv",
+      "rows": 1
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/guardtest2/index.tsv",
+      "rows": 1
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-delta-bid/index.tsv",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-delta-bid-s102_103/index.tsv",
+      "rows": 24
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-eps-bid10000/index.tsv",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-eps-bid10000-s102_103/index.tsv",
+      "rows": 24
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-eps-bid5000/index.tsv",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-eps-bid5000-s102_103/index.tsv",
+      "rows": 24
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-zeta-a30/index.tsv",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/iso-zeta-a30-s102_103/index.tsv",
+      "rows": 24
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/league-r1/index.tsv",
+      "rows": 36
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/load-probe-20261003-132631/index.tsv",
+      "rows": 3
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/load-probe-20261003-162005/index.tsv",
+      "rows": 5
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/r1/index.tsv",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/smoke/index.tsv",
+      "rows": 1
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/spec/index.tsv",
+      "rows": 6
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/sweep1/index.tsv",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/sweep3/index.tsv",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/scaffold/ascon-notes/eval/out/sweep4b/index.tsv",
+      "rows": 9
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev1-xb-r/index.tsv",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev2-xb-r/index.tsv",
+      "rows": 12
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev3a-xb-r/index.tsv",
+      "rows": 18
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev3b-xb-r/index.tsv",
+      "rows": 6
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4a-xb-r/index.tsv",
+      "rows": 18
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4b-xb-r/index.tsv",
+      "rows": 6
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev4s-xb-r/index.tsv",
+      "rows": 1
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5a-xb-r/index.tsv",
+      "rows": 18
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5b-xb-r/index.tsv",
+      "rows": 6
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev5s-xb-r/index.tsv",
+      "rows": 1
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev6s-xa-1/index.tsv",
+      "rows": 1
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/dev7s-xa-1/.matrix-tmp-31912/index.tsv",
+      "rows": 0
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-inc-zeta/index.tsv",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-opus-1/index.tsv",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-sonnet-1/index.tsv",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-zeta-2/index.tsv",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-zeta-2a/index.tsv",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/fref-zeta-2c/index.tsv",
+      "rows": 8
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0a-sonnet-1/index.tsv",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0b-sonnet-1/index.tsv",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0ba-opus-1/index.tsv",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0bb-opus-1/index.tsv",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0bc-opus-1/index.tsv",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/q0c-sonnet-1/index.tsv",
+      "rows": 20
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1/index.tsv",
+      "rows": 36
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1b/.matrix-tmp-91878/index.tsv",
+      "rows": 0
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1c/index.tsv",
+      "rows": 9
+    },
+    {
+      "path": "/Users/masashi_mac_ssd/Developer/majisuke/ascon/.claude/worktrees/upstream-eval/ascon-notes/eval/out/u1m/index.tsv",
+      "rows": 36
+    }
+  ]
+}

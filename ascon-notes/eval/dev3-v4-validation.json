@@ -1,0 +1,346 @@
+{
+  "implementationSha256": "ab2f26337c716eb73a8b4657758f20934028e6e3895ee3a4e3fd02d6a696e763",
+  "fixtureSha256": "a703985907fd5c54ed86781dd9ca8a93fda1f604c11aa5d6e1eaec772b663373",
+  "testSha256": "54ba8ef50e6d6ec557422fdb0b6b0dbd5fc862deca9f898508b2f103bae7495d",
+  "typecheck": {
+    "command": "npm run typecheck",
+    "exit": 0
+  },
+  "staticCheck": {
+    "command": "node --import tsx scripts/checkStrategyCode.ts example/agents/xb-r/agent.ts",
+    "exit": 0,
+    "files": 1,
+    "findings": 0
+  },
+  "tests": {
+    "existing": 136,
+    "added": 23,
+    "pass": 159,
+    "fail": 0,
+    "skip": 0,
+    "concurrency": 1
+  },
+  "redControls": {
+    "existing": 33,
+    "added": 10,
+    "intendedAssertionFailures": 43,
+    "sourceRestored": true,
+    "records": [
+      {
+        "label": "LIVE-original-a042a70",
+        "exit": 1,
+        "pass": 0,
+        "fail": 3,
+        "restored": true
+      },
+      {
+        "label": "DEV2-original-2ae0d59",
+        "exit": 1,
+        "pass": 0,
+        "fail": 4,
+        "restored": true
+      },
+      {
+        "label": "DEV3-original-a646e9b",
+        "exit": 1,
+        "pass": 0,
+        "fail": 3,
+        "restored": true
+      },
+      {
+        "label": "LIVE-unscoped-oracle",
+        "exit": 1,
+        "pass": 0,
+        "fail": 3,
+        "restored": true
+      },
+      {
+        "label": "LIVE-own-bid",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "LIVE-total-deadline",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "R1-priority",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "R1-cooldown",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "R2-size",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "R3-double-margin",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "R4-budget-bid",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "R4-zero-send",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "R5-restore-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "R5-net-guard",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "R5-loose-slippage",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "W2-restore-cooldown",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "W2-ordinary-cooldown",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "S1-selected-base",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "S5-validation-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "S5-negative-edge",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "S5-nonfinite-edge",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "DEV2-anchor-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 2,
+        "restored": true
+      },
+      {
+        "label": "DEV2-duplicate-single-gate",
+        "exit": 1,
+        "pass": 0,
+        "fail": 2,
+        "restored": true
+      },
+      {
+        "label": "DEV2-endgame-cross",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "DEV2-cross-without-entry",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "DEV2-entry-step",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "DEV3-default-entry",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "DEV3-settlement-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "DEV3-no-input-confirmation",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "DEV3-no-proceeds-confirmation",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "DEV3-no-gas-confirmation",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "DEV3-other-base-ambiguity",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "DEV3-headroom-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "V4-default-on",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "V4-depth-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "V4-depth-cap-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "V4-single-cap-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "V4-bundle-cap-shrunk",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "V4-backoff-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "V4-confirmation-off",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "V4-blind-release",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "V4-funding-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      },
+      {
+        "label": "V4-gas-bypass",
+        "exit": 1,
+        "pass": 0,
+        "fail": 1,
+        "restored": true
+      }
+    ]
+  },
+  "evidenceDirectory": "/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/xb-r-red-controls-KyJpya",
+  "defaultV3Parity": {
+    "stateful": 8660,
+    "stateless": 8660,
+    "commit": "d30cbbb46ca472b5a7a72fc1b99deab96dc97bf3"
+  },
+  "notRun": [
+    "chain backtest",
+    "Docker",
+    "public60",
+    "bundle/selftest",
+    "full npm test"
+  ],
+  "committed": false
+}

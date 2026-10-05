@@ -1,0 +1,2788 @@
+{
+  "method": "Reconstructed, not full observation replay: cand/inc-zeta.jsonl line anchors + market.json notionals/prices + blocks.csv receipts. Floating output balances; runtime all-other-sender max competitor bid (including oracle/flow); no Liquity/registry/RPC history. Same-input decision identity only, not historical action/performance equivalence.",
+  "windows": [
+    {
+      "group": "incz-inc-zeta",
+      "regime": "cex-drift",
+      "seed": "40005",
+      "run": "runs/2026-10-04T22-17-08-551Z",
+      "agentLog": "agents/cand.jsonl",
+      "sha256": {
+        "summary.json": "db5301acc37bd0e99b727594469e216ee340913ca3f5730c478d89def933da70",
+        "market.json": "c6a4c84abb8a45bf4e3fe5f2325d0118753fa6ef6e99dfbfe1dc38dc9182e044",
+        "blocks.csv": "bc9f84a4a2e98629f12cd756e526caea4e07f6eff648907bf58180b714a3c973",
+        "agents/cand.jsonl": "7e058567a32278f96ccdb7121436ba417988e5a3e3428de91472f355cd637139"
+      },
+      "frames": [
+        {
+          "sourceLines": [
+            6
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-08-551Z",
+            "round": 1289,
+            "blockNumber": "1289",
+            "blocksRemaining": 357,
+            "fairPriceUsdcPerWeth": 2988.952627,
+            "fairPricesUsd": {
+              "WETH": 2988.952627,
+              "WBTC": 60537.205021
+            },
+            "balances": {
+              "usdcUnits": "22500000000",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999956828100000128"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3000.917112,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60032.837387,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2997.948619,
+                "buyPriceUsdcPerWeth": 3007.268762,
+                "sellPriceUsdcPerWeth": 2988.65736,
+                "effectiveHalfSpreadBps": 31.088403123407105,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60048.83437,
+                    "buyPriceUsdcPerWeth": 60349.371218,
+                    "sellPriceUsdcPerWeth": 59749.79418,
+                    "effectiveHalfSpreadBps": 50.04873972751067
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2999.913005,
+                "buyPriceUsdcPerWeth": 3007.74998,
+                "sellPriceUsdcPerWeth": 2992.09645,
+                "effectiveHalfSpreadBps": 26.12400750954258,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60001.88699,
+                    "buyPriceUsdcPerWeth": 60166.308519,
+                    "sellPriceUsdcPerWeth": 59837.91479,
+                    "effectiveHalfSpreadBps": 27.40272631643892
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            7
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-08-551Z",
+            "round": 1290,
+            "blockNumber": "1290",
+            "blocksRemaining": 356,
+            "fairPriceUsdcPerWeth": 2978.007816,
+            "fairPricesUsd": {
+              "WETH": 2978.007816,
+              "WBTC": 60418.366866
+            },
+            "balances": {
+              "usdcUnits": "18486000000",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999469140135300608"
+            },
+            "baseBalances": {
+              "WBTC": "46671881"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2999.840148,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60047.299121,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2997.529723,
+                "buyPriceUsdcPerWeth": 3006.848537,
+                "sellPriceUsdcPerWeth": 2988.23979,
+                "effectiveHalfSpreadBps": 31.08831196945827,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60056.07874,
+                    "buyPriceUsdcPerWeth": 60356.66099,
+                    "sellPriceUsdcPerWeth": 59756.99342,
+                    "effectiveHalfSpreadBps": 50.05026239531585
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2999.889581,
+                "buyPriceUsdcPerWeth": 3007.727899,
+                "sellPriceUsdcPerWeth": 2992.07169,
+                "effectiveHalfSpreadBps": 26.128688574698078,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60022.355012,
+                    "buyPriceUsdcPerWeth": 60192.219378,
+                    "sellPriceUsdcPerWeth": 59852.97001,
+                    "effectiveHalfSpreadBps": 28.300183372671484
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            8
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-08-551Z",
+            "round": 1291,
+            "blockNumber": "1291",
+            "blocksRemaining": 355,
+            "fairPriceUsdcPerWeth": 2967.185314,
+            "fairPricesUsd": {
+              "WETH": 2967.185314,
+              "WBTC": 60395.555567
+            },
+            "balances": {
+              "usdcUnits": "18486000000",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999469140135300608"
+            },
+            "baseBalances": {
+              "WBTC": "46671881"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2998.046496,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60080.973085,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2996.320883,
+                "buyPriceUsdcPerWeth": 3005.635885,
+                "sellPriceUsdcPerWeth": 2987.03475,
+                "effectiveHalfSpreadBps": 31.088132046139805,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60143.780577,
+                    "buyPriceUsdcPerWeth": 60444.887248,
+                    "sellPriceUsdcPerWeth": 59844.17387,
+                    "effectiveHalfSpreadBps": 50.06447361917132
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3000.106176,
+                "buyPriceUsdcPerWeth": 3007.94478,
+                "sellPriceUsdcPerWeth": 2992.288,
+                "effectiveHalfSpreadBps": 26.127753847671187,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60020.867389,
+                    "buyPriceUsdcPerWeth": 60190.128288,
+                    "sellPriceUsdcPerWeth": 59852.08247,
+                    "effectiveHalfSpreadBps": 28.20034197845045
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            9
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-08-551Z",
+            "round": 1292,
+            "blockNumber": "1292",
+            "blocksRemaining": 354,
+            "fairPriceUsdcPerWeth": 2962.714419,
+            "fairPricesUsd": {
+              "WETH": 2962.714419,
+              "WBTC": 60166.328058
+            },
+            "balances": {
+              "usdcUnits": "23737562456",
+              "wethWei": "6244800000000000000",
+              "ethWei": "998751635135300608"
+            },
+            "baseBalances": {
+              "WBTC": "46671881"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2996.015635,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60072.892416,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2995.36432,
+                "buyPriceUsdcPerWeth": 3004.6763,
+                "sellPriceUsdcPerWeth": 2986.0812,
+                "effectiveHalfSpreadBps": 31.087970185121883,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60143.780577,
+                    "buyPriceUsdcPerWeth": 60444.887248,
+                    "sellPriceUsdcPerWeth": 59844.17387,
+                    "effectiveHalfSpreadBps": 50.06447361917132
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2998.765876,
+                "buyPriceUsdcPerWeth": 3006.872056,
+                "sellPriceUsdcPerWeth": 2990.68155,
+                "effectiveHalfSpreadBps": 27.03171903438717,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60018.459494,
+                    "buyPriceUsdcPerWeth": 60186.784524,
+                    "sellPriceUsdcPerWeth": 59850.60522,
+                    "effectiveHalfSpreadBps": 28.04554326028219
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            10
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-08-551Z",
+            "round": 1293,
+            "blockNumber": "1293",
+            "blocksRemaining": 353,
+            "fairPriceUsdcPerWeth": 2960.368637,
+            "fairPricesUsd": {
+              "WETH": 2960.368637,
+              "WBTC": 60131.89922
+            },
+            "balances": {
+              "usdcUnits": "28226292361",
+              "wethWei": "4743550079999998976",
+              "ethWei": "998034130135300608"
+            },
+            "baseBalances": {
+              "WBTC": "46671881"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2993.986836,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60072.892416,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3012.299888,
+                "buyPriceUsdcPerWeth": 3021.665365,
+                "sellPriceUsdcPerWeth": 3002.96344,
+                "effectiveHalfSpreadBps": 31.09078352564021,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60143.780577,
+                    "buyPriceUsdcPerWeth": 60444.887248,
+                    "sellPriceUsdcPerWeth": 59844.17387,
+                    "effectiveHalfSpreadBps": 50.06447361917132
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2995.863051,
+                "buyPriceUsdcPerWeth": 3004.645534,
+                "sellPriceUsdcPerWeth": 2987.10624,
+                "effectiveHalfSpreadBps": 29.31536691119563,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60025.837664,
+                    "buyPriceUsdcPerWeth": 60197.186013,
+                    "sellPriceUsdcPerWeth": 59854.97705,
+                    "effectiveHalfSpreadBps": 28.545765543550594
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            11
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-08-551Z",
+            "round": 1294,
+            "blockNumber": "1294",
+            "blocksRemaining": 352,
+            "fairPriceUsdcPerWeth": 2971.829573,
+            "fairPricesUsd": {
+              "WETH": 2971.829573,
+              "WBTC": 60074.935917
+            },
+            "balances": {
+              "usdcUnits": "31783610505",
+              "wethWei": "3557662559999999488",
+              "ethWei": "997552725135300608"
+            },
+            "baseBalances": {
+              "WBTC": "46671881"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2989.949773,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60060.788579,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2996.857305,
+                "buyPriceUsdcPerWeth": 3006.173994,
+                "sellPriceUsdcPerWeth": 2987.56949,
+                "effectiveHalfSpreadBps": 31.088197144903962,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60143.780577,
+                    "buyPriceUsdcPerWeth": 60444.887248,
+                    "sellPriceUsdcPerWeth": 59844.17387,
+                    "effectiveHalfSpreadBps": 50.06447361917132
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2995.726395,
+                "buyPriceUsdcPerWeth": 3004.533435,
+                "sellPriceUsdcPerWeth": 2986.94517,
+                "effectiveHalfSpreadBps": 29.398680522325638,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60024.737555,
+                    "buyPriceUsdcPerWeth": 60195.607529,
+                    "sellPriceUsdcPerWeth": 59854.35261,
+                    "effectiveHalfSpreadBps": 28.466592341391816
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            12
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-08-551Z",
+            "round": 1295,
+            "blockNumber": "1295",
+            "blocksRemaining": 351,
+            "fairPriceUsdcPerWeth": 2978.246842,
+            "fairPricesUsd": {
+              "WETH": 2978.246842,
+              "WBTC": 60040.413585
+            },
+            "balances": {
+              "usdcUnits": "33557740651",
+              "wethWei": "2963532912479999488",
+              "ethWei": "997522999078535424"
+            },
+            "baseBalances": {
+              "WBTC": "46671881"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2989.830737,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60060.788579,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2989.404761,
+                "buyPriceUsdcPerWeth": 2998.697911,
+                "sellPriceUsdcPerWeth": 2980.14041,
+                "effectiveHalfSpreadBps": 31.086959676229764,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60143.780577,
+                    "buyPriceUsdcPerWeth": 60444.887248,
+                    "sellPriceUsdcPerWeth": 59844.17387,
+                    "effectiveHalfSpreadBps": 50.06447361917132
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2995.764647,
+                "buyPriceUsdcPerWeth": 3004.56486,
+                "sellPriceUsdcPerWeth": 2986.99021,
+                "effectiveHalfSpreadBps": 29.375514155487448,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60000.591294,
+                    "buyPriceUsdcPerWeth": 60164.966925,
+                    "sellPriceUsdcPerWeth": 59836.66475,
+                    "effectiveHalfSpreadBps": 27.3956685790977
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            13
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-08-551Z",
+            "round": 1296,
+            "blockNumber": "1296",
+            "blocksRemaining": 350,
+            "fairPriceUsdcPerWeth": 2967.977925,
+            "fairPricesUsd": {
+              "WETH": 2967.977925,
+              "WBTC": 60104.053976
+            },
+            "balances": {
+              "usdcUnits": "33557740651",
+              "wethWei": "2963532912479999488",
+              "ethWei": "997522999078535424"
+            },
+            "baseBalances": {
+              "WBTC": "46671881"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2988.878707,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60060.788579,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2988.928078,
+                "buyPriceUsdcPerWeth": 2998.219722,
+                "sellPriceUsdcPerWeth": 2979.66523,
+                "effectiveHalfSpreadBps": 31.086875988091123,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60143.780577,
+                    "buyPriceUsdcPerWeth": 60444.887248,
+                    "sellPriceUsdcPerWeth": 59844.17387,
+                    "effectiveHalfSpreadBps": 50.06447361917132
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2995.857737,
+                "buyPriceUsdcPerWeth": 3004.64118,
+                "sellPriceUsdcPerWeth": 2987.09997,
+                "effectiveHalfSpreadBps": 29.31862610412672,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60000.720034,
+                    "buyPriceUsdcPerWeth": 60165.099042,
+                    "sellPriceUsdcPerWeth": 59836.79013,
+                    "effectiveHalfSpreadBps": 27.396172663496365
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "group": "incz-inc-zeta",
+      "regime": "informed-flow",
+      "seed": "40005",
+      "run": "runs/2026-10-04T22-17-11-594Z",
+      "agentLog": "agents/cand.jsonl",
+      "sha256": {
+        "summary.json": "025859bf0dc476f88f4182a4cf05a4505f02f603447965b1938ac5cecbbb7264",
+        "market.json": "0f094f9b2e56e1e6761c800f7f2ff57a2688a64bfec7d4ffd6133363581cef8d",
+        "blocks.csv": "a386a600b47978956dcf041d61d62f124672fe66014512f03b701d3daf08e9cb",
+        "agents/cand.jsonl": "6f444cbd36461f62198cfc8299d49d0a40dea9dbba9f80608e3ba92b61be4cb9"
+      },
+      "frames": [
+        {
+          "sourceLines": [
+            5
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-11-594Z",
+            "round": 1288,
+            "blockNumber": "1288",
+            "blocksRemaining": 358,
+            "fairPriceUsdcPerWeth": 3023.295729,
+            "fairPricesUsd": {
+              "WETH": 3023.295729,
+              "WBTC": 59642.604509
+            },
+            "balances": {
+              "usdcUnits": "22500000000",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999956828100000128"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2999.358027,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59968.007693,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3001.668477,
+                "buyPriceUsdcPerWeth": 3011.000366,
+                "sellPriceUsdcPerWeth": 2992.36551,
+                "effectiveHalfSpreadBps": 31.089006235893724,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59988.922929,
+                    "buyPriceUsdcPerWeth": 60289.102079,
+                    "sellPriceUsdcPerWeth": 59690.23837,
+                    "effectiveHalfSpreadBps": 50.03909640565407
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3000.050259,
+                "buyPriceUsdcPerWeth": 3007.886051,
+                "sellPriceUsdcPerWeth": 2992.23488,
+                "effectiveHalfSpreadBps": 26.11886890693471,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59999.726112,
+                    "buyPriceUsdcPerWeth": 60164.096348,
+                    "sellPriceUsdcPerWeth": 59835.80494,
+                    "effectiveHalfSpreadBps": 27.395164449062204
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            6
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-11-594Z",
+            "round": 1289,
+            "blockNumber": "1289",
+            "blocksRemaining": 357,
+            "fairPriceUsdcPerWeth": 3011.68342,
+            "fairPricesUsd": {
+              "WETH": 3011.68342,
+              "WBTC": 59855.268686
+            },
+            "balances": {
+              "usdcUnits": "19014750000",
+              "wethWei": "9158627434047302656",
+              "ethWei": "999908420117783040"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2999.598218,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59941.878249,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3001.191204,
+                "buyPriceUsdcPerWeth": 3010.521585,
+                "sellPriceUsdcPerWeth": 2991.88974,
+                "effectiveHalfSpreadBps": 31.08892600398594,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59988.922929,
+                    "buyPriceUsdcPerWeth": 60289.102079,
+                    "sellPriceUsdcPerWeth": 59690.23837,
+                    "effectiveHalfSpreadBps": 50.03909640565407
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3000.897617,
+                "buyPriceUsdcPerWeth": 3008.910071,
+                "sellPriceUsdcPerWeth": 2992.9065,
+                "effectiveHalfSpreadBps": 26.70019020784231,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59999.726112,
+                    "buyPriceUsdcPerWeth": 60164.096348,
+                    "sellPriceUsdcPerWeth": 59835.80494,
+                    "effectiveHalfSpreadBps": 27.395164449062204
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            7,
+            8
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-11-594Z",
+            "round": 1290,
+            "blockNumber": "1290",
+            "blocksRemaining": 356,
+            "fairPriceUsdcPerWeth": 3009.308397,
+            "fairPricesUsd": {
+              "WETH": 3009.308397,
+              "WBTC": 59879.236248
+            },
+            "balances": {
+              "usdcUnits": "22545419069",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999898148117783040"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3052.893631,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59935.693734,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3001.191204,
+                "buyPriceUsdcPerWeth": 3010.521585,
+                "sellPriceUsdcPerWeth": 2991.88974,
+                "effectiveHalfSpreadBps": 31.08892600398594,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59988.922929,
+                    "buyPriceUsdcPerWeth": 60289.102079,
+                    "sellPriceUsdcPerWeth": 59690.23837,
+                    "effectiveHalfSpreadBps": 50.03909640565407
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3001.055065,
+                "buyPriceUsdcPerWeth": 3009.114336,
+                "sellPriceUsdcPerWeth": 2993.01738,
+                "effectiveHalfSpreadBps": 26.85479053916584,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59999.726112,
+                    "buyPriceUsdcPerWeth": 60164.096348,
+                    "sellPriceUsdcPerWeth": 59835.80494,
+                    "effectiveHalfSpreadBps": 27.395164449062204
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            9
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-11-594Z",
+            "round": 1291,
+            "blockNumber": "1291",
+            "blocksRemaining": 355,
+            "fairPriceUsdcPerWeth": 3019.992499,
+            "fairPricesUsd": {
+              "WETH": 3019.992499,
+              "WBTC": 59667.255273
+            },
+            "balances": {
+              "usdcUnits": "22524542004",
+              "wethWei": "8017013364723931136",
+              "ethWei": "998641563117782912"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3031.173257,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60180.007229,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3003.969415,
+                "buyPriceUsdcPerWeth": 3013.308575,
+                "sellPriceUsdcPerWeth": 2994.6592,
+                "effectiveHalfSpreadBps": 31.089397588652812,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59984.130449,
+                    "buyPriceUsdcPerWeth": 60284.279529,
+                    "sellPriceUsdcPerWeth": 59685.47578,
+                    "effectiveHalfSpreadBps": 50.03808133648313
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3003.276366,
+                "buyPriceUsdcPerWeth": 3011.910071,
+                "sellPriceUsdcPerWeth": 2994.66741,
+                "effectiveHalfSpreadBps": 28.747620257068007,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59999.313944,
+                    "buyPriceUsdcPerWeth": 60163.686076,
+                    "sellPriceUsdcPerWeth": 59835.39089,
+                    "effectiveHalfSpreadBps": 27.395668596588152
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            10
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-11-594Z",
+            "round": 1292,
+            "blockNumber": "1292",
+            "blocksRemaining": 354,
+            "fairPriceUsdcPerWeth": 3014.535296,
+            "fairPricesUsd": {
+              "WETH": 3014.535296,
+              "WBTC": 59569.123205
+            },
+            "balances": {
+              "usdcUnits": "22575948629",
+              "wethWei": "8000000000000000000",
+              "ethWei": "998631471917783040"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3030.58394,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59987.752117,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3004.029655,
+                "buyPriceUsdcPerWeth": 3013.369006,
+                "sellPriceUsdcPerWeth": 2994.71925,
+                "effectiveHalfSpreadBps": 31.08940929945847,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59983.317803,
+                    "buyPriceUsdcPerWeth": 60283.462816,
+                    "sellPriceUsdcPerWeth": 59684.66718,
+                    "effectiveHalfSpreadBps": 50.03808128682952
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3003.287673,
+                "buyPriceUsdcPerWeth": 3011.923788,
+                "sellPriceUsdcPerWeth": 2994.67632,
+                "effectiveHalfSpreadBps": 28.75553774700057,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59998.658211,
+                    "buyPriceUsdcPerWeth": 60163.046695,
+                    "sellPriceUsdcPerWeth": 59834.7189,
+                    "effectiveHalfSpreadBps": 27.39869332856193
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            11
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-11-594Z",
+            "round": 1293,
+            "blockNumber": "1293",
+            "blocksRemaining": 353,
+            "fairPriceUsdcPerWeth": 3009.941284,
+            "fairPricesUsd": {
+              "WETH": 3009.941284,
+              "WBTC": 59466.640655
+            },
+            "balances": {
+              "usdcUnits": "22575948629",
+              "wethWei": "8000000000000000000",
+              "ethWei": "998631471917783040"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3029.733799,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59961.44803,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3004.029655,
+                "buyPriceUsdcPerWeth": 3013.369006,
+                "sellPriceUsdcPerWeth": 2994.71925,
+                "effectiveHalfSpreadBps": 31.08940929945847,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59970.14322,
+                    "buyPriceUsdcPerWeth": 60270.207092,
+                    "sellPriceUsdcPerWeth": 59671.57326,
+                    "effectiveHalfSpreadBps": 50.03554358881557
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3003.319978,
+                "buyPriceUsdcPerWeth": 3011.962957,
+                "sellPriceUsdcPerWeth": 2994.7018,
+                "effectiveHalfSpreadBps": 28.778083240676988,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60018.414611,
+                    "buyPriceUsdcPerWeth": 60186.724384,
+                    "sellPriceUsdcPerWeth": 59850.57551,
+                    "effectiveHalfSpreadBps": 28.043022107724358
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            12
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-11-594Z",
+            "round": 1294,
+            "blockNumber": "1294",
+            "blocksRemaining": 352,
+            "fairPriceUsdcPerWeth": 3011.651324,
+            "fairPricesUsd": {
+              "WETH": 3011.651324,
+              "WBTC": 59245.399394
+            },
+            "balances": {
+              "usdcUnits": "26976268981",
+              "wethWei": "8000000000000000000",
+              "ethWei": "998011287823417472"
+            },
+            "baseBalances": {
+              "WBTC": "32648000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3029.126775,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59920.830276,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3004.029655,
+                "buyPriceUsdcPerWeth": 3013.369006,
+                "sellPriceUsdcPerWeth": 2994.71925,
+                "effectiveHalfSpreadBps": 31.08940929945847,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59948.597756,
+                    "buyPriceUsdcPerWeth": 60248.532525,
+                    "sellPriceUsdcPerWeth": 59650.15615,
+                    "effectiveHalfSpreadBps": 50.03199075717113
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3003.319978,
+                "buyPriceUsdcPerWeth": 3011.962957,
+                "sellPriceUsdcPerWeth": 2994.7018,
+                "effectiveHalfSpreadBps": 28.778083240676988,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59992.338789,
+                    "buyPriceUsdcPerWeth": 60157.435813,
+                    "sellPriceUsdcPerWeth": 59827.69486,
+                    "effectiveHalfSpreadBps": 27.519684560077806
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            13
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T22-17-11-594Z",
+            "round": 1295,
+            "blockNumber": "1295",
+            "blocksRemaining": 351,
+            "fairPriceUsdcPerWeth": 3023.355929,
+            "fairPricesUsd": {
+              "WETH": 3023.355929,
+              "WBTC": 59193.011362
+            },
+            "balances": {
+              "usdcUnits": "31840068186",
+              "wethWei": "8000000000000000000",
+              "ethWei": "997293967823417472"
+            },
+            "baseBalances": {
+              "WBTC": "24518648"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3029.286175,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59877.868211,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3004.756085,
+                "buyPriceUsdcPerWeth": 3014.097733,
+                "sellPriceUsdcPerWeth": 2995.44339,
+                "effectiveHalfSpreadBps": 31.089538068389544,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59931.30903,
+                    "buyPriceUsdcPerWeth": 60231.142091,
+                    "sellPriceUsdcPerWeth": 59632.96855,
+                    "effectiveHalfSpreadBps": 50.02945303625772
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3003.400852,
+                "buyPriceUsdcPerWeth": 3012.060862,
+                "sellPriceUsdcPerWeth": 2994.76574,
+                "effectiveHalfSpreadBps": 28.834014086536186,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59956.881531,
+                    "buyPriceUsdcPerWeth": 60136.007833,
+                    "sellPriceUsdcPerWeth": 59778.28879,
+                    "effectiveHalfSpreadBps": 29.875853689527165
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "group": "mix1a-mix-v3",
+      "regime": "cex-drift",
+      "seed": "40001",
+      "run": "runs/2026-10-04T18-52-04-677Z",
+      "agentLog": "agents/inc-zeta.jsonl",
+      "sha256": {
+        "summary.json": "26f23311d594932f65cb56c243b5752ef5310b799d5afc16c97e6edb4bc700ef",
+        "market.json": "b22f5aceb31d7282dc8996ac5c09af83ab6b5f50a4a08e4ea5972b1a97a64163",
+        "blocks.csv": "df568e00db38974e02b142a37bbb2ae008ad0890f59cabd0313db5f223f7f501",
+        "agents/inc-zeta.jsonl": "ddfe28dcd1988856558dae83f0fd0228e2b694e6e19e55774d252204fddc8733"
+      },
+      "frames": [
+        {
+          "sourceLines": [
+            10
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T18-52-04-677Z",
+            "round": 1549,
+            "blockNumber": "1549",
+            "blocksRemaining": 353,
+            "fairPriceUsdcPerWeth": 2995.901238,
+            "fairPricesUsd": {
+              "WETH": 2995.901238,
+              "WBTC": 59476.277499
+            },
+            "balances": {
+              "usdcUnits": "22500000000",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999956828100000128"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3003.409051,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59445.718385,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3011.635959,
+                "buyPriceUsdcPerWeth": 3020.99934,
+                "sellPriceUsdcPerWeth": 3002.3016,
+                "effectiveHalfSpreadBps": 31.090678636507274,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59967.991257,
+                    "buyPriceUsdcPerWeth": 60268.044361,
+                    "sellPriceUsdcPerWeth": 59669.43201,
+                    "effectiveHalfSpreadBps": 50.0355436162403
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3000.295435,
+                "buyPriceUsdcPerWeth": 3008.156564,
+                "sellPriceUsdcPerWeth": 2992.45485,
+                "effectiveHalfSpreadBps": 26.201181848561905,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59980.071636,
+                    "buyPriceUsdcPerWeth": 60148.851534,
+                    "sellPriceUsdcPerWeth": 59811.76534,
+                    "effectiveHalfSpreadBps": 28.139329232292898
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            11
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T18-52-04-677Z",
+            "round": 1550,
+            "blockNumber": "1550",
+            "blocksRemaining": 352,
+            "fairPriceUsdcPerWeth": 2989.708121,
+            "fairPricesUsd": {
+              "WETH": 2989.708121,
+              "WBTC": 59390.491448
+            },
+            "balances": {
+              "usdcUnits": "26516278106",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999728887915328896"
+            },
+            "baseBalances": {
+              "WBTC": "33284000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3003.474222,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59445.718385,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3005.463448,
+                "buyPriceUsdcPerWeth": 3014.807326,
+                "sellPriceUsdcPerWeth": 2996.14853,
+                "effectiveHalfSpreadBps": 31.089640696535525,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59964.032571,
+                    "buyPriceUsdcPerWeth": 60264.059781,
+                    "sellPriceUsdcPerWeth": 59665.49906,
+                    "effectiveHalfSpreadBps": 50.03452850125933
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3000.292317,
+                "buyPriceUsdcPerWeth": 3008.152935,
+                "sellPriceUsdcPerWeth": 2992.45224,
+                "effectiveHalfSpreadBps": 26.199506503503667,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59680.659537,
+                    "buyPriceUsdcPerWeth": 59945.30881,
+                    "sellPriceUsdcPerWeth": 59417.17865,
+                    "effectiveHalfSpreadBps": 44.3442272369321
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            12,
+            13
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T18-52-04-677Z",
+            "round": 1551,
+            "blockNumber": "1551",
+            "blocksRemaining": 351,
+            "fairPriceUsdcPerWeth": 2979.510856,
+            "fairPricesUsd": {
+              "WETH": 2979.510856,
+              "WBTC": 59170.200116
+            },
+            "balances": {
+              "usdcUnits": "26516278106",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999728887915328896"
+            },
+            "baseBalances": {
+              "WBTC": "33284000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3002.395881,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59431.805228,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2999.702256,
+                "buyPriceUsdcPerWeth": 3009.027935,
+                "sellPriceUsdcPerWeth": 2990.40548,
+                "effectiveHalfSpreadBps": 31.088681238948812,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 58740.313958,
+                    "buyPriceUsdcPerWeth": 59033.016913,
+                    "sellPriceUsdcPerWeth": 58449.06231,
+                    "effectiveHalfSpreadBps": 49.8299949702008
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3000.270648,
+                "buyPriceUsdcPerWeth": 3008.127789,
+                "sellPriceUsdcPerWeth": 2992.43403,
+                "effectiveHalfSpreadBps": 26.18810677775585,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59673.114036,
+                    "buyPriceUsdcPerWeth": 59939.262834,
+                    "sellPriceUsdcPerWeth": 59408.14702,
+                    "effectiveHalfSpreadBps": 44.60112441635688
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            14
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T18-52-04-677Z",
+            "round": 1552,
+            "blockNumber": "1552",
+            "blocksRemaining": 350,
+            "fairPriceUsdcPerWeth": 2983.10796,
+            "fairPricesUsd": {
+              "WETH": 2983.10796,
+              "WBTC": 59185.007953
+            },
+            "balances": {
+              "usdcUnits": "26510173418",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999637438881522688"
+            },
+            "baseBalances": {
+              "WBTC": "33304869"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2995.060304,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59427.087726,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2999.402777,
+                "buyPriceUsdcPerWeth": 3008.727514,
+                "sellPriceUsdcPerWeth": 2990.10694,
+                "effectiveHalfSpreadBps": 31.08864477900264,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 58963.115062,
+                    "buyPriceUsdcPerWeth": 59257.149678,
+                    "sellPriceUsdcPerWeth": 58670.53945,
+                    "effectiveHalfSpreadBps": 49.86755112139196
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3000.255284,
+                "buyPriceUsdcPerWeth": 3008.110098,
+                "sellPriceUsdcPerWeth": 2992.42098,
+                "effectiveHalfSpreadBps": 26.18048649652538,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59536.695163,
+                    "buyPriceUsdcPerWeth": 59825.889532,
+                    "sellPriceUsdcPerWeth": 59248.89874,
+                    "effectiveHalfSpreadBps": 48.57413875221317
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            15
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T18-52-04-677Z",
+            "round": 1553,
+            "blockNumber": "1553",
+            "blocksRemaining": 349,
+            "fairPriceUsdcPerWeth": 2983.671855,
+            "fairPricesUsd": {
+              "WETH": 2983.671855,
+              "WBTC": 59320.808545
+            },
+            "balances": {
+              "usdcUnits": "26510173418",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999637438881522688"
+            },
+            "baseBalances": {
+              "WBTC": "33304869"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2995.861153,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59384.442036,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2999.163222,
+                "buyPriceUsdcPerWeth": 3008.487201,
+                "sellPriceUsdcPerWeth": 2989.86814,
+                "effectiveHalfSpreadBps": 31.088601603104227,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 58970.160257,
+                    "buyPriceUsdcPerWeth": 59264.235991,
+                    "sellPriceUsdcPerWeth": 58677.54376,
+                    "effectiveHalfSpreadBps": 49.86856614847434
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 3000.031842,
+                "buyPriceUsdcPerWeth": 3007.867125,
+                "sellPriceUsdcPerWeth": 2992.21697,
+                "effectiveHalfSpreadBps": 26.11733172331876,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59538.386062,
+                    "buyPriceUsdcPerWeth": 59827.337944,
+                    "sellPriceUsdcPerWeth": 59250.82975,
+                    "effectiveHalfSpreadBps": 48.532031300758675
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            16
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T18-52-04-677Z",
+            "round": 1554,
+            "blockNumber": "1554",
+            "blocksRemaining": 348,
+            "fairPriceUsdcPerWeth": 2977.400385,
+            "fairPricesUsd": {
+              "WETH": 2977.400385,
+              "WBTC": 59512.422859
+            },
+            "balances": {
+              "usdcUnits": "26510173418",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999637438881522688"
+            },
+            "baseBalances": {
+              "WBTC": "33304869"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2995.144926,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59384.442036,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2997.941706,
+                "buyPriceUsdcPerWeth": 3007.261828,
+                "sellPriceUsdcPerWeth": 2988.65047,
+                "effectiveHalfSpreadBps": 31.088401299506074,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 58984.300371,
+                    "buyPriceUsdcPerWeth": 59278.461588,
+                    "sellPriceUsdcPerWeth": 58691.59889,
+                    "effectiveHalfSpreadBps": 49.87110374188531
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2999.831764,
+                "buyPriceUsdcPerWeth": 3007.674761,
+                "sellPriceUsdcPerWeth": 2992.00922,
+                "effectiveHalfSpreadBps": 26.144787620971943,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59538.386062,
+                    "buyPriceUsdcPerWeth": 59827.337944,
+                    "sellPriceUsdcPerWeth": 59250.82975,
+                    "effectiveHalfSpreadBps": 48.532031300758675
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            17
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T18-52-04-677Z",
+            "round": 1555,
+            "blockNumber": "1555",
+            "blocksRemaining": 347,
+            "fairPriceUsdcPerWeth": 2980.560298,
+            "fairPricesUsd": {
+              "WETH": 2980.560298,
+              "WBTC": 59623.319755
+            },
+            "balances": {
+              "usdcUnits": "26510173418",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999637438881522688"
+            },
+            "baseBalances": {
+              "WBTC": "33304869"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2994.786909,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59389.173229,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2997.522812,
+                "buyPriceUsdcPerWeth": 3006.841605,
+                "sellPriceUsdcPerWeth": 2988.2329,
+                "effectiveHalfSpreadBps": 31.08831348118235,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59002.007083,
+                    "buyPriceUsdcPerWeth": 59296.271576,
+                    "sellPriceUsdcPerWeth": 58709.20291,
+                    "effectiveHalfSpreadBps": 49.87364126470828
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2999.586841,
+                "buyPriceUsdcPerWeth": 3007.468306,
+                "sellPriceUsdcPerWeth": 2991.72603,
+                "effectiveHalfSpreadBps": 26.27516929843754,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59538.386062,
+                    "buyPriceUsdcPerWeth": 59827.337944,
+                    "sellPriceUsdcPerWeth": 59250.82975,
+                    "effectiveHalfSpreadBps": 48.532031300758675
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            18
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T18-52-04-677Z",
+            "round": 1556,
+            "blockNumber": "1556",
+            "blocksRemaining": 346,
+            "fairPriceUsdcPerWeth": 2969.294276,
+            "fairPricesUsd": {
+              "WETH": 2969.294276,
+              "WBTC": 59425.383624
+            },
+            "balances": {
+              "usdcUnits": "26510173418",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999637438881522688"
+            },
+            "baseBalances": {
+              "WBTC": "33304869"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2986.259551,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59486.341159,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2996.804917,
+                "buyPriceUsdcPerWeth": 3006.121449,
+                "sellPriceUsdcPerWeth": 2987.51726,
+                "effectiveHalfSpreadBps": 31.08821424995245,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59570.771789,
+                    "buyPriceUsdcPerWeth": 59868.43829,
+                    "sellPriceUsdcPerWeth": 59274.58529,
+                    "effectiveHalfSpreadBps": 49.968548590637596
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2999.352531,
+                "buyPriceUsdcPerWeth": 3007.290283,
+                "sellPriceUsdcPerWeth": 2991.43573,
+                "effectiveHalfSpreadBps": 26.464886272428156,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59540.739496,
+                    "buyPriceUsdcPerWeth": 59829.349393,
+                    "sellPriceUsdcPerWeth": 59253.52182,
+                    "effectiveHalfSpreadBps": 48.47267592060778
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "group": "mix2a-mix-v3",
+      "regime": "informed-flow",
+      "seed": "40003",
+      "run": "runs/2026-10-04T20-47-35-806Z",
+      "agentLog": "agents/inc-zeta.jsonl",
+      "sha256": {
+        "summary.json": "ba9fd1b5dcd0f11bbfe4ca9b01135c8ec0eb343fe5362c7b0c7547ec1be1fe59",
+        "market.json": "b709b9ae1ffa35c700d9d0da9449661abffb80f8300c200e0957b6e538f54d4a",
+        "blocks.csv": "f56dd84400a68c2f8eb36f1019199e8993acfa07c61d55795da2933d0f4ec0dc",
+        "agents/inc-zeta.jsonl": "d410c0008762fc60a3cd711e5cf5abcc1c43781c14a99d50b7adcfd0c2e872f6"
+      },
+      "frames": [
+        {
+          "sourceLines": [
+            15
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T20-47-35-806Z",
+            "round": 1554,
+            "blockNumber": "1554",
+            "blocksRemaining": 348,
+            "fairPriceUsdcPerWeth": 2972.696233,
+            "fairPricesUsd": {
+              "WETH": 2972.696233,
+              "WBTC": 60081.920968
+            },
+            "balances": {
+              "usdcUnits": "22500000000",
+              "wethWei": "8000000000000000000",
+              "ethWei": "999956828100000128"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2989.999191,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60051.716568,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2978.386811,
+                "buyPriceUsdcPerWeth": 2987.645163,
+                "sellPriceUsdcPerWeth": 2969.15715,
+                "effectiveHalfSpreadBps": 31.085122061269566,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60016.155326,
+                    "buyPriceUsdcPerWeth": 60316.495112,
+                    "sellPriceUsdcPerWeth": 59717.31105,
+                    "effectiveHalfSpreadBps": 50.04315669949078
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2999.524998,
+                "buyPriceUsdcPerWeth": 3007.419942,
+                "sellPriceUsdcPerWeth": 2991.65078,
+                "effectiveHalfSpreadBps": 26.320646536834857,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60031.790707,
+                    "buyPriceUsdcPerWeth": 60205.823338,
+                    "sellPriceUsdcPerWeth": 59858.26114,
+                    "effectiveHalfSpreadBps": 28.99007821290489
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            16
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T20-47-35-806Z",
+            "round": 1555,
+            "blockNumber": "1555",
+            "blocksRemaining": 347,
+            "fairPriceUsdcPerWeth": 2975.391431,
+            "fairPricesUsd": {
+              "WETH": 2975.391431,
+              "WBTC": 59858.657266
+            },
+            "balances": {
+              "usdcUnits": "26777355306",
+              "wethWei": "6569600000000000000",
+              "ethWei": "999408604092546560"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2989.642096,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60039.451709,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2978.386811,
+                "buyPriceUsdcPerWeth": 2987.645163,
+                "sellPriceUsdcPerWeth": 2969.15715,
+                "effectiveHalfSpreadBps": 31.085122061269566,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60018.547051,
+                    "buyPriceUsdcPerWeth": 60318.901853,
+                    "sellPriceUsdcPerWeth": 59719.68785,
+                    "effectiveHalfSpreadBps": 50.04366428946527
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2996.214089,
+                "buyPriceUsdcPerWeth": 3004.931175,
+                "sellPriceUsdcPerWeth": 2987.52229,
+                "effectiveHalfSpreadBps": 29.093669737885186,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60031.790707,
+                    "buyPriceUsdcPerWeth": 60205.823338,
+                    "sellPriceUsdcPerWeth": 59858.26114,
+                    "effectiveHalfSpreadBps": 28.99007821290489
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            17,
+            18
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T20-47-35-806Z",
+            "round": 1556,
+            "blockNumber": "1556",
+            "blocksRemaining": 346,
+            "fairPriceUsdcPerWeth": 2975.452126,
+            "fairPricesUsd": {
+              "WETH": 2975.452126,
+              "WBTC": 59680.487212
+            },
+            "balances": {
+              "usdcUnits": "26777355306",
+              "wethWei": "6569600000000000000",
+              "ethWei": "999408604092546560"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 3022.576275,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60027.477698,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2978.386811,
+                "buyPriceUsdcPerWeth": 2987.645163,
+                "sellPriceUsdcPerWeth": 2969.15715,
+                "effectiveHalfSpreadBps": 31.085122061269566,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60012.553646,
+                    "buyPriceUsdcPerWeth": 60312.872363,
+                    "sellPriceUsdcPerWeth": 59713.73032,
+                    "effectiveHalfSpreadBps": 50.042649212294066
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2995.556778,
+                "buyPriceUsdcPerWeth": 3004.393637,
+                "sellPriceUsdcPerWeth": 2986.74591,
+                "effectiveHalfSpreadBps": 29.49988979464191,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60031.153852,
+                    "buyPriceUsdcPerWeth": 60204.890948,
+                    "sellPriceUsdcPerWeth": 59857.91812,
+                    "effectiveHalfSpreadBps": 28.941155544297548
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            19
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T20-47-35-806Z",
+            "round": 1557,
+            "blockNumber": "1557",
+            "blocksRemaining": 345,
+            "fairPriceUsdcPerWeth": 2979.821831,
+            "fairPricesUsd": {
+              "WETH": 2979.821831,
+              "WBTC": 59792.95802
+            },
+            "balances": {
+              "usdcUnits": "26750496734",
+              "wethWei": "6579713098681436160",
+              "ethWei": "998872721683453440"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2988.529651,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60025.083326,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 3000.430518,
+                "buyPriceUsdcPerWeth": 3009.758496,
+                "sellPriceUsdcPerWeth": 2991.13145,
+                "effectiveHalfSpreadBps": 31.088798044640598,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60013.742264,
+                    "buyPriceUsdcPerWeth": 60314.066929,
+                    "sellPriceUsdcPerWeth": 59714.91302,
+                    "effectiveHalfSpreadBps": 50.04264915345891
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2995.49942,
+                "buyPriceUsdcPerWeth": 3004.346202,
+                "sellPriceUsdcPerWeth": 2986.67869,
+                "effectiveHalfSpreadBps": 29.53357735814288,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60030.435377,
+                    "buyPriceUsdcPerWeth": 60203.843409,
+                    "sellPriceUsdcPerWeth": 59857.52682,
+                    "effectiveHalfSpreadBps": 28.886685756797092
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            20
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T20-47-35-806Z",
+            "round": 1558,
+            "blockNumber": "1558",
+            "blocksRemaining": 344,
+            "fairPriceUsdcPerWeth": 2988.278495,
+            "fairPricesUsd": {
+              "WETH": 2988.278495,
+              "WBTC": 59579.39237
+            },
+            "balances": {
+              "usdcUnits": "26750496734",
+              "wethWei": "6579713098681436160",
+              "ethWei": "998872721683453440"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2988.529651,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60005.933504,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2998.169579,
+                "buyPriceUsdcPerWeth": 3007.490416,
+                "sellPriceUsdcPerWeth": 2988.87763,
+                "effectiveHalfSpreadBps": 31.088423640264207,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60004.155021,
+                    "buyPriceUsdcPerWeth": 60304.422572,
+                    "sellPriceUsdcPerWeth": 59705.38256,
+                    "effectiveHalfSpreadBps": 50.041126555793184
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2995.49942,
+                "buyPriceUsdcPerWeth": 3004.346202,
+                "sellPriceUsdcPerWeth": 2986.67869,
+                "effectiveHalfSpreadBps": 29.53357735814288,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60029.326793,
+                    "buyPriceUsdcPerWeth": 60202.229055,
+                    "sellPriceUsdcPerWeth": 59856.92111,
+                    "effectiveHalfSpreadBps": 28.80296539767402
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            21
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T20-47-35-806Z",
+            "round": 1559,
+            "blockNumber": "1559",
+            "blocksRemaining": 343,
+            "fairPriceUsdcPerWeth": 2991.927186,
+            "fairPricesUsd": {
+              "WETH": 2991.927186,
+              "WBTC": 59705.635274
+            },
+            "balances": {
+              "usdcUnits": "26750496734",
+              "wethWei": "6579713098681436160",
+              "ethWei": "998872721683453440"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2998.38538,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59996.362029,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2997.58895,
+                "buyPriceUsdcPerWeth": 3006.907952,
+                "sellPriceUsdcPerWeth": 2988.29883,
+                "effectiveHalfSpreadBps": 31.088324210295504,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60000.560769,
+                    "buyPriceUsdcPerWeth": 60300.807289,
+                    "sellPriceUsdcPerWeth": 59701.80922,
+                    "effectiveHalfSpreadBps": 50.040618999911416
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2995.49942,
+                "buyPriceUsdcPerWeth": 3004.346202,
+                "sellPriceUsdcPerWeth": 2986.67869,
+                "effectiveHalfSpreadBps": 29.53357735814288,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60039.105618,
+                    "buyPriceUsdcPerWeth": 60216.5664,
+                    "sellPriceUsdcPerWeth": 59862.16782,
+                    "effectiveHalfSpreadBps": 29.557532613191384
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            22
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T20-47-35-806Z",
+            "round": 1560,
+            "blockNumber": "1560",
+            "blocksRemaining": 342,
+            "fairPriceUsdcPerWeth": 2992.462899,
+            "fairPricesUsd": {
+              "WETH": 2992.462899,
+              "WBTC": 59525.668502
+            },
+            "balances": {
+              "usdcUnits": "26750496734",
+              "wethWei": "6579713098681436160",
+              "ethWei": "998872721683453440"
+            },
+            "baseBalances": {
+              "WBTC": "40000000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2993.755953,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59974.834583,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2974.956822,
+                "buyPriceUsdcPerWeth": 2984.20434,
+                "sellPriceUsdcPerWeth": 2965.73796,
+                "effectiveHalfSpreadBps": 31.084545963537824,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59989.779966,
+                    "buyPriceUsdcPerWeth": 60289.963404,
+                    "sellPriceUsdcPerWeth": 59691.09114,
+                    "effectiveHalfSpreadBps": 50.039096345591005
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2995.49942,
+                "buyPriceUsdcPerWeth": 3004.346202,
+                "sellPriceUsdcPerWeth": 2986.67869,
+                "effectiveHalfSpreadBps": 29.53357735814288,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 60037.538492,
+                    "buyPriceUsdcPerWeth": 60214.258712,
+                    "sellPriceUsdcPerWeth": 59861.33692,
+                    "effectiveHalfSpreadBps": 29.434954313629635
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        },
+        {
+          "sourceLines": [
+            23
+          ],
+          "observation": {
+            "kind": "observation",
+            "runId": "2026-10-04T20-47-35-806Z",
+            "round": 1561,
+            "blockNumber": "1561",
+            "blocksRemaining": 341,
+            "fairPriceUsdcPerWeth": 2987.634238,
+            "fairPricesUsd": {
+              "WETH": 2987.634238,
+              "WBTC": 59676.59996
+            },
+            "balances": {
+              "usdcUnits": "30832525894",
+              "wethWei": "6579713098681436160",
+              "ethWei": "998642091553241984"
+            },
+            "baseBalances": {
+              "WBTC": "33180000"
+            },
+            "baseDecimals": {
+              "WETH": 18,
+              "WBTC": 8
+            },
+            "enabledProtocols": [
+              "uniswap",
+              "balancer",
+              "curve"
+            ],
+            "history": [],
+            "protocols": {
+              "uniswap": {
+                "pool": {
+                  "priceUsdcPerWeth": 2993.755953,
+                  "fee": 3000
+                },
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59967.661342,
+                    "fee": 3000
+                  }
+                }
+              },
+              "balancer": {
+                "priceUsdcPerWeth": 2985.113205,
+                "buyPriceUsdcPerWeth": 2994.392797,
+                "sellPriceUsdcPerWeth": 2975.86237,
+                "effectiveHalfSpreadBps": 31.086232056167784,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59984.987406,
+                    "buyPriceUsdcPerWeth": 60285.140773,
+                    "sellPriceUsdcPerWeth": 59686.32847,
+                    "effectiveHalfSpreadBps": 50.03808127446163
+                  }
+                }
+              },
+              "curve": {
+                "priceUsdcPerWeth": 2995.49942,
+                "buyPriceUsdcPerWeth": 3004.346202,
+                "sellPriceUsdcPerWeth": 2986.67869,
+                "effectiveHalfSpreadBps": 29.53357735814288,
+                "markets": {
+                  "WBTC/USDC": {
+                    "priceUsdcPerWeth": 59994.039834,
+                    "buyPriceUsdcPerWeth": 60158.851186,
+                    "sellPriceUsdcPerWeth": 59829.68,
+                    "effectiveHalfSpreadBps": 27.47128752600192
+                  }
+                }
+              }
+            },
+            "limits": {
+              "defaultPriorityFeePerGasWei": "100000000",
+              "maxPriorityFeePerGasWei": "5000000000",
+              "defaultSlippageBps": 50
+            },
+            "competition": {
+              "maxCompetitorPriorityFeeWei": "6000000000"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

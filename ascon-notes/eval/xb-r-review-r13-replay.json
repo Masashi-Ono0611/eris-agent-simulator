@@ -1,0 +1,213 @@
+{
+  "frozenCommit": "96b9764",
+  "frozenSha256": "ab2f26337c716eb73a8b4657758f20934028e6e3895ee3a4e3fd02d6a696e763",
+  "implementationSha256": "2942f3fc962007235666f1ef9be9e0efb3bee0c77e12a702010bddd9b2781dfa",
+  "scriptSha256": "e512b2fdd829a77f480d92e43aad87d681239cd1cc642bc101d13bcf7d8dde41",
+  "caveat": "Saved opportunity-selected subsets, not every block (dev2 1567; dev3a+b 1542). Fixed historical wallets/cooldowns/bids, no alternate fills or trajectory. Actual fill-count impact is unidentifiable without amount-specific quotes. Model net includes estimated gas, not realized costs.",
+  "datasets": [
+    {
+      "input": "/private/tmp/xb-r-dev2/frames.json",
+      "sha256": "2b590edfad3ada2ec806e9d3ca7eae3628052519e042e1412498c389dcf7199a",
+      "frames": 1567,
+      "frozenMatches": 1567,
+      "explicitOffMatches": 1567,
+      "storedV3Matches": 0,
+      "offTrades": 929,
+      "onTrades": 929,
+      "added": 0,
+      "removed": 0,
+      "changedRouteOrSize": 0,
+      "tightenedActions": 929,
+      "onSlippageBps": {
+        "21": 2,
+        "22": 15,
+        "23": 25,
+        "24": 25,
+        "25": 29,
+        "26": 26,
+        "27": 35,
+        "28": 33,
+        "29": 29,
+        "30": 29,
+        "31": 30,
+        "32": 39,
+        "33": 24,
+        "34": 22,
+        "35": 29,
+        "36": 29,
+        "37": 28,
+        "38": 23,
+        "39": 24,
+        "40": 20,
+        "41": 21,
+        "42": 19,
+        "43": 20,
+        "44": 18,
+        "45": 14,
+        "46": 24,
+        "47": 18,
+        "48": 13,
+        "49": 14,
+        "50": 252
+      },
+      "byRegime": {
+        "calm": {
+          "frames": 289,
+          "offTrades": 181,
+          "onTrades": 181,
+          "removed": 0
+        },
+        "cex-drift": {
+          "frames": 330,
+          "offTrades": 189,
+          "onTrades": 189,
+          "removed": 0
+        },
+        "whale": {
+          "frames": 255,
+          "offTrades": 173,
+          "onTrades": 173,
+          "removed": 0
+        },
+        "informed-flow": {
+          "frames": 262,
+          "offTrades": 178,
+          "onTrades": 178,
+          "removed": 0
+        },
+        "spike": {
+          "frames": 252,
+          "offTrades": 98,
+          "onTrades": 98,
+          "removed": 0
+        },
+        "depeg-persist": {
+          "frames": 179,
+          "offTrades": 110,
+          "onTrades": 110,
+          "removed": 0
+        }
+      }
+    },
+    {
+      "input": "/private/tmp/xb-r-dev3-v4/frames.json",
+      "sha256": "1e4463f22b074d5554f9481fbad67394131af7414316c4925d736d09c0acefb9",
+      "frames": 1542,
+      "frozenMatches": 1542,
+      "explicitOffMatches": 1542,
+      "storedV3Matches": 1542,
+      "offTrades": 1069,
+      "onTrades": 1069,
+      "added": 0,
+      "removed": 0,
+      "changedRouteOrSize": 0,
+      "tightenedActions": 1069,
+      "onSlippageBps": {
+        "21": 1,
+        "22": 63,
+        "23": 67,
+        "24": 66,
+        "25": 46,
+        "26": 44,
+        "27": 35,
+        "28": 51,
+        "29": 45,
+        "30": 35,
+        "31": 39,
+        "32": 35,
+        "33": 53,
+        "34": 35,
+        "35": 32,
+        "36": 28,
+        "37": 28,
+        "38": 27,
+        "39": 21,
+        "40": 28,
+        "41": 23,
+        "42": 16,
+        "43": 13,
+        "44": 17,
+        "45": 12,
+        "46": 17,
+        "47": 7,
+        "48": 9,
+        "49": 7,
+        "50": 169
+      },
+      "byRegime": {
+        "calm": {
+          "frames": 142,
+          "offTrades": 109,
+          "onTrades": 109,
+          "removed": 0
+        },
+        "cex-drift": {
+          "frames": 87,
+          "offTrades": 61,
+          "onTrades": 61,
+          "removed": 0
+        },
+        "informed-flow": {
+          "frames": 154,
+          "offTrades": 98,
+          "onTrades": 98,
+          "removed": 0
+        },
+        "whale": {
+          "frames": 127,
+          "offTrades": 95,
+          "onTrades": 95,
+          "removed": 0
+        },
+        "lending-incident": {
+          "frames": 158,
+          "offTrades": 112,
+          "onTrades": 112,
+          "removed": 0
+        },
+        "crash": {
+          "frames": 82,
+          "offTrades": 58,
+          "onTrades": 58,
+          "removed": 0
+        },
+        "depeg": {
+          "frames": 83,
+          "offTrades": 46,
+          "onTrades": 46,
+          "removed": 0
+        },
+        "vuln": {
+          "frames": 152,
+          "offTrades": 93,
+          "onTrades": 93,
+          "removed": 0
+        },
+        "spike": {
+          "frames": 121,
+          "offTrades": 88,
+          "onTrades": 88,
+          "removed": 0
+        },
+        "depeg-persist": {
+          "frames": 122,
+          "offTrades": 88,
+          "onTrades": 88,
+          "removed": 0
+        },
+        "cdp-incident": {
+          "frames": 144,
+          "offTrades": 103,
+          "onTrades": 103,
+          "removed": 0
+        },
+        "launch": {
+          "frames": 170,
+          "offTrades": 118,
+          "onTrades": 118,
+          "removed": 0
+        }
+      }
+    }
+  ]
+}
