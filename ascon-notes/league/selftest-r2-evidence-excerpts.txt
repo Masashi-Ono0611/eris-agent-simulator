@@ -1,0 +1,24 @@
+## check:strategy (release-r2, tail)
+  "hints": []
+}
+[static-check] PASS (98 files)
+[static-check] deploying your own contracts IS permitted (issue #40). A rawTx with no `to` deploys the creation bytecode in `data`; the environment publishes wh
+
+## ZIP payload compare + bundle (selftest prep)
+[bundle] artifacts: AgentERC20
+[bundle] wrote <selftest-worktree>/evidence/source.zip
+ZIP payload equal: True 96 96
+PREP_DONE
+
+## release ZIP sha256 check after selftest
+bundle-ascon-zeta-r2.zip: OK (shasum -c, 実行後)
+
+## ci-local tail
+ℹ pass 2331
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 9
+ℹ todo 0
+ℹ duration_ms 35707.666292
+ci-local: PASS (full @ 91c9896)
+EXIT=0
