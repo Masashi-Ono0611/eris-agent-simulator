@@ -30,12 +30,17 @@ import {
 import { privateKeyToAccount } from "viem/accounts";
 import { isExternalChain, mine, sendNoMine } from "@eris/sdk/chain.js";
 import { readForgeArtifact } from "@eris/sdk/forge.js";
-import { MULTICALL3 } from "@eris/sdk/constants.js";
 import {
   marketRegistryAbi,
   registryKindIndex,
   ZERO_ADDRESS,
 } from "@eris/sdk/marketRegistry.js";
+import {
+  readUntrustedBatch,
+  UNTRUSTED_READ_GAS,
+  UNTRUSTED_READ_TIMEOUT_MS,
+  type UntrustedReadFailure,
+} from "@eris/sdk/untrustedRead.js";
 import { simpleLendingAbi } from "@eris/sdk/protocols/lending.js";
 import { uniswapFactory } from "@eris/sdk/protocols/uniswap.js";
 import { uniswapV3FactoryEventsAbi } from "@eris/sdk/abis.js";
@@ -78,10 +83,27 @@ export type PendingEntry = {
 // to make a contract permanently invisible without anybody noticing.
 export const MAX_PENDING_ENTRIES = 2048;
 
+// How many new contracts one sweep probes. The probes share one deadline (`readUntrustedBatch`), and
+// CREATE is cheap enough that a single block can carry hundreds: unbounded, a deploy-spam block
+// spends the whole deadline every tick and every contract in it -- an honest token deployed alongside
+// included -- comes back `timeout`. The rest wait for the next sweep (issue #213 review).
+export const MAX_CLASSIFY_PER_SWEEP = 64;
+// A probe the *node* did not answer (`timeout` / transport `error`) says nothing about the contract,
+// so it is tried again on later sweeps before the contract is published as `unknown`. Out of gas and
+// revert are the contract's own answer and are final.
+export const CLASSIFY_ATTEMPTS = 3;
+
 export type MarketRegistryRuntime = {
   address: Address;
   deployBlock: number;
-  lending: Address;
+  /**
+   * The permissionless lending singleton, deployed only when the run's protocols include `lending`
+   * -- that is, only where the lending adapter scores what goes into it. In a run without it the
+   * contract would be callable and worth nothing at the bell (ADR 0022), and the registry would
+   * label markets on it `verified`: a venue the rules do not list, standing open. No official
+   * regime includes `lending`; `config/regimes/agent-markets.yaml` does.
+   */
+  lending?: Address;
   uniswapFactory?: Address;
   registrarPk: Hex;
   registrarAddress: Address;
@@ -91,6 +113,13 @@ export type MarketRegistryRuntime = {
   // (market|extra) pairs already discovered, so a re-scan of an overlapping range does not queue
   // the same contract twice.
   seen: Set<string>;
+  // Addresses whose ERC-20 probe could not be answered (out of gas / timeout / transport error),
+  // already reported as `agent_market_read_failed`. Once per address, not once per block.
+  readFailuresReported: Set<string>;
+  // Contracts found by the CREATE scan that are waiting to be probed: the overflow past
+  // MAX_CLASSIFY_PER_SWEEP, and the ones whose probe the node did not answer (CLASSIFY_ATTEMPTS).
+  // Not yet in `seen`, so nothing about them is permanent until they are published.
+  classifyQueue: Array<{ address: Address; creator: Address; attempts: number }>;
   perBlockCap: number;
 };
 
@@ -107,6 +136,26 @@ const KIND_PRIORITY: Record<RegistryKind, number> = {
 
 function entryKey(market: string, extra: string): string {
   return `${market.toLowerCase()}|${extra.toLowerCase()}`;
+}
+
+// Fail before the deploy, naming the rebuild, when `out/` predates a change to the contract.
+export function assertArtifactHasFunctions(
+  name: string,
+  required: string[],
+  outDir?: string,
+): void {
+  const { abi } = readForgeArtifact(name, outDir);
+  const have = new Set(
+    abi
+      .filter((e): e is Extract<typeof e, { type: "function" }> => e.type === "function")
+      .map((e) => e.name),
+  );
+  const missing = required.filter((f) => !have.has(f));
+  if (missing.length > 0)
+    throw new Error(
+      `forge artifact for ${name} is stale: it declares no ${missing.join(", ")}. ` +
+        "Run `npm run build:contracts` (or set ERIS_FORGE_OUT).",
+    );
 }
 
 async function deployFrom(
@@ -139,18 +188,33 @@ export async function deployAgentMarketVenues(
   registrarPk: Hex,
   perBlockCap: number,
   logger: RunLogger,
+  /** Whether the run's protocols include `lending`; the singleton is deployed only then. */
+  withLending: boolean,
 ): Promise<MarketRegistryRuntime> {
   const registrarAddress = privateKeyToAccount(registrarPk).address;
   // Owner-gated writes: the registry's owner is whoever deployed it, so the registrar must be the
   // deployer. An agent that could write here could publish a `verified` entry for its own trap.
   const address = await deployFrom(ctx, registrarPk, "MarketRegistry");
-  const lending = await deployFrom(ctx, registrarPk, "SimpleLending");
+  let lending: Address | undefined;
+  if (withLending) {
+    // The singleton is deployed from whatever `out/` holds, so a stale artifact deploys a contract
+    // the valuation cannot read. It would not fail loudly: the per-user index read would come back
+    // empty and every lending position would be worth zero while the run still scored and ranked.
+    // So the one read the valuation depends on has to be in the ABI before anything is deployed.
+    assertArtifactHasFunctions("SimpleLending", [
+      "userMarketIdsFrom",
+      "userMarketCount",
+      "expectedPosition",
+    ]);
+    lending = await deployFrom(ctx, registrarPk, "SimpleLending");
+  }
   const deployBlock = Number(await ctx.publicClient.getBlockNumber());
   const factory = await uniswapFactory(ctx.publicClient);
   logger.event({
     type: "market_registry_deployed",
     address,
-    lending,
+    // null = this run has no lending venue, which is every run without `lending` in its protocols.
+    lending: lending ?? null,
     registrar: registrarAddress,
     uniswapFactory: factory ?? null,
     perBlockCap,
@@ -165,6 +229,8 @@ export async function deployAgentMarketVenues(
     registrarAddress,
     pending: [],
     seen: new Set(),
+    readFailuresReported: new Set(),
+    classifyQueue: [],
     perBlockCap,
   };
 }
@@ -242,57 +308,62 @@ export async function sweepMarkets(
   }
 
   // ---- the lending singleton's own CreateMarket ----
-  try {
-    const logs = await publicClient.getLogs({
-      address: runtime.lending,
-      event: simpleLendingAbi.find(
-        (e) => e.type === "event" && e.name === "CreateMarket",
-      ) as never,
-      fromBlock: BigInt(fromBlock),
-      toBlock: BigInt(toBlock),
-    });
-    for (const raw of logs as unknown[]) {
-      const log = raw as { topics: readonly Hex[]; data: Hex };
-      const decoded = decodeEventLog({
-        abi: simpleLendingAbi,
-        topics: log.topics as [Hex, ...Hex[]],
-        data: log.data,
+  //
+  // Only where the singleton was deployed (runtime.lending). A run whose protocols do not include
+  // `lending` has none, and nothing on this path is published for it.
+  const lending = runtime.lending;
+  if (lending !== undefined) {
+    try {
+      const logs = await publicClient.getLogs({
+        address: lending,
+        event: simpleLendingAbi.find(
+          (e) => e.type === "event" && e.name === "CreateMarket",
+        ) as never,
+        fromBlock: BigInt(fromBlock),
+        toBlock: BigInt(toBlock),
       });
-      if (decoded.eventName !== "CreateMarket") continue;
-      const a = decoded.args as unknown as {
-        id: Hex;
-        creator: Address;
-        loanToken: Address;
-        collateralToken: Address;
-        oracle: Address;
-      };
-      found.push({
-        // Every market on the singleton lives at the singleton's address; `extra` is what tells them
-        // apart, and the registry's dedup key is the pair.
-        market: runtime.lending,
-        kind: "lendingMarket",
-        creator: a.creator,
-        token0: a.loanToken,
-        token1: a.collateralToken,
-        oracle: a.oracle,
-        codehash: await codehash(runtime.lending),
-        // Verified: the singleton is environment-owned canonical code with readable parameters.
-        // The oracle it points at is emphatically not covered by that.
-        verified: true,
-        extra: a.id,
-        seenAtBlock: toBlock,
+      for (const raw of logs as unknown[]) {
+        const log = raw as { topics: readonly Hex[]; data: Hex };
+        const decoded = decodeEventLog({
+          abi: simpleLendingAbi,
+          topics: log.topics as [Hex, ...Hex[]],
+          data: log.data,
+        });
+        if (decoded.eventName !== "CreateMarket") continue;
+        const a = decoded.args as unknown as {
+          id: Hex;
+          creator: Address;
+          loanToken: Address;
+          collateralToken: Address;
+          oracle: Address;
+        };
+        found.push({
+          // Every market on the singleton lives at the singleton's address; `extra` is what tells them
+          // apart, and the registry's dedup key is the pair.
+          market: lending,
+          kind: "lendingMarket",
+          creator: a.creator,
+          token0: a.loanToken,
+          token1: a.collateralToken,
+          oracle: a.oracle,
+          codehash: await codehash(lending),
+          // Verified: the singleton is environment-owned canonical code with readable parameters.
+          // The oracle it points at is emphatically not covered by that.
+          verified: true,
+          extra: a.id,
+          seenAtBlock: toBlock,
+        });
+      }
+    } catch (error) {
+      logger.event({
+        type: "market_sweep_failed",
+        source: "simpleLending",
+        fromBlock,
+        toBlock,
+        error: error instanceof Error ? error.message : String(error),
       });
     }
-  } catch (error) {
-    logger.event({
-      type: "market_sweep_failed",
-      source: "simpleLending",
-      fromBlock,
-      toBlock,
-      error: error instanceof Error ? error.message : String(error),
-    });
   }
-
   // ---- top-level CREATE: scan each block's transactions for `to === null` ----
   // No receipt fetch: the address is derived from (from, nonce), which the transaction itself
   // carries. CREATE / CREATE2 from inside a contract is invisible here, and is accepted.
@@ -322,20 +393,85 @@ export async function sweepMarkets(
     }
   }
 
-  const fresh = created.filter(
-    (c) =>
-      !environmentAddresses.has(c.address.toLowerCase()) &&
-      !runtime.seen.has(entryKey(c.address, ZERO_BYTES32)),
+  const queued = new Set(
+    runtime.classifyQueue.map((c) => c.address.toLowerCase()),
   );
+  const candidates = [
+    ...runtime.classifyQueue,
+    ...created
+      .filter(
+        (c) =>
+          !environmentAddresses.has(c.address.toLowerCase()) &&
+          !runtime.seen.has(entryKey(c.address, ZERO_BYTES32)) &&
+          !queued.has(c.address.toLowerCase()),
+      )
+      .map((c) => ({ ...c, attempts: 0 })),
+  ];
+  const fresh = candidates.slice(0, MAX_CLASSIFY_PER_SWEEP);
+  runtime.classifyQueue = candidates.slice(MAX_CLASSIFY_PER_SWEEP);
+  if (runtime.classifyQueue.length > MAX_PENDING_ENTRIES) {
+    const dropped = runtime.classifyQueue.length - MAX_PENDING_ENTRIES;
+    runtime.classifyQueue = runtime.classifyQueue.slice(0, MAX_PENDING_ENTRIES);
+    logger.event({
+      type: "market_registration_dropped",
+      dropped,
+      backlog: MAX_PENDING_ENTRIES,
+      stage: "classify",
+      note:
+        "the backlog of contracts waiting for the ERC-20 probe exceeded its ceiling; the newest " +
+        "will not be published. They are still on chain and findable by anyone who scans for them.",
+    });
+  }
   if (fresh.length > 0) {
-    const kinds = await classifyContracts(
+    const classified = await classifyContracts(
       publicClient,
       fresh.map((c) => c.address),
     );
     for (let i = 0; i < fresh.length; i++) {
+      const failure = classified[i].failure;
+      // The node, not the contract, failed to answer: try again on a later sweep rather than
+      // registering a kind that the registry then holds for good.
+      if (
+        failure &&
+        (failure.failure === "timeout" || failure.failure === "error") &&
+        fresh[i].attempts + 1 < CLASSIFY_ATTEMPTS
+      ) {
+        runtime.classifyQueue.push({
+          address: fresh[i].address,
+          creator: fresh[i].creator,
+          attempts: fresh[i].attempts + 1,
+        });
+        continue;
+      }
+      // The probe ran the contract's own code and the contract did not answer within the cap (or
+      // the node did not answer in time). The entry is still published, as `unknown`: the contract
+      // exists and anyone scanning for it would find it. Said once per address -- the registry
+      // records the kind once, so the misclassification is permanent and worth a line, and an
+      // ordinary revert (a vault asked `name()`) is not news and is not reported.
+      if (
+        failure &&
+        !runtime.readFailuresReported.has(fresh[i].address.toLowerCase())
+      ) {
+        runtime.readFailuresReported.add(fresh[i].address.toLowerCase());
+        logger.event({
+          type: "agent_market_read_failed",
+          address: fresh[i].address,
+          creator: fresh[i].creator,
+          functionName: failure.functionName,
+          reason: failure.failure,
+          message: failure.message,
+          gas: Number(UNTRUSTED_READ_GAS),
+          timeoutMs: UNTRUSTED_READ_TIMEOUT_MS,
+          blockNumber: toBlock,
+          note:
+            "the ERC-20 probe (name/symbol/decimals) ran this contract's code under the untrusted-read " +
+            "gas cap and got no answer; it is registered as `unknown`. A contract that cannot be " +
+            "read under the cap cannot be read by any agent either (issue #213).",
+        });
+      }
       found.push({
         market: fresh[i].address,
-        kind: kinds[i],
+        kind: classified[i].kind,
         creator: fresh[i].creator,
         token0: ZERO_ADDRESS,
         token1: ZERO_ADDRESS,
@@ -482,34 +618,61 @@ async function codehashOf(
   }
 }
 
-// ERC-20 or not. Three static calls per candidate through one multicall; a contract that answers
-// all three is called an erc20 and everything else is `unknown`. Deliberately a heuristic: the
-// alternative (only record a token once a known factory pairs it) hides a token until somebody
-// makes a market in it, which is exactly when it is too late to look at it.
+export type ClassifiedContract = {
+  kind: RegistryKind;
+  // Set when a probe got no answer for a reason other than the contract declining (`revert`):
+  // out of gas under the cap, the node's deadline, or a transport error. The first such probe
+  // wins; `name` is asked first.
+  failure?: {
+    functionName: string;
+    failure: UntrustedReadFailure;
+    message: string;
+  };
+};
+
+// ERC-20 or not. Three gas-capped `eth_call`s per candidate (the candidate's own code runs here,
+// so never a multicall -- issue #213 and `untrustedRead.ts`); a contract that answers all three is
+// called an erc20 and everything else is `unknown`. Deliberately a heuristic: the alternative
+// (only record a token once a known factory pairs it) hides a token until somebody makes a market
+// in it, which is exactly when it is too late to look at it.
 export async function classifyContracts(
   publicClient: PublicClient,
   addresses: readonly Address[],
-): Promise<RegistryKind[]> {
+  opts: { timeoutMs?: number } = {},
+): Promise<ClassifiedContract[]> {
   if (addresses.length === 0) return [];
-  let results: Array<{ status: "success" | "failure"; result?: unknown }>;
-  try {
-    results = (await publicClient.multicall({
-      contracts: addresses.flatMap((address) => [
-        { address, abi: erc20ProbeAbi, functionName: "name" },
-        { address, abi: erc20ProbeAbi, functionName: "symbol" },
-        { address, abi: erc20ProbeAbi, functionName: "decimals" },
-      ]) as never,
-      multicallAddress: MULTICALL3,
-      allowFailure: true,
-    })) as Array<{ status: "success" | "failure"; result?: unknown }>;
-  } catch {
-    return addresses.map(() => "unknown" as RegistryKind);
-  }
+  const probes = ["name", "symbol", "decimals"] as const;
+  const results = await readUntrustedBatch(
+    publicClient,
+    addresses.flatMap((address) =>
+      probes.map((functionName) => ({
+        address,
+        abi: erc20ProbeAbi,
+        functionName,
+      })),
+    ),
+    opts,
+  );
   return addresses.map((_, i) => {
-    const ok =
-      results[i * 3]?.status === "success" &&
-      results[i * 3 + 1]?.status === "success" &&
-      results[i * 3 + 2]?.status === "success";
-    return ok ? ("erc20" as RegistryKind) : ("unknown" as RegistryKind);
+    const three = probes.map((name, j) => ({
+      functionName: name,
+      result: results[i * 3 + j],
+    }));
+    const ok = three.every((p) => p.result.value !== undefined);
+    const failed = three.find(
+      (p) => p.result.failure !== undefined && p.result.failure !== "revert",
+    );
+    return {
+      kind: ok ? ("erc20" as RegistryKind) : ("unknown" as RegistryKind),
+      ...(failed && failed.result.failure !== undefined
+        ? {
+            failure: {
+              functionName: failed.functionName,
+              failure: failed.result.failure,
+              message: failed.result.message,
+            },
+          }
+        : {}),
+    };
   });
 }

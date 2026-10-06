@@ -1016,13 +1016,15 @@ async function launchModule(
     // The position is read off the chain, never off a flag: a worker reload must not be able to
     // leave a token behind, because the bell marks it at zero. Read it alongside the pool rather
     // than after it -- the round trips are what the deadline is spent on.
-    const [state, held, feeTier] = await Promise.all([
+    const [state, heldRead, feeTier] = await Promise.all([
       withTimeout(launchPoolState(ctx.publicClient, pool), "launchPoolState", deadlineAt),
       withTimeout(tokenBalance(ctx.publicClient, pool.token, ctx.address), "tokenBalance", deadlineAt),
       track?.fee !== undefined
         ? Promise.resolve(track.fee)
         : withTimeout(poolFee(ctx.publicClient, pool.pool), "poolFee", deadlineAt),
     ]);
+    if (heldRead === undefined) continue; // gas-capped read failed (upstream issue #213): skip this pool this block
+    const held = heldRead;
     const reserveUsd = Number(state.usdcReserveUnits) / 1e6;
     if (!track) {
       track = {

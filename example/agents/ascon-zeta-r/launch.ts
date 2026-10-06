@@ -140,6 +140,8 @@ export async function decide(
     if (w.entered) {
       // ---- exit? ----
       const held = await timed(tokenBalance(ctx.publicClient, w.pool.token, self), deadline);
+      // Could not read (gas-capped untrusted read, upstream issue #213): nothing to size a sale from this block.
+      if (held === undefined) continue;
       if (held === 0n) {
         if (w.entered.exiting || block - w.entered.block >= PENDING_BLOCKS) w.entered = undefined;
         continue;

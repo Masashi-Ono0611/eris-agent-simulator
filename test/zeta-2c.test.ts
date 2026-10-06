@@ -430,11 +430,15 @@ test("W4 rewind rebases held timestamp, forward gap preserves hold age", async (
   assert.equal((await f.run(69)).type, "noop");
   assert.match((await f.run(70)).reason, /exit/);
 });
-test("W5 expired holdings request releases its key for a recovered client", async () => {
+test("W5 expired holdings request releases its key for a recovered client", async (t) => {
   const f = harness(); await f.enter(); const read = f.ctx.publicClient.readContract;
+  let now = Date.now();
+  t.mock.method(Date, "now", () => now);
   let release!: (value: bigint) => void;
   f.ctx.publicClient.readContract = () => new Promise<bigint>(resolve => { release = resolve; });
   assert.equal((await f.run(5, 12)).type, "noop");
+  // readUntrusted returns after 1000 ms; expire the wrapper's 1200 ms key too.
+  now += 1201;
   f.ctx.publicClient.readContract = read;
   assert.equal((await f.run(6, 11)).type, "rawBundle");
   release(0n);

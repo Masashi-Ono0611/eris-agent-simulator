@@ -41,6 +41,7 @@ import {
   nextMilestone,
   phaseStatus,
   rulesUrl,
+  scopeUrl,
   termsUrl,
   type PhaseStatus,
 } from "@/data/competitionInfo";
@@ -982,6 +983,7 @@ function LinksPanel({ locale }: { locale: Locale }) {
           body={t("overview.links.guideBody")}
           links={[
             { label: t("overview.links.guideDoc"), href: guideUrl(locale) },
+            { label: t("overview.links.updatesDoc"), href: "/updates" },
             { label: t("overview.links.repo"), href: REPO_URL },
           ]}
         />
@@ -991,6 +993,7 @@ function LinksPanel({ locale }: { locale: Locale }) {
           links={[
             { label: t("overview.links.rulesDoc"), href: rulesUrl(locale) },
             { label: t("overview.links.termsDoc"), href: termsUrl(locale) },
+            { label: t("overview.links.scopeDoc"), href: scopeUrl(locale) },
             { label: bare(SITE_URL), href: SITE_URL },
           ]}
         />

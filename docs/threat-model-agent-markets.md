@@ -45,7 +45,7 @@ issue #40 T0。**この文書は capability の definition of done の一部**�
 |---|---|---|
 | `contracts/PriceFeed.sol` | `setPrice` / `setPriceFor` | `require(msg.sender == owner)`、owner は immutable |
 | `contracts/MarketRegistry.sol` | `register` | 同上（registrar のみ） |
-| `contracts/VulnPoolFactory.sol` | `createSimplePool` / `createRiggedPool` | `require(msg.sender == owner)` |
+| `contracts/VulnPoolFactory.sol` | `createPool`（init code を受ける 1 本。ADR 0014 Amendment 2） | `require(msg.sender == owner)`、owner は環境の `vuln-pools` 財布（immutable） |
 | `deployer/contracts/MockLSTVault.sol` | `setRewardRate` / `slash` / `setOperator` / `setWithdrawalDelayBlocks` / `setQueueThroughput` | `onlyOperator` |
 | Aave `PoolConfigurator` | reserve 開設 | `POOL_ADMIN`（＝この環境では deployer）。**これが Aave をエージェントへ開けない理由**であり、`SimpleLending` が存在する理由 |
 
@@ -90,12 +90,36 @@ issue #40 T0。**この文書は capability の definition of done の一部**�
 | エージェントランタイム | `estimateGas` の結果と 1 ブロック内の累計 | 送らずに `rejected` を mempool ログへ。`ERIS_MAX_TX_GAS` / `ERIS_MAX_AGENT_BLOCK_GAS` |
 | run 後検査 | blocks.csv の `gasUsed`（receipt 由来） | per-tx と per-agent-per-block を `gas_budget_violations` に記録 |
 
-既定値: **per-tx 30,000,000 / per-agent-per-block 90,000,000**（= 本数上限 3 × per-tx）。
-ブロックガスリミットの 90/320 なので、1 体が枠を使い切っても環境の書き込みと他者の余地は残る。
+既定値: **per-tx 10,000,000 / per-agent-per-block 10,000,000**（2026-10-03。以前は 30M / 90M → 30M / 30M）。
+公式エポックのブロック（30,000,000）の 1/3 なので、1 体が枠を使い切っても他者の余地は残る。30M / 30M のときは
+1 体がブロック全体を正当に使えた（背景フローの tip の少し上で 28M を燃やすと、エポックあたり ~1 ETH で他の参加者と
+背景フローを締め出せた。環境のオラクル・keeper は fee 上限より上で入るので落ちない）。10M は正当な最重量
+（Uniswap V3 の `createPool` ~5M、24KB の deploy ~6M。ランタイムの見積もりバッファ込みで ~8M まで）が通る値。
+anvil は申告 gas ではなく実使用量でブロックに詰める（1.5.1 で実測）ので、申告 gas だけでは占有できない。
 
 **ゲートウェイは境界ではなく最初の壁**である。自己ホスト参加者はノードへ直接送れるので、
 権威は**チェーンに着地したもの**＝ run 後検査。ゲートウェイが先に落とすのは、
 検査が見える頃には飢えたブロックがもう過ぎているからにすぎない。
+
+### 3.1 書き込みではなく read 側（issue #213）
+
+上の 3 層は **tx** の話で、`eth_call` は通らない。ところが環境と全 agent は参加者製コントラクトの
+コードを `eth_call` で**実行**している — lending 市場の oracle の `price()` / `owner()`、registry
+エントリの `owner()`、coordinator の ERC-20 判定（`name` / `symbol` / `decimals`）、launch token の
+`balanceOf` と見積り。`gas` を付けない `eth_call` はノード既定＝ブロックガスリミット（30M）で走るので、
+無限ループを 1 つ置けば**読む側全員が毎ブロック**その分を払う（実測 anvil 1.7.1: keccak ループ 1 回
+~280 ms。32 体が同じ oracle を読めば 1 ブロック分を超える）。
+
+| 層 | 何を見るか | 挙動 |
+|---|---|---|
+| sdk / core の read（`sdk/src/untrustedRead.ts`） | 参加者由来アドレスへの `eth_call` | `gas: 200,000`（`SimpleLending.EXTERNAL_CALL_GAS` と同値）を明示。1 アドレス 1 call、Multicall3 には入れない。batch に 1 秒の期限 |
+| 読めなかった値 | out of gas / revert / timeout | **欠落**（`price` / `oracleOwner` が無い）。0 ではない |
+| coordinator の判定 | 答えなかった新規コントラクト | `unknown` として登録し `agent_market_read_failed` をアドレスごとに 1 回（timeout / transport error は 3 sweep まで再判定。1 sweep 64 件まで） |
+
+Multicall3 に入れないのは aggregate が内側の CALL に残りの 63/64 を渡すから: 罠が 1 つ先頭にあると、
+同じ batch の正直な oracle まで欠落する（実測: `[loop, honest]` で honest は生き残るが、残りガスは 1/64）。
+コントラクト側の staticcall 上限（singleton の `_price` / `_borrowRate`）はこの read 側の上限と**同じ数字**で、
+`test/untrustedRead.test.ts` が一致を検査する。
 
 ## 4. エージェント同士の攻撃面（＝競技の一部。塞がない）
 
