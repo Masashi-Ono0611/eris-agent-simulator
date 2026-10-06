@@ -19,8 +19,18 @@ class Schedule(unittest.TestCase):
         self.assertEqual([tuple(r[k] for k in ['group','regime','seed','field','mode','fault_case']) for r in rows],expected)
         self.assertEqual([int(r['order']) for r in rows],list(range(1,47)))
         self.assertEqual(len({r['label'] for r in rows}),46)
+        for row in rows:
+            expected_gate = ('BLOCKED-F_mix' if row['field']=='mix' else
+                'BLOCKED-AUDITED-HAIKU-CHANGE' if row['fault_case'] in {'delayed','change-revert'} else
+                'UNVERIFIED')
+            self.assertEqual(row['gate'],expected_gate,row['label'])
+            if row['fault_case'] in {'delayed','change-revert'}:
+                roster=(G3.parents[2]/row['roster']).read_text()
+                self.assertIn('AUDITED-HAIKU-CHANGE-MISSING.json',roster)
+                self.assertFalse((G3/'fixtures/AUDITED-HAIKU-CHANGE-MISSING.json').exists())
         self.assertEqual(len({r['host'] for r in rows}),1)
-        self.assertTrue(all(r['parallel']=='1' and (G3.parents[2]/r['roster']).is_file() for r in rows))
+        self.assertTrue(all(r['parallel']=='1' and r['base_port']=='8847'
+            and (G3.parents[2]/r['roster']).is_file() for r in rows))
         self.assertEqual([(r['s'],r['k']) for r in rows[-3:]],[('1','3'),('2','3'),('3','3')])
         self.assertAlmostEqual(sum(float(r['expected_hours']) for r in rows),46*13/60,places=6)
 if __name__=='__main__':unittest.main()

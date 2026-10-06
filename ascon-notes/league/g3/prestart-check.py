@@ -21,6 +21,8 @@ SEEDS = [49001, 49002, 49003, 49101, 49102, 49103]
 SCOPES = ['example/agents/runtime', 'example/agents/lib', 'sdk']
 PRUNE = {'.git', 'node_modules', '.claude', '.codex', '.agents', '.aws', '.ssh',
          '.cache', 'cache', 'artifacts', '__pycache__'}
+MIN_SOURCES = 1
+MIN_SOURCES_PER_ROOT = 1
 
 
 def digest(data):
@@ -32,9 +34,10 @@ def aggregate(files):
     return digest(json.dumps(files, sort_keys=True, separators=(',', ':')).encode())
 
 
-def safe(path):
+def safe(path, root=None):
+    path = Path(path).relative_to(root) if root is not None else Path(path)
     return not any(p.startswith('.env') or re.search(r'secret|credential|private.?key', p, re.I)
-                   or Path(p).suffix.lower() in {'.pem', '.key', '.p12'} for p in Path(path).parts)
+                   or Path(p).suffix.lower() in {'.pem', '.key', '.p12'} for p in path.parts)
 
 
 def git(root, *args):
@@ -57,7 +60,7 @@ def local_tree(path):
         raise ValueError('missing/symlink tree')
     files = {}
     for p in sorted(path.rglob('*')):
-        if not safe(p) or p.is_symlink():
+        if not safe(p, path) or p.is_symlink():
             raise ValueError('sensitive/symlink path rejected')
         if p.is_file():
             files[p.relative_to(path).as_posix()] = digest(p.read_bytes())
@@ -108,26 +111,44 @@ def audit_seeds(roots, self_files=None):
     are conservative reservations, even when a document calls a seed unused.
     """
     self_files = self_files or {}
+    roots = list(dict.fromkeys(Path(root).absolute() for root in roots))
     sources, hits, errors, excluded = {}, [], [], []
+    skipped, root_sources = [], {str(root): set() for root in roots}
     for root in roots:
-        if not root.is_dir():
-            errors.append('missing root: ' + str(root)); continue
+        if not root.is_dir() or root.is_symlink():
+            errors.append('missing/symlink root: ' + str(root)); continue
         def onerror(err):
             errors.append(str(err))
         for base, dirs, files in os.walk(root, followlinks=False, onerror=onerror):
-            dirs[:] = [d for d in dirs if d not in PRUNE and safe(d) and not (Path(base)/d).is_symlink()]
+            kept = []
+            for name in sorted(dirs):
+                p = Path(base) / name
+                reason = ('pruned-directory' if name in PRUNE else
+                          'sensitive-path' if not safe(p, root) else
+                          'symlink' if p.is_symlink() else None)
+                if reason:
+                    # Report the directory without inspecting its descendants.
+                    skipped.append({'path': str(p), 'type': 'directory', 'reason': reason})
+                else:
+                    kept.append(name)
+            dirs[:] = kept
             for name in files:
                 p = Path(base) / name
-                if not safe(p) or p.is_symlink():
+                reason = ('sensitive-path' if not safe(p, root) else
+                          'symlink' if p.is_symlink() else None)
+                if reason:
+                    skipped.append({'path': str(p), 'type': 'file', 'reason': reason})
                     continue
+                relative = p.relative_to(root)
                 low = name.lower()
                 kind = ('index' if name == 'index.tsv' else
-                        'manifest' if p.suffix == '.json' and ('manifest' in low or 'manifests' in p.parts) else
+                        'manifest' if p.suffix == '.json' and ('manifest' in low or 'manifests' in relative.parts) else
                         'ledger' if 'ledger' in low and p.suffix in {'.jsonl','.json','.md','.tsv','.csv','.yaml','.yml'} else
                         'reservation' if p.suffix == '.json' and any(x in low for x in ['seed-audit','lock','reservation']) else
-                        'plan' if 'ascon-notes' in p.parts and p.suffix in {'.md','.yaml','.yml','.tsv'} else None)
+                        'plan' if 'ascon-notes' in relative.parts and p.suffix in {'.md','.yaml','.yml','.tsv'} else None)
                 if kind:
                     sources[p.resolve()] = kind
+                    root_sources[str(root)].add(p.resolve())
     records = []
     for p, kind in sorted(sources.items()):
         try:
@@ -135,7 +156,9 @@ def audit_seeds(roots, self_files=None):
             if str(p) in self_files:
                 if sha != self_files[str(p)]:
                     raise ValueError('self reservation hash drift')
-                excluded.append(str(p)); continue
+                excluded.append(str(p))
+                skipped.append({'path': str(p), 'type': 'file', 'reason': 'hash-bound-self-reservation'})
+                continue
             body = raw.decode('utf-8')
             rec = {'path': str(p), 'kind': kind, 'sha256': sha}
             if kind == 'index':
@@ -165,8 +188,19 @@ def audit_seeds(roots, self_files=None):
             records.append(rec)
         except (OSError, UnicodeError, ValueError, TypeError, KeyError) as exc:
             errors.append(str(p) + ': ' + str(exc))
+    # Only successfully parsed, non-exempt sources provide audit coverage.
+    audited = {Path(record['path']) for record in records}
+    root_counts = {root: len(paths & audited) for root, paths in root_sources.items()}
+    if len(records) < MIN_SOURCES:
+        errors.append(f'insufficient sources: {len(records)} < {MIN_SOURCES}')
+    for root, count in root_counts.items():
+        if count < MIN_SOURCES_PER_ROOT:
+            errors.append(f'insufficient sources for root {root}: {count} < {MIN_SOURCES_PER_ROOT}')
     return {'pass': not hits and not errors, 'proposedSeeds':SEEDS,
             'roots':list(map(str,roots)), 'sources':records,'hits':hits,'errors':errors,
+            'sourceCount':len(records), 'minimumSources':MIN_SOURCES,
+            'rootSourceCounts':root_counts, 'minimumSourcesPerRoot':MIN_SOURCES_PER_ROOT,
+            'skipped':skipped,
             'selfReservationExclusions':excluded,
             'sourceSetSha256':aggregate({r['path']:r['sha256'] for r in records}),
             'unverified':'Unrecorded runs, other devices, remote and private metadata. Re-run immediately before start.'}
@@ -176,7 +210,7 @@ def check_inputs(root, lock):
     mismatches = []
     for name, expected in lock['inputs'].items():
         p = root / name
-        if not safe(p) or p.is_symlink() or not p.is_file() or digest(p.read_bytes()) != expected:
+        if not safe(p, root) or p.is_symlink() or not p.is_file() or digest(p.read_bytes()) != expected:
             mismatches.append(name)
     agents = {}
     for name, expected in lock['agentTrees'].items():

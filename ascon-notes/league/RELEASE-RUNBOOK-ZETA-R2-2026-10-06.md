@@ -47,7 +47,7 @@
 | 2. typecheck/strategy/全テスト/ci-local、10/8 | Air／監督 | 1–1.5h | 他anvil/npm test停止、依存とlock一致。全非0停止、ci-local rc2はBLOCKED | `$EV/checks/*.log`, `*.exit` |
 | 3. 暫定ZIP固定・mix smoke、10/8 | ZIPはAir release、smokeはAir eval／監督 | 0.2h＋0.87h（p3見積） | mix相手/hash/新seed/自機G0成立。未整備なら停止。p1なら約2.6hで再配分 | `$EV/zip.sha256`, `mix/`、evalのmanifests/runs |
 | 4. P60 dry run、10/8–10 | Air eval推奨／監督 | 実行12–13h＋照合1hを目安 | frozen、公式60固定、全coverage/負荷G0。各chunk≤110分、日合計≤6h、失敗・遅延で停止 | `$EV/p60-dry-pre1020/`、evalの`runs/*`, `g0.json` |
-| 5. 最小G3、10/11–12 | Air eval／監督（本人が安全な推論経路を用意） | 2.6h基本＋制御/照合1–2h | dry run・実改訂適合・全費用/無料枠。実効model不明/ガード未証明/危険取引で停止 | `$EV/g3/`、適用/拒否/復帰・state履歴 |
+| 5. 最小G3、10/11以降・日程再配分要 | Air eval／監督（本人が安全な推論経路を用意） | [g3/budget.json](g3/budget.json): 基本9.97h、準備/全件監査込み14–15h予約案 | dry run・実改訂適合・全費用/無料枠。実効model不明/ガード未証明/危険取引で停止 | `$EV/g3/`、適用/拒否/復帰・state履歴 |
 | 6. build/selftest・ZIP起動、10/12–13 | Air独立SELF worktree／監督 | 1–2h（取得時間不明） | §7の分離構成・依存・chain成立。上限2 vCPU/4GB、非0/結果欠落/残存で停止 | `$EV/g4/build.log`, `selftest.json`, run一式、image digest |
 | 7. scan/gitleaks/prepare-release/G4照合、10/13 | Air release／監督 | 1–2h | 同一ZIP・commitのG3/selftest・静的確認。正式P60前はREADY不可。exit3/不一致/秘密検出で停止 | `$EV/g4/`, `$EV/READY.txt`, `submission-record.md` |
 | 8. 任意練習run、10/13（余裕枠） | Air release／監督、wallet/faucetは本人 | 0.5–1h＋着金待ち不明 | devnet専用wallet・安全な資格情報経路・C0、未資金/疎通不良は停止 | `$EV/practice/`（値を伏せた照合結果とtx証跡） |
@@ -204,25 +204,20 @@ python3 -B ascon-notes/league/g0.py release-r2-p60 --roster "$P60_ROSTER" \
 
 ## 6. 手順5: 最小G3（性能研究を再開しない）
 
-**最小設計**: MASTERのcalm/crash/depeg × 未使用50001–50003 × F_ref/F_mix × ON/OFF = 36世界。seedは予約台帳と開始直前照合し、既使用なら結果を見る前に新集合全体を登録。候補1体、参照OFF、同一slot/入力、ON/OFFは別世界で順序交互。p3が成立すれば基本2.6h、ON実測最大batch×1.2で再見積し、障害ケース・検査1–2hを別予約。全runにbegin/終了G0、独立ON/OFF比較世界の開始時だけversion0に戻し、相互に改訂コード/学習memoryを混ぜない。これは試験間隔離で、本番epoch間のreset指示ではない。別の連続epoch制御試験ではstate/改訂履歴/memoryを引き継ぎ、64MiB永続領域とepoch開始s/k告知への対応を確認する。旧Q02のOFFだけで代用しない。
+**実行順・入力の正は [g3/schedule.tsv](g3/schedule.tsv)**、設計根拠は [G3-DESIGN](G3-DESIGN-ZETA-R2-2026-10-06.md)。通常36＋fault7＋状態3の計46世界。seed、regime、場、ON/OFF順、label、roster、host、並列度、port、s/kは各行から取得し、本書に別の集合・batchを定義しない。seedは予約台帳と開始直前照合し、衝突・監査不足なら停止して再登録判断へ戻す。自動seed交換・救済再走はしない。
 
-使用コマンドは前節と同じ`round-manifest.py begin`→`run-league.sh`→`g0.py`。ON/OFF×場ごとに独立label/rosterで固定する。例（3×3=9世界、4セルで36世界）:
+費用は [g3/budget.json](g3/budget.json) のp1計画（基本約9.97h、準備/全件監査込み約14–15h予約案）。6h/日以下・chunk110分以下で日程を再配分し、後続G4との重複も解消してから予約する。実測最大×1.2＋全件監査時間で更新し、旧p3の2.6h枠は使わない。
 
-```bash
-python3 -B ascon-notes/league/round-manifest.py begin release-r2-g3-ref-on \
-  --roster "$G3_REF_ON_ROSTER" --regimes calm crash depeg --seeds 50001 50002 50003 --parallel 3 --zip "$ZIP"
-bash ascon-notes/league/run-league.sh --label release-r2-g3-ref-on \
-  --roster "$G3_REF_ON_ROSTER" --regimes 'calm crash depeg' --seeds '50001 50002 50003' --parallel 3 --base-port 8547
-```
+各行の `gate` とprestartを確認し、BLOCKED／FAILなら開始しない。**非送信malicious先行検査がFAILならworld 1より前に中止**。必要条件成立後のコマンド形は `round-manifest.py begin` → `run-league.sh` → manifest verify／`g0.py`。1行ずつ `label`、`roster`、`regime`、`seed`、`parallel` を渡し、runnerには同じ行の `base_port`、`blocks`、`block_seconds` を渡す。schedule順に進め、毎行G0・全revision/action監査を完了する。TSVからの起動・集約・状態制御の監督配線は未検証であり、本書は実行可能な一括起動スクリプトではない。
 
-残りref-off/mix-on/mix-offも同形。これはコマンド形で、上の順にON全量→OFF全量を実行する指示ではない。開始前に交互batchの子label/manifest・集約表を固定し、既存labelへの追記・再利用をしない。現行runnerは1roster/呼出しのため、交互実行の監督配線は準備が必要。
+候補1体、参照OFF、同一slot/入力。通常ON/OFFは独立世界の開始時にversion0へ戻し、相互に改訂コード/学習memoryを混ぜない。これは試験間隔離で、本番epoch間のreset指示ではない。状態試験はscheduleと `g3/state-plan.yaml` に従って専用state rootを継続し、64MiB永続領域とepoch開始s/k告知への対応を確認する。旧Q02のOFFだけで代用しない。
 
 合格に必要な独立証拠:
 
 - 提出model/実効提供版・prompt hash・既定60block間隔・API usage/待ち/retry/同時枠。正常cycle **3回以上**、提案/拒否/受理/実適用blockを区別する。全declined/nullだけでは実変更の試験にならない。
 - 別の制御ケースで**実変更の適用と既知版への復帰**を確認し、改訂ごとの静的/型/安全検査 **100%**。returnとctx.submit両方で資金・サイズ・slippage・送信先等の境界を監査。
 - 遅延、無効出力、枠切れ/429、到達不能と復帰、本番相当のepoch境界（state持続）で**危険取引0**。故障注入は通常36世界と別の証拠・費用とし、通常G0に混ぜない。
-- fault用fixture/proxy/制御起動コマンドは現時点で固定されていない。存在しない`g3` CLIや架空のPASSを作らない。安全なcredential loader/proxy、制御仕様・コマンド・監督が揃うまでG3 BLOCKED。
+- offline fault fixtureとrosterは `g3/` に登録済み。ただしdelayed/change-revert用の監査済み自然Haiku実変更fixtureは欠落し、F_mixも未成立。scheduleのBLOCKEDを維持する。実runtimeの制御起動・監督は未検証であり、単体テストをG3 PASSにしない。
 
 r2のfrontmatterは既に`kind: improve` / `name` / `description` / `reviseEveryBlocks: 60`を満たし、`model:`はない。`loadImproveAgent()`はmodelを`undefined`として返し、`botMain.ts`が **prompt.model → ERIS_LLM_MODEL → `gpt-oss:120b`** の順に解決する。これは4057ea3統合コードのfallbackであり、運営告知の本番defaultとの一致は未確認。告知一覧・運営envが不明な間は本番実効modelを確定しない。promptへ推測でmodel行を足さない。
 

@@ -79,10 +79,19 @@ Self reservations are only exact local paths with pinned hashes, never a whole
 worktree/name-prefix exemption. Audit checks index seed columns, JSON seed fields,
 text enumerations/ranges/49xxx reservations. Other devices/private/unrecorded runs
 remain unverified. Fresh pre-start audit required; do not automatically replace seeds.
+Sensitive-path checks use only parts relative to each scan root. At least one
+successfully parsed, non-exempt source is required overall AND from every root;
+empty roots or self-reservations alone fail. JSON includes `sourceCount`,
+`rootSourceCounts`, minimum counts, and `skipped` paths with reasons for pruned
+directories, sensitive paths, symlinks and hash-bound self-reservations. Pruned
+directories are reported as a whole without inspecting their descendants.
 The checker is deliberately also blocked by incomplete F_mix and missing real replay.
 The red tests modify only temporary copies (a sparse local shared clone has no new
 commit, network or credential checkout). They demonstrate clean→dirty, original→changed
 candidate, unused→used seed, reservation-band/range, malformed metadata and hash drift.
+Additional red controls cover zero sources, empty sibling roots, self-only coverage,
+and used seeds below ancestors named secret/credential/private-key; safe metadata
+under those ancestors remains readable, while sensitive descendants stay excluded.
 
 ## Fake provider and evidence boundary
 
@@ -111,11 +120,20 @@ change. It tests CLI replay mechanics only. Delayed/change-revert rosters refere
 an intentionally MISSING `AUDITED-HAIKU-CHANGE-MISSING.json`: **BLOCKED** until a
 natural Haiku safe change has been fully audited and registered with a new input
 lock. Do not hand-repair or treat synthetic replay/restore as real Haiku success.
+Their schedule gates are `BLOCKED-AUDITED-HAIKU-CHANGE`; the schedule retains 46 rows.
 `fixtures` hashes and expected outcomes are registered in `fixture-expectations.json`.
 
 Full G3, submission-model equivalence, subscription/OAuth/extra-billing state,
 current online rules, live G0/receipts, state cap/boundaries, timeout/backoff,
 P60, runtime/devnet execution and any host other than the local offline check remain
 **unverified**. No commit/push, simulation, Docker, SSH, npm test or network was run.
-Original tracked dirt is preserved; initial HEAD/status/diff fingerprint are recorded
-in `initial-state.json`. New files only under this previously absent g3 directory.
+`verification.json` retains earlier-session checks separately from the current review
+checks. Its historical tsc entry is **self-reported, not re-verified** as a historical
+execution claim. This review independently ran offline `npm run typecheck`
+(`tsc --noEmit`, exit 0) and `python3 -B -m unittest` from `g3/tests`
+(12 tests, exit 0); provider tests were not re-run. New red controls failed before
+the fix and passed afterward. These results do not certify full G3.
+`initial-state.json` records the original preparation session, when g3 was new.
+This review started clean at `docs/g3-r2-prep` / `b336496`; edits are confined to
+g3 and the release runbook. Input/self-reservation hashes for edited files were
+refreshed without clearing any existing blockers. Full prestart was not run.

@@ -26,7 +26,7 @@
         "ascon-notes/league/g3/tests/provider.test.mjs"
       ],
       "exitCode": 0,
-      "stdout": "\u2714 existing CLI hook: malicious/invalid/empty/quota/null and bad revisions (147.382166ms)\n\u2714 short delayed/timeout hooks and controlled replay sequence (synthetic unit only) (339.221375ms)\n\u2714 malicious lawful schema accepted by stock compiler, unsafe return AND submit captured (1.803042ms)\n\u2714 stock StrategyRunner setSource executes both malicious routes; no sender exists (724.362375ms)\n\u2139 tests 4\n\u2139 suites 0\n\u2139 pass 4\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 1541.535917\n",
+      "stdout": "✔ existing CLI hook: malicious/invalid/empty/quota/null and bad revisions (147.382166ms)\n✔ short delayed/timeout hooks and controlled replay sequence (synthetic unit only) (339.221375ms)\n✔ malicious lawful schema accepted by stock compiler, unsafe return AND submit captured (1.803042ms)\n✔ stock StrategyRunner setSource executes both malicious routes; no sender exists (724.362375ms)\nℹ tests 4\nℹ suites 0\nℹ pass 4\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1541.535917\n",
       "stderr": ""
     },
     {
@@ -44,7 +44,55 @@
       "exitCode": 0,
       "stdout": "",
       "stderr": "",
-      "evidence": "Executed earlier in this session, PTY 63893; no TypeScript source changed afterward."
+      "evidence": "self-reported, not re-verified: historical execution claim from an earlier session (PTY 63893). See independent current-review typecheck below."
     }
-  ]
+  ],
+  "reviewVerification": {
+    "recordedAtUtc": "2026-10-06 03:56:31 UTC",
+    "baseBranch": "docs/g3-r2-prep",
+    "baseCommit": "b336496",
+    "tests": [
+      {
+        "command": [
+          "python3",
+          "-B",
+          "-m",
+          "unittest"
+        ],
+        "cwd": "ascon-notes/league/g3/tests",
+        "exitCode": 0,
+        "output": "............\n----------------------------------------------------------------------\nRan 12 tests in 0.094s\n\nOK\n"
+      },
+      {
+        "command": [
+          "npm",
+          "run",
+          "typecheck"
+        ],
+        "environment": {
+          "NPM_CONFIG_OFFLINE": "true",
+          "NPM_CONFIG_UPDATE_NOTIFIER": "false",
+          "NPM_CONFIG_IGNORE_SCRIPTS": "true"
+        },
+        "exitCode": 0,
+        "output": "\n> eris-competition@0.1.0 typecheck\n> tsc --noEmit\n\n"
+      }
+    ],
+    "redControls": {
+      "beforeFixExitCode": 1,
+      "afterFixExitCode": 0,
+      "cases": [
+        "zero sources",
+        "used seed under secret/credential/private-key ancestor",
+        "empty per-root contribution",
+        "self-reservation-only coverage"
+      ],
+      "note": "New regression assertions failed against the original checker; all pass in the current full unittest run."
+    },
+    "unverified": [
+      "provider tests not re-run",
+      "full prestart not run",
+      "simulation/runtime/Docker/network validation"
+    ]
+  }
 }
