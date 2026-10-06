@@ -20,7 +20,8 @@ COPY sdk/package.json sdk/
 COPY core/package.json core/
 COPY example/package.json example/
 COPY dashboard/package.json dashboard/
-RUN npm ci
+# AGENTS.md supply-chain rule: dependency install scripts must not run (same flag as Dockerfile.team's deps stage).
+RUN npm ci --ignore-scripts
 COPY sdk-py /eris/sdk-py
 RUN python3 -m pip install --no-cache-dir --require-hashes -r /eris/sdk-py/requirements.lock \
     && python3 -m pip install --no-cache-dir --no-deps /eris/sdk-py
