@@ -1023,7 +1023,8 @@ async function launchModule(
         ? Promise.resolve(track.fee)
         : withTimeout(poolFee(ctx.publicClient, pool.pool), "poolFee", deadlineAt),
     ]);
-    const held = heldRead ?? 0n; // gas-capped read failed (upstream issue #213): nothing sellable this block
+    if (heldRead === undefined) continue; // gas-capped read failed (upstream issue #213): skip this pool this block
+    const held = heldRead;
     const reserveUsd = Number(state.usdcReserveUnits) / 1e6;
     if (!track) {
       track = {

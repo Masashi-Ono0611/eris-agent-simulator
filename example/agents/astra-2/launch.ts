@@ -114,7 +114,8 @@ export async function launchDecision(obs: AgentObservation, ctx: AgentContext, s
     // One outstanding position; balance confirmation is authoritative, never the submitted action.
     if (state.position) {
       const pos = state.position;
-      const held = (await tokenBalance(client, pos.pool.token, self)) ?? 0n;
+      const held = await tokenBalance(client, pos.pool.token, self);
+      if (held === undefined) return null; // unreadable (gas-capped read, upstream issue #213): nothing to size a sale or entry from this block
       if (held === 0n) {
         if (pos.seen && pos.exiting) state.position = undefined;
         // Keep reconciling a failed/pending purchase through the epoch. A late fill must not
@@ -148,7 +149,8 @@ export async function launchDecision(obs: AgentObservation, ctx: AgentContext, s
     const pools = launchPools(obs).filter(p => !p.mine);
     if (!pools.length) return null;
     const p = pools[state.cursor++ % pools.length];
-    const held = (await tokenBalance(client, p.token, self)) ?? 0n;
+    const held = await tokenBalance(client, p.token, self);
+    if (held === undefined) return null; // unreadable (gas-capped read, upstream issue #213): nothing to size a sale or entry from this block
     const fee = await poolFee(client, p.pool);
     if (held > 0n) {
       state.position = { pool: p, fee, block: block - P.launchHoldBlocks, cost: 0n, peak: 0n, exiting: true, seen: true };
