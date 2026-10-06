@@ -7,7 +7,8 @@
 The rules themselves live at [ascon.dev/rules](https://ascon.dev/rules) and are the only source for
 them; the Japanese text governs. Where this guide and the rules disagree, the rules win. This guide
 only covers how to build. The [Japanese version](competition-start.md) governs this guide too; this
-one is a reference translation.
+one is a reference translation. This guide always describes the current environment; **if you have
+read it already, the [environment updates](updates/README.en.md) page carries the diff.**
 
 **You need**: Node.js 20 or newer, [Foundry](https://book.getfoundry.sh/getting-started/installation)
 (`forge` and `anvil`), `git`, and `zip` (used to build the submission archive).
@@ -222,7 +223,9 @@ A way to bet on the price of ETH or BTC without buying any (a perpetual: a futur
 - **The price is the reference price.** That is why offsetting WETH bought on an AMM with a GMX short (a **hedge**) removes your exposure to the reference price and leaves only the AMM's mispricing (`basis-arb`). Until the hedge is filled, though — a block or more — the exposure is not offset. Post the short's margin in USDC (WETH margin itself carries ETH's price moves)
 - **Orders execute in two steps.** Your transaction only places the order; the position exists once the environment's keeper processes it in a later block, and the observation shows it later still. **Re-sending the same order before it shows up opens it twice**
 - Every order carries 0.03 ETH as an execution fee (the runtime attaches it); what is not used is refunded when the order executes
-- **Position fees, borrowing fees and price impact are 0 here** (on the real GMX, opening or closing costs 0.04–0.06% of the size). The only costs are the unrefunded part of the execution fee (tiny) and funding; the +$50 example above assumes this
+- **Opening and closing each pay a position fee** of 0.04% of the size (0.06% for an order that widens the long/short skew), the same as the real GMX on Arbitrum. In the example above that is $4–6 for the round trip. On top of it come price impact (worse fills the more an order widens the skew; very small at this environment's sizes), a borrowing fee (very small over 12 minutes) and the unrefunded part of the execution fee
+- **Leverage is at most 20x** (margin of at least 5% of the size when opening). A position whose margin falls below 1% of its size after losses is liquidated by the environment's keeper a block or more later (it checks every position at the reference price each block, at most two per block when several are due)
+- **Only market orders are executed.** A limit or stop order sent through `rawTx` has no keeper to execute it when its trigger is reached
 - **Funding**: a fee the crowded side (longs or shorts) pays the other. The rate moves gradually with the skew, so after the skew flips the side that was paying keeps paying for a while. The sign of `fundingPerHourBps` tells you who pays now (positive = longs pay). Here it comes to less than 0.01% of the position over 12 minutes — one cost among several, not a source of income
 
 The state is in `obs.protocols.gmx`: `marketPriceUsd` / `position` (`sizeUsd` in dollars × 10^30 as
@@ -277,9 +280,9 @@ valuation block (rules §4.1). Rows the rules do not spell out say so.
 | Token balances | ETH, WETH, WBTC at the reference price; USDC at $1. DAI and eUSD at what selling everything you hold of it into its pool pays, quoted as one sale together with what the AMM, Liquity and lending rows below hold of it (when that quote does not come back, the geometric mean of $1,000 sell and buy quotes; failing that, $1). ERLST: see the LST row. Any other token (LQTY, the `launch` listings and so on) is 0 (rules §4.1) |
 | AMM liquidity | A Uniswap position is what it holds at that moment (two tokens) plus uncollected fees. LP tokens of the Balancer and Curve WETH/USDC and WBTC/USDC pools are your share of what the pool holds (stableswap LP tokens are 0) |
 | Aave | Collateral − debt at Aave's oracle prices; negative when the debt exceeds the collateral. ERLST collateral is re-counted like the LST row, at what selling it into the pool pays (capped at its value at the redemption rate) |
-| GMX | Margin + unrealised PnL from the price move (at the reference price). Accrued funding is not deducted. An order not yet executed counts as 0, its margin and execution fee included (an order placed just before the end is one) |
+| GMX | **What the position would leave if you closed it now**: margin + unrealised PnL from the price move (at the reference price), less the settlement fee, the unpaid funding and the unpaid borrowing fee. A $10,000 position comes to about $4 under its face value. **The observation's `position.pnlUsd` is still the face value**, so adding up your account from the observation reads high by that much. An order not yet executed counts as 0, its margin and execution fee included (an order placed just before the end is one) |
 | LST | ERLST in your wallet is what selling all of it into the pool pays at that moment. A requested withdrawal counts in full if it is claimable by then (you need not have claimed it), and as 0 if not (the rules do not spell this out; it is the scoring code's rule) |
-| Liquity | A Trove is its collateral (at the reference price) minus the cost of buying back its net debt (the debt without the 200 eUSD deposit) in the pool now, floored at 0 since you can walk away from the debt by abandoning the collateral. Surplus collateral left over from a redemption or liquidation counts at the reference price. The Stability Pool is your eUSD balance after absorbed liquidations, counted as part of one sale with your wallet's eUSD (the token-balance row), plus the ETH not yet withdrawn. LQTY is 0. Rules §4.1 does not name CDPs; this is the scoring code's rule |
+| Liquity | A Trove is its collateral (at the reference price) minus the cost of buying back its net debt (the debt without the 200 eUSD deposit) in the pool now, floored at 0 since you can walk away from the debt by abandoning the collateral. Surplus collateral left over from a redemption or liquidation counts at the reference price. The Stability Pool is your eUSD balance after absorbed liquidations, counted as part of one sale with your wallet's eUSD (the token-balance row), plus the ETH not yet withdrawn. Unclaimed LQTY staking fees count too (ETH at the reference price, eUSD as above). LQTY itself, in the wallet or staked, is 0. The environment stakes 2M LQTY, so a stake earns roughly its size over 2M of the fees. Rules §4.1 does not name CDPs; this is the scoring code's rule |
 | Assets inside a contract you deployed | 0. Scoring counts only the balances and positions your agent's own address holds, so a contract's contents are not counted even when they are WETH. Profit that passed through counts in full (the rules do not spell this out; it is the scoring code's rule) |
 
 ### The 12 regimes
@@ -362,9 +365,14 @@ you, skip this section**: each item is "a problem on mainnet that does not arise
 - **An edge from arriving first.** Order within a block is by priority fee, highest first (rules §2.6;
   Anvil runs with `--order fees`). A faster line or an earlier call wins nothing — if you want the
   position, bid for it
-- **Enumerating pending orders through RPC.** With `RPC_FILTER=1`, the participant gateway refuses
-  pending transaction lists/filters and block, transaction and receipt reads with the `pending` tag.
-  `eth_getTransactionCount(address, "pending")` remains available for sender nonce management.
+- **Reading pending orders through RPC.** With `RPC_FILTER=1`, the participant gateway **answers 403
+  to the `pending` tag in any argument** -- not only block and transaction reads, but the target block
+  of `eth_call` and `eth_getBalance`, and `fromBlock` / `toBlock` inside an `eth_getLogs` object. One
+  such call in a batch rejects the whole batch. **The single exception is
+  `eth_getTransactionCount(address, "pending")`**, which a sender needs to manage its nonce.
+  `eth_getTransactionByHash` returns `null` for an unmined transaction, and an `eth_estimateGas` with
+  no block is rewritten to `latest` -- so **it no longer sees your own unmined transactions**, and
+  estimating a swap in the same block as its approve reverts.
   See the [gateway policy and measurements](../infra/rpc-gateway/README.md). This applies at the
   gateway; local runs pointed directly at Anvil do not get this filter.
 - **Rewriting the reference price or an oracle.** `PriceFeed`, the Aave aggregators and the GMX oracle
@@ -374,9 +382,9 @@ you, skip this section**: each item is "a problem on mainnet that does not arise
   follow (they come from the environment's price). Assets marked from a market — stablecoins, the LST,
   eUSD — can be moved, but the mark is the median over the previous 5 blocks (rules §4.1), and trading
   to distort a mark is a prohibited act (rules §8)
-- **Direct manipulation of chain state.** The RPC gateway answers 403 to every method outside `eth_` /
-  `net_` / `web3_` (`anvil_*` / `evm_*` / `hardhat_*` / `txpool_*` / `debug_*`;
-  `infra/rpc-gateway/README.md`). There is no way to write a balance or a storage slot, and no
+- **Direct manipulation of chain state.** The RPC gateway answers 403 to every method outside the 30
+  it permits (`anvil_*` / `evm_*` / `hardhat_*` / `txpool_*` / `debug_*`, and **an `eth_` method is
+  refused too if it is not on the list**; the list is in `infra/rpc-gateway/README.md`). There is no way to write a balance or a storage slot, and no
   `eth_sendTransaction` either — you sign locally
 - **Operator intervention mid-epoch.** During an epoch the environment does exactly this: the
   per-block reference price update, the background order flow, execution of GMX orders, and the
@@ -649,7 +657,7 @@ into**; the bigger you go, the worse the fill. Size yourself. The shared helper 
 
 | Where it comes from | What it caps | What happens if you exceed it |
 |---|---|---|
-| the runtime (validates before sending) | the action's shape and content (schema; a leg you hold no inventory for), the priority fee (`obs.limits.maxPriorityFeePerGasWei`), **gas** (30,000,000 per transaction, 30,000,000 per agent per block in total) | **rejected** before signing, with a `rejected` entry and its reason in `agents/<id>.jsonl` (for gas: `tx gas cap` / `per-block gas budget`). Nothing reaches the chain |
+| the runtime (validates before sending) | the action's shape and content (schema; a leg you hold no inventory for), the priority fee (`obs.limits.maxPriorityFeePerGasWei`), **gas** (10,000,000 per transaction, 10,000,000 per agent per block in total) | **rejected** before signing, with a `rejected` entry and its reason in `agents/<id>.jsonl` (for gas: `tx gas cap` / `per-block gas budget`). Nothing reaches the chain |
 | rules §2.3 and §2.6 (the operator imposes it) | **5,000 ms** per decision, **2 vCPU / 4 GB** of memory (§2.3). **No cap on transactions per block** (§2.6: inclusion is decided by the priority-fee auction, and the block gas limit is 30,000,000) | a timeout is no action for that block; a crash is no action for the rest of the epoch (no restart). **None of this is in `obs.limits`** |
 
 The runtime enforces send validation and the decision deadline. Design your agent to operate within
@@ -1068,6 +1076,7 @@ scored. A position you cannot close is valued as a position you cannot close.
 | Document | Contents |
 |---|---|
 | [ascon.dev/rules](https://ascon.dev/rules) | **the rules themselves** (the only source) |
+| [updates/](updates/README.en.md) | environment updates (the diff against this guide, one file per entry) |
 | [writing-agents.md](guide/writing-agents.md) | strategy authoring in depth; every field of `obs` |
 | [protocols-and-actions.md](guide/protocols-and-actions.md) | the action catalogue per venue |
 | [llm-agents.md](guide/llm-agents.md) | how self-improvement works and how to configure a backend |

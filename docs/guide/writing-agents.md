@@ -71,7 +71,12 @@ cloned (including bigint); the worker's `latestObservation()` returns that call'
 
 The worker is reused on normal blocks, preserving module variables. On timeout/failure or revision
 replacement, it reloads the selected source and resets worker-local variables. The parent retains
-nonce, logs, revision history and persisted state. `onObservation()` is for self-driven `run(ctx)`
+nonce, logs, revision history and persisted state. The worker's `process.env` is the parent's less
+every credential (`runtime/strategyEnv.ts`): `ERIS_AGENT_PRIVATE_KEY`, `ERIS_INFERENCE_TOKEN`,
+`ERIS_LLM_*`, anything ending in `_API_KEY` / `_TOKEN` / `_SECRET` / `_PRIVATE_KEY` is absent there,
+while the parameters your roster's `env` sets (`ERIS_ARB_SAFETY_BPS`, ...) arrive as before. A
+strategy signs nothing and calls no model, so it has no use for them; the same filter applies to a
+Python strategy's process. `onObservation()` is for self-driven `run(ctx)`
 agents; a `decide()` strategy receives observations through its arguments. Self-driven agents keep
 their existing process lifecycle and immediate `ctx.submit()` behavior.
 
@@ -265,7 +270,7 @@ Three things follow from the rules rather than from the code:
   `MarketRegistry` and makes no claim about it. Under the round-trip rule (rules §4.1) **value left
   inside a contract the environment cannot value is worth zero at the epoch's final block** — your
   own contract included. Profit taken *through* it counts in full.
-- **Gas is capped** at 30,000,000 per transaction and 30,000,000 per agent per block (rules §2.6).
+- **Gas is capped** at 10,000,000 per transaction and 10,000,000 per agent per block (rules §2.6) -- a third of the 30,000,000 block, so no one agent can fill it.
   The gateway refuses an over-cap transaction up front; exceeding it is a §8 offence, because a
   contract that eats the block starves the environment's price update as well as your rivals.
 - **The bundle carries the artifacts.** `bundle:agent` scans your `.ts` for the contract names you

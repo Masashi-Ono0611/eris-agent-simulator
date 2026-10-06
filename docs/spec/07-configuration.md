@@ -154,7 +154,7 @@ USDC-only を維持しているのは **`metric-*` レジームだけ**で、こ
 | `stress.liquityVictimCount` / `liquityVictimIcr` / `liquityVictimCollWethWei` | 0 / 1.20 / 5 WETH | Liquity victim Trove（issue #107。`liquity` 必須、fresh state 必須） |
 | `stress.liquityRecoveryTcr` / `liquitySpSeedEusdWei` | 0（無効）/ 0 | 暴落の底で system TCR をこの値に落とすよう cohort の担保を setup で逆算する（届かなければ fail-fast）/ 環境が Stability Pool に入れる eUSD（issue #59） |
 | `vuln.events` / `poolLiquidityUsdcUnits` / `poolFeeBps` / `llm` | [] / 2M USDC / 30 / "0" | 脆弱性イベント（ADR 0014） |
-| `lst.simulatedSecondsPerBlock` | 3600 | 経済クロック（1 ブロック = 1 時間） |
+| `lst.simulatedSecondsPerBlock` | `run.blockTimeSec` | 1 ブロックが何秒分のステークか。既定は Aave・GMX と同じチェーンの時計（ADR 0028） |
 | `lst.apyBps` | 300 | 3%/yr |
 | `lst.apyRangeBps` / `apyStepBlocks` | — / 10 | APY 変動 |
 | `lst.withdrawalDelayBlocks` | 0 | 出金待ちの下限 |
@@ -222,7 +222,10 @@ agents:
 | external | `command` / `args` / `dir` / `env` を持つ（**黙殺せず拒否**） |
 | env | 文字列以外のキー・値 |
 
-`AUTO` の鍵は `keccak256("auto-wallet:<seed>:<agentId>")` で決定論的に導出する。
+`AUTO` の鍵は環境の秘密から `HMAC-SHA256(secret, ["eris-wallet/v1", "agent", agentId])` で導出する（issue #189）。
+secret は既定ではプロセス起動時の乱数（どこにも書かない）、練習期間だけ `ERIS_WALLET_SECRET_FILE` のファイル
+（再起動しても同じ鍵に戻るため。公開しない）。**seed からは導出しない** — 自分の鍵から seed を総当たりで逆算し、
+他の agent と環境ウォレットの鍵を計算できたため。
 
 **ロスターファイルが存在しない場合の既定**は `noop` / `random` / `simple-rule` の 3 体。
 

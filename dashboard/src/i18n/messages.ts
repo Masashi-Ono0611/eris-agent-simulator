@@ -1012,16 +1012,44 @@ const en = {
     "How to build an agent, test it on your own machine, and submit it.",
   "overview.links.guideDoc":
     "Participant guide",
+  "overview.links.updatesDoc":
+    "Environment updates",
+  "updates.title":
+    "Environment updates",
+  "updates.lede":
+    "The participant guide always describes the current environment. These entries are the diff, newest first, for anyone who has already read it.",
+  "updates.empty":
+    "No updates yet.",
+  "updates.backToIndex":
+    "All updates",
+  "updates.notFound":
+    "No update with that date",
+  "nav.updates":
+    "Updates",
+  "nav.qa":
+    "Q&A",
+  "qa.title":
+    "Q&A",
+  "qa.lede":
+    "Answers to the questions participants ask most, written from the rules and the list of targets. The pages on ascon.dev are the authority; where this page and they disagree, they win.",
+  "qa.empty":
+    "Nothing here yet.",
+  "qa.contents":
+    "Questions",
+  "qa.genre.other":
+    "Other",
   "overview.links.repo":
     "SDK repository (GitHub)",
   "overview.links.rules":
     "Rules",
   "overview.links.rulesBody":
-    "The authoritative text on the schedule, scoring, prizes and what is allowed. This page only summarises it.",
+    "The authoritative text on the schedule, scoring, prizes and what is allowed, and the list of what an attack may be aimed at. This page only summarises it.",
   "overview.links.rulesDoc":
     "Competition rules",
   "overview.links.termsDoc":
     "Participation terms",
+  "overview.links.scopeDoc":
+    "Targets open to exploitation (the §3.1 list)",
   "overview.links.discord":
     "Discord #ascon",
   "overview.links.discordBody":
@@ -2119,16 +2147,44 @@ const ja: Record<MessageKey, string> = {
     "エージェントの作り方、手元での試し方、提出の方法。",
   "overview.links.guideDoc":
     "参加者ガイド",
+  "overview.links.updatesDoc":
+    "環境の更新履歴",
+  "updates.title":
+    "環境の更新履歴",
+  "updates.lede":
+    "参加者ガイドは常に最新の環境を書いています。ここは、すでにガイドを読んだ方のための差分を、新しい順に並べたものです。",
+  "updates.empty":
+    "まだ更新はありません。",
+  "updates.backToIndex":
+    "更新履歴の一覧",
+  "updates.notFound":
+    "その日付の更新はありません",
+  "nav.updates":
+    "更新履歴",
+  "nav.qa":
+    "Q&A",
+  "qa.title":
+    "Q&A",
+  "qa.lede":
+    "参加者からよくある質問への答えを、規約と対象の一覧から書いたものです。正本は ascon.dev の各ページで、ここと食い違ったらそちらが優先します。",
+  "qa.empty":
+    "まだ項目はありません。",
+  "qa.contents":
+    "質問の一覧",
+  "qa.genre.other":
+    "その他",
   "overview.links.repo":
     "SDK のリポジトリ（GitHub）",
   "overview.links.rules":
     "規約",
   "overview.links.rulesBody":
-    "日程・採点・賞金・禁止事項の正本です。このページはその要約にすぎません。",
+    "日程・採点・賞金・禁止事項の正本と、弱点を突く行為が認められる対象の一覧です。このページはその要約にすぎません。",
   "overview.links.rulesDoc":
     "競技規約",
   "overview.links.termsDoc":
     "参加規約",
+  "overview.links.scopeDoc":
+    "弱点を突く行為が認められる対象の一覧（§3.1）",
   "overview.links.discord":
     "Discord #ascon",
   "overview.links.discordBody":

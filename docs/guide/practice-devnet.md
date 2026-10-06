@@ -78,9 +78,9 @@ wallet**, registered with the operator. Nothing else is handed out, and nothing 
 
 ### 1. Create a wallet and register its address
 
-There is no faucet you can use. Your trading capital arrives when the operator registers your
-address: every registered address receives the same endowment, once. So the first step is a key of
-your own. (The Aave deployment does contain the vendor's test `Faucet`, but it is owner-only and the
+Your trading capital arrives when your address is registered: every registered address receives the
+same endowment, once. Registering is the `/faucet` command on Discord (below), which takes an address
+-- so the first step is a key of your own. (The Aave deployment does contain the vendor's test `Faucet`, but it is owner-only and the
 Pool does not accept the test tokens it mints -- their reserves are deactivated.)
 
 **Create a key pair** — either of these, from the repository root:
@@ -97,21 +97,28 @@ own machine, outside the repository (a file with `chmod 600`, or your shell's se
 fresh key for this devnet: never reuse one that holds anything real. Nobody — the operator included —
 will ever ask you for it.
 
-**Share the address on Discord.** Post it in the ASCON channel of the Discord server you joined at
-registration (rules §1), in this form:
+**Register the address with `/faucet` on Discord.** In the Discord server you joined at registration
+(rules §1), run:
 
 ```
-team:     <your participant unit>
-agent id: <the name your agent shows under — lowercase letters, digits and hyphens>
-address:  0x…
+/faucet agent_id:<the name your agent shows under — lowercase letters, digits and hyphens> address:0x…
 ```
+
+- **You need the participant role.** It is given to the Discord usernames on the registration form,
+  on a periodic sync; if you registered after the last sync, `/faucet` looks you up on the form
+  again when you run it.
+- **One agent per Discord account.** A second agent, or tying two agents to one participant unit
+  (rules §2.2), goes through the operator: post `team` / `agent id` / `address` in the ASCON channel.
+- **Check the address before you send.** Nobody verifies that you hold its key, and registrations are
+  add-only: a mistyped address is funded, and nobody can ever move that agent. The reply repeats the
+  address for this reason.
 
 Only the address. An address is public by design — it is what the dashboard and the explorer show
 your transactions under — while a key posted anywhere has to be treated as everyone's key.
 
-**What happens next.** The operator adds the address to the period's registration list, and within about
+**What happens next.** The bot adds the address to the period's registration list, and within about
 a minute the chain credits it with the endowment every agent gets: native ETH for gas, and the trading
-assets. The amounts are the manifest's `funding` (`ethWei`, `wethWei`, `usdcUnits`, and `wbtcUnits`
+assets. The bot waits for that and replies with the address's balances (only you see the reply). The amounts are the manifest's `funding` (`ethWei`, `wethWei`, `usdcUnits`, and `wbtcUnits`
 for the rest of the basket). Your address then appears in the manifest's `participants`. The standings
 place you from the **next day**: the day you register has no starting value for you, so it is left out
 of your score rather than counted as zero.
@@ -128,10 +135,10 @@ curl -s -X POST "$RPC_URL" \
 
 A non-zero `result` is your ETH. The dashboard's "Find your agent" takes the address too.
 
-- **A second agent** needs a second key and a second post. A participant unit may enter two
-  (rules §2.2); each is registered, funded and scored separately.
-- **Registrations are add-only.** To move to a new address, post it with a **new** agent id; an existing
-  id cannot be pointed somewhere else.
+- **A second agent** needs a second key and a post to the operator (`/faucet` takes one per account).
+  A participant unit may enter two (rules §2.2); each is registered, funded and scored separately.
+- **Registrations are add-only.** To move to a new address, ask the operator for a **new** agent id; an
+  existing id cannot be pointed somewhere else.
 - **Starting over** — capital spent, or a strategy you want to measure from a clean slate — is the same:
   a new key, a new id. It is scored from the day after, and the old record stays as it was.
 
@@ -219,9 +226,8 @@ ERIS_RPC_HEADERS='{"X-ASCON-Key":"…"}' \
   where its count came from on the first block.
 - `ERIS_CONFIG` is read only when you set it; nothing is picked up from `config/local.yaml` unasked.
   Name `config/practice.yaml`, the period's own configuration: it sets the venues the agent observes
-  and trades (all seven) and the LST's economic clock its `apyBps` is computed on. Without it the
-  runtime's defaults are five venues and an hour-long LST block, and it says so at startup when the
-  venues differ from the manifest's.
+  and trades (all seven). Without it the runtime's default is five venues, and it says so at startup
+  when the venues differ from the manifest's.
 - `ERIS_RPC_URL` overrides the manifest's `chain.rpcUrl` — for reaching the same gateway another way
   (a tunnel, a proxy of your own). `ERIS_PRICE_FEED_ADDRESS` does the same for `contracts.priceFeed`.
   Neither is needed with the manifest the period serves.
@@ -252,7 +258,7 @@ same rule, and the RPC gateway refuses what does not:
 |---|---|
 | EIP-1559 / 4844 / 7702 (`maxFeePerGas`, `maxPriorityFeePerGas`) | `maxFeePerGas` **equal to** (never above) `maxPriorityFeePerGas`, and that ≤ the manifest's `limits.maxPriorityFeeWei` (5 gwei) |
 | legacy / EIP-2930 (`gasPrice`) | `gasPrice` ≤ `limits.maxPriorityFeeWei` |
-| any | gas limit ≤ 30,000,000 |
+| any | gas limit ≤ 10,000,000 |
 
 ```ts
 // viem: name both fields, with the same value
@@ -289,6 +295,32 @@ leaves no trace anyone but you can verify.
 
 ## For the operator
 
+### Before taking a running period down
+
+A venue change can leave a startup check that the running chain no longer satisfies, and finding
+that out by restarting is the expensive way: the coordinator refuses, and the only way forward may
+be a redeploy, which opens a new competition directory and resets the period's standings.
+
+```bash
+ERIS_LOCAL_DEPLOY=1 npm run check:chain-readiness -- --rpc http://127.0.0.1:8545
+```
+
+It reads. It sends nothing and needs no key, and it calls the same functions the coordinator calls
+at startup, so a PASS here is that check passing rather than something resembling it. Exit 0 means
+a coordinator can start on the chain, 1 that a check refuses it, 2 that the probe could not read.
+
+Two checks can refuse a chain that predates the change that introduced them:
+
+| check | fixable on the running chain? |
+|---|---|
+| Aave's vendor test market is closed (issue #190) | **Usually.** `cd deployer && RPC_URL=<node> npm run close:aave-vendor`. Not when a participant still holds a position in one of those reserves: a frozen reserve passes only when nobody but the treasury is left in it, and the operator cannot clear somebody else's position |
+| The environment holds an LQTY stake (issue #240) | **No.** `LQTYToken` refuses the multisig as a staking sender for a year, and on a deployment that predates this the multisig is the deployer — the account that holds the LQTY. A redeploy is the only route |
+
+GMX's fee, leverage, impact, borrowing and funding settings are not startup checks, so a chain
+carrying the old ones starts and runs. They are all in GMX `Config`'s `allowedBaseKeys`, so the
+config keeper can write the competition's values on a running chain; the probe says so rather than
+reading every market's keys.
+
 ### Running a period
 
 ```bash
@@ -304,8 +336,12 @@ npm run stress:rpc -- --agents 30 --seconds 60 --write   # issue #36: does the r
 # 3. the period — in the foreground while you watch it start
 npm run sim:realtime -- --config config/practice.yaml
 
-# 4. hand out credentials, one participant at a time (the manifest itself is served; see below)
-npm run manifest -- --config config/practice.yaml --participant alice
+# 4. hand out credentials, one participant at a time (the manifest itself is served; see below).
+#    A `wallet: AUTO` key is derived from the period's wallet secret (issue #189), so this needs the
+#    same ERIS_WALLET_SECRET_FILE the coordinator runs with (.env.practice); without it the command
+#    refuses rather than print a key no run has
+ERIS_WALLET_SECRET_FILE=~/.eris-secrets/practice-wallet-secret.yaml \
+  npm run manifest -- --config config/practice.yaml --participant alice
 #    (the manifest is not handed out: participants fetch <dashboard>/runs/manifest.json, which
 #     names the gateway once ERIS_PUBLIC_RPC_URL is set. By hand, the same file:
 #     npm run manifest -- --config config/practice.yaml --public-rpc <gateway URL> --from-run runs/<period>)
@@ -433,9 +469,12 @@ The roster is read once, at startup. A period runs for weeks and participants re
 and restarting the coordinator to add one opens a **new competition directory** — the standings
 split in two. So the config can name a second list that is re-read while the chain runs.
 
-Participants post `team` / `agent id` / `address` in the ASCON Discord channel ([step 1 of the
-participant section](#1-create-a-wallet-and-register-its-address)); each post becomes one entry, with
-`participant` set to the team. A post that carries anything that looks like a private key is a key
+Most participants register themselves with the Discord `/faucet` bot ([step 1 of the participant
+section](#1-create-a-wallet-and-register-its-address); setup and operation in
+[`infra/discord-faucet/`](../../infra/discord-faucet/README.md)), which appends to this file the way
+`register.sh` does. The rest — a second agent, a unit's two agents, a new address — post `team` /
+`agent id` / `address` in the ASCON Discord channel; each post becomes one entry, with `participant`
+set to the team. A post that carries anything that looks like a private key is a key
 that has to be discarded: tell them, and register nothing from it.
 
 ```yaml
@@ -475,6 +514,13 @@ which made them invisible in the one artifact that could show them. They are now
 sender address as the owner and the role `external`: `method` still comes from the calldata, nothing
 scores or rule-checks them, and the row answers "did my transaction land?" for a participant who has
 not yet appeared in the roster.
+
+One exception (issue #212): an address that a registered agent's wallet funded -- with ETH, with a
+token the run prices, or by deploying it -- is that agent's, transitively. Its transactions are
+recorded under the agent (role `agent`, the funder in `derivedFrom`), count in the agent's gas budget
+per block, and show up in the unlogged-transaction reconciliation, because the agent's runtime never
+signed them. `summary.json` lists them under `agents[].derivedSenders`. Sending from a second wallet
+does not take a transaction out of the checks; it adds a flag next to the score for the operator.
 
 ### Switching between a local node and the devnet
 
@@ -545,13 +591,23 @@ into the live week, and every restart got a fresh 42 days.
 
 **The episode list is written for a start.** Each day of the period holds one of every kind of
 episode, and each episode's window is a fraction of the run, measured from the moment the coordinator
-starts. So before every (re)start the list is regenerated for that start, and merged like any other
-change (the box's checkout follows `main`, and an edited tracked file on it stops the dashboard
-build):
+starts. So before every (re)start the list is regenerated for that start, merged like any other
+change, and then **promoted onto the box** — which is a third step, not a consequence of the second:
 
 ```bash
 npm run gen:practice-episodes -- --start 2026-10-01T10:00:00+09:00   # rewrites config/practice.yaml
+# merge it, then on the box, before the coordinator is restarted:
+infra/dashboard/sync-main.sh promote <tag|sha>                       # moves the checkout to it
 ```
+
+The box's checkout is **pinned**, not following `main` (issue #211,
+[infra/dashboard](../../infra/dashboard/README.md)): a merge changes nothing there until a ref is
+promoted. The coordinator reads `config/practice.yaml` out of that same checkout, so a restart
+without the promotion starts on **the pinned commit's episode table** — windows measured from the
+start it was generated for, which is the thing the regeneration exists to avoid, and nothing says so
+at startup. `git -C <checkout> log -1 --format=%H` is what is actually there. Editing the file on the
+box instead is worse than it looks: a modified tracked file stops the dashboard build (the sync
+refuses to build a dirty tree), so the public page then freezes at whatever it last built.
 
 A coordinator that starts within 1.5 hours of the planned time still puts exactly one of each kind in
 every day (`core/src/practiceEpisodes.ts`, `test/practiceEpisodes.test.ts`); further off, regenerate.
@@ -565,14 +621,13 @@ not). `seconds` stays a generous ceiling rather than the stop condition. `run.bl
 `run.endsAt` together are refused; for a short smoke run of the practice config, `--blocks N` on the
 command line replaces the date.
 
-**The length bounds the LST venue.** The vault pays yield out of a fixed reward reserve (50 WETH in
-the state dump), and the default economic clock counts a block as an hour of staking — the clock the
-360-block official regimes are calibrated on. Over a month-long period that is over a century of
-yield, and the reserve ran dry after ~3.3 days (issue #129). `config/practice.yaml` sets
-`lst.simulatedSecondsPerBlock: 30`, which keeps one scoring day at the same 15 days of yield as one
-official epoch and needs ~4.4 WETH for the whole period on the seeded pool: the reserve lasts the
-period with up to ~1,000 WETH staked. If participants stake more, the reserve runs out early, and the
-venue says so rather than going quiet: `apyBps` / `yieldPerBlockBps` drop to 0,
+**The LST pays yield on the chain's clock.** The vault pays out of a fixed reward reserve (50 WETH in
+the state dump), one block's worth at a time, and a block counts as `run.blockTimeSec` seconds of
+staking — the same clock Aave's interest and GMX funding run on (ADR 0028). A day of the period is a
+day of 3%/yr, ~0.8bps, and the reserve outlasts the period at any plausible stake. (The default used
+to be an hour a block: over a month-long period that is over a century of yield, and the reserve ran
+dry after ~3.3 days, issue #129.) Should the reserve still run out, the venue says so rather than
+going quiet: `apyBps` / `yieldPerBlockBps` drop to 0,
 `rewardRunwayBlocks` (the blocks the reserve still pays) counts down to it in every observation, the
 run records `lst_reward_reserve_exhausted`, and `lst_setup` records whether the reserve covered the
 run at the start (`reserveCoversRun`).
