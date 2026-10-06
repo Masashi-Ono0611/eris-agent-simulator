@@ -1,0 +1,277 @@
+
+> eris-competition@0.1.0 agent:selftest
+> infra/docker-agent/self-test.sh ascon-zeta-r3
+
+[1/3] build images eris-agent:ascon-zeta-r3 and eris-agent:noop
+refreshing runtime base eris-agent-base:local (Docker reuses unchanged layers)
+#0 building with "colima" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.base
+#1 transferring dockerfile: 2.54kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11.16-slim-bookworm
+#2 ...
+
+#3 [internal] load metadata for docker.io/library/node:24-bookworm-slim
+#3 DONE 0.3s
+
+#2 [internal] load metadata for docker.io/library/python:3.11.16-slim-bookworm
+#2 DONE 0.3s
+
+#4 [python 1/1] FROM docker.io/library/python:3.11.16-slim-bookworm@sha256:a36c24f9cbdf4fd0f52d67f0823eeac19c2028c637cecc392d97f980d4fec56b
+#4 resolve docker.io/library/python:3.11.16-slim-bookworm@sha256:a36c24f9cbdf4fd0f52d67f0823eeac19c2028c637cecc392d97f980d4fec56b 0.0s done
+#4 DONE 0.0s
+
+#5 [stage-1  1/14] FROM docker.io/library/node:24-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20
+#5 resolve docker.io/library/node:24-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 26.27kB 0.0s done
+#6 DONE 0.0s
+
+#7 [stage-1  2/14] COPY --from=python /usr/local /usr/local
+#7 CACHED
+
+#8 [stage-1  9/14] COPY dashboard/package.json dashboard/
+#8 CACHED
+
+#9 [stage-1  3/14] RUN apt-get update && apt-get install -y --no-install-recommends     libbz2-1.0 libexpat1 libffi8 libgdbm6 liblzma5 libncursesw6 libreadline8     libsqlite3-0 libssl3 libuuid1 zlib1g && rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [stage-1  7/14] COPY core/package.json core/
+#10 CACHED
+
+#11 [stage-1 13/14] COPY . .
+#11 CACHED
+
+#12 [stage-1  5/14] COPY package.json package-lock.json ./
+#12 CACHED
+
+#13 [stage-1  4/14] WORKDIR /eris
+#13 CACHED
+
+#14 [stage-1 12/14] RUN python3 -m pip install --no-cache-dir --require-hashes -r /eris/sdk-py/requirements.lock     && python3 -m pip install --no-cache-dir --no-deps /eris/sdk-py
+#14 CACHED
+
+#15 [stage-1  8/14] COPY example/package.json example/
+#15 CACHED
+
+#16 [stage-1 11/14] COPY sdk-py /eris/sdk-py
+#16 CACHED
+
+#17 [stage-1  6/14] COPY sdk/package.json sdk/
+#17 CACHED
+
+#18 [stage-1 10/14] RUN npm ci --ignore-scripts
+#18 CACHED
+
+#19 [stage-1 14/14] RUN find example/agents -mindepth 1 -maxdepth 1 -type d ! -name runtime ! -name lib -exec rm -rf {} +
+#19 CACHED
+
+#20 exporting to image
+#20 exporting layers done
+#20 exporting manifest sha256:7f821a8393a710fdac45e104c975c5f80c92f67801918251075fbcd4665e0499 done
+#20 exporting config sha256:39f8a129495271fa49e3bd7e36f5c84fafeb390cde934cb6fc246696b3b69937 done
+#20 exporting attestation manifest sha256:ba418556ed6f5babda3eea4c6b07643279cc608e4628f00c66571f774c09824a 0.0s done
+#20 exporting manifest list sha256:8d740cd079de5d85d7461aeff2254aa7bf4869044947780de3235166905793b6 done
+#20 naming to docker.io/library/eris-agent-base:local
+#20 naming to docker.io/library/eris-agent-base:local done
+#20 unpacking to docker.io/library/eris-agent-base:local done
+#20 DONE 0.1s
+runtime base: sha256:8d740cd079de5d85d7461aeff2254aa7bf4869044947780de3235166905793b6 (built 2026-10-06T16:50:22.893089703+08:00)
+#0 building with "colima" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.team
+#1 transferring dockerfile: 3.83kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/eris-agent-base:local
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 531B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 404B 0.0s done
+#4 DONE 0.0s
+
+#5 [deps 1/4] FROM docker.io/library/eris-agent-base:local@sha256:8d740cd079de5d85d7461aeff2254aa7bf4869044947780de3235166905793b6
+#5 resolve docker.io/library/eris-agent-base:local@sha256:8d740cd079de5d85d7461aeff2254aa7bf4869044947780de3235166905793b6 done
+#5 DONE 0.0s
+
+#6 [deps 2/4] RUN test -n "ascon-zeta-r3" || { echo "AGENT_ID build-arg is required (use build.sh team <id>)"; exit 1; }
+#6 DONE 0.1s
+
+#7 [stage-1 3/5] COPY example/agents/ascon-zeta-r3/ /eris/example/agents/ascon-zeta-r3/
+#7 DONE 0.0s
+
+#8 [deps 3/4] COPY example/agents/ascon-zeta-r3/ /src/
+#8 DONE 0.0s
+
+#9 [deps 4/4] RUN set -eu; mkdir -p /out/node_modules /out/wheels; cd /src;     for f in .npmrc .yarnrc .yarnrc.yml pip.conf pip.ini npm-shrinkwrap.json; do       if [ -e "$f" ]; then echo "refusing $f in the team directory" >&2; exit 1; fi;     done;     if [ -f package.json ] && [ -f package-lock.json ]; then       npm ci --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org/;       if [ -d node_modules ]; then rm -rf /out/node_modules && mv node_modules /out/; fi;     fi;     if [ -f requirements.txt ]; then       python3 -m pip download --isolated --no-cache-dir --only-binary=:all: --require-hashes         --index-url https://pypi.org/simple -r requirements.txt -d /out/wheels;     fi
+#9 DONE 0.1s
+
+#10 [stage-1 4/5] COPY --from=deps /out/ /tmp/team-deps/
+#10 DONE 0.0s
+
+#11 [stage-1 5/5] RUN --network=none set -eu; cd "/eris/example/agents/ascon-zeta-r3";     rm -rf node_modules;     if [ -n "$(ls -A /tmp/team-deps/node_modules)" ]; then mv /tmp/team-deps/node_modules node_modules; fi;     if [ -f requirements.txt ]; then       python3 -m pip install --isolated --no-cache-dir --no-index --find-links /tmp/team-deps/wheels         --only-binary=:all: --require-hashes -r requirements.txt;     fi;     rm -rf /tmp/team-deps
+#11 DONE 0.0s
+
+#12 exporting to image
+#12 exporting layers 0.0s done
+#12 exporting manifest sha256:4b07a9f994747b7f9217c706e973b6aaca9ba343e109ddc1847a14c943512374 done
+#12 exporting config sha256:d18a170cece76c39ca7c6ab3fe7e42717ed4866af374ffaa0eebb1dc21dca775 done
+#12 exporting attestation manifest sha256:e059eace7a69eb44ad8bc8a3fcdc48f979c12cd15924e3a729415bb894439188 done
+#12 exporting manifest list sha256:b13466750cdede4043a489a1f1cfd5a3cff818c82d5171105d5eb0fef77bc627
+#12 exporting manifest list sha256:b13466750cdede4043a489a1f1cfd5a3cff818c82d5171105d5eb0fef77bc627 done
+#12 naming to docker.io/library/eris-agent:ascon-zeta-r3 done
+#12 unpacking to docker.io/library/eris-agent:ascon-zeta-r3 0.0s done
+#12 DONE 0.1s
+refreshing runtime base eris-agent-base:local (Docker reuses unchanged layers)
+#0 building with "colima" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.base
+#1 transferring dockerfile: 2.54kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.11.16-slim-bookworm
+#2 DONE 0.3s
+
+#3 [internal] load metadata for docker.io/library/node:24-bookworm-slim
+#3 DONE 0.3s
+
+#4 [stage-1  1/14] FROM docker.io/library/node:24-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20
+#4 resolve docker.io/library/node:24-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20 done
+#4 DONE 0.0s
+
+#5 [python 1/1] FROM docker.io/library/python:3.11.16-slim-bookworm@sha256:a36c24f9cbdf4fd0f52d67f0823eeac19c2028c637cecc392d97f980d4fec56b
+#5 resolve docker.io/library/python:3.11.16-slim-bookworm@sha256:a36c24f9cbdf4fd0f52d67f0823eeac19c2028c637cecc392d97f980d4fec56b done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 4.92MB 0.0s done
+#6 DONE 0.0s
+
+#7 [stage-1  6/14] COPY sdk/package.json sdk/
+#7 CACHED
+
+#8 [stage-1  4/14] WORKDIR /eris
+#8 CACHED
+
+#9 [stage-1  3/14] RUN apt-get update && apt-get install -y --no-install-recommends     libbz2-1.0 libexpat1 libffi8 libgdbm6 liblzma5 libncursesw6 libreadline8     libsqlite3-0 libssl3 libuuid1 zlib1g && rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [stage-1  5/14] COPY package.json package-lock.json ./
+#10 CACHED
+
+#11 [stage-1 12/14] RUN python3 -m pip install --no-cache-dir --require-hashes -r /eris/sdk-py/requirements.lock     && python3 -m pip install --no-cache-dir --no-deps /eris/sdk-py
+#11 CACHED
+
+#12 [stage-1 13/14] COPY . .
+#12 CACHED
+
+#13 [stage-1 10/14] RUN npm ci --ignore-scripts
+#13 CACHED
+
+#14 [stage-1 11/14] COPY sdk-py /eris/sdk-py
+#14 CACHED
+
+#15 [stage-1  9/14] COPY dashboard/package.json dashboard/
+#15 CACHED
+
+#16 [stage-1  2/14] COPY --from=python /usr/local /usr/local
+#16 CACHED
+
+#17 [stage-1  7/14] COPY core/package.json core/
+#17 CACHED
+
+#18 [stage-1  8/14] COPY example/package.json example/
+#18 CACHED
+
+#19 [stage-1 14/14] RUN find example/agents -mindepth 1 -maxdepth 1 -type d ! -name runtime ! -name lib -exec rm -rf {} +
+#19 CACHED
+
+#20 exporting to image
+#20 exporting layers done
+#20 exporting manifest sha256:7f821a8393a710fdac45e104c975c5f80c92f67801918251075fbcd4665e0499 done
+#20 exporting config sha256:39f8a129495271fa49e3bd7e36f5c84fafeb390cde934cb6fc246696b3b69937 done
+#20 exporting attestation manifest sha256:2690bc712844ecc882f1fc86c1b8e7eb0653ce5ffa5e1932cd1a12224a7cb0a2 done
+#20 exporting manifest list sha256:fdfe067792e3f0dda3a151a2683a97ca924843f515e8c4c6421aced500dc161c done
+#20 naming to docker.io/library/eris-agent-base:local done
+#20 unpacking to docker.io/library/eris-agent-base:local done
+#20 DONE 0.0s
+runtime base: sha256:fdfe067792e3f0dda3a151a2683a97ca924843f515e8c4c6421aced500dc161c (built 2026-10-06T16:50:22.893089703+08:00)
+#0 building with "colima" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.team
+#1 transferring dockerfile: 3.83kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/eris-agent-base:local
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 531B done
+#3 DONE 0.0s
+
+#4 [deps 1/4] FROM docker.io/library/eris-agent-base:local@sha256:fdfe067792e3f0dda3a151a2683a97ca924843f515e8c4c6421aced500dc161c
+#4 resolve docker.io/library/eris-agent-base:local@sha256:fdfe067792e3f0dda3a151a2683a97ca924843f515e8c4c6421aced500dc161c done
+#4 CACHED
+
+#5 [internal] load build context
+#5 transferring context: 150B done
+#5 DONE 0.0s
+
+#6 [deps 2/4] RUN test -n "noop" || { echo "AGENT_ID build-arg is required (use build.sh team <id>)"; exit 1; }
+#6 DONE 0.1s
+
+#7 [deps 3/4] COPY example/agents/noop/ /src/
+#7 DONE 0.0s
+
+#8 [stage-1 3/5] COPY example/agents/noop/ /eris/example/agents/noop/
+#8 DONE 0.0s
+
+#9 [deps 4/4] RUN set -eu; mkdir -p /out/node_modules /out/wheels; cd /src;     for f in .npmrc .yarnrc .yarnrc.yml pip.conf pip.ini npm-shrinkwrap.json; do       if [ -e "$f" ]; then echo "refusing $f in the team directory" >&2; exit 1; fi;     done;     if [ -f package.json ] && [ -f package-lock.json ]; then       npm ci --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org/;       if [ -d node_modules ]; then rm -rf /out/node_modules && mv node_modules /out/; fi;     fi;     if [ -f requirements.txt ]; then       python3 -m pip download --isolated --no-cache-dir --only-binary=:all: --require-hashes         --index-url https://pypi.org/simple -r requirements.txt -d /out/wheels;     fi
+#9 DONE 0.1s
+
+#10 [stage-1 4/5] COPY --from=deps /out/ /tmp/team-deps/
+#10 DONE 0.0s
+
+#11 [stage-1 5/5] RUN --network=none set -eu; cd "/eris/example/agents/noop";     rm -rf node_modules;     if [ -n "$(ls -A /tmp/team-deps/node_modules)" ]; then mv /tmp/team-deps/node_modules node_modules; fi;     if [ -f requirements.txt ]; then       python3 -m pip install --isolated --no-cache-dir --no-index --find-links /tmp/team-deps/wheels         --only-binary=:all: --require-hashes -r requirements.txt;     fi;     rm -rf /tmp/team-deps
+#11 DONE 0.0s
+
+#12 exporting to image
+#12 exporting layers 0.0s done
+#12 exporting manifest sha256:a4e862b44e11106e06430e03d96296407ad1e0dd5a6af6789de56e0d47c8d03e done
+#12 exporting config sha256:3f313f54219467b24753d50304739a354b4ca0fd5b793b84e5b17aa09e94c4bc done
+#12 exporting attestation manifest sha256:173ecc57bea6a01870b59353ea62c5216f8c38b3439be85ea89beb10261480f5 done
+#12 exporting manifest list sha256:34063d0ec9301d3e95e328f24ff36e995f11393bffa056c99094eef5add89c67
+#12 exporting manifest list sha256:34063d0ec9301d3e95e328f24ff36e995f11393bffa056c99094eef5add89c67 done
+#12 naming to docker.io/library/eris-agent:noop done
+#12 unpacking to docker.io/library/eris-agent:noop 0.0s done
+#12 DONE 0.1s
+[2/3] run with memory cap 4g; config /Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/selftest-r3/config/example.yaml
+[setup] funded 5/18 wallets
+[setup] funded 10/18 wallets
+[setup] funded 15/18 wallets
+[setup] funded 18/18 wallets
+[run] ==============================================================================
+[run] WARNING: docker agents are running without the live week's isolation.
+[run]   network bridge (noop, ascon-zeta-r3): these agents can reach services on this host directly, not only the RPC endpoint they were given.
+[run]   The live week runs with: ERIS_AGENT_ISOLATE=1 ERIS_AGENT_INTERNAL=1 ERIS_AGENT_RPC_URL=<the RPC gateway> ERIS_INFERENCE_HUB=<proxy container> ERIS_INFERENCE_BASE_URL=<proxy URL>
+[run]   (infra/docker-agent/ISOLATION.md). Not fatal: this run continues.
+[run] ==============================================================================
+[agents] waiting for 2 agent(s) to write runtime_start before the first block (bound 60 s)
+[agents] 2/2 ready (slowest 1.8 s after spawn, waited 1.8 s)
+realtime simulation completed: runs/2026-10-06T08-50-27-920Z (blocks 1086..1186, 102 passes, 202s)
+[run] ==============================================================================
+[run] WARNING: docker agents are running without the live week's isolation.
+[run]   network bridge (noop, ascon-zeta-r3): these agents can reach services on this host directly, not only the RPC endpoint they were given.
+[run]   The live week runs with: ERIS_AGENT_ISOLATE=1 ERIS_AGENT_INTERNAL=1 ERIS_AGENT_RPC_URL=<the RPC gateway> ERIS_INFERENCE_HUB=<proxy container> ERIS_INFERENCE_BASE_URL=<proxy URL>
+[run]   (infra/docker-agent/ISOLATION.md). Not fatal: this run continues.
+[run] ==============================================================================
+[3/3] PASS ascon-zeta-r3: completed the self-test at memory cap 4g; 11 included transactions, 0 reverted. This verifies this run, not peak memory or every scenario.
+Report: runs/2026-10-06T08-50-27-920Z/summary.json
