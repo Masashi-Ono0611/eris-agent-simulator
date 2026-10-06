@@ -1,8 +1,11 @@
 [V=verified-by-reading／読解確認、I=inferred／未検証仮説]。以下 `Z/R/R2/R3` は `example/agents/ascon-zeta{,-r,-r2,-r3}/`。現HEAD `714370b` の静的比較であり、実走コードhashとの一致は未確認。
 
+> **注意（全 [V] 行に共通）**: [V] は HEAD `714370b` の静的なコード比較で、測定に使った `8c29964` とは別の commit。実走したコードとの一致は未確認（r3 の TS 4 ファイルは両 commit 間で変更なしだが、これも diff による確認）。出典の結果ファイルは本リポジトリの `ascon-notes/league/results-2026-10-06/` にある。
+
+
 [V] `git log -p` と全ディレクトリdiff：`5ef7577` R作成→`5347243` ZETA環境読込除去→`57a96af` R2修正→`b3b27c1` 通常裁定の入札不足skip撤回→`a5df142` 共通の残高読取対応→`9f72fb2` R3。R2/R3の全TSは同一。
 
-[V] `/tmp/results-2026-10-06/mixed-field-36worlds.txt:1–27`：incは57.42/+621.7/13敗、R3は50.65/+115.5/19敗。簡易T、7世界G0不合格。**depegはR3 63.0＜inc 65.0**。優位はwhale 65.2＞54.6、cex-drift、spike。原因は集計だけでは確定不能。
+[V] `ascon-notes/league/results-2026-10-06/mixed-field-36worlds.txt:1–27`：incは57.42/+621.7/13敗、R3は50.65/+115.5/19敗。簡易T、7世界G0不合格。**depegはR3 63.0＜inc 65.0**。優位はwhale 65.2＞54.6、cex-drift、spike。原因は集計だけでは確定不能。
 
 | 読解で確認した全差分 [V] | 反証可能な予測 [I] |
 |---|---|
