@@ -1,0 +1,4 @@
+{
+  "notes": "SYNTHETIC UNIT ONLY; not real Haiku success",
+  "executorTs": "return {type:'noop',reason:'synthetic unit change'};"
+}

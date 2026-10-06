@@ -1,0 +1,42 @@
+[
+  {
+    "file": "ref-off.yaml",
+    "validator": "run-league.sh --dry-run",
+    "exitCode": 0,
+    "missing": [],
+    "stdout": "roster ok: 4 agents\nsdk/src/constants.local.ts matches git version.\nDRY RUN: /Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/upstream-2/ascon-notes/eval/run-matrix.sh --roster ascon-notes/league/g3/ref-off.yaml",
+    "stderr": "",
+    "status": "PASS"
+  },
+  {
+    "file": "ref-on.yaml",
+    "validator": "run-league.sh --dry-run",
+    "exitCode": 0,
+    "missing": [],
+    "stdout": "roster ok: 4 agents\nsdk/src/constants.local.ts matches git version.\nDRY RUN: /Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/upstream-2/ascon-notes/eval/run-matrix.sh --roster ascon-notes/league/g3/ref-on.yaml",
+    "stderr": "",
+    "status": "PASS"
+  },
+  {
+    "file": "mix-off.yaml",
+    "validator": "run-league.sh --dry-run",
+    "exitCode": 2,
+    "missing": [
+      "fixed-bid-5gwei"
+    ],
+    "stdout": "",
+    "stderr": "roster agent directory missing: example/agents/fixed-bid-5gwei (id fixed-bid-5gwei)",
+    "status": "BLOCKED"
+  },
+  {
+    "file": "mix-on.yaml",
+    "validator": "run-league.sh --dry-run",
+    "exitCode": 2,
+    "missing": [
+      "fixed-bid-5gwei"
+    ],
+    "stdout": "",
+    "stderr": "roster agent directory missing: example/agents/fixed-bid-5gwei (id fixed-bid-5gwei)",
+    "status": "BLOCKED"
+  }
+]

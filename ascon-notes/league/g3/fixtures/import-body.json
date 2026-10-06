@@ -1,0 +1,4 @@
+{
+  "notes": "module instead of body",
+  "executorTs": "import x from 'unavailable'; return null;"
+}

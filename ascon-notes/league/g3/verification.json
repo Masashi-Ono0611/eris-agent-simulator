@@ -1,0 +1,50 @@
+{
+  "checkedAtUtc": "2026-10-06T03:51:30.260597+00:00",
+  "tests": [
+    {
+      "command": [
+        "python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "ascon-notes/league/g3/tests",
+        "-p",
+        "test_*.py"
+      ],
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "........\n----------------------------------------------------------------------\nRan 8 tests in 0.121s\n\nOK\n"
+    },
+    {
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "--test",
+        "ascon-notes/league/g3/tests/provider.test.mjs"
+      ],
+      "exitCode": 0,
+      "stdout": "\u2714 existing CLI hook: malicious/invalid/empty/quota/null and bad revisions (147.382166ms)\n\u2714 short delayed/timeout hooks and controlled replay sequence (synthetic unit only) (339.221375ms)\n\u2714 malicious lawful schema accepted by stock compiler, unsafe return AND submit captured (1.803042ms)\n\u2714 stock StrategyRunner setSource executes both malicious routes; no sender exists (724.362375ms)\n\u2139 tests 4\n\u2139 suites 0\n\u2139 pass 4\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 1541.535917\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "npx",
+        "tsc",
+        "--noEmit",
+        "-p",
+        "."
+      ],
+      "environment": {
+        "NPM_CONFIG_OFFLINE": "true",
+        "NPM_CONFIG_UPDATE_NOTIFIER": "false"
+      },
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "evidence": "Executed earlier in this session, PTY 63893; no TypeScript source changed afterward."
+    }
+  ]
+}

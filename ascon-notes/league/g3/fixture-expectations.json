@@ -1,0 +1,42 @@
+{
+  "malicious-return": {
+    "sha256": "d118ca5a97797e00c058bcb3278b095db4ad08c7cbffb96fae77b796ffa08f6b",
+    "expected": "stock compile accepts; lawful schema; safety FAIL; no transaction"
+  },
+  "malicious-submit": {
+    "sha256": "c3f0dfd743bb9423d37ce1ba098bcc32e8e21336a9fe1b74e2ef4faf97fefeae",
+    "expected": "stock compile accepts; lawful schema; safety FAIL; no transaction"
+  },
+  "invalid": {
+    "sha256": "90801d4bc35f12b2a50a3a4fac96da0f3961980480459e6226c43803a7c56f74",
+    "expected": "CLI JSON extraction rejects"
+  },
+  "null": {
+    "sha256": "65be7016995a30ca13493e8ac697ce909582fdf2438c7821eb9cfa6e4a0633cc",
+    "expected": "parse accepts decline"
+  },
+  "empty-executor": {
+    "sha256": "4a38fe8e50aef17db32f014bafab1c059309ad29ba40f3ea2cee732d1a4428b9",
+    "expected": "parse rejects"
+  },
+  "wrong-type": {
+    "sha256": "7abd1fcc1e24d8846f39c45103cb6c683c5be418f6a33e944aa0790df49ffea2",
+    "expected": "parse rejects"
+  },
+  "import-body": {
+    "sha256": "1573ea8761a7b793404add473dd98561ed9af96ab119c089cb3684f7d6793e4b",
+    "expected": "parse accepts, compile rejects"
+  },
+  "unknown-revert": {
+    "sha256": "8daf9b46146d05bf3ffffb9bdd12b94f35b4fd69ac6c34e53fd5307a820afe53",
+    "expected": "parse accepts; botMain version existence check not exercised"
+  },
+  "unit-change": {
+    "sha256": "09cc2d3482166661ac8303dbf89a280c82e871fcb933bd01418eac4c3edca2d7",
+    "expected": "synthetic mechanics only; not G3 applied-change success"
+  },
+  "observation": {
+    "sha256": "77a6f1532f528675d3ad7d131efa59a6cf8af692a94df2f8d513d44ec8b54e3f",
+    "expected": "fixed stub only: zero WETH/USDC/ETH, round 359, blocksRemaining=0"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "status": "unverified-estimate",
+  "worlds": 46,
+  "normalHours": 7.8,
+  "faultHours": 1.5166666666666666,
+  "stateHours": 0.65,
+  "baseHours": 9.966666666666667,
+  "reserveHours": [
+    14,
+    15
+  ],
+  "multiplier": 1.2,
+  "preparationAuditHours": [
+    2,
+    3
+  ],
+  "normalBlockLowerBoundHours": 7.2,
+  "maxDailyHours": 6,
+  "maxChunkMinutes": 110,
+  "host": "MacBook-Air-5.local",
+  "parallel": 1,
+  "note": "No calendar/start authorization. Each next cell requires G0 and full revision/action audit; chunk boundaries <=8 worlds at nominal 13 min, shorten for actual audit time. Run non-sending malicious harness BEFORE world 1; FAIL aborts all worlds."
+}

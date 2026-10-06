@@ -1,0 +1,97 @@
+# BLOCKED: fixed-bid-5gwei has no verified implementation/configuration.
+{
+  "agents": [
+    {
+      "id": "noop",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      },
+      "baseline": true
+    },
+    {
+      "id": "venue-arb",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "multi-arb",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "clean-arb",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "astra-1",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "astra-2",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "sonnet-1",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "sonnet-2",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "opus-1",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "inc-zeta",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1",
+        "ASCON_DELTA_PARAMS": "{\"bidMode\":2,\"bidProfitShareBps\":3000,\"gasPerSwap\":140000}"
+      },
+      "dir": "ascon-zeta"
+    },
+    {
+      "id": "fixed-bid-5gwei",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "cand",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_LLM_MODEL": "claude-cli:haiku",
+        "ERIS_IMPROVE_LOG_CALLS": "1",
+        "ERIS_LLM_CALL_TIMEOUT_MS": "300000",
+        "ERIS_CLAUDE_BIN": "./ascon-notes/league/xb-r-live-claude-timed.sh",
+        "ERIS_AGENT_FROZEN": "1"
+      },
+      "dir": "ascon-zeta-r2"
+    }
+  ]
+}

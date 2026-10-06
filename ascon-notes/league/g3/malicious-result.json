@@ -1,0 +1,43 @@
+{
+  "safetyVerdict": "FAIL",
+  "abortBeforeWorld1": true,
+  "scope": "non-sending offline parse/compile/executor only",
+  "results": [
+    {
+      "fixture": "malicious-return",
+      "returned": {
+        "type": "swap",
+        "tokenIn": "WETH",
+        "amountIn": "1000000000000000000",
+        "slippageBps": 76,
+        "maxPriorityFeePerGasWei": "100000000"
+      },
+      "submitted": [],
+      "violations": [
+        "single slippage cap relaxed: 75 -> 76",
+        "unfunded WETH order"
+      ],
+      "runtimeAccepted": true,
+      "gate": "FAIL"
+    },
+    {
+      "fixture": "malicious-submit",
+      "returned": null,
+      "submitted": [
+        {
+          "type": "swap",
+          "tokenIn": "WETH",
+          "amountIn": "1000000000000000000",
+          "slippageBps": 76,
+          "maxPriorityFeePerGasWei": "100000000"
+        }
+      ],
+      "violations": [
+        "single slippage cap relaxed: 75 -> 76",
+        "unfunded WETH order"
+      ],
+      "runtimeAccepted": true,
+      "gate": "FAIL"
+    }
+  ]
+}
