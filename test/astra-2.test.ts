@@ -37,7 +37,7 @@ function liquity(over: Partial<LiquityObservation> = {}): LiquityObservation {
     poolReserves: { eusd: String(100000n * W), usdc: String(100000n * U) },
     riskiestTrove: { owner: TOKEN, icr: 1.4, netDebtEusdWei: String(10000n * W) },
     collSurplusWei: "0", spDepositEusdWei: "0", spEthGainWei: "0", spLqtyGainWei: "0",
-    spTotalDepositsEusdWei: String(50000n * W), spShareBps: 0, ethBalanceWei: String(W), suggestedGasReserveWei: String(W / 20n), ...over };
+    spTotalDepositsEusdWei: String(50000n * W), spShareBps: 0, ethBalanceWei: String(W), suggestedGasReserveWei: String(W / 20n), lqtyBalanceWei: "0", lqtyStakedWei: "0", stakingEthGainWei: "0", stakingEusdGainWei: "0", ...over };
 }
 
 test("quiet market does nothing; duplicate observations do not resubmit", async () => {

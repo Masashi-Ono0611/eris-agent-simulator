@@ -55,6 +55,8 @@ function liquity(overrides: Partial<LiquityObservation> = {}): LiquityObservatio
     spShareBps: 0,
     ethBalanceWei: ONE,
     suggestedGasReserveWei: "100000000000000000",
+    lqtyBalanceWei: "0",
+    lqtyStakedWei: "0", stakingEthGainWei: "0", stakingEusdGainWei: "0",
     ...overrides,
   };
 }

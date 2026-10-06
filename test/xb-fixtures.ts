@@ -46,7 +46,7 @@ export function liquity(overrides: Partial<LiquityObservation> = {}): LiquityObs
     poolReserves: { eusd: String(250000n * W), usdc: String(200000n * U) },
     riskiestTrove: { owner: "0x0000000000000000000000000000000000000022", icr: 1.4, netDebtEusdWei: String(10000n * W) },
     collSurplusWei: "0", spDepositEusdWei: "0", spEthGainWei: "0", spLqtyGainWei: "0",
-    spTotalDepositsEusdWei: String(50000n * W), spShareBps: 0, ethBalanceWei: String(W), suggestedGasReserveWei: String(W / 20n),
+    spTotalDepositsEusdWei: String(50000n * W), spShareBps: 0, ethBalanceWei: String(W), suggestedGasReserveWei: String(W / 20n), lqtyBalanceWei: "0", lqtyStakedWei: "0", stakingEthGainWei: "0", stakingEusdGainWei: "0",
     ...overrides,
   };
 }

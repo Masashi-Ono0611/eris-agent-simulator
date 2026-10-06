@@ -154,7 +154,9 @@ export async function decide(obs: AgentObservation, ctx: AgentContext): Promise<
       let held = 0n;
       if (w.entered) {
         // Holdings and mandatory exits do not depend on pool state or tape reads.
-        held = await read(() => tokenBalance(exitClient, w.pool.token, self));
+        const heldRead = await read(() => tokenBalance(exitClient, w.pool.token, self));
+        if (heldRead === undefined) return null; // gas-capped read failed (upstream issue #213)
+        held = heldRead;
         if (held === 0n) {
           if (w.entered.reconcile || w.entered.exiting || block - w.entered.block >= PENDING_BLOCKS) w.entered = undefined;
           return null;
