@@ -1,0 +1,4 @@
+{"type": "g3_action_attempt", "agentId": "cand", "frameId": "d1", "route": "submit", "ordinal": 0, "actionSha256": "83195406dfd515ae06d99e4a402d6058ec872709155ad46efd685cdb28862967"}
+{"type": "g3_action_attempt", "agentId": "cand", "frameId": "d1", "route": "return", "ordinal": 0, "actionSha256": "83195406dfd515ae06d99e4a402d6058ec872709155ad46efd685cdb28862967"}
+{"ts": "2026-10-06T00:02:02+00:00", "type": "g3_decision_started", "agentId": "cand", "id": "d1", "round": 61, "version": 1}
+{"ts": "2026-10-06T00:12:00+00:00", "type": "run_completed", "runId": "synthetic-safe"}

@@ -1,0 +1,79 @@
+{
+  "sourceHead": "ec80bb89df22e4899695a4cf2ba131382e130481",
+  "writeRoot": "/tmp/g3-chain",
+  "network": false,
+  "simulation": false,
+  "ssh": false,
+  "docker": false,
+  "commits": false,
+  "modelCalls": 0,
+  "dotenvOrKeyReads": false,
+  "checks": {
+    "unitTests": {
+      "status": "PASS",
+      "count": 38,
+      "log": "revision-tests.log"
+    },
+    "typecheck": {
+      "status": "PASS",
+      "exit": 0,
+      "log": "revision-typecheck.log"
+    },
+    "nodeSyntax": {
+      "status": "PASS"
+    },
+    "bashSyntax": {
+      "status": "PASS"
+    },
+    "dryRunAuditHooks": {
+      "status": "PASS",
+      "count": 18
+    },
+    "chainStopsOnFailAndBlocked": {
+      "status": "PASS"
+    },
+    "stockDecideBudget": {
+      "status": "PASS",
+      "control": "stock StrategyRunner actual 5000ms timeout, buffered submit discarded, new safe executor",
+      "elapsedMs": 5003.358875,
+      "timedOut": true,
+      "submissionsAfterRecovery": 0,
+      "liveRevisionLifecycleVerified": false
+    },
+    "stockInferenceTimeout": {
+      "status": "PASS",
+      "control": "stock runCli, local 301s child, actual 300s timeout; no provider/network/simulation",
+      "elapsedMs": 300004.2415,
+      "timedOut": true,
+      "childExitObserved": true,
+      "lateOutput": false,
+      "liveRevisionLifecycleVerified": false
+    }
+  },
+  "redControls": {
+    "safe": "PASS",
+    "malicious": "FAIL",
+    "missing": "BLOCKED",
+    "over-cap": "FAIL"
+  },
+  "previousRun": {
+    "status": "BLOCKED",
+    "starts": 6,
+    "responses": 5,
+    "unfinished": 1
+  },
+  "unverified": [
+    "G3/r2 live revision world",
+    "new full-frame recorder layout and provenance",
+    "live botMain version/timeout/late-submit lifecycle",
+    "rawTx/launch and unsupported economic action families",
+    "unexecuted code branches and full G3 acceptance"
+  ],
+  "implementationSha256": {
+    "revision_audit.py": "f2ff12581e8bdbed29962ed1019aa2ba140cfcb05096f3c9cb5dc57b4d114f52",
+    "revision_replay.mjs": "09c58b61773fca3f26cd4901f7cbf632f18f1d53232b9eb7a9e5aae0b7f2681a",
+    "chain.py": "db776d135643209aed289b85cc0f22953bba31ed0d61efcbeeaa12f74afcaf18",
+    "gates.py": "0a3970e720e0b81051bdbaf3e1ff7c83b355a95795f2ef5c8bed36c5f620ed0a",
+    "test_revision_audit.py": "a0bb991e6e3022a35026a3e9c683c7f3adc43b31991ad879fe6f802a63c881eb"
+  }
+}
