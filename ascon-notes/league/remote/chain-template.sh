@@ -111,7 +111,8 @@ if [ "${CHAIN_TEST_FREE_GB+x}" = x ]; then
 fi
 free_gb() {
   if [ "${CHAIN_TEST_FREE_GB+x}" = x ]; then printf '%s\n' "$CHAIN_TEST_FREE_GB"
-  else df -Pk "$1" | awk 'NR==2 {printf "%d\n", $4/1048576}'; fi
+  # Do not coerce a missing/non-numeric Available field to zero.
+  else df -Pk "$1" | awk 'NR==2 {if ($4 ~ /^[0-9]+$/) printf "%d\n", $4/1048576; else print "invalid"}'; fi
 }
 check_disk() {
   for disk_path in "$repo_dir" "${TMPDIR:-/tmp}"; do
@@ -139,8 +140,6 @@ done
 for chunk_no in $chunk_list; do check_label "$run_id-c$chunk_no"; done
 [ ! -e "$log_root/$run_id" ] && [ ! -L "$log_root/$run_id" ] || die 'existing run log directory refused'
 [ ! -e "$lock_dir" ] && [ ! -L "$lock_dir" ] || die "lock held: $lock_dir"
-check_disk
-check_idle
 if [ "$dry_run" -eq 0 ]; then
   [ -n "$activity_note" ] || die '--activity-note required; confirm no concurrent CPU work before starting'
   mkdir "$lock_dir" || die "lock held or parent unavailable: $lock_dir"
@@ -149,6 +148,8 @@ if [ "$dry_run" -eq 0 ]; then
   mkdir "$log_root/$run_id" || die 'cannot create unique run directory'
   run_dir="$log_root/$run_id"
 fi
+check_disk
+check_idle
 cd "$repo_dir" || die 'cannot enter repo'
 note "RUN prefix=$run_id mode=$mode chunks=$chunk_list seeds=$seed_list"
 note "ACTIVITY ${activity_note:-UNRECORDED (dry-run only)}"

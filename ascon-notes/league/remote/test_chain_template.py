@@ -27,7 +27,8 @@ class ChainControls(unittest.TestCase):
         fake_bin.mkdir()
         for name, code in {
             'pgrep': 'exit "${STUB_PGREP_RC:-1}"\n',
-            'df': 'printf "Filesystem 1024-blocks Used Available Capacity Mounted\\nfixture 200000000 0 104857600 0%% /\\n"\n',
+            'df': ('[ "${STUB_DF:-numeric}" != empty ] || exit 0\n'
+                   'printf "Filesystem 1024-blocks Used Available Capacity Mounted\\nfixture 200000000 0 %s 0%% /\\n" "${STUB_DF:-104857600}"\n'),
         }.items():
             tool = fake_bin / name
             tool.write_text('#!/bin/bash\n' + code)
@@ -46,8 +47,8 @@ class ChainControls(unittest.TestCase):
             'import os, sys\n'
             'with open(os.environ["STUB_CALLS"], "a") as f: f.write("g0 " + sys.argv[1] + "\\n")\n'
             'verdict = os.environ.get("STUB_G0", "PASS") if sys.argv[1].endswith("c1") else "PASS"\n'
-            'print("G0 " + verdict)\n'
-            'sys.exit({"PASS": 0, "FAIL": 1, "BLOCKED": 2}[verdict])\n'
+            'if verdict != "MISSING": print("G0 " + verdict)\n'
+            'sys.exit({"PASS": 0, "FAIL": 1, "BLOCKED": 2, "MISSING": 0}[verdict])\n'
         )
         # Do not inherit credentials, MIN_FREE_GB, or runner configuration.
         self.env = {
@@ -126,6 +127,11 @@ class ChainControls(unittest.TestCase):
         self.refused('below effective MIN_FREE_GB',
                      env={'CHAIN_TEST_MODE': '1', 'CHAIN_TEST_FREE_GB': '39'})
 
+    def test_disk_measurement_failure_red(self):
+        for output in ['empty', 'not-a-number']:
+            with self.subTest(df=output):
+                self.refused('STOP: cannot measure disk', env={'STUB_DF': output})
+
     def test_disk_override_and_deviation(self):
         result = self.run_chain('--min-free-gb', '25',
                                 env={'CHAIN_TEST_MODE': '1', 'CHAIN_TEST_FREE_GB': '25'})
@@ -159,15 +165,20 @@ class ChainControls(unittest.TestCase):
         self.assertTrue(self.lock.exists(), 'must not release another run lock')
 
     def test_anvil_and_unknown_probe_red(self):
-        for rc, message in [('0', 'anvil already running'), ('2', 'pgrep anvil unavailable')]:
+        for rc, message in [('0', 'anvil already running')] + [
+                (rc, 'pgrep anvil unavailable; fail closed') for rc in ['2', '3', '127', '255']]:
             with self.subTest(rc=rc):
-                self.refused(message, env={'STUB_PGREP_RC': rc})
+                self.refused('STOP: ' + message, env={'STUB_PGREP_RC': rc})
 
     def test_invalid_selection_red(self):
-        for args in [('--chunks', '1 1'), ('--chunks', '5'), ('--chunks', ''),
-                     ('--from', '4', '--to', '1'), ('--chunks', '1', '--from', '1')]:
+        for args, message in [
+                (('--chunks', '1 1'), 'duplicate chunk'),
+                (('--chunks', '5'), 'chunks must be 1..4'),
+                (('--chunks', ''), 'empty chunks'),
+                (('--from', '4', '--to', '1'), 'reversed chunk range'),
+                (('--chunks', '1', '--from', '1'), 'do not mix --chunks and --from/--to')]:
             with self.subTest(args=args):
-                self.assertNotEqual(self.run_chain(*args).returncode, 0)
+                self.refused('STOP: ' + message, *args)
 
     def test_qualification_continuation_red(self):
         self.refused('diagnostics only', '--continue-on-g0-fail')
@@ -186,6 +197,15 @@ class ChainControls(unittest.TestCase):
         self.assertIn('DEVIATION', (self.logs / 'testUTC/chain.log').read_text())
         self.assertIn('existing run log directory refused', self.run_chain().stdout)
 
+    def test_initial_disk_checks_are_logged(self):
+        result = self.run_chain('--chunks', '1', dry=False)
+        self.assert_finished(result, 0)
+        lines = (self.logs / 'testUTC/chain.log').read_text().splitlines()
+        disk_lines = [line for line in result.stdout.splitlines() if line.startswith('DISK ')]
+        self.assertEqual(len(disk_lines), 4, result.stdout)
+        self.assertEqual([line for line in lines if line.startswith('DISK ')], disk_lines)
+        self.assertEqual(lines[:2], disk_lines[:2], 'initial checks must precede RUN')
+
     def test_stub_g0_failure_stops_and_preserves_evidence(self):
         result = self.run_chain(dry=False, env={'STUB_G0': 'FAIL'})
         self.assert_finished(result, 1)
@@ -203,6 +223,48 @@ class ChainControls(unittest.TestCase):
                                 dry=False, env={'STUB_G0': 'BLOCKED'})
         self.assert_finished(result, 2)
         self.assertNotIn('testUTC-c2', self.calls.read_text())
+
+    def test_stub_g0_zero_without_pass_stops(self):
+        result = self.run_chain('--mode', 'diagnostic', '--continue-on-g0-fail',
+                                dry=False, env={'STUB_G0': 'MISSING'})
+        self.assert_finished(result, 2)
+        self.assertIn('RESULT testUTC-c1 matrix_rc=0 verify_rc=0 g0_rc=0', result.stdout)
+        self.assertIn('STOP: G0 blocked/error/inconsistent output: testUTC-c1', result.stdout)
+        self.assertNotIn('testUTC-c2', self.calls.read_text())
+        self.assertEqual((self.logs / 'testUTC/testUTC-c1-g0.log').read_text(), '')
+
+    def test_guard_mutations_are_detected(self):
+        # Mutate only a disposable copy; rerun the same tests after restoration.
+        source = SCRIPT.read_text()
+        copy_dir = self.root / 'mutations'
+        copy_dir.mkdir()
+        script_copy = copy_dir / SCRIPT.name
+        test_copy = copy_dir / Path(__file__).name
+        test_copy.write_text(Path(__file__).read_text())
+        mutations = [
+            ('test_disk_measurement_failure_red',
+             'case "$free_value" in \'\'|*[!0-9]*) die \'cannot measure disk\' ;; esac', ':', 2),
+            ('test_anvil_and_unknown_probe_red',
+             "*) die 'pgrep anvil unavailable; fail closed' ;;", '*) ;;', 4),
+            ('test_stub_g0_zero_without_pass_stops',
+             ' && grep -qx \'G0 PASS\' "$chunk_log-g0.log"', '', 1),
+        ]
+        for test_name, old, new, expected_failures in mutations:
+            with self.subTest(guard=test_name):
+                self.assertEqual(source.count(old), 1, 'mutation must target exactly one guard')
+                command = [sys.executable, '-B', str(test_copy), f'ChainControls.{test_name}']
+                try:
+                    script_copy.write_text(source.replace(old, new, 1))
+                    red = subprocess.run(command, env=self.env, text=True,
+                                         stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    self.assertEqual(red.returncode, 1, red.stdout)
+                    self.assertEqual(red.stdout.count(f'FAIL: {test_name}'), expected_failures, red.stdout)
+                    self.assertNotIn('ERROR:', red.stdout)
+                finally:
+                    script_copy.write_text(source)
+                green = subprocess.run(command, env=self.env, text=True,
+                                       stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                self.assertEqual(green.returncode, 0, green.stdout)
 
     def test_stub_runner_and_manifest_errors_stop(self):
         for flag in ['STUB_MATRIX_RC', 'STUB_VERIFY_RC']:
