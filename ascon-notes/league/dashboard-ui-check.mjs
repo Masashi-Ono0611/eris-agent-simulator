@@ -42,6 +42,63 @@ assert.equal(element('render-error').hidden,true,'initial render has no error');
 const rendered={};
 let count=0;
 function check(name,fn){fn();count++;}
+// Remaining data-specific assertions (intentional historical/content fixtures,
+// NOT generalized by this change; their exact literals are listed in each check):
+// - overview: Q-ZETA-01; excluded erroneous time 17:40 JST.
+// - qualification: 44.56/56.50/48.07/56.43 and failed/blocked/unrun labels.
+// - search/glossary/routes/popover: Ollama, FROZEN, 何もしない, term-frozen,
+//   term-noop, term-q0, Q0; budget/provider labels 未精算/未確定/Free/Off.
+// - dev3a/dev4: historical P/T/trades/submission figures, 9 regimes/18 worlds,
+//   incz/completion/cancelled-heartbeat text.
+// - rev9 decisions: authority commit, runtime/provider/seed/world facts and text.
+// - rev10/mix1: historical live scores/deltas, stop/G0/seed/world facts and text.
+// - rev12/rev13: incz values, seed/times/G0/Q0 labels, null completed_at,
+//   completed_worlds=12, noop_below=4, q0_eligible=false and accounting metrics.
+// Structural contracts (one h1, routes/classes/CSS, AA 4.5, 375px geometry),
+// injection/search sentinels and synthetic future date/counts are test fixtures,
+// not expected values of the current dashboard data.
+// Only the renderer's hidden annotation icon is discarded. Unwrap buttons/tags,
+// preserving their visible term text, then decode esc()'s entities (once).
+// Decode AFTER stripping tags so escaped literal markup remains visible text.
+function visibleText(markup){
+  return markup.replace(/<sup\b[^>]*aria-hidden="true"[^>]*>ⓘ<\/sup>/g,'')
+    .replace(/<[^>]*>/g,'')
+    .replace(/&(amp|lt|gt|quot|#39);/g,(_,entity)=>({amp:'&',lt:'<',gt:'>',quot:'"','#39':"'"}[entity]));
+}
+const currentRun=()=>app.D.plan.continuous_operation.current_run_ref.split('.').reduce((value,key)=>value[key],app.D);
+function assertVisibleFields(markup,record,keys){
+  const text=visibleText(markup);
+  for(const key of keys){
+    assert.ok(typeof record[key]==='string'&&record[key].length>0,`nonempty data field: ${key}`);
+    // rich() gives internal decision/log IDs these human-readable labels.
+    const expected=record[key].replace(/dec-007/g,'提出前の本人確認').replace(/dec-008/g,'初回の鍵登録確認').replace(/log-\d+/g,'過去の記録');
+    assert.ok(text.includes(expected),`visible data field: ${key}`);
+  }
+}
+const headlinePattern=/(<div class="summary-strip"><h2>)([\s\S]*?)(<\/h2>)/;
+function assertHeadline(markup){
+  const heading=markup.match(headlinePattern);
+  assert.ok(heading,'overview headline element exists');
+  assert.equal(visibleText(heading[2]),app.D.status.headline,'overview headline matches JSON');
+}
+function assertPriorityProgress(markup){
+  const refs=app.D.status.priority.progress_refs;
+  assert.ok(refs.length>0,'priority has progress references');
+  const items=refs.map(id=>{
+    const matches=app.D.progress.items.filter(item=>item.id===id);
+    assert.equal(matches.length,1,`unique progress reference: ${id}`);
+    return matches[0];
+  });
+  const bars=[...markup.matchAll(/<progress\b[^>]*>/g)];
+  assert.equal(bars.length,1,'overview has one priority progress bar');
+  const attr=name=>{
+    const match=bars[0][0].match(new RegExp(`\\b${name}="(\\d+)"`));
+    assert.ok(match,`progress ${name} is a nonnegative integer`);
+    return Number(match[1]);
+  };
+  assert.equal(attr('value'),items.filter(item=>item.state==='done').length,'priority progress value matches done references');
+  assert.equal(attr('max'),refs.length,'priority progress max matches reference count');
+}
 for(const page of app.D.ui.pages){
   check(`render ${page.key}`,()=>{
     app.state.page=page.key;app.render();
@@ -57,12 +114,212 @@ for(const page of app.D.ui.pages){
 }
 check('overview snapshot and no fake run percentage',()=>{
   const t=rendered.overview;
-  assert.ok(t.includes(app.D.status.headline));
-  assert.ok(t.includes('value="1" max="4"'));
+  assertHeadline(t);
+  assertPriorityProgress(t);
   assert.ok(t.includes('本人が今やること'));
   assert.ok(t.includes('Q-ZETA-01'));
   assert.ok(!t.includes('17:40 JST'));
   assert.ok(!/log-\d+/.test(t));
+});
+check('red controls reject changed headline, progress value and max',()=>{
+  const original=rendered.overview;
+  const badHeadline=original.replace(headlinePattern,(_,open,text,close)=>open+'ALTERED '+text+close);
+  assert.notEqual(badHeadline,original);
+  assert.throws(()=>assertHeadline(badHeadline),{code:'ERR_ASSERTION',message:/^overview headline matches JSON/});
+  for(const name of ['value','max']){
+    const altered=original.replace(/<progress\b[^>]*>/,bar=>bar.replace(new RegExp(`(${name}=")(\\d+)(")`),(_,prefix,value,suffix)=>prefix+(Number(value)+1)+suffix));
+    assert.notEqual(altered,original);
+    assert.throws(()=>assertPriorityProgress(altered),{code:'ERR_ASSERTION',message:name==='value'?/^priority progress value matches done references/:/^priority progress max matches reference count/});
+  }
+  // Mutations above affect strings only; the DOM, JSON and file stay unchanged.
+  assertHeadline(original);assertPriorityProgress(original);
+});
+check('headline normalization preserves term text and escaped literal markup',()=>{
+  assert.equal(visibleText('<button class="term" data-term="test">term<sup aria-hidden="true">ⓘ</sup></button> &lt;literal&gt; &amp; &quot;x&quot; &#39;y&#39; &amp;lt;'),
+    'term <literal> & "x" \'y\' &lt;');
+});
+// INVARIANTS: these are evidence boundaries, not snapshots of refreshed numbers.
+// The current schema has no signed qualification-result record. Approval/signers
+// on policy decisions cannot authorize qualified=true; supporting such a record
+// requires an explicit schema/checker change, not a truthy ad-hoc JSON field.
+function assertQualification(){
+  const q=app.D.plan.zeta_qualification,old=app.D.plan.zeta_qualification_rev14_snapshot;
+  assert.equal(q.qualified,false,'INVARIANT r2 qualification remains false');
+  // Q-ZETA-02 now contains a completed, FAILED r2 measurement: null here would
+  // erase evidence. Preserve that boundary instead of the obsolete rev14 null.
+  assert.equal(q.status,'failed','INVARIANT r2 qualification remains failed');
+  assert.ok(q.result&&typeof q.result==='object','INVARIANT r2 has a recorded failed result');
+  assert.match(q.result.criterion4,/^FAIL\b/,'INVARIANT r2 criterion4 remains failed');
+  for(const key of ['criterion5','criterion6'])
+    assert.equal(q.result[key],'BLOCKED',`INVARIANT r2 ${key} lacks complete evidence`);
+  assert.equal(old.qualified,false,'INVARIANT historical qualification remains false');
+  assert.equal(old.result,null,'INVARIANT historical qualification has no result');
+  assert.equal(app.D.status.candidate.qualified,false,'INVARIANT r3 is not qualified');
+  // r3 has no qualification result field in this schema (absence means unknown).
+  assert.equal(app.D.status.candidate.result??null,null,'INVARIANT r3 has no qualification result');
+}
+function assertMeasurements(){
+  for(const name of ['rehearsal','mixed_r3']){
+    const run=app.D.status[name];
+    // A non-null scalar is not a result record. A future completed record needs
+    // source evidence and completion metadata; a running/partial report cannot
+    // gain a result merely by adding a number or changing verified.
+    if(run.state==='reported-running-unverified'||run.result==null){
+      assert.equal(run.result,null,`INVARIANT ${name} running result is null`);
+      assert.equal(run.verified,false,`INVARIANT ${name} running report is unverified`);
+    }else{
+      assert.ok(typeof run.result==='object'&&!Array.isArray(run.result)&&Object.keys(run.result).length>0,
+        `INVARIANT ${name} completed result is a record`);
+      assert.equal(run.state,'measured-diagnostic-complete',`INVARIANT ${name} completion state`);
+      assert.ok(run.completed_at&&run.completed_worlds===run.worlds&&run.sources?.length,
+        `INVARIANT ${name} completion evidence`);
+    }
+  }
+}
+function assertG3(){
+  // There is no g3.blockers array: the blockers ledger owns the active G3
+  // blockers. Match their explicit title/impact, not unrelated open blockers.
+  const blockers=app.D.blockers.items.filter(b=>b.status!=='resolved'&&/\bG3\b/.test(b.title+' '+b.impact_note));
+  const gate=app.D.plan.gates.find(g=>g.id==='gate-g3');
+  assert.ok(gate,'INVARIANT G3 gate exists');
+  if(blockers.length){
+    assert.match(gate.state,/\bBLOCKED\b/,'INVARIANT G3 remains BLOCKED with active blockers');
+    assert.ok(!/\b(?:PASS|done)\b|^完了$/i.test(gate.state),'INVARIANT G3 cannot also claim PASS');
+    assert.equal(app.D.progress.items.find(p=>p.id==='progress-g3')?.state,'blocked',
+      'INVARIANT G3 progress remains blocked with active blockers');
+  }
+}
+// Extract only the tagged record's own container, never borrow a warning from
+// another row or a page-wide notice. Nested same-name tags are balanced.
+function recordFragments(views,key){
+  const found=[];
+  for(const markup of Object.values(views)){
+    for(const match of markup.matchAll(/<([a-z][\w-]*)\b[^>]*\bdata-record="([^"]+)"[^>]*>/g)){
+      if(match[2]!==key)continue;
+      const tags=new RegExp(`<(/?)${match[1]}\\b[^>]*>`,'g');
+      tags.lastIndex=match.index+match[0].length;
+      let depth=1,next;
+      while(depth&&(next=tags.exec(markup)))depth+=next[1]?-1:1;
+      assert.equal(depth,0,`INVARIANT balanced record ${key}`);
+      found.push(markup.slice(match.index,tags.lastIndex));
+    }
+  }
+  return found;
+}
+const needsWarning=record=>record.verified===false||/blocked|unverified/i.test(String(record.status||''))||
+  /blocked|unverified/i.test(String(record.state||''));
+function assertRecordWarnings(views){
+  function walk(value,path){
+    if(!value||typeof value!=='object')return;
+    if(needsWarning(value)){
+      const key=path.startsWith('progress.items.')?'progress.'+value.id:path;
+      assert.ok(!/^(PASS|done|closed|resolved)$/i.test(String(value.state||'')),`INVARIANT no successful state for ${key}`);
+      assert.ok(!/^(PASS|done|closed|resolved)$/i.test(String(value.status||'')),`INVARIANT no successful status for ${key}`);
+      const fragments=recordFragments(views,key);
+      assert.ok(fragments.length>0,`INVARIANT warning record rendered: ${key}`);
+      for(const fragment of fragments){
+        assert.match(visibleText(fragment),/unverified|未検証|BLOCKED/i,`INVARIANT visible warning: ${key}`);
+        assert.ok(!/class="(?:chip|step-dot) done"/.test(fragment),`INVARIANT no done badge: ${key}`);
+        const badges=fragment.replace(/<span class="chip-symbol"[^>]*>[\s\S]*?<\/span>/g,'');
+        for(const badge of badges.matchAll(/<(span|div) class="(?:chip[^" ]*(?: [^"]*)?|step-state)"[^>]*>([\s\S]*?)<\/\1>/g))
+          assert.ok(!/^(?:[✓—!×◌?]\s*)?(?:PASS|done|完了)$/i.test(visibleText(badge[2]).trim()),`INVARIANT no PASS label: ${key}`);
+      }
+    }
+    for(const [key,child] of Object.entries(value))walk(child,path+'.'+key);
+  }
+  walk(app.D.results,'results');walk(app.D.progress,'progress');
+}
+// The old exact count 23 became obsolete when dec-c-exception-r3 was added.
+// Preserve every historical ID, allow additions, and require exactly one card
+// per decision. A count equal to JSON alone cannot detect deleted history.
+const retainedDecisions=['dec-original','dec-deep','dec-no-contact','dec-008','dec-007','dec-q0-keep',
+  'dec-astra-update','dec-forward','dec-amend','dec-overnight','dec-q0-failure-branch','dec-q0b-g0',
+  'dec-step1-policy','dec-ai-scope','dec-ai-contract','dec-ai-budget','dec-revert-limit','dec-h1-authority',
+  'dec-full-executor','dec-rev10-direction','dec-zeta-original','dec-zeta-qualification','dec-pr-split','dec-c-exception-r3'];
+function assertDecisions(views){
+  const ids=app.D.decisions.items.map(d=>d.id);
+  for(const id of retainedDecisions)assert.ok(ids.includes(id),`INVARIANT retained decision ${id}`);
+  assert.equal(new Set(ids).size,ids.length,'INVARIANT unique decisions');
+  const cards=[...views.decisions.matchAll(/class="card decision-card" data-decision="([^"]+)"/g)].map(m=>m[1]);
+  assert.equal(cards.length,ids.length,'INVARIANT decision card count');
+  assert.deepEqual(cards.sort(),[...ids].sort(),'INVARIANT one card per decision');
+}
+function invariantViews(){
+  const prior={...app.state},views={};
+  try{
+    for(const [key,page,mode] of [['results','results','diagnostic'],['qualification','results','qualification'],
+      ['overview','overview'],['decisions','decisions']]){
+      app.state.page=page;if(mode)app.state.results=mode;app.render();
+      views[key]=element('page').innerHTML;
+    }
+    return views;
+  }finally{Object.assign(app.state,prior);app.render();}
+}
+const invariantGuards=[assertQualification,assertMeasurements,assertG3,assertRecordWarnings,assertDecisions];
+check('INVARIANT qualification, running evidence, G3, per-record warnings and decisions',()=>{
+  const views=invariantViews();for(const guard of invariantGuards)guard(views);
+});
+let invariantReds=0;
+function rejectMutation(name,mutate,guard,alterViews=views=>views){
+  const original={...app.D};
+  try{
+    Object.assign(app.D,structuredClone(app.D));
+    mutate(app.D);
+    const views=alterViews(invariantViews());
+    assert.throws(()=>guard(views),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('INVARIANT'),
+      `red control did not fail its invariant: ${name}`);
+    invariantReds++;
+  }finally{Object.assign(app.D,original);app.render();}
+  const views=invariantViews();for(const check of invariantGuards)check(views);
+}
+check('red controls prove evidence invariants reject false claims and original still passes',()=>{
+  for(const [path,key,value] of [
+    ['plan.zeta_qualification','qualified',true],['plan.zeta_qualification','status','PASS'],
+    ['plan.zeta_qualification','result',42],['plan.zeta_qualification.result','criterion4','PASS'],
+    ['plan.zeta_qualification.result','criterion5','PASS'],['plan.zeta_qualification.result','criterion6','PASS'],
+    ['plan.zeta_qualification_rev14_snapshot','qualified',true],['plan.zeta_qualification_rev14_snapshot','result',42],
+    ['status.candidate','qualified',true],['status.candidate','result',42]
+  ])rejectMutation(`${path}.${key}`,d=>{path.split('.').reduce((v,k)=>v[k],d)[key]=value;},assertQualification);
+  for(const name of ['rehearsal','mixed_r3']){
+    rejectMutation(`${name} fake result`,d=>{d.status[name].result=42;},assertMeasurements);
+    rejectMutation(`${name} fake verification`,d=>{d.status[name].verified=true;},assertMeasurements);
+    rejectMutation(`${name} scalar completion`,d=>{Object.assign(d.status[name],{state:'measured-diagnostic-complete',result:42,verified:true});},assertMeasurements);
+  }
+  rejectMutation('G3 PASS with blockers',d=>{d.plan.gates.find(g=>g.id==='gate-g3').state='PASS';},assertG3);
+  rejectMutation('G3 done with blockers',d=>{d.progress.items.find(p=>p.id==='progress-g3').state='done';},assertG3);
+  for(const target of ['progress','results']){
+    const item=d=>target==='progress'?d.progress.items.find(p=>p.id==='progress-smoke'):d.results.comparison.qualification[1];
+    rejectMutation(`${target} BLOCKED rendered done`,d=>{Object.assign(item(d),{status:'BLOCKED',state:'done'});},assertRecordWarnings);
+    rejectMutation(`${target} unverified rendered done`,d=>{Object.assign(item(d),{verified:false,state:'done'});},assertRecordWarnings);
+    rejectMutation(`${target} PASS badge`,d=>{Object.assign(item(d),{status:'BLOCKED',state:'warning',state_label:'PASS'});},assertRecordWarnings,
+      views=>{if(target==='progress'){
+        const key='progress.progress-smoke';
+        for(const page of Object.keys(views))for(const fragment of recordFragments({[page]:views[page]},key))
+          views[page]=views[page].replace(fragment,fragment.replace(/(<span class="chip warning">)[\s\S]*?<\/span>[^<]*<\/span>/,'$1PASS</span>'));
+      }return views;});
+    rejectMutation(`${target} warning removed`,d=>{Object.assign(item(d),{verified:false,state:'warning'});},assertRecordWarnings,
+      views=>{const key=target==='progress'?'progress.progress-smoke':'results.comparison.qualification.1';
+        for(const page of Object.keys(views))for(const fragment of recordFragments({[page]:views[page]},key))
+          views[page]=views[page].replace(fragment,fragment.replace(/unverified|未検証|BLOCKED/gi,''));
+        return views;});
+  }
+  // Renderer-only regressions must also fail even when all JSON flags are intact.
+  for(const key of ['progress.progress-smoke','results.comparison.qualification.1']){
+    rejectMutation(`${key} rendered done badge`,()=>{},assertRecordWarnings,views=>{
+      for(const page of Object.keys(views))for(const fragment of recordFragments({[page]:views[page]},key))
+        views[page]=views[page].replace(fragment,fragment.replace('class="chip blocked"','class="chip done"'));
+      return views;
+    });
+    rejectMutation(`${key} original warning removed`,()=>{},assertRecordWarnings,views=>{
+      for(const page of Object.keys(views))for(const fragment of recordFragments({[page]:views[page]},key))
+        views[page]=views[page].replace(fragment,fragment.replace(/unverified|未検証|BLOCKED/gi,''));
+      return views;
+    });
+  }
+  rejectMutation('deleted decision',d=>{d.decisions.items.pop();},assertDecisions);
+  rejectMutation('missing rendered decision',()=>{},assertDecisions,views=>{
+    views.decisions=views.decisions.replace(/class="card decision-card" data-decision="[^"]+"/,'class="card missing-card"');return views;
+  });
 });
 check('qualification result keeps failed and blocked states',()=>{
   app.state.page='results';app.state.results='qualification';app.render();
@@ -72,13 +329,14 @@ check('qualification result keeps failed and blocked states',()=>{
   assert.ok(t.includes('未実施'));
 });
 check('diagnostic metrics from JSON rather than display constants',()=>{
+  const before=app.D.status.dev2.result.p_candidate;
   app.state.results='diagnostic';app.D.status.dev2.result.p_candidate='TEST-VALUE';app.render();
   assert.ok(element('page').innerHTML.includes('TEST-VALUE'));
-  app.D.status.dev2.result.p_candidate='149.0';
+  app.D.status.dev2.result.p_candidate=before;
 });
 check('log count and complete history',()=>{
-  assert.equal(app.filteredLogs().length,100);
-  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,100);
+  assert.equal(app.filteredLogs().length,app.D.log.items.length);
+  assert.equal((rendered.log.match(/class="log-entry"/g)||[]).length,app.D.log.items.length);
   for(const l of app.D.log.items)assert.ok(rendered.log.includes(l.id));
 });
 check('log AND search, kind and date filters compose',()=>{
@@ -102,7 +360,7 @@ check('search input handler updates results without replacing input focus',()=>{
 check('glossary finds aliases and Japanese definitions',()=>{
   app.state.termQuery='FROZEN';assert.ok(app.filteredTerms().some(t=>t.id==='term-frozen'));
   app.state.termQuery='何もしない';assert.ok(app.filteredTerms().some(t=>t.id==='term-noop'));
-  app.state.termQuery='';assert.equal(app.filteredTerms().length,53);
+  app.state.termQuery='';assert.equal(app.filteredTerms().length,app.D.glossary.items.length);
 });
 check('hash routes, back/forward handler and direct term links',()=>{
   location.hash='#glossary/term-q0';listeners.get('window:hashchange')();
@@ -151,18 +409,19 @@ check('AA text palette and responsive/reduced-motion provisions',()=>{
   assert.ok(!/@media print|beforeprint|afterprint/.test(html));
 });
 check('a future reported completion renders without a forecast or live guessing',()=>{
-  const before={...app.D.status.incz};
-  Object.assign(app.D.status.incz,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-05T00:41:00+09:00',completed_worlds:24,note:'test-only confirmed completion'});
+  const run=currentRun(),before={...run};
+  try{
+  Object.assign(run,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-05T00:41:00+09:00',completed_worlds:24,note:'test-only confirmed completion'});
   app.state.page='operations';app.render();
   assert.ok(element('page').innerHTML.includes('診断完了の引継ぎ'));
   assert.ok(element('page').innerHTML.includes('00:41'));
   assert.ok(!element('page').innerHTML.includes('NaN'));
   app.state.page='overview';app.render();assert.ok(element('page').innerHTML.includes('確認された完了時刻'));
-  Object.assign(app.D.status.incz,before);
+  }finally{Object.assign(run,before);}
 });
-check('four KPI cards appear on overview only, including qualification view',()=>{
+check('all configured KPI cards appear on overview only, including qualification view',()=>{
   for(const [page,text] of Object.entries(rendered)){
-    assert.equal((text.match(/class="kpi"/g)||[]).length,page==='overview'?4:0,page);
+    assert.equal((text.match(/class="kpi"/g)||[]).length,page==='overview'?app.D.ui.kpis.length:0,page);
     assert.equal((text.match(/class="kpis"/g)||[]).length,page==='overview'?1:0,page);
   }
 });
@@ -184,13 +443,13 @@ check('dev3a historical figures and incz completed results stay distinct in visi
   assert.ok(operationsText.includes('夜間のハートビートは取消済み'));
   assert.ok(!operationsText.includes('null'));
 });
-check('historical dev4 facts, current incz and team are visible',()=>{
+check('historical dev4 facts, configured current run and team are visible',()=>{
   const t=rendered.results;
   for(const value of ['49.72','55.02','488.2','1460.8','440.0','68.8','273.4','46.3','1652','23','+7.85'])assert.ok(t.includes(value),value);
-  const op=rendered.operations.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
-  for(const value of ['07:20','08:15','診断完了','3/3回目','Codex(Astra)','Claude','402','agy','masa-harness#409','PLATEAU-ANALYSIS','ツール使用禁止・差分埋め込み・echo &quot;&quot; | …'])assert.ok(op.includes(value),value);
-  const overviewText=rendered.overview.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
-  assert.ok(overviewText.includes('条件付き第一候補')&&overviewText.includes('58.26'));
+  assertVisibleFields(rendered.operations,currentRun(),['name','note']);
+  assertVisibleFields(rendered.operations,app.D.status.team,['primary','secondary','unavailable','support','independent_review','tool_policy','note']);
+  for(const job of app.D.queue.side_jobs)assertVisibleFields(rendered.operations,job,['title','state','note']);
+  assertVisibleFields(rendered.overview,app.D.status,['notice']);
 });
 check('dev4 display is sourced from JSON',()=>{
   app.state.page='results';app.state.results='diagnostic';
@@ -227,17 +486,19 @@ if(process.argv.includes('--dump')){
 check('rev9 authority, runtime limit, no-cost provider and next branch are visible',()=>{
   const plain=page=>rendered[page].replace(/<[^>]*>/g,'');
   for(const value of ['a95054a','検査済み方針の選択+ENTRY','ON起動を拒否','VENDORED','プロンプト誘導','validator ok=true','能力評価ではない','claude-cli:haiku','39001/39002','OFF1+ON3=32世界','安全保証なしで本番と同条件で測るか'])assert.ok(plain('decisions').includes(value),value);
-  for(const value of ['7179efe','38003','第3回xa-1は打ち切り','専用adapter','PILOT-STOP','202分','352分'])assert.ok(plain('operations').includes(value),value);
-  for(const value of ['本人承認済み','Q-ZETA-01','全計測終了・走行中なし'])assert.ok(plain('overview').includes(value),value);
+  assertVisibleFields(rendered.operations,app.D.plan.continuous_operation,['title','note']);
+  assertVisibleFields(rendered.operations,app.D.status.repair_v5,['note']);
+  assertVisibleFields(rendered.overview,app.D.status.priority,['title','note']);
 });
 check('rev10 live outcomes, xa stop and mix placeholder come from data',()=>{
   const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   for(const value of ['HEALTHY=no','50.15','55.73','54.74','48.91','52.80','53.62','-5.83','-1.93','-1.11','-229.4','+178.7','-19.75','PILOT-STOP','診断完了'])assert.ok(t.includes(value),value);
   assert.ok(!t.includes('undefined'));
-  const before=app.D.status.incz.note;
-  app.D.status.incz.note='REV10-MIX-SENTINEL';app.state.page='operations';app.render();
+  const run=currentRun(),before=run.note;
+  try{
+  run.note='REV10-MIX-SENTINEL';app.state.page='operations';app.render();
   assert.ok(element('page').innerHTML.includes('REV10-MIX-SENTINEL'));
-  app.D.status.incz.note=before;
+  }finally{run.note=before;}
 });
 check('mix1 ranking, regimes and G0 exception render from measured JSON',()=>{
   const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
@@ -260,28 +521,23 @@ check('rev12 all mixed rankings and incz completed boundary are rendered',()=>{
   assert.equal(app.D.status.incz.completed_worlds,12);
 });
 check('rev13 incz measured values, all regimes and accounting visible without qualification',()=>{
-  const plain=page=>rendered[page].replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   for(const v of ['56.30','44.44','1343.6','730.0','281.1','254.2','253.0','42.2','3057','90','2.9','−52.8','−131.4','−104.8','−142.1','−8.12','0.2/世界','8.4'])assert.ok(t.includes(v),v);
   for(const row of app.D.status.incz.result.regime_t)for(const k of ['regime','candidate','multi'])assert.ok(t.includes(row[k]),row[k]);
-  assert.ok(plain('operations').includes('457分（7h37）'));
-  assert.ok(plain('overview').includes('全計測終了・走行中なし'));
-  assert.ok(app.D.queue.items.every(q=>q.active===false));
+  assertVisibleFields(rendered.operations,app.D.budget.overnight,['note']);
+  assertVisibleFields(rendered.overview,currentRun(),['note']);
+  for(const item of app.D.queue.items)assertVisibleFields(rendered.operations,item,['title','state','dependency']);
   assert.equal(app.D.status.incz.q0_eligible,false);
 });
-check('rev14 approved direction, split PR, unverified prep and cancellation visible',()=>{
-  const plain=page=>rendered[page].replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
-  for(const v of ['multi-arb派生','Q-ZETA-01','ascon-zeta-r','3d86a35','pr/upstream-integration','merge commit','結果は未確認']){
-    assert.ok(plain('overview').includes(v),v);
-    assert.ok(plain('operations').includes(v),v);
-  }
-  for(const v of ['Masashi-Ono0611/ascon','11 worktree','cca4005','8303d85'])assert.ok(plain('overview').includes(v),v);
-  for(const v of ['NPM_CONFIG_IGNORE_SCRIPTS=true','bidMode:2','bidMode:0','夜間のハートビートは取消済み','ドキュメント18件'])assert.ok(plain('operations').includes(v),v);
-  assert.equal(app.D.decisions.items.length,23);
-  assert.equal(app.D.plan.zeta_qualification.result,null);
-  assert.equal(app.D.plan.zeta_qualification.qualified,false);
-  assert.ok(!plain('overview').includes('推奨・未決'));
-  assert.ok(!plain('overview').includes('契約変更は提案のみ'));
+check('current direction, recent events, next milestone and night operation come from JSON',()=>{
+  assertVisibleFields(rendered.overview,app.D.status,['subhead','human_action']);
+  assertVisibleFields(rendered.overview,app.D.status.next_milestone,['title','note']);
+  assert.ok(app.D.status.recent.length>0);
+  for(const event of app.D.status.recent)assertVisibleFields(rendered.overview,event,['title','text']);
+  assertVisibleFields(rendered.operations,app.D.status.night_operation,['note']);
+  for(const decision of app.D.decisions.items)assertVisibleFields(rendered.decisions,decision,['title']);
 });
-console.log(`PASS dashboard UI: ${count} checks; 8 page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
+console.log(`PASS dashboard UI: ${count} checks; ${app.D.ui.pages.length} page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
+console.log('PASS red controls: altered headline, progress value and max each rejected in memory; original assertions pass');
+console.log(`PASS invariant red controls: ${invariantReds} false claims rejected in memory; original passes after every mutation`);
 console.log('LIMIT: minimal DOM adapter, not a browser; visual layout and assistive technology unverified');

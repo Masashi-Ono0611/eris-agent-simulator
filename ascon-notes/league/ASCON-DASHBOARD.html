@@ -303,6 +303,90 @@
       "path": "ascon-notes/league/Q-ZETA-01-RESULT-2026-10-05.md",
       "title": "Q-ZETA-01 条件4 FAILを保持",
       "locator": "条件5/6は未判定項目あり・sleep/時間逸脱記録"
+    },
+    {
+      "id": "src-c-exception",
+      "path": "ascon-notes/league/C-EXCEPTION-01-2026-10-06.md",
+      "title": "C例外・r3本人選択",
+      "locator": "§1–8、特に§7/§8"
+    },
+    {
+      "id": "src-selftest-r2",
+      "path": "ascon-notes/league/SELFTEST-ZETA-R2-2026-10-06.md",
+      "title": "r2 release確認",
+      "locator": "確認結果・射程・未検証"
+    },
+    {
+      "id": "src-release-r3",
+      "path": "ascon-notes/league/RELEASE-CHECKS-ZETA-R3-2026-10-06.md",
+      "title": "r3 release確認",
+      "locator": "全表・commit別の射程"
+    },
+    {
+      "id": "src-r3-guard",
+      "path": "ascon-notes/league/ZETA-R3-GUARD-2026-10-06.md",
+      "title": "r3 promptと安全境界",
+      "locator": "Current fallback / Direct evidence。後半は過去記録"
+    },
+    {
+      "id": "src-g3-design",
+      "path": "ascon-notes/league/G3-DESIGN-ZETA-R2-2026-10-06.md",
+      "title": "最小G3設計",
+      "locator": "§1–7。計画と実証を区別"
+    },
+    {
+      "id": "src-g3-prep",
+      "path": "ascon-notes/league/g3/README.md",
+      "title": "G3準備",
+      "locator": "Offline inputs / NO-GO"
+    },
+    {
+      "id": "src-g3-chain",
+      "path": "ascon-notes/league/g3/chain/README.md",
+      "title": "G3 chain snapshot",
+      "locator": "Requirements / implementation update"
+    },
+    {
+      "id": "src-revision-audit",
+      "path": "ascon-notes/league/g3/chain/REVISION-AUDIT.md",
+      "title": "改訂監査器",
+      "locator": "Required recorder / safety boundaries"
+    },
+    {
+      "id": "src-g3-diagnostic",
+      "path": "ascon-notes/league/G3-DIAG-WORLD-2026-10-06.md",
+      "title": "1世界診断・G3対象外",
+      "locator": "実測表・射程・未実施"
+    },
+    {
+      "id": "src-release-runbook",
+      "path": "ascon-notes/league/RELEASE-RUNBOOK-ZETA-R2-2026-10-06.md",
+      "title": "release runbook",
+      "locator": "§1–9。r2時点の計画、後続のr3記録を優先"
+    },
+    {
+      "id": "src-retro-oct06",
+      "path": "ascon-notes/league/RETRO-2026-10-06.md",
+      "title": "10/6朝の振り返り",
+      "locator": "§1–7。朝の判断待ちは旧状態"
+    },
+    {
+      "id": "src-options-oct06",
+      "path": "ascon-notes/league/OPTIONS-AFTER-QZETA02-2026-10-06.md",
+      "title": "Q02後の選択肢（履歴）",
+      "locator": "§1–7 / 付録。未承認はC例外より前の状態"
+    },
+    {
+      "id": "src-handoff-oct06",
+      "path": "ascon-notes/league/ASCON-DASHBOARD.html",
+      "title": "本人引継ぎ 10/6 約20:15 JST",
+      "locator": "data-status.rehearsal / mixed_r3：今回依頼文の転記。資料・実機で未検証"
+    },
+    {
+      "id": "src-main-history",
+      "path": "ascon-notes/league/ASCON-DASHBOARD.html",
+      "title": "ローカル保存済みmain履歴",
+      "locator": "data-status.main_merges：git log origin/main。HEAD一致、オンライン未照合"
     }
   ]
 }
@@ -312,19 +396,18 @@
 <script type="application/json" id="data-status">
 {
   "sources": [
-    "src-master",
-    "src-ai",
-    "src-xbr-debug",
-    "src-ollama-report",
-    "src-rev10",
-    "src-rev14"
+    "src-c-exception",
+    "src-release-r3",
+    "src-g3-diagnostic",
+    "src-handoff-oct06",
+    "src-main-history"
   ],
-  "as_of": "2026-10-06T01:38:37+09:00",
+  "as_of": "2026-10-06T20:19:29+09:00",
   "measurement_as_of": null,
-  "last_update": "rev 14: 本人承認3点・移管実績・分割PR/zeta-prep進行中・夜間heartbeat取消を本文に統合。作成中の結果は未確認。",
+  "last_update": "10/6: PR #5–15・C例外§7/§8・r3 release・G3 BLOCKEDを反映。既存ログ全件保持。mini/Airは約20:15 JSTの本人引継ぎ・未検証。",
   "phase_id": "phase-first",
-  "headline": "Q-ZETA-02 registered-pending-start。Q-ZETA-01条件4 FAIL保持、ascon-zeta-r2を1候補1回で登録。実行未開始・プロセス再照会なし。",
-  "subhead": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+  "headline": "提出候補の事前確認が完了。改訂安全性・提出適合・公式回帰は未達。",
+  "subhead": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -342,8 +425,8 @@
     "regimes": 12,
     "name": "Q0b"
   },
-  "notice": "10/8の旧受理目標は延期済み。3点の再承認は不要。H1標準ON拒否・旧資格FAILを維持。受理済み版は未確保。",
-  "measurement_note": "本人提示measured引継ぎ。mix1/mix2/48世界集計は診断のみ。inczも本人提示measured集計を受領・全計測終了。原ログ/プロセスの再監査なし。",
+  "notice": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+  "measurement_note": "指定資料の実行記録を引用。今回の再実行・原ログ・実機照会なし。[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。 [本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
   "dev1": {
     "name": "dev1-xb-r",
     "state": "measured-diagnostic-complete",
@@ -417,12 +500,12 @@
       "d30cbbb",
       "7b1448b"
     ],
-    "branch": "league/v2",
-    "pushed": false,
-    "pr_created": false,
-    "evidence_basis": "今回引継ぎ。リモート再照会なし",
+    "branch": "docs/dashboard-update-1",
+    "pushed": null,
+    "pr_created": null,
+    "evidence_basis": "HEAD = origin/main = 8c29964。ローカルmainはc761624。PR #5–15 mergeを保存済み履歴で確認、オンライン未照合。今回push/PR作成なし。",
     "sources": [
-      "src-master"
+      "src-main-history"
     ]
   },
   "dev3": {
@@ -498,76 +581,70 @@
       "src-dev2-repair"
     ]
   },
-  "human_action": "追加方針確認なし。Claudeが開始前host・G0・seed・予算を照合",
+  "human_action": "ゲート成立後に本人がフォーム送信。10/28 Ollama最終確認",
   "priority": {
-    "title": "Q-ZETA-02登録済み・Claudeの開始前照合待ち",
+    "title": "G3安全境界と証跡欠測が提出を止めている",
     "blocker_ref": "B01",
-    "note": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+    "note": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
     "progress_refs": [
-      "progress-rev14-approval",
-      "progress-zeta-prep",
-      "progress-zeta-qualification",
-      "progress-pr-split"
+      "progress-release-r3",
+      "progress-g3",
+      "progress-smoke",
+      "progress-g4"
     ],
     "sources": [
-      "src-q-zeta-02",
-      "src-q-zeta-01-result"
+      "src-r3-guard",
+      "src-revision-audit",
+      "src-release-r3"
     ],
     "state": "blocked",
-    "state_label": "登録済み・未起動"
+    "state_label": "G3 BLOCKED / 未READY"
   },
   "recent": [
     {
       "kind": "warning",
-      "title": "Q-ZETA-02登録 / Q-ZETA-01不合格保持",
-      "text": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+      "title": "r3へC例外を継承・PR #14/#15 merged",
+      "text": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。",
       "date": "2026-10-06",
-      "time_note": "契約更新。実行時刻ではない",
+      "time_note": "資料記録。検査の再実行なし",
       "sources": [
-        "src-q-zeta-02",
-        "src-q-zeta-01-result"
+        "src-c-exception",
+        "src-release-r3",
+        "src-main-history"
       ]
     },
     {
       "kind": "warning",
-      "title": "本人承認: 3点を進める",
-      "text": "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。",
-      "date": "2026-10-05",
-      "time_note": "本人引継ぎ。記録時刻は実施/完了時刻ではない",
+      "title": "1世界診断: revision採用0・監査BLOCKED",
+      "text": "r2、F_ref calm/49002、360 blocks / 362 loops / 721.7秒。revision開始6、応答5（見送り4・無効1）、未完了1、採用0。recorder欠測。G3合否には数えない。",
+      "date": "2026-10-06",
+      "time_note": "資料記録・実行時刻未提示",
       "sources": [
-        "src-rev14"
+        "src-g3-diagnostic",
+        "src-revision-audit"
       ]
     },
     {
       "kind": "warning",
-      "title": "ASCONの移管は実施済み",
-      "text": "[measured/実施済み・本人引継ぎ 2026-10-05 JST] ローカル~/Developer/majisuke/ascon→~/Developer/asconへ移管（旧パスは相対symlink）。11 worktreeのbranch/HEAD/tracked変更数が前後一致、worktree repair・node_modulesの絶対symlink張り直し済み。GitHubはMajisuke-dev/ascon→Masashi-Ono0611/ascon（private・ADMIN）へ本人が画面からtransfer実施（auto modeの判定はgh apiのtransferを拒否）。旧URLはredirect、open PR #2も移動。ローカルremote URL更新・fetch/push確認済み。league/v2（cca4005）とeval/upstream-merge（8303d85）を新しい場所へpush、pre-push ci-local quick PASS。mainへ直pushなし。本更新で移管・ネットワークの再検証はしていない。",
-      "date": "2026-10-05",
-      "time_note": "本人引継ぎ。記録時刻は実施/完了時刻ではない",
+      "title": "mini 60世界 / Air 36世界を計測中との引継ぎ",
+      "text": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。 [本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+      "date": "2026-10-06",
+      "time_note": "約20:15 JST本人提示。実機未照会",
       "sources": [
-        "src-rev14"
-      ]
-    },
-    {
-      "kind": "warning",
-      "title": "分割PR・zeta-prep進行中",
-      "text": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。 [進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。",
-      "date": "2026-10-05",
-      "time_note": "本人引継ぎ。記録時刻は実施/完了時刻ではない",
-      "sources": [
-        "src-rev14"
+        "src-handoff-oct06"
       ]
     }
   ],
   "next_milestone": {
-    "title": "Q-ZETA-02: 単一hostのG0・全残費照合後に開始",
-    "note": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+    "title": "G3/G4の不足整理と公式P60（10/20以降）",
+    "note": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
     "sources": [
-      "src-q-zeta-02",
-      "src-q-zeta-01-result"
+      "src-release-runbook",
+      "src-c-exception",
+      "src-handoff-oct06"
     ],
-    "state": "pending",
-    "state_label": "registered-pending-start"
+    "state": "blocked",
+    "state_label": "未READY"
   },
   "dev3b": {
     "name": "dev3b-xb-r",
@@ -762,13 +839,13 @@
   },
   "plateau": {
     "name": "PLATEAU-ANALYSIS",
-    "state": "reported-creating-unverified",
+    "state": "stopped-c-route",
     "owner": "Codex",
     "result": null,
     "verified": false,
-    "note": "構造の異なる独自設計候補の検討をAstraが別ジョブで作成中。結果未確認。新規計測・採用・予算追加を意味しない。",
+    "note": "旧作成中記録の結果は未検証。C+E経路では追加探索・資格再試行・AI性能研究を終了。",
     "sources": [
-      "src-operations"
+      "src-c-exception"
     ]
   },
   "xa1": {
@@ -1509,9 +1586,195 @@
   "review_handoff": {
     "evidence": "独立意見の本人引継ぎ",
     "verified": false,
-    "note": "[独立意見・引継ぎ] Codex(Astra)は賛成。ただし「今のまま merge/提出してよいとは判断しない」。分割点候補は3d86a35。提出物混入は確認範囲で重大なしだが、直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認。現行CIのnpm ciにNPM_CONFIG_IGNORE_SCRIPTS=trueが無く作業ルールと不整合のため修正対象。inc-zetaの測定設定（bidMode:2等はrosterの環境変数）はコード既定値（bidMode:0）と違い、そのままbundleすると再現しないため焼き込み候補を固定する。noop割れ4レジームを先に診断する。契約の場を混成場へ変える案は結果を見たあとの基準変更になるため推奨しない。",
+    "note": "PR #5–15 mergeを保存済みorigin/mainで確認。upstream 4057ea3統合済み。最新CI・配布版・全件秘密監査・最終ZIPの再検証なし。",
     "sources": [
-      "src-rev14"
+      "src-main-history",
+      "src-release-r3"
+    ]
+  },
+  "candidate": {
+    "name": "ascon-zeta-r3",
+    "label": "S_cond / ascon-zeta-r3 / a03da518…3dff",
+    "sha256": "a03da51869cf8c8160aaa25eb5f1e87cfa74a3a9dfdac3050945a71f7d143dff",
+    "r2_compat_sha256": "153becef74bebb21acf8674191407ee941b2844a4cb4fa25716b111390eade59",
+    "q02_sha256": "ddd7c718f2e9091c64b9949e277447868dd82347729d86f899b35dc89156786c",
+    "hash_recomputed": false,
+    "qualified": false,
+    "note": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。",
+    "sources": [
+      "src-c-exception",
+      "src-r3-guard"
+    ]
+  },
+  "main_merges": [
+    {
+      "pr": 15,
+      "commit": "8c29964",
+      "timestamp": "2026-10-06T18:02:58+09:00",
+      "subject": "Merge pull request #15 from Masashi-Ono0611/docs/r3-release-record",
+      "sources": [
+        "src-main-history"
+      ]
+    },
+    {
+      "pr": 14,
+      "commit": "64e4990",
+      "timestamp": "2026-10-06T17:49:01+09:00",
+      "subject": "Merge pull request #14 from Masashi-Ono0611/docs/r3-exception-carry",
+      "sources": [
+        "src-main-history"
+      ]
+    },
+    {
+      "pr": 13,
+      "commit": "1f49117",
+      "timestamp": "2026-10-06T17:34:21+09:00",
+      "subject": "Merge pull request #13 from Masashi-Ono0611/docs/g3-diag-world",
+      "sources": [
+        "src-main-history"
+      ]
+    },
+    {
+      "pr": 12,
+      "commit": "223f244",
+      "timestamp": "2026-10-06T16:42:38+09:00",
+      "subject": "Merge pull request #12 from Masashi-Ono0611/feat/ascon-zeta-r3-guard",
+      "sources": [
+        "src-main-history"
+      ]
+    },
+    {
+      "pr": 11,
+      "commit": "0bdc9dc",
+      "timestamp": "2026-10-06T16:17:34+09:00",
+      "subject": "Merge pull request #11 from Masashi-Ono0611/docs/g3-chain-snapshot",
+      "sources": [
+        "src-main-history"
+      ]
+    },
+    {
+      "pr": 10,
+      "commit": "ec80bb8",
+      "timestamp": "2026-10-06T15:26:51+09:00",
+      "subject": "Merge pull request #10 from Masashi-Ono0611/docs/selftest-record-r2",
+      "sources": [
+        "src-main-history"
+      ]
+    },
+    {
+      "pr": 9,
+      "commit": "91c9896",
+      "timestamp": "2026-10-06T13:26:47+09:00",
+      "subject": "Merge pull request #9 from Masashi-Ono0611/docs/g3-r2-prep",
+      "sources": [
+        "src-main-history"
+      ]
+    },
+    {
+      "pr": 8,
+      "commit": "c1eaf6f",
+      "timestamp": "2026-10-06T12:45:22+09:00",
+      "subject": "Merge pull request #8 from Masashi-Ono0611/pr/upstream-integration-2",
+      "sources": [
+        "src-main-history"
+      ]
+    },
+    {
+      "pr": 7,
+      "commit": "0bdbbfe",
+      "timestamp": "2026-10-06T11:36:22+09:00",
+      "subject": "Merge pull request #7 from Masashi-Ono0611/league/v2",
+      "sources": [
+        "src-main-history"
+      ]
+    },
+    {
+      "pr": 6,
+      "commit": "316b7bc",
+      "timestamp": "2026-10-05T10:50:09+09:00",
+      "subject": "Merge pull request #6 from Masashi-Ono0611/league/v2",
+      "sources": [
+        "src-main-history"
+      ]
+    },
+    {
+      "pr": 5,
+      "commit": "29c4cd5",
+      "timestamp": "2026-10-05T10:36:34+09:00",
+      "subject": "Merge pull request #5 from Masashi-Ono0611/pr/upstream-integration",
+      "sources": [
+        "src-main-history"
+      ]
+    }
+  ],
+  "rehearsal": {
+    "name": "mini: r3 P60リハーサル（非公式）",
+    "state": "reported-running-unverified",
+    "field": "P60リハーサル（場の詳細は未検証）",
+    "seeds": "62001–62005",
+    "regimes": 12,
+    "worlds": 60,
+    "started_at": null,
+    "expected_end": null,
+    "completed_at": null,
+    "completed_worlds": null,
+    "result": null,
+    "verified": false,
+    "note": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。",
+    "sources": [
+      "src-handoff-oct06"
+    ],
+    "chunk1": {
+      "g0": "PASS（本人引継ぎ・未検証）",
+      "t_candidate": "60.04",
+      "t_multi": "43.63",
+      "violations": 0,
+      "rev_per_world": "0.5",
+      "sources": [
+        "src-handoff-oct06"
+      ]
+    }
+  },
+  "mixed_r3": {
+    "name": "Air: r3混成場計測（非公式）",
+    "state": "reported-running-unverified",
+    "field": "固定10相手（G3 F_mixとの一致未検証）",
+    "seeds": "63001–63003",
+    "regimes": 12,
+    "worlds": 36,
+    "started_at": "2026-10-06T20:14:00+09:00",
+    "expected_end": null,
+    "completed_at": null,
+    "completed_worlds": null,
+    "result": null,
+    "verified": false,
+    "note": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+    "sources": [
+      "src-handoff-oct06"
+    ]
+  },
+  "g3_diag": {
+    "name": "r2 1世界診断（G3対象外）",
+    "field": "F_ref",
+    "seeds": "49002",
+    "regimes": 1,
+    "worlds": 1,
+    "result": {
+      "p_candidate": "+762.0",
+      "p_multi": "−414.9",
+      "p_clean": "+88.4",
+      "p_noop": "0",
+      "calls_started": 6,
+      "replies": 5,
+      "declined": 4,
+      "invalid": 1,
+      "unfinished": 1,
+      "adopted": 0,
+      "auditor": "BLOCKED"
+    },
+    "note": "calm、revision ON、p1。360/362/721.7秒。24〜42秒/call。違反なしとの資料記録。recorderなし、監査FAIL 0でもBLOCKED。",
+    "sources": [
+      "src-g3-diagnostic"
     ]
   }
 }
@@ -1521,86 +1784,107 @@
 <script type="application/json" id="data-plan">
 {
   "sources": [
-    "src-master",
-    "src-guide",
-    "src-rules",
-    "src-ai",
-    "src-rev14"
+    "src-c-exception",
+    "src-release-runbook",
+    "src-r3-guard",
+    "src-g3-design"
   ],
-  "goal": "ASCONで優勝する。条件付き第一候補inc-zetaの診断・設定固定・新契約資格を経て初回受理を確保する。",
+  "goal": "ASCONで優勝する。C+E経路のS_cond / ascon-zeta-r3を固定し、安全監査・提出適合と期限内受理へ集中する。",
   "win": "エポック終了時のPを参加者間でTへ標準化し、後半ほど重く集計。対noop・最悪レジーム・混成場・改訂ONの尾部を同時に守る。",
   "rules": [
     "独自戦略のみ・提出は1体。参照の改名や設定移植だけへ戻さない。",
-    "公式規約が最優先。本文はオンライン取得済みだが10/6公表・10/20発効の未来日付表示。10/4適用版は未確認。",
-    "凍結Q0と提出時の改訂適合を分ける。decide＋kind: improve等が必要。現xb-rのnull固定promptは診断用。",
+    "規約が最優先。保存ランブックの適用版: 10/11まで9/22版、10/12–19は9/28版、10/20から新改訂版。オンライン未照合。",
+    "r3はdecide＋kind: improve、reviseEveryBlocks: 60、model指定なし。FROZENは内部比較用で提出設定へ持ち込まない。",
     "評価価格の歪曲・自己提出間の移転・禁止RPCを使わない。鍵は本人が専用フォームへ入力、記録には残さない。",
-    "p=3・等速・CPU排他・入力固定。Q0b全60世界とG0/平均Tの旧FAIL保持、資格救済再走なし。",
-    "G0不良は隔離。P60は公開回帰で、未使用holdoutではない。過去u1mを資格へ昇格させない。",
-    "本人決定H1: 検査済み3方針+ENTRY 20–60bps・初期/復帰50・刻み5・最大±5、120block復帰。全面executorTs改訂は見送り。標準ON拒否、専用adapter未実装。旧rev 6署名契約は履歴として保持。",
-    "dev4/dev5はF_ref平均T未達、第3回xa-1は2回修理後も不健全で打ち切り。Q0契約を維持し、扱いと提出方針は本人判断。mix1は5/11位・最悪値1位の診断。",
-    "[未確認] 規約は「10/20 発効版」表示との引継ぎで、今日（2026-10-05）の適用版との一致は未確認。本更新ではオンライン再取得なし。"
+    "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
+    "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。",
+    "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
+    "通常6h/日以下・chunk110分以下・forward100h。実消化未精算、日程や2台稼働を理由に上限を緩めない。"
   ],
   "protocol": [
     {
       "id": "protocol-first",
-      "title": "Step1 決定論Q0・受理",
-      "body": "10/5〜6準備、10/6〜8資格、10/9〜12初回受理目標。入口: inc-zeta弱点診断・設定固定・Q-ZETA-01登録・hash/G0/新seed/費用",
-      "exit": "凍結Q0→mix/P60→最小改訂適合/G3/G4→本人受理S。新枠約4.5hは未精算・全費用確認待ち。旧Q0追加1回5hの自動転用なし。旧FAIL保持・延期は既決",
-      "label": "まず提出できる独自版を作る",
-      "period": "10/4〜・受理日未定",
+      "title": "条件付き候補と事前確認",
+      "body": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。",
+      "exit": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "label": "条件付き候補と事前確認",
+      "period": "10/6〜10/14",
       "state": "blocked",
-      "start_date": "2026-10-04",
-      "end_date": "2026-10-17"
+      "start_date": "2026-10-06",
+      "end_date": "2026-10-14",
+      "sources": [
+        "src-c-exception",
+        "src-release-runbook"
+      ]
     },
     {
       "id": "protocol-ai-min",
-      "title": "Step2 限定AI最小版",
-      "body": "S受理後〜10/12目安。入口: S・cal・受付境界/許可model/全費用",
-      "exit": "H1（検査済み方針+ENTRY）・専用adapter/受付・適用/拒否/復帰・epoch間学習なし。H1は本人選択済み・標準ON拒否。adapter未実装、実行費未見積。旧署名・反復/費用契約は保持",
-      "label": "AIによる調整を小さく導入",
-      "period": "初回受理後〜10/12目安",
+      "title": "最小G3の安全・改訂確認",
+      "body": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
+      "exit": "通常36＋7＋3は未実施。適用・復帰、検査100%、正常cycle≥3が必要。",
+      "label": "最小G3の安全・改訂確認",
+      "period": "10/11以降・未解放",
       "state": "blocked",
-      "start_date": "2026-10-09",
-      "end_date": "2026-10-12"
+      "start_date": "2026-10-11",
+      "end_date": "2026-10-19",
+      "sources": [
+        "src-c-exception",
+        "src-release-runbook"
+      ]
     },
     {
       "id": "protocol-ai-eval",
-      "title": "Step3 AI価値検証",
-      "body": "10/13〜17。入口: 固定R*・未使用集合・D/反復/下流費",
-      "exit": "Dへの増分・AI専用ON E3/Q1・R* G3三反復PASS。G3はR*12h＋S5.2h=17.2h。全工程未確保なら実走なし、10/17条件分岐",
-      "label": "AIで利益が増えるか検証",
-      "period": "10/13〜10/17",
+      "title": "公式P60を確認",
+      "body": "10/20適用版、公開seeds 101/202/303/404/505、60世界。未実施。",
+      "exit": "非公式リハーサルを合格に流用しない。",
+      "label": "公式P60を確認",
+      "period": "10/20〜10/22案",
       "state": "blocked",
-      "start_date": "2026-10-13",
-      "end_date": "2026-10-17"
+      "start_date": "2026-10-20",
+      "end_date": "2026-10-22",
+      "sources": [
+        "src-c-exception",
+        "src-release-runbook"
+      ]
     },
     {
       "id": "protocol-sealed",
-      "title": "Step4 封印・一回採用",
-      "body": "10/18〜25。入口: 二場/10seed・model/reset/判定固定・残費",
-      "exit": "H480又は事前指定S240、一回判定・性能凍結。final-g2 35hはON校正前。不足ならS240、S/費用不足ならH未実施",
-      "label": "条件を固定して最終比較",
-      "period": "10/18〜10/25",
-      "state": "pending",
-      "start_date": "2026-10-18",
-      "end_date": "2026-10-25"
+      "title": "G4・最終ZIPを固定",
+      "body": "事前bundle/selftest済みだが最終ZIP固定・G4は未完了。",
+      "exit": "同一候補・commit・ZIP・住所表・公式P60/G3を照合。",
+      "label": "G4・最終ZIPを固定",
+      "period": "10/23〜10/27案",
+      "state": "blocked",
+      "start_date": "2026-10-23",
+      "end_date": "2026-10-27",
+      "sources": [
+        "src-c-exception",
+        "src-release-runbook"
+      ]
     },
     {
       "id": "protocol-ai-release",
-      "title": "Step5 最終受理",
-      "body": "10/26〜31 23:59。入口: 選定版・G4・本人確認",
-      "exit": "10/28 dec-007→10/29送信/受理目標→10/30予備→締切照合。final-g4 9h＋予備3h。探索再開なし、受理メール/hashで閉じる",
-      "label": "提出と受理を最終確認",
-      "period": "10/26〜10/31",
-      "state": "pending",
-      "start_date": "2026-10-26",
-      "end_date": "2026-10-31"
+      "title": "本人送信・最終受理確認",
+      "body": "10/28 dec-007、10/29受理照合目標。本人送信。",
+      "exit": "10/31 23:59 JST締切。送信と受理を分離。",
+      "label": "本人送信・最終受理確認",
+      "period": "10/28〜10/31",
+      "state": "blocked",
+      "start_date": "2026-10-28",
+      "end_date": "2026-10-31",
+      "sources": [
+        "src-c-exception",
+        "src-release-runbook"
+      ]
     },
     {
       "id": "protocol-deep",
       "title": "余力がある時だけ深いリーグ",
-      "body": "研究最大20h・2世代は維持。M2は0h、因子/D/Eは保留。Q0/受理・限定AIを優先する。",
-      "exit": "10/17時点で既資格候補と全残費/日程がある場合だけ切替。新規探索なし"
+      "body": "C+Eで追加探索・資格再試行・AI性能研究は終了。",
+      "exit": "旧研究契約は保存。S_condをH240/H480の入口へ流用しない。",
+      "sources": [
+        "src-c-exception"
+      ]
     }
   ],
   "gates": [
@@ -1618,18 +1902,17 @@
     {
       "id": "gate-q",
       "title": "現G2-Q / 初回資格",
-      "state": "xb-r現状資格不可",
-      "resolve": "A現行維持。全12×2の診断screen成立→hash/新seed/5h枠→追加1候補1回。P/F_u1m追加は不採用、revert上限は新資格だけ採用。",
+      "state": "Q-ZETA-01/02 FAIL、原5/6 BLOCKED",
+      "resolve": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。 本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。",
       "sources": [
-        "src-dev2",
-        "src-dev3",
-        "src-delegation"
+        "src-c-exception",
+        "src-retro-oct06"
       ]
     },
     {
       "id": "gate-g1",
       "title": "G1 / 探索screen",
-      "state": "未実施",
+      "state": "未実施・C+Eで探索終了（旧条件を保存）",
       "resolve": "新E3で平均ΔT≥+1、最悪差≥−2、平均Δ(P−noop)≥0、安全適合。次点再選抜なし。",
       "sources": [
         "src-master"
@@ -1638,17 +1921,19 @@
     {
       "id": "gate-g3",
       "title": "G3 / 改訂ON",
-      "state": "未実施",
-      "resolve": "R*は12×3セルのON3/OFF1＋障害12h、SはON/OFF各36の5.2h、計17.2h。各反復に既存G3・全安全、epoch間学習なし。受付/実装/費用証跡待ち。",
+      "state": "本体未実施 / BLOCKED",
+      "resolve": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。 通常36＋fault7＋状態3。固定5gwei相手・自然Haiku変更fixtureも欠落。1世界診断は対象外。",
       "sources": [
-        "src-ai",
-        "src-delegation"
+        "src-r3-guard",
+        "src-g3-prep",
+        "src-revision-audit",
+        "src-g3-diagnostic"
       ]
     },
     {
       "id": "gate-final",
       "title": "G2-final / 採用",
-      "state": "未実施",
+      "state": "未実施・C+Eで探索終了（旧条件を保存）",
       "resolve": "F_mix下限>0、J=0.5ΔT−1>0、P−noop下限≥0。F_ref下限≥−1T、P−noop平均≥0。両場最悪≥−2T・ES5差下限≥−1T、seed除去で逆転なし。差不明は適合S。",
       "sources": [
         "src-master"
@@ -1657,15 +1942,16 @@
     {
       "id": "gate-g4",
       "title": "G4 / 提出適合・受理",
-      "state": "未実施",
-      "resolve": "clean release、型/関連検査・strategy・P60・bundle scan・selftest・住所bytes・同一commit/ZIP・ci-local full。鍵登録受理は本人報告済み。ZIPの受理メールは未確認。",
+      "state": "未実施（事前確認のみPASS）",
+      "resolve": "資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。 最終ZIP固定・同一ZIP起動・全監査・公式P60・G3・受理は未検証。",
       "sources": [
-        "src-master",
-        "src-checklist"
+        "src-selftest-r2",
+        "src-release-r3",
+        "src-release-runbook"
       ]
     }
   ],
-  "caution": "H1は実装済みだが標準runtimeでは安全境界不成立・ON拒否。agyは形式確認のみ。AIの性能増分は未実証。R*だけON3/OFF1、Sは既存full G3、epoch間学習持越しなし。17.2hを予約してもdeep9.7hでは追加Q0/修理/D/AI専用E3/Q1全工程が未確保。D増分とE3/Q1/G3・全費用が10/17に揃わなければS240、S/費用不足ならH未実施。",
+  "caution": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
   "ai_contract": {
     "name": "AI-G3-01",
     "status": "decided",
@@ -1799,11 +2085,12 @@
     "diagnostic_revert_max": 0,
     "qualification_seeds_excluded": "41301–41305",
     "budget_status": "unreconciled-not-released",
-    "title": "連続稼働の運用モデル",
-    "note": "決定論ラインは3/3回目xa-1で打ち切り。独立fresh screen未成立。[本人引継ぎ] 8分ごとのハートビートと/tmp/night-state.mdで夜間の自動進行を管理。監視は30分で失効するため、各ハートビートで監視の有効期限・再登録/更新・次回起床・状態表を確認し、失効前に更新する。失効/未受領なら新規起動を止める。8分は進行管理用で、既決の60秒以下監視・2分検知/5分受領/10分次着手を置換しない。稼働実績・更新成功は本更新で未検証。",
+    "title": "現在の計測引継ぎと停止条件",
+    "note": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。 [本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。 旧3回開発screenは履歴。C+Eでは探索を再開しない。監視稼働・全費用は未検証。",
     "sources": [
-      "src-master",
-      "src-retro-day"
+      "src-handoff-oct06",
+      "src-c-exception",
+      "src-release-runbook"
     ],
     "stages": {
       "header": [
@@ -1880,7 +2167,7 @@
       ]
     },
     "iteration_current": 3,
-    "current_run_ref": "status.incz"
+    "current_run_ref": "status.rehearsal"
   },
   "h1": {
     "authority": "本人決定 2026-10-04",
@@ -1953,8 +2240,10 @@
     ],
     "falsification": "反証条件: 独立60世界で平均T<multi-arb、いずれかのレジーム平均(T−Tnoop)<0、mined revert>1件または包含取引比>0.1%、原因不明の失敗、未回収自前資産損失/gas枯渇/無効注文>0のいずれかで停止する。G0・既決安全条件も維持し、閾値緩和・結果後の場変更・救済再走で合格にしない。",
     "sources": [
-      "src-rev14"
-    ]
+      "src-c-exception"
+    ],
+    "status": "closed-c-route",
+    "note": "C+Eで追加資格・候補探索・AI性能研究は終了。S_condを資格済Sへ昇格しない。"
   },
   "live_contract": {
     "regimes": [
@@ -1997,7 +2286,7 @@
   "zeta_qualification": {
     "contract": "Q-ZETA-02",
     "approval": "本人方針承認 2026-10-05 / 実行指示 2026-10-06 JST",
-    "status": "registered-pending-start",
+    "status": "failed",
     "field": "F_ref",
     "regimes": 12,
     "new_seed_count": 5,
@@ -2013,17 +2302,25 @@
     ],
     "release_candidate": "ascon-zeta-r2",
     "frozen_hash": "ddd7c718f2e9091c64b9949e277447868dd82347729d86f899b35dc89156786c",
-    "result": null,
+    "result": {
+      "g0": "PASS（全60世界・資料記録）",
+      "t_candidate": "58.91",
+      "t_multi": "42.34",
+      "regimes_met": "12/12",
+      "criterion4": "FAIL（8/60世界）",
+      "criterion5": "BLOCKED",
+      "criterion6": "BLOCKED"
+    },
     "qualified": false,
     "thresholds_changed": false,
-    "execution_status": "registered-pending-start",
-    "note": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+    "execution_status": "completed-reported",
+    "note": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
     "sources": [
-      "src-q-zeta-02",
-      "src-q-zeta-01-result"
+      "src-retro-oct06",
+      "src-c-exception"
     ],
     "reserved_hours": "5",
-    "execution_host": null,
+    "execution_host": "mini",
     "previous_contract": "Q-ZETA-01",
     "previous_result": "FAIL",
     "previous_attempts_used": 1,
@@ -2032,16 +2329,18 @@
   },
   "integration": {
     "split": "3d86a35",
-    "pr1": "pr/upstream-integration → main",
-    "pr2": "league/v2 → pr/upstream-integration; PR1 merge後mainへbase変更",
+    "pr1": "PR #5 merged 29c4cd5",
+    "pr2": "PR #6 merged 316b7bc / PR #7 merged 0bdbbfe",
     "reviewers": "Claudeの別エージェント+agy",
     "merge_method": "merge commit",
     "ci_fix": "npm ciにNPM_CONFIG_IGNORE_SCRIPTS=true",
-    "state": "in-progress-reported",
-    "merged": false,
-    "note": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+    "state": "merged-local-history",
+    "merged": true,
+    "note": "PR #8 c1eaf6fでupstream 4057ea3統合。PR #9 G3準備、#10 r2 selftest、#11 chain snapshot、#12 r3、#13診断世界、#14例外継承、#15 r3 release確認がmerged。HEAD/origin/main 8c29964、オンライン未照合。",
     "sources": [
-      "src-rev14"
+      "src-main-history",
+      "src-c-exception",
+      "src-release-r3"
     ]
   },
   "zeta_qualification_rev14_snapshot": {
@@ -2078,11 +2377,15 @@
   "items": [
     {
       "id": "phase-first",
-      "title": "Step1 Q0・初回受理",
+      "title": "Step1 条件付きr3・初回受理",
       "start_date": "2026-10-04",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "本人承認済みのQ-ZETA-01: 弱点診断・設定/hash・新seed・契約登録・全残費待ち。条件付き第一候補は未資格、受理S未確保。"
+      "gate": "C+E経路。標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
+      "sources": [
+        "src-c-exception",
+        "src-release-runbook"
+      ]
     },
     {
       "id": "phase-deep",
@@ -2090,23 +2393,35 @@
       "start_date": "2026-10-09",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "契約は決定済み。S/cal/全費用とD増分/E3/Q1/G3が成立した時だけ"
+      "gate": "C+E経路。旧探索は停止。S_condを資格済Sへ昇格させない。初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "sources": [
+        "src-c-exception",
+        "src-release-runbook"
+      ]
     },
     {
       "id": "phase-sealed",
-      "title": "Step4 封印・一回比較",
+      "title": "Step4 公式P60・G4（旧封印比較は停止）",
       "start_date": "2026-10-18",
       "end_date": "2026-10-25",
-      "state": "pending",
-      "gate": "一回開封・二場・尾部・差不明ならS"
+      "state": "blocked",
+      "gate": "C+E経路。旧探索は停止。S_condを資格済Sへ昇格させない。初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "sources": [
+        "src-c-exception",
+        "src-release-runbook"
+      ]
     },
     {
       "id": "phase-release",
       "title": "Step5 最終適合・受理",
       "start_date": "2026-10-26",
       "end_date": "2026-10-31",
-      "state": "pending",
-      "gate": "G4 → dec-007 → 受理済み版照合"
+      "state": "blocked",
+      "gate": "C+E経路。旧探索は停止。S_condを資格済Sへ昇格させない。初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "sources": [
+        "src-c-exception",
+        "src-release-runbook"
+      ]
     }
   ]
 }
@@ -2140,23 +2455,26 @@
     {
       "id": "day-2026-10-05",
       "date": "2026-10-05",
-      "title": "本人承認3点・移管完了、zeta-prepと分割PR進行中",
-      "dependency": "noop割れ4レジーム診断・測定設定焼き込み・由来/新契約下書き。結果は未確認",
-      "stop": "閾値維持、今のままmerge/提出可とはしない。実消費は未精算",
-      "state": "blocked",
+      "title": "PR #5/#6統合・Q-ZETA-01条件4 FAIL",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "done",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-rev14"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-retro-oct06",
+        "src-main-history"
       ]
     },
     {
       "id": "day-2026-10-06",
       "date": "2026-10-06",
-      "title": "診断・設定/hash固定・Q-ZETA-01登録、資格入口を照合",
-      "dependency": "F_ref 12×5新seed=60世界・約4.5h、試行上限/独立性/全残費を登録",
-      "stop": "旧41301–41305/5h枠の自動転用なし、証跡不足なら開始不可",
-      "state": "blocked",
+      "title": "Q02条件4 FAIL・r3選択・release確認、非公式計測引継ぎ",
+      "dependency": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。 [本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "running",
       "highlight": false,
       "decision_refs": [
         "dec-q0-failure-branch",
@@ -2164,344 +2482,397 @@
         "dec-revert-limit"
       ],
       "sources": [
-        "src-rev14"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-retro-oct06",
+        "src-main-history"
       ]
     },
     {
       "id": "day-2026-10-07",
       "date": "2026-10-07",
-      "title": "条件成立時Q-ZETA-01資格試験。dec-008はresolved（旧期日）",
-      "dependency": "固定候補・新seed・全費用/G0。初回登録は10/4本人報告済み",
-      "stop": "結果未確認、閾値緩和なし。モデル/無料枠/疎通は10/28 dec-007へ",
-      "state": "done",
+      "title": "C開示・G3/G4不足の監査",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [
         "dec-008"
       ],
       "sources": [
-        "src-rev14"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-08",
       "date": "2026-10-08",
-      "title": "資格結果を全量判定、延期済み旧受理目標も照合",
-      "dependency": "独立60世界・G0/安全/平均T/全レジーム対noop",
-      "stop": "不合格なら停止。10/8延期の再承認なし",
-      "state": "pending",
+      "title": "C開示・G3/G4不足の監査",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [
         "dec-step1-policy"
       ],
       "sources": [
-        "src-rev14"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-09",
       "date": "2026-10-09",
-      "title": "未受理なら原因・質問方針を本人判断",
-      "dependency": "Q0/適合/受理の残工程",
-      "stop": "運営へ無断質問なし、AI性能研究/深い探索は後回し",
-      "state": "pending",
+      "title": "C開示・G3/G4不足の監査",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-10",
       "date": "2026-10-10",
-      "title": "資格成立後P60・最小G3/G4・受理準備を優先",
-      "dependency": "資格・最小改訂受付・model/usage証拠と全残費",
-      "stop": "未受理なら探索窓を受理修復へ振替",
-      "state": "pending",
+      "title": "C開示・G3/G4不足の監査",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-rev14"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-11",
       "date": "2026-10-11",
-      "title": "P60・最小G3/G4、本人送信・初回受理Sを優先",
-      "dependency": "資格・改訂適合・全残費。S受理後だけStep2",
-      "stop": "H1標準ON拒否・受付未成立なら停止",
-      "state": "pending",
+      "title": "最小G3/G4準備（実走BLOCKED）",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-rev14"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-12",
       "date": "2026-10-12",
-      "title": "初回受理Sの証跡照合・規約適用版を確認",
-      "dependency": "本人送信/受理メール/ZIP hash・最小G3/G4",
-      "stop": "資格/適合/受理を混同しない。未受理ならAI探索を削る",
-      "state": "pending",
+      "title": "最小G3/G4準備（実走BLOCKED）",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [
         "dec-ai-scope",
         "dec-ai-contract"
       ],
       "sources": [
-        "src-rev14"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-13",
       "date": "2026-10-13",
-      "title": "S full G3証跡照合、未取得なら72世界",
-      "dependency": "S固定・ON/OFF各36・全残費",
-      "stop": "同一版の有効証跡だけ再利用。5.2hを二重計上しない",
-      "state": "pending",
+      "title": "最小G3/G4準備（実走BLOCKED）",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-14",
       "date": "2026-10-14",
-      "title": "固定R*がある時だけON E3/Q1/G3の残工程",
-      "dependency": "Dへの増分・新seed・全費用・受理S",
-      "stop": "次点再選抜/未検証H移行なし、深い棚との二重追加禁止",
-      "state": "pending",
-      "highlight": false,
+      "title": "本人の初回提出目標（ゲート未達）",
+      "dependency": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
+      "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-15",
       "date": "2026-10-15",
-      "title": "障害/復帰・遅延・epoch reset確認",
-      "dependency": "正常cycle・return/submit境界・CPU排他",
-      "stop": "危険取引/持越し不一致/反復間の結論反転なら停止",
-      "state": "pending",
+      "title": "G3/G4不足対応・探索停止",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-16",
       "date": "2026-10-16",
-      "title": "AI増分・決定論代替・費用を整理",
-      "dependency": "全予定の開封条件と証拠",
-      "stop": "LLM導入そのものを利益証明にしない",
-      "state": "pending",
+      "title": "G3/G4不足対応・探索停止",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-17",
       "date": "2026-10-17",
-      "title": "18:00 JSTにAstraが確定条件でH480/S240/未実施へ切替",
-      "dependency": "受理S・D増分・R* E3/Q1/G3・cal後の全残費と日程",
-      "stop": "不足ならAI終了。既資格候補がなければ深い探索へ替えずS240、S/費用不足はHなし",
-      "state": "pending",
+      "title": "G3/G4不足対応・探索停止",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [
         "dec-ai-budget",
         "dec-ai-contract"
       ],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-18",
       "date": "2026-10-18",
-      "title": "Step4: 二場/候補/10seed/model/stateを封印",
-      "dependency": "資格/G3・独立系列と判定/費用契約",
-      "stop": "未達ならH開始なし、反復数を後付けしない",
-      "state": "pending",
+      "title": "G3/G4不足対応・探索停止",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-19",
       "date": "2026-10-19",
-      "title": "H開始、通常最大6h",
-      "dependency": "封印・校正後chunk上限",
-      "stop": "G0/安全/時間のみ監視",
-      "state": "pending",
+      "title": "G3/G4不足対応・探索停止",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-20",
       "date": "2026-10-20",
-      "title": "H継続・適用規約版を照合、通常最大6h",
-      "dependency": "前chunk正常・入力不変・10/20表示版の確認",
-      "stop": "仕様差分が出れば比較可能性を再判定、性能再走禁止",
-      "state": "pending",
-      "highlight": false,
+      "title": "10/20適用版の公式P60（未実施）",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
+      "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-21",
       "date": "2026-10-21",
-      "title": "H継続、通常最大6h",
-      "dependency": "全予定の完了見通し",
-      "stop": "相手/seed/版の交換禁止",
-      "state": "pending",
+      "title": "10/20適用版の公式P60（未実施）",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-22",
       "date": "2026-10-22",
-      "title": "H継続、通常最大6h",
-      "dependency": "残枠とG0",
-      "stop": "model変更は同一試験へプール不可",
-      "state": "pending",
+      "title": "10/20適用版の公式P60（未実施）",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-23",
       "date": "2026-10-23",
-      "title": "H継続、通常最大6h",
-      "dependency": "予定集合を維持",
-      "stop": "欠測の黙示除外禁止",
-      "state": "pending",
+      "title": "G4再照合・最終ZIP固定 / 本人送信案",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-24",
       "date": "2026-10-24",
-      "title": "H継続、通常最大6h",
-      "dependency": "終了検査の時間も確保",
-      "stop": "部分成績で採用禁止",
-      "state": "pending",
+      "title": "G4再照合・最終ZIP固定 / 本人送信案",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-25",
       "date": "2026-10-25",
-      "title": "全予定Hを一回判定、性能凍結",
-      "dependency": "480又は事前指定240全件G0",
-      "stop": "差不明/未完は適合S、比較主張なし",
-      "state": "pending",
+      "title": "G4再照合・最終ZIP固定 / 本人送信案",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-26",
       "date": "2026-10-26",
-      "title": "最終P60 60 ON",
-      "dependency": "選定版・実測時間",
-      "stop": "失格/資産喪失/受理不能以外の性能変更なし",
-      "state": "pending",
+      "title": "G4再照合・最終ZIP固定 / 本人送信案",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-27",
       "date": "2026-10-27",
-      "title": "配置/起動順24 ON、G4",
-      "dependency": "事前固定の配置・残枠",
-      "stop": "逆転なら優位主張撤回、無検証差替えなし",
-      "state": "pending",
+      "title": "G4再照合・最終ZIP固定 / 本人送信案",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-28",
       "date": "2026-10-28",
-      "title": "G4照合、最後にdec-007",
-      "dependency": "全技術証跡・本人確認",
-      "stop": "修正なら影響検証とF0を再実施",
-      "state": "pending",
+      "title": "dec-007: Ollama・ZIP・枠・鍵の最終確認",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [
         "dec-007"
       ],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-29",
       "date": "2026-10-29",
-      "title": "本人最終送信・受理/hash",
-      "dependency": "READYと鍵登録証跡",
-      "stop": "未受理版を最終扱いしない",
-      "state": "pending",
+      "title": "本人送信・受理/hash照合目標",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-30",
       "date": "2026-10-30",
-      "title": "受理ZIP/鍵の確認・予備",
-      "dependency": "受理メール/commit/hash",
-      "stop": "探索再開なし",
-      "state": "pending",
+      "title": "受理照合の予備日",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "day-2026-10-31",
       "date": "2026-10-31",
       "title": "10/31 23:59 JSTまでに最後の受理版を照合",
-      "dependency": "本人指定期限・適用版・受理メール/hash",
-      "stop": "駆込み無検証更新なし。未受理版を最終扱いしない",
-      "state": "pending",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     }
   ]
@@ -2514,7 +2885,7 @@
   "sources": [
     "src-master"
   ],
-  "note": "バーはこの台帳の完了項目数 / 登録項目数。工数達成率・合格率ではない。FAIL/BLOCKEDは完了色に数えない。",
+  "note": "資料に記録された完了と、未達ゲート・未検証の本人引継ぎを分離。旧資格・診断の判定は維持。",
   "workstreams": [
     "基盤",
     "計測",
@@ -2548,11 +2919,12 @@
     {
       "id": "progress-upstream",
       "workstream": "基盤",
-      "title": "upstream取り込み・適合",
+      "title": "upstream 4057ea3統合済み",
       "state": "done",
-      "evidence": "40 commitを取り込み、指定検査331 PASS / 2 SKIP。旧新seedを混ぜない。",
+      "evidence": "PR #8 merged。launch.ts互換2行でr2 hash変更、本人Goにより例外継承。旧Q結果の再認定なし。",
       "sources": [
-        "src-upstream"
+        "src-c-exception",
+        "src-main-history"
       ]
     },
     {
@@ -2599,36 +2971,36 @@
     {
       "id": "progress-smoke",
       "workstream": "初回受理",
-      "title": "新F_mix smoke / P60",
+      "title": "公式P60（10/20以降）は未実施",
       "state": "blocked",
-      "evidence": "修理・再診断後の現Q0 PASSが先。dev1診断のG0 PASSでは解除しない。",
+      "evidence": "公開101/202/303/404/505の60世界。miniの62001–62005リハーサルは代用不可。",
       "sources": [
-        "src-master",
-        "src-ai",
-        "src-repair"
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "progress-g3",
       "workstream": "初回受理",
-      "title": "最小改訂適合・G3/cal",
+      "title": "G3本体は未実施・BLOCKED",
       "state": "blocked",
-      "evidence": "受理前に実改訂/拒否/復帰と機械的安全境界を確認。null固定promptのまま適合扱いしない。",
+      "evidence": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。 36＋7＋3は未実施。",
       "sources": [
-        "src-master",
-        "src-ai",
-        "src-repair"
+        "src-g3-design",
+        "src-g3-prep",
+        "src-revision-audit",
+        "src-r3-guard"
       ]
     },
     {
       "id": "progress-g4",
       "workstream": "初回受理",
-      "title": "G4・ZIP送信・受理",
+      "title": "G4・最終ZIP固定・送信・受理は未完了",
       "state": "blocked",
-      "evidence": "dec-008は本人報告でresolved。鍵登録受理とZIP受理を分け、G4/受理済み版は未確認。",
+      "evidence": "資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。 同一ZIP起動・最終ZIP hash・受理は未検証。",
       "sources": [
-        "src-ollama-report",
-        "src-master"
+        "src-release-r3",
+        "src-release-runbook"
       ]
     },
     {
@@ -2667,11 +3039,12 @@
     {
       "id": "progress-final",
       "workstream": "最終確認",
-      "title": "二場H / 最終G3・G4 / 受理",
+      "title": "最終G3・G4・本人送信・受理照合",
       "state": "pending",
-      "evidence": "10/18封印・10/25凍結・10/28 dec-007。",
+      "evidence": "公式P60は10/20以降、G3/G4未達。10/28 dec-007、10/31 23:59 JST締切。二場H研究はC+Eで終了。",
       "sources": [
-        "src-master"
+        "src-c-exception",
+        "src-release-runbook"
       ]
     },
     {
@@ -2720,13 +3093,11 @@
     {
       "id": "progress-xbr-requal",
       "workstream": "初回受理",
-      "title": "資格試験の開始条件をそろえる",
+      "title": "旧xb-r再資格はC+Eで終了",
       "state": "blocked",
-      "evidence": "dev4/dev5は平均T未達、第3回xa-1打ち切り。独立fresh screen未成立。G0/安全・固定hash・未使用資格seed・5h枠と全残費は未成立。Q0停止、方針は本人判断。",
+      "evidence": "旧資格の未達を保存。現在はr3の条件付き提出準備で、新資格は行わない。",
       "sources": [
-        "src-dev4",
-        "src-dev5",
-        "src-delegation"
+        "src-c-exception"
       ]
     },
     {
@@ -2833,11 +3204,11 @@
     {
       "id": "progress-plateau",
       "workstream": "探索",
-      "title": "PLATEAU-ANALYSISの別ジョブ",
-      "state": "running",
-      "evidence": "構造の異なる独自設計候補の検討をAstraが別ジョブで作成中。結果未確認。新規計測・採用・予算追加を意味しない。",
+      "title": "PLATEAU探索はC+Eで停止",
+      "state": "blocked",
+      "evidence": "旧作成中記録の結果は未検証。C+E経路では追加探索・資格再試行・AI性能研究を終了。",
       "sources": [
-        "src-operations"
+        "src-c-exception"
       ]
     },
     {
@@ -2950,32 +3321,97 @@
     },
     {
       "id": "progress-zeta-prep",
-      "title": "ascon-zeta-r2・Q-ZETA-02契約パッケージ",
+      "title": "r3条件付き候補を固定",
       "state": "done",
-      "evidence": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+      "evidence": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。",
       "sources": [
-        "src-q-zeta-02",
-        "src-q-zeta-01-result"
-      ]
+        "src-c-exception",
+        "src-r3-guard"
+      ],
+      "workstream": "初回受理"
     },
     {
       "id": "progress-zeta-qualification",
-      "title": "Q-ZETA-02開始前照合と60世界",
-      "state": "blocked",
-      "evidence": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+      "title": "Q-ZETA-02完了・条件4 FAIL / 原5/6 BLOCKED",
+      "state": "failed",
+      "evidence": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
       "sources": [
-        "src-q-zeta-02",
-        "src-q-zeta-01-result"
-      ]
+        "src-retro-oct06",
+        "src-c-exception"
+      ],
+      "workstream": "初回受理"
     },
     {
       "id": "progress-pr-split",
-      "title": "分割PRと独立レビュー・CI",
-      "state": "running",
-      "evidence": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+      "title": "PR #5–15 merged（保存済み履歴）",
+      "state": "done",
+      "evidence": "PR #8 c1eaf6fでupstream 4057ea3統合。PR #9 G3準備、#10 r2 selftest、#11 chain snapshot、#12 r3、#13診断世界、#14例外継承、#15 r3 release確認がmerged。HEAD/origin/main 8c29964、オンライン未照合。",
       "sources": [
-        "src-rev14"
-      ]
+        "src-main-history"
+      ],
+      "workstream": "基盤"
+    },
+    {
+      "id": "progress-release-r2",
+      "title": "r2 release事前確認",
+      "state": "done",
+      "evidence": "資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。 r2対象main 91c9896、対象テスト6/6、strategy 98ファイル。",
+      "sources": [
+        "src-selftest-r2"
+      ],
+      "workstream": "初回受理"
+    },
+    {
+      "id": "progress-release-r3",
+      "title": "r3 release事前確認",
+      "state": "done",
+      "evidence": "資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。 r3テスト12件、strategy 102ファイル。ci-local対象64e4990、bundle/selftest対象1f49117。ZIP payload一致96ファイル（mtime除外）。",
+      "sources": [
+        "src-release-r3"
+      ],
+      "workstream": "初回受理"
+    },
+    {
+      "id": "progress-g3-prep",
+      "title": "G3設計・roster・chain/監査器の準備",
+      "state": "done",
+      "evidence": "PR #9/#11 merged。準備完了は起動許可・本体PASSではない。F_ref 18行NOT RUN、F_mix 18行BLOCKED。",
+      "sources": [
+        "src-g3-prep",
+        "src-g3-chain",
+        "src-main-history"
+      ],
+      "workstream": "初回受理"
+    },
+    {
+      "id": "progress-g3-diag",
+      "title": "r2 1世界診断を記録（G3対象外）",
+      "state": "done",
+      "evidence": "calm、revision ON、p1。360/362/721.7秒。24〜42秒/call。違反なしとの資料記録。recorderなし、監査FAIL 0でもBLOCKED。 revision開始6 / 応答5 / 採用0、監査BLOCKED。",
+      "sources": [
+        "src-g3-diagnostic"
+      ],
+      "workstream": "初回受理"
+    },
+    {
+      "id": "progress-rehearsal-r3",
+      "title": "mini 60世界リハーサル（本人引継ぎ）",
+      "state": "running",
+      "evidence": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。",
+      "sources": [
+        "src-handoff-oct06"
+      ],
+      "workstream": "計測"
+    },
+    {
+      "id": "progress-mixed-r3",
+      "title": "Air 36世界混成計測（本人引継ぎ）",
+      "state": "running",
+      "evidence": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+      "sources": [
+        "src-handoff-oct06"
+      ],
+      "workstream": "計測"
     }
   ]
 }
@@ -3005,20 +3441,20 @@
     {
       "id": "B01",
       "rank": 1,
-      "title": "inc-zetaの弱点・設定再現・新資格証跡が未解消",
+      "title": "G3の経済安全境界・recorderが未成立",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
       "owner": "Codex",
-      "evidence": "dev4 v3: 49.72対55.02、dev5 v5: 50.15対55.73で昇格せず。[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。 [measured] inczはF_ref平均T56.30対44.44だがnoop割れ4/12、全12レジームの対noop条件には反する方向。1 seed診断で資格合否は未判定。",
-      "mitigation": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。 反証条件: 独立60世界で平均T<multi-arb、いずれかのレジーム平均(T−Tnoop)<0、mined revert>1件または包含取引比>0.1%、原因不明の失敗、未回収自前資産損失/gas枯渇/無効注文>0のいずれかで停止する。G0・既決安全条件も維持し、閾値緩和・結果後の場変更・救済再走で合格にしない。",
-      "status": "mitigating",
+      "evidence": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
+      "mitigation": "G3本体BLOCKEDを維持。自然Haiku実変更・復帰、全action記録と強制境界を別々に確認。promptだけで解消扱いにしない。",
+      "status": "open",
       "sources": [
-        "src-rev10",
-        "src-rev13",
-        "src-rev14"
+        "src-r3-guard",
+        "src-revision-audit",
+        "src-g3-diagnostic"
       ],
-      "impact_note": "初回提出の受理まで進めない"
+      "impact_note": "G3を通過できず、提出READYにできない"
     },
     {
       "id": "B10",
@@ -3045,13 +3481,13 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "G3 17.2h、deep9.7h、Q0 5h留保は不変。[本人提示概算] 00:26 JST以降: xa-1 smoke約13分×2 + live smoke約13分×2 + live本計測32世界約150分 + mix1約100分 + mix2約100分 + incz約55分 = 単純和457分（7h37）。非重複を仮定した単純和で、確定値・区間和集合ではない。修理/検査/非run・重複・当日/forward消費は未精算。p3を3倍しない。C_forward + R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止。不明なら追加起動BLOCKED。旧rev 10の202分（3h22）・352分（5h52）は当時の部分見積として保持し、現行合計や残量には使わない。",
-      "mitigation": "AI専用E3/Q1約9.5333hにD48世界52/15h＋実装/支援が別。全工程不足なので実走未解放、cal後再予算。10/17不成立ならS240又はHなし。",
+      "evidence": "100hは総枠、残時間ではない。実消化・残費は未精算。RETRO概算はQ01約5.8h、Q02約4.4h、診断等約5h、合計約15h（推定）。既存予約を消化率や現在残費にしない。",
+      "mitigation": "公式P60実行12–13h＋照合1h、最小G3監査込み14–15hは計画見積。G4・全残予約・host別実消化を照合。追加研究は終了。",
       "status": "open",
       "sources": [
-        "src-master",
-        "src-ai",
-        "src-delegation"
+        "src-retro-oct06",
+        "src-release-runbook",
+        "src-c-exception"
       ],
       "impact_note": "後工程を時間枠内で完了できないおそれ"
     },
@@ -3109,16 +3545,18 @@
     {
       "id": "B07",
       "rank": 7,
-      "title": "新F_mixの相手・負荷入口が未確定",
+      "title": "G3 F_mixのfixed-bid-5gweiが未整備",
       "severity": "Warning",
       "likelihood": "高",
       "impact": "大",
       "owner": "Claude",
-      "evidence": "固定高入札対照の存在/適合/hash、財布順、場別G0が未確認。",
-      "mitigation": "結果前に全体登録。smokeで安全/執行を点検し、成績で相手を外さない。",
+      "evidence": "G3 rosterの固定5gwei相手が存在せずBLOCKED。Airの固定10相手計測は本人引継ぎのみで、この問題の解消証拠ではない。",
+      "mitigation": "既存相手の無断置換なし。正式roster・hashを確認するまでG3 F_mixは停止。",
       "status": "open",
       "sources": [
-        "src-master"
+        "src-g3-prep",
+        "src-g3-chain",
+        "src-handoff-oct06"
       ],
       "impact_note": "異なる対戦構成での確認を始められない"
     },
@@ -3159,17 +3597,18 @@
     {
       "id": "B11",
       "rank": 10,
-      "title": "xb-rコードと計測入力・再現性の照合",
+      "title": "旧xb-rの再現性照合（探索終了・履歴）",
       "severity": "Warning",
       "likelihood": "高",
       "impact": "中",
       "owner": "Claude",
       "evidence": "v5検査記録は引継ぎ。dev5未達・昇格せず、第3回xa-1打ち切り。mix1入力はxb-r v3凍結、d30cbbbとバイト同一との引継ぎ。5/11位の診断結果受領。独立fresh screen・Q0用hash/費用は未成立。",
-      "mitigation": "別ジョブのhash/clock固定再生/取引成立の再診断証跡を受領。編集中コードへ資格認定を移さない。",
+      "mitigation": "C+Eで追加探索を終了。旧測定版への不確実性は保存し、r3の検証に転用しない。",
       "status": "mitigating",
       "sources": [
         "src-v2-repair",
-        "src-dev3"
+        "src-dev3",
+        "src-c-exception"
       ],
       "impact_note": "測定した版と採用する版が一致しないおそれ"
     },
@@ -3194,17 +3633,18 @@
     {
       "id": "B13",
       "rank": 12,
-      "title": "最新仕様・release住所・ZIPの不整合",
+      "title": "G4・最終ZIP固定・運営相当の起動は未検証",
       "severity": "Warning",
       "likelihood": "中",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "規約本文はオンライン取得済み、10/6公表・10/20発効の未来日付表示。適用版/許可model/改訂受付の提出適合は未確定。",
-      "mitigation": "初回G4/10/12/10/28に版とmodelを照合。isolated releaseの受付差分をbundle/scan/selftestで確認。",
+      "evidence": "資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。",
+      "mitigation": "同一ZIP/住所表/commitを束縛し公式P60・G3・G4を確認。selftestはローカル住所表・隔離なし。",
       "status": "open",
       "sources": [
-        "src-ai",
-        "src-master"
+        "src-selftest-r2",
+        "src-release-r3",
+        "src-release-runbook"
       ],
       "impact_note": "提出仕様の不一致で受理されないおそれ"
     },
@@ -3217,12 +3657,13 @@
       "impact": "中",
       "owner": "Codex",
       "evidence": "M1の14/16が重複、新利益源0。M2の全実施は予約されていない。",
-      "mitigation": "M2既定省略、D/Eと因子は代替棚。最大2世代・下流資格費を先に予約。",
+      "mitigation": "C+Eで候補探索・資格再試行・AI性能研究を終了。提出必須工程と全残費を優先。",
       "status": "mitigating",
       "sources": [
         "src-m1",
         "src-grok-plan",
-        "src-master"
+        "src-master",
+        "src-c-exception"
       ],
       "impact_note": "新案の生成が優先工程の時間を使う"
     },
@@ -3262,18 +3703,19 @@
     {
       "id": "B17",
       "rank": 16,
-      "title": "分割PRのレビュー・CI・統合は未完了",
+      "title": "分割PR・後続PR #5–15の統合は完了",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "大",
       "owner": "human",
-      "evidence": "[独立意見・引継ぎ] Codex(Astra)は賛成。ただし「今のまま merge/提出してよいとは判断しない」。分割点候補は3d86a35。提出物混入は確認範囲で重大なしだが、直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認。現行CIのnpm ciにNPM_CONFIG_IGNORE_SCRIPTS=trueが無く作業ルールと不整合のため修正対象。inc-zetaの測定設定（bidMode:2等はrosterの環境変数）はコード既定値（bidMode:0）と違い、そのままbundleすると再現しないため焼き込み候補を固定する。noop割れ4レジームを先に診断する。契約の場を混成場へ変える案は結果を見たあとの基準変更になるため推奨しない。",
-      "mitigation": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
-      "status": "open",
+      "evidence": "PR #8 c1eaf6fでupstream 4057ea3統合。PR #9 G3準備、#10 r2 selftest、#11 chain snapshot、#12 r3、#13診断世界、#14例外継承、#15 r3 release確認がmerged。HEAD/origin/main 8c29964、オンライン未照合。",
+      "mitigation": "ローカル保存済み履歴で確認。最新オンラインCIは未照合、G4とは別。",
+      "status": "resolved",
       "sources": [
-        "src-rev14"
+        "src-main-history",
+        "src-release-r3"
       ],
-      "impact_note": "統合または適合受理を完了と判断できない"
+      "impact_note": "PR未統合による停止は解消。実行・提出ゲートは別"
     },
     {
       "id": "B18",
@@ -3283,13 +3725,29 @@
       "likelihood": "高",
       "impact": "大",
       "owner": "Codex",
-      "evidence": "[未確認] 規約は「10/20 発効版」表示との引継ぎで、今日（2026-10-05）の適用版との一致は未確認。本更新ではオンライン再取得なし。",
-      "mitigation": "適用版照合・提出物監査・実ZIP検査・運営配布版との一致を受理工程で確認する。今のままmerge/提出可とはしない。",
+      "evidence": "保存ランブックに規約適用日を記録。現在のオンライン規約・運営モデル・10/20配布版は未照合。",
+      "mitigation": "公式P60は10/20以降の比較可能な版で確認。",
       "status": "open",
       "sources": [
-        "src-rev14"
+        "src-release-runbook"
       ],
       "impact_note": "統合または適合受理を完了と判断できない"
+    },
+    {
+      "id": "B19",
+      "rank": 18,
+      "title": "C例外の未解決115件・回収停止リスク",
+      "severity": "Warning",
+      "likelihood": "高",
+      "impact": "致命",
+      "owner": "Codex",
+      "evidence": "未説明・未決115件＝82＋8＋25（BAL#507原因未確証82、mined revert reason未保存8、期末未包含25）。片脚回収不明2件は8件の内数。期末gas/実残高/raw receipts/完全action台帳等は未検証。wrapPending/recoverySellPendingが解除されずnoop継続するリスクはr3にも残る。",
+      "mitigation": "C5/C6保存証拠限定の受容を維持。新しい違反・不一致・実害で停止し、未検証をゼロにしない。",
+      "status": "open",
+      "sources": [
+        "src-c-exception"
+      ],
+      "impact_note": "r3でも安全の完全証明はなく、後続ゲート固有の証拠が必要"
     }
   ]
 }
@@ -3299,58 +3757,91 @@
 <script type="application/json" id="data-queue">
 {
   "sources": [
-    "src-master",
-    "src-handoff"
+    "src-c-exception",
+    "src-release-runbook",
+    "src-handoff-oct06"
   ],
   "items": [
     {
-      "id": "queue-zeta-prep",
+      "id": "queue-mixed-r3",
       "priority": 1,
+      "experiment": "mixed-r3",
+      "title": "Air r3混成場計測",
+      "state": "進行中との本人引継ぎ・未検証",
+      "worlds": 36,
+      "hours": null,
+      "window": "10/6 約20:15 JST時点",
+      "dependency": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-handoff-oct06"
+      ]
+    },
+    {
+      "id": "queue-rehearsal-r3",
+      "priority": 2,
+      "experiment": "rehearsal-r3",
+      "title": "mini r3 P60リハーサル",
+      "state": "進行中との本人引継ぎ・未検証",
+      "worlds": 60,
+      "hours": null,
+      "window": "10/6 約20:15 JST時点",
+      "dependency": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。",
+      "owner": "Claude",
+      "active": true,
+      "sources": [
+        "src-handoff-oct06"
+      ]
+    },
+    {
+      "id": "queue-zeta-prep",
+      "priority": 3,
       "experiment": "zeta-prep",
-      "title": "ascon-zeta-r2・契約登録完了",
-      "state": "登録済み・起動前照合待ち",
+      "title": "r3条件付き候補固定",
+      "state": "完了・資格合格ではない",
       "worlds": 0,
       "hours": null,
       "window": "10/6",
-      "dependency": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。",
       "owner": "Codex",
       "active": false,
       "sources": [
-        "src-q-zeta-02",
-        "src-q-zeta-01-result"
+        "src-c-exception",
+        "src-r3-guard"
       ]
     },
     {
       "id": "queue-pr-split",
-      "priority": 2,
+      "priority": 4,
       "experiment": "pr-split",
-      "title": "分割PR・CI修正・独立レビュー",
-      "state": "進行中・本人報告待ち",
+      "title": "PR #5–15統合",
+      "state": "完了・保存済み履歴",
       "worlds": 0,
       "hours": null,
       "window": "10/5以降",
-      "dependency": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+      "dependency": "PR #8 c1eaf6fでupstream 4057ea3統合。PR #9 G3準備、#10 r2 selftest、#11 chain snapshot、#12 r3、#13診断世界、#14例外継承、#15 r3 release確認がmerged。HEAD/origin/main 8c29964、オンライン未照合。",
       "owner": "human",
       "active": false,
       "sources": [
-        "src-rev14"
+        "src-main-history"
       ]
     },
     {
       "id": "queue-q-zeta-02",
-      "priority": 3,
+      "priority": 5,
       "experiment": "q-zeta-02",
       "title": "Q-ZETA-02の独立60世界資格試験",
-      "state": "registered-pending-start",
+      "state": "完了・条件4 FAIL / 原5/6 BLOCKED",
       "worlds": 60,
       "hours": "5",
-      "window": "10/6以降・基本4.5h+確認0.5h",
-      "dependency": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+      "window": "10/6 02:02〜06:25 JST（資料記録）",
+      "dependency": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
       "owner": "Claude",
       "active": false,
       "sources": [
-        "src-q-zeta-02",
-        "src-q-zeta-01-result"
+        "src-retro-oct06",
+        "src-c-exception"
       ]
     },
     {
@@ -3362,7 +3853,7 @@
         "src-rev13"
       ],
       "experiment": "dev1-evidence",
-      "priority": 4,
+      "priority": 6,
       "state": "incz診断完了・履歴",
       "worlds": 12,
       "hours": null,
@@ -3372,7 +3863,7 @@
     {
       "id": "queue-q0b-evidence",
       "experiment": "q0b-evidence",
-      "priority": 5,
+      "priority": 7,
       "title": "Q0b安全・G0履歴・時間証跡の補完",
       "state": "証跡精算のみ・再走なし",
       "worlds": 0,
@@ -3390,57 +3881,57 @@
       "id": "queue-q0-requal",
       "owner": "Claude",
       "sources": [
-        "src-master",
-        "src-delegation"
+        "src-c-exception"
       ],
       "experiment": "q0-requal",
-      "priority": 6,
-      "state": "条件付き決定・実行停止",
+      "priority": 8,
+      "state": "C+Eで終了・旧計画",
       "worlds": 60,
       "hours": "5",
-      "window": "修理再診断・hash/seed/費用成立後",
-      "dependency": "A維持、§8.3の全12×2診断screen成立後、新41301–41305の未使用性監査、1候補1回。deep内5h留保、超過/不足は開始しない",
+      "window": "現経路では実行しない",
+      "dependency": "旧契約を保存し、追加資格・候補探索・AI性能研究を再開しない。",
       "active": false,
       "title": "A現Q0・追加1候補1回"
     },
     {
       "id": "queue-mix-design",
       "experiment": "mix-design",
-      "priority": 7,
+      "priority": 9,
       "title": "F_mixと最小改訂受付の設計",
-      "state": "設計のみ",
+      "state": "準備済み・起動BLOCKED",
       "worlds": 0,
       "hours": "1/2",
       "window": "計測を邪魔しない空き枠",
-      "dependency": "固定相手/slot/hashとH1の専用adapter/運営受付・G4経路を整理。標準ON拒否。mix1診断は契約変更ではなく、Q0の扱い・本番自由改訂の継続は本人判断。",
+      "dependency": "設計・roster・chain snapshot/監査器を保存。実recorderと経済安全境界は未成立。",
       "owner": "Claude",
       "active": false,
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-g3-prep",
+        "src-g3-chain",
+        "src-revision-audit"
       ]
     },
     {
       "id": "queue-first-mix",
       "experiment": "first-mix",
-      "priority": 8,
+      "priority": 10,
       "title": "混成の対戦相手で動作を確認",
-      "state": "停止",
+      "state": "G3 F_mix未整備・停止",
       "worlds": 12,
       "hours": "13/15",
-      "window": "Q0契約PASS後のみ",
-      "dependency": "候補不変・roster/hash/G0。診断完走を資格PASSにしない",
+      "window": "roster/費用/G0成立後",
+      "dependency": "fixed-bid-5gwei未整備。Air混成計測との一致は未検証。",
       "owner": "Claude",
       "active": false,
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-g3-prep",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "queue-q0m",
       "experiment": "q0m",
-      "priority": 9,
+      "priority": 11,
       "title": "混成場での資格試験案（不採用）",
       "state": "不採用・旧未署名記録",
       "worlds": 60,
@@ -3457,51 +3948,53 @@
     {
       "id": "queue-first-p60",
       "experiment": "first-p60",
-      "priority": 10,
+      "priority": 12,
       "title": "公開60シナリオで回帰確認",
-      "state": "停止",
+      "state": "未実施・10/20以降待ち",
       "worlds": 60,
-      "hours": "13/3",
-      "window": "Q0 PASS後",
-      "dependency": "候補不変・G3/G4費確保。公開回帰は資格代替不可",
+      "hours": "14",
+      "window": "10/20〜22案、実行12–13h＋照合1h",
+      "dependency": "10/20適用版・同一候補/ZIP・G0照合。非公式リハーサルは代替不可。",
       "owner": "Claude",
       "active": false,
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-release-runbook",
+        "src-handoff-oct06"
       ]
     },
     {
       "id": "queue-first-g3",
       "experiment": "first-g3",
-      "priority": 11,
+      "priority": 13,
       "title": "AI改訂の最小動作確認",
-      "state": "停止",
-      "worlds": 36,
-      "hours": "13/5",
-      "window": "P60/資格・最小改訂policy後",
-      "dependency": "ON/OFF最小校正・実適用/復帰・機械的境界。gpt-oss:120b前提を本人了承・鍵登録受理は本人報告。無料枠不足時の前払い判断はG3見積もり後",
+      "state": "BLOCKED・本体未実施",
+      "worlds": 46,
+      "hours": "15",
+      "window": "日程再配分・14–15h予約案（未精算）",
+      "dependency": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。 fixed-bid-5gweiと自然変更fixture欠落。",
       "owner": "Claude",
       "active": false,
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-g3-design",
+        "src-g3-prep",
+        "src-g3-chain",
+        "src-revision-audit",
+        "src-r3-guard"
       ]
     },
     {
       "id": "queue-ai-implementation",
       "owner": "Claude",
       "sources": [
-        "src-master",
-        "src-delegation"
+        "src-c-exception"
       ],
       "experiment": "ai-implementation",
-      "priority": 12,
-      "state": "全費用待ち",
+      "priority": 14,
+      "state": "C+Eで終了・旧計画",
       "worlds": 0,
       "hours": null,
-      "window": "S受理/cal/費用成立後",
-      "dependency": "H1実装済みa95054a（213テスト・赤対照25）の引継ぎ。専用adapter接続・検査は未実装、標準ON拒否。別系統xb-r-liveの32世界はPILOT-STOP、追加予約/ON4なし。",
+      "window": "現経路では実行しない",
+      "dependency": "旧契約を保存し、追加資格・候補探索・AI性能研究を再開しない。",
       "active": false,
       "title": "H1専用adapter・D対照の前提整理"
     },
@@ -3509,40 +4002,38 @@
       "id": "queue-ai-d-control",
       "owner": "Claude",
       "sources": [
-        "src-master",
-        "src-delegation"
+        "src-c-exception"
       ],
       "experiment": "ai-d-control",
-      "priority": 13,
-      "state": "未解放",
+      "priority": 15,
+      "state": "C+Eで終了・旧計画",
       "worlds": 48,
       "hours": "52/15",
-      "window": "S受理後、AI下流全費用確保時のみ",
-      "dependency": "全12×新seed×A/D、48世界。旧案35001/35002はdev3診断で既見のため再利用不可。実行前に未使用の全seed集合を再登録。費用は基本単価で支援別。",
+      "window": "現経路では実行しない",
+      "dependency": "旧契約を保存し、追加資格・候補探索・AI性能研究を再開しない。",
       "active": false,
       "title": "AI対決定論適応の開発screen"
     },
     {
       "id": "queue-factor-ab",
       "experiment": "factor-ab",
-      "priority": 14,
+      "priority": 16,
       "title": "機能を切り替えて効果を比較",
-      "state": "保留",
+      "state": "C+Eで終了・旧計画",
       "worlds": 48,
       "hours": "52/15",
-      "window": "既資格候補と全残費がある場合のみ",
-      "dependency": "AI優先、10/17から新規探索なし。二重予約不可",
+      "window": "現経路では実行しない",
+      "dependency": "旧契約を保存し、追加資格・候補探索・AI性能研究を再開しない。",
       "owner": "Claude",
       "active": false,
       "sources": [
-        "src-q0b",
-        "src-master"
+        "src-c-exception"
       ]
     },
     {
       "id": "queue-m2",
       "experiment": "m2",
-      "priority": 15,
+      "priority": 17,
       "title": "新案の再生成（不採用）",
       "state": "不採用・0h配分",
       "worlds": 60,
@@ -3557,62 +4048,37 @@
       ]
     }
   ],
-  "note": "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。 承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。",
+  "note": "C+E経路。旧探索・新資格は終了。現在の2計測は本人引継ぎ・未検証であり新たな起動許可ではない。",
   "day_limit_hours": 6,
-  "bundle": "Q0再資格5hをdeep内優先留保。AI G3は17.2hへ振替済み、追加実装/D/下流費は全量成立まで未解放。 Q-ZETA-01の約4.5hは別契約の見積。旧5h予約の自動転用・予算再起算なし、診断/終了検査を含む全費用の登録待ち。",
+  "bundle": "forward100h・6h/日・110分/chunkを維持。実消化・残費未精算。G3準備/全監査込み14–15h、公式P60 12–13h＋照合1hは計画見積。",
   "side_jobs": [
     {
-      "title": "zeta-prep（Astra）",
-      "owner": "Codex",
-      "state": "進行中・結果未確認",
-      "note": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。",
-      "sources": [
-        "src-rev14"
-      ]
-    },
-    {
-      "title": "PR分割（本人）",
-      "owner": "human",
-      "state": "進行中・結果未確認",
-      "note": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
-      "sources": [
-        "src-rev14"
-      ]
-    },
-    {
-      "title": "PLATEAU-ANALYSIS",
-      "owner": "Codex",
-      "state": "作成中・結果未確認",
-      "note": "構造の異なる独自設計候補の検討をAstraが別ジョブで作成中。結果未確認。新規計測・採用・予算追加を意味しない。",
-      "sources": [
-        "src-operations"
-      ]
-    },
-    {
-      "title": "xa-1 / 第3回打ち切り",
+      "title": "mini P60リハーサル",
       "owner": "Claude",
-      "state": "HEALTHY=no・停止",
-      "note": "[measured引継ぎ] xa-1 7179efe→6cd9e70→3ad4f60。dev6は判断ログにround無し+取引停止でG0 BLOCKED、修理1後dev7は提出18・回収専用264/362、修理2後xas2はcalm/38005・G0 PASS・提出10件<30・回収専用4/710（ロック解消）・violations0/revert0。HEALTHY=no。2回修理後も不健全のため打ち切り、第3回未達扱いは本人報告事項。 旧smoke 38003・38001/38002×12=24世界・約104分+終了確認の案は履歴。第3回はsmoke打ち切りで本計測未達。",
+      "state": "進行中・未検証",
+      "note": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。",
       "sources": [
-        "src-rev10"
+        "src-handoff-oct06"
       ]
     },
     {
-      "title": "H1 / AI受付の前提整理",
-      "owner": "Codex",
-      "state": "ON停止・adapter未実装",
-      "note": "H1は専用adapter未実装・標準ON拒否を維持。旧H1仕様の39001/39002は今回liveで使用済みで、fresh seedとして再利用しない。[measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。",
-      "sources": [
-        "src-rev10"
-      ]
-    },
-    {
-      "title": "xb-r-live / 自由改訂",
+      "title": "Air 混成場計測",
       "owner": "Claude",
-      "state": "PILOT-STOP",
-      "note": "[measured引継ぎ] xb-r-liveはv3初期コード・prompt v2・claude-cli:haiku・課金なし。F_ref、calm/whale/crash/depeg-persist×39001/39002、OFF1+ON3=32世界、全群G0 PASS・安全OK。全反復dT>0を満たさずPILOT-STOP。H1とは別のsim内自由改訂診断で、資格/提出許可ではない。",
+      "state": "進行中・未検証",
+      "note": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
       "sources": [
-        "src-rev10"
+        "src-handoff-oct06"
+      ]
+    },
+    {
+      "title": "release / G3準備",
+      "owner": "Claude",
+      "state": "事前確認済み / G3 BLOCKED",
+      "note": "資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。 標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
+      "sources": [
+        "src-release-r3",
+        "src-r3-guard",
+        "src-revision-audit"
       ]
     }
   ]
@@ -3625,14 +4091,16 @@
   "sources": [
     "src-master",
     "src-budget-update",
-    "src-ai"
+    "src-ai",
+    "src-retro-oct06",
+    "src-release-runbook"
   ],
   "total_hours": "100",
   "interpretation": "forward100h運用を維持・起点実区間の精算待ち",
   "start_at": "2026-10-04T01:00:00+09:00",
   "consumed_lower_bound_hours": "18.6",
   "consumed_exact_hours": null,
-  "note": "確認済み過去実測下限18.6hは据置。Q0b概算とdev1/dev2/dev3未精算を実測残枠にしない。KEEPはG3へ5.2h振替済み、AMENDは旧未署名比較の履歴。Q0/受理優先。鍵登録受理は本人報告済み、無料枠不足時の前払い判断はG3見積もり後。",
+  "note": "100hは総枠、残時間ではない。実消化・残費は未精算。RETRO概算はQ01約5.8h、Q02約4.4h、診断等約5h、合計約15h（推定）。既存予約を消化率や現在残費にしない。",
   "columns": [
     {
       "id": "budget-keep",
@@ -3809,7 +4277,7 @@
       ]
     ]
   },
-  "on_note": "決定: R*反復12h＋S full G3 5.2h=17.2h（ON倍率1）。deep9.7hへ縮小、Q0再資格5h優先。E3/Q1基本143/15h・D基本52/15h・実装/支援は全費用未確保。cal最大×1.2で再予算、10/17の切替条件を適用。",
+  "on_note": "現C経路の最小G3は36＋7＋3、p1基本約9.97h、監査込み14–15h予約案。旧G3 17.2h配分は保存された予約で、起動許可・実消化ではない。",
   "historic_bar_note": "履歴の下限 / forward計画と同じ時間スケール（枠外、差引き禁止）",
   "consumption_estimate": {
     "sources": [
@@ -3826,7 +4294,8 @@
   "overnight": {
     "sources": [
       "src-overnight",
-      "src-rev10"
+      "src-rev10",
+      "src-retro-oct06"
     ],
     "window_start": "2026-10-05T00:26:00+09:00",
     "xa_smoke_minutes_each": 13,
@@ -3845,7 +4314,7 @@
     "remaining_reserved_hours": null,
     "next_full_cost_hours": null,
     "formula": "C_forward + R_remaining + N_next ≤ 100h",
-    "note": "[本人提示概算] 00:26 JST以降: xa-1 smoke約13分×2 + live smoke約13分×2 + live本計測32世界約150分 + mix1約100分 + mix2約100分 + incz約55分 = 単純和457分（7h37）。非重複を仮定した単純和で、確定値・区間和集合ではない。修理/検査/非run・重複・当日/forward消費は未精算。p3を3倍しない。C_forward + R_remaining + N_next ≤ 100h、同一区間のC/R二重計上禁止。不明なら追加起動BLOCKED。旧rev 10の202分（3h22）・352分（5h52）は当時の部分見積として保持し、現行合計や残量には使わない。",
+    "note": "旧夜間概算457分は当時の部分履歴。RETROの10/5〜6概算約15hも未精算であり、重複を未照合のまま足さない。2台の稼働時間・現在の残費は未検証。",
     "mix2_estimate_minutes": 100,
     "incz_estimate_minutes": 55,
     "historical_rev10": {
@@ -4862,6 +5331,55 @@
     ],
     "diagnostic": [
       {
+        "candidate": "r2 1世界（G3対象外）",
+        "scope_ref": "status.g3_diag",
+        "run_ref": "status.g3_diag.name",
+        "metrics": [
+          {
+            "label": "netPnl USDC",
+            "candidate_ref": "status.g3_diag.result.p_candidate",
+            "baseline_ref": "status.g3_diag.result.p_multi"
+          }
+        ],
+        "detail": "calm、revision ON、p1。360/362/721.7秒。24〜42秒/call。違反なしとの資料記録。recorderなし、監査FAIL 0でもBLOCKED。",
+        "state": "warning",
+        "verdict": "G3合否・公式P60・資格の証拠にしない。監査BLOCKED、採用revision 0。",
+        "sources": [
+          "src-g3-diagnostic",
+          "src-revision-audit"
+        ]
+      },
+      {
+        "candidate": "r3 Air（結果未確認）",
+        "scope_ref": "status.mixed_r3",
+        "run_ref": "status.mixed_r3.name",
+        "metrics": [],
+        "detail": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+        "state": "warning",
+        "verdict": "G3合否・公式P60・資格の証拠にしない。本人引継ぎ・未検証。",
+        "sources": [
+          "src-handoff-oct06"
+        ]
+      },
+      {
+        "candidate": "r3 mini（chunk 1のみ）",
+        "scope_ref": "status.rehearsal",
+        "run_ref": "status.rehearsal.name",
+        "metrics": [
+          {
+            "label": "chunk 1平均T",
+            "candidate_ref": "status.rehearsal.chunk1.t_candidate",
+            "baseline_ref": "status.rehearsal.chunk1.t_multi"
+          }
+        ],
+        "detail": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。",
+        "state": "warning",
+        "verdict": "G3合否・公式P60・資格の証拠にしない。本人引継ぎ・未検証。",
+        "sources": [
+          "src-handoff-oct06"
+        ]
+      },
+      {
         "candidate": "xb-r v5",
         "scope_ref": "status.dev5",
         "run_ref": "status.dev5.name",
@@ -5096,6 +5614,25 @@
       }
     ],
     "qualification": [
+      {
+        "candidate": "ascon-zeta-r2（旧資格hash）",
+        "scope_ref": "plan.zeta_qualification",
+        "run_ref": "plan.zeta_qualification.contract",
+        "metrics": [
+          {
+            "label": "平均T",
+            "candidate_ref": "plan.zeta_qualification.result.t_candidate",
+            "baseline_ref": "plan.zeta_qualification.result.t_multi"
+          }
+        ],
+        "detail": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
+        "state": "failed",
+        "verdict": "条件4 FAIL / 原条件5/6 BLOCKED。r3の資格合格に転用しない。",
+        "sources": [
+          "src-retro-oct06",
+          "src-c-exception"
+        ]
+      },
       {
         "candidate": "xb-r",
         "scope_ref": "plan.q0_requalification",
@@ -5889,7 +6426,7 @@
     "src-master",
     "src-handoff"
   ],
-  "date_note": "2026-10-05の3点は本人チャット承認済み。既存20判断は全フィールドを原記録として保持（dec-rev10-directionのopenは当時の状態）。現方針は以下のrev14本人決定を参照。署名/金銭/APIの委任範囲は不変。",
+  "date_note": "旧決定23件を全フィールド保持。最新のC+E / r3選択はC例外§8。原条件4 FAIL・5/6 BLOCKEDは不変。",
   "items": [
     {
       "id": "dec-original",
@@ -6229,26 +6766,41 @@
       "sources": [
         "src-rev14"
       ]
+    },
+    {
+      "id": "dec-c-exception-r3",
+      "date": "2026-10-06",
+      "due_date": null,
+      "title": "C+E経路・r3への例外継承を本人選択",
+      "status": "decided",
+      "note": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。 未説明・未決115件＝82＋8＋25（BAL#507原因未確証82、mined revert reason未保存8、期末未包含25）。片脚回収不明2件は8件の内数。期末gas/実残高/raw receipts/完全action台帳等は未検証。wrapPending/recoverySellPendingが解除されずnoop継続するリスクはr3にも残る。",
+      "sources": [
+        "src-c-exception"
+      ],
+      "owner": "human",
+      "group": "delegated"
     }
   ],
   "human_only": {
-    "status": "3点は本人承認済み・分割PRの進行を本人報告へ",
+    "status": "r3への例外継承を本人選択済み。送信・10/28最終確認は未完了",
     "items": [
-      "分割PRの進行を報告し、独立レビュー・CI後にmerge commitで統合する",
-      "資格・P60・最小G3/G4成立後の本人送信と受理確認",
-      "10/28 dec-007、10/29最終受理目標、10/31 23:59 JST照合",
-      "無料枠不足時の前払い判断はG3見積もり後（未承認）"
+      "G3/G4/公式P60成立後に本人がフォーム送信",
+      "10/28 dec-007でOllama・ZIP・枠・鍵を最終確認",
+      "送信と受理を別記し10/31 23:59 JSTまでに照合"
     ],
     "decision_refs": [
       "dec-zeta-original",
       "dec-zeta-qualification",
       "dec-pr-split",
-      "dec-007"
+      "dec-007",
+      "dec-c-exception-r3"
     ],
     "sources": [
-      "src-rev14"
+      "src-c-exception",
+      "src-release-runbook",
+      "src-handoff-oct06"
     ],
-    "note": "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。 [独立意見・引継ぎ] Codex(Astra)は賛成。ただし「今のまま merge/提出してよいとは判断しない」。分割点候補は3d86a35。提出物混入は確認範囲で重大なしだが、直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認。現行CIのnpm ciにNPM_CONFIG_IGNORE_SCRIPTS=trueが無く作業ルールと不整合のため修正対象。inc-zetaの測定設定（bidMode:2等はrosterの環境変数）はコード既定値（bidMode:0）と違い、そのままbundleすると再現しないため焼き込み候補を固定する。noop割れ4レジームを先に診断する。契約の場を混成場へ変える案は結果を見たあとの基準変更になるため推奨しない。 承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。"
+    "note": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。"
   },
   "ollama_report": {
     "evidence_kind": "本人報告",
@@ -6295,8 +6847,105 @@
     "計画変更",
     "誤り"
   ],
-  "note": "追記専用・記録時刻の降順。同時刻は許可。正確な出来事時刻がない履歴は移行時刻で追記し、対象日と時刻根拠を併記。既存entryは訂正せず[誤り]を追加。",
+  "note": "追記のみ。旧100件は全フィールド保持、8件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-108",
+      "timestamp": "2026-10-06T20:18:51+09:00",
+      "type": "誤り",
+      "summary": "旧Q-ZETA-02登録待ち・分割PR進行中・全計測終了という現在表示を訂正。朝のOPTIONS/RETROは履歴。初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "sources": [
+        "src-c-exception",
+        "src-retro-oct06",
+        "src-options-oct06",
+        "src-release-runbook",
+        "src-handoff-oct06"
+      ],
+      "time_basis": "ダッシュボード更新のJST記録時刻。資料は10/6付、実行時刻は推測しない。進行中計測は本人提示の約20:15 JSTスナップショット。",
+      "event_date": "2026-10-06"
+    },
+    {
+      "id": "log-107",
+      "timestamp": "2026-10-06T20:18:51+09:00",
+      "type": "実測",
+      "summary": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。 [本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+      "sources": [
+        "src-handoff-oct06"
+      ],
+      "time_basis": "ダッシュボード更新のJST記録時刻。資料は10/6付、実行時刻は推測しない。進行中計測は本人提示の約20:15 JSTスナップショット。",
+      "event_date": "2026-10-06"
+    },
+    {
+      "id": "log-106",
+      "timestamp": "2026-10-06T20:18:51+09:00",
+      "type": "レビュー",
+      "summary": "環境注意: upstream統合後はstate dumpをdeployから再生成（旧dumpはLQTYStakingが0で起動拒否）。Colimaは/tmpをmountできずホーム配下のworktreeが必要。env -iでclaudeログインにはUSERが必要。",
+      "sources": [
+        "src-g3-diagnostic",
+        "src-selftest-r2"
+      ],
+      "time_basis": "ダッシュボード更新のJST記録時刻。資料は10/6付、実行時刻は推測しない。進行中計測は本人提示の約20:15 JSTスナップショット。",
+      "event_date": "2026-10-06"
+    },
+    {
+      "id": "log-105",
+      "timestamp": "2026-10-06T20:18:51+09:00",
+      "type": "実測",
+      "summary": "calm、revision ON、p1。360/362/721.7秒。24〜42秒/call。違反なしとの資料記録。recorderなし、監査FAIL 0でもBLOCKED。 revision開始6・応答5・採用0。",
+      "sources": [
+        "src-g3-diagnostic"
+      ],
+      "time_basis": "ダッシュボード更新のJST記録時刻。資料は10/6付、実行時刻は推測しない。進行中計測は本人提示の約20:15 JSTスナップショット。",
+      "event_date": "2026-10-06"
+    },
+    {
+      "id": "log-104",
+      "timestamp": "2026-10-06T20:18:51+09:00",
+      "type": "レビュー",
+      "summary": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。 未説明・未決115件＝82＋8＋25（BAL#507原因未確証82、mined revert reason未保存8、期末未包含25）。片脚回収不明2件は8件の内数。期末gas/実残高/raw receipts/完全action台帳等は未検証。wrapPending/recoverySellPendingが解除されずnoop継続するリスクはr3にも残る。",
+      "sources": [
+        "src-r3-guard",
+        "src-revision-audit",
+        "src-c-exception"
+      ],
+      "time_basis": "ダッシュボード更新のJST記録時刻。資料は10/6付、実行時刻は推測しない。進行中計測は本人提示の約20:15 JSTスナップショット。",
+      "event_date": "2026-10-06"
+    },
+    {
+      "id": "log-103",
+      "timestamp": "2026-10-06T20:18:51+09:00",
+      "type": "実測",
+      "summary": "資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。",
+      "sources": [
+        "src-selftest-r2",
+        "src-release-r3"
+      ],
+      "time_basis": "ダッシュボード更新のJST記録時刻。資料は10/6付、実行時刻は推測しない。進行中計測は本人提示の約20:15 JSTスナップショット。",
+      "event_date": "2026-10-06"
+    },
+    {
+      "id": "log-102",
+      "timestamp": "2026-10-06T20:18:51+09:00",
+      "type": "実装",
+      "summary": "PR #8 c1eaf6fでupstream 4057ea3統合。PR #9 G3準備、#10 r2 selftest、#11 chain snapshot、#12 r3、#13診断世界、#14例外継承、#15 r3 release確認がmerged。HEAD/origin/main 8c29964、オンライン未照合。",
+      "sources": [
+        "src-main-history"
+      ],
+      "time_basis": "ダッシュボード更新のJST記録時刻。資料は10/6付、実行時刻は推測しない。進行中計測は本人提示の約20:15 JSTスナップショット。",
+      "event_date": "2026-10-06"
+    },
+    {
+      "id": "log-101",
+      "timestamp": "2026-10-06T20:18:51+09:00",
+      "type": "決定",
+      "summary": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
+      "sources": [
+        "src-c-exception",
+        "src-retro-oct06"
+      ],
+      "time_basis": "ダッシュボード更新のJST記録時刻。資料は10/6付、実行時刻は推測しない。進行中計測は本人提示の約20:15 JSTスナップショット。",
+      "event_date": "2026-10-06"
+    },
     {
       "id": "log-100",
       "timestamp": "2026-10-05T09:52:03+09:00",
@@ -8050,28 +8699,28 @@
   ],
   "kpis": [
     {
-      "label": "最新の混成場診断",
-      "ref": "status.mix48.name",
-      "note": "48世界の診断集計。mix1の1世界BLOCKEDを保持",
+      "label": "提出候補（条件付き）",
+      "ref": "status.candidate.name",
+      "note": "S_cond・a03da518…3dff。資格合格・提出READYではない",
       "route": "results"
     },
     {
-      "label": "混成場首位 inc-zeta 平均T",
-      "ref": "status.mix48.result.t_leader",
-      "note": "12レジーム等重み・1/11位、最悪46.8。Q0未通過",
+      "label": "miniリハーサル chunk 1平均T",
+      "ref": "status.rehearsal.chunk1.t_candidate",
+      "note": "対multi-arb 43.63。本人引継ぎ・未検証、全60世界結果ではない",
       "route": "results"
     },
     {
       "label": "本人が今やること",
       "ref": "status.human_action",
-      "note": "3点は承認済み。再承認待ちではない",
+      "note": "r3の選択済み。初回目標10/14はゲート未達、日程不整合あり",
       "route": "decisions"
     },
     {
       "label": "提出締切 · JST",
       "ref": "plan.deadline_at",
       "format": "deadline",
-      "note": "初回受理日は再見積もり",
+      "note": "10/31 23:59 JST。本人送信と運営受理は別",
       "route": "plan"
     }
   ],
@@ -8090,17 +8739,17 @@
     }
   ],
   "copy": {
-    "action_note": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
-    "action_next": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
-    "diagnostic_notice": "48001は旧variant、48002はG0 FAIL（sleep後360/361loops）の診断。資格証拠ではない。",
-    "qualification_notice": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+    "action_note": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+    "action_next": "10/28 dec-007未完了。Ollama・ZIP・利用枠・鍵の最終確認は本人。",
+    "diagnostic_notice": "最新はr2 1世界診断と、mini/Airの本人引継ぎ。公式P60・G3・資格へ昇格させない。過去診断は元判定のまま保持。",
+    "qualification_notice": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
     "diagnostic_criteria": "Pは損益、Tは同じ相手の中での相対スコア。取引が増えることと、資格を満たすことは別です。",
-    "plan_state": "条件付き第一候補を承認・準備中",
-    "plan_note": "[日程案・JST] 10/5〜6 診断・設定固定・契約登録、10/6〜8 資格試験、10/9〜12 P60/最小G3/G4・本人送信・初回受理、10/13〜17は受理Sと全残費がある時だけ既決AI工程。10/17 18:00 H480/S240/Hなし分岐、10/18〜25 最終確認、10/26〜28 G4照合と10/28 dec-007、10/29 最終受理目標・10/30 予備・10/31 23:59 JST 照合。初回受理は未確保、日付を理由にゲートを緩めない。",
+    "plan_state": "S_cond / r3・G3 BLOCKED",
+    "plan_note": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
     "registration": "受理表示を本人が確認済み",
     "provider_remaining": "運営モデル一覧・無料枠量・鍵の疎通",
-    "decisions_note": "2026-10-05の3点は本人チャット承認済み。既存20判断は全フィールドを原記録として保持（dec-rev10-directionのopenは当時の状態）。現方針は以下のrev14本人決定を参照。署名/金銭/APIの委任範囲は不変。"
+    "decisions_note": "旧決定23件を全フィールド保持。最新のC+E / r3選択はC例外§8。原条件4 FAIL・5/6 BLOCKEDは不変。"
   },
   "roadmap_axis": [
     "10/4",
@@ -8166,7 +8815,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
   const fraction = value => {const [a,b='1']=String(value).split('/'); return Number(a)/Number(b);};
   const hours = value => value == null ? '未見積' : `${Number(fraction(value).toFixed(2))} h`;
   const lookupProgress = id => D.progress.items.find(p => p.id===id);
-  const fmtState = {done:['完了','✓'],running:['進行中','◌'],blocked:['ブロック','!'],failed:['不合格','×'],pending:['未着手','—'],decision:['要判断','?'],warning:['確認待ち','!'],decided:['決定済み','✓'],resolved:['解決済み','✓'],closed:['完了','✓'],unsigned:['不採用・履歴','—'],open:['未完了','!'],mitigating:['対応中','◌']};
+  const fmtState = {done:['完了','✓'],running:['進行中','◌'],blocked:['BLOCKED · ブロック','!'],failed:['不合格','×'],pending:['未着手','—'],decision:['要判断','?'],warning:['確認待ち','!'],decided:['決定済み','✓'],resolved:['解決済み','✓'],closed:['完了','✓'],unsigned:['不採用・履歴','—'],open:['未完了','!'],mitigating:['対応中','◌']};
   const chip = (kind,label) => {const [text,symbol]=fmtState[kind]||[kind,'—'];const tone={decided:'done',resolved:'done',closed:'done',open:'warning',mitigating:'running'}[kind]||kind;return `<span class="chip ${esc(tone)}"><span class="chip-symbol" aria-hidden="true">${symbol}</span>${esc(label||text)}</span>`;};
   const evidence = label => `<span class="evidence">${esc(label)}</span>`;
   let explained = new Set();
@@ -8189,12 +8838,13 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
   const sectionTitle = (title,extra='') => `<div class="section-title"><h2>${esc(title)}</h2>${extra}</div>`;
   const details = (title,body,open=false) => `<details class="details-card"${open?' open':''}><summary>${esc(title)}</summary><div class="details-body">${body}</div></details>`;
   function rawTable(obj) {
+    const resultKey=Object.keys(D.results).find(k=>D.results[k]===obj);
     const header=obj.header||['構成','指標','候補','結果'];
-    return `<table class="raw-table ${header.length>5?'wide-table':''}" role="table"><caption>${rich(obj.run_label||obj.title||'詳細データ')}</caption><thead><tr>${header.map(h=>`<th scope="col">${rich(h)}</th>`).join('')}</tr></thead><tbody>${obj.rows.map(row=>`<tr>${row.map((c,i)=>`<td data-label="${esc(header[i])}"><div>${rich(c)}</div></td>`).join('')}</tr>`).join('')}</tbody></table>${obj.note?`<p class="scope-note">${rich(obj.note)}</p>`:''}${refs(obj.sources||D.results.sources)}`;
+    return `<table data-record="${resultKey?'results.'+resultKey:''}" class="raw-table ${header.length>5?'wide-table':''}" role="table"><caption>${rich(obj.run_label||obj.title||'詳細データ')}${obj.verified===false?evidence('未検証'):''}${obj.status==='BLOCKED'?evidence('BLOCKED'):''}</caption><thead><tr>${header.map(h=>`<th scope="col">${rich(h)}</th>`).join('')}</tr></thead><tbody>${obj.rows.map(row=>`<tr>${row.map((c,i)=>`<td data-label="${esc(header[i])}"><div>${rich(c)}</div></td>`).join('')}</tr>`).join('')}</tbody></table>${obj.note?`<p class="scope-note">${rich(obj.note)}</p>`:''}${refs(obj.sources||D.results.sources)}`;
   }
   function keyValues(obj) {return `<dl class="data-list">${Object.entries(obj).filter(([k])=>!['sources','id'].includes(k)).map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${rich(v===null?'未確認':Array.isArray(v)?v.join(' / '):typeof v==='object'?JSON.stringify(v):v)}</dd></div>`).join('')}</dl>${obj.sources?refs(obj.sources):''}`;}
   function kpis(){return `<div class="kpis">${D.ui.kpis.map(k=>{let value=read(k.ref);if(k.format==='deadline')value=dateOnly(value)+' '+value.slice(11,16);return `<article class="kpi"><div class="kpi-heading"><div class="kpi-label">${rich(k.label)}</div><a class="kpi-jump" href="#${k.route}" aria-label="${esc(k.label+'の詳細を見る')}">↗</a></div><div class="kpi-value ${String(value).length>7?'compact':''}">${rich(value)}</div><p class="kpi-note">${rich(k.note)}</p></article>`;}).join('')}</div>`;}
-  function prioritySteps(){const items=D.status.priority.progress_refs.map(lookupProgress),complete=items.filter(i=>i.state==='done').length;return `<div class="progress-head"><span>資格試験までの確認項目</span><span>${complete} / ${items.length} 完了</span></div><progress value="${complete}" max="${items.length}" aria-label="資格試験までの確認項目 ${complete} / ${items.length}"></progress><ol class="steps">${items.map((p,i)=>`<li class="step"><span class="step-dot ${p.state}" aria-hidden="true">${p.state==='done'?'✓':i+1}</span><div class="step-label">${rich(p.title)}</div><div class="step-state">${fmtState[p.state][0]}</div></li>`).join('')}</ol><p class="scope-note">確認項目の完了数です。試験の合格率や計測の進行率ではありません。</p>`;}
+  function prioritySteps(){const items=D.status.priority.progress_refs.map(lookupProgress),complete=items.filter(i=>i.state==='done').length;return `<div class="progress-head"><span>資格試験までの確認項目</span><span>${complete} / ${items.length} 完了</span></div><progress value="${complete}" max="${items.length}" aria-label="資格試験までの確認項目 ${complete} / ${items.length}"></progress><ol class="steps">${items.map((p,i)=>`<li class="step" data-record="progress.${esc(p.id)}"><span class="step-dot ${p.state}" aria-hidden="true">${p.state==='done'?'✓':i+1}</span><div class="step-label">${rich(p.title)}</div><div class="step-state">${fmtState[p.state][0]}${p.verified===false?evidence('未検証'):''}${p.status==='BLOCKED'?evidence('BLOCKED'):''}</div></li>`).join('')}</ol><p class="scope-note">確認項目の完了数です。試験の合格率や計測の進行率ではありません。</p>`;}
   function overview(){const s=D.status,r=read(D.plan.continuous_operation.current_run_ref),finalCheck=D.decisions.items.find(d=>d.id==='dec-007');return `${kpis()}
     <div class="summary-strip"><h2>${rich(s.headline)}</h2><p>${rich(s.subhead)}</p></div>
     <div class="grid-2"><article class="card priority-card"><div class="card-title"><span class="mini-label">いまの最優先目標</span>${chip(s.priority.state,s.priority.state_label)}</div><h2 class="priority-title">${rich(s.priority.title)}</h2><p>${rich(s.priority.note)}</p>${prioritySteps()}${refs(s.priority.sources)}${link('results','診断と資格試験の結果を見る')}</article>
@@ -8221,16 +8871,16 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
       `<strong>${rich(row.candidate)}</strong>`,
       `<div class="run-label">${rich(read(row.run_ref))}</div><p>${rich(scopeText(read(row.scope_ref)))}</p>`,
       (row.value_note?`<strong>${rich(row.value_note)}</strong>`:'')+(row.metrics?`<div class="metric-pair">${row.metrics.map(m=>`<p>${rich(m.label)} <b>${esc(read(m.candidate_ref))}</b>${m.baseline_ref?' / '+esc(read(m.baseline_ref)):''}</p>`).join('')}</div>`:'')+(row.metric_note?`<p class="scope-note">${rich(row.metric_note)}</p>`:'')+((row.detail||row.detail_ref)?`<p>${rich(row.detail||read(row.detail_ref))}</p>`:''),
-      `${chip(row.state,row.state_label)}<p>${rich(row.verdict)}</p>${row.safety_ref?`<p>${rich(safetyText(row.safety_ref))}</p>`:''}${refs(row.sources)}`
+      `${chip(row.state,row.state_label)}${row.verified===false?evidence('未検証'):''}${row.status==='BLOCKED'?evidence('BLOCKED'):''}<p>${rich(row.verdict)}</p>${row.safety_ref?`<p>${rich(safetyText(row.safety_ref))}</p>`:''}${refs(row.sources)}`
     ]);
-    return `<table class="comparison" role="table"><caption class="sr-only">${mode==='diagnostic'?'診断計測':'資格試験'}の候補比較</caption><thead><tr>${head.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((v,i)=>`<td data-label="${head[i]}"><div>${v}</div></td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    return `<table class="comparison" role="table"><caption class="sr-only">${mode==='diagnostic'?'診断計測':'資格試験'}の候補比較</caption><thead><tr>${head.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map((row,index)=>`<tr data-record="results.comparison.${mode}.${index}">${row.map((v,i)=>`<td data-label="${head[i]}"><div>${v}</div></td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
   function results(){const mode=state.results;const keys=mode==='diagnostic'?['xa1','live','live_safety','mix1','dev5','dev4','dev4_regimes','dev3a','dev2','dev2_detail','dev1','d0','strategies','ranking','zeta']:['q0','q0b'];return `
     <section class="card table-card results-primary"><div class="table-intro"><div class="subnav" role="group" aria-label="結果の種類"><button type="button" data-results="diagnostic" aria-pressed="${mode==='diagnostic'}">診断 · 原因と改善を調べる</button><button type="button" data-results="qualification" aria-pressed="${mode==='qualification'}">資格試験 · 合否を判定する</button></div><div class="card-title"><h2>${mode==='diagnostic'?'診断計測の比較':'資格試験の判定'}</h2>${evidence('measured引継ぎ / 原ログ未再監査')}</div><p class="card-sub">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_criteria:D.ui.copy.qualification_criteria)}</p></div>${comparison(mode)}<div class="table-foot">${rich(D.status.measurement_note)}</div></section><div class="section"><div class="notice ${mode==='diagnostic'?'':'warning'}">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_notice:D.ui.copy.qualification_notice)}</div></div>
     <section class="section">${sectionTitle('測定の原表・条件')}<div class="stack">${keys.map(k=>details(D.results[k].title,rawTable(D.results[k]))).join('')}</div></section>
-    <div class="stack section">${details('進捗台帳 · すべての作業項目',D.progress.workstreams.map(w=>`<section class="section"><h3>${esc(w)}</h3><ol class="milestone-list">${D.progress.items.filter(p=>p.workstream===w).map(p=>`<li><div>${chip(p.state)}</div><div><h3>${rich(p.title)}</h3><p>${rich(p.evidence)}</p>${refs(p.sources)}</div></li>`).join('')}</ol></section>`).join(''))}${details('固定版・過去の記録',keyValues(D.status.commits)+keyValues(D.status.q0b)+keyValues(D.status.dev1)+keyValues(D.status.repair_v2))}${details('過去の診断・設計の記録',rawTable(D.results.m1)+rawTable(D.results.fields)+D.results.research.concat(D.results.archive).map(r=>`<article class="section"><h3>${rich(r.title)}</h3><p class="scope-note">${rich(r.text)}</p>${refs(r.sources)}</article>`).join(''))}</div>`;}
+    <div class="stack section">${details('進捗台帳 · すべての作業項目',D.progress.workstreams.map(w=>`<section class="section"><h3>${esc(w)}</h3><ol class="milestone-list">${D.progress.items.filter(p=>p.workstream===w).map(p=>`<li data-record="progress.${esc(p.id)}"><div>${chip(p.state)}${p.verified===false?evidence('未検証'):''}${p.status==='BLOCKED'?evidence('BLOCKED'):''}</div><div><h3>${rich(p.title)}</h3><p>${rich(p.evidence)}</p>${refs(p.sources)}</div></li>`).join('')}</ol></section>`).join(''))}${details('固定版・過去の記録',keyValues(D.status.commits)+keyValues(D.status.q0b)+keyValues(D.status.dev1)+keyValues(D.status.repair_v2))}${details('過去の診断・設計の記録',rawTable(D.results.m1)+rawTable(D.results.fields)+D.results.research.concat(D.results.archive).map(r=>`<article class="section"><h3>${rich(r.title)}</h3><p class="scope-note">${rich(r.text)}</p>${refs(r.sources)}</article>`).join(''))}</div>`;}
   function blockers(){const items=D.blockers.items.filter(b=>state.risk==='all'||(state.risk==='resolved'?b.status==='resolved':b.status!=='resolved'));return `<div class="subnav" role="group" aria-label="リスクの状態">${[['active','未解消'],['resolved','解消済み'],['all','すべて']].map(([k,l])=>`<button type="button" data-risk="${k}" aria-pressed="${state.risk===k}">${l}</button>`).join('')}</div><p class="scope-note">優先順位・可能性・影響は資料に基づく定性判断です。発生確率の実測ではありません。</p><div class="risk-list section">${items.map(b=>`<article class="card risk-card ${b.rank===1?'risk-first':''}"><div class="rank" aria-label="優先順位 ${b.rank}">${b.rank}</div><div><div class="risk-head"><div><h2>${rich(b.title)}</h2><div class="risk-meta"><span>${b.severity==='Critical'?'重要':b.severity==='Warning'?'注意':'記録'}</span><span>可能性 ${esc(b.likelihood)} · 影響 ${esc(b.impact)}</span>${owner(b.owner)}</div></div>${chip(b.status)}</div><dl class="risk-content"><div><dt>原因・根拠</dt><dd>${rich(b.evidence)}</dd></div><div><dt>このままだと</dt><dd>${rich(b.impact_note)}</dd></div></dl><div class="risk-action"><strong>次の対応</strong>${rich(b.mitigation)}</div>${refs(b.sources)}</div></article>`).join('')}</div>`;}
-  function decisionCard(d){const note=d.note.replace(/ 署名者=.*$/,'');return `<article class="card decision-card"><div class="card-title"><h3>${rich(d.title)}</h3>${chip(d.status)}</div><div class="date-line">${owner(d.owner)}<span>記録日 ${dateOnly(d.date)}</span><span>期日 ${d.due_date?dateOnly(d.due_date):'指定なし'}</span></div><p>${rich(note)}</p>${d.origin?`<details><summary>決定の出所・署名を見る</summary><p>${rich(d.origin)}</p><p>署名者：${esc(d.signer)}<br>記録時刻：${time(d.signed_at)}</p><p>本人が委任した決定です。本人の署名として扱いません。</p></details>`:''}${refs(d.sources)}</article>`;}
+  function decisionCard(d){const note=d.note.replace(/ 署名者=.*$/,'');return `<article class="card decision-card" data-decision="${esc(d.id)}"><div class="card-title"><h3>${rich(d.title)}</h3>${chip(d.status)}</div><div class="date-line">${owner(d.owner)}<span>記録日 ${dateOnly(d.date)}</span><span>期日 ${d.due_date?dateOnly(d.due_date):'指定なし'}</span></div><p>${rich(note)}</p>${d.origin?`<details><summary>決定の出所・署名を見る</summary><p>${rich(d.origin)}</p><p>署名者：${esc(d.signer)}<br>記録時刻：${time(d.signed_at)}</p><p>本人が委任した決定です。本人の署名として扱いません。</p></details>`:''}${refs(d.sources)}</article>`;}
   function decisions(){const ds=D.decisions.items,rep=D.decisions.ollama_report;return `<div class="grid-2"><section class="card"><div class="card-title"><h2>本人の現在の作業</h2>${chip(D.status.human_action==='なし'?'done':'decision',D.status.human_action==='なし'?'対応不要':'要判断')}</div><h3 class="action-value">${esc(D.status.human_action)}</h3><p class="card-sub">${rich(D.decisions.human_only.note)}</p>${refs(D.decisions.human_only.sources)}</section><section class="card"><div class="card-title"><h2>${rich('Ollamaの登録状況')}</h2>${evidence(rep.evidence_kind)}</div><dl class="data-list"><div><dt>登録</dt><dd>${rich(D.ui.copy.registration)}</dd></div><div><dt>プラン / 残高</dt><dd>${esc(rep.plan)} / $${esc(rep.balance_usd)}</dd></div><div><dt>自動チャージ</dt><dd>${esc(rep.auto_reload)}</dd></div><div><dt>利用するモデルの前提</dt><dd>${esc(rep.assumed_model)}</dd></div><div><dt>残る確認</dt><dd>${rich(D.ui.copy.provider_remaining)}</dd></div></dl><p class="scope-note">${esc(rep.reported_at_note)}の本人報告。今回の画面・API監査ではありません。</p>${refs(rep.sources)}</section></div>
     <section class="section">${sectionTitle('本人の確認予定・完了記録')}<div class="grid-equal">${ds.filter(d=>['dec-007','dec-008','dec-no-contact'].includes(d.id)).map(decisionCard).join('')}</div></section>
     <section class="section">${sectionTitle('委任により確定した決定',`<small>Codex / 過去の記録名 Astra</small>`)}<div class="notice">${rich(D.ui.copy.decisions_note)}</div><div class="grid-equal section">${ds.filter(d=>d.group==='delegated').map(decisionCard).join('')}</div></section>
