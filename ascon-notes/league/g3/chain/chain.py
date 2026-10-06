@@ -2,6 +2,8 @@
 """Fail-closed G3 F_ref plan. No source mutations. --dry-run never starts a child."""
 import argparse
 import csv
+from contextlib import contextmanager
+import fcntl
 import datetime as dt
 import hashlib
 import json
@@ -13,10 +15,21 @@ import shlex
 import shutil
 import signal
 import subprocess
+import stat
+import tempfile
 import sys
 import time
 
+# Restrictive permissions apply to standalone initialization and imported helpers too.
+os.umask(0o077)
 BASE=Path('/tmp/g3-chain')
+TOOL_ROOT=BASE
+# Recorded tool manifest, kept inline to limit edits to the approved four files.
+# Refresh only after reviewing changed tool bytes; never derive expected hashes at run time.
+TOOL_MANIFEST={
+    'gates.py':'0a3970e720e0b81051bdbaf3e1ff7c83b355a95795f2ef5c8bed36c5f620ed0a',
+    'revision_audit.py':'f2ff12581e8bdbed29962ed1019aa2ba140cfcb05096f3c9cb5dc57b4d114f52',
+}
 SOURCE=Path('/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/release-r2')
 VIEW=BASE/'source-view'
 EVAL=BASE/'eval'
@@ -157,6 +170,19 @@ def source_check():
         if original.is_symlink() or hashlib.sha256(original.read_bytes()).hexdigest()!=digest: raise Stop('FAIL: source working bytes drift',1)
     # Prestart checks candidate/input working bytes; no untracked/credential files are read here.
 
+def tool_check():
+    for name,digest in TOOL_MANIFEST.items():
+        path=TOOL_ROOT/name
+        try:
+            if path.is_symlink() or not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=digest:
+                raise Stop('BLOCKED: tool manifest mismatch: '+name)
+        except OSError:
+            raise Stop('BLOCKED: tool manifest input unavailable: '+name) from None
+
+def default_audit_cmd():
+    return shlex.join([sys.executable,'-B',str(BASE/'revision_audit.py')])
+
+
 class Supervisor:
     def __init__(self):
         self.child=None; self.deadline=0
@@ -166,6 +192,7 @@ class Supervisor:
             except ProcessLookupError: pass
             self.child.wait(); self.child=None
     def run(self,c,allow_failure=False):
+        tool_check()
         e=clean_env(); e.update(c['env'])
         dest=BASE/c['log']; dest.parent.mkdir(parents=True,exist_ok=True)
         with dest.open('xb') as stream:
@@ -186,32 +213,127 @@ class Supervisor:
         if rc and not allow_failure: raise Stop('FAIL/BLOCKED: '+c['log']+' (exit '+str(rc)+')',rc)
         return rc
 
-def reserve_budget():
+def ledger_path():
+    home=os.environ.get('HOME')
+    if not home or not Path(home).is_absolute():
+        raise Stop('BLOCKED: absolute HOME required for persistent budget ledger')
+    path=Path(home)/'.ascon-g3'/'budget-ledger.json'
+    # macOS /tmp resolves to /private/tmp; neither is a persistent ledger location.
+    if any(path.resolve().is_relative_to(Path(root).resolve()) for root in ('/tmp','/var/tmp')):
+        raise Stop('BLOCKED: budget ledger must live outside temporary storage')
+    return path
+
+def validate_ledger(data):
+    try:
+        if not isinstance(data,list) or not data: raise ValueError()
+        totals={}
+        for index,item in enumerate(data):
+            if not isinstance(item,dict): raise ValueError()
+            stamp=dt.datetime.fromisoformat(item['started'])
+            day=dt.date.fromisoformat(item['day']).isoformat()
+            seconds=item['reservedSeconds']
+            if stamp.tzinfo is None or stamp.date().isoformat()!=day: raise ValueError()
+            if type(seconds) not in (int,float) or not math.isfinite(seconds): raise ValueError()
+            if index==0:
+                if item.get('event')!='init' or seconds!=0: raise ValueError()
+            elif item.get('event')!='reserve' or not 0<seconds<=110*60: raise ValueError()
+            totals[day]=totals.get(day,0)+seconds
+            if totals[day]>6*3600: raise ValueError()
+    except (ValueError,TypeError,KeyError,OverflowError):
+        raise Stop('BLOCKED: corrupt budget ledger; never reset automatically') from None
+
+@contextmanager
+def budget_ledger(init=False):
+    ledger=ledger_path(); directory=ledger.parent
+    try:
+        if init: directory.mkdir(mode=0o700,exist_ok=True)
+        if directory.is_symlink(): raise Stop('BLOCKED: ledger directory is a symlink')
+        fd=os.open(directory,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+        try:
+            if os.fstat(fd).st_uid!=os.getuid(): raise Stop('BLOCKED: ledger directory owner mismatch')
+            os.fchmod(fd,0o700)
+            # Persistent directory lock survives atomic ledger replacement and /tmp cleanup.
+            fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+            if init:
+                now=dt.datetime.now().astimezone()
+                initial=[{'event':'init','day':now.date().isoformat(),'started':now.isoformat(),
+                          'reservedSeconds':0,'accounting':'explicit --init-ledger'}]
+                try:
+                    newfd=os.open(ledger,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+                except FileExistsError:
+                    raise Stop('BLOCKED: ledger already exists; --init-ledger never resets it') from None
+                with os.fdopen(newfd,'w') as stream:
+                    json.dump(initial,stream,allow_nan=False); stream.write('\n')
+                    stream.flush(); os.fsync(stream.fileno())
+                os.fsync(fd)
+            readfd=os.open(ledger,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+            with os.fdopen(readfd) as stream:
+                info=os.fstat(stream.fileno())
+                if not stat.S_ISREG(info.st_mode) or info.st_uid!=os.getuid():
+                    raise Stop('BLOCKED: ledger is not an owned regular file')
+                os.fchmod(stream.fileno(),0o600)
+                data=json.load(stream)
+            validate_ledger(data)
+            yield ledger,data
+        finally:
+            os.close(fd)
+    except FileNotFoundError:
+        raise Stop('BLOCKED: budget ledger MISSING; operator must explicitly --init-ledger') from None
+    except (OSError,ValueError):
+        raise Stop('BLOCKED: budget ledger unavailable, locked or corrupt') from None
+
+def save_ledger(ledger,data):
+    fd,temp=tempfile.mkstemp(prefix='.budget-ledger-',dir=ledger.parent)
+    try:
+        with os.fdopen(fd,'w') as stream:
+            os.fchmod(stream.fileno(),0o600)
+            json.dump(data,stream,allow_nan=False); stream.write('\n')
+            stream.flush(); os.fsync(stream.fileno())
+        os.replace(temp,ledger)
+        directory_fd=os.open(ledger.parent,os.O_RDONLY|os.O_DIRECTORY)
+        try: os.fsync(directory_fd)
+        finally: os.close(directory_fd)
+    finally:
+        if os.path.exists(temp): os.unlink(temp)
+
+def reserve_budget(init=False):
     # Persist a conservative FULL chunk charge before any work; restart/crash cannot erase cost.
-    ledger=BASE/'budget-ledger.json'; data=json.loads(ledger.read_text()) if ledger.exists() else []
-    now=dt.datetime.now().astimezone(); day=now.date().isoformat()
-    used=sum(x['reservedSeconds'] for x in data if x['day']==day)
-    midnight=dt.datetime.combine(now.date()+dt.timedelta(days=1),dt.time(),tzinfo=now.tzinfo)
-    cap=min(BUDGET['maxChunkMinutes']*60,BUDGET['maxDailyHours']*3600-used,(midnight-now).total_seconds())
-    if cap<60: raise Stop('BLOCKED: daily/time budget exhausted; no automatic wait or retry',75)
-    data.append({'day':day,'started':now.isoformat(),'reservedSeconds':cap,'accounting':'full chunk charged even on early abort'})
-    save_json(ledger,data)
-    return cap
+    with budget_ledger(init) as (ledger,data):
+        now=dt.datetime.now().astimezone(); day=now.date().isoformat()
+        used=sum(x['reservedSeconds'] for x in data if x['day']==day)
+        midnight=dt.datetime.combine(now.date()+dt.timedelta(days=1),dt.time(),tzinfo=now.tzinfo)
+        cap=min(BUDGET['maxChunkMinutes']*60,110*60,BUDGET['maxDailyHours']*3600-used,6*3600-used,(midnight-now).total_seconds())
+        if cap<60: raise Stop('BLOCKED: daily/time budget exhausted; no automatic wait or retry',75)
+        data.append({'event':'reserve','day':day,'started':now.isoformat(),'reservedSeconds':cap,'accounting':'full chunk charged even on early abort'})
+        save_ledger(ledger,data)
+        return cap
 
 def main():
+    os.umask(0o077)
     parser=argparse.ArgumentParser(description=__doc__)
     mode=parser.add_mutually_exclusive_group()
     mode.add_argument('--dry-run',action='store_true')
     mode.add_argument('--run',action='store_true')
-    parser.add_argument('--audit-cmd',default=shlex.join([sys.executable,'-B',str(BASE/'revision_audit.py')]),
+    parser.add_argument('--init-ledger',action='store_true',help='explicitly create missing persistent ledger; never reset existing ledger')
+    parser.add_argument('--audit-cmd',default=default_audit_cmd(),
                         help='auditor argv prefix (no shell); run_dir --mode on/off appended')
     args=parser.parse_args()
+    if args.init_ledger and args.dry_run:
+        parser.error('--init-ledger cannot be combined with --dry-run')
+    if args.init_ledger and not args.run:
+        with budget_ledger(init=True): pass
+        print('PASS: persistent budget ledger initialized; no work executed')
+        return 0
+    if args.run:
+        tool_check()
+        if shlex.split(args.audit_cmd)!=shlex.split(default_audit_cmd()):
+            raise Stop('BLOCKED: --run requires the manifest-pinned auditor')
     arg='--run' if args.run else '--dry-run'
     _,ref=rows()
     if arg=='--dry-run':
         print('# F_REF ONLY: 18 normal worlds; all 18 F_mix = NOT RUN / BLOCKED.')
         print('# Conditional full plan, NOT an execution log. Each non-PASS stops. F_mix exemption is exact-match only.')
-        print('# --run acquires /tmp/g3-chain/chain.lock; checks pgrep; reserves <=110min from persistent 6h/day ledger.')
+        print('# --run acquires /tmp/g3-chain/chain.lock; checks pgrep; reserves <=110min from $HOME/.ascon-g3/budget-ledger.json (6h/day; missing/corrupt = BLOCKED).')
         print('caffeinate -i -s -w "${LAUNCHER_PID}"')
         print('# Auth helper (only after PASS prestart + malicious): resolve executable claude; capture auth status --json without raw output.')
         print('# Project wrapper probe (single attempted call): xb-r-live-claude-timed.sh -p \'Reply exactly OK.\' --model haiku --max-turns 1 --tools \'\' --disable-slash-commands --strict-mcp-config --mcp-config \'{"mcpServers":{}}\' --setting-sources \'\' --no-session-persistence')
@@ -233,7 +355,7 @@ def main():
     try:
         idle(); source_check(); summary_init()
         if not shutil.which('caffeinate'): raise Stop('BLOCKED: caffeinate unavailable')
-        seconds=reserve_budget(); supervisor.deadline=time.monotonic()+seconds
+        seconds=reserve_budget(init=args.init_ledger); supervisor.deadline=time.monotonic()+seconds
         awake=subprocess.Popen(['caffeinate','-i','-s','-w',str(os.getpid())],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         def interrupted(signum,frame): raise Stop('interrupted',128+signum)
         signal.signal(signal.SIGTERM,interrupted); signal.signal(signal.SIGINT,interrupted)

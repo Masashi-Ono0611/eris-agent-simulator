@@ -2,7 +2,8 @@
 
 Entry point: `/tmp/g3-chain/g3-ref-chain.sh --dry-run` (default). `--run` is a future
 execution mode, not used in this task. Current pinned inputs **cannot launch a world**.
-All generated files, tests, logs and future launcher outputs live under `/tmp/g3-chain/`.
+Preparation files, tests and logs live under `/tmp/g3-chain/`. Future execution keeps
+the persistent budget ledger at `$HOME/.ascon-g3/budget-ledger.json`, outside `/tmp`.
 No edits to release-r2 or league-v2. No network/SSH/Docker/simulation/model/auth calls,
 no run-league invocation, no commit, no dotenv/key reads were made during preparation.
 The non-sending malicious compiler/executor harness was run; it is not a simulation.
@@ -39,6 +40,10 @@ or Git metadata was written. This is a source view, **not a runnable eval instal
    before starting; no retry or fallback. Probe output is only tested for `OK`, never saved.
    The probe and auth have NOT been run. This task did not manufacture the future
    `subscription-check.json` assertion (checkedAt with timezone, extraUsageOff, haikuAllowed).
+   **This is a hand-written, self-attested check valid for one hour, not a measurement
+   of the extra-usage setting.** Before the Haiku probe, the operator must confirm
+   extra usage is OFF and Haiku is allowed in the Claude app, then record that confirmation.
+   OAuth status alone cannot establish extra usage is OFF.
 3. **PASS (plan/limits/tests/offline auditor), BLOCKED (live recorder/runtime)**: exact 18 F_ref
    rows from schedule.tsv; calm/crash/depeg, seeds 49001..49003; middle seed ON first.
    Runner has no `--blocks` or `--block-seconds` options: use documented
@@ -52,6 +57,16 @@ or Git metadata was written. This is a source view, **not a runnable eval instal
    wait/retry/seed replacement. A clean completed pair checkpoint allows next `--run`
    to continue after a budget pause; an interrupted/failed pair forbids rescue reruns.
    Daily ledger covers this launcher only, not unrelated jobs or unrecorded preparation.
+   It lives at `$HOME/.ascon-g3/budget-ledger.json` (directory 700, file 600).
+   Missing or corrupt ledgers are **BLOCKED**; no implicit zero-usage fallback exists.
+   An operator may initialize a genuinely new ledger with
+   `python3 -B /tmp/g3-chain/chain.py --init-ledger` (initialization only, no child process),
+   or use `--run --init-ledger` for explicit initialization plus a guarded launch.
+   Initialization records an `init` event and refuses to overwrite any existing ledger.
+   Never use initialization to erase prior usage after loss: restore the previous ledger;
+   do not reset it or discard the old `/tmp/g3-chain/budget-ledger.json` charges.
+   Existing legacy charges must be reconciled before first use of the new ledger.
+   The shell wrapper is unchanged; initialization options go directly to `chain.py`.
 4. **PASS (wiring), BLOCKED (live exclusivity check)**: atomic mkdir lock, caffeinate
    while running, process checks before startup and each world; pgrep errors fail closed.
    Only owned process groups can be killed by the deadline. Existing Anvil/matrix is
@@ -63,6 +78,18 @@ or Git metadata was written. This is a source view, **not a runnable eval instal
    is labeled world PASS. `--dry-run` prints all 18 run commands, 9 pair checks and gates
    without executing a child or modifying the summary. bash 3.2, bash -n, ShellCheck,
    offline npm run typecheck and local control tests pass. See `validation.json`.
+
+## Tool integrity
+
+`chain.py` applies umask 077 and contains the recorded SHA-256 tool manifest
+`TOOL_MANIFEST` for `gates.py` and `revision_audit.py`. The inline manifest keeps this
+change within the four approved files. Expected hashes are fixed reviewed values,
+never regenerated from current files at launch. `--run` checks both before starting
+any child, and the supervisor rechecks before each command. Missing files, symlinks
+or hash mismatches are **BLOCKED**. Updating tool bytes requires reviewing and updating
+the recorded manifest. `--run` rejects an alternate `--audit-cmd`; standalone gate
+hooks remain available for offline tests. The manifest protects against tool drift;
+it is not an external trust anchor against someone rewriting the launcher itself.
 
 ## Existing tools and audit boundary
 
