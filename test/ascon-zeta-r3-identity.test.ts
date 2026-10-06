@@ -2,7 +2,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { spawnSync } from "node:child_process";
 import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolve } from "node:path";
@@ -61,17 +60,26 @@ test("r3 contains only the five candidate files; all four code SHA-256 hashes eq
 
 test("prompt diff contains only the r3 name/description and the hardening sentence", () => {
   const path = (id: string) => resolve(candidateDir(id), "prompt.md");
-  const diff = spawnSync("diff", ["-U", "0", path("ascon-zeta-r2"), path("ascon-zeta-r3")], { encoding: "utf8" });
-  assert.ifError(diff.error);
-  assert.equal(diff.status, 1, diff.stderr);
-  const changes = diff.stdout.split("\n").filter(line => /^[+-]/.test(line) && !/^(---|\+\+\+)/.test(line));
-  assert.deepEqual(changes, [
-    "-name: ascon-zeta-r2",
-    '-description: "ascon-zeta-r with 3 bounded fixes: launch allowance, independent bundle funding, and attributable WETH recovery; original venue bidding preserved."',
-    "+name: ascon-zeta-r3",
-    '+description: "ascon-zeta-r3: byte-identical r2 strategy with evidence-gated revision prompt hardening; no enforced revision guard."',
-    "+executorTs: null unless the evidence shows a clear improvement",
-    "+",
+  // Line-multiset difference computed in-process: GNU and BSD diff order adjacent hunks differently.
+  const lines = (id: string) => readFileSync(path(id), "utf8").split("\n");
+  const minus = (from: string[], other: string[]) => {
+    const left = [...other], out: string[] = [];
+    for (const line of from) {
+      const at = left.indexOf(line);
+      if (at >= 0) left.splice(at, 1); else out.push(line);
+    }
+    return out.sort();
+  };
+  const r2 = lines("ascon-zeta-r2"), r3 = lines("ascon-zeta-r3");
+  assert.deepEqual(minus(r2, r3), [
+    'description: "ascon-zeta-r with 3 bounded fixes: launch allowance, independent bundle funding, and attributable WETH recovery; original venue bidding preserved."',
+    "name: ascon-zeta-r2",
+  ]);
+  assert.deepEqual(minus(r3, r2), [
+    "",
+    'description: "ascon-zeta-r3: byte-identical r2 strategy with evidence-gated revision prompt hardening; no enforced revision guard."',
+    "executorTs: null unless the evidence shows a clear improvement",
+    "name: ascon-zeta-r3",
   ]);
   const prompt = readFileSync(path("ascon-zeta-r3"), "utf8");
   const frontmatter = prompt.split("---")[1];
