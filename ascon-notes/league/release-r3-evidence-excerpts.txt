@@ -1,0 +1,18 @@
+## ZIP payload compare (selftest prep)
+[bundle] artifacts: AgentERC20
+ZIP payload equal: True 96 96
+PREP_DONE
+
+## ci-local full tail (64e4990)
+ℹ suites 6
+ℹ pass 2337
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 9
+ℹ todo 0
+ℹ duration_ms 42235.252208
+ci-local: PASS (full @ 64e4990)
+EXIT=0
+
+## release ZIP sha256 check after selftest
+bundle-ascon-zeta-r3.zip: OK (shasum -c)
