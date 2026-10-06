@@ -138,6 +138,189 @@ check('headline normalization preserves term text and escaped literal markup',()
   assert.equal(visibleText('<button class="term" data-term="test">term<sup aria-hidden="true">ⓘ</sup></button> &lt;literal&gt; &amp; &quot;x&quot; &#39;y&#39; &amp;lt;'),
     'term <literal> & "x" \'y\' &lt;');
 });
+// INVARIANTS: these are evidence boundaries, not snapshots of refreshed numbers.
+// The current schema has no signed qualification-result record. Approval/signers
+// on policy decisions cannot authorize qualified=true; supporting such a record
+// requires an explicit schema/checker change, not a truthy ad-hoc JSON field.
+function assertQualification(){
+  const q=app.D.plan.zeta_qualification,old=app.D.plan.zeta_qualification_rev14_snapshot;
+  assert.equal(q.qualified,false,'INVARIANT r2 qualification remains false');
+  // Q-ZETA-02 now contains a completed, FAILED r2 measurement: null here would
+  // erase evidence. Preserve that boundary instead of the obsolete rev14 null.
+  assert.equal(q.status,'failed','INVARIANT r2 qualification remains failed');
+  assert.ok(q.result&&typeof q.result==='object','INVARIANT r2 has a recorded failed result');
+  assert.match(q.result.criterion4,/^FAIL\b/,'INVARIANT r2 criterion4 remains failed');
+  for(const key of ['criterion5','criterion6'])
+    assert.equal(q.result[key],'BLOCKED',`INVARIANT r2 ${key} lacks complete evidence`);
+  assert.equal(old.qualified,false,'INVARIANT historical qualification remains false');
+  assert.equal(old.result,null,'INVARIANT historical qualification has no result');
+  assert.equal(app.D.status.candidate.qualified,false,'INVARIANT r3 is not qualified');
+  // r3 has no qualification result field in this schema (absence means unknown).
+  assert.equal(app.D.status.candidate.result??null,null,'INVARIANT r3 has no qualification result');
+}
+function assertMeasurements(){
+  for(const name of ['rehearsal','mixed_r3']){
+    const run=app.D.status[name];
+    // A non-null scalar is not a result record. A future completed record needs
+    // source evidence and completion metadata; a running/partial report cannot
+    // gain a result merely by adding a number or changing verified.
+    if(run.state==='reported-running-unverified'||run.result==null){
+      assert.equal(run.result,null,`INVARIANT ${name} running result is null`);
+      assert.equal(run.verified,false,`INVARIANT ${name} running report is unverified`);
+    }else{
+      assert.ok(typeof run.result==='object'&&!Array.isArray(run.result)&&Object.keys(run.result).length>0,
+        `INVARIANT ${name} completed result is a record`);
+      assert.equal(run.state,'measured-diagnostic-complete',`INVARIANT ${name} completion state`);
+      assert.ok(run.completed_at&&run.completed_worlds===run.worlds&&run.sources?.length,
+        `INVARIANT ${name} completion evidence`);
+    }
+  }
+}
+function assertG3(){
+  // There is no g3.blockers array: the blockers ledger owns the active G3
+  // blockers. Match their explicit title/impact, not unrelated open blockers.
+  const blockers=app.D.blockers.items.filter(b=>b.status!=='resolved'&&/\bG3\b/.test(b.title+' '+b.impact_note));
+  const gate=app.D.plan.gates.find(g=>g.id==='gate-g3');
+  assert.ok(gate,'INVARIANT G3 gate exists');
+  if(blockers.length){
+    assert.match(gate.state,/\bBLOCKED\b/,'INVARIANT G3 remains BLOCKED with active blockers');
+    assert.ok(!/\b(?:PASS|done)\b|^完了$/i.test(gate.state),'INVARIANT G3 cannot also claim PASS');
+    assert.equal(app.D.progress.items.find(p=>p.id==='progress-g3')?.state,'blocked',
+      'INVARIANT G3 progress remains blocked with active blockers');
+  }
+}
+// Extract only the tagged record's own container, never borrow a warning from
+// another row or a page-wide notice. Nested same-name tags are balanced.
+function recordFragments(views,key){
+  const found=[];
+  for(const markup of Object.values(views)){
+    for(const match of markup.matchAll(/<([a-z][\w-]*)\b[^>]*\bdata-record="([^"]+)"[^>]*>/g)){
+      if(match[2]!==key)continue;
+      const tags=new RegExp(`<(/?)${match[1]}\\b[^>]*>`,'g');
+      tags.lastIndex=match.index+match[0].length;
+      let depth=1,next;
+      while(depth&&(next=tags.exec(markup)))depth+=next[1]?-1:1;
+      assert.equal(depth,0,`INVARIANT balanced record ${key}`);
+      found.push(markup.slice(match.index,tags.lastIndex));
+    }
+  }
+  return found;
+}
+const needsWarning=record=>record.verified===false||/blocked|unverified/i.test(String(record.status||''))||
+  /blocked|unverified/i.test(String(record.state||''));
+function assertRecordWarnings(views){
+  function walk(value,path){
+    if(!value||typeof value!=='object')return;
+    if(needsWarning(value)){
+      const key=path.startsWith('progress.items.')?'progress.'+value.id:path;
+      assert.ok(!/^(PASS|done|closed|resolved)$/i.test(String(value.state||'')),`INVARIANT no successful state for ${key}`);
+      assert.ok(!/^(PASS|done|closed|resolved)$/i.test(String(value.status||'')),`INVARIANT no successful status for ${key}`);
+      const fragments=recordFragments(views,key);
+      assert.ok(fragments.length>0,`INVARIANT warning record rendered: ${key}`);
+      for(const fragment of fragments){
+        assert.match(visibleText(fragment),/unverified|未検証|BLOCKED/i,`INVARIANT visible warning: ${key}`);
+        assert.ok(!/class="(?:chip|step-dot) done"/.test(fragment),`INVARIANT no done badge: ${key}`);
+        const badges=fragment.replace(/<span class="chip-symbol"[^>]*>[\s\S]*?<\/span>/g,'');
+        for(const badge of badges.matchAll(/<(span|div) class="(?:chip[^" ]*(?: [^"]*)?|step-state)"[^>]*>([\s\S]*?)<\/\1>/g))
+          assert.ok(!/^(?:[✓—!×◌?]\s*)?(?:PASS|done|完了)$/i.test(visibleText(badge[2]).trim()),`INVARIANT no PASS label: ${key}`);
+      }
+    }
+    for(const [key,child] of Object.entries(value))walk(child,path+'.'+key);
+  }
+  walk(app.D.results,'results');walk(app.D.progress,'progress');
+}
+// The old exact count 23 became obsolete when dec-c-exception-r3 was added.
+// Preserve every historical ID, allow additions, and require exactly one card
+// per decision. A count equal to JSON alone cannot detect deleted history.
+const retainedDecisions=['dec-original','dec-deep','dec-no-contact','dec-008','dec-007','dec-q0-keep',
+  'dec-astra-update','dec-forward','dec-amend','dec-overnight','dec-q0-failure-branch','dec-q0b-g0',
+  'dec-step1-policy','dec-ai-scope','dec-ai-contract','dec-ai-budget','dec-revert-limit','dec-h1-authority',
+  'dec-full-executor','dec-rev10-direction','dec-zeta-original','dec-zeta-qualification','dec-pr-split','dec-c-exception-r3'];
+function assertDecisions(views){
+  const ids=app.D.decisions.items.map(d=>d.id);
+  for(const id of retainedDecisions)assert.ok(ids.includes(id),`INVARIANT retained decision ${id}`);
+  assert.equal(new Set(ids).size,ids.length,'INVARIANT unique decisions');
+  const cards=[...views.decisions.matchAll(/class="card decision-card" data-decision="([^"]+)"/g)].map(m=>m[1]);
+  assert.equal(cards.length,ids.length,'INVARIANT decision card count');
+  assert.deepEqual(cards.sort(),[...ids].sort(),'INVARIANT one card per decision');
+}
+function invariantViews(){
+  const prior={...app.state},views={};
+  try{
+    for(const [key,page,mode] of [['results','results','diagnostic'],['qualification','results','qualification'],
+      ['overview','overview'],['decisions','decisions']]){
+      app.state.page=page;if(mode)app.state.results=mode;app.render();
+      views[key]=element('page').innerHTML;
+    }
+    return views;
+  }finally{Object.assign(app.state,prior);app.render();}
+}
+const invariantGuards=[assertQualification,assertMeasurements,assertG3,assertRecordWarnings,assertDecisions];
+check('INVARIANT qualification, running evidence, G3, per-record warnings and decisions',()=>{
+  const views=invariantViews();for(const guard of invariantGuards)guard(views);
+});
+let invariantReds=0;
+function rejectMutation(name,mutate,guard,alterViews=views=>views){
+  const original={...app.D};
+  try{
+    Object.assign(app.D,structuredClone(app.D));
+    mutate(app.D);
+    const views=alterViews(invariantViews());
+    assert.throws(()=>guard(views),error=>error.code==='ERR_ASSERTION'&&error.message.startsWith('INVARIANT'),
+      `red control did not fail its invariant: ${name}`);
+    invariantReds++;
+  }finally{Object.assign(app.D,original);app.render();}
+  const views=invariantViews();for(const check of invariantGuards)check(views);
+}
+check('red controls prove evidence invariants reject false claims and original still passes',()=>{
+  for(const [path,key,value] of [
+    ['plan.zeta_qualification','qualified',true],['plan.zeta_qualification','status','PASS'],
+    ['plan.zeta_qualification','result',42],['plan.zeta_qualification.result','criterion4','PASS'],
+    ['plan.zeta_qualification.result','criterion5','PASS'],['plan.zeta_qualification.result','criterion6','PASS'],
+    ['plan.zeta_qualification_rev14_snapshot','qualified',true],['plan.zeta_qualification_rev14_snapshot','result',42],
+    ['status.candidate','qualified',true],['status.candidate','result',42]
+  ])rejectMutation(`${path}.${key}`,d=>{path.split('.').reduce((v,k)=>v[k],d)[key]=value;},assertQualification);
+  for(const name of ['rehearsal','mixed_r3']){
+    rejectMutation(`${name} fake result`,d=>{d.status[name].result=42;},assertMeasurements);
+    rejectMutation(`${name} fake verification`,d=>{d.status[name].verified=true;},assertMeasurements);
+    rejectMutation(`${name} scalar completion`,d=>{Object.assign(d.status[name],{state:'measured-diagnostic-complete',result:42,verified:true});},assertMeasurements);
+  }
+  rejectMutation('G3 PASS with blockers',d=>{d.plan.gates.find(g=>g.id==='gate-g3').state='PASS';},assertG3);
+  rejectMutation('G3 done with blockers',d=>{d.progress.items.find(p=>p.id==='progress-g3').state='done';},assertG3);
+  for(const target of ['progress','results']){
+    const item=d=>target==='progress'?d.progress.items.find(p=>p.id==='progress-smoke'):d.results.comparison.qualification[1];
+    rejectMutation(`${target} BLOCKED rendered done`,d=>{Object.assign(item(d),{status:'BLOCKED',state:'done'});},assertRecordWarnings);
+    rejectMutation(`${target} unverified rendered done`,d=>{Object.assign(item(d),{verified:false,state:'done'});},assertRecordWarnings);
+    rejectMutation(`${target} PASS badge`,d=>{Object.assign(item(d),{status:'BLOCKED',state:'warning',state_label:'PASS'});},assertRecordWarnings,
+      views=>{if(target==='progress'){
+        const key='progress.progress-smoke';
+        for(const page of Object.keys(views))for(const fragment of recordFragments({[page]:views[page]},key))
+          views[page]=views[page].replace(fragment,fragment.replace(/(<span class="chip warning">)[\s\S]*?<\/span>[^<]*<\/span>/,'$1PASS</span>'));
+      }return views;});
+    rejectMutation(`${target} warning removed`,d=>{Object.assign(item(d),{verified:false,state:'warning'});},assertRecordWarnings,
+      views=>{const key=target==='progress'?'progress.progress-smoke':'results.comparison.qualification.1';
+        for(const page of Object.keys(views))for(const fragment of recordFragments({[page]:views[page]},key))
+          views[page]=views[page].replace(fragment,fragment.replace(/unverified|未検証|BLOCKED/gi,''));
+        return views;});
+  }
+  // Renderer-only regressions must also fail even when all JSON flags are intact.
+  for(const key of ['progress.progress-smoke','results.comparison.qualification.1']){
+    rejectMutation(`${key} rendered done badge`,()=>{},assertRecordWarnings,views=>{
+      for(const page of Object.keys(views))for(const fragment of recordFragments({[page]:views[page]},key))
+        views[page]=views[page].replace(fragment,fragment.replace('class="chip blocked"','class="chip done"'));
+      return views;
+    });
+    rejectMutation(`${key} original warning removed`,()=>{},assertRecordWarnings,views=>{
+      for(const page of Object.keys(views))for(const fragment of recordFragments({[page]:views[page]},key))
+        views[page]=views[page].replace(fragment,fragment.replace(/unverified|未検証|BLOCKED/gi,''));
+      return views;
+    });
+  }
+  rejectMutation('deleted decision',d=>{d.decisions.items.pop();},assertDecisions);
+  rejectMutation('missing rendered decision',()=>{},assertDecisions,views=>{
+    views.decisions=views.decisions.replace(/class="card decision-card" data-decision="[^"]+"/,'class="card missing-card"');return views;
+  });
+});
 check('qualification result keeps failed and blocked states',()=>{
   app.state.page='results';app.state.results='qualification';app.render();
   const t=element('page').innerHTML;rendered.qualification=t;
@@ -356,4 +539,5 @@ check('current direction, recent events, next milestone and night operation come
 });
 console.log(`PASS dashboard UI: ${count} checks; ${app.D.ui.pages.length} page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
 console.log('PASS red controls: altered headline, progress value and max each rejected in memory; original assertions pass');
+console.log(`PASS invariant red controls: ${invariantReds} false claims rejected in memory; original passes after every mutation`);
 console.log('LIMIT: minimal DOM adapter, not a browser; visual layout and assistive technology unverified');
