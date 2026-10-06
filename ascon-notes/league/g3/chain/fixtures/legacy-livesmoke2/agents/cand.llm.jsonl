@@ -1,0 +1,5 @@
+{"ts": "2026-10-04T16:11:38.171Z", "agentId": "cand", "block": 1345, "kind": "revision_call", "model": "claude-cli:haiku", "system": "sanitized dummy", "context": "sanitized dummy", "raw": "not json"}
+{"ts": "2026-10-04T16:12:51.214Z", "agentId": "cand", "block": 1405, "kind": "revision_call", "model": "claude-cli:haiku", "system": "sanitized dummy", "context": "sanitized dummy", "raw": "{\"notes\": \"sanitized\", \"executorTs\": null}"}
+{"ts": "2026-10-04T16:15:24.090Z", "agentId": "cand", "block": 1465, "kind": "revision_call", "model": "claude-cli:haiku", "system": "sanitized dummy", "context": "sanitized dummy", "raw": "{\"notes\": \"sanitized\", \"executorTs\": \"return null;\"}"}
+{"ts": "2026-10-04T16:16:27.586Z", "agentId": "cand", "block": 1525, "kind": "revision_call", "model": "claude-cli:haiku", "system": "sanitized dummy", "context": "sanitized dummy", "raw": "{\"notes\": \"sanitized\", \"executorTs\": null}"}
+{"ts": "2026-10-04T16:18:28.464Z", "agentId": "cand", "block": 1585, "kind": "revision_call", "model": "claude-cli:haiku", "system": "sanitized dummy", "context": "sanitized dummy", "raw": "{\"notes\": \"sanitized\", \"executorTs\": null}"}

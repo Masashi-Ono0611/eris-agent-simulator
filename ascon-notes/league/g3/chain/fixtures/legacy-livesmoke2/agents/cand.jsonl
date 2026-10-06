@@ -1,0 +1,5 @@
+{"ts": "2026-10-04T16:11:38.174Z", "agentId": "cand", "round": 1345, "reason": "revision rejected", "state": {"kind": "rejected", "reason": "synthetic malformed JSON"}}
+{"ts": "2026-10-04T16:12:51.215Z", "agentId": "cand", "round": 1405, "reason": "revision declined", "state": {"kind": "declined"}}
+{"ts": "2026-10-04T16:15:24.092Z", "agentId": "cand", "round": 1465, "reason": "revision installed", "state": {"kind": "installed", "version": 1}}
+{"ts": "2026-10-04T16:16:27.587Z", "agentId": "cand", "round": 1525, "reason": "revision declined", "state": {"kind": "declined"}}
+{"ts": "2026-10-04T16:18:28.465Z", "agentId": "cand", "round": 1585, "reason": "revision declined", "state": {"kind": "declined"}}

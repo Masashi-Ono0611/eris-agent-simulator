@@ -1,0 +1,10 @@
+{
+  "source": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/upstream-eval/runs/2026-10-04T16-07-41-570Z",
+  "syntheticSanitization": true,
+  "description": "Native shapes/timestamps/counts; prompts, code, IDs and PID values replaced. Never a live safety fixture.",
+  "files": {
+    "cand.cli-timing.jsonl": "a372dafe8a7abbccdc833e22d4e83a5fcb09614137636035f4d6934b65c057ce",
+    "cand.llm.jsonl": "8d10d629ce5d0167926b87affcbe3ac2d121963673a6c15417f32d4d621eb538",
+    "cand.jsonl": "94a143291a201767ca88cc9949d54bea0f5f420e24aaf198371231ecff5895b5"
+  }
+}

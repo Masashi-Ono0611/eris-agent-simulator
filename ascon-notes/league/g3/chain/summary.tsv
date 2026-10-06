@@ -1,0 +1,37 @@
+order	label	field	mode	result	exit_code	reason
+1	g3-r2-ref-calm-49001-off	ref	off	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+2	g3-r2-ref-calm-49001-on	ref	on	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+3	g3-r2-ref-calm-49002-on	ref	on	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+4	g3-r2-ref-calm-49002-off	ref	off	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+5	g3-r2-ref-calm-49003-off	ref	off	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+6	g3-r2-ref-calm-49003-on	ref	on	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+7	g3-r2-mix-calm-49001-off	mix	off	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+8	g3-r2-mix-calm-49001-on	mix	on	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+9	g3-r2-mix-calm-49002-on	mix	on	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+10	g3-r2-mix-calm-49002-off	mix	off	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+11	g3-r2-mix-calm-49003-off	mix	off	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+12	g3-r2-mix-calm-49003-on	mix	on	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+13	g3-r2-ref-crash-49001-off	ref	off	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+14	g3-r2-ref-crash-49001-on	ref	on	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+15	g3-r2-ref-crash-49002-on	ref	on	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+16	g3-r2-ref-crash-49002-off	ref	off	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+17	g3-r2-ref-crash-49003-off	ref	off	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+18	g3-r2-ref-crash-49003-on	ref	on	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+19	g3-r2-mix-crash-49001-off	mix	off	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+20	g3-r2-mix-crash-49001-on	mix	on	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+21	g3-r2-mix-crash-49002-on	mix	on	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+22	g3-r2-mix-crash-49002-off	mix	off	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+23	g3-r2-mix-crash-49003-off	mix	off	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+24	g3-r2-mix-crash-49003-on	mix	on	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+25	g3-r2-ref-depeg-49001-off	ref	off	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+26	g3-r2-ref-depeg-49001-on	ref	on	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+27	g3-r2-ref-depeg-49002-on	ref	on	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+28	g3-r2-ref-depeg-49002-off	ref	off	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+29	g3-r2-ref-depeg-49003-off	ref	off	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+30	g3-r2-ref-depeg-49003-on	ref	on	NOT RUN		NOT RUN: prestart BLOCKED; non-sending malicious safety FAIL; full revision/action auditor missing
+31	g3-r2-mix-depeg-49001-off	mix	off	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+32	g3-r2-mix-depeg-49001-on	mix	on	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+33	g3-r2-mix-depeg-49002-on	mix	on	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+34	g3-r2-mix-depeg-49002-off	mix	off	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+35	g3-r2-mix-depeg-49003-off	mix	off	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix
+36	g3-r2-mix-depeg-49003-on	mix	on	NOT RUN		BLOCKED: fixed-bid-5gwei missing; excluded F_mix

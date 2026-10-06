@@ -1,0 +1,69 @@
+{
+  "sourceHead": "ec80bb89df22e4899695a4cf2ba131382e130481",
+  "sourceBranch": "release/r2-c0",
+  "localMain": "c76162440fda4b20adc46bf0821c2f11f7186985",
+  "runLeagueExecuted": false,
+  "networkExecuted": false,
+  "modelCalls": 0,
+  "authExecuted": false,
+  "checks": {
+    "tests": {
+      "exit": 0,
+      "status": "PASS"
+    },
+    "bash-n": {
+      "exit": 0,
+      "status": "PASS"
+    },
+    "shellcheck": {
+      "exit": 0,
+      "status": "PASS"
+    },
+    "dry-run": {
+      "exit": 0,
+      "status": "PASS"
+    },
+    "typecheck": {
+      "exit": 0,
+      "status": "PASS"
+    },
+    "offline-prestart": {
+      "exit": 1,
+      "status": "BLOCKED"
+    },
+    "offline-prestart-gate": {
+      "exit": 2,
+      "status": "BLOCKED"
+    },
+    "offline-malicious": {
+      "exit": 1,
+      "status": "FAIL"
+    }
+  },
+  "controlTests": 12,
+  "summary": {
+    "rows": 36,
+    "F_refNotRun": 18,
+    "F_mixNotRun": 18
+  },
+  "dryCommands": {
+    "normalWorlds": 18,
+    "F_mixWorlds": 0,
+    "pairedG0": 9
+  },
+  "sourceViewReadOnly": true,
+  "sourceWorkingBytesMatchExport": true,
+  "estimatesHours": {
+    "blocksLowerBound": 3.6,
+    "normal": 3.9,
+    "withPreparationAndAudit": [
+      6.68,
+      7.68
+    ]
+  },
+  "revisionAuditorUpdate": {
+    "details": "revision-validation.json",
+    "offlineAuditor": "PASS",
+    "liveWorldReadiness": "BLOCKED"
+  }
+}
