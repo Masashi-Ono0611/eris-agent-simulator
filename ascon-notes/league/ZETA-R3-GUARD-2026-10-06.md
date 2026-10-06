@@ -46,7 +46,7 @@ npm_config_offline=true npx tsc --noEmit
 runs it. Strategy-check acceptance remains unverified here. No simulation, network,
 or commit is authorized or performed.
 
-## Original blocker record (before fallback; preserved below)
+## HISTORICAL: blocker record as of HEAD 0bdc9dc (r3 did not exist yet; now it does)
 
 The remaining sections record the earlier enforced-guard request and its validation.
 Their statements that r3 was not created, no new hash existed, or r3 identity/env
