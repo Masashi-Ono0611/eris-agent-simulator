@@ -1,0 +1,27 @@
+# Air mixed-field chain logs (MIXA lines) and G0 failure lines
+MIXA 2026-10-06 20:14:56 JST chunk 1 begin: calm cex-drift informed-flow
+MIXA 2026-10-06 20:53:21 JST STOP chunk 1 G0 not PASS (see logs/mb1.log)
+EXIT=11
+MIXA 2026-10-06 20:56:20 JST chunk 2 begin: whale lending-incident crash
+MIXA 2026-10-06 21:34:52 JST STOP chunk 2 G0 not PASS (see logs/mb2.log)
+EXIT=12
+MIXA 2026-10-06 21:35:09 JST chunk 3 begin: depeg vuln spike
+MIXA 2026-10-06 22:13:34 JST STOP chunk 3 G0 not PASS (see logs/mb3.log)
+EXIT=13
+MIXA 2026-10-06 22:18:06 JST chunk 4 begin: depeg-persist cdp-incident launch
+MIXA 2026-10-06 22:56:41 JST STOP chunk 4 G0 not PASS (see logs/mb4b.log)
+EXIT=14
+--- mb1
+G0 FAIL
+FAIL: informed-flow/63001: loopIterations=361 expected 362
+--- mb2
+G0 FAIL
+FAIL: crash/63001: loopIterations=360 expected 362
+--- mb3
+G0 FAIL
+FAIL: vuln/63001: loopIterations=359 expected 362
+--- mb4
+QUEUE STOP: begin failed for mb4-mix-r3
+--- mb4b
+G0 FAIL
+FAIL: depeg-persist/63001: loopIterations=360 expected 362

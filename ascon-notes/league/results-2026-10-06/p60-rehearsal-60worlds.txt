@@ -1,0 +1,25 @@
+| レジーム | 世界数 | 平均 P | 平均 P−noop | 最悪 P−noop | 平均(T−T_noop) | 平均 T(候補) | 平均 T(multi-arb) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| calm | 5 | 288.7 | 671.7 | -225.9 | 11.24 | 58.70 | 40.19 |
+| cex-drift | 5 | 2856.9 | 1913.0 | 996.5 | 29.24 | 61.51 | 48.07 |
+| informed-flow | 5 | 1313.8 | 1226.5 | 212.5 | 23.72 | 59.92 | 42.62 |
+| whale | 5 | 3505.5 | 3293.3 | 78.6 | 18.78 | 50.01 | 40.01 |
+| lending-incident | 5 | 1245.9 | 2096.9 | 1901.5 | 22.68 | 61.85 | 46.97 |
+| crash | 5 | 1964.6 | 2490.1 | 576.2 | 19.29 | 59.14 | 50.19 |
+| depeg | 5 | 712.8 | 265.4 | -608.1 | 7.93 | 58.46 | 37.77 |
+| vuln | 5 | 403.6 | 335.6 | -128.2 | 11.05 | 59.65 | 38.08 |
+| spike | 5 | 2328.5 | 1108.6 | -1374.7 | 11.50 | 53.09 | 50.81 |
+| depeg-persist | 5 | 482.4 | 813.3 | 272.4 | 13.03 | 61.47 | 38.02 |
+| cdp-incident | 5 | 162.5 | 1196.2 | 266.9 | 21.63 | 58.63 | 47.31 |
+| launch | 5 | 1690.5 | 1896.7 | 387.9 | 19.23 | 63.42 | 40.94 |
+
+worlds 60 regimes 12 below noop 5 ; loops [362]
+regimes with mean(T-Tnoop)>=0: 12 / 12 ; min regime mean dT 7.93
+equal-weight mean T cand 58.82 vs multi-arb 43.42
+Traceback (most recent call last):
+  File "/Users/masa-ws1/ascon-run/q0_summary_r3.py", line 23, in <module>
+worlds 60
+multi-arb {'P': 314.1, 'tx': 254.1, 'rev': 3.2}
+clean-arb {'P': 613.3, 'tx': 48.9, 'rev': 0.5}
+ascon-zeta-r3 {'P': 1413.0, 'tx': 235.6, 'rev': 0.2}
+violations 0 cand submitted 14167 failed 168
