@@ -1,5 +1,7 @@
 # ASCON 計測の遠隔・常駐運用 Runbook（mini 常駐 + Air 併用）
 
+再発防止・固定chunkテンプレート・診断/資格の再開規則: [OPS-LESSONS-2026-10-06.md](../OPS-LESSONS-2026-10-06.md)（`chain-template.sh` / `test_chain_template.py`）。
+
 作成: 2026-10-05（Claude が Codex 作成のスクリプトを検証して整備）。状態: **仕組みは作成・オフライン試験済み、mini での実機運用は未検証。**
 
 ## 1. 役割
