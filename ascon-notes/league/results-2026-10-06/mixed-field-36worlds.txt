@@ -1,0 +1,27 @@
+Mixed-field measurement (Air, eval2 @8c29964, r3 FROZEN vs 10 fixed opponents, seeds 63001-63003, p3). SIMPLIFIED T = 50+10*(P-mean)/popstdev over the 12 agents per world, equal weight; NOT the official weighted T.
+worlds 36 ; worlds with loopIterations!=362 (G0 FAIL): [('informed-flow', '63001', 361), ('crash', '63001', 360), ('vuln', '63001', 359), ('depeg-persist', '63001', 360), ('depeg-persist', '63002', 359), ('cdp-incident', '63001', 361), ('cdp-incident', '63002', 360)]
+inc-zeta       meanT= 57.42 meanP-noop=   621.7 P<noop=13/36
+venue-arb      meanT= 53.98 meanP-noop=   349.3 P<noop=15/36
+sonnet-1       meanT= 53.24 meanP-noop=   259.2 P<noop=8/36
+opus-1         meanT= 52.90 meanP-noop=   265.3 P<noop=9/36
+grok-1         meanT= 52.67 meanP-noop=   228.7 P<noop=6/36
+clean-arb      meanT= 50.69 meanP-noop=   134.8 P<noop=20/36
+ascon-zeta-r3  meanT= 50.65 meanP-noop=   115.5 P<noop=19/36
+astra-2        meanT= 50.18 meanP-noop=    35.6 P<noop=18/36
+astra-1        meanT= 49.55 meanP-noop=    11.5 P<noop=14/36
+noop           meanT= 49.44 meanP-noop=     0.0 P<noop=0/36
+sonnet-2       meanT= 43.03 meanP-noop=  -282.1 P<noop=26/36
+multi-arb      meanT= 36.26 meanP-noop=  -701.0 P<noop=28/36
+per-regime meanT (r3 / venue-arb / inc-zeta / noop)
+calm              40.5  55.9  48.5  54.9
+cdp-incident      47.1  49.2  60.4  45.7
+cex-drift         60.7  72.7  41.1  48.8
+crash             45.4  55.9  59.7  45.7
+depeg             63.0  44.7  65.0  47.7
+depeg-persist     46.0  48.2  57.7  55.2
+informed-flow     44.9  56.5  55.9  50.5
+launch            49.5  47.5  72.1  49.3
+lending-incident  37.2  53.5  64.9  52.0
+spike             53.5  61.5  52.4  49.3
+vuln              54.6  56.1  56.7  51.3
+whale             65.2  46.2  54.6  42.7

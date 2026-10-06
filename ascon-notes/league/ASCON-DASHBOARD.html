@@ -387,6 +387,12 @@
       "path": "ascon-notes/league/ASCON-DASHBOARD.html",
       "title": "ローカル保存済みmain履歴",
       "locator": "data-status.main_merges：git log origin/main。HEAD一致、オンライン未照合"
+    },
+    {
+      "id": "src-results-p60reh-mixed",
+      "path": "ascon-notes/league/RESULTS-P60REH-MIXED-2026-10-06.md",
+      "title": "P60リハーサル・混成場結果 2026-10-06",
+      "locator": "指定集計の転記・実行条件・未検証境界"
     }
   ]
 }
@@ -402,12 +408,12 @@
     "src-handoff-oct06",
     "src-main-history"
   ],
-  "as_of": "2026-10-06T20:19:29+09:00",
+  "as_of": "2026-10-06T23:05:28+09:00",
   "measurement_as_of": null,
-  "last_update": "10/6: PR #5–15・C例外§7/§8・r3 release・G3 BLOCKEDを反映。既存ログ全件保持。mini/Airは約20:15 JSTの本人引継ぎ・未検証。",
+  "last_update": "10/6: mini 60世界・Air 36世界の集計を読取確認。両ジョブ完了、混成G0 FAIL 7世界保持。資格フラグ不変。",
   "phase_id": "phase-first",
-  "headline": "提出候補の事前確認が完了。改訂安全性・提出適合・公式回帰は未達。",
-  "subhead": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
+  "headline": "r3は条件付きの提出保険。参照場では優位、混成場では7位・noop近傍。",
+  "subhead": "miniリハーサル・Air混成場の計測は完了。優勝の根拠は未確立。 本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -426,7 +432,7 @@
     "name": "Q0b"
   },
   "notice": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
-  "measurement_note": "指定資料の実行記録を引用。今回の再実行・原ログ・実機照会なし。[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。 [本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+  "measurement_note": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。 集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
   "dev1": {
     "name": "dev1-xb-r",
     "state": "measured-diagnostic-complete",
@@ -581,7 +587,7 @@
       "src-dev2-repair"
     ]
   },
-  "human_action": "ゲート成立後に本人がフォーム送信。10/28 Ollama最終確認",
+  "human_action": "新候補停止の限定解除・探索優先度・損失許容・予算を判断。ゲート成立後に本人送信、10/28 Ollama確認",
   "priority": {
     "title": "G3安全境界と証跡欠測が提出を止めている",
     "blocker_ref": "B01",
@@ -603,14 +609,22 @@
   "recent": [
     {
       "kind": "warning",
-      "title": "r3へC例外を継承・PR #14/#15 merged",
-      "text": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。",
+      "title": "mini: 60世界リハーサル完了（非公式）",
+      "text": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。",
       "date": "2026-10-06",
-      "time_note": "資料記録。検査の再実行なし",
+      "time_note": "集計読取確認・実完了時刻未提示",
       "sources": [
-        "src-c-exception",
-        "src-release-r3",
-        "src-main-history"
+        "src-results-p60reh-mixed"
+      ]
+    },
+    {
+      "kind": "warning",
+      "title": "Air: 混成36世界完了・G0 FAIL 7世界保持",
+      "text": "集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
+      "date": "2026-10-06",
+      "time_note": "集計読取確認・実完了時刻未提示",
+      "sources": [
+        "src-results-p60reh-mixed"
       ]
     },
     {
@@ -622,16 +636,6 @@
       "sources": [
         "src-g3-diagnostic",
         "src-revision-audit"
-      ]
-    },
-    {
-      "kind": "warning",
-      "title": "mini 60世界 / Air 36世界を計測中との引継ぎ",
-      "text": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。 [本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
-      "date": "2026-10-06",
-      "time_note": "約20:15 JST本人提示。実機未照会",
-      "sources": [
-        "src-handoff-oct06"
       ]
     }
   ],
@@ -1709,20 +1713,30 @@
   ],
   "rehearsal": {
     "name": "mini: r3 P60リハーサル（非公式）",
-    "state": "reported-running-unverified",
-    "field": "P60リハーサル（場の詳細は未検証）",
+    "state": "measured-diagnostic-complete",
+    "field": "F_ref 4体（r3 / multi-arb / clean-arb / noop）",
     "seeds": "62001–62005",
     "regimes": 12,
     "worlds": 60,
     "started_at": null,
     "expected_end": null,
     "completed_at": null,
-    "completed_worlds": null,
-    "result": null,
-    "verified": false,
-    "note": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。",
+    "completed_worlds": 60,
+    "result": {
+      "t_candidate": "58.82",
+      "t_multi": "43.42",
+      "positive_regimes": 12,
+      "min_regime_dt": "7.93",
+      "noop_below": 5,
+      "violations": 0,
+      "rev_per_world": "0.2",
+      "submitted": 14167,
+      "submit_failed": 168
+    },
+    "verified": true,
+    "note": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。",
     "sources": [
-      "src-handoff-oct06"
+      "src-results-p60reh-mixed"
     ],
     "chunk1": {
       "g0": "PASS（本人引継ぎ・未検証）",
@@ -1732,26 +1746,259 @@
       "rev_per_world": "0.5",
       "sources": [
         "src-handoff-oct06"
-      ]
-    }
+      ],
+      "note": "途中集計の履歴。最新値は全60世界resultを参照。"
+    },
+    "verification_scope": "summary-facts-only",
+    "evidence_basis": "指定集計ファイルを読取確認。実行条件補足は依頼者引継ぎ。原ログ・実機未監査。",
+    "completion_evidence": "summary-world-count",
+    "completed_at_basis": "全世界集計と依頼者引継ぎで完了確認。正確な終了時刻は未提示。",
+    "sha": "8c29964",
+    "g0": "全4chunk PASS（依頼者引継ぎ）",
+    "loops": 362
   },
   "mixed_r3": {
     "name": "Air: r3混成場計測（非公式）",
-    "state": "reported-running-unverified",
-    "field": "固定10相手（G3 F_mixとの一致未検証）",
+    "state": "measured-diagnostic-complete",
+    "field": "混成12体（r3＋固定10相手＋noop）",
     "seeds": "63001–63003",
     "regimes": 12,
     "worlds": 36,
     "started_at": "2026-10-06T20:14:00+09:00",
     "expected_end": null,
     "completed_at": null,
-    "completed_worlds": null,
-    "result": null,
-    "verified": false,
-    "note": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+    "completed_worlds": 36,
+    "result": {
+      "t_candidate": "50.65",
+      "t_multi": "36.26",
+      "t_inc_zeta": "57.42",
+      "t_venue": "53.98",
+      "t_noop": "49.44",
+      "rank": 7,
+      "noop_below": 19,
+      "g0_failed_worlds": 7,
+      "ranking": [
+        [
+          "1",
+          "inc-zeta",
+          "57.42",
+          "621.7",
+          "13/36"
+        ],
+        [
+          "2",
+          "venue-arb",
+          "53.98",
+          "349.3",
+          "15/36"
+        ],
+        [
+          "3",
+          "sonnet-1",
+          "53.24",
+          "259.2",
+          "8/36"
+        ],
+        [
+          "4",
+          "opus-1",
+          "52.90",
+          "265.3",
+          "9/36"
+        ],
+        [
+          "5",
+          "grok-1",
+          "52.67",
+          "228.7",
+          "6/36"
+        ],
+        [
+          "6",
+          "clean-arb",
+          "50.69",
+          "134.8",
+          "20/36"
+        ],
+        [
+          "7",
+          "ascon-zeta-r3",
+          "50.65",
+          "115.5",
+          "19/36"
+        ],
+        [
+          "8",
+          "astra-2",
+          "50.18",
+          "35.6",
+          "18/36"
+        ],
+        [
+          "9",
+          "astra-1",
+          "49.55",
+          "11.5",
+          "14/36"
+        ],
+        [
+          "10",
+          "noop",
+          "49.44",
+          "0.0",
+          "0/36"
+        ],
+        [
+          "11",
+          "sonnet-2",
+          "43.03",
+          "-282.1",
+          "26/36"
+        ],
+        [
+          "12",
+          "multi-arb",
+          "36.26",
+          "-701.0",
+          "28/36"
+        ]
+      ],
+      "regime_t": [
+        [
+          "calm",
+          "40.5",
+          "55.9",
+          "48.5",
+          "54.9"
+        ],
+        [
+          "cdp-incident",
+          "47.1",
+          "49.2",
+          "60.4",
+          "45.7"
+        ],
+        [
+          "cex-drift",
+          "60.7",
+          "72.7",
+          "41.1",
+          "48.8"
+        ],
+        [
+          "crash",
+          "45.4",
+          "55.9",
+          "59.7",
+          "45.7"
+        ],
+        [
+          "depeg",
+          "63.0",
+          "44.7",
+          "65.0",
+          "47.7"
+        ],
+        [
+          "depeg-persist",
+          "46.0",
+          "48.2",
+          "57.7",
+          "55.2"
+        ],
+        [
+          "informed-flow",
+          "44.9",
+          "56.5",
+          "55.9",
+          "50.5"
+        ],
+        [
+          "launch",
+          "49.5",
+          "47.5",
+          "72.1",
+          "49.3"
+        ],
+        [
+          "lending-incident",
+          "37.2",
+          "53.5",
+          "64.9",
+          "52.0"
+        ],
+        [
+          "spike",
+          "53.5",
+          "61.5",
+          "52.4",
+          "49.3"
+        ],
+        [
+          "vuln",
+          "54.6",
+          "56.1",
+          "56.7",
+          "51.3"
+        ],
+        [
+          "whale",
+          "65.2",
+          "46.2",
+          "54.6",
+          "42.7"
+        ]
+      ],
+      "g0_failures": [
+        [
+          "informed-flow",
+          "63001",
+          "361"
+        ],
+        [
+          "crash",
+          "63001",
+          "360"
+        ],
+        [
+          "vuln",
+          "63001",
+          "359"
+        ],
+        [
+          "depeg-persist",
+          "63001",
+          "360"
+        ],
+        [
+          "depeg-persist",
+          "63002",
+          "359"
+        ],
+        [
+          "cdp-incident",
+          "63001",
+          "361"
+        ],
+        [
+          "cdp-incident",
+          "63002",
+          "360"
+        ]
+      ],
+      "t_definition": "50+10*(P-mean)/popstdev; 12 agents/world; equal weight; NOT official weighted T"
+    },
+    "verified": true,
+    "note": "集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
     "sources": [
-      "src-handoff-oct06"
-    ]
+      "src-results-p60reh-mixed"
+    ],
+    "verification_scope": "summary-facts-only",
+    "evidence_basis": "指定集計ファイルを読取確認。実行条件補足は依頼者引継ぎ。原ログ・実機未監査。",
+    "completion_evidence": "summary-world-count",
+    "completed_at_basis": "全世界集計と依頼者引継ぎで完了確認。正確な終了時刻は未提示。",
+    "sha": "8c29964",
+    "g0": "FAIL（7/36世界、除外・救済なし）"
   },
   "g3_diag": {
     "name": "r2 1世界診断（G3対象外）",
@@ -2086,7 +2333,7 @@
     "qualification_seeds_excluded": "41301–41305",
     "budget_status": "unreconciled-not-released",
     "title": "現在の計測引継ぎと停止条件",
-    "note": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。 [本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。 旧3回開発screenは履歴。C+Eでは探索を再開しない。監視稼働・全費用は未検証。",
+    "note": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。 集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
     "sources": [
       "src-handoff-oct06",
       "src-c-exception",
@@ -2472,7 +2719,7 @@
       "id": "day-2026-10-06",
       "date": "2026-10-06",
       "title": "Q02条件4 FAIL・r3選択・release確認、非公式計測引継ぎ",
-      "dependency": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。 [本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+      "dependency": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。 集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
       "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
       "state": "running",
       "highlight": false,
@@ -3395,23 +3642,25 @@
     },
     {
       "id": "progress-rehearsal-r3",
-      "title": "mini 60世界リハーサル（本人引継ぎ）",
-      "state": "running",
-      "evidence": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。",
+      "title": "mini: r3 P60リハーサル（非公式）・集計完了",
+      "state": "done",
+      "evidence": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。",
       "sources": [
-        "src-handoff-oct06"
+        "src-results-p60reh-mixed"
       ],
-      "workstream": "計測"
+      "workstream": "計測",
+      "verified": true
     },
     {
       "id": "progress-mixed-r3",
-      "title": "Air 36世界混成計測（本人引継ぎ）",
-      "state": "running",
-      "evidence": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+      "title": "Air: r3混成場計測（非公式）・集計完了",
+      "state": "done",
+      "evidence": "集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
       "sources": [
-        "src-handoff-oct06"
+        "src-results-p60reh-mixed"
       ],
-      "workstream": "計測"
+      "workstream": "計測",
+      "verified": true
     }
   ]
 }
@@ -3457,8 +3706,24 @@
       "impact_note": "G3を通過できず、提出READYにできない"
     },
     {
-      "id": "B10",
+      "id": "B20",
       "rank": 2,
+      "title": "r3 vs inc-zeta gap",
+      "severity": "Warning",
+      "likelihood": "高",
+      "impact": "大",
+      "owner": "Codex",
+      "evidence": "混成36世界の簡易T: inc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。G0 FAIL 7世界を含む。3修理の挙動変化は未検証仮説。",
+      "mitigation": "資産別・約定edge・gas・片脚・期末在庫・分岐を分解し、venue-arb機構を検証する。限定新候補・優先度・損失許容・研究枠は本人判断待ち。追加実験は未承認。",
+      "status": "open",
+      "sources": [
+        "src-results-p60reh-mixed"
+      ],
+      "impact_note": "r3の優勝力を説明できず、条件付きの提出保険を超える採用根拠がない"
+    },
+    {
+      "id": "B10",
+      "rank": 3,
       "title": "Q0b診断と安全契約証跡の差",
       "severity": "Critical",
       "likelihood": "高",
@@ -3475,7 +3740,7 @@
     },
     {
       "id": "B03",
-      "rank": 3,
+      "rank": 4,
       "title": "消費会計と改訂ON容量の不足",
       "severity": "Critical",
       "likelihood": "高",
@@ -3493,7 +3758,7 @@
     },
     {
       "id": "B04",
-      "rank": 4,
+      "rank": 5,
       "title": "Ollamaモデル照合・無料枠量・鍵疎通の未確認",
       "severity": "Critical",
       "likelihood": "中",
@@ -3509,7 +3774,7 @@
     },
     {
       "id": "B05",
-      "rank": 5,
+      "rank": 6,
       "title": "G0入口・CPU排他・入力固定の逸脱",
       "severity": "Critical",
       "likelihood": "高",
@@ -3526,7 +3791,7 @@
     },
     {
       "id": "B06",
-      "rank": 6,
+      "rank": 7,
       "title": "相手の構成で順位が逆転する",
       "severity": "Critical",
       "likelihood": "高",
@@ -3544,13 +3809,13 @@
     },
     {
       "id": "B07",
-      "rank": 7,
+      "rank": 8,
       "title": "G3 F_mixのfixed-bid-5gweiが未整備",
       "severity": "Warning",
       "likelihood": "高",
       "impact": "大",
       "owner": "Claude",
-      "evidence": "G3 rosterの固定5gwei相手が存在せずBLOCKED。Airの固定10相手計測は本人引継ぎのみで、この問題の解消証拠ではない。",
+      "evidence": "G3 rosterの固定5gwei相手が存在せずBLOCKED。Air混成36世界は集計確認済みだが、G3との一致やこの問題の解消は未検証。",
       "mitigation": "既存相手の無断置換なし。正式roster・hashを確認するまでG3 F_mixは停止。",
       "status": "open",
       "sources": [
@@ -3562,7 +3827,7 @@
     },
     {
       "id": "B08",
-      "rank": 8,
+      "rank": 9,
       "title": "少数seed・選抜楽観・尾部の不確実性",
       "severity": "Warning",
       "likelihood": "高",
@@ -3580,7 +3845,7 @@
     },
     {
       "id": "B09",
-      "rank": 9,
+      "rank": 10,
       "title": "H1の標準runtime安全境界が不成立・ON拒否",
       "severity": "Critical",
       "likelihood": "中",
@@ -3596,7 +3861,7 @@
     },
     {
       "id": "B11",
-      "rank": 10,
+      "rank": 11,
       "title": "旧xb-rの再現性照合（探索終了・履歴）",
       "severity": "Warning",
       "likelihood": "高",
@@ -3614,7 +3879,7 @@
     },
     {
       "id": "B12",
-      "rank": 11,
+      "rank": 12,
       "title": "独自性・zeta回帰・因果の未確定",
       "severity": "Warning",
       "likelihood": "中",
@@ -3632,7 +3897,7 @@
     },
     {
       "id": "B13",
-      "rank": 12,
+      "rank": 13,
       "title": "G4・最終ZIP固定・運営相当の起動は未検証",
       "severity": "Warning",
       "likelihood": "中",
@@ -3650,7 +3915,7 @@
     },
     {
       "id": "B14",
-      "rank": 13,
+      "rank": 14,
       "title": "生成の重複が初回経路を圧迫",
       "severity": "Warning",
       "likelihood": "高",
@@ -3669,7 +3934,7 @@
     },
     {
       "id": "B15",
-      "rank": 14,
+      "rank": 15,
       "title": "Q0b G0 FAILの扱い決定済み",
       "severity": "Suggestion",
       "likelihood": "低",
@@ -3685,7 +3950,7 @@
     },
     {
       "id": "B02",
-      "rank": 15,
+      "rank": 16,
       "title": "Q0b後のAstra更新",
       "severity": "Suggestion",
       "likelihood": "低",
@@ -3702,7 +3967,7 @@
     },
     {
       "id": "B17",
-      "rank": 16,
+      "rank": 17,
       "title": "分割PR・後続PR #5–15の統合は完了",
       "severity": "Critical",
       "likelihood": "高",
@@ -3719,7 +3984,7 @@
     },
     {
       "id": "B18",
-      "rank": 17,
+      "rank": 18,
       "title": "今日の適用規約・提出物一致は未確認",
       "severity": "Critical",
       "likelihood": "高",
@@ -3735,7 +4000,7 @@
     },
     {
       "id": "B19",
-      "rank": 18,
+      "rank": 19,
       "title": "C例外の未解決115件・回収停止リスク",
       "severity": "Warning",
       "likelihood": "高",
@@ -3767,15 +4032,15 @@
       "priority": 1,
       "experiment": "mixed-r3",
       "title": "Air r3混成場計測",
-      "state": "進行中との本人引継ぎ・未検証",
+      "state": "計測完了・診断のみ / G0 FAIL 7世界",
       "worlds": 36,
       "hours": null,
-      "window": "10/6 約20:15 JST時点",
-      "dependency": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+      "window": "10/6完了引継ぎ・実時刻未提示",
+      "dependency": "集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
-        "src-handoff-oct06"
+        "src-results-p60reh-mixed"
       ]
     },
     {
@@ -3783,15 +4048,15 @@
       "priority": 2,
       "experiment": "rehearsal-r3",
       "title": "mini r3 P60リハーサル",
-      "state": "進行中との本人引継ぎ・未検証",
+      "state": "計測完了・診断のみ",
       "worlds": 60,
       "hours": null,
-      "window": "10/6 約20:15 JST時点",
-      "dependency": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。",
+      "window": "10/6完了引継ぎ・実時刻未提示",
+      "dependency": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。",
       "owner": "Claude",
-      "active": true,
+      "active": false,
       "sources": [
-        "src-handoff-oct06"
+        "src-results-p60reh-mixed"
       ]
     },
     {
@@ -4048,26 +4313,26 @@
       ]
     }
   ],
-  "note": "C+E経路。旧探索・新資格は終了。現在の2計測は本人引継ぎ・未検証であり新たな起動許可ではない。",
+  "note": "mini/Air計測完了。G0 FAILは保持。追加研究は本人判断待ち。公式P60・G3/G4は未達、実消化未精算。",
   "day_limit_hours": 6,
   "bundle": "forward100h・6h/日・110分/chunkを維持。実消化・残費未精算。G3準備/全監査込み14–15h、公式P60 12–13h＋照合1hは計画見積。",
   "side_jobs": [
     {
       "title": "mini P60リハーサル",
       "owner": "Claude",
-      "state": "進行中・未検証",
-      "note": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。",
+      "state": "計測完了・診断のみ",
+      "note": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。",
       "sources": [
-        "src-handoff-oct06"
+        "src-results-p60reh-mixed"
       ]
     },
     {
       "title": "Air 混成場計測",
       "owner": "Claude",
-      "state": "進行中・未検証",
-      "note": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
+      "state": "計測完了・診断のみ",
+      "note": "集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
       "sources": [
-        "src-handoff-oct06"
+        "src-results-p60reh-mixed"
       ]
     },
     {
@@ -5331,6 +5596,46 @@
     ],
     "diagnostic": [
       {
+        "candidate": "r3（Air混成場）",
+        "scope_ref": "status.mixed_r3",
+        "run_ref": "status.mixed_r3.name",
+        "detail_ref": "status.mixed_r3.note",
+        "state": "warning",
+        "verified": true,
+        "state_label": "計測完了・診断のみ",
+        "verdict": "公式T・P60・G3/G4未検証。資格認定なし。G0 FAIL 7世界保持。",
+        "sources": [
+          "src-results-p60reh-mixed"
+        ],
+        "metrics": [
+          {
+            "label": "簡易平均T（対inc-zeta）",
+            "candidate_ref": "status.mixed_r3.result.t_candidate",
+            "baseline_ref": "status.mixed_r3.result.t_inc_zeta"
+          }
+        ]
+      },
+      {
+        "candidate": "r3（mini P60リハーサル）",
+        "scope_ref": "status.rehearsal",
+        "run_ref": "status.rehearsal.name",
+        "detail_ref": "status.rehearsal.note",
+        "state": "warning",
+        "verified": true,
+        "state_label": "計測完了・診断のみ",
+        "verdict": "公式T・P60・G3/G4未検証。資格認定なし。弱い参照場。",
+        "sources": [
+          "src-results-p60reh-mixed"
+        ],
+        "metrics": [
+          {
+            "label": "平均T（対multi-arb）",
+            "candidate_ref": "status.rehearsal.result.t_candidate",
+            "baseline_ref": "status.rehearsal.result.t_multi"
+          }
+        ]
+      },
+      {
         "candidate": "r2 1世界（G3対象外）",
         "scope_ref": "status.g3_diag",
         "run_ref": "status.g3_diag.name",
@@ -5347,36 +5652,6 @@
         "sources": [
           "src-g3-diagnostic",
           "src-revision-audit"
-        ]
-      },
-      {
-        "candidate": "r3 Air（結果未確認）",
-        "scope_ref": "status.mixed_r3",
-        "run_ref": "status.mixed_r3.name",
-        "metrics": [],
-        "detail": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] Airでr3 FROZEN対固定10相手、seeds 63001–63003、p3、36世界の混成場計測。20:14 JST開始（分精度）。結果・G0・完了数は未確認。公式P60でもG3でもなく、G3のfixed-bid-5gwei問題の解消も示さない。",
-        "state": "warning",
-        "verdict": "G3合否・公式P60・資格の証拠にしない。本人引継ぎ・未検証。",
-        "sources": [
-          "src-handoff-oct06"
-        ]
-      },
-      {
-        "candidate": "r3 mini（chunk 1のみ）",
-        "scope_ref": "status.rehearsal",
-        "run_ref": "status.rehearsal.name",
-        "metrics": [
-          {
-            "label": "chunk 1平均T",
-            "candidate_ref": "status.rehearsal.chunk1.t_candidate",
-            "baseline_ref": "status.rehearsal.chunk1.t_multi"
-          }
-        ],
-        "detail": "[本人引継ぎ・未検証、2026-10-06 約20:15 JST] miniでr3 FROZEN・seeds 62001–62005の60世界P60リハーサル進行中。chunk 1 G0 PASS、平均T 60.04対multi-arb 43.63、violations 0、revert 平均 0.5件/世界（agents ログの revert 件数の1世界あたり平均。集計スクリプトの定義で、基準4の判定値ではない・未検証）。全60世界の結果・完了数・終了時刻は未確認。公式P60でもG3でもない。",
-        "state": "warning",
-        "verdict": "G3合否・公式P60・資格の証拠にしない。本人引継ぎ・未検証。",
-        "sources": [
-          "src-handoff-oct06"
         ]
       },
       {
@@ -6415,6 +6690,363 @@
       "source": "src-rev10",
       "header_key": "live校正・安全・解釈"
     }
+  },
+  "mixed_r3_ranking": {
+    "id": "result-mixed-r3-ranking",
+    "title": "混成場 順位",
+    "category": "diagnostic",
+    "header": [
+      "順位",
+      "agent",
+      "meanT",
+      "meanP-noop",
+      "P<noop"
+    ],
+    "rows": [
+      [
+        "1",
+        "inc-zeta",
+        "57.42",
+        "621.7",
+        "13/36"
+      ],
+      [
+        "2",
+        "venue-arb",
+        "53.98",
+        "349.3",
+        "15/36"
+      ],
+      [
+        "3",
+        "sonnet-1",
+        "53.24",
+        "259.2",
+        "8/36"
+      ],
+      [
+        "4",
+        "opus-1",
+        "52.90",
+        "265.3",
+        "9/36"
+      ],
+      [
+        "5",
+        "grok-1",
+        "52.67",
+        "228.7",
+        "6/36"
+      ],
+      [
+        "6",
+        "clean-arb",
+        "50.69",
+        "134.8",
+        "20/36"
+      ],
+      [
+        "7",
+        "ascon-zeta-r3",
+        "50.65",
+        "115.5",
+        "19/36"
+      ],
+      [
+        "8",
+        "astra-2",
+        "50.18",
+        "35.6",
+        "18/36"
+      ],
+      [
+        "9",
+        "astra-1",
+        "49.55",
+        "11.5",
+        "14/36"
+      ],
+      [
+        "10",
+        "noop",
+        "49.44",
+        "0.0",
+        "0/36"
+      ],
+      [
+        "11",
+        "sonnet-2",
+        "43.03",
+        "-282.1",
+        "26/36"
+      ],
+      [
+        "12",
+        "multi-arb",
+        "36.26",
+        "-701.0",
+        "28/36"
+      ]
+    ],
+    "sources": [
+      "src-results-p60reh-mixed"
+    ],
+    "source_table": {
+      "source": "src-results-p60reh-mixed",
+      "header_key": "順位"
+    },
+    "note": "36世界・簡易T・G0 FAIL 7世界を含む診断"
+  },
+  "mixed_r3_regimes": {
+    "id": "result-mixed-r3-regimes",
+    "title": "混成場 レジーム別平均T",
+    "category": "diagnostic",
+    "header": [
+      "混成レジーム",
+      "r3 meanT",
+      "venue-arb meanT",
+      "inc-zeta meanT",
+      "noop meanT"
+    ],
+    "rows": [
+      [
+        "calm",
+        "40.5",
+        "55.9",
+        "48.5",
+        "54.9"
+      ],
+      [
+        "cdp-incident",
+        "47.1",
+        "49.2",
+        "60.4",
+        "45.7"
+      ],
+      [
+        "cex-drift",
+        "60.7",
+        "72.7",
+        "41.1",
+        "48.8"
+      ],
+      [
+        "crash",
+        "45.4",
+        "55.9",
+        "59.7",
+        "45.7"
+      ],
+      [
+        "depeg",
+        "63.0",
+        "44.7",
+        "65.0",
+        "47.7"
+      ],
+      [
+        "depeg-persist",
+        "46.0",
+        "48.2",
+        "57.7",
+        "55.2"
+      ],
+      [
+        "informed-flow",
+        "44.9",
+        "56.5",
+        "55.9",
+        "50.5"
+      ],
+      [
+        "launch",
+        "49.5",
+        "47.5",
+        "72.1",
+        "49.3"
+      ],
+      [
+        "lending-incident",
+        "37.2",
+        "53.5",
+        "64.9",
+        "52.0"
+      ],
+      [
+        "spike",
+        "53.5",
+        "61.5",
+        "52.4",
+        "49.3"
+      ],
+      [
+        "vuln",
+        "54.6",
+        "56.1",
+        "56.7",
+        "51.3"
+      ],
+      [
+        "whale",
+        "65.2",
+        "46.2",
+        "54.6",
+        "42.7"
+      ]
+    ],
+    "sources": [
+      "src-results-p60reh-mixed"
+    ],
+    "source_table": {
+      "source": "src-results-p60reh-mixed",
+      "header_key": "混成レジーム"
+    },
+    "note": "36世界・簡易T・G0 FAIL 7世界を含む診断"
+  },
+  "rehearsal_regimes": {
+    "id": "result-rehearsal-regimes",
+    "title": "P60リハーサル レジーム別集計",
+    "category": "diagnostic",
+    "header": [
+      "レジーム",
+      "世界数",
+      "平均 P",
+      "平均 P−noop",
+      "最悪 P−noop",
+      "平均(T−T_noop)",
+      "平均 T(候補)",
+      "平均 T(multi-arb)"
+    ],
+    "rows": [
+      [
+        "calm",
+        "5",
+        "288.7",
+        "671.7",
+        "-225.9",
+        "11.24",
+        "58.70",
+        "40.19"
+      ],
+      [
+        "cex-drift",
+        "5",
+        "2856.9",
+        "1913.0",
+        "996.5",
+        "29.24",
+        "61.51",
+        "48.07"
+      ],
+      [
+        "informed-flow",
+        "5",
+        "1313.8",
+        "1226.5",
+        "212.5",
+        "23.72",
+        "59.92",
+        "42.62"
+      ],
+      [
+        "whale",
+        "5",
+        "3505.5",
+        "3293.3",
+        "78.6",
+        "18.78",
+        "50.01",
+        "40.01"
+      ],
+      [
+        "lending-incident",
+        "5",
+        "1245.9",
+        "2096.9",
+        "1901.5",
+        "22.68",
+        "61.85",
+        "46.97"
+      ],
+      [
+        "crash",
+        "5",
+        "1964.6",
+        "2490.1",
+        "576.2",
+        "19.29",
+        "59.14",
+        "50.19"
+      ],
+      [
+        "depeg",
+        "5",
+        "712.8",
+        "265.4",
+        "-608.1",
+        "7.93",
+        "58.46",
+        "37.77"
+      ],
+      [
+        "vuln",
+        "5",
+        "403.6",
+        "335.6",
+        "-128.2",
+        "11.05",
+        "59.65",
+        "38.08"
+      ],
+      [
+        "spike",
+        "5",
+        "2328.5",
+        "1108.6",
+        "-1374.7",
+        "11.50",
+        "53.09",
+        "50.81"
+      ],
+      [
+        "depeg-persist",
+        "5",
+        "482.4",
+        "813.3",
+        "272.4",
+        "13.03",
+        "61.47",
+        "38.02"
+      ],
+      [
+        "cdp-incident",
+        "5",
+        "162.5",
+        "1196.2",
+        "266.9",
+        "21.63",
+        "58.63",
+        "47.31"
+      ],
+      [
+        "launch",
+        "5",
+        "1690.5",
+        "1896.7",
+        "387.9",
+        "19.23",
+        "63.42",
+        "40.94"
+      ]
+    ],
+    "sources": [
+      "src-results-p60reh-mixed"
+    ],
+    "source_table": {
+      "source": "src-results-p60reh-mixed",
+      "header_key": "レジーム"
+    },
+    "note": "60世界・非公式・弱いF_ref。資格認定なし。"
   }
 }
 </script>
@@ -6849,6 +7481,39 @@
   ],
   "note": "追記のみ。旧100件は全フィールド保持、8件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-111",
+      "timestamp": "2026-10-06T23:05:28+09:00",
+      "type": "レビュー",
+      "summary": "r3は条件付き保険。r3 vs inc-zeta gapをCodex担当の未解消リスクに追加。原因仮説・venue-arb機構・本人の新候補/優先度/損失許容/予算判断は未確定。",
+      "sources": [
+        "src-results-p60reh-mixed"
+      ],
+      "time_basis": "資料読取・ダッシュボード更新のJST記録時刻。実計測の終了時刻ではない。",
+      "event_date": "2026-10-06"
+    },
+    {
+      "id": "log-110",
+      "timestamp": "2026-10-06T23:05:28+09:00",
+      "type": "実測",
+      "summary": "集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
+      "sources": [
+        "src-results-p60reh-mixed"
+      ],
+      "time_basis": "資料読取・ダッシュボード更新のJST記録時刻。実計測の終了時刻ではない。",
+      "event_date": "2026-10-06"
+    },
+    {
+      "id": "log-109",
+      "timestamp": "2026-10-06T23:05:28+09:00",
+      "type": "実測",
+      "summary": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。",
+      "sources": [
+        "src-results-p60reh-mixed"
+      ],
+      "time_basis": "資料読取・ダッシュボード更新のJST記録時刻。実計測の終了時刻ではない。",
+      "event_date": "2026-10-06"
+    },
     {
       "id": "log-108",
       "timestamp": "2026-10-06T20:18:51+09:00",
@@ -8741,7 +9406,7 @@
   "copy": {
     "action_note": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
     "action_next": "10/28 dec-007未完了。Ollama・ZIP・利用枠・鍵の最終確認は本人。",
-    "diagnostic_notice": "最新はr2 1世界診断と、mini/Airの本人引継ぎ。公式P60・G3・資格へ昇格させない。過去診断は元判定のまま保持。",
+    "diagnostic_notice": "最新はmini 60世界リハーサル・Air 36世界混成場の集計読取確認。AirのG0 FAIL 7世界を保持。公式T・P60・G3/G4・資格は未検証のまま。過去診断は元判定を保持。",
     "qualification_notice": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
     "diagnostic_criteria": "Pは損益、Tは同じ相手の中での相対スコア。取引が増えることと、資格を満たすことは別です。",

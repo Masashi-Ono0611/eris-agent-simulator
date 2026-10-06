@@ -171,8 +171,20 @@ function assertMeasurements(){
       assert.ok(typeof run.result==='object'&&!Array.isArray(run.result)&&Object.keys(run.result).length>0,
         `INVARIANT ${name} completed result is a record`);
       assert.equal(run.state,'measured-diagnostic-complete',`INVARIANT ${name} completion state`);
-      assert.ok(run.completed_at&&run.completed_worlds===run.worlds&&run.sources?.length,
+      // Summary completion does not supply an exact wall-clock end time.
+      // Keep unknown timestamps null; require explicit evidence instead.
+      const summaryComplete=run.completion_evidence==='summary-world-count'&&
+        run.verification_scope==='summary-facts-only'&&run.verified===true&&
+        run.completed_at===null&&Boolean(run.completed_at_basis)&&
+        run.sources?.includes('src-results-p60reh-mixed');
+      assert.ok((run.completed_at||summaryComplete)&&run.completed_worlds===run.worlds&&run.sources?.length,
         `INVARIANT ${name} completion evidence`);
+      if(summaryComplete&&name==='mixed_r3'){
+        assert.match(run.g0,/^FAIL\b/,'INVARIANT mixed G0 failures remain flagged');
+        assert.equal(run.result.g0_failed_worlds,7,'INVARIANT all seven failed worlds retained');
+        assert.equal(run.result.g0_failures.length,7,'INVARIANT failed world records retained');
+        assert.match(run.result.t_definition,/NOT official weighted T/,'INVARIANT simplified T boundary');
+      }
     }
   }
 }
@@ -282,9 +294,18 @@ check('red controls prove evidence invariants reject false claims and original s
   ])rejectMutation(`${path}.${key}`,d=>{path.split('.').reduce((v,k)=>v[k],d)[key]=value;},assertQualification);
   for(const name of ['rehearsal','mixed_r3']){
     rejectMutation(`${name} fake result`,d=>{d.status[name].result=42;},assertMeasurements);
-    rejectMutation(`${name} fake verification`,d=>{d.status[name].verified=true;},assertMeasurements);
+    // Preserve the running-report red control after actual completion arrives.
+    rejectMutation(`${name} fake verification`,d=>{Object.assign(d.status[name],{
+      state:'reported-running-unverified',result:null,verified:true});},assertMeasurements);
     rejectMutation(`${name} scalar completion`,d=>{Object.assign(d.status[name],{state:'measured-diagnostic-complete',result:42,verified:true});},assertMeasurements);
+    rejectMutation(`${name} missing completion evidence`,d=>{
+      d.status[name].completed_at=null;delete d.status[name].completion_evidence;
+    },assertMeasurements);
+    rejectMutation(`${name} incomplete world count`,d=>{d.status[name].completed_worlds--;},assertMeasurements);
   }
+  rejectMutation('mixed G0 false PASS',d=>{d.status.mixed_r3.g0='PASS';},assertMeasurements);
+  rejectMutation('mixed failed worlds erased',d=>{d.status.mixed_r3.result.g0_failed_worlds=0;},assertMeasurements);
+  rejectMutation('mixed official T claim',d=>{d.status.mixed_r3.result.t_definition='official weighted T';},assertMeasurements);
   rejectMutation('G3 PASS with blockers',d=>{d.plan.gates.find(g=>g.id==='gate-g3').state='PASS';},assertG3);
   rejectMutation('G3 done with blockers',d=>{d.progress.items.find(p=>p.id==='progress-g3').state='done';},assertG3);
   for(const target of ['progress','results']){
@@ -504,11 +525,25 @@ check('mix1 ranking, regimes and G0 exception render from measured JSON',()=>{
   const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
   for(const row of app.D.status.mix1.result.ranking)for(const k of ['agent','t','worst_regime_t'])assert.ok(t.includes(String(row[k])),`${row.agent} ${k}`);
   for(const row of app.D.status.mix1.result.regime_t)for(const k of ['regime','t','mean_rank'])assert.ok(t.includes(String(row[k])),`${row.regime} ${k}`);
-  for(const value of ['23世界PASS','crash/40001','grok-1','telemetry','BLOCKEDをPASSとは扱わない','40003/40004','結果未確認','48世界'])assert.ok(t.includes(value),value);
+  // Current measurements may finish; retain the historical G0 boundary checks.
+  for(const value of ['23世界PASS','crash/40001','grok-1','telemetry','BLOCKEDをPASSとは扱わない','40003/40004','48世界'])assert.ok(t.includes(value),value);
   const before=app.D.status.mix1.result.t_candidate;
   app.D.status.mix1.result.t_candidate='REV11-MIX-SENTINEL';app.state.page='results';app.state.results='diagnostic';app.render();
   assert.ok(element('page').innerHTML.includes('REV11-MIX-SENTINEL'));
   app.D.status.mix1.result.t_candidate=before;
+});
+check('completed rehearsal and mixed summaries render with diagnostic boundaries',()=>{
+  const t=visibleText(rendered.results);
+  for(const value of ['58.82','43.42','57.42','50.65','49.44','G0 FAIL 7世界','公式T','未検証'])
+    assert.ok(t.includes(value),value);
+  for(const name of ['rehearsal','mixed_r3']){
+    assert.equal(app.D.status[name].completed_at,null,'unknown finish time remains null');
+    assert.equal(app.D.status[name].verification_scope,'summary-facts-only');
+    const rows=app.D.results.comparison.diagnostic.filter(r=>r.scope_ref==='status.'+name);
+    assert.equal(rows.length,1,'one current comparison row per run');
+    assert.equal(rows[0].state,'warning','diagnostic completion is not qualification PASS');
+  }
+  assert.ok(!app.D.queue.items.some(q=>['queue-rehearsal-r3','queue-mixed-r3'].includes(q.id)&&q.active));
 });
 check('rev12 all mixed rankings and incz completed boundary are rendered',()=>{
   const t=rendered.results.replace(/<[^>]*>/g,'').replace(/ⓘ/g,'');
