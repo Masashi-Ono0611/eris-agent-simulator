@@ -1,0 +1,151 @@
+{
+  "candidateSha256": "153becef74bebb21acf8674191407ee941b2844a4cb4fa25716b111390eade59",
+  "inputs": {
+    "ascon-notes/league/g3/prestart-check.py": "81097997056aa5b3b1c299c3822acb5e532d42eece94fb4e2b2e0a85c0c1d3f3",
+    "ascon-notes/league/g3/fixture-expectations.json": "1bb314804406bea8ef9e81342467aab0ecbffc800f5592bd6577b597c447c963",
+    "ascon-notes/league/g3/initial-state.json": "7fb9601246be5bc16240c6daf8f8b4e7eaa962e01fc46901a08679ca31880734",
+    "ascon-notes/league/g3/fault-delayed.yaml": "7cf13875bce04fb925a4a0f1f4910394fbe5885c9cf639922be50a0e0ab3f687",
+    "ascon-notes/league/g3/ref-off.yaml": "b773fe7181b3754d43b97ee8dcb5cb61b7f72f7b088c4ef932dbfff5b1b122df",
+    "ascon-notes/league/g3/fault-timeout.yaml": "ed0c4d671540e091aa8e83bd68728475a215a1299e36fbede20341a47f6e5f4a",
+    "ascon-notes/league/g3/validate-inputs.mjs": "2925dbc5a157f260be2964853fc9d3bf574a24ae139ed88ac4281459405f5e56",
+    "ascon-notes/league/g3/fake-claude.py": "d75f07db0c6b847fbb3e70acc4d84093306ca3b520cfaa977e843532189de3d1",
+    "ascon-notes/league/g3/README.md": "7a70429b801a56db783f00996e01fedbe0fe7cb6a814928c6cdaf60775d081a6",
+    "ascon-notes/league/g3/mix-off.yaml": "88969314c1fc1c3540c65c6391fcac3a45bf497d8825a28a0f6a8892fdd60ccc",
+    "ascon-notes/league/g3/schedule.tsv": "429ba18eccd23082acd7fc9e081a26f49c0d63879aa79af9af17ac6709ed17ff",
+    "ascon-notes/league/g3/fault-invalid.yaml": "a1dd127e5583db212f1b18ee0a077e71ad133df6c57bcadeae3cf8c41b3e3578",
+    "ascon-notes/league/g3/harness.mjs": "61ddcdb45b34351e00050621bd69eebbe76287ec90d2a24f5e8ba048c7018cfb",
+    "ascon-notes/league/g3/mix-on.yaml": "e35d8e0539fa3850a09fb5e9c4bcb70801c8f34db41c0a6e79b0840a699e5f5d",
+    "ascon-notes/league/g3/fault-malicious.yaml": "193815839b9e1238a3f18cfe1fb44e2ad1c8a91bdfb3ef3a3939517ebe925f56",
+    "ascon-notes/league/g3/budget.json": "5e688312e0b4438993e1a67f616c85e7ca14fdc2f1396c01d5c7926c7d1363fa",
+    "ascon-notes/league/g3/fault-change-revert.yaml": "7bc60969d18f35d6c202e646de2db22fbc583cbac1bbfcade30e5b6ded548820",
+    "ascon-notes/league/g3/state-plan.yaml": "b6701ce82506de5a780a66da8f545368b0385bf8cfd70314f10aa57bdf4fd714",
+    "ascon-notes/league/g3/fault-quota.yaml": "1a8f3e7fddd15d9e0758bf23d20358f2079b9991b7104e915240e9015a6b1f71",
+    "ascon-notes/league/g3/ref-on.yaml": "6dbb400710807deb5e8bd31b3bd2bea5f0dc50c5e96e15c31f6762c90de112d0",
+    "ascon-notes/league/g3/fault-empty.yaml": "09c4755c881bb1e902e20e87ac006830e73f4b43270f871d2ed5afa48da9fe49",
+    "ascon-notes/league/g3/tests/test_schedule.py": "40baaf9c9266f3729e3b686d94e4ca036720ddb058f1122cf6cb915a6a4bf0a0",
+    "ascon-notes/league/g3/tests/test_prestart.py": "b4ddc841b93cb0d43f9e88978d0546c2c251445aee310f7d2e963ee270bff5cc",
+    "ascon-notes/league/g3/tests/provider.test.mjs": "bd4e4fd8ad759436d9bdf4a726c2cf01f1f5cf36fd877483da5e2de12ed1a198",
+    "ascon-notes/league/g3/fixtures/unit-change.json": "09cc2d3482166661ac8303dbf89a280c82e871fcb933bd01418eac4c3edca2d7",
+    "ascon-notes/league/g3/fixtures/unknown-revert.json": "8daf9b46146d05bf3ffffb9bdd12b94f35b4fd69ac6c34e53fd5307a820afe53",
+    "ascon-notes/league/g3/fixtures/observation.json": "77a6f1532f528675d3ad7d131efa59a6cf8af692a94df2f8d513d44ec8b54e3f",
+    "ascon-notes/league/g3/fixtures/invalid.json": "90801d4bc35f12b2a50a3a4fac96da0f3961980480459e6226c43803a7c56f74",
+    "ascon-notes/league/g3/fixtures/malicious-submit.json": "c3f0dfd743bb9423d37ce1ba098bcc32e8e21336a9fe1b74e2ef4faf97fefeae",
+    "ascon-notes/league/g3/fixtures/malicious-return.json": "d118ca5a97797e00c058bcb3278b095db4ad08c7cbffb96fae77b796ffa08f6b",
+    "ascon-notes/league/g3/fixtures/null.json": "65be7016995a30ca13493e8ac697ce909582fdf2438c7821eb9cfa6e4a0633cc",
+    "ascon-notes/league/g3/fixtures/import-body.json": "1573ea8761a7b793404add473dd98561ed9af96ab119c089cb3684f7d6793e4b",
+    "ascon-notes/league/g3/fixtures/wrong-type.json": "7abd1fcc1e24d8846f39c45103cb6c683c5be418f6a33e944aa0790df49ffea2",
+    "ascon-notes/league/g3/fixtures/empty-executor.json": "4a38fe8e50aef17db32f014bafab1c059309ad29ba40f3ea2cee732d1a4428b9",
+    "ascon-notes/league/g3/tests/fixtures/used-index.tsv": "f143191d53441219da0e75b87bc22b3186365780065cfe00ea5b4780efad932a",
+    "ascon-notes/league/G3-DESIGN-ZETA-R2-2026-10-06.md": "4c7ceac01593417cb922f3027bd7d83d14a70649361641c1e77bd0c6d1e86485",
+    "ascon-notes/league/xb-r-live-claude-timed.sh": "a1b59dc96ebf116940cf08c92e47454674df0f7b36bbe223020c4b4bee5fa52a"
+  },
+  "agentTrees": {
+    "noop": {
+      "files": {
+        "agent.ts": "4618bdc28eb78fc0cf68c33b54794b3da3e40b1b5e49a1f5b66e623b2584f917"
+      },
+      "sha256": "4e2a2a1f089eb19bfe95325d9afe4ddc42e5eee9b06cf995f1ba48857aab26c5"
+    },
+    "multi-arb": {
+      "files": {
+        "agent.ts": "b0c8b80fdf02134be423e3be15285713aafb8656ec2e40430e121578b02f0592",
+        "prompt.md": "ac070887d1adc9652a8e2a14c2b05f45381ba53ef2458210b3c40f3d7515a9bf"
+      },
+      "sha256": "a705820dbe73accf51de795d125bc3ba7951cd31c996c6dcef2a0ba693894741"
+    },
+    "clean-arb": {
+      "files": {
+        "agent.ts": "40855393ff8d6f18482c4b6d1bb59b974284654bea793f90df62ebfe0ec1a493"
+      },
+      "sha256": "5db25e9636e567c7ef6dd6bba34e4dc22652b10967a354a16cc90a6b995ebef9"
+    },
+    "venue-arb": {
+      "files": {
+        "agent.ts": "9af40614fb63d4aa8362dac96a49f988e73a78acb18a3e5fb4377c12c2f108f7",
+        "prompt.md": "ea3fefbab534d554cb2dc9f08f94df44f26ce78b96439dc8fb19572004112d2a"
+      },
+      "sha256": "deb150caebfc27b3e15b8f6b579f5f6799185fe13117f20fc84f1fd00fad0e76"
+    },
+    "astra-1": {
+      "files": {
+        "agent.ts": "cf32684c1b3aa9112e6811c6bad3cf26df64d17434929648a3747e6dde259f4b",
+        "prompt.md": "bf0c30a123675ddfb945d3dfab5932c7296043d171e20f9deddd4b34a23f536e"
+      },
+      "sha256": "32da8183ca0d24ee6bdd8b1c3b62f6eebdd56f6759baac53cb2157c938669f3b"
+    },
+    "astra-2": {
+      "files": {
+        "README.md": "4484c92107d9f807f3307ff79932c3713e6fc9212fd7675bae2d6810bc089111",
+        "agent.ts": "d2f8807a223bb6cd11b5f1af5445bfc9dc57cfdfd465556eece5a30d4aafbc6a",
+        "launch.ts": "e5381a500f13fc70817b4e1926d3a329605c43df1fe19ca3d6475f07f69a5cb0",
+        "params.ts": "f3e1f51427d5824a26603317a050de750de40ed52a039d0cd69a203deba91df9",
+        "prompt.md": "967b7a565e3d83f311773ba81243a011be89049f25b7e728578dbb720667086f"
+      },
+      "sha256": "248363709b699b96a272efae1c4b1fdf689a1fe3bf25eca4f0522683f9cdd79c"
+    },
+    "sonnet-1": {
+      "files": {
+        "agent.ts": "af4de39cd806e27bea0da5ce080c82a9c308e44452a8a92cde32fa2c89d57acb",
+        "prompt.md": "c2dfd69f937dc402b1b6ba2d05077dc7aa7beb9e015bf5c99b46ddf2efe6e23c"
+      },
+      "sha256": "bdacd6d40bd2a31d31186c17a663ec0d7b9de4fbb912121a40611512b07f738d"
+    },
+    "sonnet-2": {
+      "files": {
+        "agent.ts": "9e0831e6d706857d633f43722815ae87af22d69e5c0c6496d44613e65d6c58c0",
+        "prompt.md": "7b1b251b9dd882f60adf0867dc38bf75e462bcd2243a6f9079fb31143a300538"
+      },
+      "sha256": "cc7aaa36e0674085893bee850923bbc6bffda3aac8c8591d31a12d17ca1815ea"
+    },
+    "opus-1": {
+      "files": {
+        "agent.ts": "2745b27d3d989f2d6810aa4a78da1e7399e659f1cf328f4addd507eda0e9962b",
+        "prompt.md": "da0492aee747486c10c62dd2f5be127b64a73bb4d4aa959112342eaf5469b482"
+      },
+      "sha256": "4f1f61a341203282f4d2d16fbb6ddf1400650b25886fa70edead2a87c62dbc60"
+    },
+    "ascon-zeta": {
+      "files": {
+        "agent.ts": "fc2585219af27b01ceac76af642d98d485f39681a2c214d2a636eb84e6d4d80b",
+        "delta.ts": "4bfd0e1522aaa4042a9ff70d5e24ea8f2adabbf97357f310fce8b110a15f7800",
+        "launch.ts": "4b3af7e48415f19e396f51f851df373fd8f728616e4e0a117e8694fa7dde4815",
+        "prompt.md": "5ceeffc559b23033afe4f7775d3161a73ad7f0bcce704d548d2b0e44d9c7b1c4"
+      },
+      "sha256": "efa9fbef0f50eaf43887c4b8fdb8a85046b8f1f7ec6a700328b119b1012ae872"
+    },
+    "ascon-zeta-r2": {
+      "files": {
+        "agent.ts": "2903c55d805e2c42c0a78eaf4b066c26826952e811a1703c5fdede131f8ffe6a",
+        "delta.ts": "9ae322a7859c442f7c4efbed1df0708fff81849b7cc9bf7078e0ffcd558ade91",
+        "launch.ts": "3b2df02d6ce75efc18fff802ea1e77bacfc6f09f7fe6e05916227d28c428b36a",
+        "launchSwap.ts": "0feb331b802669f5e88dd7b09c33f9a6eda5f294bad498c03c9dd46f8223b6a1",
+        "prompt.md": "bf0c18dfc3589f3b365026fd4163c1fb1ed6a78d4840cc28647aaaffa7db8788"
+      },
+      "sha256": "153becef74bebb21acf8674191407ee941b2844a4cb4fa25716b111390eade59"
+    }
+  },
+  "selfReservations": {
+    "ascon-notes/league/g3/fault-delayed.yaml": "7cf13875bce04fb925a4a0f1f4910394fbe5885c9cf639922be50a0e0ab3f687",
+    "ascon-notes/league/g3/ref-off.yaml": "b773fe7181b3754d43b97ee8dcb5cb61b7f72f7b088c4ef932dbfff5b1b122df",
+    "ascon-notes/league/g3/fault-timeout.yaml": "ed0c4d671540e091aa8e83bd68728475a215a1299e36fbede20341a47f6e5f4a",
+    "ascon-notes/league/g3/README.md": "7a70429b801a56db783f00996e01fedbe0fe7cb6a814928c6cdaf60775d081a6",
+    "ascon-notes/league/g3/mix-off.yaml": "88969314c1fc1c3540c65c6391fcac3a45bf497d8825a28a0f6a8892fdd60ccc",
+    "ascon-notes/league/g3/schedule.tsv": "429ba18eccd23082acd7fc9e081a26f49c0d63879aa79af9af17ac6709ed17ff",
+    "ascon-notes/league/g3/fault-invalid.yaml": "a1dd127e5583db212f1b18ee0a077e71ad133df6c57bcadeae3cf8c41b3e3578",
+    "ascon-notes/league/g3/mix-on.yaml": "e35d8e0539fa3850a09fb5e9c4bcb70801c8f34db41c0a6e79b0840a699e5f5d",
+    "ascon-notes/league/g3/fault-malicious.yaml": "193815839b9e1238a3f18cfe1fb44e2ad1c8a91bdfb3ef3a3939517ebe925f56",
+    "ascon-notes/league/g3/fault-change-revert.yaml": "7bc60969d18f35d6c202e646de2db22fbc583cbac1bbfcade30e5b6ded548820",
+    "ascon-notes/league/g3/state-plan.yaml": "b6701ce82506de5a780a66da8f545368b0385bf8cfd70314f10aa57bdf4fd714",
+    "ascon-notes/league/g3/fault-quota.yaml": "1a8f3e7fddd15d9e0758bf23d20358f2079b9991b7104e915240e9015a6b1f71",
+    "ascon-notes/league/g3/ref-on.yaml": "6dbb400710807deb5e8bd31b3bd2bea5f0dc50c5e96e15c31f6762c90de112d0",
+    "ascon-notes/league/g3/fault-empty.yaml": "09c4755c881bb1e902e20e87ac006830e73f4b43270f871d2ed5afa48da9fe49",
+    "ascon-notes/league/g3/tests/fixtures/used-index.tsv": "f143191d53441219da0e75b87bc22b3186365780065cfe00ea5b4780efad932a",
+    "ascon-notes/league/G3-DESIGN-ZETA-R2-2026-10-06.md": "4c7ceac01593417cb922f3027bd7d83d14a70649361641c1e77bd0c6d1e86485"
+  },
+  "blocked": [
+    "fixed-bid-5gwei implementation/configuration absent; both F_mix rosters intentionally invalid",
+    "audited natural-Haiku safe-change fixture absent; delayed/change-revert world not ready",
+    "non-sending malicious fixture demonstrates unsafe actions accepted by stock compile/runner: abort before normal worlds"
+  ],
+  "localUpstreamRef": "4057ea339f050373bdff92c961b71d015afaad3c"
+}

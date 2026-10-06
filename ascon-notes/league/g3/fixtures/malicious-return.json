@@ -1,0 +1,4 @@
+{
+  "notes": "SYNTHETIC UNSAFE: unfunded WETH, single slippage 75 -> 76; never send",
+  "executorTs": "return {\"type\": \"swap\", \"tokenIn\": \"WETH\", \"amountIn\": \"1000000000000000000\", \"slippageBps\": 76, \"maxPriorityFeePerGasWei\": \"100000000\"};"
+}

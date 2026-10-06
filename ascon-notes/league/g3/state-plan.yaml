@@ -1,0 +1,20 @@
+{
+  "k": 3,
+  "epochs": [
+    {
+      "s": 1,
+      "regime": "calm",
+      "seed": 49102
+    },
+    {
+      "s": 2,
+      "regime": "crash",
+      "seed": 49103
+    },
+    {
+      "s": 3,
+      "regime": "depeg",
+      "seed": 49102
+    }
+  ]
+}

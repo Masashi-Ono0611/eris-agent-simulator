@@ -1,0 +1,39 @@
+# OFFLINE ONLY. No launch approval; malicious fixture must never reach a chain.
+{
+  "agents": [
+    {
+      "id": "noop",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      },
+      "baseline": true
+    },
+    {
+      "id": "multi-arb",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "clean-arb",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_AGENT_FROZEN": "1"
+      }
+    },
+    {
+      "id": "cand",
+      "wallet": "AUTO",
+      "env": {
+        "ERIS_LLM_MODEL": "claude-cli:haiku",
+        "ERIS_IMPROVE_LOG_CALLS": "1",
+        "ERIS_LLM_CALL_TIMEOUT_MS": "300000",
+        "ERIS_CLAUDE_BIN": "./ascon-notes/league/g3/fake-claude.py",
+        "G3_FAULT_CASE": "quota"
+      },
+      "dir": "ascon-zeta-r2"
+    }
+  ]
+}

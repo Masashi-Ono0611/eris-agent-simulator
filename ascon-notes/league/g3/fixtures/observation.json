@@ -1,0 +1,14 @@
+{
+  "round": 359,
+  "blocksRemaining": 0,
+  "runId": "g3-offline-only",
+  "balances": {
+    "usdcUnits": "0",
+    "wethWei": "0",
+    "ethWei": "0"
+  },
+  "limits": {
+    "defaultPriorityFeePerGasWei": "100000000",
+    "maxPriorityFeePerGasWei": "5000000000"
+  }
+}
