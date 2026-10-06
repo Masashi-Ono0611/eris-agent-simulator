@@ -291,6 +291,18 @@
       "path": "ascon-notes/league/MASTER-PLAN-2026-10-04.md",
       "title": "rev 14 本人承認・移管・進行中作業",
       "locator": "§2/4/8/9/10。2026-10-05 JSTの本人チャット引継ぎ。作成中の結果は未確認"
+    },
+    {
+      "id": "src-q-zeta-02",
+      "path": "ascon-notes/league/Q-ZETA-02.md",
+      "title": "Q-ZETA-02 登録済み・未起動",
+      "locator": "契約・署名・host・停止規則"
+    },
+    {
+      "id": "src-q-zeta-01-result",
+      "path": "ascon-notes/league/Q-ZETA-01-RESULT-2026-10-05.md",
+      "title": "Q-ZETA-01 条件4 FAILを保持",
+      "locator": "条件5/6は未判定項目あり・sleep/時間逸脱記録"
     }
   ]
 }
@@ -307,12 +319,12 @@
     "src-rev10",
     "src-rev14"
   ],
-  "as_of": "2026-10-05T09:52:03+09:00",
+  "as_of": "2026-10-06T01:38:37+09:00",
   "measurement_as_of": null,
   "last_update": "rev 14: 本人承認3点・移管実績・分割PR/zeta-prep進行中・夜間heartbeat取消を本文に統合。作成中の結果は未確認。",
   "phase_id": "phase-first",
-  "headline": "inc-zetaを条件付き第一候補とし、新契約Q-ZETA-01へ進むことを本人承認済み。移管完了、分割PRとzeta-prepは進行中・結果未確認。既報の全計測終了・走行中なし（プロセス再照会なし）。",
-  "subhead": "承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。",
+  "headline": "Q-ZETA-02 registered-pending-start。Q-ZETA-01条件4 FAIL保持、ascon-zeta-r2を1候補1回で登録。実行未開始・プロセス再照会なし。",
+  "subhead": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -486,11 +498,11 @@
       "src-dev2-repair"
     ]
   },
-  "human_action": "分割PRの進行を報告し、レビュー・CI後に統合を進める",
+  "human_action": "追加方針確認なし。Claudeが開始前host・G0・seed・予算を照合",
   "priority": {
-    "title": "inc-zetaの弱点診断・設定固定・新契約登録をそろえ、資格から初回受理へ進む",
+    "title": "Q-ZETA-02登録済み・Claudeの開始前照合待ち",
     "blocker_ref": "B01",
-    "note": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。 承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。",
+    "note": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
     "progress_refs": [
       "progress-rev14-approval",
       "progress-zeta-prep",
@@ -498,12 +510,24 @@
       "progress-pr-split"
     ],
     "sources": [
-      "src-rev14"
+      "src-q-zeta-02",
+      "src-q-zeta-01-result"
     ],
     "state": "blocked",
-    "state_label": "準備進行中・資格証跡待ち"
+    "state_label": "登録済み・未起動"
   },
   "recent": [
+    {
+      "kind": "warning",
+      "title": "Q-ZETA-02登録 / Q-ZETA-01不合格保持",
+      "text": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+      "date": "2026-10-06",
+      "time_note": "契約更新。実行時刻ではない",
+      "sources": [
+        "src-q-zeta-02",
+        "src-q-zeta-01-result"
+      ]
+    },
     {
       "kind": "warning",
       "title": "本人承認: 3点を進める",
@@ -536,13 +560,14 @@
     }
   ],
   "next_milestone": {
-    "title": "10/5〜6: 診断・設定固定・Q-ZETA-01登録",
-    "note": "[日程案・JST] 10/5〜6 診断・設定固定・契約登録、10/6〜8 資格試験、10/9〜12 P60/最小G3/G4・本人送信・初回受理、10/13〜17は受理Sと全残費がある時だけ既決AI工程。10/17 18:00 H480/S240/Hなし分岐、10/18〜25 最終確認、10/26〜28 G4照合と10/28 dec-007、10/29 最終受理目標・10/30 予備・10/31 23:59 JST 照合。初回受理は未確保、日付を理由にゲートを緩めない。",
+    "title": "Q-ZETA-02: 単一hostのG0・全残費照合後に開始",
+    "note": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
     "sources": [
-      "src-rev14"
+      "src-q-zeta-02",
+      "src-q-zeta-01-result"
     ],
     "state": "pending",
-    "state_label": "本人承認済み・準備結果未確認"
+    "state_label": "registered-pending-start"
   },
   "dev3b": {
     "name": "dev3b-xb-r",
@@ -1970,6 +1995,56 @@
     ]
   },
   "zeta_qualification": {
+    "contract": "Q-ZETA-02",
+    "approval": "本人方針承認 2026-10-05 / 実行指示 2026-10-06 JST",
+    "status": "registered-pending-start",
+    "field": "F_ref",
+    "regimes": 12,
+    "new_seed_count": 5,
+    "worlds": 60,
+    "estimated_hours": "4.5",
+    "attempt_limit": 1,
+    "seeds": [
+      47001,
+      47002,
+      47003,
+      47004,
+      47005
+    ],
+    "release_candidate": "ascon-zeta-r2",
+    "frozen_hash": "ddd7c718f2e9091c64b9949e277447868dd82347729d86f899b35dc89156786c",
+    "result": null,
+    "qualified": false,
+    "thresholds_changed": false,
+    "execution_status": "registered-pending-start",
+    "note": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
+    "sources": [
+      "src-q-zeta-02",
+      "src-q-zeta-01-result"
+    ],
+    "reserved_hours": "5",
+    "execution_host": null,
+    "previous_contract": "Q-ZETA-01",
+    "previous_result": "FAIL",
+    "previous_attempts_used": 1,
+    "count_reset": false,
+    "diagnostics_qualification_evidence": false
+  },
+  "integration": {
+    "split": "3d86a35",
+    "pr1": "pr/upstream-integration → main",
+    "pr2": "league/v2 → pr/upstream-integration; PR1 merge後mainへbase変更",
+    "reviewers": "Claudeの別エージェント+agy",
+    "merge_method": "merge commit",
+    "ci_fix": "npm ciにNPM_CONFIG_IGNORE_SCRIPTS=true",
+    "state": "in-progress-reported",
+    "merged": false,
+    "note": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
+    "sources": [
+      "src-rev14"
+    ]
+  },
+  "zeta_qualification_rev14_snapshot": {
     "contract": "Q-ZETA-01",
     "approval": "本人決定・チャット承認 2026-10-05 JST",
     "status": "draft-in-progress-unverified",
@@ -1987,20 +2062,6 @@
     "thresholds_changed": false,
     "execution_status": "blocked-pending-evidence",
     "note": "承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。",
-    "sources": [
-      "src-rev14"
-    ]
-  },
-  "integration": {
-    "split": "3d86a35",
-    "pr1": "pr/upstream-integration → main",
-    "pr2": "league/v2 → pr/upstream-integration; PR1 merge後mainへbase変更",
-    "reviewers": "Claudeの別エージェント+agy",
-    "merge_method": "merge commit",
-    "ci_fix": "npm ciにNPM_CONFIG_IGNORE_SCRIPTS=true",
-    "state": "in-progress-reported",
-    "merged": false,
-    "note": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
     "sources": [
       "src-rev14"
     ]
@@ -2889,20 +2950,22 @@
     },
     {
       "id": "progress-zeta-prep",
-      "title": "zeta-prepの診断・release候補・契約下書き",
-      "state": "running",
-      "evidence": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。",
+      "title": "ascon-zeta-r2・Q-ZETA-02契約パッケージ",
+      "state": "done",
+      "evidence": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
       "sources": [
-        "src-rev14"
+        "src-q-zeta-02",
+        "src-q-zeta-01-result"
       ]
     },
     {
       "id": "progress-zeta-qualification",
-      "title": "Q-ZETA-01の資格証跡",
+      "title": "Q-ZETA-02開始前照合と60世界",
       "state": "blocked",
-      "evidence": "承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。",
+      "evidence": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
       "sources": [
-        "src-rev14"
+        "src-q-zeta-02",
+        "src-q-zeta-01-result"
       ]
     },
     {
@@ -3244,16 +3307,17 @@
       "id": "queue-zeta-prep",
       "priority": 1,
       "experiment": "zeta-prep",
-      "title": "弱点診断・設定焼き込み・由来/新契約下書き",
-      "state": "進行中・結果未確認",
+      "title": "ascon-zeta-r2・契約登録完了",
+      "state": "登録済み・起動前照合待ち",
       "worlds": 0,
       "hours": null,
-      "window": "10/5〜6",
-      "dependency": "[進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。 [独立意見・引継ぎ] Codex(Astra)は賛成。ただし「今のまま merge/提出してよいとは判断しない」。分割点候補は3d86a35。提出物混入は確認範囲で重大なしだが、直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認。現行CIのnpm ciにNPM_CONFIG_IGNORE_SCRIPTS=trueが無く作業ルールと不整合のため修正対象。inc-zetaの測定設定（bidMode:2等はrosterの環境変数）はコード既定値（bidMode:0）と違い、そのままbundleすると再現しないため焼き込み候補を固定する。noop割れ4レジームを先に診断する。契約の場を混成場へ変える案は結果を見たあとの基準変更になるため推奨しない。",
+      "window": "10/6",
+      "dependency": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
       "owner": "Codex",
       "active": false,
       "sources": [
-        "src-rev14"
+        "src-q-zeta-02",
+        "src-q-zeta-01-result"
       ]
     },
     {
@@ -3273,19 +3337,20 @@
       ]
     },
     {
-      "id": "queue-q-zeta-01",
+      "id": "queue-q-zeta-02",
       "priority": 3,
-      "experiment": "q-zeta-01",
-      "title": "Q-ZETA-01の独立60世界資格試験",
-      "state": "本人承認済み・実行条件待ち",
+      "experiment": "q-zeta-02",
+      "title": "Q-ZETA-02の独立60世界資格試験",
+      "state": "registered-pending-start",
       "worlds": 60,
-      "hours": "9/2",
-      "window": "10/6〜8・約4.5h見積",
-      "dependency": "承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。 反証条件: 独立60世界で平均T<multi-arb、いずれかのレジーム平均(T−Tnoop)<0、mined revert>1件または包含取引比>0.1%、原因不明の失敗、未回収自前資産損失/gas枯渇/無効注文>0のいずれかで停止する。G0・既決安全条件も維持し、閾値緩和・結果後の場変更・救済再走で合格にしない。",
+      "hours": "5",
+      "window": "10/6以降・基本4.5h+確認0.5h",
+      "dependency": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
       "owner": "Claude",
       "active": false,
       "sources": [
-        "src-rev14"
+        "src-q-zeta-02",
+        "src-q-zeta-01-result"
       ]
     },
     {
@@ -8025,10 +8090,10 @@
     }
   ],
   "copy": {
-    "action_note": "[本人決定・チャット承認 2026-10-05 JST] 3点を「進める」: inc-zeta（ascon-zetaのzeta-a30）の実質的改変を独自戦略と認め、multi-arb派生を開示して条件付き第一候補にする。弱点診断後、現行閾値を維持した新契約・回数枠Q-ZETA-01（F_ref・12レジーム×5新seed=60世界・約4.5h）で資格試験へ進む。上流統合・適応とleague追加分を分割PRにし、Claudeの別エージェント+agyによる独立レビュー・CI後、merge commitで統合する。",
+    "action_note": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
     "action_next": "[進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。",
-    "diagnostic_notice": "inc-zetaを条件付き第一候補とし、新契約Q-ZETA-01へ進むことを本人承認済み。移管完了、分割PRとzeta-prepは進行中・結果未確認。既報の全計測終了・走行中なし（プロセス再照会なし）。 診断結果は資格合格ではありません。",
-    "qualification_notice": "旧2候補は不合格。旧xb-r再資格枠は未実施・停止を維持。新Q-ZETA-01は本人承認済み、下書き作成中で資格結果は未確認。",
+    "diagnostic_notice": "48001は旧variant、48002はG0 FAIL（sleep後360/361loops）の診断。資格証拠ではない。",
+    "qualification_notice": "Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
     "diagnostic_criteria": "Pは損益、Tは同じ相手の中での相対スコア。取引が増えることと、資格を満たすことは別です。",
     "plan_state": "条件付き第一候補を承認・準備中",

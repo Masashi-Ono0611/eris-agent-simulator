@@ -11,7 +11,7 @@ import re
 import sys
 
 
-QUEUE = ["zeta-prep", "pr-split", "q-zeta-01", "dev1-evidence", "q0b-evidence", "q0-requal", "mix-design", "first-mix", "q0m",
+QUEUE = ["zeta-prep", "pr-split", "q-zeta-02", "dev1-evidence", "q0b-evidence", "q0-requal", "mix-design", "first-mix", "q0m",
          "first-p60", "first-g3", "ai-implementation", "ai-d-control", "factor-ab", "m2"]
 DECISION_IDS = ["dec-ai-scope", "dec-ai-contract", "dec-ai-budget", "dec-q0-failure-branch", "dec-q0b-g0", "dec-revert-limit"]
 ORIGIN = "本人が 2026-10-04 に Astra へ判断を委任。Astra が決定"
@@ -1173,11 +1173,41 @@ REV14_DIGESTS = {'human_only': '220e05ef2c4208ceab9f30c9d7c727b6b4cf5c21df2b0800
  'next_branch': '84774d1139046353238f9d9c4eefe402816f1faed520d204dbd1db1557b781d6',
  'night_operation': 'f6ca4e14ae873469ffeecc9b0f8f326e4746933ad63100fa29d9bbd17a405b1a',
  'new_decisions': 'f1922db071bff055cf30e2e6cbfab1c64848103ffc7ac44bfd34450b2ee967a5',
- 'new_queue': '4c8267c5ae230697fe86eb8d8795d31bd31a9a7008a262fa25dd3ab7722759ed',
+ 'new_queue': '0ecad4f96c063fe6e8fe8f2747c730b0a53538439b2e077adae59fb6d0e4a5de',
  'migration': '57992ca3a0a28d22983a08751bfd93ba47eb31d8c6a6c7e5c6598ac48f558140',
  'review_handoff': '2cfa574979bb7ed66ac33062f8f3c3fe8e4b0d42bb8e4e87ba8a99f92842b2f6',
  'new_logs': '4b63768a1d85ed58cba0add103ca3a4723b885ab7a22f925ae56003703e8ab37',
  'schedule': 'b16169d3079f753f49e286c9d9d5705c25ca7718ee96c06c75711f50e98a0ab4'}
+
+# Q-ZETA-02 registration supersedes only the current qualification fields.
+Q_ZETA_02_EXPECTED = {'contract': 'Q-ZETA-02',
+ 'approval': '本人方針承認 2026-10-05 / 実行指示 2026-10-06 JST',
+ 'status': 'registered-pending-start',
+ 'field': 'F_ref',
+ 'regimes': 12,
+ 'new_seed_count': 5,
+ 'worlds': 60,
+ 'estimated_hours': '4.5',
+ 'attempt_limit': 1,
+ 'seeds': [47001, 47002, 47003, 47004, 47005],
+ 'release_candidate': 'ascon-zeta-r2',
+ 'frozen_hash': 'ddd7c718f2e9091c64b9949e277447868dd82347729d86f899b35dc89156786c',
+ 'result': None,
+ 'qualified': False,
+ 'thresholds_changed': False,
+ 'execution_status': 'registered-pending-start',
+ 'note': 'Q-ZETA-02 '
+         'registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 '
+         'FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback '
+         'Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。',
+ 'sources': ['src-q-zeta-02', 'src-q-zeta-01-result'],
+ 'reserved_hours': '5',
+ 'execution_host': None,
+ 'previous_contract': 'Q-ZETA-01',
+ 'previous_result': 'FAIL',
+ 'previous_attempts_used': 1,
+ 'count_reset': False,
+ 'diagnostics_qualification_evidence': False}
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
@@ -1223,9 +1253,9 @@ _RESULT_LINES = [
     "PASS sources: D0/Q0/M1/Q0b tables retained; dev1/dev2 handoffs match plan/dashboard",
     "PASS Q0b: old 60-world result, G0 2-world FAIL and mean-T FAIL retained; no rescue rerun",
     "PASS budget: KEEP 100 h (G3 17.2, deep 9.7); archived unsigned AMEND 100 h; Q0 priority 5 h",
-    "PASS queue: zeta preparation / split PRs -> Q-ZETA-01 -> acceptance; old queues and full-cost gates retained",
+    "PASS queue: Q-ZETA-02 registered-pending-start -> acceptance; Q-ZETA-01 FAIL retained",
     "PASS decisions: 6 delegated Astra decisions with origin/signer/JST; Ollama registration/settings are user-reported; prepayment deferred",
-    "PASS Q0: old A/requalification contract unchanged; new Q-ZETA-01 draft/result unverified; revert cap prospective only",
+    "PASS Q0: old A/requalification contract unchanged; Q-ZETA-02 pending start; Q-ZETA-01 criterion 4 FAIL retained; revert cap prospective only",
     "PASS AI: ENTRY_BPS 20-60, max step 5; R* ON3/OFF1 + S full = 216 worlds / 17.2 h; no epoch learning carryover",
     "PASS cutover: Oct 17 evidence gates select H480 / S240 / no campaign; no fresh deep exploration",
     "PASS schedule/review: 28 JST dates, 18 findings, five roadmap steps match dashboard",
@@ -1234,7 +1264,7 @@ _RESULT_LINES = [
     "PASS operations: independent completion monitoring, 150/180 minute iterations, max 3, fresh 12x2 screen; not execution approval",
     "LIMIT: static consistency only; raw runs, actual hours, strategy safety, browser layout and acceptance unverified",
     "PASS rev9: H1 selected / standard ON refused / adapter unimplemented; agy format only; xa-1 stopped; H1 pilot gated; separate live pilot STOP",
-    "PASS rev14: 3 user approvals / migration reported complete / zeta-prep and split PRs in progress / Q-ZETA-01 unverified / heartbeat cancelled",
+    "PASS rev14: 3 user approvals / migration reported complete / Q-ZETA-02 registered-pending-start / no counter reset / split PR history retained / heartbeat cancelled",
     "PASS check-plan-consistency",
 ]
 
@@ -1308,7 +1338,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
     require([int(r["順序"]) for r in queue] == list(range(1, len(QUEUE)+1)), "queue numbers")
     require([r["実験ID"] for r in queue] == QUEUE, "queue priority")
     require(all(r["状態"] and r["窓"] and r["依存・停止"] for r in queue), "queue gates missing")
-    expected_queue = [("0", "未見積"), ("0", "未見積"), ("60", "9/2"), ("12", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
+    expected_queue = [("0", "未見積"), ("0", "未見積"), ("60", "5"), ("12", "未見積"), ("0", "未見積"), ("60", "5"), ("0", "1/2"), ("12", "13/15"),
                       ("60", "143/30"), ("60", "13/3"), ("36", "13/5"),
                       ("0", "未見積"), ("48", "52/15"), ("48", "52/15"), ("60", "13/3")]
     require([(r["世界数"], r["全量見積h"]) for r in queue] == expected_queue, "queue worlds/hours")
@@ -1553,7 +1583,7 @@ def check_documents(document, html, morning, m1, ai, morning_new):
             ('a646e9b',123,25,False,'measured引継ぎ'), 'v2 implementation/test evidence cannot become fresh verification')
     require('123' in document and '赤対照25' in document and '16:24 JST開始' in document and '17:39 JST完了' in document,
             'v2/dev3 MASTER handoff missing')
-    require(data['status']['human_action'] == REV14_EXPECTED['human_action'] and data['budget']['consumed_forward_hours'] is None and
+    require(data['status']['human_action'] == '追加方針確認なし。Claudeが開始前host・G0・seed・予算を照合' and data['budget']['consumed_forward_hours'] is None and
             data['budget']['consumption_status'] == '未精算', 'human action and unknown forward consumption')
     require(data['plan']['revision'] == 14 and data['plan']['deadline_at'] == '2026-10-31T23:59:00+09:00',
             'revision and submission deadline')
@@ -1744,12 +1774,12 @@ def check_documents(document, html, morning, m1, ai, morning_new):
             'completion confirmed but actual completion timestamp unreported')
     require(data['status']['incz']['q0_eligible'] is False and data['status']['incz']['contract_effect'] == 'none-diagnostic-only',
             'incz never qualifies or changes contract')
-    require('全計測終了・走行中なし' in data['status']['headline'], 'current overview has no running measurement')
+    require('Q-ZETA-02 registered-pending-start' in data['status']['headline'], 'current overview records pending start')
     rev13_logs = [x for x in data['log']['items'] if x['id'] in {f'log-{i:03}' for i in range(1,96)}]
     require(len(rev13_logs) == 95 and digest(rev13_logs) == REV13_LOG_DIGEST, 'all 95 pre-rev14 logs and every field immutable')
     require(len(data['decisions']['items']) == 23, '20 preserved and 3 newly approved decisions')
     for name in ('zeta_qualification', 'integration'):
-        require(data['plan'][name] == REV14_EXPECTED[name], 'rev14 exact approved contract and unverified execution: '+name)
+        require(data['plan'][name] == (Q_ZETA_02_EXPECTED if name == 'zeta_qualification' else REV14_EXPECTED[name]), 'rev14 exact approved contract and unverified execution: '+name)
     values = dict(human_only=data['decisions']['human_only'], next_branch=data['plan']['next_branch'],
                   night_operation=data['status']['night_operation'], migration=data['status']['migration'],
                   review_handoff=data['status']['review_handoff'], new_decisions=data['decisions']['items'][20:],
@@ -1773,8 +1803,14 @@ def check_documents(document, html, morning, m1, ai, morning_new):
         require('契約変更は提案のみ' not in current and '推奨・未決' not in current, 'stale current approval: '+key)
     require(data['status']['night_operation']['state'] == 'cancelled-reported', 'cancelled heartbeat is not active')
     require(all(x['state'] == state for x,state in [(progress['progress-rev14-approval'],'done'),
-                (progress['progress-zeta-prep'],'running'),(progress['progress-pr-split'],'running'),
+                (progress['progress-zeta-prep'],'done'),(progress['progress-pr-split'],'running'),
                 (progress['progress-zeta-qualification'],'blocked')]), 'approval/preparation/qualification separate')
+    require(data['plan']['zeta_qualification_rev14_snapshot'] == REV14_EXPECTED['zeta_qualification'],
+            'rev14 qualification snapshot preserved')
+    require('Q-ZETA-02 registered-pending-start' in document and Q_ZETA_02_EXPECTED['frozen_hash'] in document,
+            'Q-ZETA-02 registration and candidate hash in MASTER')
+    require(data['queue']['items'][2]['state'] == 'registered-pending-start' and
+            data['queue']['items'][2]['hours'] == '5', 'Q-ZETA-02 reserved cost and pending state')
     return list(_RESULT_LINES)
 
 

@@ -1,5 +1,5 @@
 {
-  "checkedAtUtc": "2026-10-05T00:54:18.457581+00:00",
+  "checkedAtUtc": "2026-10-05T01:51:01.433182+00:00",
   "scope": "All visible sibling worktrees: runs/**/index.tsv, eval/out/**/index.tsv; league/eval manifests seeds, top-level Markdown and ledger.jsonl. No run-result opening for proposed seeds. External/private reservations cannot be proven absent; re-audit before launch.",
   "proposedSeeds": [
     46001,
@@ -736,7 +736,7 @@
     },
     {
       "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/DASHBOARD-README.md",
-      "sha256": "712ed24c35ff6f51846486147493b50f61c223618eeeb52d1cf43f3fbb082c7c"
+      "sha256": "2e6223281115fc0726867821a9250c5379a9aab5686f211069e8590004c12b02"
     },
     {
       "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/DEGRADATION-GATE.md",
@@ -784,7 +784,7 @@
     },
     {
       "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/MASTER-PLAN-2026-10-04.md",
-      "sha256": "4ab0fd389ac3a74e5c74f1075ac2c7817ad708be6ac488923e7ad244b5cb7c14"
+      "sha256": "ac938bbfb60a8354f411f753b62d2633b9fd138cfa047648deaea61f044b4bd8"
     },
     {
       "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/MASTER-PLAN-BEFORE-V2-INTEGRATION.md",
@@ -1159,22 +1159,22 @@
     },
     {
       "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/DASHBOARD-README.md",
-      "line": 69,
+      "line": 74,
       "text": "- v5はv3+R9 ON、7b1448b・183テスト/赤対照59は既存引継ぎ。dev5のF_ref・同seed36001/36002・12レジーム24世界は平均T50.15対55.73、v5昇格せず基準はv3。2/3回目。完了時刻/完了数/G0/安全内訳は未提示のまま。独立screen/Q0へ使わない。"
     },
     {
       "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/DASHBOARD-README.md",
-      "line": 81,
+      "line": 86,
       "text": "- [measured] mix2はmix1と同じroster（u1の11体、zeta-2をcand=xb-r v3凍結に置換）。fresh seed40003/40004・12レジーム24世界、mix2a/mix2bともG0 PASS、violations 0。candは平均T51.63・6位・最悪46.2、inc-zetaは61.54・1位・最悪53.2。05:34 JST開始の引継ぎを保持し、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。"
     },
     {
       "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/DASHBOARD-README.md",
-      "line": 82,
+      "line": 87,
       "text": "- [measured] mix1/mix2でseedを替えても順位は概ね安定（inc-zeta 1位・venue-arb 2位・multi-arb 11位）。mix1+mix2は12レジーム等重み・seed40001–40004の48世界。inc-zetaは平均T58.26、2位53.71との差は約4.5T（表示値の差4.55T）、最悪レジームT46.8。観測した混成場では明確な最強。cand(xb-r v3)は平均T51.91・5位・最悪47.6で、sonnet-1/grok-1/opus-1と約1T以内（表示値ではsonnet-1との差1.01T、grok-1との差0.89T、opus-1との差0.03T）。 mix1のcrash/40001（grok-1 telemetry）BLOCKEDを保持し、PASSへ変更しない。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。"
     },
     {
       "path": "/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/league-v2/ascon-notes/league/DASHBOARD-README.md",
-      "line": 154,
+      "line": 161,
       "text": "| Q0b | opus-1、seeds 41101–41105、60世界、3 chunks、06:37 JST開始、RUNNING、~11:00終了見込み |"
     },
     {

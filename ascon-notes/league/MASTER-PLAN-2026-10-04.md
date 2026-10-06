@@ -1,5 +1,17 @@
 # ASCON master plan — 2026-10-04 — revision 14
 
+<!-- q-zeta-02-registration:start -->
+## 2026-10-06 追記 — Q-ZETA-02 registered-pending-start
+
+Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。
+
+契約: [Q-ZETA-02](Q-ZETA-02.md)。候補hash `ddd7c718f2e9091c64b9949e277447868dd82347729d86f899b35dc89156786c`、seed 47001–47005、slot noop/multi-arb/clean-arb/cand、全60世界を同一host。48001/48002は使用済み診断で再使用しない。実行担当Claudeの開始前確認欄は空欄。準備中のreadはupstream-eval/run metadataまで許可、writeはleague-v2のみ。commit/push/network/ssh/計測起動なし。check:strategyは本人実施。
+
+本人原文: 2026-10-05 “limited repair then new contract”、2026-10-06 JST “start quickly and run Air and mini in parallel”。Q-ZETA-02の60世界を2hostへ分割する許可とはしない。Q-ZETA-01の条件5/6未判定とsleep/時間逸脱も保持。
+
+以下のrev14本文・分割PR状況・旧日程は2026-10-05時点の履歴。本追記と更新した実行キューを現在の契約状態とする。過去の合否・署名・予算表は変更せず、未精算費用を0にしない。
+<!-- q-zeta-02-registration:end -->
+
 更新: **2026-10-05 09:52:03 JST**（Asia/TokyoによるJST）。文書更新時刻。既存の決定署名日時・計測時刻は変更しない。
 
 **決定の出所**: rev 14の3点は2026-10-05 JSTの本人チャット承認（§2/4/8/10）。rev 9のH1選択と課金なし方針は2026-10-04の本人決定。rev 6の6論点は「本人が 2026-10-04 に Astra へ判断を委任。Astra が決定」の原記録を保持する。 本人のチャット上の「全てコデックス(Astra)に決めさせて」に基づき、直前の`decisions.out`の論点1〜6を本書の各節へ統合した。既決のQ0維持・10/8延期・forward100h・独自戦略のみ・Q0最優先は変更しない。金銭/API上限・自動チャージ・残高・Ollama鍵登録は委任対象外。本人報告による登録・設定確認は§10、前払い判断はG3見積もり後。
@@ -728,9 +740,9 @@ fixtureは公開実観測から秘密を除いた**実ログ由来入力を必�
 <!-- next-24h:start -->
 | 順序 | 実験ID | 状態 | 世界数 | 全量見積h | 窓 | 依存・停止 |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | zeta-prep | 進行中・結果未確認 | 0 | 未見積 | 10/5〜6 | [進行中・本人引継ぎ] zeta-prep（Astra）がnoop割れ4レジーム（cex-drift/informed-flow/lending-incident/vuln）の診断、測定設定を焼き込むrelease候補example/agents/ascon-zeta-r/、ascon-notes/league/INC-ZETA-ORIGIN-2026-10-05.md、ascon-notes/league/Q-ZETA-01.mdの下書きを作成中。存在する/作成中の参照のみで、結果は未確認。由来はINC-ZETA-ORIGINへ記録予定。 [独立意見・引継ぎ] Codex(Astra)は賛成。ただし「今のまま merge/提出してよいとは判断しない」。分割点候補は3d86a35。提出物混入は確認範囲で重大なしだが、直書き秘密の全件監査・実ZIP検査・運営配布版との一致は未確認。現行CIのnpm ciにNPM_CONFIG_IGNORE_SCRIPTS=trueが無く作業ルールと不整合のため修正対象。inc-zetaの測定設定（bidMode:2等はrosterの環境変数）はコード既定値（bidMode:0）と違い、そのままbundleすると再現しないため焼き込み候補を固定する。noop割れ4レジームを先に診断する。契約の場を混成場へ変える案は結果を見たあとの基準変更になるため推奨しない。 |
+| 1 | zeta-prep | 登録済み・起動前照合待ち | 0 | 未見積 | 10/6 | Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。 |
 | 2 | pr-split | 進行中・本人報告待ち | 0 | 未見積 | 10/5以降 | [進行中・本人報告] 分割点3d86a35からpr/upstream-integration（CIのignore-scripts修正を含む）をmain向けPR1にし、league/v2をPR1ブランチ基点のPR2にする。PR1 merge後にPR2のbaseをmainへ付け替える。独立レビュー・CI後にmerge commitで統合。PR番号・レビュー/CI/merge結果は未確認、進行は本人報告へ。 |
-| 3 | q-zeta-01 | 本人承認済み・実行条件待ち | 60 | 9/2 | 10/6〜8・約4.5h見積 | 承認は準備と新枠の方針を確定したもので、資格合格・merge完了・提出許可ではない。Q-ZETA-01の契約登録・試行上限の明文化・未使用seed監査・焼き込み設定/hash・診断/安全・全残費の証跡は未確認。約4.5hは見積で、通常6h/日・forward100hと既決留保を維持する。旧Q0-A-REQUAL-01の1候補1回・41301–41305・5h枠を自動転用せず、旧3/3回目打ち切りを解除しない。 反証条件: 独立60世界で平均T<multi-arb、いずれかのレジーム平均(T−Tnoop)<0、mined revert>1件または包含取引比>0.1%、原因不明の失敗、未回収自前資産損失/gas枯渇/無効注文>0のいずれかで停止する。G0・既決安全条件も維持し、閾値緩和・結果後の場変更・救済再走で合格にしない。 |
+| 3 | q-zeta-02 | registered-pending-start | 60 | 5 | 10/6以降・基本4.5h+確認0.5h | Q-ZETA-02 registered-pending-start（登録済み・未起動）。ascon-zeta-r2、1候補1回60世界、4チャンク各110分以下、確認込み5hはforward100h内数。Q-ZETA-01条件4 FAIL・消費1回を保持し回数リセットなし。6条件・閾値は不変。単一host固定: miniは自機G0 smoke PASS時のみ、fallback Airは給電・caffeinate・sleep禁止。host/開始前署名/残費は未確認。診断48001/48002は資格証拠にしない。 |
 | 4 | dev1-evidence | incz診断完了・履歴 | 12 | 未見積 | 全12世界完了（本人引継ぎ）、約55分・実完了時刻未提示 | [measured] inczはinc-zeta（ascon-zetaのzeta-a30パラメータ・frozen）をF_ref(cand+noop+multi-arb+clean-arb)で12レジーム×seed40005=12世界。全計測終了・走行中なし。G0 PASS・362ループ・違反0。12レジーム等重み平均T cand 56.30 / multi-arb 44.44（candが上）。1世界平均P 1343.6 / 730.0 / 281.1、取引数254.2 / 253.0 / 42.2（cand/multi/clean）。noop割れ4/12世界、平均(T−Tnoop)<0のレジーム4（最悪informed-flow −8.12）。cand mined revert平均0.2/世界（multi-arb 8.4）、submitted3057/failed90（2.9%）。07:20 JST頃開始との引継ぎ（旧05:40頃開始見込みを訂正）、約55分。旧08:15 JST頃の完了見込みは実績ではなく、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。 第3回xa-1は打ち切り。H1専用adapter/受付未成立、Q0停止。 |
 | 5 | q0b-evidence | 証跡精算のみ・再走なし | 0 | 未見積 | 実行担当の次の空き枠 | 旧60世界とG0 2世界FAIL・平均T FAIL保持。安全/区間証跡の照合のみ |
 | 6 | q0-requal | 条件付き決定・実行停止 | 60 | 5 | 修理再診断・hash/seed/費用成立後 | A維持、§8.3の全12×2診断screen成立後、新41301–41305の未使用性監査、1候補1回。deep内5h留保、超過/不足は開始しない |

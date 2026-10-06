@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>local.ascon-queue</string>
+  <key>ProgramArguments</key><array>
+    <string>/bin/bash</string>
+    <string>__REPO__/ascon-notes/league/remote/job-queue.sh</string>
+    <string>run</string><string>__HOME__/ascon-run/queue</string>
+  </array>
+  <key>WorkingDirectory</key><string>__REPO__</string>
+  <key>EnvironmentVariables</key><dict>
+    <key>HOME</key><string>__HOME__</string>
+    <key>PATH</key><string>__HOME__/ascon-run/bin:__NODE_BIN__:__HOME__/.homebrew/bin:__HOME__/.foundry/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>PYTHONDONTWRITEBYTECODE</key><string>1</string>
+  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+  <key>Nice</key><integer>10</integer>
+  <key>ThrottleInterval</key><integer>60</integer>
+  <key>ExitTimeOut</key><integer>20</integer>
+  <key>LowPriorityIO</key><true/>
+  <key>StandardOutPath</key><string>__HOME__/ascon-run/logs/queue.out.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/ascon-run/logs/queue.err.log</string>
+</dict></plist>
