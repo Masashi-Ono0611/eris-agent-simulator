@@ -393,6 +393,18 @@
       "path": "ascon-notes/league/RESULTS-P60REH-MIXED-2026-10-06.md",
       "title": "P60リハーサル・混成場結果 2026-10-06",
       "locator": "指定集計の転記・実行条件・未検証境界"
+    },
+    {
+      "id": "src-retro-full-oct07",
+      "path": "ascon-notes/league/RETROSPECTIVE-FULL-2026-10-07.md",
+      "title": "全体回顧 2026-10-07・42仮説台帳",
+      "locator": "§3 仮説台帳・r3x、§8 残作業/予算、§9 本人判断"
+    },
+    {
+      "id": "src-r3x-summary",
+      "path": "ascon-notes/league/results-2026-10-06/r3x-experiment.txt",
+      "title": "r3/r3x paired診断・提供集計",
+      "locator": "監督者提供の6世界/3ペア集計。raw receipts/action ledgerではない"
     }
   ]
 }
@@ -406,14 +418,16 @@
     "src-release-r3",
     "src-g3-diagnostic",
     "src-handoff-oct06",
-    "src-main-history"
+    "src-main-history",
+    "src-retro-full-oct07",
+    "src-r3x-summary"
   ],
-  "as_of": "2026-10-06T23:05:28+09:00",
+  "as_of": "2026-10-07T12:33:05+09:00",
   "measurement_as_of": null,
-  "last_update": "10/6: mini 60世界・Air 36世界の集計を読取確認。両ジョブ完了、混成G0 FAIL 7世界保持。資格フラグ不変。",
+  "last_update": "10/7 JST: 夜間2計測完了・r3x 6世界診断・全体回顧42仮説を保存集計/文書で照合。本人判断と受入れゲートは未完了。",
   "phase_id": "phase-first",
-  "headline": "r3は条件付きの提出保険。参照場では優位、混成場では7位・noop近傍。",
-  "subhead": "miniリハーサル・Air混成場の計測は完了。優勝の根拠は未確立。 本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
+  "headline": "夜間2計測とr3x診断が完了。r3は条件付き保険、提出ゲートは未達。",
+  "subhead": "mini P60リハーサル60世界・Air混成36世界が完了。r3xは6世界/3ペアすべてで悪化、1 seedの診断で「修理2が害」は支持されない。 miniリハーサル・Air混成場の計測は完了。優勝の根拠は未確立。 本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。 全体回顧の42仮説: 各行の先頭判定でsupported（支持）7 / refuted（反証）25 / inconclusive（未決）6 / untested（未検証）4。複合判定5行（H18/H20/H25/H26/H41）も重複集計すると7 / 25 / 9 / 6（計47判定）。限定観測に対する回顧の評価であり、資格合格数ではない。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -432,7 +446,7 @@
     "name": "Q0b"
   },
   "notice": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
-  "measurement_note": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。 集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
+  "measurement_note": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。 集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。 r3/r3x paired診断完了: Air eval2 / 77c6ead（8c29964＋local-only r3x）、固定10相手＋noop＋候補の12体、seed64001、whale/lending-incident/crash×2候補=6世界・3ペア・1 seed。提供集計では全G0 PASS・362 loops。r3xは修理2のsell資金不足時buy-only分岐を外してalways bundle。簡易T（simplified T）平均r3 66.28 / r3x 58.49、r3xは全3ペアでT・P−noopとも悪化。「repair 2 hurts（修理2が害）」はこの診断では支持されない。全12レジーム・安全性・因果の一般化は未検証。 verified=trueは提供集計の読取確認のみ。公式T・公式P60・G3・G4・原ログ/実機・安全性は未検証。実完了時刻は未提示。",
   "dev1": {
     "name": "dev1-xb-r",
     "state": "measured-diagnostic-complete",
@@ -506,10 +520,10 @@
       "d30cbbb",
       "7b1448b"
     ],
-    "branch": "docs/dashboard-update-1",
+    "branch": "docs/dashboard-update-2",
     "pushed": null,
     "pr_created": null,
-    "evidence_basis": "HEAD = origin/main = 8c29964。ローカルmainはc761624。PR #5–15 mergeを保存済み履歴で確認、オンライン未照合。今回push/PR作成なし。",
+    "evidence_basis": "今回の作業開始HEAD 7abd198、branch docs/dashboard-update-2（docs/retrospective-full由来）。main_mergesは前回の保存済み履歴で、現在のupstream/main・オンライン状態は未照合。commit/pushなし。",
     "sources": [
       "src-main-history"
     ]
@@ -587,7 +601,7 @@
       "src-dev2-repair"
     ]
   },
-  "human_action": "新候補停止の限定解除・探索優先度・損失許容・予算を判断。ゲート成立後に本人送信、10/28 Ollama確認",
+  "human_action": "全体回顧§9: 新候補停止の限定解除・配分、残余リスク/最悪損失、予算精算、最終登録・提出・受理を本人判断",
   "priority": {
     "title": "G3安全境界と証跡欠測が提出を止めている",
     "blocker_ref": "B01",
@@ -629,23 +643,22 @@
     },
     {
       "kind": "warning",
-      "title": "1世界診断: revision採用0・監査BLOCKED",
-      "text": "r2、F_ref calm/49002、360 blocks / 362 loops / 721.7秒。revision開始6、応答5（見送り4・無効1）、未完了1、採用0。recorder欠測。G3合否には数えない。",
-      "date": "2026-10-06",
-      "time_note": "資料記録・実行時刻未提示",
+      "title": "r3x: 3ペアすべて悪化 / 全体回顧42仮説",
+      "text": "r3/r3x paired診断完了: Air eval2 / 77c6ead（8c29964＋local-only r3x）、固定10相手＋noop＋候補の12体、seed64001、whale/lending-incident/crash×2候補=6世界・3ペア・1 seed。提供集計では全G0 PASS・362 loops。r3xは修理2のsell資金不足時buy-only分岐を外してalways bundle。簡易T（simplified T）平均r3 66.28 / r3x 58.49、r3xは全3ペアでT・P−noopとも悪化。「repair 2 hurts（修理2が害）」はこの診断では支持されない。全12レジーム・安全性・因果の一般化は未検証。 全体回顧の42仮説: 各行の先頭判定でsupported（支持）7 / refuted（反証）25 / inconclusive（未決）6 / untested（未検証）4。複合判定5行（H18/H20/H25/H26/H41）も重複集計すると7 / 25 / 9 / 6（計47判定）。限定観測に対する回顧の評価であり、資格合格数ではない。",
+      "date": "2026-10-07",
+      "time_note": "資料読取の記録日。実完了時刻未提示",
       "sources": [
-        "src-g3-diagnostic",
-        "src-revision-audit"
+        "src-retro-full-oct07",
+        "src-r3x-summary"
       ]
     }
   ],
   "next_milestone": {
-    "title": "G3/G4の不足整理と公式P60（10/20以降）",
-    "note": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+    "title": "予算精算 → G3前提整備 → 10/14棚卸し → 10/20公式P60確認 → 10/28 dec-007",
+    "note": "直近: host別の100h会計と全残予約を精算。G3再開前: 実runtime recorder・自然改訂fixture・F_mix・seed予約・host排他を確認。10/14は準備棚卸し、10/20は公式P60の適用版/公開状況確認。10/28はdec-007。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
     "sources": [
-      "src-release-runbook",
-      "src-c-exception",
-      "src-handoff-oct06"
+      "src-retro-full-oct07",
+      "src-release-runbook"
     ],
     "state": "blocked",
     "state_label": "未READY"
@@ -2023,6 +2036,100 @@
     "sources": [
       "src-g3-diagnostic"
     ]
+  },
+  "updated_at": "2026-10-07T12:33:05+09:00",
+  "retrospective": {
+    "hypotheses": 42,
+    "primary_counts": {
+      "supported": 7,
+      "refuted": 25,
+      "untested": 4,
+      "inconclusive": 6
+    },
+    "inclusive_counts": {
+      "supported": 7,
+      "refuted": 25,
+      "untested": 6,
+      "inconclusive": 9
+    },
+    "mixed_verdict_ids": [
+      "H18",
+      "H20",
+      "H25",
+      "H26",
+      "H41"
+    ],
+    "note": "全体回顧の42仮説: 各行の先頭判定でsupported（支持）7 / refuted（反証）25 / inconclusive（未決）6 / untested（未検証）4。複合判定5行（H18/H20/H25/H26/H41）も重複集計すると7 / 25 / 9 / 6（計47判定）。限定観測に対する回顧の評価であり、資格合格数ではない。",
+    "verified": true,
+    "verification_scope": "document-ledger-only",
+    "sources": [
+      "src-retro-full-oct07"
+    ]
+  },
+  "r3x": {
+    "name": "r3 vs r3x paired診断（simplified T）",
+    "state": "measured-diagnostic-complete",
+    "field": "混成12体（固定10相手＋noop＋候補）",
+    "seeds": "64001",
+    "regimes": 3,
+    "worlds": 6,
+    "pairs": 3,
+    "seed_count": 1,
+    "completed_worlds": 6,
+    "started_at": null,
+    "expected_end": null,
+    "completed_at": null,
+    "completed_at_basis": "監督者提供集計の3ペアで完了確認。正確な終了時刻は未提示。",
+    "completion_evidence": "summary-world-count",
+    "verified": true,
+    "verification_scope": "summary-facts-only",
+    "evidence_basis": "監督者提供集計と回顧を読取照合。G0/loopsは提供記載、raw receipts/inventory/action ledgerは独立未監査。",
+    "sha": "77c6ead",
+    "g0": "全6世界PASS（提供集計記載・独立未監査）",
+    "loops": 362,
+    "q0_eligible": false,
+    "official_t_verified": false,
+    "p60_verified": false,
+    "g3_verified": false,
+    "g4_verified": false,
+    "safety_verified": false,
+    "note": "r3/r3x paired診断完了: Air eval2 / 77c6ead（8c29964＋local-only r3x）、固定10相手＋noop＋候補の12体、seed64001、whale/lending-incident/crash×2候補=6世界・3ペア・1 seed。提供集計では全G0 PASS・362 loops。r3xは修理2のsell資金不足時buy-only分岐を外してalways bundle。簡易T（simplified T）平均r3 66.28 / r3x 58.49、r3xは全3ペアでT・P−noopとも悪化。「repair 2 hurts（修理2が害）」はこの診断では支持されない。全12レジーム・安全性・因果の一般化は未検証。 verified=trueは提供集計の読取確認のみ。公式T・公式P60・G3・G4・原ログ/実機・安全性は未検証。実完了時刻は未提示。",
+    "sources": [
+      "src-retro-full-oct07",
+      "src-r3x-summary"
+    ],
+    "result": {
+      "t_r3": "66.28",
+      "t_r3x": "58.49",
+      "worse_pairs": 3,
+      "t_definition": "simplified T; 12 agents/world including noop; equal weight; NOT official weighted T",
+      "paired": {
+        "whale": {
+          "regime": "whale",
+          "r3_p_minus_noop": "972.3",
+          "r3_t": "58.2",
+          "r3x_p_minus_noop": "404.3",
+          "r3x_t": "48.8",
+          "inc_zeta_t": "46.1"
+        },
+        "lending-incident": {
+          "regime": "lending-incident",
+          "r3_p_minus_noop": "3266.4",
+          "r3_t": "79.9",
+          "r3x_p_minus_noop": "2079.0",
+          "r3x_t": "70.0",
+          "inc_zeta_t": "48.1"
+        },
+        "crash": {
+          "regime": "crash",
+          "r3_p_minus_noop": "1723.8",
+          "r3_t": "60.7",
+          "r3x_p_minus_noop": "1169.5",
+          "r3x_t": "56.7",
+          "inc_zeta_t": "72.8"
+        }
+      }
+    }
   }
 }
 </script>
@@ -2738,9 +2845,9 @@
     {
       "id": "day-2026-10-07",
       "date": "2026-10-07",
-      "title": "C開示・G3/G4不足の監査",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "予算精算・全体回顧・本人判断の整理",
+      "dependency": "夜間60/36世界とr3x6世界は診断完了。host別実消化/全残予約は未精算。",
+      "stop": "100h残費不明なら追加起動BLOCKED。新候補停止の限定解除は未承認。",
       "state": "blocked",
       "highlight": true,
       "decision_refs": [
@@ -2749,15 +2856,16 @@
       "sources": [
         "src-c-exception",
         "src-release-runbook",
-        "src-handoff-oct06"
+        "src-handoff-oct06",
+        "src-retro-full-oct07"
       ]
     },
     {
       "id": "day-2026-10-08",
       "date": "2026-10-08",
-      "title": "C開示・G3/G4不足の監査",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "G3前提: recorder・自然fixture・F_mix整備",
+      "dependency": "seed予約・budget・host排他も成立させる。G3本体未実施。",
+      "stop": "欠測を0にしない。runtime経済guardなし、promptで安全PASSにしない。",
       "state": "blocked",
       "highlight": true,
       "decision_refs": [
@@ -2766,7 +2874,8 @@
       "sources": [
         "src-c-exception",
         "src-release-runbook",
-        "src-handoff-oct06"
+        "src-handoff-oct06",
+        "src-retro-full-oct07"
       ]
     },
     {
@@ -2850,8 +2959,8 @@
     {
       "id": "day-2026-10-14",
       "date": "2026-10-14",
-      "title": "本人の初回提出目標（ゲート未達）",
-      "dependency": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "title": "準備棚卸し・初回目標の日程不整合を確認",
+      "dependency": "旧初回提出目標10/14とrunbook 10/24–27送信案は未整合。適用版・provider・入力の不足を確認。",
       "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
       "state": "blocked",
       "highlight": true,
@@ -2859,7 +2968,8 @@
       "sources": [
         "src-c-exception",
         "src-release-runbook",
-        "src-handoff-oct06"
+        "src-handoff-oct06",
+        "src-retro-full-oct07"
       ]
     },
     {
@@ -2943,8 +3053,8 @@
     {
       "id": "day-2026-10-20",
       "date": "2026-10-20",
-      "title": "10/20適用版の公式P60（未実施）",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
+      "title": "公式P60の公開・適用版の可用性確認",
+      "dependency": "10/20以降の公式版/公開60世界を確認してから計画。リハーサル62001–5で代替しない。",
       "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
       "state": "blocked",
       "highlight": true,
@@ -2952,7 +3062,8 @@
       "sources": [
         "src-c-exception",
         "src-release-runbook",
-        "src-handoff-oct06"
+        "src-handoff-oct06",
+        "src-retro-full-oct07"
       ]
     },
     {
@@ -3661,6 +3772,29 @@
       ],
       "workstream": "計測",
       "verified": true
+    },
+    {
+      "id": "progress-r3x",
+      "title": "r3/r3x paired診断・6世界集計完了",
+      "state": "done",
+      "evidence": "r3/r3x paired診断完了: Air eval2 / 77c6ead（8c29964＋local-only r3x）、固定10相手＋noop＋候補の12体、seed64001、whale/lending-incident/crash×2候補=6世界・3ペア・1 seed。提供集計では全G0 PASS・362 loops。r3xは修理2のsell資金不足時buy-only分岐を外してalways bundle。簡易T（simplified T）平均r3 66.28 / r3x 58.49、r3xは全3ペアでT・P−noopとも悪化。「repair 2 hurts（修理2が害）」はこの診断では支持されない。全12レジーム・安全性・因果の一般化は未検証。 verified=trueは提供集計の読取確認のみ。公式T・公式P60・G3・G4・原ログ/実機・安全性は未検証。実完了時刻は未提示。",
+      "sources": [
+        "src-retro-full-oct07",
+        "src-r3x-summary"
+      ],
+      "workstream": "計測",
+      "verified": true
+    },
+    {
+      "id": "progress-retro-full",
+      "title": "全体回顧・42仮説台帳を照合",
+      "state": "done",
+      "evidence": "全体回顧の42仮説: 各行の先頭判定でsupported（支持）7 / refuted（反証）25 / inconclusive（未決）6 / untested（未検証）4。複合判定5行（H18/H20/H25/H26/H41）も重複集計すると7 / 25 / 9 / 6（計47判定）。限定観測に対する回顧の評価であり、資格合格数ではない。",
+      "sources": [
+        "src-retro-full-oct07"
+      ],
+      "workstream": "計測",
+      "verified": true
     }
   ]
 }
@@ -3695,13 +3829,14 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Codex",
-      "evidence": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
+      "evidence": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。 自然改訂fixtureは未成立。F_mix、seed予約、予算・host排他もG3再開前の条件。",
       "mitigation": "G3本体BLOCKEDを維持。自然Haiku実変更・復帰、全action記録と強制境界を別々に確認。promptだけで解消扱いにしない。",
       "status": "open",
       "sources": [
         "src-r3-guard",
         "src-revision-audit",
-        "src-g3-diagnostic"
+        "src-g3-diagnostic",
+        "src-retro-full-oct07"
       ],
       "impact_note": "G3を通過できず、提出READYにできない"
     },
@@ -3713,11 +3848,13 @@
       "likelihood": "高",
       "impact": "大",
       "owner": "Codex",
-      "evidence": "混成36世界の簡易T: inc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。G0 FAIL 7世界を含む。3修理の挙動変化は未検証仮説。",
-      "mitigation": "資産別・約定edge・gas・片脚・期末在庫・分岐を分解し、venue-arb機構を検証する。限定新候補・優先度・損失許容・研究枠は本人判断待ち。追加実験は未承認。",
+      "evidence": "混成36世界の簡易T: inc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。G0 FAIL 7世界を含む。3修理の挙動変化は未検証仮説。 r3/r3x paired診断完了: Air eval2 / 77c6ead（8c29964＋local-only r3x）、固定10相手＋noop＋候補の12体、seed64001、whale/lending-incident/crash×2候補=6世界・3ペア・1 seed。提供集計では全G0 PASS・362 loops。r3xは修理2のsell資金不足時buy-only分岐を外してalways bundle。簡易T（simplified T）平均r3 66.28 / r3x 58.49、r3xは全3ペアでT・P−noopとも悪化。「repair 2 hurts（修理2が害）」はこの診断では支持されない。全12レジーム・安全性・因果の一般化は未検証。 新seed64001のr3平均Tは66.28（約66.3）。局面別はwhale 58.2 / lending-incident 79.9 / crash 60.7で、以前の63001–63003の局面平均65.2 / 37.2 / 45.4とは区別する。inc-zeta対照T 46.1 / 48.1 / 72.8はfresh 3世界のうち2世界でr3を下回る。seed間変動が大きく、1 seedの結果で混成36世界のgapや修理の一般的因果は解消しない。",
+      "mitigation": "既存確定ログで資産別edge/carry/gas/片脚/期末在庫を分解する。修理2撤去を優先しない。限定新候補・配分・最悪損失・研究枠は本人判断待ち、追加実験は未承認。",
       "status": "open",
       "sources": [
-        "src-results-p60reh-mixed"
+        "src-results-p60reh-mixed",
+        "src-retro-full-oct07",
+        "src-r3x-summary"
       ],
       "impact_note": "r3の優勝力を説明できず、条件付きの提出保険を超える採用根拠がない"
     },
@@ -3747,12 +3884,13 @@
       "impact": "致命",
       "owner": "Claude",
       "evidence": "100hは総枠、残時間ではない。実消化・残費は未精算。RETRO概算はQ01約5.8h、Q02約4.4h、診断等約5h、合計約15h（推定）。既存予約を消化率や現在残費にしない。",
-      "mitigation": "公式P60実行12–13h＋照合1h、最小G3監査込み14–15hは計画見積。G4・全残予約・host別実消化を照合。追加研究は終了。",
+      "mitigation": "公式P60実行12–13h＋照合1h、最小G3監査込み14–15hは計画見積。G4・全残予約・host別実消化を照合。追加研究は終了。 予算精算後の限定再開は本人判断。",
       "status": "open",
       "sources": [
         "src-retro-oct06",
         "src-release-runbook",
-        "src-c-exception"
+        "src-c-exception",
+        "src-retro-full-oct07"
       ],
       "impact_note": "後工程を時間枠内で完了できないおそれ"
     },
@@ -3990,7 +4128,7 @@
       "likelihood": "高",
       "impact": "大",
       "owner": "Codex",
-      "evidence": "保存ランブックに規約適用日を記録。現在のオンライン規約・運営モデル・10/20配布版は未照合。",
+      "evidence": "保存ランブックに規約適用日を記録。現在のオンライン規約・運営モデル・10/20配布版は未照合。 公式P60は未実施・BLOCKED、10/20以降に公開/適用版の可用性を確認。",
       "mitigation": "公式P60は10/20以降の比較可能な版で確認。",
       "status": "open",
       "sources": [
@@ -4013,6 +4151,23 @@
         "src-c-exception"
       ],
       "impact_note": "r3でも安全の完全証明はなく、後続ゲート固有の証拠が必要"
+    },
+    {
+      "id": "B21",
+      "rank": 20,
+      "title": "10/14初回目標とrunbook 10/24–27送信案が不整合",
+      "severity": "Critical",
+      "likelihood": "高",
+      "impact": "大",
+      "owner": "human",
+      "evidence": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "mitigation": "10/14は準備棚卸し。予算とG3・公式P60・G4の順序を整合させて本人判断。日付だけで送信を許可しない。",
+      "status": "open",
+      "sources": [
+        "src-retro-full-oct07",
+        "src-release-runbook"
+      ],
+      "impact_note": "受入れゲート未達のまま初回提出目標を達成扱いにするおそれ"
     }
   ]
 }
@@ -4313,7 +4468,7 @@
       ]
     }
   ],
-  "note": "mini/Air計測完了。G0 FAILは保持。追加研究は本人判断待ち。公式P60・G3/G4は未達、実消化未精算。",
+  "note": "夜間mini60/Air36世界とr3x6世界は診断完了。直近は予算精算とG3前提整備。追加研究は本人判断待ち、公式P60・G3/G4は未達。MASTER旧15行との不一致は未解消（既存17行/IDを保持）。",
   "day_limit_hours": 6,
   "bundle": "forward100h・6h/日・110分/chunkを維持。実消化・残費未精算。G3準備/全監査込み14–15h、公式P60 12–13h＋照合1hは計画見積。",
   "side_jobs": [
@@ -4344,6 +4499,16 @@
         "src-release-r3",
         "src-r3-guard",
         "src-revision-audit"
+      ]
+    },
+    {
+      "title": "r3 vs r3x paired診断",
+      "owner": "Codex",
+      "state": "計測完了・診断のみ",
+      "note": "r3/r3x paired診断完了: Air eval2 / 77c6ead（8c29964＋local-only r3x）、固定10相手＋noop＋候補の12体、seed64001、whale/lending-incident/crash×2候補=6世界・3ペア・1 seed。提供集計では全G0 PASS・362 loops。r3xは修理2のsell資金不足時buy-only分岐を外してalways bundle。簡易T（simplified T）平均r3 66.28 / r3x 58.49、r3xは全3ペアでT・P−noopとも悪化。「repair 2 hurts（修理2が害）」はこの診断では支持されない。全12レジーム・安全性・因果の一般化は未検証。 verified=trueは提供集計の読取確認のみ。公式T・公式P60・G3・G4・原ログ/実機・安全性は未検証。実完了時刻は未提示。",
+      "sources": [
+        "src-retro-full-oct07",
+        "src-r3x-summary"
       ]
     }
   ]
@@ -5287,6 +5452,13 @@
   ],
   "research": [
     {
+      "title": "全体回顧・42仮説台帳（2026-10-07）",
+      "text": "全体回顧の42仮説: 各行の先頭判定でsupported（支持）7 / refuted（反証）25 / inconclusive（未決）6 / untested（未検証）4。複合判定5行（H18/H20/H25/H26/H41）も重複集計すると7 / 25 / 9 / 6（計47判定）。限定観測に対する回顧の評価であり、資格合格数ではない。",
+      "sources": [
+        "src-retro-full-oct07"
+      ]
+    },
+    {
       "id": "research-dev1",
       "title": "無取引の修正から、収益性の再診断へ",
       "text": "dev1は取引0。2ae0d59で競合入札の誤認を修正し、dev2で取引成立を確認。収益の不足を受け、a646e9bで追加の売買制限を切り分け、dev3を開始。資格は未確認。",
@@ -5595,6 +5767,59 @@
       "src-dev5"
     ],
     "diagnostic": [
+      {
+        "candidate": "r3x（対r3 paired診断）",
+        "scope_ref": "status.r3x",
+        "run_ref": "status.r3x.name",
+        "detail_ref": "status.r3x.note",
+        "state": "warning",
+        "verified": true,
+        "verification_scope": "summary-facts-only",
+        "state_label": "計測完了・診断のみ",
+        "verdict": "3/3ペアで悪化。「repair 2 hurts」は支持されない（1 seed）。公式T / G3 / G4 / 公式P60は未検証。資格認定なし。",
+        "sources": [
+          "src-retro-full-oct07",
+          "src-r3x-summary"
+        ],
+        "metric_note": "候補r3x / 対照r3。平均は提供値を保持し、丸めた各局面値から再計算しない。",
+        "metrics": [
+          {
+            "label": "簡易平均T（simplified T）r3x / r3",
+            "candidate_ref": "status.r3x.result.t_r3x",
+            "baseline_ref": "status.r3x.result.t_r3"
+          },
+          {
+            "label": "whale 簡易T r3x / r3",
+            "candidate_ref": "status.r3x.result.paired.whale.r3x_t",
+            "baseline_ref": "status.r3x.result.paired.whale.r3_t"
+          },
+          {
+            "label": "whale P−noop r3x / r3",
+            "candidate_ref": "status.r3x.result.paired.whale.r3x_p_minus_noop",
+            "baseline_ref": "status.r3x.result.paired.whale.r3_p_minus_noop"
+          },
+          {
+            "label": "lending-incident 簡易T r3x / r3",
+            "candidate_ref": "status.r3x.result.paired.lending-incident.r3x_t",
+            "baseline_ref": "status.r3x.result.paired.lending-incident.r3_t"
+          },
+          {
+            "label": "lending-incident P−noop r3x / r3",
+            "candidate_ref": "status.r3x.result.paired.lending-incident.r3x_p_minus_noop",
+            "baseline_ref": "status.r3x.result.paired.lending-incident.r3_p_minus_noop"
+          },
+          {
+            "label": "crash 簡易T r3x / r3",
+            "candidate_ref": "status.r3x.result.paired.crash.r3x_t",
+            "baseline_ref": "status.r3x.result.paired.crash.r3_t"
+          },
+          {
+            "label": "crash P−noop r3x / r3",
+            "candidate_ref": "status.r3x.result.paired.crash.r3x_p_minus_noop",
+            "baseline_ref": "status.r3x.result.paired.crash.r3_p_minus_noop"
+          }
+        ]
+      },
       {
         "candidate": "r3（Air混成場）",
         "scope_ref": "status.mixed_r3",
@@ -7056,7 +7281,8 @@
 {
   "sources": [
     "src-master",
-    "src-handoff"
+    "src-handoff",
+    "src-retro-full-oct07"
   ],
   "date_note": "旧決定23件を全フィールド保持。最新のC+E / r3選択はC例外§8。原条件4 FAIL・5/6 BLOCKEDは不変。",
   "items": [
@@ -7411,6 +7637,97 @@
       ],
       "owner": "human",
       "group": "delegated"
+    },
+    {
+      "id": "dec-retro-allocation",
+      "date": "2026-10-07",
+      "due_date": null,
+      "title": "提出確保と優勝探索の配分",
+      "status": "open",
+      "note": "全体回顧§9の未決事項。精算後にA（r3保全）へ集中するか、B/C/Dを限定再開するか。再開承認なし。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-retro-full-oct07"
+      ]
+    },
+    {
+      "id": "dec-retro-limited-lifting",
+      "date": "2026-10-07",
+      "due_date": null,
+      "title": "新候補停止の限定解除",
+      "status": "open",
+      "note": "全体回顧§9の未決事項。候補数・1因子・時間・停止条件・例外失効/再承認を事前固定。改善希望は追加資格走や候補追加の許可ではない。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-retro-full-oct07"
+      ]
+    },
+    {
+      "id": "dec-retro-risk-acceptance",
+      "date": "2026-10-07",
+      "due_date": null,
+      "title": "条件付き安全性の残余リスク受容",
+      "status": "open",
+      "note": "全体回顧§9の未決事項。新たな残余リスク/欠測を受容するか中止するか。元条件4 FAIL・5/6 BLOCKEDを維持。G0・規約・P60・G3・G4は免除しない。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-retro-full-oct07"
+      ]
+    },
+    {
+      "id": "dec-retro-revision-risk",
+      "date": "2026-10-07",
+      "due_date": null,
+      "title": "revisionの残余リスク",
+      "status": "open",
+      "note": "全体回顧§9の未決事項。runtimeに経済guardがなく、r3 promptは強制境界ではない。無改変runtimeで安全要件を満たせない場合の方針。Haikuの見送りだけで閉じない。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-retro-full-oct07"
+      ]
+    },
+    {
+      "id": "dec-retro-originality-loss",
+      "date": "2026-10-07",
+      "due_date": null,
+      "title": "独自性と最悪損失の許容",
+      "status": "open",
+      "note": "全体回顧§9の未決事項。B/Cで何を独自と認め、平均改善と最悪レジーム悪化をどこまで許すか。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-retro-full-oct07"
+      ]
+    },
+    {
+      "id": "dec-retro-budget-schedule",
+      "date": "2026-10-07",
+      "due_date": null,
+      "title": "100h予算精算と日程整合",
+      "status": "open",
+      "note": "全体回顧§9の未決事項。host別実消化・G3/G4/P60留保・監査/再試行/予備を精算。10/14目標と10/24–27送信案を整合させる。超過を自動補充しない。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-retro-full-oct07"
+      ]
+    },
+    {
+      "id": "dec-retro-final-submission",
+      "date": "2026-10-07",
+      "due_date": null,
+      "title": "最終登録・提出・受理",
+      "status": "open",
+      "note": "全体回顧§9の未決事項。provider/model/枠の有効性と最終ZIPの対応を確認。鍵/支払い/運営フォームは本人。登録の再操作を無条件に求めず、10/28 dec-007後も送信と受理/hash照合を分ける。受理未確認。",
+      "owner": "human",
+      "group": "human",
+      "sources": [
+        "src-retro-full-oct07"
+      ]
     }
   ],
   "human_only": {
@@ -7425,14 +7742,22 @@
       "dec-zeta-qualification",
       "dec-pr-split",
       "dec-007",
-      "dec-c-exception-r3"
+      "dec-c-exception-r3",
+      "dec-retro-allocation",
+      "dec-retro-limited-lifting",
+      "dec-retro-risk-acceptance",
+      "dec-retro-revision-risk",
+      "dec-retro-originality-loss",
+      "dec-retro-budget-schedule",
+      "dec-retro-final-submission"
     ],
     "sources": [
       "src-c-exception",
       "src-release-runbook",
-      "src-handoff-oct06"
+      "src-handoff-oct06",
+      "src-retro-full-oct07"
     ],
-    "note": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。"
+    "note": "全体回顧§9の7件はopen。r3への例外継承など既決事項を再承認待ちに戻さず、新しいリスク・停止限定解除・予算精算・最終提出を本人判断する。 本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。"
   },
   "ollama_report": {
     "evidence_kind": "本人報告",
@@ -7481,6 +7806,63 @@
   ],
   "note": "追記のみ。旧100件は全フィールド保持、8件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-116",
+      "timestamp": "2026-10-07T12:33:05+09:00",
+      "type": "誤り",
+      "summary": "既存check-plan-consistency.py --self-checkのdashboard queue order失敗を再現。旧MASTER/固定QUEUEは15行、現行dashboardは完了済みmixed-r3/rehearsal-r3を含む17行。旧未起動状態への巻戻し・既存ID削除では直さず、スコープ外の計画/検査整合として未解消。",
+      "sources": [
+        "src-master"
+      ],
+      "time_basis": "資料読取・ダッシュボード更新のJST記録時刻。実計測の終了時刻ではない。",
+      "event_date": "2026-10-07"
+    },
+    {
+      "id": "log-115",
+      "timestamp": "2026-10-07T12:33:05+09:00",
+      "type": "レビュー",
+      "summary": "全体回顧§9の7項目をopenで追加。予算精算・G3前提・10/14棚卸し・10/20公式P60公開確認・10/28 dec-007を次工程に反映。既決承認・BLOCKEDを保持。",
+      "sources": [
+        "src-retro-full-oct07"
+      ],
+      "time_basis": "資料読取・ダッシュボード更新のJST記録時刻。実計測の終了時刻ではない。",
+      "event_date": "2026-10-07"
+    },
+    {
+      "id": "log-114",
+      "timestamp": "2026-10-07T12:33:05+09:00",
+      "type": "レビュー",
+      "summary": "r3 vs inc-zeta gapをopenのまま更新。新seed64001のr3平均Tは66.28（約66.3）。局面別はwhale 58.2 / lending-incident 79.9 / crash 60.7で、以前の63001–63003の局面平均65.2 / 37.2 / 45.4とは区別する。inc-zeta対照T 46.1 / 48.1 / 72.8はfresh 3世界のうち2世界でr3を下回る。seed間変動が大きく、1 seedの結果で混成36世界のgapや修理の一般的因果は解消しない。",
+      "sources": [
+        "src-retro-full-oct07",
+        "src-r3x-summary"
+      ],
+      "time_basis": "資料読取・ダッシュボード更新のJST記録時刻。実計測の終了時刻ではない。",
+      "event_date": "2026-10-07"
+    },
+    {
+      "id": "log-113",
+      "timestamp": "2026-10-07T12:33:05+09:00",
+      "type": "レビュー",
+      "summary": "全体回顧の42仮説: 各行の先頭判定でsupported（支持）7 / refuted（反証）25 / inconclusive（未決）6 / untested（未検証）4。複合判定5行（H18/H20/H25/H26/H41）も重複集計すると7 / 25 / 9 / 6（計47判定）。限定観測に対する回顧の評価であり、資格合格数ではない。",
+      "sources": [
+        "src-retro-full-oct07"
+      ],
+      "time_basis": "資料読取・ダッシュボード更新のJST記録時刻。実計測の終了時刻ではない。",
+      "event_date": "2026-10-07"
+    },
+    {
+      "id": "log-112",
+      "timestamp": "2026-10-07T12:33:05+09:00",
+      "type": "実測",
+      "summary": "r3/r3x paired診断完了: Air eval2 / 77c6ead（8c29964＋local-only r3x）、固定10相手＋noop＋候補の12体、seed64001、whale/lending-incident/crash×2候補=6世界・3ペア・1 seed。提供集計では全G0 PASS・362 loops。r3xは修理2のsell資金不足時buy-only分岐を外してalways bundle。簡易T（simplified T）平均r3 66.28 / r3x 58.49、r3xは全3ペアでT・P−noopとも悪化。「repair 2 hurts（修理2が害）」はこの診断では支持されない。全12レジーム・安全性・因果の一般化は未検証。 verified=trueは提供集計の読取確認のみ。公式T・公式P60・G3・G4・原ログ/実機・安全性は未検証。実完了時刻は未提示。",
+      "sources": [
+        "src-retro-full-oct07",
+        "src-r3x-summary"
+      ],
+      "time_basis": "資料読取・ダッシュボード更新のJST記録時刻。実計測の終了時刻ではない。",
+      "event_date": "2026-10-07"
+    },
     {
       "id": "log-111",
       "timestamp": "2026-10-06T23:05:28+09:00",
@@ -9406,7 +9788,7 @@
   "copy": {
     "action_note": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
     "action_next": "10/28 dec-007未完了。Ollama・ZIP・利用枠・鍵の最終確認は本人。",
-    "diagnostic_notice": "最新はmini 60世界リハーサル・Air 36世界混成場の集計読取確認。AirのG0 FAIL 7世界を保持。公式T・P60・G3/G4・資格は未検証のまま。過去診断は元判定を保持。",
+    "diagnostic_notice": "夜間mini60世界・Air混成36世界とr3x6世界/3ペアは完了。r3x全3ペア悪化、1 seed・simplified Tのみ。Air G0 FAIL 7世界を保持。公式T・P60・G3/G4・資格は未検証。",
     "qualification_notice": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
     "diagnostic_criteria": "Pは損益、Tは同じ相手の中での相対スコア。取引が増えることと、資格を満たすことは別です。",
@@ -9414,7 +9796,7 @@
     "plan_note": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
     "registration": "受理表示を本人が確認済み",
     "provider_remaining": "運営モデル一覧・無料枠量・鍵の疎通",
-    "decisions_note": "旧決定23件を全フィールド保持。最新のC+E / r3選択はC例外§8。原条件4 FAIL・5/6 BLOCKEDは不変。"
+    "decisions_note": "既存24判断を全フィールド保持。全体回顧§9の7判断をopenで追加。C+E/r3例外継承は既決、限定再開は未承認。原条件4 FAIL・5/6 BLOCKEDは不変。"
   },
   "roadmap_axis": [
     "10/4",

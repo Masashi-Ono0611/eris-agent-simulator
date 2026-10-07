@@ -247,7 +247,9 @@ function assertRecordWarnings(views){
 const retainedDecisions=['dec-original','dec-deep','dec-no-contact','dec-008','dec-007','dec-q0-keep',
   'dec-astra-update','dec-forward','dec-amend','dec-overnight','dec-q0-failure-branch','dec-q0b-g0',
   'dec-step1-policy','dec-ai-scope','dec-ai-contract','dec-ai-budget','dec-revert-limit','dec-h1-authority',
-  'dec-full-executor','dec-rev10-direction','dec-zeta-original','dec-zeta-qualification','dec-pr-split','dec-c-exception-r3'];
+  'dec-full-executor','dec-rev10-direction','dec-zeta-original','dec-zeta-qualification','dec-pr-split','dec-c-exception-r3',
+  'dec-retro-allocation','dec-retro-limited-lifting','dec-retro-risk-acceptance','dec-retro-revision-risk',
+  'dec-retro-originality-loss','dec-retro-budget-schedule','dec-retro-final-submission'];
 function assertDecisions(views){
   const ids=app.D.decisions.items.map(d=>d.id);
   for(const id of retainedDecisions)assert.ok(ids.includes(id),`INVARIANT retained decision ${id}`);
@@ -267,7 +269,40 @@ function invariantViews(){
     return views;
   }finally{Object.assign(app.state,prior);app.render();}
 }
-const invariantGuards=[assertQualification,assertMeasurements,assertG3,assertRecordWarnings,assertDecisions];
+// The paired summary adds a new evidence boundary: six runs are only three
+// pairs and one seed. Reading a supplied summary cannot verify official gates.
+function assertPairedDiagnostic(views){
+  const run=app.D.status.r3x;
+  assert.equal(run.state,'measured-diagnostic-complete','INVARIANT r3x diagnostic completion');
+  assert.equal(run.verified,true,'INVARIANT r3x summary read');
+  assert.equal(run.verification_scope,'summary-facts-only','INVARIANT r3x summary scope');
+  assert.equal(run.completion_evidence,'summary-world-count','INVARIANT r3x completion evidence');
+  assert.equal(run.completed_at,null,'INVARIANT r3x finish time unknown');
+  assert.ok(run.completed_at_basis&&run.sources.includes('src-r3x-summary'),'INVARIANT r3x provenance');
+  assert.equal(run.worlds,6,'INVARIANT r3x six runs');
+  assert.equal(run.completed_worlds,run.worlds,'INVARIANT r3x complete runs');
+  assert.equal(run.pairs,3,'INVARIANT r3x three pairs');
+  assert.equal(run.seed_count,1,'INVARIANT r3x one seed');
+  assert.equal(run.seeds,'64001','INVARIANT r3x seed');
+  for(const key of ['q0_eligible','official_t_verified','p60_verified','g3_verified','g4_verified','safety_verified'])
+    assert.equal(run[key],false,`INVARIANT r3x unverified ${key}`);
+  assert.match(run.result.t_definition,/simplified T.*NOT official weighted T/,'INVARIANT r3x simplified T');
+  const pairs=Object.values(run.result.paired);
+  assert.equal(pairs.length,run.pairs,'INVARIANT r3x paired rows');
+  assert.equal(run.result.worse_pairs,3,'INVARIANT r3x all pairs worse');
+  for(const pair of pairs)for(const metric of ['t','p_minus_noop'])
+    assert.ok(Number(pair['r3x_'+metric])<Number(pair['r3_'+metric]),'INVARIANT r3x negative paired result');
+  const rows=app.D.results.comparison.diagnostic.filter(r=>r.scope_ref==='status.r3x');
+  assert.equal(rows.length,1,'INVARIANT r3x one diagnostic comparison');
+  assert.equal(rows[0].state,'warning','INVARIANT r3x no qualification PASS');
+  assert.ok(!app.D.results.comparison.qualification.some(r=>r.scope_ref==='status.r3x'),'INVARIANT r3x not qualification');
+  const text=visibleText(views.results);
+  for(const value of ['r3x','66.28','58.49','64001','simplified T','公式T','未検証'])
+    assert.ok(text.includes(value),`INVARIANT r3x visible ${value}`);
+  for(const id of retainedDecisions.filter(id=>id.startsWith('dec-retro-')))
+    assert.equal(app.D.decisions.items.find(d=>d.id===id)?.status,'open',`INVARIANT pending user decision ${id}`);
+}
+const invariantGuards=[assertQualification,assertMeasurements,assertG3,assertRecordWarnings,assertDecisions,assertPairedDiagnostic];
 check('INVARIANT qualification, running evidence, G3, per-record warnings and decisions',()=>{
   const views=invariantViews();for(const guard of invariantGuards)guard(views);
 });
@@ -341,6 +376,21 @@ check('red controls prove evidence invariants reject false claims and original s
   rejectMutation('missing rendered decision',()=>{},assertDecisions,views=>{
     views.decisions=views.decisions.replace(/class="card decision-card" data-decision="[^"]+"/,'class="card missing-card"');return views;
   });
+});
+check('paired diagnostic red controls preserve summary limits and pending decisions',()=>{
+  for(const [key,value] of [
+    ['state','qualified'],['verified',false],['verification_scope','runtime-audited'],
+    ['completion_evidence',null],['completed_at','2026-10-07T00:00:00+09:00'],
+    ['worlds',3],['completed_worlds',5],['pairs',6],['seed_count',3],['seeds','63001'],
+    ['q0_eligible',true],['official_t_verified',true],['p60_verified',true],
+    ['g3_verified',true],['g4_verified',true],['safety_verified',true]
+  ])rejectMutation(`r3x ${key}`,d=>{d.status.r3x[key]=value;},assertPairedDiagnostic);
+  rejectMutation('r3x missing source',d=>{d.status.r3x.sources=[];},assertPairedDiagnostic);
+  rejectMutation('r3x official T',d=>{d.status.r3x.result.t_definition='official weighted T';},assertPairedDiagnostic);
+  rejectMutation('r3x false win',d=>{d.status.r3x.result.paired.whale.r3x_t='99';},assertPairedDiagnostic);
+  rejectMutation('r3x false PASS',d=>{d.results.comparison.diagnostic.find(r=>r.scope_ref==='status.r3x').state='done';},assertPairedDiagnostic);
+  for(const id of retainedDecisions.filter(id=>id.startsWith('dec-retro-')))
+    rejectMutation(`unapproved decision ${id}`,d=>{d.decisions.items.find(r=>r.id===id).status='decided';},assertPairedDiagnostic);
 });
 check('qualification result keeps failed and blocked states',()=>{
   app.state.page='results';app.state.results='qualification';app.render();
