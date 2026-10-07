@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline controls: temporary fake runners only; no simulator/network/key access."""
 from pathlib import Path
+import json
 import os
 import pty
 import shlex
@@ -378,6 +379,140 @@ class ChainControls(unittest.TestCase):
                 self.assertFalse(self.lock.exists())
                 self.assertIn(f'g0 {flag}-c1', self.calls.read_text())
                 self.assertNotIn(f'{flag}-c2', self.calls.read_text())
+
+    def telemetry_stubs(self):
+        # Real stdlib classifier; only manifest, matrix and G0 are synthetic.
+        remote = self.league / 'remote'
+        remote.mkdir()
+        shutil.copyfile(SCRIPT.with_name('g0_blocked_classify.py'), remote / 'g0_blocked_classify.py')
+        self.roster.write_text('agents: [{id: candidate, baseline: false}, {id: opponent, baseline: false}]\n')
+        (self.league / 'round-manifest.py').write_text(
+            'import os, sys\nfrom pathlib import Path\n'
+            f'sys.path.insert(0, {str(SCRIPT.parent)!r})\n'
+            'from test_g0_blocked_classify import fixture\n'
+            'with open(os.environ["STUB_CALLS"], "a") as f: f.write("manifest " + " ".join(sys.argv[1:]) + "\\n")\n'
+            'if sys.argv[1] == "verify": sys.exit(int(os.environ.get("STUB_VERIFY_RC", "0")))\n'
+            'def value(flag): return sys.argv[sys.argv.index(flag) + 1]\n'
+            'status = "BLOCKED" if sys.argv[2].endswith("c1") else os.environ.get("STUB_LATER_G0", "PASS")\n'
+            'fixture(Path.cwd(), Path(value("--roster")), label=sys.argv[2],\n'
+            '        regimes=value("--regimes").split(), seeds=value("--seeds").split(),\n'
+            '        status=status, defect=os.environ.get("STUB_DEFECT", "known"))\n'
+        )
+        (self.league / 'g0.py').write_text(
+            'import json, os, sys\nfrom pathlib import Path\n'
+            'with open(os.environ["STUB_CALLS"], "a") as f: f.write("g0 " + sys.argv[1] + "\\n")\n'
+            'p = Path("ascon-notes/eval/out") / sys.argv[1] / "fixture-g0.json"\n'
+            'raw = p.read_text(); data = json.loads(raw)\n'
+            'if os.environ.get("STUB_VERDICT_BLOCK"): Path(os.environ["STUB_VERDICT_BLOCK"]).mkdir()\n'
+            'print(raw if "--json" in sys.argv else "G0 " + data["status"], end="\\n")\n'
+            'sys.exit({"PASS":0, "FAIL":1, "BLOCKED":2}[data["status"]])\n'
+        )
+
+    def run_telemetry(self, *args, env=None):
+        return self.run_chain('--mode', 'diagnostic',
+                              '--continue-on-opponent-telemetry-blocked', 'candidate',
+                              *args, dry=False, env=env)
+
+    def test_telemetry_approval_continues_and_final_stays_blocked(self):
+        self.telemetry_stubs()
+        result = self.run_telemetry()
+        self.assert_finished(result, 2)
+        self.assertIn('g0 testUTC-c4', self.calls.read_text())
+        deviation = ('DEVIATION diagnostic continuation; G0=BLOCKED; '
+                     'world=calm/63001; agent=opponent; eligible_for_gate=false')
+        self.assertIn(deviation, result.stdout)
+        chain = (self.logs / 'testUTC/chain.log').read_text()
+        self.assertIn(deviation, chain)
+        self.assertIn('G0 BLOCKED testUTC-c1', chain)
+        self.assertIn('G0 PASS testUTC-c4', chain)
+        verdict = json.loads((self.logs / 'testUTC/testUTC-c1-classifier.json').read_text())
+        self.assertTrue(verdict['approved'])
+        self.assertFalse(verdict['eligible_for_gate'])
+        self.assertEqual((verdict['blocked_worlds'], verdict['expected_worlds']), (1, 9))
+        original = (self.repo / 'ascon-notes/eval/out/testUTC-c1/fixture-g0.json').read_text()
+        self.assertEqual((self.logs / 'testUTC/testUTC-c1-g0.json').read_text(), original + '\n')
+
+    def test_telemetry_candidate_same_defect_stops(self):
+        self.telemetry_stubs()
+        result = self.run_telemetry(env={'STUB_DEFECT': 'candidate'})
+        self.assert_telemetry_stopped(result)
+
+    def assert_telemetry_stopped(self, result):
+        self.assert_finished(result, 2)
+        self.assertIn('STOP:', result.stdout)
+        self.assertNotIn('testUTC-c2', self.calls.read_text())
+        self.assertNotIn('DEVIATION diagnostic continuation; G0=BLOCKED;', result.stdout)
+
+    def test_telemetry_unknown_id_stops(self):
+        self.telemetry_stubs()
+        result = self.run_telemetry(env={'STUB_DEFECT': 'unknown'})
+        self.assert_telemetry_stopped(result)
+
+    def test_telemetry_non_diagnostic_refuses(self):
+        result = self.refused('requires --mode diagnostic',
+                              '--continue-on-opponent-telemetry-blocked', 'candidate')
+        self.assertEqual(result.returncode, 2)
+
+    def test_telemetry_empty_candidate_refuses(self):
+        result = self.refused('invalid telemetry candidate ID', '--mode', 'diagnostic',
+                              '--continue-on-opponent-telemetry-blocked', '')
+        self.assertEqual(result.returncode, 2)
+
+    def test_telemetry_other_defects_stop(self):
+        self.telemetry_stubs()
+        for defect in ('newline', 'no-action', 'other-round', 'corrupt', 'missing'):
+            with self.subTest(defect=defect):
+                result = self.run_telemetry('--prefix', defect, env={'STUB_DEFECT': defect})
+                self.assertEqual(result.returncode, 2, result.stdout)
+                self.assertIn('classification refused', result.stdout)
+                self.assertNotIn(f'g0 {defect}-c2', self.calls.read_text())
+                self.assertNotIn('DEVIATION diagnostic continuation; G0=BLOCKED;', result.stdout)
+                self.assertEqual((self.logs / defect / 'end.marker').read_text(), f'CHAIN_END_{defect}=2\n')
+
+    def test_telemetry_fail_and_blocked_stops_even_with_both_flags(self):
+        self.telemetry_stubs()
+        result = self.run_telemetry('--continue-on-g0-fail', env={'STUB_DEFECT': 'mixed'})
+        self.assert_telemetry_stopped(result)
+
+    def test_telemetry_flag_absent_still_stops(self):
+        self.telemetry_stubs()
+        result = self.run_chain('--mode', 'diagnostic', '--continue-on-g0-fail', dry=False)
+        self.assert_telemetry_stopped(result)
+        self.assertFalse((self.logs / 'testUTC/testUTC-c1-classifier.json').exists())
+
+    def test_telemetry_matrix_or_manifest_error_stops_before_classification(self):
+        self.telemetry_stubs()
+        for flag in ('STUB_MATRIX_RC', 'STUB_VERIFY_RC'):
+            with self.subTest(flag=flag):
+                result = self.run_telemetry('--prefix', flag, env={flag: '1'})
+                self.assertEqual(result.returncode, 2, result.stdout)
+                self.assertIn('runner/manifest failure', result.stdout)
+                self.assertNotIn(f'g0 {flag}-c2', self.calls.read_text())
+                self.assertFalse((self.logs / flag / f'{flag}-c1-classifier.json').exists())
+
+    def test_telemetry_later_fail_never_overwrites_blocked(self):
+        self.telemetry_stubs()
+        for continue_fail in (False, True):
+            with self.subTest(continue_fail=continue_fail):
+                prefix = 'later' + str(continue_fail)
+                args = ['--prefix', prefix] + (['--continue-on-g0-fail'] if continue_fail else [])
+                result = self.run_telemetry(*args, env={'STUB_LATER_G0': 'FAIL'})
+                self.assertEqual(result.returncode, 2, result.stdout)
+                self.assertEqual(f'g0 {prefix}-c4' in self.calls.read_text(), continue_fail)
+                self.assertEqual((self.logs / prefix / 'end.marker').read_text(), f'CHAIN_END_{prefix}=2\n')
+
+    def test_telemetry_verdict_write_failure_stops(self):
+        self.telemetry_stubs()
+        result = self.run_telemetry(env={
+            'STUB_VERDICT_BLOCK': str(self.logs / 'testUTC/testUTC-c1-classifier.json')})
+        self.assert_telemetry_stopped(result)
+
+    def test_telemetry_unknown_candidate_stops_before_matrix(self):
+        self.telemetry_stubs()
+        result = self.run_telemetry('--continue-on-opponent-telemetry-blocked', 'unknown')
+        self.assert_finished(result, 2)
+        self.assertIn('cannot fix candidate/opponents at start', result.stdout)
+        self.assertNotIn('matrix ', self.calls.read_text())
 
 
 if __name__ == '__main__':

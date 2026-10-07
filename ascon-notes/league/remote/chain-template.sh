@@ -10,6 +10,7 @@ Usage: bash chain-template.sh --repo DIR --roster FILE --prefix UNIQUE --seeds "
   [--chunks "1 3 4" | --from 1 --to 4] [--dry-run]
   [--min-free-gb N] [--mode qualification|diagnostic]
   [--continue-on-g0-fail] [--activity-note "host idle; scheduled jobs paused"]
+  [--continue-on-opponent-telemetry-blocked CANDIDATE_ID] (diagnostic only)
   [--log-root DIR] [--lock-dir DIR]
 Defaults: all 4 chunks, parallel=3, base-port=8547, MIN_FREE_GB=40.
 Use a UTC timestamp in UNIQUE. Read OPS-LESSONS-2026-10-06.md before live use.
@@ -23,6 +24,7 @@ die() {
 repo_dir='' roster_file='' run_id='' seed_list='' chunk_list=''
 first_chunk=1 last_chunk=4 selection='' mode=qualification
 dry_run=0 continue_g0=0 min_free=40 disk_explicit=0 activity_note=''
+telemetry_candidate='' telemetry_enabled=0
 log_root="${TMPDIR:-/tmp}/ascon-chain-logs"
 lock_dir="${TMPDIR:-/tmp}/ascon-measurement-host.lock"
 run_dir='' lock_owned=0
@@ -31,7 +33,7 @@ while [ "$#" -gt 0 ]; do
     --help|-h) usage; exit 0 ;;
     --dry-run) dry_run=1; shift ;;
     --continue-on-g0-fail) continue_g0=1; shift ;;
-    --repo|--roster|--prefix|--seeds|--chunks|--from|--to|--min-free-gb|--mode|--activity-note|--log-root|--lock-dir)
+    --repo|--roster|--prefix|--seeds|--chunks|--from|--to|--min-free-gb|--mode|--activity-note|--log-root|--lock-dir|--continue-on-opponent-telemetry-blocked)
       [ "$#" -ge 2 ] || die "missing value for $1"
       opt=$1; val=$2; shift 2
       case "$opt" in
@@ -45,6 +47,7 @@ while [ "$#" -gt 0 ]; do
         --min-free-gb) min_free=$val; disk_explicit=1 ;;
         --mode) mode=$val ;; --activity-note) activity_note=$val ;;
         --log-root) log_root=$val ;; --lock-dir) lock_dir=$val ;;
+        --continue-on-opponent-telemetry-blocked) telemetry_candidate=$val; telemetry_enabled=1 ;;
       esac ;;
     *) die "unknown argument: $1" ;;
   esac
@@ -81,6 +84,10 @@ case "$log_root" in /*) ;; *) log_root="$PWD/$log_root" ;; esac
 case "$lock_dir" in /*) ;; *) lock_dir="$PWD/$lock_dir" ;; esac
 case "$mode" in diagnostic|qualification) ;; *) die 'invalid --mode' ;; esac
 [ "$continue_g0" -eq 0 ] || [ "$mode" = diagnostic ] || die '--continue-on-g0-fail is diagnostics only'
+if [ "$telemetry_enabled" -eq 1 ]; then
+  [ "$mode" = diagnostic ] || die '--continue-on-opponent-telemetry-blocked requires --mode diagnostic'
+  [[ "$telemetry_candidate" =~ ^[A-Za-z0-9_-]+$ ]] || die 'invalid telemetry candidate ID'
+fi
 case "$min_free" in ''|*[!0-9]*) die 'invalid --min-free-gb' ;; esac
 [ "$min_free" -ge 25 ] || die 'MIN_FREE_GB cannot be below hard stop 25 GB'
 if [ "${MIN_FREE_GB+x}" = x ] && [ "$disk_explicit" -eq 0 ]; then
@@ -159,6 +166,8 @@ check_label() {
 for required_file in ascon-notes/league/round-manifest.py ascon-notes/league/run-league.sh ascon-notes/league/g0.py; do
   [ -f "$repo_dir/$required_file" ] || die "missing runner: $required_file"
 done
+classifier=ascon-notes/league/remote/g0_blocked_classify.py
+[ "$telemetry_enabled" -eq 0 ] || [ -f "$repo_dir/$classifier" ] || die 'missing telemetry classifier'
 for chunk_no in $chunk_list; do check_label "$run_id-c$chunk_no"; done
 [ ! -e "$log_root/$run_id" ] && [ ! -L "$log_root/$run_id" ] || die 'existing run log directory refused'
 [ ! -e "$lock_dir" ] && [ ! -L "$lock_dir" ] || die "lock held: $lock_dir"
@@ -211,14 +220,26 @@ for chunk_no in $chunk_list; do
   check_idle
   note "CHUNK $chunk_no label=$label regimes=$regime_list"
   command_to_log "$chunk_log-begin.log" python3 -B ascon-notes/league/round-manifest.py begin "$label" --roster "$roster_file" --regimes "$regime_list" --seeds "$seed_list" --parallel 3 || die "manifest begin failed: $label"
+  if [ "$telemetry_enabled" -eq 1 ]; then
+    command_to_log "$chunk_log-bind.log" python3 -B "$classifier" bind --manifest "ascon-notes/league/manifests/$label.json" --roster "$roster_file" --candidate "$telemetry_candidate" --context "$log_root/$run_id/telemetry-context.json" || die "cannot fix candidate/opponents at start: $label"
+  fi
   command_to_log "$chunk_log-run.log" env "MIN_FREE_GB=$min_free" NPM_CONFIG_IGNORE_SCRIPTS=true bash ascon-notes/league/run-league.sh --label "$label" --roster "$roster_file" --regimes "$regime_list" --seeds "$seed_list" --parallel 3 --base-port 8547
   matrix_rc=$?
   command_to_log "$chunk_log-verify.log" python3 -B ascon-notes/league/round-manifest.py verify "$label"
   verify_rc=$?
   # Intentional splitting of validated lists for argparse nargs='+'. Globbing is disabled.
   # shellcheck disable=SC2086
-  command_to_log "$chunk_log-g0.log" python3 -B ascon-notes/league/g0.py "$label" --roster "$roster_file" --regimes $regime_list --seeds $seed_list --manifest "$label"
-  g0_rc=$?
+  if [ "$telemetry_enabled" -eq 1 ]; then
+    # One G0 evaluation; retain its original structured output unchanged.
+    # shellcheck disable=SC2086
+    command_to_log "$chunk_log-g0.json" python3 -B ascon-notes/league/g0.py "$label" --roster "$roster_file" --regimes $regime_list --seeds $seed_list --manifest "$label" --json
+    g0_rc=$?
+    command_to_log "$chunk_log-g0.log" python3 -B "$classifier" status --g0 "$chunk_log-g0.json" --g0-rc "$g0_rc" || die "G0 inconsistent structured output: $label"
+  else
+    # shellcheck disable=SC2086
+    command_to_log "$chunk_log-g0.log" python3 -B ascon-notes/league/g0.py "$label" --roster "$roster_file" --regimes $regime_list --seeds $seed_list --manifest "$label"
+    g0_rc=$?
+  fi
   [ "$dry_run" -eq 0 ] || continue
   note "RESULT $label matrix_rc=$matrix_rc verify_rc=$verify_rc g0_rc=$g0_rc"
   [ "$matrix_rc" -eq 0 ] && [ "$verify_rc" -eq 0 ] || die "runner/manifest failure: $label (G0 recorded; no continuation)"
@@ -226,8 +247,14 @@ for chunk_no in $chunk_list; do
     note "G0 PASS $label"
   elif [ "$g0_rc" -eq 1 ] && grep -qx 'G0 FAIL' "$chunk_log-g0.log"; then
     note "G0 FAIL $label (preserved; never retried)"
-    chain_rc=1
-    [ "$continue_g0" -eq 1 ] || exit 1
+    [ "$chain_rc" -eq 2 ] || chain_rc=1
+    [ "$continue_g0" -eq 1 ] || exit "$chain_rc"
+  elif [ "$g0_rc" -eq 2 ] && [ "$telemetry_enabled" -eq 1 ]; then
+    note "G0 BLOCKED $label (preserved; eligible_for_gate=false)"
+    command_to_log "$chunk_log-classifier.log" python3 -B "$classifier" classify --g0 "$chunk_log-g0.json" --g0-rc "$g0_rc" --repo "$repo_dir" --manifest "ascon-notes/league/manifests/$label.json" --roster "$roster_file" --candidate "$telemetry_candidate" --context "$run_dir/telemetry-context.json" --verdict "$chunk_log-classifier.json" || die "G0 blocked/error/inconsistent output: $label (classification refused)"
+    # Read only after the classifier has saved the complete approval verdict.
+    while IFS= read -r deviation; do note "$deviation"; done < "$chunk_log-classifier.log"
+    chain_rc=2
   else
     die "G0 blocked/error/inconsistent output: $label"
   fi
