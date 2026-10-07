@@ -302,7 +302,41 @@ function assertPairedDiagnostic(views){
   for(const id of retainedDecisions.filter(id=>id.startsWith('dec-retro-')))
     assert.equal(app.D.decisions.items.find(d=>d.id===id)?.status,'open',`INVARIANT pending user decision ${id}`);
 }
-const invariantGuards=[assertQualification,assertMeasurements,assertG3,assertRecordWarnings,assertDecisions,assertPairedDiagnostic];
+const diagnosticWarningId='recent-one-world-diagnostic';
+function assertDiagnosticWarning(views){
+  const records=app.D.status.recent.filter(r=>r.id===diagnosticWarningId);
+  assert.equal(records.length,1,'INVARIANT retained one-world diagnostic warning by id');
+  const record=records[0];
+  assert.equal(record.kind,'warning','INVARIANT one-world diagnostic remains a warning');
+  assert.equal(record.title,'1世界診断: revision採用0・監査BLOCKED','INVARIANT one-world diagnostic retains BLOCKED wording');
+  assert.equal(record.text,'r2、F_ref calm/49002、360 blocks / 362 loops / 721.7秒。revision開始6、応答5（見送り4・無効1）、未完了1、採用0。recorder欠測。G3合否には数えない。',
+    'INVARIANT one-world diagnostic retains original evidence');
+  assert.deepEqual([...record.sources],['src-g3-diagnostic','src-revision-audit'],'INVARIANT one-world diagnostic sources retained');
+  const fragments=recordFragments(views,'status.recent.'+diagnosticWarningId);
+  assert.ok(fragments.length>0,'INVARIANT one-world diagnostic warning rendered');
+  for(const fragment of fragments)
+    assert.ok(visibleText(fragment).includes(record.title),'INVARIANT one-world diagnostic visible BLOCKED wording');
+}
+const documentedProgressIds=['progress-r3x','progress-retro-full'];
+const documentedLabel='読取済み（文書化・ゲート完了ではない）';
+function assertDocumentedProgress(views){
+  for(const id of documentedProgressIds){
+    const records=app.D.progress.items.filter(p=>p.id===id);
+    assert.equal(records.length,1,`INVARIANT documented progress exists: ${id}`);
+    assert.equal(records[0].state_label,documentedLabel,`INVARIANT documented progress label: ${id}`);
+    assert.ok(records[0].evidence.startsWith(documentedLabel),`INVARIANT documented evidence scope: ${id}`);
+    assert.ok(!app.D.status.priority.progress_refs.includes(id),`INVARIANT document reading cannot count as a gate: ${id}`);
+    const fragments=recordFragments(views,'progress.'+id);
+    assert.ok(fragments.length>0,`INVARIANT documented progress rendered: ${id}`);
+    for(const fragment of fragments){
+      const badges=[...fragment.matchAll(/<span class="chip [^"]*">([\s\S]*?)<\/span>([^<]*)<\/span>/g)];
+      assert.ok(badges.length>0,`INVARIANT documented progress badge exists: ${id}`);
+      for(const badge of badges)
+        assert.equal(visibleText(badge[2]),documentedLabel,`INVARIANT no gate-complete badge for documented progress: ${id}`);
+    }
+  }
+}
+const invariantGuards=[assertQualification,assertMeasurements,assertG3,assertRecordWarnings,assertDecisions,assertPairedDiagnostic,assertDiagnosticWarning,assertDocumentedProgress];
 check('INVARIANT qualification, running evidence, G3, per-record warnings and decisions',()=>{
   const views=invariantViews();for(const guard of invariantGuards)guard(views);
 });
@@ -376,6 +410,31 @@ check('red controls prove evidence invariants reject false claims and original s
   rejectMutation('missing rendered decision',()=>{},assertDecisions,views=>{
     views.decisions=views.decisions.replace(/class="card decision-card" data-decision="[^"]+"/,'class="card missing-card"');return views;
   });
+});
+check('retained warning and documented progress red controls',()=>{
+  rejectMutation('one-world warning deleted',d=>{
+    d.status.recent=d.status.recent.filter(r=>r.id!==diagnosticWarningId);
+  },assertDiagnosticWarning);
+  rejectMutation('one-world BLOCKED wording removed',d=>{
+    const record=d.status.recent.find(r=>r.id===diagnosticWarningId);
+    record.title=record.title.replace('BLOCKED','PASS');
+  },assertDiagnosticWarning);
+  rejectMutation('one-world rendered BLOCKED removed',()=>{},assertDiagnosticWarning,views=>{
+    for(const fragment of recordFragments(views,'status.recent.'+diagnosticWarningId))
+      views.overview=views.overview.replace(fragment,fragment.replace('BLOCKED','PASS'));
+    return views;
+  });
+  for(const id of documentedProgressIds){
+    for(const label of [undefined,'完了','PASS'])rejectMutation(`${id} gate-complete label ${label}`,d=>{
+      d.progress.items.find(p=>p.id===id).state_label=label;
+    },assertDocumentedProgress);
+    rejectMutation(`${id} rendered gate-complete label`,()=>{},assertDocumentedProgress,views=>{
+      for(const page of Object.keys(views))for(const fragment of recordFragments({[page]:views[page]},'progress.'+id))
+        views[page]=views[page].replace(fragment,fragment.replace(documentedLabel,'完了'));
+      return views;
+    });
+    rejectMutation(`${id} counted as gate`,d=>{d.status.priority.progress_refs.push(id);},assertDocumentedProgress);
+  }
 });
 check('paired diagnostic red controls preserve summary limits and pending decisions',()=>{
   for(const [key,value] of [
