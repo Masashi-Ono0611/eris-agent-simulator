@@ -52,3 +52,68 @@ mini は Intel (x86_64) で、Air は Apple シリコン。次の差があるの
 3. 状態ダンプ: Air の `backtest/state/{manifest.json,venues-state.json}` を scp で mini の `~/ascon-run/ascon/backtest/state/` へ（sha256 一致を確認）。大きいファイルは `.part` に送ってから sha256 照合後に rename。`rsync -e 'tailscale ssh'` は固まったので使わない。
 4. `PATH` は `~/ascon-run/bin` を先頭に、nvm の default node、`NPM_CONFIG_IGNORE_SCRIPTS=true`。`npm ci` は `mini-bringup.sh --npm-ci`、コントラクトは `npm run build:contracts`。
 5. 注意: Air と anvil のビルド（x86_64/arm64）・CPU が違うので、mini の結果は Air の結果と数値を直接比較しない（相対 T は同一ホスト・同一場の中だけで意味を持つ）。G0 は mini 固有の確認が必要。
+
+## 7. Detached chain launch（2026-10-07 additions）
+
+ハーネスの `run_in_background` で起動した計測が、セッション再起動時に exit 143 で終了したという運用報告を受けた。長時間のchainはmini上のシェルで **nohup + stdinを `/dev/null` + caffeinate + chain自身のend marker** を使って起動する。以下は実行手順の例であり、この変更ではSSH接続・実計測・切断後の生存確認は実施していない。
+
+```bash
+# mini上で実行。repo/roster/activityは実際の固定済み計画に合わせる。
+export PATH="$HOME/ascon-run/bin:$HOME/.homebrew/bin:$HOME/.foundry/bin:$PATH"
+export NVM_DIR="$HOME/.nvm"
+. "$NVM_DIR/nvm.sh"
+nvm use default || exit 1
+export NPM_CONFIG_IGNORE_SCRIPTS=true
+
+repo="$HOME/ascon-run/p60"
+roster="/absolute/path/roster-fref-p60-r3.yaml"
+runid="p60-$(date -u +%Y%m%dT%H%M%SZ)"
+logroot="$HOME/ascon-run/chain-logs"
+mkdir -p "$logroot"
+nohup caffeinate -i /bin/bash "$repo/ascon-notes/league/remote/chain-template.sh" \
+  --repo "$repo" --roster "$roster" --prefix "$runid" \
+  --seeds "62001 62002 62003 62004 62005" \
+  --log-root "$logroot" --lock-dir "$HOME/ascon-run/measurement-host.lock" \
+  --activity-note 'host idle; scheduled jobs paused; record actual confirmation time' \
+  </dev/null >"$logroot/$runid.launch.log" 2>&1 &
+printf 'launcher_pid=%s runid=%s\n' "$!" "$runid"
+```
+
+nohupはSIGHUP、caffeinateは計測中のidle sleepへの対策。SIGTERMを送るハーネスのcleanup、ホスト再起動、電源断まで防ぐものではない。プロセス寿命がセッションに束縛されるハーネス経由で起動せず、mini上の独立した起動手順を使う。`CHAIN_END_<runid>=0` を `$logroot/$runid/end.marker` と `chain.log` で確認し、全chunkのG0記録も確認する。markerがない場合は未完了扱い。起動コマンドの終了やPIDの表示だけでは完了ではない。preflightの早期拒否はlaunch.logだけにmarkerが残る場合もある。
+
+chainはrun headerに1行の `LAUNCH_ENV PATH_head=... stdin_tty=yes|no` を残す。TTYなら `WARN stdin is a tty`。`stdin_tty=no` はnohup/caffeinate使用や切断後の生存を証明しない。PATH先頭はBash `%q` でエスケープし、全環境のdumpは行わない。
+
+manifest beginより前に `command -v anvil/node/python3` を検査し、解決先を `PREFLIGHT <tool>=<path>` として表示・保存する。欠落は `STOP: required command not found in PATH: <tool>`、専用exit **3** で終了する（通常のガード拒否は2）。dry-runも同じ検査を行う。実行可能性・バージョン互換性まで証明する検査ではない。
+
+**forgeを要求しない理由**: `run-league.sh` → `ascon-notes/eval/run-matrix.sh` → `npm run backtest`（`core/src/cli/backtest.ts`）の経路は既存stateとビルド済みartifactを読む。chainもこの経路もforgeを起動しない。`package.json` の `build:contracts` は別の準備工程でのみ `forge build` を使う。依存導入、npmとその依存パッケージ、artifact/stateの準備は従来どおり事前に必要。
+
+macOS（`uname -s=Darwin`）でtmutilが見つかれば、各容量検査で `tmutil listlocalsnapshots /` のヘッダ・空行以外を数える。10件以上は `WARN local TimeMachine snapshots=N`。空きがMIN_FREE_GB未満ならSTOPに件数と「snapshotの見直し/間引きまたはTime Machine backup完了後にdf再確認」の対処を添える。tmutilの失敗は件数unknownの警告、tmutilなし・Linuxでは通常の容量検査を継続する。自動削除しない。件数は保持容量や容量不足の原因を証明しない。
+
+## 8. 保存されたmixed-field集計
+
+`agg_mixed.py` は標準ライブラリのみを使用する。repo rootとindex TSVを渡す。indexは次のヘッダをこの順に持ち、`run_dir` はrootからの相対パス、`summary.json` は各run_dir内に置く。index自身の相対パスもroot基準。複数chunkのindexはこの形の単一TSVにまとめて、元summaryと一緒に保存する。
+
+```text
+chunk	regime	seed	run_dir	exit_code
+1	calm	63001	runs/example-world	0
+```
+
+```bash
+python3 -B ascon-notes/league/remote/agg_mixed.py /absolute/repo /absolute/mixed-index.tsv
+python3 -B ascon-notes/league/remote/agg_mixed.py /absolute/repo /absolute/mixed-index.tsv \
+  --paired ascon-zeta-r3 venue-arb
+```
+
+出力は **SIMPLIFIED T (not the official weighted T)**。各worldの全 `agents[]`（noopを含む）の `pnlUsdc` をPとして、`50+10*(P-mean)/pstdev`（母標準偏差0なら50）。worldを等重みとし、agent別にmeanT、mean(P-noop)、P<noop件数/世界数を表示する。ALLと、**loopIterations==362だけ**に限定した表を併記する。後者もexit_code/violationsによる除外はしないため、資格合格表ではない。loopIterations不一致・非ゼロexit・violationsのworldはWARNで列挙する。これらは診断結果として表示し、集計CLI自体はexit 0。
+
+`--paired A B` は両表について同一world内のT(A)-T(B)を集計する。n、平均差、標本標準偏差/√nのSE、平均±2SEの概算95%区間、正の差のwins/n（同点は勝ちに含めない）、regime別平均差。n<2のSE/区間はNA。regime相関や公式epoch重みを反映した推論ではない。
+
+不足/不正summary、非数値P、noop欠落、world間のroster不一致、重複world/run_dir、root外のrun_dir、不明なpaired agentは `STOP` / exit 2。黙って母集団を縮めない。既存の参照値は `../results-2026-10-06/mixed-field-36worlds.txt` に保存済みで変更していない。今回の数値確認は3world×4agentの手計算fixtureのみ。実36worldの再集計は未実施。
+
+repo rootからのオフライン検証:
+
+```bash
+python3 -B -m unittest discover -s ascon-notes/league/remote -p test_chain_template.py
+python3 -B -m unittest discover -s ascon-notes/league/remote -p test_agg_mixed.py
+bash -n ascon-notes/league/remote/chain-template.sh
+```

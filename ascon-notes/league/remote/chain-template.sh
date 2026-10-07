@@ -115,12 +115,34 @@ free_gb() {
   else df -Pk "$1" | awk 'NR==2 {if ($4 ~ /^[0-9]+$/) printf "%d\n", $4/1048576; else print "invalid"}'; fi
 }
 check_disk() {
+  snapshot_context=''
+  if [ "$(uname -s)" = Darwin ] && command -v tmutil >/dev/null 2>&1; then
+    if snapshot_output=$(tmutil listlocalsnapshots / 2>/dev/null); then
+      snapshot_count=$(printf '%s\n' "$snapshot_output" | awk 'NF && $0 !~ /^Snapshots for / {n++} END {print n+0}')
+      [ "$snapshot_count" -lt 10 ] || note "WARN local TimeMachine snapshots=$snapshot_count"
+    else
+      snapshot_count=unknown
+      note 'WARN cannot list local TimeMachine snapshots'
+    fi
+    snapshot_context="; local TimeMachine snapshots=$snapshot_count; remedy: review/thin local snapshots with tmutil or complete a Time Machine backup, then recheck df (no automatic deletion)"
+  fi
   for disk_path in "$repo_dir" "${TMPDIR:-/tmp}"; do
     free_value=$(free_gb "$disk_path") || die 'cannot measure disk'
     case "$free_value" in ''|*[!0-9]*) die 'cannot measure disk' ;; esac
     note "DISK path=$disk_path free_GB=$free_value MIN_FREE_GB=$min_free hard_stop_GB=25 (GiB units)"
-    [ "$free_value" -ge 25 ] || die 'free disk below hard stop 25 GB'
-    [ "$free_value" -ge "$min_free" ] || die 'free disk below effective MIN_FREE_GB'
+    [ "$free_value" -ge 25 ] || die "free disk below hard stop 25 GB$snapshot_context"
+    [ "$free_value" -ge "$min_free" ] || die "free disk below effective MIN_FREE_GB$snapshot_context"
+  done
+}
+check_path() {
+  # Only resolve commands: do not start Anvil or execute tool version probes.
+  for required_tool in anvil node python3; do
+    if resolved_tool=$(command -v "$required_tool"); then
+      note "PREFLIGHT $required_tool=$resolved_tool"
+    else
+      note "STOP: required command not found in PATH: $required_tool"
+      exit 3
+    fi
   done
 }
 check_idle() {
@@ -149,9 +171,16 @@ if [ "$dry_run" -eq 0 ]; then
   run_dir="$log_root/$run_id"
 fi
 check_disk
-check_idle
 cd "$repo_dir" || die 'cannot enter repo'
 note "RUN prefix=$run_id mode=$mode chunks=$chunk_list seeds=$seed_list"
+stdin_tty=no
+[ ! -t 0 ] || stdin_tty=yes
+# %q keeps even a PATH containing whitespace/newlines on one log line.
+printf -v launch_env 'LAUNCH_ENV PATH_head=%q stdin_tty=%s' "${PATH%%:*}" "$stdin_tty"
+note "$launch_env"
+[ "$stdin_tty" = no ] || note 'WARN stdin is a tty; use nohup with </dev/null and caffeinate (see runbook)'
+check_path
+check_idle
 note "ACTIVITY ${activity_note:-UNRECORDED (dry-run only)}"
 note 'RULE: no other CPU work; pause codex jobs, npm ci, builds, ci-local and scheduled workers for the full measurement.'
 note 'RULE: regenerate state dump after upstream integration; verify LQTYStaking is nonzero before measurement.'

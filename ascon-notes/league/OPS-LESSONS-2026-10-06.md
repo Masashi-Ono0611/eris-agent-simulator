@@ -61,3 +61,16 @@ bash ascon-notes/league/remote/chain-template.sh \
 | `npm run typecheck` | PASS（今回の再確認はexit 0。前回の `tsc: command not found` は再現せず） |
 
 依存導入は行っていない。シミュレーション、ネットワーク、SSH、Docker、commit、`.env`/鍵の読み取りも実施していない。
+
+## 2026-10-07 additions
+
+以下は運用報告を受けた追加対策。実機での失敗再現ではなく、ローカルのスタブと手計算fixtureで検証した。
+
+| failure | cause | guard | where tested |
+|---|---|---|---|
+| SSH+nohup起動の全worldがAnvil不足で失敗 | 非対話シェルのPATHにfoundry/nodeがなく、既存Anvil検査だけでは検出できなかった | manifest begin前にanvil/node/python3の解決先を記録。欠落はSTOP・exit 3。測定経路はforgeを起動しないのでforgeは要求しない | `test_chain_template.py`: `test_path_missing_stops_before_manifest` / `test_path_resolved_passes_without_forge` |
+| セッション再起動でbackground計測がexit 143 | ハーネスが子プロセスの寿命を管理していたという報告 | runbook §7にnohup・/dev/null・caffeinate・PATH/nvm・独自end marker確認を固定。LAUNCH_ENVでPATH先頭/TTYを記録しTTYならWARN | `test_launch_env_tty_warns` / `test_launch_env_detached_input_passes`。切断後の実機生存は未検証 |
+| ファイル削除後も空きが戻らず計測停止 | Time Machine local snapshotが削除済みデータを保持していたという報告 | macOSでsnapshot数>=10ならWARN。容量STOPに件数と対処を追加。自動削除なし | `test_snapshot_warning_threshold` / `test_snapshot_low_disk_remedy` / `test_snapshot_absent_or_linux_passes` / `test_snapshot_probe_failure_warns` |
+| 過去のmixed-field数値を再現できない | 集計コードが使い捨てで、計算式・対象集合が保存されていなかった | `remote/agg_mixed.py`に簡易T、362限定表、異常一覧、paired差を保存。不正入力はSTOP。公式weighted Tとは明確に区別 | `test_agg_mixed.py`: 手計算3world×4agent、361/標準偏差0、paired SE、異常WARN/正常対照、不正入力STOP/復元後PASS |
+
+追加後のオフライン結果: chain **34 tests**（既存26を含む）、aggregation **7 tests**、`bash -n` はPASS。今回の `npm run typecheck` は `tsc: command not found` で実行不可。依存導入は行っていない。参照36worldの再集計、SSH/nohup切断試験、Time Machineの実容量回復、実シミュレーションは未検証。起動例・集計の入力形式と統計上の範囲は [README-RUNBOOK.md](remote/README-RUNBOOK.md) §7–8を参照。
