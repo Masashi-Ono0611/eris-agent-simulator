@@ -1,0 +1,6 @@
+r3 vs r3x paired diagnostic (Air, eval2 diag branch @77c6ead = main 8c29964 + local-only r3x dir; mixed field, 10 fixed opponents + noop + candidate; seed 64001; regimes whale/lending-incident/crash; chain-template live run, all G0 PASS, loops 362)
+r3x = r3 with delta.ts line 220 'if (!sellFunded) return buy-only' disabled (always bundle).  Simplified T over the 12 agents per world.
+whale             noop 524/524  r3 P-noop=  972.3 T= 58.2 | r3x P-noop=  404.3 T= 48.8 | inc-zeta(ctl) T= 46.1 venue-arb(ctl) T= 53.6
+lending-incident  noop -427/-427  r3 P-noop= 3266.4 T= 79.9 | r3x P-noop= 2079.0 T= 70.0 | inc-zeta(ctl) T= 48.1 venue-arb(ctl) T= 56.0
+crash             noop -2739/-2739  r3 P-noop= 1723.8 T= 60.7 | r3x P-noop= 1169.5 T= 56.7 | inc-zeta(ctl) T= 72.8 venue-arb(ctl) T= 59.4
+mean T r3 = 66.28  r3x = 58.49
