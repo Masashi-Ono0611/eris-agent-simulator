@@ -117,3 +117,28 @@ python3 -B -m unittest discover -s ascon-notes/league/remote -p test_chain_templ
 python3 -B -m unittest discover -s ascon-notes/league/remote -p test_agg_mixed.py
 bash -n ascon-notes/league/remote/chain-template.sh
 ```
+
+## 9. 固定相手の既知 telemetry BLOCKED に限る診断続行
+
+runtime は upstream と同一のままで変更できないため、これは **診断専用の暫定回避策**。
+公式・gate・qualification 実行は影響を受けない。生成側で拒否行に `round` を記録する恒久修正は、引き続き upstream コード側の検討事項である。
+
+通常の chain 引数に `--mode diagnostic --continue-on-opponent-telemetry-blocked CANDIDATE_ID` を追加する。
+`CANDIDATE_ID` はディレクトリ名ではなく roster 内の正確な候補 ID。最初の matrix より前に begin manifest から候補と残りの固定相手・roster hash・agent tree を `telemetry-context.json` に固定し、後続 chunk でも一致を要求する。`baseline: false` から候補を推定しない。diagnostic 以外では STOP / exit 2。
+
+matrix / manifest verify が成功し、G0 の JSON・終了コード・世界別理由が整合するときだけ分類する。
+BLOCKED 世界の該当相手の原ログ全行を読み、唯一の欠陥が既知のゼロ数量 `gmxDecrease` 拒否（`kind=mempool,event=rejected,action` あり、`round` なし、理由 `sizeDeltaUsd must be positive`）の場合に限り次の未実行 chunk へ進む。候補・不明 ID・他の欠損・破損・FAIL 混在・記録失敗は停止。両方の続行フラグを付けても FAIL+BLOCKED 混在は許可しない。
+
+各承認世界・相手について `DEVIATION diagnostic continuation; G0=BLOCKED; world=<regime>/<seed>; agent=<id>; eligible_for_gate=false` を標準出力と `chain.log` に残す。chunk は BLOCKED のまま、後続 PASS/FAIL で上書きせず、最終 exit と `CHAIN_END_<runid>` は **2**。フラグなしの停止挙動、既存 `--continue-on-g0-fail` 単独の挙動は変わらない。
+
+chunk ログの隣に `*-g0.json`（原出力）、`*-g0.log`（状態表示）、`*-classifier.json`（承認/拒否、承認時は世界・agent・原ログパス/hash・行番号・理由・BLOCKED 世界数と全世界数）、`*-classifier.log` を保存する。原ログは修復せず、そのパスの証跡を保持する。診断集計ではこの欠測世界一覧と母数を必ず併記し、除外して「36世界合格」と報告しない。既存 report/ledger の非 PASS 抑止は維持する。
+
+オフライン検証は `python3 -B -m unittest discover -s ascon-notes/league/remote -p 'test*.py'`。
+合成 fixture とスタブ runner による検証であり、実36世界・実 G0・実機継続は未検証。
+
+### 既知の限界（`--continue-on-opponent-telemetry-blocked`、独立レビューで指摘された確度の低い点）
+
+- 候補の席は、操作者が指定した ID を信頼する。roster に候補のような席が複数あると、指定した 1 つ以外はすべて「固定相手」として扱われ、その席の既知の欠陥も承認される。起動前に roster で、候補が 1 つだけであることを確認する。
+- 分類器は、G0 が読んだ後にログを読む。G0 と結び付けて固定しているのは `index.tsv` のハッシュだけで、ログ自体は固定していない。検査と記録のハッシュの間にも、わずかな時間差がある。測定ホストを占有している前提（他の作業がログを書き換えない）に依存する。
+- どちらも診断用のチェーンだけの問題で、公式・ゲートの経路には適用されない。
+
