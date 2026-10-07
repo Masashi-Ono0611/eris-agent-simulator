@@ -24,19 +24,11 @@ Parent **must unset** FROZEN before BOTH paired runs (omission does not erase an
 inherited value); checker rejects even an inherited `0`. Opponents are always frozen.
 AUTO wallets are for future local Anvil only. No private wallets were opened.
 
-`mix-{off,on}.yaml` deliberately fails directory validation: **fixed-bid-5gwei BLOCKED**.
+`example/agents/fixed-bid-5gwei/` now exists. **G3 F_mix remains BLOCKED**
+for the reasons in [G3-PREREQ-2026-10-07.md](../G3-PREREQ-2026-10-07.md).
 Slots are fixed as noop, the 10 opponents in MASTER's listed order, then cand.
-The name occurs only as an unverified planned fixed-high-bid control in MASTER,
-DESIGN-REPAIR, release runbook and RETRO-R1/U1 (0.1/5 gwei contrast).
-There is no such agent directory or documented existing fixed-5-gwei parameterization.
-Multi/venue-arb use the observation's default fee (DEFAULT_PRIORITY_FEE_WEI
-exists in the SDK's standalone env loader, but botMain's normal ERIS_CONFIG path
-uses coordinator-resolved YAML, so a per-roster env value is not an established
-fixed-bid configuration for this runner); adaptive-arb is competition/profit
-adaptive; zeta bidMode=0 uses the observation default and mode=2 is adaptive, not a
-fixed bid. We did not invent a wrapper, mutate a reference, or substitute grok-1.
-The nonexistent slot is retained to fail closed, not to imply an executable F_mix.
-All other directories are checked and trees bound in `inputs.lock.json`.
+Input-lock review and re-registration remain pending; directory existence does
+not establish an executable F_mix.
 inc-zeta maps to ascon-zeta with measured ASCON_DELTA_PARAMS:
 `{"bidMode":2,"bidProfitShareBps":3000,"gasPerSwap":140000}` from roster-league-u1
 and scratchpad mix-v3. No ASCON_ZETA_PARAMS override is invented.

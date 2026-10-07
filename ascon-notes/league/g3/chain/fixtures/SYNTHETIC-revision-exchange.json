@@ -1,0 +1,18 @@
+{
+  "schema": "g3-revision-exchange-v1",
+  "provenance": "SYNTHETIC",
+  "files": {
+    "agents/cand.cli-timing.jsonl": {
+      "text": "{\"ts\":\"2026-10-07T00:02:00Z\",\"kind\":\"cli_call_started\",\"agentId\":\"cand\",\"pid\":1}\n{\"ts\":\"2026-10-07T00:04:00Z\",\"kind\":\"cli_call_started\",\"agentId\":\"cand\",\"pid\":2}\n",
+      "sha256": "4646c50915343e14c4a680ed4e7ee34e187e6a1e1f730572da37c0a65fd66982"
+    },
+    "agents/cand.llm.jsonl": {
+      "text": "{\"ts\":\"2026-10-07T00:02:01Z\",\"kind\":\"revision_call\",\"agentId\":\"cand\",\"block\":60,\"model\":\"SYNTHETIC\",\"system\":\"SYNTHETIC offline test, no model called\",\"context\":\"SYNTHETIC test context\",\"raw\":\"{\\\"notes\\\": \\\"SYNTHETIC accepted noop body\\\", \\\"executorTs\\\": \\\"return null;\\\"}\"}\n{\"ts\":\"2026-10-07T00:04:01Z\",\"kind\":\"revision_call\",\"agentId\":\"cand\",\"block\":120,\"model\":\"SYNTHETIC\",\"system\":\"SYNTHETIC offline test, no model called\",\"context\":\"SYNTHETIC test context\",\"raw\":\"{\\\"notes\\\": \\\"SYNTHETIC rejected import body\\\", \\\"executorTs\\\": \\\"import x from \\\\\\\"missing\\\\\\\"; return null;\\\"}\"}\n",
+      "sha256": "d588d4d376d1633028bd3d03bd7ccf1f09b5f84d6610532a4d64eab50647eec4"
+    },
+    "agents/cand.jsonl": {
+      "text": "{\"ts\":\"2026-10-07T00:02:02Z\",\"agentId\":\"cand\",\"round\":60,\"reason\":\"revision installed\",\"state\":{\"kind\":\"installed\",\"version\":1}}\n{\"ts\":\"2026-10-07T00:04:02Z\",\"agentId\":\"cand\",\"round\":120,\"reason\":\"revision rejected\",\"state\":{\"kind\":\"rejected\",\"reason\":\"SYNTHETIC import body rejected\"}}\n",
+      "sha256": "a7fda19fd6bb0191bb3e149a4b13f2427ffae866c4ae626c35d87af5da5e08f8"
+    }
+  }
+}
