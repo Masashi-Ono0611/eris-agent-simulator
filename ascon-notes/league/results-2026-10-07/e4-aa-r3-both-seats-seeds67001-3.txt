@@ -1,0 +1,35 @@
+SIMPLIFIED T (not the official weighted T)
+Equal weight per world; flagged worlds remain in ALL.
+FLAGGED WORLDS
+none
+
+ALL worlds=36
+agent	meanT	mean(P-noop)	P<noop
+opus-1	55.883400	339.691302	4/36
+inc-zeta	53.968841	283.734421	13/36
+sonnet-1	53.866620	231.228457	8/36
+ascon-zeta-r3	53.554507	526.672908	14/36
+grok-1	52.924060	186.721952	5/36
+venue-arb	51.087010	106.570294	18/36
+clean-arb	50.290024	139.260665	18/36
+astra-2	50.276695	1.985726	20/36
+noop	49.633944	0.000000	0/36
+astra-1	49.542634	-11.997062	16/36
+sonnet-2	46.283190	-286.669711	22/36
+multi-arb	32.689074	-902.398537	30/36
+
+loopIterations==362 ONLY worlds=36
+note: filters on loopIterations only; worlds with exit_code!=0 or violations stay in this table and are listed under FLAGGED WORLDS
+agent	meanT	mean(P-noop)	P<noop
+opus-1	55.883400	339.691302	4/36
+inc-zeta	53.968841	283.734421	13/36
+sonnet-1	53.866620	231.228457	8/36
+ascon-zeta-r3	53.554507	526.672908	14/36
+grok-1	52.924060	186.721952	5/36
+venue-arb	51.087010	106.570294	18/36
+clean-arb	50.290024	139.260665	18/36
+astra-2	50.276695	1.985726	20/36
+noop	49.633944	0.000000	0/36
+astra-1	49.542634	-11.997062	16/36
+sonnet-2	46.283190	-286.669711	22/36
+multi-arb	32.689074	-902.398537	30/36

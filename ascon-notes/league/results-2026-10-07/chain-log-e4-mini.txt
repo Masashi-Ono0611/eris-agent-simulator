@@ -1,0 +1,28 @@
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:DISK path=/tmp free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:RUN prefix=e4aa-20261007T093737Z mode=diagnostic chunks=1 2 3 4 seeds=67001 67002 67003
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:DEVIATION explicit --min-free-gb=25 (matrix default 40; inherited value ignored)
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:DISK path=/tmp free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:CHUNK 1 label=e4aa-20261007T093737Z-c1 regimes=calm cex-drift informed-flow
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:G0 PASS e4aa-20261007T093737Z-c1
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:DISK path=/tmp free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:CHUNK 2 label=e4aa-20261007T093737Z-c2 regimes=whale lending-incident crash
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:STOP: G0 blocked/error/inconsistent output: e4aa-20261007T093737Z-c2
+/Users/masa-ws1/ascon-run/logs/e4-chain.log:CHAIN_END_e4aa-20261007T093737Z=2
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:DISK path=/tmp free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:RUN prefix=e4bb-20261007T110235Z mode=diagnostic chunks=3 4 seeds=67001 67002 67003
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:DEVIATION explicit --min-free-gb=25 (matrix default 40; inherited value ignored)
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:DISK path=/tmp free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:CHUNK 3 label=e4bb-20261007T110235Z-c3 regimes=depeg vuln spike
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:G0 PASS e4bb-20261007T110235Z-c3
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:DISK path=/tmp free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:CHUNK 4 label=e4bb-20261007T110235Z-c4 regimes=depeg-persist cdp-incident launch
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:G0 PASS e4bb-20261007T110235Z-c4
+/Users/masa-ws1/ascon-run/logs/e4b-chain.log:CHAIN_END_e4bb-20261007T110235Z=0
