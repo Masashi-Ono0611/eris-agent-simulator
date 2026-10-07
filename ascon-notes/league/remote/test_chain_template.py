@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Offline controls: temporary fake runners only; no simulator/network/key access."""
 from pathlib import Path
+import os
+import pty
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -25,7 +28,15 @@ class ChainControls(unittest.TestCase):
         self.calls = self.root / 'calls'
         fake_bin = self.root / 'bin'
         fake_bin.mkdir()
+        self.fake_bin = fake_bin
+        # Hermetic PATH: never depend on or invoke a real Anvil/node/tmutil.
+        for name in ['awk', 'mkdir', 'rmdir', 'grep', 'env', 'bash']:
+            (fake_bin / name).symlink_to(shutil.which(name))
+        (fake_bin / 'python3').symlink_to(sys.executable)
         for name, code in {
+            'anvil': 'exit 99\n',
+            'node': 'exit 99\n',
+            'uname': 'echo "${STUB_OS:-Linux}"\n',
             'pgrep': 'exit "${STUB_PGREP_RC:-1}"\n',
             'df': ('[ "${STUB_DF:-numeric}" != empty ] || exit 0\n'
                    'printf "Filesystem 1024-blocks Used Available Capacity Mounted\\nfixture 200000000 0 %s 0%% /\\n" "${STUB_DF:-104857600}"\n'),
@@ -52,12 +63,12 @@ class ChainControls(unittest.TestCase):
         )
         # Do not inherit credentials, MIN_FREE_GB, or runner configuration.
         self.env = {
-            'PATH': f'{fake_bin}:{Path(sys.executable).parent}:/usr/bin:/bin',
+            'PATH': str(fake_bin),
             'HOME': str(self.root), 'TMPDIR': str(self.root),
             'STUB_CALLS': str(self.calls),
         }
 
-    def run_chain(self, *args, dry=True, env=None):
+    def run_chain(self, *args, dry=True, env=None, stdin=subprocess.DEVNULL):
         argv = ['/bin/bash', str(SCRIPT), '--repo', str(self.repo),
                 '--roster', str(self.roster), '--prefix', 'testUTC',
                 '--seeds', '63001 63002 63003', '--log-root', str(self.logs),
@@ -65,8 +76,100 @@ class ChainControls(unittest.TestCase):
         if dry:
             argv.append('--dry-run')
         result = subprocess.run(argv + list(args), env={**self.env, **(env or {})},
-                                text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                stdin=stdin, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         return result
+
+    def stub_snapshots(self):
+        tool = self.fake_bin / 'tmutil'
+        tool.write_text('#!/bin/bash\n'
+                        '[ "$*" = "listlocalsnapshots /" ] || exit 99\n'
+                        '[ "${STUB_TM_FAIL:-0}" = 0 ] || exit 1\n'
+                        'echo "Snapshots for disk /:"\n'
+                        'i=0; while [ "$i" -lt "${STUB_SNAPSHOTS:-10}" ]; do\n'
+                        '  echo "com.apple.TimeMachine.fixture-$i.local"; i=$((i+1))\n'
+                        'done\n')
+        tool.chmod(0o700)
+
+    def test_path_missing_stops_before_manifest(self):
+        for name in ['anvil', 'node', 'python3']:
+            with self.subTest(tool=name):
+                tool = self.fake_bin / name
+                hidden = self.root / name
+                tool.rename(hidden)
+                try:
+                    result = self.run_chain('--prefix', name, dry=False)
+                    self.assertEqual(result.returncode, 3, result.stdout)
+                    self.assertIn(f'STOP: required command not found in PATH: {name}', result.stdout)
+                    self.assertNotIn('COMMAND:', result.stdout)
+                    self.assertFalse(self.calls.exists())
+                    self.assertFalse(self.lock.exists())
+                    self.assertEqual((self.logs / name / 'end.marker').read_text(), f'CHAIN_END_{name}=3\n')
+                finally:
+                    hidden.rename(tool)
+
+    def test_path_resolved_passes_without_forge(self):
+        result = self.run_chain('--chunks', '1', dry=False)
+        self.assert_finished(result, 0)
+        for name in ['anvil', 'node', 'python3']:
+            line = f'PREFLIGHT {name}={self.fake_bin / name}'
+            self.assertIn(line, result.stdout)
+            self.assertIn(line, (self.logs / 'testUTC/chain.log').read_text())
+        self.assertIn('manifest begin', self.calls.read_text())
+
+    def test_launch_env_tty_warns(self):
+        master, slave = pty.openpty()
+        try:
+            result = self.run_chain('--chunks', '1', stdin=slave)
+        finally:
+            os.close(slave)
+            os.close(master)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn(f'LAUNCH_ENV PATH_head={self.fake_bin} stdin_tty=yes', result.stdout)
+        self.assertIn('WARN stdin is a tty', result.stdout)
+
+    def test_launch_env_detached_input_passes(self):
+        result = self.run_chain('--chunks', '1', dry=False)
+        self.assert_finished(result, 0)
+        line = f'LAUNCH_ENV PATH_head={self.fake_bin} stdin_tty=no'
+        self.assertIn(line, (self.logs / 'testUTC/chain.log').read_text())
+        self.assertNotIn('WARN stdin', result.stdout)
+
+    def test_snapshot_warning_threshold(self):
+        self.stub_snapshots()
+        for count in [0, 9, 10, 12]:
+            with self.subTest(count=count):
+                result = self.run_chain('--chunks', '1', env={'STUB_OS': 'Darwin', 'STUB_SNAPSHOTS': str(count)})
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertEqual('WARN local TimeMachine snapshots=' in result.stdout, count >= 10)
+                if count >= 10:
+                    self.assertIn(f'WARN local TimeMachine snapshots={count}', result.stdout)
+
+    def test_snapshot_low_disk_remedy(self):
+        self.stub_snapshots()
+        for free in ['24', '39']:
+            with self.subTest(free=free):
+                result = self.refused('STOP: free disk below', env={
+                    'STUB_OS': 'Darwin', 'CHAIN_TEST_MODE': '1', 'CHAIN_TEST_FREE_GB': free})
+                stop = next(line for line in result.stdout.splitlines() if line.startswith('STOP:'))
+                self.assertIn('local TimeMachine snapshots=10; remedy:', stop)
+                self.assertIn('recheck df', stop)
+
+    def test_snapshot_absent_or_linux_passes(self):
+        for system in ['Darwin', 'Linux']:
+            with self.subTest(system=system):
+                result = self.run_chain('--chunks', '1', env={'STUB_OS': system})
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertNotIn('TimeMachine', result.stdout)
+        self.stub_snapshots()
+        result = self.run_chain('--chunks', '1', env={'STUB_OS': 'Linux'})
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertNotIn('TimeMachine', result.stdout)
+
+    def test_snapshot_probe_failure_warns(self):
+        self.stub_snapshots()
+        result = self.run_chain('--chunks', '1', env={'STUB_OS': 'Darwin', 'STUB_TM_FAIL': '1'})
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn('WARN cannot list local TimeMachine snapshots', result.stdout)
 
     def refused(self, text, *args, env=None):
         result = self.run_chain(*args, env=env)
