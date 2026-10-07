@@ -1,0 +1,21 @@
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=53 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=53 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+RUN prefix=e1-20261007T034035Z mode=diagnostic chunks=1 2 3 4 seeds=65001 65002 65003
+DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=53 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=53 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+CHUNK 1 label=e1-20261007T034035Z-c1 regimes=calm cex-drift informed-flow
+G0 FAIL e1-20261007T034035Z-c1 (preserved; never retried)
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=53 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=53 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+CHUNK 2 label=e1-20261007T034035Z-c2 regimes=whale lending-incident crash
+G0 PASS e1-20261007T034035Z-c2
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=53 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=53 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+CHUNK 3 label=e1-20261007T034035Z-c3 regimes=depeg vuln spike
+G0 PASS e1-20261007T034035Z-c3
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=59 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=59 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+CHUNK 4 label=e1-20261007T034035Z-c4 regimes=depeg-persist cdp-incident launch
+G0 PASS e1-20261007T034035Z-c4
+CHAIN_END_e1-20261007T034035Z=1
