@@ -405,6 +405,12 @@
       "path": "ascon-notes/league/results-2026-10-06/r3x-experiment.txt",
       "title": "r3/r3x paired診断・提供集計",
       "locator": "監督者提供の6世界/3ペア集計。raw receipts/action ledgerではない"
+    },
+    {
+      "id": "src-results-e1-e2",
+      "path": "ascon-notes/league/RESULTS-E1-E2-2026-10-07.md",
+      "title": "2026-10-07 E1/E2 混成場診断・E3計画",
+      "locator": "実験設計・結果・判定計画・運用事故・決定の記録（各数値の結果ファイル併記）"
     }
   ]
 }
@@ -422,11 +428,11 @@
     "src-retro-full-oct07",
     "src-r3x-summary"
   ],
-  "as_of": "2026-10-07T12:33:05+09:00",
+  "as_of": "2026-10-07T16:05:16+09:00",
   "measurement_as_of": null,
-  "last_update": "10/7 JST: 夜間2計測完了・r3x 6世界診断・全体回顧42仮説を保存集計/文書で照合。本人判断と受入れゲートは未完了。",
+  "last_update": "10/7 JST: E1/E2の保存集計を読取。E3はminiで実行中との引継ぎ、結果未確認。公式T・G3・G4・公式P60は未検証・未完了。",
   "phase_id": "phase-first",
-  "headline": "夜間2計測とr3x診断が完了。r3は条件付き保険、提出ゲートは未達。",
+  "headline": "E1/E2診断完了。修理原因説は支持されず、E3実行中との引継ぎ。提出ゲートは未達。",
   "subhead": "mini P60リハーサル60世界・Air混成36世界が完了。r3xは6世界/3ペアすべてで悪化、1 seedの診断で「修理2が害」は支持されない。 miniリハーサル・Air混成場の計測は完了。優勝の根拠は未確立。 本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。 全体回顧の42仮説: 各行の先頭判定でsupported（支持）7 / refuted（反証）25 / inconclusive（未決）6 / untested（未検証）4。複合判定5行（H18/H20/H25/H26/H41）も重複集計すると7 / 25 / 9 / 6（計47判定）。限定観測に対する回顧の評価であり、資格合格数ではない。",
   "q0b": {
     "state": "failed",
@@ -621,6 +627,17 @@
     "state_label": "G3 BLOCKED / 未READY"
   },
   "recent": [
+    {
+      "id": "recent-e1-e2",
+      "kind": "warning",
+      "title": "2026-10-07 E1/E2診断完了・E3実行中との引継ぎ",
+      "text": "E1 r3は6位52.30、E2 rは10位49.30（簡易T）。inc-zetaとの差は−2.79/−2.72で有意といえず、修理原因説は支持されない。G0 FAILを保持。E3はmini・66001–66003、結果未確認。公式T・G3・G4・公式P60は未完了。",
+      "date": "2026-10-07",
+      "time_note": "保存集計読取・依頼者引継ぎ。実完了時刻未提示。",
+      "sources": [
+        "src-results-e1-e2"
+      ]
+    },
     {
       "kind": "warning",
       "title": "mini: 60世界リハーサル完了（非公式）",
@@ -2144,6 +2161,84 @@
         }
       }
     }
+  },
+  "e1": {
+    "name": "2026-10-07 E1 / mini r3混成場",
+    "state": "measured-diagnostic-complete",
+    "field": "混成12体（候補＋固定10相手＋noop）",
+    "seeds": "65001–65003",
+    "regimes": 12,
+    "worlds": 36,
+    "completed_worlds": 36,
+    "started_at": null,
+    "expected_end": null,
+    "completed_at": null,
+    "completed_at_basis": "保存集計の全世界数を確認。実完了時刻は未提示。",
+    "verified": true,
+    "verification_scope": "summary-facts-only",
+    "g0": "チャンク単位でG0 FAIL（うちloops≠362は2世界、保持）",
+    "q0_eligible": false,
+    "official_t_verified": false,
+    "p60_verified": false,
+    "g3_verified": false,
+    "g4_verified": false,
+    "note": "2026-10-07 E1: mini / r3 / 固定10相手（inc-zetaを含む）＋noop / 65001–65003 / 36世界。簡易T 52.30で6位、inc-zeta 55.10で1位。対応差−2.79、SE 2.68、14/36勝。chunk 1の2世界は361 loopsでG0 FAILを保持。出典: e1-mixed-r3-seeds65001-3.txt、e1-paired-r3-vs-inczeta.txt、chain-log-e1-mini.txt。",
+    "sources": [
+      "src-results-e1-e2"
+    ],
+    "result": {
+      "t_candidate": "52.30",
+      "t_inc_zeta": "55.10",
+      "t_definition": "SIMPLIFIED T; equal weight per world; NOT official weighted T"
+    }
+  },
+  "e2": {
+    "name": "2026-10-07 E2 / Air r混成場",
+    "state": "measured-diagnostic-complete",
+    "field": "混成12体（候補＋固定10相手＋noop）",
+    "seeds": "65001–65003",
+    "regimes": 12,
+    "worlds": 36,
+    "completed_worlds": 36,
+    "started_at": null,
+    "expected_end": null,
+    "completed_at": null,
+    "completed_at_basis": "保存集計の全世界数を確認。実完了時刻は未提示。",
+    "verified": true,
+    "verification_scope": "summary-facts-only",
+    "g0": "チャンク単位でG0 FAIL（うちloops≠362は10世界、保持）",
+    "q0_eligible": false,
+    "official_t_verified": false,
+    "p60_verified": false,
+    "g3_verified": false,
+    "g4_verified": false,
+    "note": "2026-10-07 E2: Air / r（対象修理なし）/ E1と同じ固定相手・seed / 36世界。簡易T 49.30で10位、inc-zeta 52.02。対応差−2.72、SE 2.58。chunk 2/4の10世界がloops≠362。disk guard停止後e2r3、セッション再起動exit 143後e2r4で再実行、G0 FAILは保持。出典: e2-mixed-r-seeds65001-3.txt、e2-paired-r-vs-inczeta.txt、chain-log-e2-air.txt。",
+    "sources": [
+      "src-results-e1-e2"
+    ],
+    "result": {
+      "t_candidate": "49.30",
+      "t_inc_zeta": "52.02",
+      "t_definition": "SIMPLIFIED T; equal weight per world; NOT official weighted T"
+    }
+  },
+  "e3": {
+    "name": "2026-10-07 E3 / mini r3混成場（実行中との引継ぎ）",
+    "state": "reported-running-unverified",
+    "field": "E1と同じ混成12体",
+    "seeds": "66001–66003",
+    "regimes": 12,
+    "worlds": 36,
+    "completed_worlds": null,
+    "started_at": null,
+    "expected_end": null,
+    "completed_at": null,
+    "verified": false,
+    "result": null,
+    "note": "2026-10-07の依頼者引継ぎ: E3はminiで実行中。r3、E1と同じroster、66001–66003。実プロセス・途中結果・完了数は未確認。E1＋E3の72世界poolは完了後の計画で、条件・hash・欠測を照合し、対応差の平均±2 SEで負/未決/正を診断する。G0 FAILを保持し、公式T・G3・G4・公式P60の完了にはしない。",
+    "sources": [
+      "src-results-e1-e2"
+    ]
   }
 }
 </script>
@@ -2535,7 +2630,7 @@
       ]
     },
     "iteration_current": 3,
-    "current_run_ref": "status.rehearsal"
+    "current_run_ref": "status.e3"
   },
   "h1": {
     "authority": "本人決定 2026-10-04",
@@ -4195,7 +4290,8 @@
   "sources": [
     "src-c-exception",
     "src-release-runbook",
-    "src-handoff-oct06"
+    "src-handoff-oct06",
+    "src-results-e1-e2"
   ],
   "items": [
     {
@@ -4482,9 +4578,25 @@
         "src-q0b",
         "src-master"
       ]
+    },
+    {
+      "id": "queue-e3",
+      "priority": 18,
+      "experiment": "e3",
+      "title": "2026-10-07 E3 / mini r3混成場",
+      "state": "実行中との引継ぎ・結果未確認",
+      "worlds": 36,
+      "hours": null,
+      "window": "2026-10-07引継ぎ・開始/終了時刻未提示",
+      "dependency": "2026-10-07の依頼者引継ぎ: E3はminiで実行中。r3、E1と同じroster、66001–66003。実プロセス・途中結果・完了数は未確認。E1＋E3の72世界poolは完了後の計画で、条件・hash・欠測を照合し、対応差の平均±2 SEで負/未決/正を診断する。G0 FAILを保持し、公式T・G3・G4・公式P60の完了にはしない。",
+      "owner": "Codex",
+      "active": true,
+      "sources": [
+        "src-results-e1-e2"
+      ]
     }
   ],
-  "note": "夜間mini60/Air36世界とr3x6世界は診断完了。直近は予算精算とG3前提整備。追加研究は本人判断待ち、公式P60・G3/G4は未達。MASTER旧15行との不一致は未解消（既存17行/IDを保持）。",
+  "note": "2026-10-07: E1/E2は診断完了、E3はminiで実行中との引継ぎ。結果・実消化未確認。新規候補作成の停止は限定解除、時間予算はチームに委任（Codex主、miniをフル活用）。新しい提出hashは本人の新たな例外継承確認が必要。公式P60・G3/G4は未達。MASTER旧キューとの不一致は未解消。",
   "day_limit_hours": 6,
   "bundle": "forward100h・6h/日・110分/chunkを維持。実消化・残費未精算。G3準備/全監査込み14–15h、公式P60 12–13h＋照合1hは計画見積。",
   "side_jobs": [
@@ -5783,6 +5895,48 @@
       "src-dev5"
     ],
     "diagnostic": [
+      {
+        "candidate": "E1 r3（mini、修理あり）",
+        "scope_ref": "status.e1",
+        "run_ref": "status.e1.name",
+        "detail_ref": "status.e1.note",
+        "state": "warning",
+        "verified": true,
+        "verification_scope": "summary-facts-only",
+        "state_label": "計測完了・診断のみ",
+        "verdict": "inc-zetaとの差は有意といえない。G0 FAIL保持、SIMPLIFIED Tは公式加重Tではない。公式T・G3・G4・公式P60は未検証・未完了。",
+        "sources": [
+          "src-results-e1-e2"
+        ],
+        "metrics": [
+          {
+            "label": "簡易平均T（候補 / inc-zeta）",
+            "candidate_ref": "status.e1.result.t_candidate",
+            "baseline_ref": "status.e1.result.t_inc_zeta"
+          }
+        ]
+      },
+      {
+        "candidate": "E2 r（Air、対象修理なし）",
+        "scope_ref": "status.e2",
+        "run_ref": "status.e2.name",
+        "detail_ref": "status.e2.note",
+        "state": "warning",
+        "verified": true,
+        "verification_scope": "summary-facts-only",
+        "state_label": "計測完了・診断のみ",
+        "verdict": "cross-r3-vs-r.txt: r3(E1)−r(E2)は+3.00（SE 2.41）、両hostのloops=362部分集合は+6.02（SE 2.92、24世界）。出力名both G0-PASSはループ数だけの条件で、完全なG0再監査ではない。venue-arbのmini−Air対照は−1.69。inc-zetaとの差は両実験とも有意といえず、修理原因説は支持されない。修理の正効果は未確立。host・G0・旧seed・旧集計器との差が残る。SIMPLIFIED Tは公式加重Tではない。G3・G4・公式P60は未完了。",
+        "sources": [
+          "src-results-e1-e2"
+        ],
+        "metrics": [
+          {
+            "label": "簡易平均T（候補 / inc-zeta）",
+            "candidate_ref": "status.e2.result.t_candidate",
+            "baseline_ref": "status.e2.result.t_inc_zeta"
+          }
+        ]
+      },
       {
         "candidate": "r3x（対r3 paired診断）",
         "scope_ref": "status.r3x",
@@ -7822,6 +7976,17 @@
   ],
   "note": "追記のみ。旧100件は全フィールド保持、8件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-117",
+      "timestamp": "2026-10-07T16:05:16+09:00",
+      "type": "実測",
+      "summary": "2026-10-07 E1: mini / r3 / 固定10相手（inc-zetaを含む）＋noop / 65001–65003 / 36世界。簡易T 52.30で6位、inc-zeta 55.10で1位。対応差−2.79、SE 2.68、14/36勝。chunk 1の2世界は361 loopsでG0 FAILを保持。出典: e1-mixed-r3-seeds65001-3.txt、e1-paired-r3-vs-inczeta.txt、chain-log-e1-mini.txt。 2026-10-07 E2: Air / r（対象修理なし）/ E1と同じ固定相手・seed / 36世界。簡易T 49.30で10位、inc-zeta 52.02。対応差−2.72、SE 2.58。chunk 2/4の10世界がloops≠362。disk guard停止後e2r3、セッション再起動exit 143後e2r4で再実行、G0 FAILは保持。出典: e2-mixed-r-seeds65001-3.txt、e2-paired-r-vs-inczeta.txt、chain-log-e2-air.txt。 cross-r3-vs-r.txt: r3(E1)−r(E2)は+3.00（SE 2.41）、両hostのloops=362部分集合は+6.02（SE 2.92、24世界）。出力名both G0-PASSはループ数だけの条件で、完全なG0再監査ではない。venue-arbのmini−Air対照は−1.69。inc-zetaとの差は両実験とも有意といえず、修理原因説は支持されない。修理の正効果は未確立。host・G0・旧seed・旧集計器との差が残る。SIMPLIFIED Tは公式加重Tではない。G3・G4・公式P60は未完了。 2026-10-07の依頼者引継ぎ: E3はminiで実行中。r3、E1と同じroster、66001–66003。実プロセス・途中結果・完了数は未確認。E1＋E3の72世界poolは完了後の計画で、条件・hash・欠測を照合し、対応差の平均±2 SEで負/未決/正を診断する。G0 FAILを保持し、公式T・G3・G4・公式P60の完了にはしない。",
+      "sources": [
+        "src-results-e1-e2"
+      ],
+      "time_basis": "保存資料読取と依頼者引継ぎのJST記録時刻。実計測開始/終了時刻ではない。",
+      "event_date": "2026-10-07"
+    },
     {
       "id": "log-116",
       "timestamp": "2026-10-07T12:33:05+09:00",

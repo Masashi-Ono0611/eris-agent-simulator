@@ -1,0 +1,40 @@
+/tmp/e2b-chain.log:DISK path=/private/tmp/g3-chain/eval2 free_GB=39 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/tmp/e2b-chain.log:DISK path=/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/ free_GB=39 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/tmp/e2b-chain.log:RUN prefix=e2r3-20261007T051203Z mode=diagnostic chunks=3 4 seeds=65001 65002 65003
+/tmp/e2b-chain.log:DEVIATION explicit --min-free-gb=25 (matrix default 40; inherited value ignored)
+/tmp/e2b-chain.log:DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+/tmp/e2b-chain.log:DISK path=/private/tmp/g3-chain/eval2 free_GB=39 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/tmp/e2b-chain.log:DISK path=/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/ free_GB=39 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/tmp/e2b-chain.log:CHUNK 3 label=e2r3-20261007T051203Z-c3 regimes=depeg vuln spike
+/tmp/e2b-chain.log:G0 PASS e2r3-20261007T051203Z-c3
+/tmp/e2b-chain.log:DISK path=/private/tmp/g3-chain/eval2 free_GB=72 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/tmp/e2b-chain.log:DISK path=/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/ free_GB=72 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/tmp/e2b-chain.log:CHUNK 4 label=e2r3-20261007T051203Z-c4 regimes=depeg-persist cdp-incident launch
+/tmp/e2b-chain.log:CHAIN_END_e2r3-20261007T051203Z=143
+/tmp/e2-chain.log:DISK path=/private/tmp/g3-chain/eval2 free_GB=69 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+/tmp/e2-chain.log:DISK path=/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/ free_GB=69 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+/tmp/e2-chain.log:RUN prefix=e2r-20261007T034113Z mode=diagnostic chunks=1 2 3 4 seeds=65001 65002 65003
+/tmp/e2-chain.log:DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+/tmp/e2-chain.log:DISK path=/private/tmp/g3-chain/eval2 free_GB=69 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+/tmp/e2-chain.log:DISK path=/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/ free_GB=69 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+/tmp/e2-chain.log:CHUNK 1 label=e2r-20261007T034113Z-c1 regimes=calm cex-drift informed-flow
+/tmp/e2-chain.log:G0 PASS e2r-20261007T034113Z-c1
+/tmp/e2-chain.log:DISK path=/private/tmp/g3-chain/eval2 free_GB=56 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+/tmp/e2-chain.log:DISK path=/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/ free_GB=56 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+/tmp/e2-chain.log:CHUNK 2 label=e2r-20261007T034113Z-c2 regimes=whale lending-incident crash
+/tmp/e2-chain.log:G0 FAIL e2r-20261007T034113Z-c2 (preserved; never retried)
+/tmp/e2-chain.log:DISK path=/private/tmp/g3-chain/eval2 free_GB=53 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+/tmp/e2-chain.log:DISK path=/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/ free_GB=53 MIN_FREE_GB=40 hard_stop_GB=25 (GiB units)
+/tmp/e2-chain.log:CHUNK 3 label=e2r-20261007T034113Z-c3 regimes=depeg vuln spike
+/tmp/e2-chain.log:STOP: runner/manifest failure: e2r-20261007T034113Z-c3 (G0 recorded; no continuation)
+/tmp/e2-chain.log:CHAIN_END_e2r-20261007T034113Z=2
+/tmp/e2c-chain.log:DISK path=/private/tmp/g3-chain/eval2 free_GB=56 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/tmp/e2c-chain.log:DISK path=/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/ free_GB=56 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/tmp/e2c-chain.log:RUN prefix=e2r4-20261007T060658Z mode=diagnostic chunks=4 seeds=65001 65002 65003
+/tmp/e2c-chain.log:DEVIATION explicit --min-free-gb=25 (matrix default 40; inherited value ignored)
+/tmp/e2c-chain.log:DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+/tmp/e2c-chain.log:DISK path=/private/tmp/g3-chain/eval2 free_GB=56 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/tmp/e2c-chain.log:DISK path=/var/folders/yk/mx8jn78j6xq0w5l4z9d8hbvw0000gn/T/ free_GB=56 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/tmp/e2c-chain.log:CHUNK 4 label=e2r4-20261007T060658Z-c4 regimes=depeg-persist cdp-incident launch
+/tmp/e2c-chain.log:G0 FAIL e2r4-20261007T060658Z-c4 (preserved; never retried)
+/tmp/e2c-chain.log:CHAIN_END_e2r4-20261007T060658Z=1

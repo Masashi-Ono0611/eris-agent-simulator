@@ -1,0 +1,2 @@
+all: n=36 r3(E1,mini)-r(E2,Air) T=3.00 SE=2.41 wins=19/36 | control venue-arb mini-Air T=-1.69
+both G0-PASS: n=24 r3(E1,mini)-r(E2,Air) T=6.02 SE=2.92 wins=15/24 | control venue-arb mini-Air T=-2.42
