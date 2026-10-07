@@ -17,8 +17,8 @@ export function validate() {
       const checked=spawnSync('bash',['ascon-notes/league/run-league.sh','--dry-run','--roster',dir+name],{encoding:'utf8'});
       results.push({file:name,validator:'run-league.sh --dry-run',exitCode:checked.status,missing,
         stdout:checked.stdout.trim(),stderr:checked.stderr.trim(),status:checked.status===0?'PASS':'BLOCKED'});
-      assert.deepEqual(missing,field==='ref'?[]:['fixed-bid-5gwei']);
-      assert.equal(checked.status,field==='ref'?0:2);
+      assert.deepEqual(missing,[]);
+      assert.equal(checked.status,0);
       assert.equal(r.agents.filter(a=>a.baseline).length,1);
       assert.equal(r.agents.find(a=>a.baseline).id,'noop');
       for(const a of r.agents) {
