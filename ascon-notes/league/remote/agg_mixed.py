@@ -115,7 +115,10 @@ def report(worlds, pair=None):
     if not flagged:
         lines.append('none')
     for label, selected in [('ALL', worlds), ('loopIterations==362 ONLY', [w for w in worlds if w['loops'] == 362])]:
-        lines.extend(['', f'{label} worlds={len(selected)}', 'agent\tmeanT\tmean(P-noop)\tP<noop'])
+        lines.extend(['', f'{label} worlds={len(selected)}'])
+        if label != 'ALL':
+            lines.append('note: filters on loopIterations only; worlds with exit_code!=0 or violations stay in this table and are listed under FLAGGED WORLDS')
+        lines.append('agent\tmeanT\tmean(P-noop)\tP<noop')
         for row in table(selected):
             lines.append(f'{row["agent"]}\t{row["meanT"]:.6f}\t{row["excess"]:.6f}\t{row["below"]}/{row["n"]}')
         if not selected:
