@@ -1,0 +1,32 @@
+/Users/masa-ws1/ascon-run/logs/e3-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3-chain.log:DISK path=/tmp free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3-chain.log:RUN prefix=e3-20261007T063846Z mode=diagnostic chunks=1 2 3 4 seeds=66001 66002 66003
+/Users/masa-ws1/ascon-run/logs/e3-chain.log:DEVIATION explicit --min-free-gb=25 (matrix default 40; inherited value ignored)
+/Users/masa-ws1/ascon-run/logs/e3-chain.log:DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+/Users/masa-ws1/ascon-run/logs/e3-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3-chain.log:DISK path=/tmp free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3-chain.log:CHUNK 1 label=e3-20261007T063846Z-c1 regimes=calm cex-drift informed-flow
+/Users/masa-ws1/ascon-run/logs/e3-chain.log:STOP: runner/manifest failure: e3-20261007T063846Z-c1 (G0 recorded; no continuation)
+/Users/masa-ws1/ascon-run/logs/e3-chain.log:CHAIN_END_e3-20261007T063846Z=2
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DISK path=/tmp free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:RUN prefix=e3b-20261007T063927Z mode=diagnostic chunks=1 2 3 4 seeds=66001 66002 66003
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DEVIATION explicit --min-free-gb=25 (matrix default 40; inherited value ignored)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DISK path=/tmp free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:CHUNK 1 label=e3b-20261007T063927Z-c1 regimes=calm cex-drift informed-flow
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:G0 PASS e3b-20261007T063927Z-c1
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DISK path=/tmp free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:CHUNK 2 label=e3b-20261007T063927Z-c2 regimes=whale lending-incident crash
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:G0 PASS e3b-20261007T063927Z-c2
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DISK path=/tmp free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:CHUNK 3 label=e3b-20261007T063927Z-c3 regimes=depeg vuln spike
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:G0 FAIL e3b-20261007T063927Z-c3 (preserved; never retried)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:DISK path=/tmp free_GB=59 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:CHUNK 4 label=e3b-20261007T063927Z-c4 regimes=depeg-persist cdp-incident launch
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:G0 PASS e3b-20261007T063927Z-c4
+/Users/masa-ws1/ascon-run/logs/e3b-chain.log:CHAIN_END_e3b-20261007T063927Z=1

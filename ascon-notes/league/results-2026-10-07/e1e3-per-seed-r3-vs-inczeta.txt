@@ -1,0 +1,6 @@
+seed 65001: ascon-zeta-r3-inc-zeta: n=12 meanT diff=-5.93 SE=5.26 (~95% -16.44..4.59) wins=3/12; mean P diff=-459
+seed 65002: ascon-zeta-r3-inc-zeta: n=12 meanT diff=-6.90 SE=5.05 (~95% -16.99..3.20) wins=3/12; mean P diff=-697
+seed 65003: ascon-zeta-r3-inc-zeta: n=12 meanT diff=4.44 SE=2.90 (~95% -1.37..10.25) wins=8/12; mean P diff=237
+seed 66001: ascon-zeta-r3-inc-zeta: n=12 meanT diff=-2.31 SE=3.65 (~95% -9.61..4.99) wins=7/12; mean P diff=-120
+seed 66002: ascon-zeta-r3-inc-zeta: n=12 meanT diff=-6.10 SE=2.60 (~95% -11.31..-0.89) wins=2/12; mean P diff=-344
+seed 66003: ascon-zeta-r3-inc-zeta: n=12 meanT diff=-3.68 SE=4.97 (~95% -13.61..6.25) wins=7/12; mean P diff=-433
