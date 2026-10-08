@@ -148,6 +148,10 @@ HOMEが設定済みかつ空でない場合の既定は `$HOME/.ascon-hours/chai
 
 各chunkは `chunk_start` と、結果確定時の `chunk_end` を各1行のJSONとして追記する。`python3 -c 'import json,sys; [print(json.dumps(json.loads(s), ensure_ascii=False, indent=2)) for s in sys.stdin]' < "$HOME/.ascon-hours/chain-hours.jsonl"` で読める。schema_version=1。hostは `hostname -s`、host_id_sourceに出所を記録する。同名・改名ホストは自動判別できないため、収集元ホストとの対応も保持する。regimes/seedsは配列、flagsは使用した続行フラグ名のみ、exit_codesは各工程の終了コード（未実行はnull）。開始行のresult/utc_endはnull、終了行のresultはPASS/FAIL/BLOCKED/RUNNER_FAILED/STOPPED。utc_start/utc_endはshellの `date -u` による秒精度UTC、local_utc_offsetは開始時のUTC offset。
 
-読むときは `(host, prefix, chunk)` の開始・終了を対にし、**2026-10-04 01:00 JST = 2026-10-03T16:00:00Z以後**に切り詰めた区間をホストごとにunionしてから時間を合計する。開始だけなら **INTERRUPTED / UNKNOWN end** と報告し、0時間扱い・mtimeによる補完をしない。重複イベント、逆転時刻、壊れた行も精算不能として調査する。記録範囲はmanifest begin直前からG0/分類などの結果確定までで、chunk間の待機は含まない。ホスト時計の正確さは別途確認する。このツリーには `budget_hours.py` がないため、自動union readerの追加は未実施。
+読むときは `(host, prefix, label, chunk)` の開始・終了を対にし、**2026-10-04 01:00 JST = 2026-10-03T16:00:00Z以後**に切り詰めた区間をホストごとにunionしてから時間を合計する。開始だけなら **INTERRUPTED / UNKNOWN end** と報告し、0時間扱い・mtimeによる補完をしない。重複イベント、逆転時刻、壊れた行も精算不能として調査する。記録範囲はmanifest begin直前からG0/分類などの結果確定までで、chunk間の待機は含まない。ホスト時計の正確さは別途確認する。
+
+集計: `python3 -B ascon-notes/league/remote/budget_hours.py --ledger mini.jsonl --ledger air.jsonl > hours.json`（ホストごとに1ファイル、JSONはstdout、短い表はstderr）。`known` は確定区間のホスト別union/JST日別小計、結果別時間は異なる結果間で重複し得るため加算不可。`UNKNOWN_END` は一覧化し時間はnull、総時間も未確定とする。不正行・不明schema・時刻不正・対の不整合はexit 2で集計を拒否し、`--report-bad-lines` 指定時だけ一覧化して該当行/対を除外した小計を出す。ライブ確認専用の `--assume-end-now` は未終了区間を現在時刻まで仮定した別集計 `LIVE_ASSUMED_END_NOW` を出す（精算には使わない）。
+
+終了コード: `0` は確定（すべての開始に終了がある）、`2` は不正な行・不整合（`--report-bad-lines` を付けない場合）、`3` は未確定（終了の記録が無い開始がある）。`3` の時の `known` は確定した区間だけの小計で、合計ではない。終了コードだけを見る仕組みは `0` 以外を「精算できていない」と扱うこと。
 
 START作成・追記に失敗すると `HOURS_LEDGER_START_FAILED` / exit 2でchunk起動前に停止する。ENDだけの失敗ではWARNを出し、通常のchain終了コードと `CHAIN_END_<prefix>=<rc>` 行を保持しつつ、標準出力・chain.logだけに補助行 `HOURS_LEDGER_END_FAILED_<prefix>=1` を付ける。`end.marker` は従来どおり `CHAIN_END_<prefix>=<rc>` の単一行のみ。この場合も時間精算は未完了。TERM/INT/HUP・KILLの中断は終了時刻を推測せず、開始行を未対応のまま残す。
