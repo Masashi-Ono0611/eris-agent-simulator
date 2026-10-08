@@ -15,12 +15,27 @@ import subprocess
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[2]
-CANDIDATE = 'example/agents/ascon-zeta-r2'
-EXPECTED = '153becef74bebb21acf8674191407ee941b2844a4cb4fa25716b111390eade59'
+CANDIDATE = 'example/agents/ascon-zeta-r3'
+EXPECTED = 'a03da51869cf8c8160aaa25eb5f1e87cfa74a3a9dfdac3050945a71f7d143dff'
 SEEDS = [49001, 49002, 49003, 49101, 49102, 49103]
 SCOPES = ['example/agents/runtime', 'example/agents/lib', 'sdk']
 PRUNE = {'.git', 'node_modules', '.claude', '.codex', '.agents', '.aws', '.ssh',
          '.cache', 'cache', 'artifacts', '__pycache__'}
+# Reviewed unresolved prerequisites. Registration is not evidence of completion.
+OBSOLETE_ABSENT = 'fixed-bid-5gwei implementation/configuration absent; both F_mix rosters intentionally invalid'
+NATURAL_MISSING = 'audited natural-Haiku safe-change fixture absent; delayed/change-revert world not ready'
+REQUIRED_BLOCKERS = [
+    'F_mix r3 load calibration and real-chain validation absent; launcher remains F_ref-only',
+    NATURAL_MISSING,
+    'non-sending malicious fixture demonstrates unsafe actions accepted by stock compile/runner: abort before normal worlds',
+    'validated live full-frame revision/decision/action/receipt recorder absent',
+    'persistent budget ledger and legacy usage reconciliation, forward-100h remaining budget and reservations unverified',
+    'current subscription extra-usage OFF, Haiku usage window and authentication unverified; user decision required',
+    'r3 isolated source/eval/tool manifest, dependencies and compatible state dump hash not registered; chain snapshot remains r2',
+    'fresh seed collision audit, host exclusivity, disk and load calibration required',
+    'submission-model and applicable rules/distribution equivalence unverified; Haiku proxy is not release G3',
+    'real 300s timeout, 5s decisions, late-response, epoch carry/revert and 64MiB state-boundary evidence absent',
+]
 MIN_SOURCES = 1
 MIN_SOURCES_PER_ROOT = 1
 
@@ -216,7 +231,24 @@ def check_inputs(root, lock):
     for name, expected in lock['agentTrees'].items():
         try: agents[name] = local_tree(root/'example/agents'/name) == expected
         except (ValueError, OSError): agents[name] = False
-    return {'pass':not mismatches and all(agents.values()),'hashMismatches':mismatches,'agentTrees':agents}
+    candidate_pin = True
+    if any(k in lock for k in ('candidateId', 'candidateDir', 'candidateSha256')):
+        candidate_pin = (lock.get('candidateId') == 'cand'
+                         and lock.get('candidateDir') == Path(CANDIDATE).name
+                         and lock.get('candidateSha256') == EXPECTED
+                         and lock.get('agentTrees', {}).get(Path(CANDIDATE).name, {}).get('sha256') == EXPECTED)
+    return {'pass':not mismatches and all(agents.values()) and candidate_pin,
+            'hashMismatches':mismatches,'agentTrees':agents,'candidatePin':candidate_pin}
+
+
+def completeness_check(root, lock):
+    # Do not let removing text from the lock manufacture readiness. Clearing these
+    # reviewed blockers requires a separate evidence-backed implementation/review.
+    blocked = list(dict.fromkeys(lock['blocked'] + REQUIRED_BLOCKERS))
+    fixture = root / 'ascon-notes/league/g3/fixtures/AUDITED-HAIKU-CHANGE-MISSING.json'
+    if not fixture.is_file() and NATURAL_MISSING not in blocked:
+        blocked.append(NATURAL_MISSING)
+    return {'pass':not blocked, 'blocked':blocked}
 
 
 def upstream_check(root=ROOT):
@@ -253,7 +285,7 @@ def main():
     check('noAnvil',no_anvil)
     check('parentFrozenUnset',lambda:{'pass':'ERIS_AGENT_FROZEN' not in os.environ,'note':'ON omits flag, so parent must unset it for BOTH paired launches.'})
     check('unitTimingOverrideAbsent',lambda:{'pass':'G3_UNIT_TIME_SCALE' not in os.environ})
-    checks['completeness']={'pass':not lock['blocked'],'blocked':lock['blocked']}
+    check('completeness',lambda:completeness_check(ROOT,lock))
     passed=all(v['pass'] for v in checks.values())
     print(json.dumps({'status':'PASS' if passed else 'FAIL','checkedAtUtc':datetime.datetime.now(datetime.timezone.utc).isoformat(),'checks':checks},indent=2))
     return 0 if passed else 1

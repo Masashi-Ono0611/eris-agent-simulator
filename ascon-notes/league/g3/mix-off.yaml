@@ -91,7 +91,7 @@
         "ERIS_CLAUDE_BIN": "./ascon-notes/league/xb-r-live-claude-timed.sh",
         "ERIS_AGENT_FROZEN": "1"
       },
-      "dir": "ascon-zeta-r2"
+      "dir": "ascon-zeta-r3"
     }
   ]
 }

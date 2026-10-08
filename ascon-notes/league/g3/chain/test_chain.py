@@ -1,17 +1,31 @@
-import copy, datetime as dt, json, os, shutil, stat, subprocess, sys, tempfile, unittest
+import copy, datetime as dt, hashlib, json, os, shutil, stat, subprocess, sys, tempfile, unittest
 from unittest.mock import patch
 from pathlib import Path
 import chain
 from gates import strict_g0
 
-class Gates(unittest.TestCase):
+TOOLS = Path(__file__).resolve().parent
+
+class RepositoryTools(unittest.TestCase):
+    def setUp(self):
+        # Verify the checked-in tools against the checked-in manifest. Do not mix
+        # this launcher's new pins with a previously staged /tmp tool snapshot.
+        tools = patch.object(chain, 'TOOL_ROOT', TOOLS)
+        tools.start(); self.addCleanup(tools.stop)
+
+class Gates(RepositoryTools):
     def base(self):
         return {'status':'FAIL','checks':{**{k:{'pass':True} for k in chain.CHECKS if k!='completeness'},'completeness':{'pass':False,'blocked':[chain.F_MIX]}}}
-    def test_exact_exemption_green(self): self.assertTrue(chain.prestart_gate(self.base(),1))
+    def test_no_mix_exemption(self): self.assertFalse(chain.prestart_gate(self.base(),1))
+    def test_complete_positive_control(self):
+        d=self.base(); d['status']='PASS'; d['checks']['completeness']={'pass':True,'blocked':[]}
+        self.assertTrue(chain.prestart_gate(d,0))
     def test_every_other_check_red(self):
         for name in chain.CHECKS-{'completeness'}:
             with self.subTest(name=name):
-                d=self.base(); d['checks'][name]['pass']=False
+                d=self.base(); d['status']='PASS'; d['checks']['completeness']={'pass':True,'blocked':[]}
+                self.assertTrue(chain.prestart_gate(d,0))
+                d['status']='FAIL'; d['checks'][name]['pass']=False
                 self.assertFalse(chain.prestart_gate(d,1))
     def test_other_completeness_red(self):
         d=self.base(); d['checks']['completeness']['blocked'].append('audited natural-Haiku safe-change fixture absent; delayed/change-revert world not ready')
@@ -29,7 +43,7 @@ class Gates(unittest.TestCase):
             root=Path(td); d=self.base(); d['checks']['candidate']['pass']=False
             (root/'pre.json').write_text(json.dumps(d)); (root/'rc').write_text('1')
             code='import subprocess,sys; p=subprocess.run(sys.argv[1:]); sys.exit(p.returncode) if p.returncode else print("SHOULD_NOT_REACH")'
-            p=subprocess.run([sys.executable,'-B','-c',code,sys.executable,'-B',str(chain.BASE/'gates.py'),'prestart',str(root/'pre.json'),str(root/'rc')],capture_output=True,text=True)
+            p=subprocess.run([sys.executable,'-B','-c',code,sys.executable,'-B',str(TOOLS/'gates.py'),'prestart',str(root/'pre.json'),str(root/'rc')],capture_output=True,text=True)
             self.assertEqual(p.returncode,2); self.assertNotIn('SHOULD_NOT_REACH',p.stdout)
     def test_schedule_order_and_freeze(self):
         normal,ref=chain.rows(); self.assertEqual(len(ref),18); self.assertEqual(sum(r['field']=='mix' for r in normal),18)
@@ -69,7 +83,7 @@ class Gates(unittest.TestCase):
                 self.assertEqual((root/'deadline.log.exit').read_text().strip(),'124')
                 self.assertIsNone(supervisor.child)
     def test_no_arbitrary_audit_pass(self):
-        p=subprocess.run([sys.executable,'-B',str(chain.BASE/'gates.py'),'revision-audit','test','on'],capture_output=True,text=True)
+        p=subprocess.run([sys.executable,'-B',str(TOOLS/'gates.py'),'revision-audit','test','on'],capture_output=True,text=True)
         self.assertEqual(p.returncode,2); self.assertEqual(json.loads(p.stdout)['status'],'BLOCKED')
 
 class BudgetLedger(unittest.TestCase):
@@ -149,15 +163,21 @@ class BudgetLedger(unittest.TestCase):
             chain.main()
         self.assertFalse(self.ledger.exists())
 
-class ToolManifest(unittest.TestCase):
+class ToolManifest(RepositoryTools):
     def test_recorded_manifest_matches(self):
         self.assertEqual(set(chain.TOOL_MANIFEST),{'gates.py','revision_audit.py'})
         chain.tool_check()
+
+    def test_recorded_manifest_equals_recomputed_bytes(self):
+        recomputed = {name: hashlib.sha256((TOOLS/name).read_bytes()).hexdigest()
+                      for name in chain.TOOL_MANIFEST}
+        self.assertEqual(chain.TOOL_MANIFEST, recomputed)
 
     def test_drift_blocks_run_before_any_process(self):
         with tempfile.TemporaryDirectory(dir=chain.BASE) as td:
             root=Path(td)
             for name in chain.TOOL_MANIFEST: shutil.copyfile(chain.TOOL_ROOT/name,root/name)
+            with patch.object(chain,'TOOL_ROOT',root): chain.tool_check()
             for name in chain.TOOL_MANIFEST:
                 with self.subTest(name=name):
                     p=root/name; original=p.read_bytes(); p.write_bytes(original+b'\n# red control\n')
@@ -165,6 +185,7 @@ class ToolManifest(unittest.TestCase):
                         with self.assertRaisesRegex(chain.Stop,'BLOCKED.*manifest mismatch'): chain.main()
                         child.assert_not_called()
                     p.write_bytes(original)
+                    with patch.object(chain,'TOOL_ROOT',root): chain.tool_check()
             (root/'gates.py').unlink()
             with patch.object(chain,'TOOL_ROOT',root),self.assertRaisesRegex(chain.Stop,'BLOCKED'): chain.tool_check()
 

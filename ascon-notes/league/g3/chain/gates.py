@@ -86,7 +86,7 @@ def main():
     if action=='prestart':
         d=json.loads(Path(sys.argv[2]).read_text()); rc=int(Path(sys.argv[3]).read_text())
         ok=prestart_gate(d,rc)
-        return emit('PASS_F_REF_ONLY' if ok else 'BLOCKED',exemption='ONLY exact F_mix missing fixed-bid-5gwei completeness item',otherFailures=[k for k,v in d.get('checks',{}).items() if not v.get('pass') and k!='completeness'],remainingBlocked=[x for x in d.get('checks',{}).get('completeness',{}).get('blocked',[]) if x!='fixed-bid-5gwei implementation/configuration absent; both F_mix rosters intentionally invalid'])
+        return emit('PASS_F_REF_ONLY' if ok else 'BLOCKED',exemption='NONE; all completeness prerequisites required',otherFailures=[k for k,v in d.get('checks',{}).items() if not v.get('pass') and k!='completeness'],remainingBlocked=d.get('checks',{}).get('completeness',{}).get('blocked',[]))
     if action=='strict-g0': return emit('PASS' if strict_g0(sys.argv[2]) else 'FAIL',required='360 blocks, 362 loops, p99 strictly <1000ms, manifest verified, zero G0 failures')
     if action=='auth': return auth()
     if action=='revision-audit': return revision_audit_gate(sys.argv[2:])

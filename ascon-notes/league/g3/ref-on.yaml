@@ -32,7 +32,7 @@
         "ERIS_LLM_CALL_TIMEOUT_MS": "300000",
         "ERIS_CLAUDE_BIN": "./ascon-notes/league/xb-r-live-claude-timed.sh"
       },
-      "dir": "ascon-zeta-r2"
+      "dir": "ascon-zeta-r3"
     }
   ]
 }

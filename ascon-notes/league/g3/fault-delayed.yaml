@@ -34,7 +34,7 @@
         "G3_FAULT_CASE": "delayed",
         "G3_FAULT_REPLY": "./ascon-notes/league/g3/fixtures/AUDITED-HAIKU-CHANGE-MISSING.json"
       },
-      "dir": "ascon-zeta-r2"
+      "dir": "ascon-zeta-r3"
     }
   ]
 }

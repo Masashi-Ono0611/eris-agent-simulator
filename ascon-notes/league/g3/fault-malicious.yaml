@@ -33,7 +33,7 @@
         "ERIS_CLAUDE_BIN": "./ascon-notes/league/g3/fake-claude.py",
         "G3_FAULT_CASE": "malicious"
       },
-      "dir": "ascon-zeta-r2"
+      "dir": "ascon-zeta-r3"
     }
   ]
 }
