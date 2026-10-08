@@ -1,0 +1,61 @@
+SIMPLIFIED T (not the official weighted T)
+Equal weight per world; flagged worlds remain in ALL.
+FLAGGED WORLDS
+none
+
+ALL worlds=36
+agent	meanT	mean(P-noop)	P<noop
+inc-zeta	55.425686	387.794389	12/36
+opus-1	54.477749	321.736369	7/36
+ascon-zeta-r3a	54.135853	403.896654	16/36
+sonnet-1	53.623879	279.584742	14/36
+venue-arb	53.002410	298.892076	13/36
+grok-1	52.335211	183.708738	2/36
+clean-arb	49.522065	48.806708	12/36
+astra-1	49.444228	19.155873	14/36
+noop	49.274580	0.000000	0/36
+astra-2	48.991097	-18.187883	20/36
+sonnet-2	45.923918	-173.171817	24/36
+multi-arb	33.843322	-727.036291	30/36
+PAIRED ascon-zeta-r3a - inc-zeta n=36 meanTdiff=-1.289833 SE=2.611835 approx95%=[-6.513503, 3.933836] wins/n=17/36
+PAIRED regime=calm meanTdiff=-9.597889
+PAIRED regime=cdp-incident meanTdiff=-4.704598
+PAIRED regime=cex-drift meanTdiff=1.908124
+PAIRED regime=crash meanTdiff=-7.290380
+PAIRED regime=depeg meanTdiff=-7.472671
+PAIRED regime=depeg-persist meanTdiff=-2.570368
+PAIRED regime=informed-flow meanTdiff=5.176712
+PAIRED regime=launch meanTdiff=7.191681
+PAIRED regime=lending-incident meanTdiff=-1.388117
+PAIRED regime=spike meanTdiff=11.354239
+PAIRED regime=vuln meanTdiff=-1.128926
+PAIRED regime=whale meanTdiff=-6.955808
+
+loopIterations==362 ONLY worlds=36
+note: filters on loopIterations only; worlds with exit_code!=0 or violations stay in this table and are listed under FLAGGED WORLDS
+agent	meanT	mean(P-noop)	P<noop
+inc-zeta	55.425686	387.794389	12/36
+opus-1	54.477749	321.736369	7/36
+ascon-zeta-r3a	54.135853	403.896654	16/36
+sonnet-1	53.623879	279.584742	14/36
+venue-arb	53.002410	298.892076	13/36
+grok-1	52.335211	183.708738	2/36
+clean-arb	49.522065	48.806708	12/36
+astra-1	49.444228	19.155873	14/36
+noop	49.274580	0.000000	0/36
+astra-2	48.991097	-18.187883	20/36
+sonnet-2	45.923918	-173.171817	24/36
+multi-arb	33.843322	-727.036291	30/36
+PAIRED ascon-zeta-r3a - inc-zeta n=36 meanTdiff=-1.289833 SE=2.611835 approx95%=[-6.513503, 3.933836] wins/n=17/36
+PAIRED regime=calm meanTdiff=-9.597889
+PAIRED regime=cdp-incident meanTdiff=-4.704598
+PAIRED regime=cex-drift meanTdiff=1.908124
+PAIRED regime=crash meanTdiff=-7.290380
+PAIRED regime=depeg meanTdiff=-7.472671
+PAIRED regime=depeg-persist meanTdiff=-2.570368
+PAIRED regime=informed-flow meanTdiff=5.176712
+PAIRED regime=launch meanTdiff=7.191681
+PAIRED regime=lending-incident meanTdiff=-1.388117
+PAIRED regime=spike meanTdiff=11.354239
+PAIRED regime=vuln meanTdiff=-1.128926
+PAIRED regime=whale meanTdiff=-6.955808
