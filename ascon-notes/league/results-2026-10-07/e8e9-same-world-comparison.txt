@@ -1,0 +1,8 @@
+loops!=362: E8 1 E9 1
+E8 r3c meanT=52.73 inc-zeta=54.63 noop=50.20
+  cand-inc: n=36 mean=-1.90 SE=2.69 (~95% -7.28..+3.47) wins=14/36 | cand-noop: n=36 mean=+2.53 SE=2.86 (~95% -3.20..+8.25) wins=18/36
+E9 r3 meanT=53.93 inc-zeta=55.01 noop=49.37
+  cand-inc: n=36 mean=-1.08 SE=2.25 (~95% -5.58..+3.42) wins=15/36 | cand-noop: n=36 mean=+4.57 SE=2.23 (~95% +0.11..+9.02) wins=21/36
+r3c-r3 (all): n=36 mean=-1.21 SE=2.26 (~95% -5.72..+3.30) wins=17/36 | control inc-zeta seat: n=36 mean=-0.38 SE=1.71 (~95% -3.81..+3.04) wins=17/36
+r3c-r3 (loops==362 both): n=34 mean=-1.00 SE=2.39 (~95% -5.78..+3.77) wins=17/34 | control inc-zeta seat: n=34 mean=-0.89 SE=1.77 (~95% -4.44..+2.66) wins=15/34
+mean excluding top3:-3.21 bottom3:1.43 top5 [(23.4, 'lending-incident/69001'), (20.8, 'informed-flow/69001'), (18.2, 'cex-drift/69002'), (14.9, 'whale/69003'), (13.3, 'whale/69001')]

@@ -409,8 +409,8 @@
     {
       "id": "src-results-e1-e2",
       "path": "ascon-notes/league/RESULTS-E1-E2-2026-10-07.md",
-      "title": "E1–E3・E5–E7 混成場診断（2026-10-08更新）",
-      "locator": "E1＋E3統合・2026-10-08 E5/E6/E7同一世界比較。数値は各結果ファイル、運用補足は作業記録（口頭情報・未検証）に区分"
+      "title": "E1–E3・E5–E10 混成場・参照場診断（2026-10-08更新）",
+      "locator": "E1＋E3統合、E5–E10同一世界比較、帯間統合式。数値は保存結果、運用補足は依頼者報告と区分。"
     }
   ]
 }
@@ -428,11 +428,11 @@
     "src-retro-full-oct07",
     "src-r3x-summary"
   ],
-  "as_of": "2026-10-08T11:05:04+09:00",
+  "as_of": "2026-10-08T21:09:25+09:00",
   "measurement_as_of": null,
-  "last_update": "10/8 JST: E5–E7の保存集計を読取。r3a−r3は境界的な正方向、r3c−r3aは区別できず。研究版・診断のみ。G3・G4・公式P60は未検証・未完了。",
+  "last_update": "10/8 JST: E8–E10保存結果を読取。r3cの混成場優位は再現せず、F_refでは名目上先行するが背景変動あり。研究版・診断のみ。G3・G4・公式P60は未実施・未完了。",
   "phase_id": "phase-first",
-  "headline": "E5–E7診断: r3aの改善は境界的、r3cとの差は未確立。研究版のまま、提出ゲートは未達。",
+  "headline": "E8–E10診断: r3cの混成場優位は再現せず。参照場では名目上先行、提出ゲートは未達。",
   "subhead": "mini P60リハーサル60世界・Air混成36世界が完了。r3xは6世界/3ペアすべてで悪化、1 seedの診断で「修理2が害」は支持されない。 miniリハーサル・Air混成場の計測は完了。優勝の根拠は未確立。 本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。 全体回顧の42仮説: 各行の先頭判定でsupported（支持）7 / refuted（反証）25 / inconclusive（未決）6 / untested（未検証）4。複合判定5行（H18/H20/H25/H26/H41）も重複集計すると7 / 25 / 9 / 6（計47判定）。限定観測に対する回顧の評価であり、資格合格数ではない。",
   "q0b": {
     "state": "failed",
@@ -627,6 +627,17 @@
     "state_label": "G3 BLOCKED / 未READY"
   },
   "recent": [
+    {
+      "id": "recent-e8-e10",
+      "kind": "warning",
+      "title": "2026-10-08 E8–E10追試・改善は未確立",
+      "text": "2026-10-08 E8/E9読取: mini（Mac mini）、新seed 69001–69003の同じ36世界。r3cは6位・簡易平均T 52.73、r3は53.93。r3c−r3は−1.21（SE＝標準誤差2.26、近似95% −5.72..+3.30、17/36勝）、両run loops==362でも−1.00。対照inc-zeta席は−0.38（SE 1.71）。先行68001–68003の+3.25は再現せず、両帯等重み統合+1.02（SE約1.42）で改善未確立。E9のr3−noopは+4.57（SE 2.23、+0.11..+9.02）で、この帯のr3まで一律に弱いとはいえない。r3−inc-zetaはE1＋E3・E6・E9の近似逆分散統合−3.54（SE 1.17）。 2026-10-08 E10読取: 弱い参照場F_ref、seed 62001–62005の同じ60世界でr3cと以前のr3自前リハーサルを比較。簡易平均T 62.90対60.81、平均P−noop +1778対+1442 USDC、noop割れ4/60対5/60、revert/世界0.13対0.20。r3c−r3は+2.09（SE 0.79、近似95% +0.50..+3.68、38/60勝）、上位3世界除外で+1.03。名目上先行するが、対照multi-arb−2.09（SE 0.93）・clean-arb−0.20（SE 0.65）も動き、run間の背景変動が混在し得る。r3の60.81は今回の比較出力で、旧集計58.82との差の原因は未検証。 chain-log-e8-e10-mini.txt: E8はchunk 1 PASS・2–4 FAIL、E9は1–3 PASS・4 FAIL、E10は全4 PASS。FAILを保持し、ループ数だけでG0 PASSへ格上げしない。診断専用telemetryフラグは未発動との依頼者引継ぎで、抜粋に発動記録なし（全履歴の独立監査は未実施）。 SIMPLIFIED T（簡易T）は公式Tではない。r3a/r3cは研究版で提出候補ではなく、新しい提出hashには本人の新たなexception-carry（例外継承）確認が必要。G3・G4・公式P60は未実施・未完了、実チェーン安全性は未検証。",
+      "date": "2026-10-08",
+      "time_note": "保存集計の読取記録。実完了時刻・実走hashは独立監査していない。",
+      "sources": [
+        "src-results-e1-e2"
+      ]
+    },
     {
       "id": "recent-e5-e7",
       "kind": "warning",
@@ -2285,11 +2296,71 @@
     "sources": [
       "src-results-e1-e2"
     ],
-    "note": "2026-10-08読取: E5 r3a / E6 r3 / E7 r3c、mini・68001–68003の同じ36世界。候補の簡易Tと順位は54.14（3位）/48.82（10位）/52.07（6位）。r3a−r3は+5.31（SE＝標準誤差2.38、近似95% +0.55..+10.07、24/36勝）で下端は境界的。r3c−r3は+3.25（SE 1.73、−0.22..+6.72）、両run loops==362の33世界では+4.41（+0.90..+7.91）。r3c−r3aは−2.06（SE 1.97、−6.00..+1.88）で区別できない。各ALL比較のinc-zeta席対照は同じ向きに+0.31 / −1.44 / −1.75で、背景変動を補正値として差し引かない。 実験内の候補−inc-zetaはE5/E6/E7で−1.29 / −6.29 / −1.60、候補−noopは+4.86 / −1.62 / +2.49。E6対inc-zetaの区間[−10.87, −1.72]は0を除外し、このseed帯のr3は劣位、対noopは[−5.98, +2.74]で区別できない。 E5は相手telemetry BLOCKEDによる1回の再起動後に全4chunk G0 PASSとの作業記録（口頭情報・未検証）（抜粋は最終chunk 2 PASSを未収録）。E6はchunk 1/3/4 FAIL・loops≠362が2世界、E7はchunk 3 FAIL・1世界。FAILは保持。E6/E7はBLOCKEDなしで診断専用telemetryフラグ未発動との引継ぎ。ループ数部分集合は完全なG0監査ではない。 新seed 69001–69003でminiのr3c→r3追試を開始したとの作業記録（口頭情報・未検証）。実プロセス・完了数・結果は未確認で、E5–E7の結果には含めない。 出典: RESULTS-E1-E2-2026-10-07.mdの2026-10-08節、e5/e6/e7-mixed・paired集計、e5e6e7-same-world-comparison.txt（＋.py）、chain-log-e5-e7-mini.txt。運用補足・追試開始は作業記録（リポジトリ外）。",
+    "note": "2026-10-08読取: E5 r3a / E6 r3 / E7 r3c、mini・68001–68003の同じ36世界。候補の簡易Tと順位は54.14（3位）/48.82（10位）/52.07（6位）。r3a−r3は+5.31（SE＝標準誤差2.38、近似95% +0.55..+10.07、24/36勝）で下端は境界的。r3c−r3は+3.25（SE 1.73、−0.22..+6.72）、両run loops==362の33世界では+4.41（+0.90..+7.91）。r3c−r3aは−2.06（SE 1.97、−6.00..+1.88）で区別できない。各ALL比較のinc-zeta席対照は同じ向きに+0.31 / −1.44 / −1.75で、背景変動を補正値として差し引かない。 実験内の候補−inc-zetaはE5/E6/E7で−1.29 / −6.29 / −1.60、候補−noopは+4.86 / −1.62 / +2.49。E6対inc-zetaの区間[−10.87, −1.72]は0を除外し、このseed帯のr3は劣位、対noopは[−5.98, +2.74]で区別できない。 E5は相手telemetry BLOCKEDによる1回の再起動後に全4chunk G0 PASSとの作業記録（口頭情報・未検証）（抜粋は最終chunk 2 PASSを未収録）。E6はchunk 1/3/4 FAIL・loops≠362が2世界、E7はchunk 3 FAIL・1世界。FAILは保持。E6/E7はBLOCKEDなしで診断専用telemetryフラグ未発動との引継ぎ。ループ数部分集合は完全なG0監査ではない。 後続E8/E9の保存結果は読取済み。r3c−r3は−1.21で、先行帯の優位は再現しなかった（E8–E10欄）。実プロセス・実走hashの独立監査は未実施。 出典: RESULTS-E1-E2-2026-10-07.mdの2026-10-08節、e5/e6/e7-mixed・paired集計、e5e6e7-same-world-comparison.txt（＋.py）、chain-log-e5-e7-mini.txt。運用補足・追試開始は作業記録（リポジトリ外）。",
     "result": {
       "r3a_t": "54.14",
       "r3_t": "48.82",
       "r3c_t": "52.07",
+      "t_definition": "SIMPLIFIED T; equal weight per world; NOT official weighted T"
+    }
+  },
+  "e8e9": {
+    "name": "2026-10-08 E8 r3c / E9 r3（mini）",
+    "state": "measured-diagnostic-complete",
+    "field": "固定混成12体・同じ36世界を別runで比較",
+    "seeds": "69001–69003",
+    "regimes": 12,
+    "worlds": 36,
+    "completed_worlds": 36,
+    "started_at": null,
+    "expected_end": null,
+    "completed_at": null,
+    "completed_at_basis": "各runの保存ALL表を読取。実完了時刻は未提示。",
+    "verified": true,
+    "verification_scope": "summary-facts-only",
+    "q0_eligible": false,
+    "official_t_verified": false,
+    "p60_verified": false,
+    "g3_verified": false,
+    "g4_verified": false,
+    "safety_verified": false,
+    "sources": [
+      "src-results-e1-e2"
+    ],
+    "note": "2026-10-08 E8/E9読取: mini（Mac mini）、新seed 69001–69003の同じ36世界。r3cは6位・簡易平均T 52.73、r3は53.93。r3c−r3は−1.21（SE＝標準誤差2.26、近似95% −5.72..+3.30、17/36勝）、両run loops==362でも−1.00。対照inc-zeta席は−0.38（SE 1.71）。先行68001–68003の+3.25は再現せず、両帯等重み統合+1.02（SE約1.42）で改善未確立。E9のr3−noopは+4.57（SE 2.23、+0.11..+9.02）で、この帯のr3まで一律に弱いとはいえない。r3−inc-zetaはE1＋E3・E6・E9の近似逆分散統合−3.54（SE 1.17）。 chain-log-e8-e10-mini.txt: E8はchunk 1 PASS・2–4 FAIL、E9は1–3 PASS・4 FAIL、E10は全4 PASS。FAILを保持し、ループ数だけでG0 PASSへ格上げしない。診断専用telemetryフラグは未発動との依頼者引継ぎで、抜粋に発動記録なし（全履歴の独立監査は未実施）。 SIMPLIFIED T（簡易T）は公式Tではない。r3a/r3cは研究版で提出候補ではなく、新しい提出hashには本人の新たなexception-carry（例外継承）確認が必要。G3・G4・公式P60は未実施・未完了、実チェーン安全性は未検証。 出典: RESULTS-E1-E2-2026-10-07.mdの2026-10-08 E8–E10節。e8/e9-mixed・paired出力、e8e9-same-world-comparison.txt（＋.py）、e10-fref-r3c-seeds62001-5.txt、e10-vs-p60-rehearsal-r3.txt（＋.py）、chain-log-e8-e10-mini.txt。統合式・先行帯の出典も同節。",
+    "result": {
+      "r3c_t": "52.73",
+      "r3_t": "53.93",
+      "t_definition": "SIMPLIFIED T; equal weight per world; NOT official weighted T"
+    }
+  },
+  "e10": {
+    "name": "2026-10-08 E10 r3c / 以前のr3自前リハーサル",
+    "state": "measured-diagnostic-complete",
+    "field": "F_ref参照4体・同じ60世界を別runで比較",
+    "seeds": "62001–62005",
+    "regimes": 12,
+    "worlds": 60,
+    "completed_worlds": 60,
+    "started_at": null,
+    "expected_end": null,
+    "completed_at": null,
+    "completed_at_basis": "各runの保存ALL表を読取。実完了時刻は未提示。",
+    "verified": true,
+    "verification_scope": "summary-facts-only",
+    "q0_eligible": false,
+    "official_t_verified": false,
+    "p60_verified": false,
+    "g3_verified": false,
+    "g4_verified": false,
+    "safety_verified": false,
+    "sources": [
+      "src-results-e1-e2"
+    ],
+    "note": "2026-10-08 E10読取: 弱い参照場F_ref、seed 62001–62005の同じ60世界でr3cと以前のr3自前リハーサルを比較。簡易平均T 62.90対60.81、平均P−noop +1778対+1442 USDC、noop割れ4/60対5/60、revert/世界0.13対0.20。r3c−r3は+2.09（SE 0.79、近似95% +0.50..+3.68、38/60勝）、上位3世界除外で+1.03。名目上先行するが、対照multi-arb−2.09（SE 0.93）・clean-arb−0.20（SE 0.65）も動き、run間の背景変動が混在し得る。r3の60.81は今回の比較出力で、旧集計58.82との差の原因は未検証。 chain-log-e8-e10-mini.txt: E8はchunk 1 PASS・2–4 FAIL、E9は1–3 PASS・4 FAIL、E10は全4 PASS。FAILを保持し、ループ数だけでG0 PASSへ格上げしない。診断専用telemetryフラグは未発動との依頼者引継ぎで、抜粋に発動記録なし（全履歴の独立監査は未実施）。 SIMPLIFIED T（簡易T）は公式Tではない。r3a/r3cは研究版で提出候補ではなく、新しい提出hashには本人の新たなexception-carry（例外継承）確認が必要。G3・G4・公式P60は未実施・未完了、実チェーン安全性は未検証。 出典: RESULTS-E1-E2-2026-10-07.mdの2026-10-08 E8–E10節。e8/e9-mixed・paired出力、e8e9-same-world-comparison.txt（＋.py）、e10-fref-r3c-seeds62001-5.txt、e10-vs-p60-rehearsal-r3.txt（＋.py）、chain-log-e8-e10-mini.txt。統合式・先行帯の出典も同節。",
+    "result": {
+      "r3c_t": "62.90",
+      "r3_t": "60.81",
       "t_definition": "SIMPLIFIED T; equal weight per world; NOT official weighted T"
     }
   }
@@ -4649,7 +4720,7 @@
       ]
     }
   ],
-  "note": "2026-10-08: E1–E3・E5–E7は保存集計読取済み、診断のみ。新seed 69001–69003でminiのr3c→r3追試を開始したとの作業記録（口頭情報・未検証）。実プロセス・完了数・結果は未確認で、E5–E7の結果には含めない。 新規候補作成の停止は限定解除、時間予算はチームに委任（Codex主、miniをフル活用）。新しい提出hashは本人の新たな例外継承確認が必要。公式P60・G3/G4は未達。実消化未精算、MASTER旧キューとの不一致は未解消。",
+  "note": "2026-10-08: E1–E3・E5–E10は保存集計読取済み、診断のみ。後続E8/E9の保存結果は読取済み。r3c−r3は−1.21で、先行帯の優位は再現しなかった（E8–E10欄）。実プロセス・実走hashの独立監査は未実施。 新規候補作成の停止は限定解除、時間予算はチームに委任（Codex主、miniをフル活用）。新しい提出hashは本人の新たな例外継承確認が必要。公式P60・G3/G4は未達。実消化未精算、MASTER旧キューとの不一致は未解消。",
   "day_limit_hours": 6,
   "bundle": "forward100h・6h/日・110分/chunkを維持。実消化・残費未精算。G3準備/全監査込み14–15h、公式P60 12–13h＋照合1hは計画見積。",
   "side_jobs": [
@@ -5948,6 +6019,48 @@
       "src-dev5"
     ],
     "diagnostic": [
+      {
+        "candidate": "2026-10-08 E8 r3c / E9 r3（mini）",
+        "scope_ref": "status.e8e9",
+        "run_ref": "status.e8e9.name",
+        "detail_ref": "status.e8e9.note",
+        "state": "warning",
+        "verified": true,
+        "verification_scope": "summary-facts-only",
+        "state_label": "読取済み・診断のみ（ゲート完了ではない）",
+        "verdict": "SIMPLIFIED T（簡易T）は公式Tではない。r3a/r3cは研究版で提出候補ではなく、新しい提出hashには本人の新たなexception-carry（例外継承）確認が必要。G3・G4・公式P60は未実施・未完了、実チェーン安全性は未検証。",
+        "sources": [
+          "src-results-e1-e2"
+        ],
+        "metrics": [
+          {
+            "label": "簡易平均T（r3c / r3）",
+            "candidate_ref": "status.e8e9.result.r3c_t",
+            "baseline_ref": "status.e8e9.result.r3_t"
+          }
+        ]
+      },
+      {
+        "candidate": "2026-10-08 E10 r3c / 以前のr3自前リハーサル",
+        "scope_ref": "status.e10",
+        "run_ref": "status.e10.name",
+        "detail_ref": "status.e10.note",
+        "state": "warning",
+        "verified": true,
+        "verification_scope": "summary-facts-only",
+        "state_label": "読取済み・診断のみ（ゲート完了ではない）",
+        "verdict": "SIMPLIFIED T（簡易T）は公式Tではない。r3a/r3cは研究版で提出候補ではなく、新しい提出hashには本人の新たなexception-carry（例外継承）確認が必要。G3・G4・公式P60は未実施・未完了、実チェーン安全性は未検証。",
+        "sources": [
+          "src-results-e1-e2"
+        ],
+        "metrics": [
+          {
+            "label": "簡易平均T（r3c / r3）",
+            "candidate_ref": "status.e10.result.r3c_t",
+            "baseline_ref": "status.e10.result.r3_t"
+          }
+        ]
+      },
       {
         "candidate": "2026-10-08 E5–E7: r3a / r3 / r3c",
         "scope_ref": "status.e5e6e7",
@@ -8054,6 +8167,17 @@
   ],
   "note": "追記のみ。旧100件は全フィールド保持、8件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-119",
+      "timestamp": "2026-10-08T21:09:25+09:00",
+      "type": "実測",
+      "summary": "2026-10-08 E8/E9読取: mini（Mac mini）、新seed 69001–69003の同じ36世界。r3cは6位・簡易平均T 52.73、r3は53.93。r3c−r3は−1.21（SE＝標準誤差2.26、近似95% −5.72..+3.30、17/36勝）、両run loops==362でも−1.00。対照inc-zeta席は−0.38（SE 1.71）。先行68001–68003の+3.25は再現せず、両帯等重み統合+1.02（SE約1.42）で改善未確立。E9のr3−noopは+4.57（SE 2.23、+0.11..+9.02）で、この帯のr3まで一律に弱いとはいえない。r3−inc-zetaはE1＋E3・E6・E9の近似逆分散統合−3.54（SE 1.17）。 2026-10-08 E10読取: 弱い参照場F_ref、seed 62001–62005の同じ60世界でr3cと以前のr3自前リハーサルを比較。簡易平均T 62.90対60.81、平均P−noop +1778対+1442 USDC、noop割れ4/60対5/60、revert/世界0.13対0.20。r3c−r3は+2.09（SE 0.79、近似95% +0.50..+3.68、38/60勝）、上位3世界除外で+1.03。名目上先行するが、対照multi-arb−2.09（SE 0.93）・clean-arb−0.20（SE 0.65）も動き、run間の背景変動が混在し得る。r3の60.81は今回の比較出力で、旧集計58.82との差の原因は未検証。 chain-log-e8-e10-mini.txt: E8はchunk 1 PASS・2–4 FAIL、E9は1–3 PASS・4 FAIL、E10は全4 PASS。FAILを保持し、ループ数だけでG0 PASSへ格上げしない。診断専用telemetryフラグは未発動との依頼者引継ぎで、抜粋に発動記録なし（全履歴の独立監査は未実施）。 SIMPLIFIED T（簡易T）は公式Tではない。r3a/r3cは研究版で提出候補ではなく、新しい提出hashには本人の新たなexception-carry（例外継承）確認が必要。G3・G4・公式P60は未実施・未完了、実チェーン安全性は未検証。 出典: RESULTS-E1-E2-2026-10-07.mdの2026-10-08 E8–E10節。e8/e9-mixed・paired出力、e8e9-same-world-comparison.txt（＋.py）、e10-fref-r3c-seeds62001-5.txt、e10-vs-p60-rehearsal-r3.txt（＋.py）、chain-log-e8-e10-mini.txt。統合式・先行帯の出典も同節。",
+      "sources": [
+        "src-results-e1-e2"
+      ],
+      "time_basis": "保存資料の読取・近似統合計算のJST記録時刻。実測開始/終了時刻ではない。",
+      "event_date": "2026-10-08"
+    },
     {
       "id": "log-118",
       "timestamp": "2026-10-08T11:05:04+09:00",

@@ -1,0 +1,35 @@
+SIMPLIFIED T (not the official weighted T)
+Equal weight per world; flagged worlds remain in ALL.
+FLAGGED WORLDS
+WARN world chunk=e8-c3 regime=vuln seed=69002 run_dir=runs/2026-10-08T03-37-12-213Z loopIterations=361 exit_code=0 violations=[]
+
+ALL worlds=36
+agent	meanT	mean(P-noop)	P<noop
+inc-zeta	54.631713	414.996679	14/36
+opus-1	54.036079	253.334949	5/36
+venue-arb	53.276458	260.203156	17/36
+grok-1	53.232062	186.923776	5/36
+sonnet-1	52.781357	173.739389	12/36
+ascon-zeta-r3c	52.726882	194.569541	18/36
+noop	50.200372	0.000000	0/36
+astra-1	50.166923	3.494559	23/36
+astra-2	50.011923	4.888625	18/36
+clean-arb	49.940477	16.733682	22/36
+sonnet-2	44.060355	-299.981591	23/36
+multi-arb	34.935400	-797.990068	32/36
+
+loopIterations==362 ONLY worlds=35
+note: filters on loopIterations only; worlds with exit_code!=0 or violations stay in this table and are listed under FLAGGED WORLDS
+agent	meanT	mean(P-noop)	P<noop
+inc-zeta	54.760278	431.770172	13/35
+opus-1	54.010688	257.489781	5/35
+grok-1	53.244802	192.750687	4/35
+ascon-zeta-r3c	52.972840	215.082373	17/35
+venue-arb	52.884773	244.423735	17/35
+sonnet-1	52.813142	181.054495	11/35
+noop	50.118168	0.000000	0/35
+astra-1	50.093462	4.160985	22/35
+astra-2	49.981965	8.394929	17/35
+clean-arb	49.847008	16.987479	22/35
+sonnet-2	43.955472	-299.629091	22/35
+multi-arb	35.317401	-768.192805	31/35
