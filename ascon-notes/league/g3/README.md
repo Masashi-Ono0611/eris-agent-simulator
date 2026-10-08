@@ -1,4 +1,4 @@
-# G3-proxy offline inputs — r2
+# G3-proxy offline inputs — r3 (BLOCKED)
 
 **NO-GO. Offline preparation only; no simulation or launch authorization.**
 The non-sending malicious control is expected to produce **safety FAIL** while
@@ -17,7 +17,7 @@ partial/intersection-only summaries. No old results were used to select new seed
 
 ## Rosters and blocked slot
 
-`ref-{off,on}.yaml` has noop (baseline), multi-arb, clean-arb, cand/ascon-zeta-r2.
+`ref-{off,on}.yaml` has noop (baseline), multi-arb, clean-arb, cand/ascon-zeta-r3.
 ON omits `ERIS_AGENT_FROZEN`; OFF sets `1`. All other candidate env is identical:
 claude-cli:haiku, call logging=1, timeout=300000, existing timed CLI wrapper.
 Parent **must unset** FROZEN before BOTH paired runs (omission does not erase an
@@ -27,8 +27,9 @@ AUTO wallets are for future local Anvil only. No private wallets were opened.
 `example/agents/fixed-bid-5gwei/` now exists. **G3 F_mix remains BLOCKED**
 for the reasons in [G3-PREREQ-2026-10-07.md](../G3-PREREQ-2026-10-07.md).
 Slots are fixed as noop, the 10 opponents in MASTER's listed order, then cand.
-Input-lock review and re-registration remain pending; directory existence does
-not establish an executable F_mix.
+Repository input hashes and r3 candidate binding were re-registered on 2026-10-08.
+Directory existence and matching hashes do not establish an executable F_mix.
+See [G3-LOCK-R3-2026-10-08.md](../G3-LOCK-R3-2026-10-08.md) for remaining blockers.
 inc-zeta maps to ascon-zeta with measured ASCON_DELTA_PARAMS:
 `{"bidMode":2,"bidProfitShareBps":3000,"gasPerSwap":140000}` from roster-league-u1
 and scratchpad mix-v3. No ASCON_ZETA_PARAMS override is invented.
@@ -50,6 +51,21 @@ worlds/chunk, shorter after measured audit costs. ON-first pairs need recheck af
 OFF completes; every next cell requires G0 + complete revision/action audit.
 **Non-sending malicious precheck precedes world 1**, although the scheduled seven
 fault worlds retain their prescribed order after the normal group.
+
+## r3 registration (2026-10-08)
+
+`python3 -B ascon-notes/league/g3/register-inputs.py --check` compares the
+registration byte-for-byte and uses `prestart-check.py` to verify every pin.
+After review ONLY, `--write` recomputes repository hashes and the fixed inline tool
+manifest. It does not register a state dump, create a live source manifest, clear
+prerequisites, change seeds or grant start permission. Candidate tree must match
+C-EXCEPTION-01 section 8, using sorted compact JSON of relative-path SHA-256 values.
+The 11 rosters and 46 schedule labels now name r3; `cand` and opponent slots stay fixed.
+The chain directory remains a legacy r2 execution snapshot; its source/eval/replay
+paths and manifest require a separate reviewed r3 installation. No snapshot or old
+result is promoted to r3 evidence. No completeness exemption remains in its gate.
+The remainder of this README includes historical verification records; current
+commands/results are recorded in the 2026-10-08 report, not inferred from those records.
 
 ## Offline checks
 
@@ -103,7 +119,7 @@ observation, read-only client stub and return/submit capture. Both malicious fix
 are legal swap schema yet relax single slippage 75→76 and attempt unfunded WETH.
 Tests also exercise stock StrategyRunner.setSource and both output routes, then
 restore a null executor. This is **not** a custom stock revision-loop substitute:
-no botMain installation lifecycle, receipts, epoch boundary or actual r2 module
+no botMain installation lifecycle, receipts, epoch boundary or actual candidate module
 restore is certified. Worker fixtures make no RPC calls; no sender exists.
 Unknown revert parses successfully; botMain checks version existence separately.
 

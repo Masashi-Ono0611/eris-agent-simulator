@@ -27,7 +27,7 @@ TOOL_ROOT=BASE
 # Recorded tool manifest, kept inline to limit edits to the approved four files.
 # Refresh only after reviewing changed tool bytes; never derive expected hashes at run time.
 TOOL_MANIFEST={
-    'gates.py':'0a3970e720e0b81051bdbaf3e1ff7c83b355a95795f2ef5c8bed36c5f620ed0a',
+    'gates.py':'0acab461951dbd7b5f9d55c37244b127b7a09ec8a33367f047f28d8b73ac8c3b',
     'revision_audit.py':'f2ff12581e8bdbed29962ed1019aa2ba140cfcb05096f3c9cb5dc57b4d114f52',
 }
 SOURCE=Path('/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/release-r2')
@@ -35,7 +35,7 @@ VIEW=BASE/'source-view'
 EVAL=BASE/'eval'
 G3='ascon-notes/league/g3'
 LEAGUE='ascon-notes/league'
-F_MIX='fixed-bid-5gwei implementation/configuration absent; both F_mix rosters intentionally invalid'
+F_MIX='F_mix r3 load calibration and real-chain validation absent; launcher remains F_ref-only'
 CHECKS={'candidate','inputs','trackedTree','upstreamByteEquality','upstreamRefPinned','seedAudit','disk','noAnvil','parentFrozenUnset','unitTimingOverrideAbsent','completeness'}
 MANIFEST=json.loads((BASE/'source-manifest.json').read_text())
 BUDGET=json.loads((VIEW/G3/'budget.json').read_text())
@@ -44,7 +44,7 @@ class Stop(Exception):
     def __init__(self, message, rc=2): super().__init__(message); self.rc=rc
 
 def prestart_gate(doc, rc):
-    """Only the exact F_mix completeness item is exempted; never whole FAIL."""
+    """No completeness exemption: every unresolved prerequisite blocks."""
     checks=doc.get('checks')
     if not isinstance(checks,dict) or not CHECKS <= set(checks): return False
     if rc not in (0,1): return False
@@ -56,7 +56,7 @@ def prestart_gate(doc, rc):
     comp=checks['completeness']; blocked=comp.get('blocked')
     if not isinstance(blocked,list) or len(set(map(str,blocked)))!=len(blocked): return False
     if comp['pass'] != (blocked==[]): return False
-    return blocked==[] or blocked==[F_MIX]
+    return blocked==[]
 
 def rows():
     with (VIEW/G3/'schedule.tsv').open() as f: allrows=list(csv.DictReader(f,delimiter='\t'))
@@ -91,7 +91,7 @@ def summary_init():
     with dest.open('x') as f:
         w=csv.writer(f,delimiter='\t',lineterminator='\n')
         w.writerow(['order','label','field','mode','result','exit_code','reason'])
-        for r in normal: w.writerow([r['order'],r['label'],r['field'],r['mode'],'NOT RUN','', 'BLOCKED: fixed-bid-5gwei missing; excluded F_mix' if r['field']=='mix' else 'planned only; prestart/malicious/audit gates required'])
+        for r in normal: w.writerow([r['order'],r['label'],r['field'],r['mode'],'NOT RUN','', 'BLOCKED: '+F_MIX if r['field']=='mix' else 'planned only; prestart/malicious/audit gates required'])
 
 def summary_update(row,result,rc,reason):
     dest=BASE/'summary.tsv'
@@ -332,7 +332,7 @@ def main():
     _,ref=rows()
     if arg=='--dry-run':
         print('# F_REF ONLY: 18 normal worlds; all 18 F_mix = NOT RUN / BLOCKED.')
-        print('# Conditional full plan, NOT an execution log. Each non-PASS stops. F_mix exemption is exact-match only.')
+        print('# Conditional full plan, NOT an execution log. Each non-PASS stops. No completeness exemptions.')
         print('# --run acquires /tmp/g3-chain/chain.lock; checks pgrep; reserves <=110min from $HOME/.ascon-g3/budget-ledger.json (6h/day; missing/corrupt = BLOCKED).')
         print('caffeinate -i -s -w "${LAUNCHER_PID}"')
         print('# Auth helper (only after PASS prestart + malicious): resolve executable claude; capture auth status --json without raw output.')

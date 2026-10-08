@@ -1,3 +1,12 @@
+> 2026-10-08: This is a historical r2 execution snapshot, not an r3-ready launcher.
+> Repository rosters/lock/schedule now bind r3. The obsolete missing-opponent
+> completeness exemption has been removed: ALL remaining blockers stop prestart.
+> F_mix remains blocked on r3 load/real-chain validation; the launcher is F_ref-only.
+> Fixed tool hashes were refreshed by `../register-inputs.py --write` after review.
+> Source-view/eval/replay paths and live source/state manifests have NOT been renewed.
+> Historical results and paths below are not current r3 evidence. See
+> [the current report](../../G3-LOCK-R3-2026-10-08.md).
+
 # G3-proxy F_REF-ONLY launcher (offline preparation, NOT launch approval)
 
 Entry point: `/tmp/g3-chain/g3-ref-chain.sh --dry-run` (default). `--run` is a future

@@ -19,6 +19,7 @@ export function validate() {
         stdout:checked.stdout.trim(),stderr:checked.stderr.trim(),status:checked.status===0?'PASS':'BLOCKED'});
       assert.deepEqual(missing,[]);
       assert.equal(checked.status,0);
+      assert.equal(r.agents.find(a=>a.id==='cand').dir,'ascon-zeta-r3');
       assert.equal(r.agents.filter(a=>a.baseline).length,1);
       assert.equal(r.agents.find(a=>a.baseline).id,'noop');
       for(const a of r.agents) {
