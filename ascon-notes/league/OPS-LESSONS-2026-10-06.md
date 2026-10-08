@@ -68,6 +68,7 @@ bash ascon-notes/league/remote/chain-template.sh \
 
 | failure | cause | guard | where tested |
 |---|---|---|---|
+| 2026-10-04 01:00 JST起点の100h予算を正確に精算できなかった（依頼者報告） | chainログにtimestampがなく、あるホストではend markerのmtimeとworld開始時刻が矛盾。既存ledger.jsonlにもhost・start/endがない | `chain-template.sh` がホストローカルの追記専用JSONLへchunk_start/chunk_endとUTC時刻を保存。HOME未設定・空なら実行時に明示台帳パスを要求（help/dry-runは利用可）。START書込不能は起動前にexit 2、END書込不能はWARN＋標準出力/chain.logの補助行（end.markerはCHAIN_ENDの単一行）。中断の終了時刻はUNKNOWNのまま保持 | `remote/test_chain_template.py` の `test_hours_*`: PASS/FAIL継続/BLOCKED停止/runner失敗/STOPPED、TERM/KILL中断、書込拒否、END失敗時の通常exit保持と単一行marker、HOME未設定/空でのhelp・dry-run・明示パス成功と未指定停止、追記とJSON quoting。実ホストでの計測は未検証 |
 | SSH+nohup起動の全worldがAnvil不足で失敗 | 非対話シェルのPATHにfoundry/nodeがなく、既存Anvil検査だけでは検出できなかった | manifest begin前にanvil/node/python3の解決先を記録。欠落はSTOP・exit 3。測定経路はforgeを起動しないのでforgeは要求しない | `test_chain_template.py`: `test_path_missing_stops_before_manifest` / `test_path_resolved_passes_without_forge` |
 | セッション再起動でbackground計測がexit 143 | ハーネスが子プロセスの寿命を管理していたという報告 | runbook §7にnohup・/dev/null・caffeinate・PATH/nvm・独自end marker確認を固定。LAUNCH_ENVでPATH先頭/TTYを記録しTTYならWARN | `test_launch_env_tty_warns` / `test_launch_env_detached_input_passes`。切断後の実機生存は未検証 |
 | ファイル削除後も空きが戻らず計測停止 | Time Machine local snapshotが削除済みデータを保持していたという報告 | macOSでsnapshot数>=10ならWARN。容量STOPに件数と対処を追加。自動削除なし | `test_snapshot_warning_threshold` / `test_snapshot_low_disk_remedy` / `test_snapshot_absent_or_linux_passes` / `test_snapshot_probe_failure_warns` |

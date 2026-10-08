@@ -142,3 +142,12 @@ chunk ログの隣に `*-g0.json`（原出力）、`*-g0.log`（状態表示）�
 - 分類器は、G0 が読んだ後にログを読む。G0 と結び付けて固定しているのは `index.tsv` のハッシュだけで、ログ自体は固定していない。検査と記録のハッシュの間にも、わずかな時間差がある。測定ホストを占有している前提（他の作業がログを書き換えない）に依存する。
 - どちらも診断用のチェーンだけの問題で、公式・ゲートの経路には適用されない。
 
+## 10. ホスト別の時間台帳（追記専用）
+
+HOMEが設定済みかつ空でない場合の既定は `$HOME/.ascon-hours/chain-hours.jsonl`。HOME未設定・空の場合、`--help` と `--dry-run` は利用できるが、実行には `--hours-ledger PATH` が必須。未指定なら `HOURS_LEDGER_START_FAILED` と指定方法を表示し、最初のchunk起動前にexit 2で停止する。`--hours-ledger PATH` で変更でき、存在しない親ディレクトリは mode 700 で作る。同じホストでは同じ永続パスを使い、**台帳は決して編集・削除しない**。停止した試行からの再起動には `--relaunch-of 元prefix` を付ける（未着手chunkだけを選ぶ規則は同じ）。dry-runでは台帳を作成・追記しない。
+
+各chunkは `chunk_start` と、結果確定時の `chunk_end` を各1行のJSONとして追記する。`python3 -c 'import json,sys; [print(json.dumps(json.loads(s), ensure_ascii=False, indent=2)) for s in sys.stdin]' < "$HOME/.ascon-hours/chain-hours.jsonl"` で読める。schema_version=1。hostは `hostname -s`、host_id_sourceに出所を記録する。同名・改名ホストは自動判別できないため、収集元ホストとの対応も保持する。regimes/seedsは配列、flagsは使用した続行フラグ名のみ、exit_codesは各工程の終了コード（未実行はnull）。開始行のresult/utc_endはnull、終了行のresultはPASS/FAIL/BLOCKED/RUNNER_FAILED/STOPPED。utc_start/utc_endはshellの `date -u` による秒精度UTC、local_utc_offsetは開始時のUTC offset。
+
+読むときは `(host, prefix, chunk)` の開始・終了を対にし、**2026-10-04 01:00 JST = 2026-10-03T16:00:00Z以後**に切り詰めた区間をホストごとにunionしてから時間を合計する。開始だけなら **INTERRUPTED / UNKNOWN end** と報告し、0時間扱い・mtimeによる補完をしない。重複イベント、逆転時刻、壊れた行も精算不能として調査する。記録範囲はmanifest begin直前からG0/分類などの結果確定までで、chunk間の待機は含まない。ホスト時計の正確さは別途確認する。このツリーには `budget_hours.py` がないため、自動union readerの追加は未実施。
+
+START作成・追記に失敗すると `HOURS_LEDGER_START_FAILED` / exit 2でchunk起動前に停止する。ENDだけの失敗ではWARNを出し、通常のchain終了コードと `CHAIN_END_<prefix>=<rc>` 行を保持しつつ、標準出力・chain.logだけに補助行 `HOURS_LEDGER_END_FAILED_<prefix>=1` を付ける。`end.marker` は従来どおり `CHAIN_END_<prefix>=<rc>` の単一行のみ。この場合も時間精算は未完了。TERM/INT/HUP・KILLの中断は終了時刻を推測せず、開始行を未対応のまま残す。

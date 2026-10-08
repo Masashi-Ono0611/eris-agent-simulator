@@ -12,6 +12,7 @@ Usage: bash chain-template.sh --repo DIR --roster FILE --prefix UNIQUE --seeds "
   [--continue-on-g0-fail] [--activity-note "host idle; scheduled jobs paused"]
   [--continue-on-opponent-telemetry-blocked CANDIDATE_ID] (diagnostic only)
   [--log-root DIR] [--lock-dir DIR]
+  [--hours-ledger PATH] [--relaunch-of PREFIX]
 Defaults: all 4 chunks, parallel=3, base-port=8547, MIN_FREE_GB=40.
 Use a UTC timestamp in UNIQUE. Read OPS-LESSONS-2026-10-06.md before live use.
 HELP
@@ -28,12 +29,15 @@ telemetry_candidate='' telemetry_enabled=0
 log_root="${TMPDIR:-/tmp}/ascon-chain-logs"
 lock_dir="${TMPDIR:-/tmp}/ascon-measurement-host.lock"
 run_dir='' lock_owned=0
+hours_ledger='' relaunch_of=''
+if [ -n "${HOME:-}" ]; then hours_ledger="${HOME:-}/.ascon-hours/chain-hours.jsonl"; fi
+hours_active=0 hours_end_failed=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --help|-h) usage; exit 0 ;;
     --dry-run) dry_run=1; shift ;;
     --continue-on-g0-fail) continue_g0=1; shift ;;
-    --repo|--roster|--prefix|--seeds|--chunks|--from|--to|--min-free-gb|--mode|--activity-note|--log-root|--lock-dir|--continue-on-opponent-telemetry-blocked)
+    --repo|--roster|--prefix|--seeds|--chunks|--from|--to|--min-free-gb|--mode|--activity-note|--log-root|--lock-dir|--hours-ledger|--relaunch-of|--continue-on-opponent-telemetry-blocked)
       [ "$#" -ge 2 ] || die "missing value for $1"
       opt=$1; val=$2; shift 2
       case "$opt" in
@@ -47,6 +51,7 @@ while [ "$#" -gt 0 ]; do
         --min-free-gb) min_free=$val; disk_explicit=1 ;;
         --mode) mode=$val ;; --activity-note) activity_note=$val ;;
         --log-root) log_root=$val ;; --lock-dir) lock_dir=$val ;;
+        --hours-ledger) hours_ledger=$val ;; --relaunch-of) relaunch_of=$val ;;
         --continue-on-opponent-telemetry-blocked) telemetry_candidate=$val; telemetry_enabled=1 ;;
       esac ;;
     *) die "unknown argument: $1" ;;
@@ -57,10 +62,19 @@ done
 finish() {
   final_rc=$?
   trap - EXIT
+  # Unexpected orderly stops after START still get an end. Signals deliberately
+  # leave START unmatched: the foreground child may still be running.
+  if [ "$hours_active" -eq 1 ]; then hours_end; fi
   if [ "$lock_owned" -eq 1 ]; then
     rmdir "$lock_dir" || final_rc=2
   fi
   if [ "$dry_run" -eq 0 ]; then
+    if [ "$hours_end_failed" -eq 1 ]; then
+      printf 'HOURS_LEDGER_END_FAILED_%s=1\n' "$run_id"
+      if [ -n "$run_dir" ]; then
+        printf 'HOURS_LEDGER_END_FAILED_%s=1\n' "$run_id" >> "$run_dir/chain.log"
+      fi
+    fi
     if [ -n "$run_dir" ]; then
       printf 'CHAIN_END_%s=%s\n' "$run_id" "$final_rc" >> "$run_dir/chain.log" || final_rc=2
       printf 'CHAIN_END_%s=%s\n' "$run_id" "$final_rc" > "$run_dir/end.marker" || final_rc=2
@@ -70,9 +84,9 @@ finish() {
   exit "$final_rc"
 }
 trap finish EXIT
-trap 'exit 130' INT
-trap 'exit 143' TERM
-trap 'exit 129' HUP
+trap 'hours_active=0; exit 130' INT
+trap 'hours_active=0; exit 143' TERM
+trap 'hours_active=0; exit 129' HUP
 note() {
   printf '%s\n' "$*"
   if [ -n "$run_dir" ]; then printf '%s\n' "$*" >> "$run_dir/chain.log" || die 'cannot write chain log'; fi
@@ -82,6 +96,12 @@ repo_dir=$(cd "$repo_dir" && pwd -P) || die 'repo missing'
 case "$roster_file" in /*) ;; *) roster_file="$repo_dir/$roster_file" ;; esac
 case "$log_root" in /*) ;; *) log_root="$PWD/$log_root" ;; esac
 case "$lock_dir" in /*) ;; *) lock_dir="$PWD/$lock_dir" ;; esac
+if [ -z "$hours_ledger" ]; then
+  [ "$dry_run" -eq 1 ] || die 'HOURS_LEDGER_START_FAILED: no ledger path; pass --hours-ledger PATH (chunk not run)'
+else
+  case "$hours_ledger" in /*) ;; *) hours_ledger="$PWD/$hours_ledger" ;; esac
+fi
+[ -z "$relaunch_of" ] || [[ "$relaunch_of" =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || die 'invalid --relaunch-of prefix'
 case "$mode" in diagnostic|qualification) ;; *) die 'invalid --mode' ;; esac
 [ "$continue_g0" -eq 0 ] || [ "$mode" = diagnostic ] || die '--continue-on-g0-fail is diagnostics only'
 if [ "$telemetry_enabled" -eq 1 ]; then
@@ -205,6 +225,56 @@ command_to_log() {
   if [ "$dry_run" -eq 1 ]; then return 0; fi
   "$@" > "$dest_file" 2>&1
 }
+# One JSON line per event; no shell interpolation inside JSON and no persistent
+# file descriptor. A single printf append opens/closes the ledger for each event.
+hours_write() {
+  [ ! -e "$hours_ledger" ] || [ -f "$hours_ledger" ] || return 1
+  hours_line=$(python3 -B - "$1" "$hours_host" "$run_id" "$label" "$chunk_no" \
+    "$regime_list" "$seed_list" "$mode" "$continue_g0" "$telemetry_enabled" \
+    "$utc_start" "$utc_end" "$local_utc_offset" "$chunk_result" \
+    "$begin_rc" "$bind_rc" "$matrix_rc" "$verify_rc" "$g0_rc" "$status_rc" "$classify_rc" \
+    "$relaunch_of" "$$" "$activity_note" <<'PY'
+import json, sys
+(event, host, prefix, label, chunk, regimes, seeds, mode, continue_g0, telemetry,
+ utc_start, utc_end, offset, result, begin, bind, matrix, verify, g0, status,
+ classify, relaunch, pid, activity) = sys.argv[1:]
+flags = []
+if continue_g0 == '1': flags.append('--continue-on-g0-fail')
+if telemetry == '1': flags.append('--continue-on-opponent-telemetry-blocked')
+codes = dict(zip(('manifest_begin', 'telemetry_bind', 'matrix', 'verify', 'g0',
+                 'telemetry_status', 'telemetry_classify'),
+                (int(v) if v else None for v in (begin, bind, matrix, verify, g0, status, classify))))
+print(json.dumps(dict(schema_version=1, event=event, host=host,
+    host_id_source='hostname -s (host-local name; not a globally unique hardware ID)',
+    prefix=prefix, label=label, chunk=int(chunk), regimes=regimes.split(),
+    seeds=[int(s) for s in seeds.split()], mode=mode, flags=flags,
+    utc_start=utc_start, utc_end=utc_end or None, local_utc_offset=offset,
+    result=result or None, exit_codes=codes, parallel=3,
+    relaunch_of=relaunch or None, pid=int(pid), activity_note=activity),
+    ensure_ascii=True, separators=(',', ':')))
+PY
+  ) || return 1
+  printf '%s\n' "$hours_line" >> "$hours_ledger"
+}
+hours_start() {
+  begin_rc='' bind_rc='' matrix_rc='' verify_rc='' g0_rc='' status_rc='' classify_rc=''
+  chunk_result='' utc_end=''
+  hours_parent=${hours_ledger%/*}
+  mkdir -p -m 700 "${hours_parent:-/}" || die "HOURS_LEDGER_START_FAILED: cannot create ledger directory: $hours_ledger"
+  hours_host=$(hostname -s) && [ -n "$hours_host" ] || die 'HOURS_LEDGER_START_FAILED: cannot capture host'
+  local_utc_offset=$(date +%z) || die 'HOURS_LEDGER_START_FAILED: cannot capture UTC offset'
+  utc_start=$(date -u +%Y-%m-%dT%H:%M:%SZ) || die 'HOURS_LEDGER_START_FAILED: cannot capture UTC start'
+  hours_write chunk_start || die "HOURS_LEDGER_START_FAILED: cannot append START: $hours_ledger (chunk not run)"
+  hours_active=1
+  chunk_result=STOPPED
+}
+hours_end() {
+  # Do not retry a failed END or synthesize another record in the EXIT trap.
+  hours_active=0
+  if utc_end=$(date -u +%Y-%m-%dT%H:%M:%SZ) && hours_write chunk_end; then return 0; fi
+  hours_end_failed=1
+  printf 'WARN: HOURS_LEDGER_END_FAILED: %s; UNKNOWN end for %s; preserve START and investigate\n' "$hours_ledger" "$label" >&2
+}
 chain_rc=0
 for chunk_no in $chunk_list; do
   case "$chunk_no" in
@@ -219,14 +289,20 @@ for chunk_no in $chunk_list; do
   check_disk
   check_idle
   note "CHUNK $chunk_no label=$label regimes=$regime_list"
-  command_to_log "$chunk_log-begin.log" python3 -B ascon-notes/league/round-manifest.py begin "$label" --roster "$roster_file" --regimes "$regime_list" --seeds "$seed_list" --parallel 3 || die "manifest begin failed: $label"
+  [ "$dry_run" -eq 1 ] || hours_start
+  command_to_log "$chunk_log-begin.log" python3 -B ascon-notes/league/round-manifest.py begin "$label" --roster "$roster_file" --regimes "$regime_list" --seeds "$seed_list" --parallel 3
+  begin_rc=$?
+  if [ "$begin_rc" -ne 0 ]; then chunk_result=RUNNER_FAILED; die "manifest begin failed: $label"; fi
   if [ "$telemetry_enabled" -eq 1 ]; then
-    command_to_log "$chunk_log-bind.log" python3 -B "$classifier" bind --manifest "ascon-notes/league/manifests/$label.json" --roster "$roster_file" --candidate "$telemetry_candidate" --context "$log_root/$run_id/telemetry-context.json" || die "cannot fix candidate/opponents at start: $label"
+    command_to_log "$chunk_log-bind.log" python3 -B "$classifier" bind --manifest "ascon-notes/league/manifests/$label.json" --roster "$roster_file" --candidate "$telemetry_candidate" --context "$log_root/$run_id/telemetry-context.json"
+    bind_rc=$?
+    [ "$bind_rc" -eq 0 ] || die "cannot fix candidate/opponents at start: $label"
   fi
   command_to_log "$chunk_log-run.log" env "MIN_FREE_GB=$min_free" NPM_CONFIG_IGNORE_SCRIPTS=true bash ascon-notes/league/run-league.sh --label "$label" --roster "$roster_file" --regimes "$regime_list" --seeds "$seed_list" --parallel 3 --base-port 8547
   matrix_rc=$?
   command_to_log "$chunk_log-verify.log" python3 -B ascon-notes/league/round-manifest.py verify "$label"
   verify_rc=$?
+  if [ "$matrix_rc" -ne 0 ] || [ "$verify_rc" -ne 0 ]; then chunk_result=RUNNER_FAILED; fi
   # Intentional splitting of validated lists for argparse nargs='+'. Globbing is disabled.
   # shellcheck disable=SC2086
   if [ "$telemetry_enabled" -eq 1 ]; then
@@ -234,7 +310,9 @@ for chunk_no in $chunk_list; do
     # shellcheck disable=SC2086
     command_to_log "$chunk_log-g0.json" python3 -B ascon-notes/league/g0.py "$label" --roster "$roster_file" --regimes $regime_list --seeds $seed_list --manifest "$label" --json
     g0_rc=$?
-    command_to_log "$chunk_log-g0.log" python3 -B "$classifier" status --g0 "$chunk_log-g0.json" --g0-rc "$g0_rc" || die "G0 inconsistent structured output: $label"
+    command_to_log "$chunk_log-g0.log" python3 -B "$classifier" status --g0 "$chunk_log-g0.json" --g0-rc "$g0_rc"
+    status_rc=$?
+    [ "$status_rc" -eq 0 ] || die "G0 inconsistent structured output: $label"
   else
     # shellcheck disable=SC2086
     command_to_log "$chunk_log-g0.log" python3 -B ascon-notes/league/g0.py "$label" --roster "$roster_file" --regimes $regime_list --seeds $seed_list --manifest "$label"
@@ -242,20 +320,30 @@ for chunk_no in $chunk_list; do
   fi
   [ "$dry_run" -eq 0 ] || continue
   note "RESULT $label matrix_rc=$matrix_rc verify_rc=$verify_rc g0_rc=$g0_rc"
-  [ "$matrix_rc" -eq 0 ] && [ "$verify_rc" -eq 0 ] || die "runner/manifest failure: $label (G0 recorded; no continuation)"
+  if [ "$matrix_rc" -ne 0 ] || [ "$verify_rc" -ne 0 ]; then
+    chunk_result=RUNNER_FAILED
+    die "runner/manifest failure: $label (G0 recorded; no continuation)"
+  fi
   if [ "$g0_rc" -eq 0 ] && grep -qx 'G0 PASS' "$chunk_log-g0.log"; then
+    chunk_result=PASS; hours_end
     note "G0 PASS $label"
   elif [ "$g0_rc" -eq 1 ] && grep -qx 'G0 FAIL' "$chunk_log-g0.log"; then
+    chunk_result=FAIL; hours_end
     note "G0 FAIL $label (preserved; never retried)"
     [ "$chain_rc" -eq 2 ] || chain_rc=1
     [ "$continue_g0" -eq 1 ] || exit "$chain_rc"
   elif [ "$g0_rc" -eq 2 ] && [ "$telemetry_enabled" -eq 1 ]; then
+    chunk_result=BLOCKED
     note "G0 BLOCKED $label (preserved; eligible_for_gate=false)"
-    command_to_log "$chunk_log-classifier.log" python3 -B "$classifier" classify --g0 "$chunk_log-g0.json" --g0-rc "$g0_rc" --repo "$repo_dir" --manifest "ascon-notes/league/manifests/$label.json" --roster "$roster_file" --candidate "$telemetry_candidate" --context "$run_dir/telemetry-context.json" --verdict "$chunk_log-classifier.json" || die "G0 blocked/error/inconsistent output: $label (classification refused)"
+    command_to_log "$chunk_log-classifier.log" python3 -B "$classifier" classify --g0 "$chunk_log-g0.json" --g0-rc "$g0_rc" --repo "$repo_dir" --manifest "ascon-notes/league/manifests/$label.json" --roster "$roster_file" --candidate "$telemetry_candidate" --context "$run_dir/telemetry-context.json" --verdict "$chunk_log-classifier.json"
+    classify_rc=$?
+    [ "$classify_rc" -eq 0 ] || die "G0 blocked/error/inconsistent output: $label (classification refused)"
+    hours_end
     # Read only after the classifier has saved the complete approval verdict.
     while IFS= read -r deviation; do note "$deviation"; done < "$chunk_log-classifier.log"
     chain_rc=2
   else
+    if [ "$g0_rc" -eq 2 ] && grep -qx 'G0 BLOCKED' "$chunk_log-g0.log"; then chunk_result=BLOCKED; fi
     die "G0 blocked/error/inconsistent output: $label"
   fi
 done
