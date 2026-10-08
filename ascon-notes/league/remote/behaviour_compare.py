@@ -294,13 +294,170 @@ def analyse(root, default_fee=100_000_000):
         flags=[k for k, v in comparison.items() if v['flag']], worlds=worlds)
 
 
+def metric_direction(key):
+    """Activity direction is not profitability; ambiguous metrics have no wins."""
+    if key in {'pnlUsdc', 'netPnlUsdc', 'simplified_t', 'included_per_submitted'}:
+        return 'higher'
+    if (key.startswith('noop_reason/') or key in {
+            'noop_records', 'noop_rounds', 'window_blocks_without_submission',
+            'event/submit_failed', 'revertCount', 'reverts_per_included', 'unloggedTxCount'}):
+        return 'lower'
+    if (key.startswith(('action/', 'protocol/', 'action_protocol/')) or key in {
+            'submitted', 'event/submitted', 'includedTxCount', 'submitted_blocks',
+            'bundle_groups', 'bundle_tagged_tx', 'two_leg_submitted_groups',
+            'unbundled_tx', 'liquity_tx', 'stability_pool_tx'}):
+        return 'higher'
+    return None
+
+
+def difference_distribution(values, direction, total):
+    result = distribution(values)
+    result.update(direction=direction, missing=total - len(values),
+                  wins=(sum(v > 0 if direction == 'higher' else v < 0 for v in values)
+                        if direction else None), ties=sum(v == 0 for v in values))
+    return result
+
+
+def control_screen(candidate, control):
+    """Conservative descriptive screen; neither a test nor a confidence interval."""
+    if candidate['se'] is None or control['min'] is None:
+        return dict(flag=False, candidate_margin=None, control_radius=None)
+    margin = abs(candidate['mean']) - 2 * candidate['se']
+    radius = max(abs(control['min']), abs(control['max']))
+    return dict(flag=margin > radius, candidate_margin=margin, control_radius=radius)
+
+
+def analyse_same_world(runs, default_fee=100_000_000):
+    """runs: ordered (name, directory, candidate-id); later run minus earlier.
+
+    Reuse the legacy extractor, but keep its E1-E4 aggregation/output untouched.
+    All world sets must match exactly. Each metric's candidate/control rows use
+    the SAME complete quadruples; missing fee/timing measurements are not zeros.
+    """
+    names = [name for name, _, _ in runs]
+    if len(runs) < 2 or len(set(names)) != len(names) or not all(names):
+        raise ValueError('same-world requires at least two uniquely named runs')
+    groups, indexes = {}, {}
+    for name, directory, candidate in runs:
+        if candidate == 'inc-zeta':
+            raise ValueError('candidate must differ from inc-zeta control seat')
+        directory = Path(directory)
+        ws = load_experiment(directory.parent, directory.name, candidate, default_fee)
+        for w in ws:
+            w['experiment'] = name
+        groups[name] = {(w['regime'], w['seed']): w for w in ws}
+        indexes[name] = source(directory / 'index.tsv')
+    identities = sorted(groups[names[0]])
+    for name in names[1:]:
+        if set(groups[name]) != set(identities):
+            raise ValueError(f'{name}: world set mismatch; no intersection-only comparison')
+    worlds = [groups[name][identity] for name in names for identity in identities]
+    count_keys = set().union(*(s['counts'] for w in worlds for s in w['seats'].values()))
+    # These named categories must remain visible even if absent from every log.
+    count_keys.update({'noop_reason/recovery_cost', 'event/submit_failed',
+                       'action_protocol/swap/uniswap'})
+    for w in worlds:
+        for s in w['seats'].values():
+            for key in sorted(count_keys):
+                s['counts'].setdefault(key, 0)
+                s['metrics'].setdefault(key, 0)
+        a, b = w['seats']['candidate']['metrics'], w['seats']['inc']['metrics']
+        w['delta'] = {k: a[k] - b[k] if a[k] is not None and b[k] is not None else None for k in a}
+        w['delta']['first_submission_seat_ms'] = w['first_submission_seat_delta_ms']
+    metric_keys = sorted(worlds[0]['seats']['candidate']['metrics'])
+    directions = {key: metric_direction(key) for key in metric_keys}
+    aggregate = {}
+    for name in names:
+        ws = [groups[name][identity] for identity in identities]
+        seats = {}
+        for role in ('inc', 'candidate'):
+            ss = [w['seats'][role] for w in ws]
+            hist = Counter()
+            for s in ss:
+                hist.update(s['fee_histogram'])
+            expanded = [fee for fee, n in hist.items() for _ in range(n)]
+            seats[role] = dict(
+                totals={k: sum(s['metrics'][k] for s in ss) for k in sorted(count_keys | {
+                    'submitted', 'includedTxCount', 'revertCount', 'unloggedTxCount'})},
+                world_metrics={k: distribution([s['metrics'][k] for s in ss
+                                                if s['metrics'][k] is not None]) for k in metric_keys},
+                pooled_fees=distribution(expanded), fee_histogram=dict(sorted(hist.items())),
+                pooled_fee_shares={label: ratio(sum(s['metrics']['fee_' + label + '_count'] for s in ss),
+                                               len(expanded)) for label in ('default', 'bumped', 'below', '5gwei')},
+                runtime_directories=dict(Counter(s['runtime']['agentDir'] for s in ss)),
+                runtime_modes=dict(Counter(s['runtime']['mode'] for s in ss)))
+        aggregate[name] = dict(worlds=len(ws), seeds=sorted({w['seed'] for w in ws}),
+            regimes=sorted({w['regime'] for w in ws}), nonzero_exit=sum(w['exit_code'] != 0 for w in ws),
+            loops_not_362=sum(w['loopIterations'] != 362 for w in ws),
+            violations=sum(w['violation_count'] for w in ws), seats=seats,
+            delta={k: difference_distribution([w['delta'][k] for w in ws if w['delta'][k] is not None],
+                                              directions.get(k), len(ws)) for k in sorted(ws[0]['delta'])})
+    comparisons = []
+    for i, run_a in enumerate(names):
+        for run_b in names[:i]:
+            paired, metrics = [], {}
+            for identity in identities:
+                a, b = groups[run_a][identity], groups[run_b][identity]
+                differences = {'regime': identity[0], 'seed': identity[1], 'candidate': {}, 'control': {}}
+                for key in metric_keys:
+                    values = [w['seats'][role]['metrics'][key] for role in ('candidate', 'inc') for w in (a, b)]
+                    complete = all(v is not None for v in values)
+                    for offset, label in ((0, 'candidate'), (2, 'control')):
+                        differences[label][key] = values[offset] - values[offset + 1] if complete else None
+                paired.append(differences)
+            for key in metric_keys:
+                rows = {label: difference_distribution([w[label][key] for w in paired if w[label][key] is not None],
+                        directions[key], len(paired)) for label in ('candidate', 'control')}
+                metrics[key] = dict(**rows, **control_screen(rows['candidate'], rows['control']))
+            comparisons.append(dict(run_a=run_a, run_b=run_b, worlds=len(paired), metrics=metrics,
+                                    flags=[k for k, v in metrics.items() if v['flag']], paired_worlds=paired))
+    # Only selected index/summary/seat files; expose parameter names, never values.
+    paths = sorted({Path(s['path']) for s in indexes.values()} |
+                   {Path(w['summary_source']['path']) for w in worlds} |
+                   {Path(s['source']['path']) for w in worlds for s in w['seats'].values()})
+    parameter_hits, vocabulary = [], defaultdict(set)
+    for path in paths:
+        for line, text in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+            hits = [name for name in PARAM_NAMES if name in text]
+            if hits:
+                parameter_hits.append(dict(path=str(path), line=line, names=hits))
+    for w in worlds:
+        for s in w['seats'].values():
+            for ev, keys in s['event_keys'].items():
+                vocabulary[ev].update(keys)
+    return dict(mode='same-world', runs=[dict(name=n, directory=str(d), candidate=c) for n, d, c in runs],
+        default_fee_reference_wei=default_fee, indexes=indexes, scanned_files=len(paths),
+        parameter_name_hits=parameter_hits, event_keys={k: sorted(v) for k, v in vocabulary.items()},
+        flag_rule='abs(candidate mean) - 2*candidate SE > max(abs(control min), abs(control max)); '
+                  'strict, n>=2, matched complete quadruples; descriptive only, no significance test',
+        wins_rule='strict increase for higher, strict decrease for lower; ties stay in n; '
+                  'activity direction is not profitability; ambiguous directions have wins=null',
+        directions=directions,
+        audit=dict(matched_worlds=len(identities), worlds=len(worlds), seat_logs=2 * len(worlds),
+            world_shapes=sorted({(w['agent_count'], w['finalBlock'] - w['runStartBlock'], w['mode'], w['resetUnit']) for w in worlds}),
+            inclusion_tail_count_mismatches=sum(s['metrics']['included_minus_submitted'] != -s['metrics']['at_or_after_final_submitted']
+                                                for w in worlds for s in w['seats'].values())),
+        aggregate=aggregate, comparisons=comparisons, worlds=worlds)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, default=Path('.scratch-logs'))
     parser.add_argument('--default-fee-wei', type=int, default=100_000_000,
                         help='comparison reference, NOT a recovered runtime config')
+    parser.add_argument('--same-world', action='store_true',
+                        help='separate mode: pair all runs by exact (regime, seed) sets')
+    parser.add_argument('--run', nargs=3, action='append', metavar=('NAME', 'DIRECTORY', 'CANDIDATE'),
+                        help='repeat >=2 times with --same-world; later minus earlier; directories are relative to cwd, not --root')
     args = parser.parse_args()
-    result = analyse(args.root, args.default_fee_wei)
+    if args.same_world:
+        if not args.run or len(args.run) < 2:
+            parser.error('--same-world requires at least two --run NAME DIRECTORY CANDIDATE')
+        result = analyse_same_world(args.run, args.default_fee_wei)
+    else:
+        if args.run:
+            parser.error('--run requires --same-world')
+        result = analyse(args.root, args.default_fee_wei)
     json.dump(result, sys.stdout, ensure_ascii=False, indent=2, allow_nan=False, sort_keys=True)
     print()
 
