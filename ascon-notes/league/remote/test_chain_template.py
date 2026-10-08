@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline controls: temporary fake runners only; no simulator/network/key access."""
 from pathlib import Path
+from datetime import datetime, timezone
 import json
 import os
 import pty
@@ -27,16 +28,18 @@ class ChainControls(unittest.TestCase):
         self.logs = self.root / 'logs'
         self.lock = self.root / 'host.lock'
         self.calls = self.root / 'calls'
+        self.hours = self.root / '.ascon-hours/chain-hours.jsonl'
         fake_bin = self.root / 'bin'
         fake_bin.mkdir()
         self.fake_bin = fake_bin
         # Hermetic PATH: never depend on or invoke a real Anvil/node/tmutil.
-        for name in ['awk', 'mkdir', 'rmdir', 'grep', 'env', 'bash']:
+        for name in ['awk', 'mkdir', 'rmdir', 'grep', 'env', 'bash', 'date', 'cat']:
             (fake_bin / name).symlink_to(shutil.which(name))
         (fake_bin / 'python3').symlink_to(sys.executable)
         for name, code in {
             'anvil': 'exit 99\n',
             'node': 'exit 99\n',
+            'hostname': '[ "$1" = -s ] || exit 99\necho fixture-host\n',
             'uname': 'echo "${STUB_OS:-Linux}"\n',
             'pgrep': 'exit "${STUB_PGREP_RC:-1}"\n',
             'df': ('[ "${STUB_DF:-numeric}" != empty ] || exit 0\n'
@@ -48,6 +51,7 @@ class ChainControls(unittest.TestCase):
         (self.league / 'round-manifest.py').write_text(
             'import os, sys\n'
             'with open(os.environ["STUB_CALLS"], "a") as f: f.write("manifest " + " ".join(sys.argv[1:]) + "\\n")\n'
+            'if sys.argv[1] == "begin": sys.exit(int(os.environ.get("STUB_BEGIN_RC", "0")))\n'
             'if sys.argv[1] == "verify": sys.exit(int(os.environ.get("STUB_VERIFY_RC", "0")))\n'
         )
         (self.league / 'run-league.sh').write_text(
@@ -69,13 +73,15 @@ class ChainControls(unittest.TestCase):
             'STUB_CALLS': str(self.calls),
         }
 
-    def run_chain(self, *args, dry=True, env=None, stdin=subprocess.DEVNULL):
+    def run_chain(self, *args, dry=True, env=None, stdin=subprocess.DEVNULL, unset_home=False):
         argv = ['/bin/bash', str(SCRIPT), '--repo', str(self.repo),
                 '--roster', str(self.roster), '--prefix', 'testUTC',
                 '--seeds', '63001 63002 63003', '--log-root', str(self.logs),
                 '--lock-dir', str(self.lock), '--activity-note', 'fixture only']
         if dry:
             argv.append('--dry-run')
+        if unset_home:
+            argv = [str(self.fake_bin / 'env'), '-u', 'HOME'] + argv
         result = subprocess.run(argv + list(args), env={**self.env, **(env or {})},
                                 stdin=stdin, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         return result
@@ -205,7 +211,217 @@ class ChainControls(unittest.TestCase):
         self.assertFalse(self.calls.exists())
         self.assertFalse(self.logs.exists())
         self.assertFalse(self.lock.exists())
+        self.assertFalse(self.hours.parent.exists())
         self.assertNotIn('CHAIN_END_testUTC=', result.stdout)
+
+    def hours_records(self, path=None):
+        raw = (path or self.hours).read_bytes()
+        self.assertTrue(raw.endswith(b'\n'))
+        return [json.loads(line) for line in raw.splitlines()]
+
+    def assert_hours_pair(self, start, end, result):
+        self.assertEqual(start['event'], 'chunk_start')
+        self.assertEqual(end['event'], 'chunk_end')
+        self.assertIsNone(start['result'])
+        self.assertIsNone(start['utc_end'])
+        self.assertTrue(all(v is None for v in start['exit_codes'].values()))
+        self.assertEqual(end['result'], result)
+        for key in ('prefix', 'label', 'chunk', 'host', 'pid', 'utc_start', 'flags'):
+            self.assertEqual(start[key], end[key])
+        for value in (start['utc_start'], end['utc_end']):
+            self.assertRegex(value, r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$')
+        begin = datetime.strptime(start['utc_start'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
+        finish = datetime.strptime(end['utc_end'], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=timezone.utc)
+        self.assertLessEqual(begin, finish)
+        self.assertLess(abs((datetime.now(timezone.utc) - finish).total_seconds()), 60)
+        self.assertRegex(start['local_utc_offset'], r'^[+-]\d{4}$')
+
+    def test_hours_pass_pairs_metadata_and_append(self):
+        note = 'idle; "quoted" \\ path\n日本語\t$(no execution)'
+        result = self.run_chain('--chunks', '1 3', '--activity-note', note, dry=False)
+        self.assert_finished(result, 0)
+        records = self.hours_records()
+        self.assertEqual(len(records), 4)
+        for offset, chunk in [(0, 1), (2, 3)]:
+            start, end = records[offset:offset + 2]
+            self.assert_hours_pair(start, end, 'PASS')
+            self.assertEqual(start['schema_version'], 1)
+            self.assertEqual(start['host'], 'fixture-host')
+            self.assertIn('hostname -s', start['host_id_source'])
+            self.assertEqual(start['chunk'], chunk)
+            self.assertEqual(start['label'], f'testUTC-c{chunk}')
+            self.assertEqual(start['seeds'], [63001, 63002, 63003])
+            self.assertEqual(start['parallel'], 3)
+            self.assertEqual(start['activity_note'], note)
+            self.assertEqual(start['mode'], 'qualification')
+            self.assertEqual(start['flags'], [])
+            self.assertIsNone(start['relaunch_of'])
+            self.assertGreater(start['pid'], 0)
+            self.assertEqual(end['exit_codes'], dict(manifest_begin=0, telemetry_bind=None,
+                             matrix=0, verify=0, g0=0, telemetry_status=None, telemetry_classify=None))
+        self.assertEqual(records[0]['regimes'], ['calm', 'cex-drift', 'informed-flow'])
+        self.assertEqual(self.hours.parent.stat().st_mode & 0o777, 0o700)
+        before = self.hours.read_bytes()
+        result = self.run_chain('--prefix', 'secondUTC', '--chunks', '2',
+                                '--relaunch-of', 'testUTC', dry=False)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertTrue(self.hours.read_bytes().startswith(before))
+        self.assertEqual(len(self.hours_records()), 6)
+        self.assertEqual(self.hours_records()[-1]['relaunch_of'], 'testUTC')
+
+    def test_hours_override_and_dry_run(self):
+        custom = self.root / 'custom ledger/records.jsonl'
+        result = self.run_chain('--hours-ledger', str(custom))
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertFalse(custom.parent.exists())
+        self.assertFalse(self.hours.parent.exists())
+        result = self.run_chain('--hours-ledger', str(custom), '--chunks', '1', dry=False)
+        self.assert_finished(result, 0)
+        self.assertEqual(len(self.hours_records(custom)), 2)
+        self.assertFalse(self.hours.exists())
+
+    def test_hours_fail_continue_and_blocked_stop(self):
+        result = self.run_chain('--mode', 'diagnostic', '--continue-on-g0-fail',
+                                dry=False, env={'STUB_G0': 'FAIL'})
+        self.assert_finished(result, 1)
+        records = self.hours_records()
+        self.assertEqual(len(records), 8)
+        for offset, verdict in zip(range(0, 8, 2), ['FAIL', 'PASS', 'PASS', 'PASS']):
+            self.assert_hours_pair(*records[offset:offset + 2], verdict)
+        self.assertEqual(records[1]['exit_codes']['g0'], 1)
+        self.assertEqual(records[1]['flags'], ['--continue-on-g0-fail'])
+        result = self.run_chain('--prefix', 'blockedUTC', dry=False, env={'STUB_G0': 'BLOCKED'})
+        self.assertEqual(result.returncode, 2, result.stdout)
+        records = self.hours_records()
+        self.assertEqual(len(records), 10)
+        self.assert_hours_pair(*records[-2:], 'BLOCKED')
+        self.assertEqual(records[-1]['exit_codes']['g0'], 2)
+
+    def test_hours_runner_failure_and_stopped(self):
+        for flag, code in [('STUB_BEGIN_RC', 'manifest_begin'), ('STUB_MATRIX_RC', 'matrix'),
+                           ('STUB_VERIFY_RC', 'verify'), ('STUB_G0', 'g0')]:
+            with self.subTest(flag=flag):
+                env = {flag: 'MISSING' if flag == 'STUB_G0' else '7'}
+                result = self.run_chain('--prefix', flag, dry=False, env=env)
+                self.assertEqual(result.returncode, 2, result.stdout)
+                records = self.hours_records()
+                self.assert_hours_pair(*records[-2:], 'STOPPED' if flag == 'STUB_G0' else 'RUNNER_FAILED')
+                self.assertEqual(records[-1]['exit_codes'][code], 0 if flag == 'STUB_G0' else 7)
+        self.assertEqual(len(self.hours_records()), 8)
+
+    def test_hours_interrupted_leaves_unmatched_start(self):
+        for signal in ['TERM', 'KILL']:
+            with self.subTest(signal=signal):
+                (self.league / 'run-league.sh').write_text(
+                    f'#!/bin/bash\nkill -{signal} "$PPID"\nexit 143\n')
+                result = self.run_chain('--prefix', signal, dry=False)
+                self.assertEqual(result.returncode, 143 if signal == 'TERM' else -9, result.stdout)
+                records = [r for r in self.hours_records() if r['prefix'] == signal]
+                self.assertEqual(len(records), 1)
+                self.assertEqual(records[0]['event'], 'chunk_start')
+                self.assertIsNone(records[0]['utc_end'], 'missing END must never become zero hours')
+                self.assertNotIn('g0 ', self.calls.read_text())
+
+    def test_hours_unwritable_path_stops_before_chunk(self):
+        # A directory as the file, and a regular file as its parent, fail even
+        # under root (unlike chmod-only controls).
+        parent_file = self.root / 'not-a-directory'
+        parent_file.write_text('preserve me')
+        for prefix, path in [('file-blocked', self.root), ('parent-blocked', parent_file / 'hours.jsonl')]:
+            with self.subTest(path=path):
+                result = self.run_chain('--prefix', prefix, '--hours-ledger', str(path), dry=False)
+                self.assertEqual(result.returncode, 2, result.stdout)
+                self.assertIn('STOP: HOURS_LEDGER_START_FAILED:', result.stdout)
+                self.assertFalse(self.calls.exists())
+                self.assertFalse(self.lock.exists())
+        self.assertEqual(parent_file.read_text(), 'preserve me')
+
+    def test_hours_start_append_failure_stops_before_chunk(self):
+        # Ledger directory creation succeeds, but the actual printf append fails.
+        self.hours.parent.mkdir()
+        self.hours.symlink_to(self.root / 'absent-parent/ledger.jsonl')
+        result = self.run_chain(dry=False)
+        self.assert_finished(result, 2)
+        self.assertIn('HOURS_LEDGER_START_FAILED: cannot append START:', result.stdout)
+        self.assertFalse(self.calls.exists())
+
+    def test_hours_missing_home_help(self):
+        for options in ({'unset_home': True}, {'env': {'HOME': ''}}):
+            with self.subTest(options=options):
+                result = self.run_chain('--help', dry=False, **options)
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertIn('Usage: bash chain-template.sh', result.stdout)
+                self.assertFalse(self.calls.exists())
+                self.assertFalse(self.hours.exists())
+                self.assertFalse(self.logs.exists())
+                self.assertFalse(self.lock.exists())
+
+    def test_hours_missing_home_dry_run(self):
+        for options in ({'unset_home': True}, {'env': {'HOME': ''}}):
+            with self.subTest(options=options):
+                result = self.run_chain('--chunks', '1', **options)
+                self.assertEqual(result.returncode, 0, result.stdout)
+                self.assertIn('PLAN_ONLY:', result.stdout)
+                self.assertEqual(result.stdout.count('COMMAND:'), 4)
+                self.assertNotIn('CHAIN_END_', result.stdout)
+                self.assertFalse(self.calls.exists())
+                self.assertFalse(self.hours.exists())
+                self.assertFalse(self.logs.exists())
+                self.assertFalse(self.lock.exists())
+
+    def test_hours_missing_home_explicit_path_runs(self):
+        for prefix, options in [('unset', {'unset_home': True}), ('empty', {'env': {'HOME': ''}})]:
+            with self.subTest(prefix=prefix):
+                path = self.root / f'{prefix}.jsonl'
+                result = self.run_chain('--prefix', prefix, '--chunks', '1',
+                                        '--hours-ledger', str(path), dry=False, **options)
+                self.assertEqual(result.returncode, 0, result.stdout)
+                records = self.hours_records(path)
+                self.assertEqual([row['event'] for row in records], ['chunk_start', 'chunk_end'])
+                self.assertEqual(records[-1]['result'], 'PASS')
+                self.assertIn(f'g0 {prefix}-c1', self.calls.read_text())
+                marker = f'CHAIN_END_{prefix}=0\n'
+                self.assertTrue(result.stdout.endswith(marker))
+                self.assertEqual((self.logs / prefix / 'end.marker').read_text(), marker)
+                self.assertNotIn('HOURS_LEDGER_END_FAILED', result.stdout)
+                self.assertFalse(self.hours.exists())
+                self.assertFalse(self.lock.exists())
+
+    def test_hours_missing_home_without_path_stops_before_chunk(self):
+        for options in ({'unset_home': True}, {'env': {'HOME': ''}}):
+            with self.subTest(options=options):
+                result = self.run_chain(dry=False, **options)
+                self.assertEqual(result.returncode, 2, result.stdout)
+                self.assertIn('STOP: HOURS_LEDGER_START_FAILED:', result.stdout)
+                self.assertIn('pass --hours-ledger PATH', result.stdout)
+                self.assertTrue(result.stdout.endswith('CHAIN_END_testUTC=2\n'))
+                self.assertNotIn('COMMAND:', result.stdout)
+                self.assertFalse(self.calls.exists())
+                self.assertFalse(self.hours.exists())
+                self.assertFalse(self.logs.exists())
+                self.assertFalse(self.lock.exists())
+
+    def test_hours_end_failure_warns_and_preserves_exit_and_marker(self):
+        # Simulate a storage failure after a successful START. Save the original
+        # ledger, then block its pathname with a directory before END.
+        gate = self.league / 'g0.py'
+        gate.write_text('from pathlib import Path\n'
+                        'import os\n'
+                        'p = Path(os.environ["STUB_HOURS"])\n'
+                        'p.rename(p.with_suffix(".saved")); p.mkdir()\n' + gate.read_text())
+        for verdict, rc in [('PASS', 0), ('FAIL', 1), ('BLOCKED', 2)]:
+            with self.subTest(verdict=verdict):
+                path = self.root / f'{verdict}.jsonl'
+                result = self.run_chain('--prefix', verdict, '--chunks', '1', '--hours-ledger', str(path),
+                                        dry=False, env={'STUB_HOURS': str(path), 'STUB_G0': verdict})
+                self.assertEqual(result.returncode, rc, result.stdout)
+                self.assertIn('WARN: HOURS_LEDGER_END_FAILED:', result.stdout)
+                marker = f'CHAIN_END_{verdict}={rc}\n'
+                log_lines = f'HOURS_LEDGER_END_FAILED_{verdict}=1\n' + marker
+                self.assertTrue(result.stdout.endswith(log_lines))
+                self.assertEqual((self.logs / verdict / 'end.marker').read_text(), marker)
+                self.assertIn(log_lines, (self.logs / verdict / 'chain.log').read_text())
+                self.assertEqual(len(self.hours_records(path.with_suffix('.saved'))), 1)
 
     def test_range(self):
         result = self.run_chain('--from', '2', '--to', '2')
@@ -418,6 +634,12 @@ class ChainControls(unittest.TestCase):
         result = self.run_telemetry()
         self.assert_finished(result, 2)
         self.assertIn('g0 testUTC-c4', self.calls.read_text())
+        records = self.hours_records()
+        self.assertEqual(len(records), 8)
+        self.assert_hours_pair(*records[:2], 'BLOCKED')
+        self.assert_hours_pair(*records[-2:], 'PASS')
+        self.assertEqual(records[1]['flags'], ['--continue-on-opponent-telemetry-blocked'])
+        self.assertEqual(records[1]['exit_codes']['telemetry_classify'], 0)
         deviation = ('DEVIATION diagnostic continuation; G0=BLOCKED; '
                      'world=calm/63001; agent=opponent; eligible_for_gate=false')
         self.assertIn(deviation, result.stdout)
