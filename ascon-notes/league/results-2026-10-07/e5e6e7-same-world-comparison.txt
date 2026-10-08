@@ -1,0 +1,13 @@
+loops!=362: {'E5': 0, 'E6': 2, 'E7': 1}
+E5 ascon-zeta-r3a meanT=54.14 inc-zeta meanT=55.43 noop=49.27
+  cand-incT: n=36 mean=-1.29 SE=2.61 (~95% -6.51..+3.93) wins=17/36 | cand-noopT: n=36 mean=+4.86 SE=2.90 (~95% -0.95..+10.67) wins=20/36
+E6 ascon-zeta-r3 meanT=48.82 inc-zeta meanT=55.12 noop=50.44
+  cand-incT: n=36 mean=-6.29 SE=2.29 (~95% -10.87..-1.72) wins=9/36 | cand-noopT: n=36 mean=-1.62 SE=2.18 (~95% -5.98..+2.74) wins=15/36
+E7 ascon-zeta-r3c meanT=52.07 inc-zeta meanT=53.68 noop=49.59
+  cand-incT: n=36 mean=-1.60 SE=2.66 (~95% -6.92..+3.71) wins=18/36 | cand-noopT: n=36 mean=+2.49 SE=2.40 (~95% -2.31..+7.28) wins=20/36
+ascon-zeta-r3a - ascon-zeta-r3 (all): n=36 mean=+5.31 SE=2.38 (~95% +0.55..+10.07) wins=24/36 | control inc-zeta seat across the two runs: n=36 mean=+0.31 SE=1.74 (~95% -3.18..+3.80) wins=18/36
+ascon-zeta-r3a - ascon-zeta-r3 (loops==362 both): n=34 mean=+5.63 SE=2.51 (~95% +0.62..+10.64) wins=23/34 | control inc-zeta seat across the two runs: n=34 mean=+0.43 SE=1.82 (~95% -3.21..+4.07) wins=17/34
+ascon-zeta-r3c - ascon-zeta-r3 (all): n=36 mean=+3.25 SE=1.73 (~95% -0.22..+6.72) wins=23/36 | control inc-zeta seat across the two runs: n=36 mean=-1.44 SE=1.70 (~95% -4.85..+1.97) wins=14/36
+ascon-zeta-r3c - ascon-zeta-r3 (loops==362 both): n=33 mean=+4.41 SE=1.75 (~95% +0.90..+7.91) wins=23/33 | control inc-zeta seat across the two runs: n=33 mean=-1.69 SE=1.85 (~95% -5.40..+2.01) wins=12/33
+ascon-zeta-r3c - ascon-zeta-r3a (all): n=36 mean=-2.06 SE=1.97 (~95% -6.00..+1.88) wins=15/36 | control inc-zeta seat across the two runs: n=36 mean=-1.75 SE=1.98 (~95% -5.70..+2.20) wins=19/36
+ascon-zeta-r3c - ascon-zeta-r3a (loops==362 both): n=35 mean=-2.39 SE=2.00 (~95% -6.39..+1.61) wins=14/35 | control inc-zeta seat across the two runs: n=35 mean=-1.43 SE=2.01 (~95% -5.44..+2.58) wins=19/35

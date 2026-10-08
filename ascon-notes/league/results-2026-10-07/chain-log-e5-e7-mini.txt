@@ -1,0 +1,80 @@
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+RUN prefix=e5r3a-20261007T124829Z mode=diagnostic chunks=1 2 3 4 seeds=68001 68002 68003
+DEVIATION explicit --min-free-gb=25 (matrix default 40; inherited value ignored)
+DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 1 label=e5r3a-20261007T124829Z-c1 regimes=calm cex-drift informed-flow
+G0 PASS e5r3a-20261007T124829Z-c1
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=58 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 2 label=e5r3a-20261007T124829Z-c2 regimes=whale lending-incident crash
+STOP: G0 blocked/error/inconsistent output: e5r3a-20261007T124829Z-c2
+CHAIN_END_e5r3a-20261007T124829Z=2
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+RUN prefix=e5bb-20261007T141555Z mode=diagnostic chunks=3 4 seeds=68001 68002 68003
+DEVIATION explicit --min-free-gb=25 (matrix default 40; inherited value ignored)
+DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 3 label=e5bb-20261007T141555Z-c3 regimes=depeg vuln spike
+G0 PASS e5bb-20261007T141555Z-c3
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 4 label=e5bb-20261007T141555Z-c4 regimes=depeg-persist cdp-incident launch
+G0 PASS e5bb-20261007T141555Z-c4
+CHAIN_END_e5bb-20261007T141555Z=0
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+RUN prefix=e6r3-20261007T154230Z mode=diagnostic chunks=1 2 3 4 seeds=68001 68002 68003
+LAUNCH_ENV PATH_head=/Users/masa-ws1/.nvm/versions/node/v24.18.0/bin stdin_tty=no
+PREFLIGHT anvil=/Users/masa-ws1/ascon-run/bin/anvil
+PREFLIGHT node=/Users/masa-ws1/.nvm/versions/node/v24.18.0/bin/node
+PREFLIGHT python3=/Users/masa-ws1/.homebrew/bin/python3
+DEVIATION explicit --min-free-gb=25 (matrix default 40; inherited value ignored)
+DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 1 label=e6r3-20261007T154230Z-c1 regimes=calm cex-drift informed-flow
+G0 FAIL e6r3-20261007T154230Z-c1 (preserved; never retried)
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 2 label=e6r3-20261007T154230Z-c2 regimes=whale lending-incident crash
+G0 PASS e6r3-20261007T154230Z-c2
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 3 label=e6r3-20261007T154230Z-c3 regimes=depeg vuln spike
+G0 FAIL e6r3-20261007T154230Z-c3 (preserved; never retried)
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 4 label=e6r3-20261007T154230Z-c4 regimes=depeg-persist cdp-incident launch
+G0 FAIL e6r3-20261007T154230Z-c4 (preserved; never retried)
+CHAIN_END_e6r3-20261007T154230Z=1
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+RUN prefix=e7r3c-20261007T183122Z mode=diagnostic chunks=1 2 3 4 seeds=68001 68002 68003
+LAUNCH_ENV PATH_head=/Users/masa-ws1/.nvm/versions/node/v24.18.0/bin stdin_tty=no
+PREFLIGHT anvil=/Users/masa-ws1/ascon-run/bin/anvil
+PREFLIGHT node=/Users/masa-ws1/.nvm/versions/node/v24.18.0/bin/node
+PREFLIGHT python3=/Users/masa-ws1/.homebrew/bin/python3
+DEVIATION explicit --min-free-gb=25 (matrix default 40; inherited value ignored)
+DEVIATION diagnostic continuation after G0 FAIL; failures remain failures
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 1 label=e7r3c-20261007T183122Z-c1 regimes=calm cex-drift informed-flow
+G0 PASS e7r3c-20261007T183122Z-c1
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 2 label=e7r3c-20261007T183122Z-c2 regimes=whale lending-incident crash
+G0 PASS e7r3c-20261007T183122Z-c2
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 3 label=e7r3c-20261007T183122Z-c3 regimes=depeg vuln spike
+G0 FAIL e7r3c-20261007T183122Z-c3 (preserved; never retried)
+DISK path=/Users/masa-ws1/ascon-run/p60 free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+DISK path=/tmp free_GB=57 MIN_FREE_GB=25 hard_stop_GB=25 (GiB units)
+CHUNK 4 label=e7r3c-20261007T183122Z-c4 regimes=depeg-persist cdp-incident launch
+G0 PASS e7r3c-20261007T183122Z-c4
+CHAIN_END_e7r3c-20261007T183122Z=1
