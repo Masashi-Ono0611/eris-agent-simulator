@@ -1,0 +1,61 @@
+SIMPLIFIED T (not the official weighted T)
+Equal weight per world; flagged worlds remain in ALL.
+FLAGGED WORLDS
+WARN world chunk=e9-c4 regime=launch seed=69001 run_dir=runs/2026-10-08T07-20-59-318Z loopIterations=361 exit_code=0 violations=[]
+
+ALL worlds=36
+agent	meanT	mean(P-noop)	P<noop
+inc-zeta	55.013935	332.405307	15/36
+sonnet-1	54.249440	294.217699	10/36
+ascon-zeta-r3	53.934835	253.263214	15/36
+opus-1	53.640343	256.317348	10/36
+grok-1	52.686558	205.075932	4/36
+venue-arb	52.375015	335.327791	15/36
+noop	49.368474	0.000000	0/36
+astra-1	49.341755	4.106708	22/36
+astra-2	49.280750	20.025690	16/36
+clean-arb	48.904846	-17.493409	22/36
+sonnet-2	46.883632	-106.174552	20/36
+multi-arb	34.320417	-777.785268	28/36
+PAIRED ascon-zeta-r3 - inc-zeta n=36 meanTdiff=-1.079100 SE=2.251831 approx95%=[-5.582762, 3.424562] wins/n=15/36
+PAIRED regime=calm meanTdiff=-3.738527
+PAIRED regime=cdp-incident meanTdiff=-6.140567
+PAIRED regime=cex-drift meanTdiff=9.567033
+PAIRED regime=crash meanTdiff=10.628142
+PAIRED regime=depeg meanTdiff=-15.098174
+PAIRED regime=depeg-persist meanTdiff=1.523947
+PAIRED regime=informed-flow meanTdiff=4.550124
+PAIRED regime=launch meanTdiff=5.596764
+PAIRED regime=lending-incident meanTdiff=-10.473105
+PAIRED regime=spike meanTdiff=7.676790
+PAIRED regime=vuln meanTdiff=-6.017531
+PAIRED regime=whale meanTdiff=-11.024094
+
+loopIterations==362 ONLY worlds=35
+note: filters on loopIterations only; worlds with exit_code!=0 or violations stay in this table and are listed under FLAGGED WORLDS
+agent	meanT	mean(P-noop)	P<noop
+inc-zeta	55.434259	362.372921	14/35
+sonnet-1	54.326263	308.319384	9/35
+ascon-zeta-r3	54.058138	268.742635	14/35
+opus-1	53.618233	265.591196	9/35
+grok-1	52.592364	210.826435	4/35
+venue-arb	52.131563	338.352671	15/35
+noop	49.181847	0.000000	0/35
+astra-1	49.154403	4.225828	21/35
+astra-2	49.088590	20.458831	16/35
+clean-arb	48.704972	-17.993220	22/35
+sonnet-2	47.091342	-87.833764	19/35
+multi-arb	34.618026	-758.016296	27/35
+PAIRED ascon-zeta-r3 - inc-zeta n=35 meanTdiff=-1.376121 SE=2.296870 approx95%=[-5.969861, 3.217619] wins/n=14/35
+PAIRED regime=calm meanTdiff=-3.738527
+PAIRED regime=cdp-incident meanTdiff=-6.140567
+PAIRED regime=cex-drift meanTdiff=9.567033
+PAIRED regime=crash meanTdiff=10.628142
+PAIRED regime=depeg meanTdiff=-15.098174
+PAIRED regime=depeg-persist meanTdiff=1.523947
+PAIRED regime=informed-flow meanTdiff=4.550124
+PAIRED regime=launch meanTdiff=3.736829
+PAIRED regime=lending-incident meanTdiff=-10.473105
+PAIRED regime=spike meanTdiff=7.676790
+PAIRED regime=vuln meanTdiff=-6.017531
+PAIRED regime=whale meanTdiff=-11.024094

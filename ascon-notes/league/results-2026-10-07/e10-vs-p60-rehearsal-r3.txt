@@ -1,0 +1,10 @@
+agents: ['ascon-zeta-r3', 'clean-arb', 'multi-arb', 'noop']
+r3 (P60 rehearsal) meanT=60.81 multi-arb=44.70 clean-arb=50.11 noop=44.38
+  P-noop mean=1442.3 below-noop worlds=5/60 loops!=362: 0
+r3c (E10) meanT=62.90 multi-arb=42.61 clean-arb=49.91 noop=44.58
+  P-noop mean=1777.8 below-noop worlds=4/60 loops!=362: 0
+r3c - r3 same worlds: n=60 mean=+2.09 SE=0.79 (~95% +0.50..+3.68) wins=38/60
+control multi-arb seat across runs: n=60 mean=-2.09 SE=0.93 (~95% -3.95..-0.23) wins=23/60 | clean-arb: n=60 mean=-0.20 SE=0.65 (~95% -1.51..+1.11) wins=30/60
+P diff r3c-r3 (USDC): n=60 mean=+335.49 SE=97.67 (~95% +140.15..+530.83) wins=35/60
+excl top3 mean=1.03 excl bottom3 mean=2.55
+revert/world r3=0.20 r3c=0.13

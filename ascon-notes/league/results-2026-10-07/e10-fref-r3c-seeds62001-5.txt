@@ -1,0 +1,19 @@
+SIMPLIFIED T (not the official weighted T)
+Equal weight per world; flagged worlds remain in ALL.
+FLAGGED WORLDS
+none
+
+ALL worlds=60
+agent	meanT	mean(P-noop)	P<noop
+ascon-zeta-r3c	62.903591	1777.762435	4/60
+clean-arb	49.912012	595.617961	3/60
+noop	44.575219	0.000000	0/60
+multi-arb	42.609179	174.604293	32/60
+
+loopIterations==362 ONLY worlds=60
+note: filters on loopIterations only; worlds with exit_code!=0 or violations stay in this table and are listed under FLAGGED WORLDS
+agent	meanT	mean(P-noop)	P<noop
+ascon-zeta-r3c	62.903591	1777.762435	4/60
+clean-arb	49.912012	595.617961	3/60
+noop	44.575219	0.000000	0/60
+multi-arb	42.609179	174.604293	32/60
