@@ -249,7 +249,8 @@ const retainedDecisions=['dec-original','dec-deep','dec-no-contact','dec-008','d
   'dec-step1-policy','dec-ai-scope','dec-ai-contract','dec-ai-budget','dec-revert-limit','dec-h1-authority',
   'dec-full-executor','dec-rev10-direction','dec-zeta-original','dec-zeta-qualification','dec-pr-split','dec-c-exception-r3',
   'dec-retro-allocation','dec-retro-limited-lifting','dec-retro-risk-acceptance','dec-retro-revision-risk',
-  'dec-retro-originality-loss','dec-retro-budget-schedule','dec-retro-final-submission'];
+  'dec-retro-originality-loss','dec-retro-budget-schedule','dec-retro-final-submission',
+  'dec-oct09-r3','dec-oct09-g3','dec-oct09-dev-billing','dec-oct09-ollama'];
 function assertDecisions(views){
   const ids=app.D.decisions.items.map(d=>d.id);
   for(const id of retainedDecisions)assert.ok(ids.includes(id),`INVARIANT retained decision ${id}`);
@@ -680,6 +681,62 @@ check('current direction, recent events, next milestone and night operation come
   for(const event of app.D.status.recent)assertVisibleFields(rendered.overview,event,['title','text']);
   assertVisibleFields(rendered.operations,app.D.status.night_operation,['note']);
   for(const decision of app.D.decisions.items)assertVisibleFields(rendered.decisions,decision,['title']);
+});
+// 2026-10-09 evidence contract: preparation may finish while the gate and
+// probe measurement stay unresolved. Keep these semantic checks alongside the
+// existing historical-result and per-record warning controls.
+function assertOctoberStatus(views){
+  const d=app.D,t=d.status.timing;
+  assert.equal(d.status.g3_state,'BLOCKED','INVARIANT October G3 blocked');
+  assert.equal(d.status.budget_state,'UNKNOWN','INVARIANT October remaining budget unknown');
+  assert.equal(d.budget.consumed_exact_hours,null,'INVARIANT October exact spend unknown');
+  assert.equal(d.budget.consumed_forward_hours,null,'INVARIANT October forward spend unknown');
+  assert.equal(t.state,'harness-unvalidated','INVARIANT October harness not validated');
+  assert.equal(t.result,null,'INVARIANT October no interference result');
+  assert.equal(t.merged,false,'INVARIANT October timing branch not merged');
+  assert.equal(d.plan.continuous_operation.current_run_ref,'status.timing','INVARIANT October current work is timing');
+  assert.equal(d.status.next_steps.length,3,'INVARIANT October next three steps');
+  const overview=visibleText(views.overview),operations=visibleText(app.renderers.operations());
+  for(const phrase of ['前回更新から','次の3手','G3','BLOCKED','10/28'])
+    assert.ok(overview.includes(phrase),`INVARIANT October overview ${phrase}`);
+  for(const step of d.status.next_steps)assertVisibleFields(views.overview,step,['title','text','label']);
+  for(const phrase of ['UNMEASURED','main未統合','not found in files','Spotlight','Atomics.wait','busy-spin'])
+    assert.ok(operations.includes(phrase),`INVARIANT October operations ${phrase}`);
+  assertVisibleFields(app.renderers.operations(),d.status.infrastructure,['note','boundary']);
+  const policy=visibleText(views.decisions);
+  for(const id of ['dec-oct09-r3','dec-oct09-g3','dec-oct09-dev-billing','dec-oct09-ollama']){
+    const item=d.decisions.items.find(x=>x.id===id);
+    assert.equal(item?.status,'decided',`INVARIANT October decided policy ${id}`);
+    assert.ok(item.sources.includes('src-decisions-oct09'),`INVARIANT October policy provenance ${id}`);
+    assert.ok(policy.includes(item.title),`INVARIANT October policy displayed ${id}`);
+  }
+  assert.match(policy,/1日/,'INVARIANT October bounded investigation');
+  assert.match(policy,/\$0/,'INVARIANT October no billing approval');
+  assert.ok(overview.includes('資格合格・提出READYではない'),'INVARIANT October candidate is conditional');
+}
+check('October current status separates decisions, preparation and unmeasured work',()=>{
+  assertOctoberStatus(invariantViews());
+  const footer=element('footer').innerHTML;
+  assert.ok(footer.includes('基準時点'));
+  for(const id of app.D.status.footer_sources){
+    const source=app.D.sources.sources.find(s=>s.id===id);
+    assert.ok(footer.includes(source.path),'footer links to the actual source file');
+  }
+  const decisionHistory=rendered.decisions.indexOf('原判断・署名・過去の未決提案');
+  assert.ok(decisionHistory>rendered.decisions.indexOf('決定済みの方針'),'current policy precedes historical proposals');
+  assert.ok(rendered.overview.includes('<figure class="next-lane'),'next lane is a figure with a caption');
+});
+check('October red controls reject false gate, budget and interference completion',()=>{
+  for(const [label,mutate] of [
+    ['G3 false pass',d=>{d.status.g3_state='PASS';}],
+    ['remaining hours invented',d=>{d.status.budget_state='70 h';}],
+    ['exact spend invented',d=>{d.budget.consumed_exact_hours=30;}],
+    ['harness false validation',d=>{d.status.timing.state='validated';}],
+    ['interference result invented',d=>{d.status.timing.result={delay:0};}],
+    ['timing false merge',d=>{d.status.timing.merged=true;}],
+    ['next step removed',d=>{d.status.next_steps.pop();}],
+    ['G3 policy reopened',d=>{d.decisions.items.find(x=>x.id==='dec-oct09-g3').status='open';}]
+  ])rejectMutation(label,mutate,assertOctoberStatus);
 });
 console.log(`PASS dashboard UI: ${count} checks; ${app.D.ui.pages.length} page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
 console.log('PASS red controls: altered headline, progress value and max each rejected in memory; original assertions pass');
