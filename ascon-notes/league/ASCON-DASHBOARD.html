@@ -411,6 +411,90 @@
       "path": "ascon-notes/league/RESULTS-E1-E2-2026-10-07.md",
       "title": "E1–E3・E5–E10 混成場・参照場診断（2026-10-08更新）",
       "locator": "E1＋E3統合、E5–E10同一世界比較、帯間統合式。数値は保存結果、運用補足は依頼者報告と区分。"
+    },
+    {
+      "id": "src-decisions-oct09",
+      "path": "ascon-notes/league/DECISIONS-2026-10-09.md",
+      "title": "本人決定 10/9",
+      "locator": "G3必須・1日上限・開発課金と前払い$0・dec-007"
+    },
+    {
+      "id": "src-g3-lock-r3",
+      "path": "ascon-notes/league/G3-LOCK-R3-2026-10-08.md",
+      "title": "r3入力ロック",
+      "locator": "§2 候補hash・§4 不足前提。登録一致は実走許可ではない"
+    },
+    {
+      "id": "src-g3-prereq",
+      "path": "ascon-notes/league/G3-PREREQ-2026-10-07.md",
+      "title": "G3不足前提",
+      "locator": "収集要件1–5・安全・予算・実走証拠"
+    },
+    {
+      "id": "src-g3-load",
+      "path": "ascon-notes/league/G3-LOAD-EVIDENCE-2026-10-08.md",
+      "title": "既存G0証拠",
+      "locator": "144世界・137世界362 loops。負荷校正ではない"
+    },
+    {
+      "id": "src-g3-recorder",
+      "path": "ascon-notes/league/G3-RECORDER-FEASIBILITY-2026-10-08.md",
+      "title": "収集器の実現性",
+      "locator": "PARTLY。ローカルmerge履歴680dbd7 / PR #39"
+    },
+    {
+      "id": "src-g3-loader",
+      "path": "ascon-notes/league/G3-LOADER-FEASIBILITY-2026-10-08.md",
+      "title": "外部loaderの実現性",
+      "locator": "PARTLY。ローカルmerge履歴c8743b3 / PR #42"
+    },
+    {
+      "id": "src-g3-req4",
+      "path": "ascon-notes/league/G3-REQ4-FEASIBILITY-2026-10-09.md",
+      "title": "取引境界の実現性",
+      "locator": "要件4 PARTLY。ローカルmerge履歴f352e17 / PR #44"
+    },
+    {
+      "id": "src-cli-binding",
+      "path": "ascon-notes/league/g3/claude-start-binding.py",
+      "title": "呼出開始の収集試作",
+      "locator": "冒頭: requirement 1 only。ローカルmerge履歴39e62f6 / PR #40"
+    },
+    {
+      "id": "src-loader-probe",
+      "path": "ascon-notes/league/g3/loader/README.md",
+      "title": "観測probeの試作",
+      "locator": "オフライン限定・時間干渉未測定。ローカルmerge履歴ab5ad98 / PR #43"
+    },
+    {
+      "id": "src-p60-spec",
+      "path": "ascon-notes/league/P60-PREP-SPEC-2026-10-08.md",
+      "title": "公式P60準備仕様",
+      "locator": "冒頭・§2。提供日不明、10/20は最早窓。ローカルmerge abcc705 / PR #41"
+    },
+    {
+      "id": "src-budget-settlement",
+      "path": "ascon-notes/league/BUDGET-SETTLEMENT-2026-10-08.md",
+      "title": "100h暫定精算",
+      "locator": "結論: 10/4 01:00 JST起算、正確な消化・残量UNKNOWN"
+    },
+    {
+      "id": "src-schedule-oct08",
+      "path": "ascon-notes/league/SCHEDULE-2026-10-08.md",
+      "title": "条件付き提出の工程表",
+      "locator": "§3 I–N。最新の候補・調査方針は10/9本人決定を優先"
+    },
+    {
+      "id": "src-remote-ops",
+      "path": "ascon-notes/league/remote/README-RUNBOOK.md",
+      "title": "運用テンプレートの仕様",
+      "locator": "時間台帳・telemetry分類。miniへの転送・清掃結果の証明ではない"
+    },
+    {
+      "id": "src-competition-notes",
+      "path": "ascon-notes/competition-notes.md",
+      "title": "保存済み競技メモ",
+      "locator": "最後に受理された単一提出。現行オンライン規約は未照合"
     }
   ]
 }
@@ -420,20 +504,18 @@
 <script type="application/json" id="data-status">
 {
   "sources": [
-    "src-c-exception",
-    "src-release-r3",
-    "src-g3-diagnostic",
-    "src-handoff-oct06",
-    "src-main-history",
-    "src-retro-full-oct07",
-    "src-r3x-summary"
+    "src-decisions-oct09",
+    "src-g3-lock-r3",
+    "src-results-e1-e2",
+    "src-budget-settlement",
+    "src-schedule-oct08"
   ],
-  "as_of": "2026-10-08T21:09:25+09:00",
+  "as_of": "2026-10-09T18:30:04+09:00",
   "measurement_as_of": null,
-  "last_update": "10/8 JST: E8–E10保存結果を読取。r3cの混成場優位は再現せず、F_refでは名目上先行するが背景変動あり。研究版・診断のみ。G3・G4・公式P60は未実施・未完了。",
+  "last_update": "10/9 JST: r3維持・G3必須・費用$0の決定を反映。実現性調査とオフライン試作は統合済み。時間干渉は未測定、G3はBLOCKED。",
   "phase_id": "phase-first",
-  "headline": "E8–E10診断: r3cの混成場優位は再現せず。参照場では名目上先行、提出ゲートは未達。",
-  "subhead": "mini P60リハーサル60世界・Air混成36世界が完了。r3xは6世界/3ペアすべてで悪化、1 seedの診断で「修理2が害」は支持されない。 miniリハーサル・Air混成場の計測は完了。優勝の根拠は未確立。 本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。 全体回顧の42仮説: 各行の先頭判定でsupported（支持）7 / refuted（反証）25 / inconclusive（未決）6 / untested（未検証）4。複合判定5行（H18/H20/H25/H26/H41）も重複集計すると7 / 25 / 9 / 6（計47判定）。限定観測に対する回顧の評価であり、資格合格数ではない。",
+  "headline": "r3を保険として維持。提出はG3で止まっている。",
+  "subhead": "候補選択は決定済み。収集器の調査・試作は進んだが、安全性と完全な実測証拠はまだ揃っていない。r3cは研究版のまま、提出可能とは判定していない。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -451,8 +533,8 @@
     "regimes": 12,
     "name": "Q0b"
   },
-  "notice": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
-  "measurement_note": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。 集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。 r3/r3x paired診断完了: Air eval2 / 77c6ead（8c29964＋local-only r3x）、固定10相手＋noop＋候補の12体、seed64001、whale/lending-incident/crash×2候補=6世界・3ペア・1 seed。提供集計では全G0 PASS・362 loops。r3xは修理2のsell資金不足時buy-only分岐を外してalways bundle。簡易T（simplified T）平均r3 66.28 / r3x 58.49、r3xは全3ペアでT・P−noopとも悪化。「repair 2 hurts（修理2が害）」はこの診断では支持されない。全12レジーム・安全性・因果の一般化は未検証。 verified=trueは提供集計の読取確認のみ。公式T・公式P60・G3・G4・原ログ/実機・安全性は未検証。実完了時刻は未提示。",
+  "notice": "Q-ZETA-01/02の不合格と証拠不足は保持。限定例外はG0・G3・G4・公式P60・規約を免除しない。締切は10/31 23:59 JST、最後に受理された単一提出が最終版。",
+  "measurement_note": "E1–E10は診断。混成場でr3はinc-zetaに約3.5 T劣り、r3cの改善は未確立。弱い参照場の強さを優勝の根拠にしない。G0 FAILを保持し、公式P60・G3・G4と分ける。",
   "dev1": {
     "name": "dev1-xb-r",
     "state": "measured-diagnostic-complete",
@@ -607,11 +689,11 @@
       "src-dev2-repair"
     ]
   },
-  "human_action": "全体回顧§9: 新候補停止の限定解除・配分、残余リスク/最悪損失、予算精算、最終登録・提出・受理を本人判断",
+  "human_action": "10/28までに鍵・無料枠を確認",
   "priority": {
-    "title": "G3安全境界と証跡欠測が提出を止めている",
+    "title": "G3の安全・完全収集を成立させる",
     "blocker_ref": "B01",
-    "note": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
+    "note": "G3（自己改訂の実チェーン受入れ）は必須。外部観測の別案を1日上限で調査する。収集器・loader・取引境界の結論はいずれもPARTLY（部分可能）。試作の成功だけでは実走を始められない。",
     "progress_refs": [
       "progress-release-r3",
       "progress-g3",
@@ -619,14 +701,52 @@
       "progress-g4"
     ],
     "sources": [
-      "src-r3-guard",
-      "src-revision-audit",
-      "src-release-r3"
+      "src-decisions-oct09",
+      "src-g3-prereq",
+      "src-g3-lock-r3",
+      "src-g3-req4"
     ],
     "state": "blocked",
-    "state_label": "G3 BLOCKED / 未READY"
+    "state_label": "必須 / BLOCKED"
   },
   "recent": [
+    {
+      "id": "recent-decisions-oct09",
+      "kind": "decision",
+      "title": "本人方針を確定",
+      "text": "r3を維持し、新しい提出候補を作らない。G3は必須、外部観測案の調査は1日上限。開発モデル課金・Ollama前払いは$0を維持し、無料枠量と鍵の有効性は本人が10/28までに確認する。",
+      "date": "2026-10-09",
+      "time_note": "決定文書の記録日",
+      "sources": [
+        "src-decisions-oct09"
+      ]
+    },
+    {
+      "id": "recent-g3-preparation",
+      "kind": "warning",
+      "title": "調査・試作を統合、G3はBLOCKED",
+      "text": "収集器・loader・要件4の実現性はPARTLY。呼出開始collector（PR #40）は要件1のみ、loader probe（PR #43）もオフライン試作。いずれもG3証拠ではなく、G3実走なし。",
+      "date": "2026-10-09",
+      "time_note": "この日までの統合。正確なmerge日は進捗・結果に表示",
+      "sources": [
+        "src-g3-recorder",
+        "src-g3-loader",
+        "src-g3-req4",
+        "src-cli-binding",
+        "src-loader-probe"
+      ]
+    },
+    {
+      "id": "recent-measurement-conclusion",
+      "kind": "warning",
+      "title": "r3cの改善は再現せず",
+      "text": "E1–E10の診断では、混成場のr3はinc-zeta比で約−3.5 T。弱い参照場F_refでは強いが、r3cの混成場優位は追試で再現しない。簡易Tの探索的集計であり、公式得点・優勝・提出資格の証明ではない。",
+      "date": "2026-10-08",
+      "time_note": "保存結果の読取",
+      "sources": [
+        "src-results-e1-e2"
+      ]
+    },
     {
       "id": "recent-e8-e10",
       "kind": "warning",
@@ -652,10 +772,10 @@
     {
       "id": "recent-e1-e2",
       "kind": "warning",
-      "title": "2026-10-07 E1/E2診断完了・E3実行中との引継ぎ",
-      "text": "E1 r3は6位52.30、E2 rは10位49.30（簡易T）。inc-zetaとの差は−2.79/−2.72で有意といえず、修理原因説は支持されない。G0 FAILを保持。E3はmini・66001–66003、結果未確認。公式T・G3・G4・公式P60は未完了。",
+      "title": "E1–E3：保存集計を読取済み",
+      "text": "E1/E2では修理の有無によるinc-zetaとの差が同程度。E3も保存集計読取済みで、結果待ちではない。修理が弱さの原因という仮説は支持されず、G0 FAILは保持する。",
       "date": "2026-10-07",
-      "time_note": "保存集計読取・依頼者引継ぎ。実完了時刻未提示。",
+      "time_note": "過去の診断履歴。現在進行中の計測ではない。",
       "sources": [
         "src-results-e1-e2"
       ]
@@ -705,16 +825,15 @@
     }
   ],
   "next_milestone": {
-    "title": "予算精算 → G3前提整備 → 10/14棚卸し → 10/20公式P60確認 → 10/28 dec-007",
-    "note": "直近: host別の100h会計と全残予約を精算。G3再開前: 実runtime recorder・自然改訂fixture・F_mix・seed予約・host排他を確認。10/14は準備棚卸し、10/20は公式P60の適用版/公開状況確認。10/28はdec-007。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+    "title": "公式P60の版・提供日を確認する",
+    "note": "提供日は不明。10/20は最早の確認窓で、確定配布日ではない。G3と残予算が成立してから提出工程を進める。10/14は準備棚卸し、10/28は本人の鍵・無料枠確認。",
     "sources": [
-      "src-retro-full-oct07",
-      "src-release-runbook",
-      "src-c-exception",
-      "src-handoff-oct06"
+      "src-p60-spec",
+      "src-schedule-oct08",
+      "src-decisions-oct09"
     ],
     "state": "blocked",
-    "state_label": "未READY"
+    "state_label": "版・提供日 UNKNOWN"
   },
   "dev3b": {
     "name": "dev3b-xb-r",
@@ -1670,10 +1789,12 @@
     "q02_sha256": "ddd7c718f2e9091c64b9949e277447868dd82347729d86f899b35dc89156786c",
     "hash_recomputed": false,
     "qualified": false,
-    "note": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。",
+    "note": "r3を条件付きの保険・提出候補として維持する。r3cは研究版で、新しい提出hashへの例外継承には本人の再確認が必要。合格済みではなく、提出準備も未完了。",
     "sources": [
-      "src-c-exception",
-      "src-r3-guard"
+      "src-decisions-oct09",
+      "src-g3-lock-r3",
+      "src-results-e1-e2",
+      "src-c-exception"
     ]
   },
   "main_merges": [
@@ -2090,7 +2211,7 @@
       "src-g3-diagnostic"
     ]
   },
-  "updated_at": "2026-10-07T12:33:05+09:00",
+  "updated_at": "2026-10-09T18:30:04+09:00",
   "retrospective": {
     "hypotheses": 42,
     "primary_counts": {
@@ -2363,7 +2484,177 @@
       "r3_t": "60.81",
       "t_definition": "SIMPLIFIED T; equal weight per world; NOT official weighted T"
     }
-  }
+  },
+  "g3_state": "BLOCKED",
+  "budget_state": "UNKNOWN",
+  "billing": "開発モデル $0 / Ollama前払い $0",
+  "changes": {
+    "title": "前回更新から",
+    "items": [
+      "決定：r3維持・G3必須・課金$0",
+      "完了：実現性調査・収集試作・P60準備仕様",
+      "継続：時間干渉は未測定・提出不可"
+    ],
+    "caption": "完了したのは調査とオフライン準備。G3の実走証拠は増えていない。",
+    "sources": [
+      "src-decisions-oct09",
+      "src-g3-req4",
+      "src-cli-binding",
+      "src-loader-probe",
+      "src-p60-spec"
+    ]
+  },
+  "next_steps": [
+    {
+      "title": "計測器を確かめる",
+      "text": "時間干渉harness（測定用の仕組み）の修正・校正・対照検証を終える。成立しなければ停止する。",
+      "state": "running",
+      "label": "branch作業 / 結果なし",
+      "sources": [
+        "src-loader-probe"
+      ]
+    },
+    {
+      "title": "G3の不足を絞る",
+      "text": "要件2–5を本人の1日上限内で調査。安全・負荷校正・予算等の未充足を残したまま実走しない。成立しなければ本人へ方針を戻す。",
+      "state": "blocked",
+      "label": "上限を自動延長しない",
+      "sources": [
+        "src-decisions-oct09",
+        "src-g3-prereq",
+        "src-g3-lock-r3"
+      ]
+    },
+    {
+      "title": "公式版を待つ",
+      "text": "最早10/20以降、公式P60の適用版と提供日を確認。前提成立後に同一候補・提出物でP60、G4、本人送信へ進む。",
+      "state": "blocked",
+      "label": "提供版・日付は不明",
+      "sources": [
+        "src-p60-spec",
+        "src-schedule-oct08"
+      ]
+    }
+  ],
+  "prerequisites": [
+    {
+      "title": "安全と自然な改訂",
+      "text": "標準runtimeの悪意制御は既知FAIL。自然な実変更・復帰を示すfixtureと、遅着・故障・状態境界の実証が必要。"
+    },
+    {
+      "title": "完全な観測",
+      "text": "呼出開始から全判断、取引前の残高・allowance（支出許可額）・予約・ガス、receipt（取引結果）まで対応付ける。"
+    },
+    {
+      "title": "実走の入力と負荷",
+      "text": "r3入力lock・固定相手は登録済み。同一ホストの負荷校正、r3専用manifest（版と証拠の対応台帳）・state・独立実行領域、seed監査・占有確認は未完。"
+    },
+    {
+      "title": "時間・認証・提出条件",
+      "text": "100hの既消費と残予約、追加利用OFF・利用枠・認証、提出モデルと適用版を確認。全前提を満たした後もG3実走・全件監査が必要。"
+    }
+  ],
+  "prerequisite_sources": [
+    "src-g3-prereq",
+    "src-g3-lock-r3"
+  ],
+  "timing": {
+    "name": "loader probeの時間干渉調査",
+    "state": "harness-unvalidated",
+    "state_label": "UNMEASURED · 未測定",
+    "field": "オフライン測定器の検証中",
+    "seeds": null,
+    "regimes": null,
+    "worlds": null,
+    "completed_worlds": null,
+    "started_at": null,
+    "expected_end": null,
+    "completed_at": null,
+    "result": null,
+    "verified": false,
+    "branch": "feat/g3-probe-timing-measure",
+    "merged": false,
+    "sources": [
+      "src-loader-probe"
+    ],
+    "note": "別branchで進行中・main未統合。測定器は未検証で、probeの干渉結果は存在しない。最初の試行は負荷guardで拒否、正対照はtimeoutへの飽和で不成立。待機時間の超過を診断し、busy-spin（時計を見ながら待つ処理）と校正への修正を実装中。",
+    "provenance": "ローカル別worktreeの未コミット資料 TIMING-VALIDATION-2026-10-09.md / TIMING-DIAGNOSIS-2026-10-09.md / TIMING-DIAGNOSIS-2-2026-10-09.mdを読取。確定した干渉値は not found in files。",
+    "handoff": "本人引継ぎ（10/9）：自分の転送によるSpotlight索引負荷が拒否を起こし、Mac miniのAtomics.waitが指定時間を超えた。本人報告の待機時間中央値とbusy-spin精度の根拠値は not found in files。原因確定と修正効果はこの画面では独立検証していない。"
+  },
+  "infrastructure": {
+    "title": "Mac miniの運用整備",
+    "note": "本人引継ぎ（10/9）：時間台帳とtelemetry（実行状態の記録）分類器を含む新しいchain-templateをMac miniへ反映済み。清掃で削除が必要なものはなく、~/ascon-runの主な内容であるP60リハーサルの生ログは証拠として保持。",
+    "boundary": "台帳・分類器の仕様はrepoで確認。転送完了・mini内の構成・清掃結果の記録は not found in files。今回はホストへ接続していない。",
+    "sources": [
+      "src-remote-ops"
+    ]
+  },
+  "preparation": {
+    "title": "統合済みの準備",
+    "header": [
+      "作業",
+      "統合日 · JST",
+      "到達点",
+      "未成立の範囲"
+    ],
+    "rows": [
+      [
+        "recorder実現性",
+        "2026-10-08",
+        "PARTLY",
+        "既存の外部hookでは全判断・経済境界を揃えられない"
+      ],
+      [
+        "CLI開始collector / PR #40",
+        "2026-10-08",
+        "オフライン試作",
+        "要件1の開始結合のみ。完全なG3収集ではない"
+      ],
+      [
+        "loader実現性",
+        "2026-10-09",
+        "PARTLY",
+        "完全収集と提出物との同等性は未実証"
+      ],
+      [
+        "loader probe / PR #43",
+        "2026-10-09",
+        "オフライン試作",
+        "時間干渉・liveの完全収集は未測定"
+      ],
+      [
+        "要件4実現性",
+        "2026-10-09",
+        "PARTLY",
+        "取引境界の経済値・全attempt対応が不足"
+      ],
+      [
+        "公式P60準備仕様",
+        "2026-10-08",
+        "準備仕様",
+        "提供版・提供日不明。公式P60結果ではない"
+      ]
+    ],
+    "note": "ローカルgitのmerge記録から日付を生成。試作・調査の統合はG3実走の証拠ではない。",
+    "sources": [
+      "src-g3-recorder",
+      "src-cli-binding",
+      "src-g3-loader",
+      "src-loader-probe",
+      "src-g3-req4",
+      "src-p60-spec"
+    ]
+  },
+  "footer_sources": [
+    "src-decisions-oct09",
+    "src-g3-lock-r3",
+    "src-results-e1-e2",
+    "src-g3-prereq",
+    "src-g3-load",
+    "src-g3-req4",
+    "src-p60-spec",
+    "src-budget-settlement"
+  ]
 }
 </script>
 <!-- END data-status -->
@@ -2371,12 +2662,12 @@
 <script type="application/json" id="data-plan">
 {
   "sources": [
-    "src-c-exception",
-    "src-release-runbook",
-    "src-r3-guard",
-    "src-g3-design"
+    "src-decisions-oct09",
+    "src-schedule-oct08",
+    "src-g3-lock-r3",
+    "src-p60-spec"
   ],
-  "goal": "ASCONで優勝する。C+E経路のS_cond / ascon-zeta-r3を固定し、安全監査・提出適合と期限内受理へ集中する。",
+  "goal": "r3を条件付きの保険として維持し、必須ゲートと最終提出の成立を確認する。",
   "win": "エポック終了時のPを参加者間でTへ標準化し、後半ほど重く集計。対noop・最悪レジーム・混成場・改訂ONの尾部を同時に守る。",
   "rules": [
     "独自戦略のみ・提出は1体。参照の改名や設定移植だけへ戻さない。",
@@ -2385,7 +2676,7 @@
     "評価価格の歪曲・自己提出間の移転・禁止RPCを使わない。鍵は本人が専用フォームへ入力、記録には残さない。",
     "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
     "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。",
-    "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
+    "標準runtimeの安全FAILと完全収集不足は未解消。収集器・loader・要件4調査はPARTLY、オフライン試作は存在するが完全な実収集器は未成立。G3は必須・BLOCKED、実走なし。",
     "通常6h/日以下・chunk110分以下・forward100h。実消化未精算、日程や2台稼働を理由に上限を緩めない。"
   ],
   "protocol": [
@@ -2393,7 +2684,7 @@
       "id": "protocol-first",
       "title": "条件付き候補と事前確認",
       "body": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。",
-      "exit": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "exit": "10/14は準備棚卸し。公式P60の提供日は不明、最早10/20以降。10/24–27送信・10/29受理照合は条件付き目標。締切は固定。",
       "label": "条件付き候補と事前確認",
       "period": "10/6〜10/14",
       "state": "blocked",
@@ -2407,31 +2698,30 @@
     {
       "id": "protocol-ai-min",
       "title": "最小G3の安全・改訂確認",
-      "body": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
-      "exit": "通常36＋7＋3は未実施。適用・復帰、検査100%、正常cycle≥3が必要。",
+      "body": "G3（自己改訂の実チェーン受入れ）は必須。外部観測の別案を1日上限で調査する。収集器・loader・取引境界の結論はいずれもPARTLY（部分可能）。試作の成功だけでは実走を始められない。",
+      "exit": "全不足前提と実走・全件監査を満たすまでBLOCKED。日付では解放しない。",
       "label": "最小G3の安全・改訂確認",
-      "period": "10/11以降・未解放",
+      "period": "1日上限の調査 → 前提成立後に実走",
       "state": "blocked",
       "start_date": "2026-10-11",
       "end_date": "2026-10-19",
       "sources": [
-        "src-c-exception",
-        "src-release-runbook"
+        "src-decisions-oct09",
+        "src-g3-lock-r3"
       ]
     },
     {
       "id": "protocol-ai-eval",
       "title": "公式P60を確認",
-      "body": "10/20適用版、公開seeds 101/202/303/404/505、60世界。未実施。",
-      "exit": "非公式リハーサルを合格に流用しない。",
+      "body": "準備仕様は統合済み。公式の適用版・提供日はnot found in files。",
+      "exit": "同一候補・版・提出物・公式採点・G0の証拠を照合する。",
       "label": "公式P60を確認",
-      "period": "10/20〜10/22案",
+      "period": "最早10/20以降・提供日不明",
       "state": "blocked",
       "start_date": "2026-10-20",
       "end_date": "2026-10-22",
       "sources": [
-        "src-c-exception",
-        "src-release-runbook"
+        "src-p60-spec"
       ]
     },
     {
@@ -2478,12 +2768,11 @@
     {
       "id": "gate-g0",
       "title": "G0 / 計測",
-      "state": "dev2 PASS / 旧Q0b B FAIL保持",
-      "resolve": "dev4は24世界G0 PASSの引継ぎ、平均T未達。dev5は平均T未達・G0未提示。xas2はG0 PASSでもHEALTHY=no、liveは全群G0 PASSでもPILOT-STOP。G0は24世界中23世界PASS、crash/40001のみBLOCKED（grok-1のtelemetryが原因、candではない）。診断として全24世界を保持し、BLOCKEDをPASSとは扱わない。violations 0。旧Q0bの2世界FAILを保持し、診断成立と資格を分ける。",
+      "state": "既存混成証拠を整理済み／負荷校正はBLOCKED",
+      "resolve": "fixed-bid-5gweiは実在しr3入力lockへ登録済み。既存混成144世界中137世界が362 loopsだが、G0世界別合格率・p99はnot found in files。負荷校正ではない。",
       "sources": [
-        "src-dev2",
-        "src-dev3",
-        "src-delegation"
+        "src-g3-lock-r3",
+        "src-g3-load"
       ]
     },
     {
@@ -2508,13 +2797,13 @@
     {
       "id": "gate-g3",
       "title": "G3 / 改訂ON",
-      "state": "本体未実施 / BLOCKED",
-      "resolve": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。 通常36＋fault7＋状態3。固定5gwei相手・自然Haiku変更fixtureも欠落。1世界診断は対象外。",
+      "state": "REQUIRED / BLOCKED / 実走なし",
+      "resolve": "G3（自己改訂の実チェーン受入れ）は必須。外部観測の別案を1日上限で調査する。収集器・loader・取引境界の結論はいずれもPARTLY（部分可能）。試作の成功だけでは実走を始められない。 標準runtimeの悪意制御は既知FAIL。自然改訂fixtureも未成立。",
       "sources": [
-        "src-r3-guard",
-        "src-g3-prep",
-        "src-revision-audit",
-        "src-g3-diagnostic"
+        "src-decisions-oct09",
+        "src-g3-prereq",
+        "src-g3-lock-r3",
+        "src-g3-req4"
       ]
     },
     {
@@ -2538,7 +2827,7 @@
       ]
     }
   ],
-  "caution": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+  "caution": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。 10/14は準備棚卸し。公式P60の提供日は不明、最早10/20以降。10/24–27送信・10/29受理照合は条件付き目標。締切は固定。",
   "ai_contract": {
     "name": "AI-G3-01",
     "status": "decided",
@@ -2754,7 +3043,7 @@
       ]
     },
     "iteration_current": 3,
-    "current_run_ref": "status.e3"
+    "current_run_ref": "status.timing"
   },
   "h1": {
     "authority": "本人決定 2026-10-04",
@@ -2968,22 +3257,22 @@
       "start_date": "2026-10-04",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "C+E経路。標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
+      "gate": "r3維持。G3は必須・BLOCKED、別案調査は1日上限。公式P60は版・提供日不明、G4・本人提出も未完。日程は開始許可ではない。",
       "sources": [
-        "src-c-exception",
-        "src-release-runbook"
+        "src-schedule-oct08",
+        "src-decisions-oct09"
       ]
     },
     {
       "id": "phase-deep",
-      "title": "Step2/3 AI検証・任意探索",
+      "title": "外部観測の調査（1日上限）・残前提の整理",
       "start_date": "2026-10-09",
       "end_date": "2026-10-17",
       "state": "blocked",
-      "gate": "C+E経路。旧探索は停止。S_condを資格済Sへ昇格させない。初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "gate": "r3維持。G3は必須・BLOCKED、別案調査は1日上限。公式P60は版・提供日不明、G4・本人提出も未完。日程は開始許可ではない。",
       "sources": [
-        "src-c-exception",
-        "src-release-runbook"
+        "src-schedule-oct08",
+        "src-decisions-oct09"
       ]
     },
     {
@@ -2992,10 +3281,10 @@
       "start_date": "2026-10-18",
       "end_date": "2026-10-25",
       "state": "blocked",
-      "gate": "C+E経路。旧探索は停止。S_condを資格済Sへ昇格させない。初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "gate": "r3維持。G3は必須・BLOCKED、別案調査は1日上限。公式P60は版・提供日不明、G4・本人提出も未完。日程は開始許可ではない。",
       "sources": [
-        "src-c-exception",
-        "src-release-runbook"
+        "src-schedule-oct08",
+        "src-decisions-oct09"
       ]
     },
     {
@@ -3004,10 +3293,10 @@
       "start_date": "2026-10-26",
       "end_date": "2026-10-31",
       "state": "blocked",
-      "gate": "C+E経路。旧探索は停止。S_condを資格済Sへ昇格させない。初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+      "gate": "r3維持。G3は必須・BLOCKED、別案調査は1日上限。公式P60は版・提供日不明、G4・本人提出も未完。日程は開始許可ではない。",
       "sources": [
-        "src-c-exception",
-        "src-release-runbook"
+        "src-schedule-oct08",
+        "src-decisions-oct09"
       ]
     }
   ]
@@ -3028,8 +3317,8 @@
       "title": "dev4/dev5診断、v5昇格せず",
       "dependency": "dev4 49.72対55.02、dev5 50.15対55.73。基準v3",
       "stop": "第2回まで未達。既見seedを独立screen/Q0へ使わない",
-      "state": "running",
-      "highlight": true,
+      "state": "done",
+      "highlight": false,
       "decision_refs": [
         "dec-q0-failure-branch",
         "dec-q0b-g0",
@@ -3061,7 +3350,7 @@
       "title": "Q02条件4 FAIL・r3選択・release確認、非公式計測引継ぎ",
       "dependency": "集計読取確認: mini / 8c29964 / r3 FROZEN / F_ref 4体 / 62001–62005 / 60世界完了。平均T 58.82対multi-arb 43.42、12/12レジームmean dT≥0、noop割れ5/60、violations 0、revert 0.2/世界、submit failures 168/14167。全4chunk G0 PASSは本人引継ぎ、集計loops [362]。弱い参照場の非公式リハーサル。公式T/P60・G3/G4、原ログ・Traceback原因・終了時刻は未検証。 集計読取確認: Air eval2 / 8c29964 / r3 FROZEN対固定10相手＋noop / 63001–63003 / p3 / 36世界完了。簡易Tでinc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。7世界はloopIterations 359–361対期待362のG0 FAIL、除外・救済なし。3修理による挙動変化・同時負荷の因果は未検証。公式T/P60・G3/G4の証拠にしない。",
       "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
-      "state": "running",
+      "state": "done",
       "highlight": false,
       "decision_refs": [
         "dec-q0-failure-branch",
@@ -3080,9 +3369,9 @@
       "date": "2026-10-07",
       "title": "予算精算・全体回顧・本人判断の整理",
       "dependency": "夜間60/36世界とr3x6世界は診断完了。host別実消化/全残予約は未精算。",
-      "stop": "100h残費不明なら追加起動BLOCKED。新候補停止の限定解除は未承認。",
+      "stop": "過去の回顧・未決提案は履歴。現在の方針はr3維持・G3必須。",
       "state": "blocked",
-      "highlight": true,
+      "highlight": false,
       "decision_refs": [
         "dec-008"
       ],
@@ -3090,7 +3379,8 @@
         "src-c-exception",
         "src-release-runbook",
         "src-handoff-oct06",
-        "src-retro-full-oct07"
+        "src-retro-full-oct07",
+        "src-decisions-oct09"
       ]
     },
     {
@@ -3100,7 +3390,7 @@
       "dependency": "seed予約・budget・host排他も成立させる。G3本体未実施。",
       "stop": "欠測を0にしない。runtime経済guardなし、promptで安全PASSにしない。",
       "state": "blocked",
-      "highlight": true,
+      "highlight": false,
       "decision_refs": [
         "dec-step1-policy"
       ],
@@ -3114,356 +3404,354 @@
     {
       "id": "day-2026-10-09",
       "date": "2026-10-09",
-      "title": "C開示・G3/G4不足の監査",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
-      "state": "blocked",
-      "highlight": false,
+      "title": "G3必須・課金$0を決定／外部観測を調査",
+      "dependency": "r3維持。時間干渉harnessは未検証・別branch。",
+      "stop": "外部観測の調査は1日上限。未測定をPASSにせず、成立しなければ本人へ戻す。",
+      "state": "running",
+      "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-10",
       "date": "2026-10-10",
-      "title": "C開示・G3/G4不足の監査",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "残前提の整理（調査上限の延長なし）",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "10/9の1日上限を自動延長しない。追加調査・実走は本人方針と前提を確認。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-11",
       "date": "2026-10-11",
-      "title": "最小G3/G4準備（実走BLOCKED）",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "残前提の整理（調査上限の延長なし）",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "10/9の1日上限を自動延長しない。追加調査・実走は本人方針と前提を確認。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-12",
       "date": "2026-10-12",
-      "title": "最小G3/G4準備（実走BLOCKED）",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "残前提の整理（調査上限の延長なし）",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "10/9の1日上限を自動延長しない。追加調査・実走は本人方針と前提を確認。",
       "state": "blocked",
-      "highlight": true,
+      "highlight": false,
       "decision_refs": [
         "dec-ai-scope",
         "dec-ai-contract"
       ],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-13",
       "date": "2026-10-13",
-      "title": "最小G3/G4準備（実走BLOCKED）",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "残前提の整理（調査上限の延長なし）",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "10/9の1日上限を自動延長しない。追加調査・実走は本人方針と前提を確認。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-14",
       "date": "2026-10-14",
-      "title": "準備棚卸し・初回目標の日程不整合を確認",
-      "dependency": "旧初回提出目標10/14とrunbook 10/24–27送信案は未整合。適用版・provider・入力の不足を確認。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "準備棚卸し（提出期限ではない）",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06",
-        "src-retro-full-oct07"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-15",
       "date": "2026-10-15",
-      "title": "G3/G4不足対応・探索停止",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "最小G3の条件付き実走・監査窓",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-16",
       "date": "2026-10-16",
-      "title": "G3/G4不足対応・探索停止",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "最小G3の条件付き実走・監査窓",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-17",
       "date": "2026-10-17",
-      "title": "G3/G4不足対応・探索停止",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "最小G3の条件付き実走・監査窓",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
-      "highlight": true,
+      "highlight": false,
       "decision_refs": [
         "dec-ai-budget",
         "dec-ai-contract"
       ],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-18",
       "date": "2026-10-18",
-      "title": "G3/G4不足対応・探索停止",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "最小G3の条件付き実走・監査窓",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
-      "highlight": true,
+      "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-19",
       "date": "2026-10-19",
-      "title": "G3/G4不足対応・探索停止",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "中間監査・遅延吸収",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-20",
       "date": "2026-10-20",
-      "title": "公式P60の公開・適用版の可用性確認",
-      "dependency": "10/20以降の公式版/公開60世界を確認してから計画。リハーサル62001–5で代替しない。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "公式P60の適用版確認・実施候補窓",
+      "dependency": "版と提供日は不明。最早10/20以降、G3・予算・同一提出物等が成立後。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06",
-        "src-retro-full-oct07"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-21",
       "date": "2026-10-21",
-      "title": "10/20適用版の公式P60（未実施）",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "公式P60の適用版確認・実施候補窓",
+      "dependency": "版と提供日は不明。最早10/20以降、G3・予算・同一提出物等が成立後。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-22",
       "date": "2026-10-22",
-      "title": "10/20適用版の公式P60（未実施）",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "title": "公式P60の適用版確認・実施候補窓",
+      "dependency": "版と提供日は不明。最早10/20以降、G3・予算・同一提出物等が成立後。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-23",
       "date": "2026-10-23",
       "title": "G4再照合・最終ZIP固定 / 本人送信案",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-24",
       "date": "2026-10-24",
       "title": "G4再照合・最終ZIP固定 / 本人送信案",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-25",
       "date": "2026-10-25",
       "title": "G4再照合・最終ZIP固定 / 本人送信案",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
-      "highlight": true,
+      "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-26",
       "date": "2026-10-26",
       "title": "G4再照合・最終ZIP固定 / 本人送信案",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-27",
       "date": "2026-10-27",
       "title": "G4再照合・最終ZIP固定 / 本人送信案",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-28",
       "date": "2026-10-28",
-      "title": "dec-007: Ollama・ZIP・枠・鍵の最終確認",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
-      "state": "blocked",
+      "title": "本人：Ollama鍵・無料枠量の再確認",
+      "dependency": "dec-007。前払い$0を維持し、不足時は本人が金額を判断。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
+      "state": "pending",
       "highlight": true,
       "decision_refs": [
         "dec-007"
       ],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-29",
       "date": "2026-10-29",
       "title": "本人送信・受理/hash照合目標",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-30",
       "date": "2026-10-30",
       "title": "受理照合の予備日",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
       "id": "day-2026-10-31",
       "date": "2026-10-31",
       "title": "10/31 23:59 JSTまでに最後の受理版を照合",
-      "dependency": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 G3/G4/P60未達。",
-      "stop": "G0・規約・P60・G3・G4の免除なし。日付だけで送信可にしない。",
+      "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
+      "stop": "前提が欠ければBLOCKED。期限を理由にゲートを免除しない。",
       "state": "blocked",
       "highlight": true,
       "decision_refs": [],
       "sources": [
-        "src-c-exception",
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-schedule-oct08",
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     }
   ]
@@ -3562,12 +3850,11 @@
     {
       "id": "progress-smoke",
       "workstream": "初回受理",
-      "title": "公式P60（10/20以降）は未実施",
+      "title": "公式P60：版・提供日不明／未実施",
       "state": "blocked",
-      "evidence": "公開101/202/303/404/505の60世界。miniの62001–62005リハーサルは代用不可。",
+      "evidence": "準備仕様は統合済み。最早10/20以降の確認窓であり、主催者の適用版・提供日はnot found in files。自前リハーサルでは代用できない。",
       "sources": [
-        "src-release-runbook",
-        "src-handoff-oct06"
+        "src-p60-spec"
       ]
     },
     {
@@ -3575,12 +3862,12 @@
       "workstream": "初回受理",
       "title": "G3本体は未実施・BLOCKED",
       "state": "blocked",
-      "evidence": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。 36＋7＋3は未実施。",
+      "evidence": "G3（自己改訂の実チェーン受入れ）は必須。外部観測の別案を1日上限で調査する。収集器・loader・取引境界の結論はいずれもPARTLY（部分可能）。試作の成功だけでは実走を始められない。 全体の実走・安全受入れは未成立。",
       "sources": [
-        "src-g3-design",
-        "src-g3-prep",
-        "src-revision-audit",
-        "src-r3-guard"
+        "src-decisions-oct09",
+        "src-g3-prereq",
+        "src-g3-lock-r3",
+        "src-g3-req4"
       ]
     },
     {
@@ -3675,10 +3962,9 @@
       "workstream": "探索",
       "title": "限定AI受付・ON反復",
       "state": "blocked",
-      "evidence": "ENTRY_BPSだけ・epoch reset・R*三反復＋S fullを決定。機械的境界/実装/全費用は未成立、無料枠不足時の前払い判断はG3見積もり後。",
+      "evidence": "旧限定AI計画の履歴。現在はG3必須・外部観測の1日調査。Ollama前払い$0、無料枠量は10/28に本人確認。",
       "sources": [
-        "src-ai",
-        "src-delegation"
+        "src-decisions-oct09"
       ]
     },
     {
@@ -3717,9 +4003,10 @@
       "workstream": "初回受理",
       "title": "Ollama鍵登録受理（本人報告）",
       "state": "done",
-      "evidence": "[本人報告] 2026-10-04 15:07頃 JST、運営フォームの鍵登録受理表示を本人が提示。Ollama Cloud鍵・代表者メール一致は本人確認。画面はFree・無料枠0%・残高$0・Auto-reload Off。無料枠モデル一覧はgemma4:31b、gpt-oss:120b、gpt-oss:20b、nemotron-3-nano:30b、nemotron-3-super、nemotron-3-ultra。許可モデルは既定例gpt-oss:120bを前提に進める（本人了承）。dec-008=resolved、attentionctl記録済み。クリップボードの鍵は本人が消去済み（本人報告）。 運営公表モデル一覧との照合・無料枠の量の十分性・鍵の疎通は未確認で、10/28 dec-007で再確認。本人のやることは現在なし。無料枠不足時の前払い判断は将来のG3見積もり後で、支払承認ではない。",
+      "evidence": "10/4の初回鍵登録は本人報告で完了。現在の鍵有効性・無料枠量は未確認で、10/28までの本人作業。前払い$0を維持。",
       "sources": [
-        "src-ollama-report"
+        "src-ollama-report",
+        "src-decisions-oct09"
       ]
     },
     {
@@ -3956,9 +4243,12 @@
       "id": "progress-release-r3",
       "title": "r3 release事前確認",
       "state": "done",
-      "evidence": "資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。 r3テスト12件、strategy 102ファイル。ci-local対象64e4990、bundle/selftest対象1f49117。ZIP payload一致96ファイル（mtime除外）。",
+      "evidence": "r3を条件付きの保険・提出候補として維持する。r3cは研究版で、新しい提出hashへの例外継承には本人の再確認が必要。合格済みではなく、提出準備も未完了。",
       "sources": [
-        "src-release-r3"
+        "src-decisions-oct09",
+        "src-g3-lock-r3",
+        "src-results-e1-e2",
+        "src-c-exception"
       ],
       "workstream": "初回受理"
     },
@@ -4030,6 +4320,40 @@
       "workstream": "計測",
       "verified": true,
       "state_label": "読取済み（文書化・ゲート完了ではない）"
+    },
+    {
+      "id": "progress-g3-preparation",
+      "workstream": "基盤",
+      "title": "G3調査・オフライン試作の統合",
+      "state": "done",
+      "evidence": "recorder・loader・要件4はPARTLY。CLI開始collectorは要件1のみ、loader probeも実走証拠ではない。",
+      "sources": [
+        "src-g3-recorder",
+        "src-cli-binding",
+        "src-g3-loader",
+        "src-loader-probe",
+        "src-g3-req4"
+      ]
+    },
+    {
+      "id": "progress-p60-spec",
+      "workstream": "基盤",
+      "title": "公式P60準備仕様の統合",
+      "state": "done",
+      "evidence": "準備仕様の文書化のみ完了。版・提供日不明、公式P60未実施。",
+      "sources": [
+        "src-p60-spec"
+      ]
+    },
+    {
+      "id": "progress-probe-timing",
+      "workstream": "基盤",
+      "title": "観測probeの時間干渉harness",
+      "state": "running",
+      "evidence": "別branchで進行中・main未統合。測定器は未検証で、probeの干渉結果は存在しない。最初の試行は負荷guardで拒否、正対照はtimeoutへの飽和で不成立。待機時間の超過を診断し、busy-spin（時計を見ながら待つ処理）と校正への修正を実装中。",
+      "sources": [
+        "src-loader-probe"
+      ]
     }
   ]
 }
@@ -4059,37 +4383,36 @@
     {
       "id": "B01",
       "rank": 1,
-      "title": "G3の経済安全境界・recorderが未成立",
+      "title": "G3：安全と完全な収集証拠が不足",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "致命",
       "owner": "Codex",
-      "evidence": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。 自然改訂fixtureは未成立。F_mix、seed予約、予算・host排他もG3再開前の条件。",
-      "mitigation": "G3本体BLOCKEDを維持。自然Haiku実変更・復帰、全action記録と強制境界を別々に確認。promptだけで解消扱いにしない。",
+      "evidence": "G3（自己改訂の実チェーン受入れ）は必須。外部観測の別案を1日上限で調査する。収集器・loader・取引境界の結論はいずれもPARTLY（部分可能）。試作の成功だけでは実走を始められない。 標準runtimeの悪意制御は既知FAIL。自然改訂fixtureも未成立。",
+      "mitigation": "要件2–5を1日上限で調査。時間干渉harnessの検証を終えるか停止し、不成立ならBLOCKEDのまま本人へ方針を戻す。免除を推奨しない。",
       "status": "open",
       "sources": [
-        "src-r3-guard",
-        "src-revision-audit",
-        "src-g3-diagnostic",
-        "src-retro-full-oct07"
+        "src-decisions-oct09",
+        "src-g3-prereq",
+        "src-g3-lock-r3",
+        "src-g3-req4"
       ],
       "impact_note": "G3を通過できず、提出READYにできない"
     },
     {
       "id": "B20",
       "rank": 2,
-      "title": "r3 vs inc-zeta gap",
+      "title": "r3の混成場の競争力は不足",
       "severity": "Warning",
       "likelihood": "高",
       "impact": "大",
       "owner": "Codex",
-      "evidence": "混成36世界の簡易T: inc-zeta 57.42（1位）、r3 50.65（7位）、noop 49.44。G0 FAIL 7世界を含む。3修理の挙動変化は未検証仮説。 r3/r3x paired診断完了: Air eval2 / 77c6ead（8c29964＋local-only r3x）、固定10相手＋noop＋候補の12体、seed64001、whale/lending-incident/crash×2候補=6世界・3ペア・1 seed。提供集計では全G0 PASS・362 loops。r3xは修理2のsell資金不足時buy-only分岐を外してalways bundle。簡易T（simplified T）平均r3 66.28 / r3x 58.49、r3xは全3ペアでT・P−noopとも悪化。「repair 2 hurts（修理2が害）」はこの診断では支持されない。全12レジーム・安全性・因果の一般化は未検証。 新seed64001のr3平均Tは66.28（約66.3）。局面別はwhale 58.2 / lending-incident 79.9 / crash 60.7で、以前の63001–63003の局面平均65.2 / 37.2 / 45.4とは区別する。inc-zeta対照T 46.1 / 48.1 / 72.8はfresh 3世界のうち2世界でr3を下回る。seed間変動が大きく、1 seedの結果で混成36世界のgapや修理の一般的因果は解消しない。",
-      "mitigation": "既存確定ログで資産別edge/carry/gas/片脚/期末在庫を分解する。修理2撤去を優先しない。限定新候補・配分・最悪損失・研究枠は本人判断待ち、追加実験は未承認。",
+      "evidence": "E1＋E3・E6・E9の探索的な近似統合でr3−inc-zetaは−3.54 T。r3cの改善は追試で再現しない。弱いF_refの好成績を混成場や本番へ外挿しない。",
+      "mitigation": "r3を保険として維持。r3cは研究のみ、新しい提出候補は本人の例外継承確認が必要。",
       "status": "open",
       "sources": [
-        "src-results-p60reh-mixed",
-        "src-retro-full-oct07",
-        "src-r3x-summary"
+        "src-results-e1-e2",
+        "src-decisions-oct09"
       ],
       "impact_note": "r3の優勝力を説明できず、条件付きの提出保険を超える採用根拠がない"
     },
@@ -4118,14 +4441,12 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Claude",
-      "evidence": "100hは総枠、残時間ではない。実消化・残費は未精算。RETRO概算はQ01約5.8h、Q02約4.4h、診断等約5h、合計約15h（推定）。既存予約を消化率や現在残費にしない。",
-      "mitigation": "公式P60実行12–13h＋照合1h、最小G3監査込み14–15hは計画見積。G4・全残予約・host別実消化を照合。追加研究は終了。 予算精算後の限定再開は本人判断。",
+      "evidence": "100hは10/4 01:00 JST起算の総枠。正確な消化・残量はUNKNOWN。復元区間や旧予約を残量として使えない。",
+      "mitigation": "失敗・監査・非runを含むhost別区間と全残予約を精算。次工程の費用条件が不明なら起動BLOCKED。",
       "status": "open",
       "sources": [
-        "src-retro-oct06",
-        "src-release-runbook",
-        "src-c-exception",
-        "src-retro-full-oct07"
+        "src-budget-settlement",
+        "src-g3-lock-r3"
       ],
       "impact_note": "後工程を時間枠内で完了できないおそれ"
     },
@@ -4137,11 +4458,12 @@
       "likelihood": "中",
       "impact": "致命",
       "owner": "human",
-      "evidence": "[本人報告] dec-008 resolved、登録受理表示・Cloud鍵/代表者メール一致を確認。Free・無料枠0%・残高$0・Auto-reload Off。gpt-oss:120b前提を本人了承。",
-      "mitigation": "登録の再操作は不要。10/28 dec-007で運営一覧・無料枠量・疎通を再確認。シミュレーションでは本人のOllama鍵/無料枠を使わずサブスクCLIを用いる。agy形式確認から本番疎通を認定しない。",
+      "evidence": "初回登録受理表示は10/4本人報告。10/9決定で前払い$0を維持。現在の無料枠量・鍵の有効性は未確認。",
+      "mitigation": "10/28までにOllama鍵の有効性と無料枠量を本人が再確認。前払いは$0を維持し、不足時の支払額は本人が決める。",
       "status": "mitigating",
       "sources": [
-        "src-ollama-report"
+        "src-ollama-report",
+        "src-decisions-oct09"
       ],
       "impact_note": "最終提出時にAIを利用できないおそれ"
     },
@@ -4153,12 +4475,13 @@
       "likelihood": "高",
       "impact": "大",
       "owner": "Claude",
-      "evidence": "u1m begin欠落。夜間キューを実行中に書換え、末尾構文エラー。",
-      "mitigation": "[本人引継ぎ] 8分ごとのハートビートと/tmp/night-state.mdで夜間の自動進行を管理。監視は30分で失効するため、各ハートビートで監視の有効期限・再登録/更新・次回起床・状態表を確認し、失効前に更新する。失効/未受領なら新規起動を止める。8分は進行管理用で、既決の60秒以下監視・2分検知/5分受領/10分次着手を置換しない。稼働実績・更新成功は本更新で未検証。",
+      "evidence": "運用テンプレートには時間台帳とtelemetry分類がある。Mac miniへの反映は本人引継ぎで、現在のホスト状態は未検証。",
+      "mitigation": "時間干渉は未測定。負荷guardを迂回せず、占有・入力固定・監視・費用の入口条件を満たす。取消済みの旧夜間ハートビートは使わない。",
       "status": "open",
       "sources": [
-        "src-master",
-        "src-rev10"
+        "src-remote-ops",
+        "src-loader-probe",
+        "src-decisions-oct09"
       ],
       "impact_note": "結果を資格証拠に使えなくなる"
     },
@@ -4183,18 +4506,17 @@
     {
       "id": "B07",
       "rank": 8,
-      "title": "G3 F_mixのfixed-bid-5gweiが未整備",
+      "title": "G3：固定相手は登録済み、負荷校正は未完",
       "severity": "Warning",
       "likelihood": "高",
       "impact": "大",
       "owner": "Claude",
-      "evidence": "G3 rosterの固定5gwei相手が存在せずBLOCKED。Air混成36世界は集計確認済みだが、G3との一致やこの問題の解消は未検証。",
-      "mitigation": "既存相手の無断置換なし。正式roster・hashを確認するまでG3 F_mixは停止。",
+      "evidence": "fixed-bid-5gweiは実在しr3入力lockへ登録済み。既存混成144世界中137世界が362 loopsだが、G0世界別合格率・p99はnot found in files。負荷校正ではない。",
+      "mitigation": "ロック対象の場・候補・同一ホストで専用校正と完全な実チェーン証拠が必要。旧「相手不在」は撤回。",
       "status": "open",
       "sources": [
-        "src-g3-prep",
-        "src-g3-chain",
-        "src-handoff-oct06"
+        "src-g3-lock-r3",
+        "src-g3-load"
       ],
       "impact_note": "異なる対戦構成での確認を始められない"
     },
@@ -4346,7 +4668,7 @@
       "likelihood": "高",
       "impact": "大",
       "owner": "human",
-      "evidence": "PR #8 c1eaf6fでupstream 4057ea3統合。PR #9 G3準備、#10 r2 selftest、#11 chain snapshot、#12 r3、#13診断世界、#14例外継承、#15 r3 release確認がmerged。HEAD/origin/main 8c29964、オンライン未照合。",
+      "evidence": "PR #8 c1eaf6fでupstream 4057ea3統合。PR #9 G3準備、#10 r2 selftest、#11 chain snapshot、#12 r3、#13診断世界、#14例外継承、#15 r3 release確認がmerged。当時の保存HEAD/origin/mainは8c29964、オンライン未照合。",
       "mitigation": "ローカル保存済み履歴で確認。最新オンラインCIは未照合、G4とは別。",
       "status": "resolved",
       "sources": [
@@ -4363,11 +4685,11 @@
       "likelihood": "高",
       "impact": "大",
       "owner": "Codex",
-      "evidence": "保存ランブックに規約適用日を記録。現在のオンライン規約・運営モデル・10/20配布版は未照合。 公式P60は未実施・BLOCKED、10/20以降に公開/適用版の可用性を確認。",
-      "mitigation": "公式P60は10/20以降の比較可能な版で確認。",
+      "evidence": "公式P60の適用版・提供日はnot found in files。現行のオンライン規約・運営モデルは今回照合していない。",
+      "mitigation": "最早10/20以降、提供された版・規約・モデル・同一ZIPへの証拠束縛を確認。",
       "status": "open",
       "sources": [
-        "src-release-runbook"
+        "src-p60-spec"
       ],
       "impact_note": "統合または適合受理を完了と判断できない"
     },
@@ -4390,17 +4712,17 @@
     {
       "id": "B21",
       "rank": 20,
-      "title": "10/14初回目標とrunbook 10/24–27送信案が不整合",
+      "title": "公式P60の提供日と提出日程が未確定",
       "severity": "Critical",
       "likelihood": "高",
       "impact": "大",
       "owner": "human",
-      "evidence": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
-      "mitigation": "10/14は準備棚卸し。予算とG3・公式P60・G4の順序を整合させて本人判断。日付だけで送信を許可しない。",
+      "evidence": "10/14は準備棚卸し。公式P60の適用版・提供日は不明で、10/20は最早の確認窓。G3・予算・公式版が揃わなければ下流日程も成立しない。",
+      "mitigation": "10/24–27の送信、10/29の受理照合は条件付き目標。10/31 23:59 JSTの締切から必要工程を再確認する。",
       "status": "open",
       "sources": [
-        "src-retro-full-oct07",
-        "src-release-runbook"
+        "src-p60-spec",
+        "src-schedule-oct08"
       ],
       "impact_note": "受入れゲート未達のまま初回提出目標を達成扱いにするおそれ"
     }
@@ -4419,8 +4741,117 @@
   ],
   "items": [
     {
+      "id": "queue-probe-timing",
+      "experiment": "probe-timing",
+      "title": "時間干渉harnessの検証・校正",
+      "state": "進行中 / 未統合 / UNMEASURED",
+      "worlds": null,
+      "hours": null,
+      "window": "本人方針の上限・前提内",
+      "dependency": "別branchで進行中・main未統合。測定器は未検証で、probeの干渉結果は存在しない。最初の試行は負荷guardで拒否、正対照はtimeoutへの飽和で不成立。待機時間の超過を診断し、busy-spin（時計を見ながら待つ処理）と校正への修正を実装中。",
+      "owner": "Codex",
+      "active": true,
+      "current": true,
+      "sources": [
+        "src-loader-probe"
+      ],
+      "priority": 1
+    },
+    {
+      "id": "queue-g3-bounded",
+      "experiment": "g3-bounded",
+      "title": "G3要件2–5の外部観測調査",
+      "state": "1日上限 / PARTLY",
+      "worlds": null,
+      "hours": null,
+      "window": "本人方針の上限・前提内",
+      "dependency": "G3（自己改訂の実チェーン受入れ）は必須。外部観測の別案を1日上限で調査する。収集器・loader・取引境界の結論はいずれもPARTLY（部分可能）。試作の成功だけでは実走を始められない。",
+      "owner": "Codex",
+      "active": false,
+      "current": true,
+      "sources": [
+        "src-decisions-oct09",
+        "src-g3-prereq",
+        "src-g3-lock-r3",
+        "src-g3-req4"
+      ],
+      "priority": 2
+    },
+    {
+      "id": "queue-budget-settlement",
+      "experiment": "budget-settlement",
+      "title": "既消費・残予約を精算",
+      "state": "UNKNOWN / 起動条件未成立",
+      "worlds": null,
+      "hours": null,
+      "window": "本人方針の上限・前提内",
+      "dependency": "100hは総枠。10/4 01:00 JST起算、正確な実消化・残時間はUNKNOWN。既存記録の不整合・未記録費用があり、復元区間の小計を100hから差し引いて残量にしない。",
+      "owner": "Codex",
+      "active": false,
+      "current": true,
+      "sources": [
+        "src-budget-settlement",
+        "src-schedule-oct08",
+        "src-decisions-oct09"
+      ],
+      "priority": 3
+    },
+    {
+      "id": "queue-first-mix",
+      "experiment": "first-mix",
+      "priority": 4,
+      "title": "G3の同一ホスト負荷校正",
+      "state": "負荷校正未完・BLOCKED",
+      "worlds": null,
+      "hours": null,
+      "window": "専用校正の設計・全費用を確認してから",
+      "dependency": "fixed-bid-5gweiは実在しr3入力lockへ登録済み。既存混成144世界中137世界が362 loopsだが、G0世界別合格率・p99はnot found in files。負荷校正ではない。",
+      "owner": "Claude",
+      "active": false,
+      "sources": [
+        "src-g3-lock-r3",
+        "src-g3-load"
+      ],
+      "current": true
+    },
+    {
+      "id": "queue-first-g3",
+      "experiment": "first-g3",
+      "priority": 5,
+      "title": "AI改訂の最小動作確認",
+      "state": "BLOCKED・本体未実施",
+      "worlds": 46,
+      "hours": "15",
+      "window": "日程再配分・14–15h予約案（未精算）",
+      "dependency": "G3（自己改訂の実チェーン受入れ）は必須。外部観測の別案を1日上限で調査する。収集器・loader・取引境界の結論はいずれもPARTLY（部分可能）。試作の成功だけでは実走を始められない。 標準runtimeの悪意制御は既知FAIL。自然改訂fixtureも未成立。 r3入力lock・固定相手は登録済み。負荷校正・自然fixture・専用manifest・予算等が不足。",
+      "owner": "Claude",
+      "active": false,
+      "sources": [
+        "src-g3-lock-r3",
+        "src-decisions-oct09"
+      ],
+      "current": true
+    },
+    {
+      "id": "queue-first-p60",
+      "experiment": "first-p60",
+      "priority": 6,
+      "title": "公開60シナリオで回帰確認",
+      "state": "版・提供日不明 / BLOCKED",
+      "worlds": 60,
+      "hours": "14",
+      "window": "最早10/20以降。確定提供日なし",
+      "dependency": "準備仕様統合済み。適用版・G3・同一候補/ZIP・公式採点・G0照合が必要。自前リハーサルでは代替不可。",
+      "owner": "Claude",
+      "active": false,
+      "sources": [
+        "src-p60-spec"
+      ],
+      "current": true
+    },
+    {
       "id": "queue-mixed-r3",
-      "priority": 1,
+      "priority": 7,
       "experiment": "mixed-r3",
       "title": "Air r3混成場計測",
       "state": "計測完了・診断のみ / G0 FAIL 7世界",
@@ -4432,11 +4863,12 @@
       "active": false,
       "sources": [
         "src-results-p60reh-mixed"
-      ]
+      ],
+      "current": false
     },
     {
       "id": "queue-rehearsal-r3",
-      "priority": 2,
+      "priority": 8,
       "experiment": "rehearsal-r3",
       "title": "mini r3 P60リハーサル",
       "state": "計測完了・診断のみ",
@@ -4448,11 +4880,12 @@
       "active": false,
       "sources": [
         "src-results-p60reh-mixed"
-      ]
+      ],
+      "current": false
     },
     {
       "id": "queue-zeta-prep",
-      "priority": 3,
+      "priority": 9,
       "experiment": "zeta-prep",
       "title": "r3条件付き候補固定",
       "state": "完了・資格合格ではない",
@@ -4465,27 +4898,29 @@
       "sources": [
         "src-c-exception",
         "src-r3-guard"
-      ]
+      ],
+      "current": false
     },
     {
       "id": "queue-pr-split",
-      "priority": 4,
+      "priority": 10,
       "experiment": "pr-split",
       "title": "PR #5–15統合",
       "state": "完了・保存済み履歴",
       "worlds": 0,
       "hours": null,
       "window": "10/5以降",
-      "dependency": "PR #8 c1eaf6fでupstream 4057ea3統合。PR #9 G3準備、#10 r2 selftest、#11 chain snapshot、#12 r3、#13診断世界、#14例外継承、#15 r3 release確認がmerged。HEAD/origin/main 8c29964、オンライン未照合。",
+      "dependency": "PR #8 c1eaf6fでupstream 4057ea3統合。PR #9 G3準備、#10 r2 selftest、#11 chain snapshot、#12 r3、#13診断世界、#14例外継承、#15 r3 release確認がmerged。当時の保存HEAD/origin/mainは8c29964、オンライン未照合。",
       "owner": "human",
       "active": false,
       "sources": [
         "src-main-history"
-      ]
+      ],
+      "current": false
     },
     {
       "id": "queue-q-zeta-02",
-      "priority": 5,
+      "priority": 11,
       "experiment": "q-zeta-02",
       "title": "Q-ZETA-02の独立60世界資格試験",
       "state": "完了・条件4 FAIL / 原5/6 BLOCKED",
@@ -4498,7 +4933,8 @@
       "sources": [
         "src-retro-oct06",
         "src-c-exception"
-      ]
+      ],
+      "current": false
     },
     {
       "id": "queue-dev1-evidence",
@@ -4509,17 +4945,18 @@
         "src-rev13"
       ],
       "experiment": "dev1-evidence",
-      "priority": 6,
+      "priority": 12,
       "state": "incz診断完了・履歴",
       "worlds": 12,
       "hours": null,
       "window": "全12世界完了（本人引継ぎ）、約55分・実完了時刻未提示",
-      "dependency": "[measured] inczはinc-zeta（ascon-zetaのzeta-a30パラメータ・frozen）をF_ref(cand+noop+multi-arb+clean-arb)で12レジーム×seed40005=12世界。全計測終了・走行中なし。G0 PASS・362ループ・違反0。12レジーム等重み平均T cand 56.30 / multi-arb 44.44（candが上）。1世界平均P 1343.6 / 730.0 / 281.1、取引数254.2 / 253.0 / 42.2（cand/multi/clean）。noop割れ4/12世界、平均(T−Tnoop)<0のレジーム4（最悪informed-flow −8.12）。cand mined revert平均0.2/世界（multi-arb 8.4）、submitted3057/failed90（2.9%）。07:20 JST頃開始との引継ぎ（旧05:40頃開始見込みを訂正）、約55分。旧08:15 JST頃の完了見込みは実績ではなく、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。 第3回xa-1は打ち切り。H1専用adapter/受付未成立、Q0停止。"
+      "dependency": "[measured] inczはinc-zeta（ascon-zetaのzeta-a30パラメータ・frozen）をF_ref(cand+noop+multi-arb+clean-arb)で12レジーム×seed40005=12世界。全計測終了・走行中なし。G0 PASS・362ループ・違反0。12レジーム等重み平均T cand 56.30 / multi-arb 44.44（candが上）。1世界平均P 1343.6 / 730.0 / 281.1、取引数254.2 / 253.0 / 42.2（cand/multi/clean）。noop割れ4/12世界、平均(T−Tnoop)<0のレジーム4（最悪informed-flow −8.12）。cand mined revert平均0.2/世界（multi-arb 8.4）、submitted3057/failed90（2.9%）。07:20 JST頃開始との引継ぎ（旧05:40頃開始見込みを訂正）、約55分。旧08:15 JST頃の完了見込みは実績ではなく、実完了時刻は未提示。契約・資格とは無関係の診断。資格合格・旧Q0mの代用・提出可否の判断に使わず、Q0契約は変更しない。 第3回xa-1は打ち切り。H1専用adapter/受付未成立、Q0停止。",
+      "current": false
     },
     {
       "id": "queue-q0b-evidence",
       "experiment": "q0b-evidence",
-      "priority": 7,
+      "priority": 13,
       "title": "Q0b安全・G0履歴・時間証跡の補完",
       "state": "証跡精算のみ・再走なし",
       "worlds": 0,
@@ -4531,7 +4968,8 @@
       "sources": [
         "src-q0b",
         "src-master"
-      ]
+      ],
+      "current": false
     },
     {
       "id": "queue-q0-requal",
@@ -4540,19 +4978,20 @@
         "src-c-exception"
       ],
       "experiment": "q0-requal",
-      "priority": 8,
+      "priority": 14,
       "state": "C+Eで終了・旧計画",
       "worlds": 60,
       "hours": "5",
       "window": "現経路では実行しない",
       "dependency": "旧契約を保存し、追加資格・候補探索・AI性能研究を再開しない。",
       "active": false,
-      "title": "A現Q0・追加1候補1回"
+      "title": "A現Q0・追加1候補1回",
+      "current": false
     },
     {
       "id": "queue-mix-design",
       "experiment": "mix-design",
-      "priority": 9,
+      "priority": 15,
       "title": "F_mixと最小改訂受付の設計",
       "state": "準備済み・起動BLOCKED",
       "worlds": 0,
@@ -4565,29 +5004,13 @@
         "src-g3-prep",
         "src-g3-chain",
         "src-revision-audit"
-      ]
-    },
-    {
-      "id": "queue-first-mix",
-      "experiment": "first-mix",
-      "priority": 10,
-      "title": "混成の対戦相手で動作を確認",
-      "state": "G3 F_mix未整備・停止",
-      "worlds": 12,
-      "hours": "13/15",
-      "window": "roster/費用/G0成立後",
-      "dependency": "fixed-bid-5gwei未整備。Air混成計測との一致は未検証。",
-      "owner": "Claude",
-      "active": false,
-      "sources": [
-        "src-g3-prep",
-        "src-handoff-oct06"
-      ]
+      ],
+      "current": false
     },
     {
       "id": "queue-q0m",
       "experiment": "q0m",
-      "priority": 11,
+      "priority": 16,
       "title": "混成場での資格試験案（不採用）",
       "state": "不採用・旧未署名記録",
       "worlds": 60,
@@ -4599,44 +5022,8 @@
       "sources": [
         "src-q0b",
         "src-master"
-      ]
-    },
-    {
-      "id": "queue-first-p60",
-      "experiment": "first-p60",
-      "priority": 12,
-      "title": "公開60シナリオで回帰確認",
-      "state": "未実施・10/20以降待ち",
-      "worlds": 60,
-      "hours": "14",
-      "window": "10/20〜22案、実行12–13h＋照合1h",
-      "dependency": "10/20適用版・同一候補/ZIP・G0照合。非公式リハーサルは代替不可。",
-      "owner": "Claude",
-      "active": false,
-      "sources": [
-        "src-release-runbook",
-        "src-handoff-oct06"
-      ]
-    },
-    {
-      "id": "queue-first-g3",
-      "experiment": "first-g3",
-      "priority": 13,
-      "title": "AI改訂の最小動作確認",
-      "state": "BLOCKED・本体未実施",
-      "worlds": 46,
-      "hours": "15",
-      "window": "日程再配分・14–15h予約案（未精算）",
-      "dependency": "標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。 fixed-bid-5gweiと自然変更fixture欠落。",
-      "owner": "Claude",
-      "active": false,
-      "sources": [
-        "src-g3-design",
-        "src-g3-prep",
-        "src-g3-chain",
-        "src-revision-audit",
-        "src-r3-guard"
-      ]
+      ],
+      "current": false
     },
     {
       "id": "queue-ai-implementation",
@@ -4645,14 +5032,15 @@
         "src-c-exception"
       ],
       "experiment": "ai-implementation",
-      "priority": 14,
+      "priority": 17,
       "state": "C+Eで終了・旧計画",
       "worlds": 0,
       "hours": null,
       "window": "現経路では実行しない",
       "dependency": "旧契約を保存し、追加資格・候補探索・AI性能研究を再開しない。",
       "active": false,
-      "title": "H1専用adapter・D対照の前提整理"
+      "title": "H1専用adapter・D対照の前提整理",
+      "current": false
     },
     {
       "id": "queue-ai-d-control",
@@ -4661,19 +5049,20 @@
         "src-c-exception"
       ],
       "experiment": "ai-d-control",
-      "priority": 15,
+      "priority": 18,
       "state": "C+Eで終了・旧計画",
       "worlds": 48,
       "hours": "52/15",
       "window": "現経路では実行しない",
       "dependency": "旧契約を保存し、追加資格・候補探索・AI性能研究を再開しない。",
       "active": false,
-      "title": "AI対決定論適応の開発screen"
+      "title": "AI対決定論適応の開発screen",
+      "current": false
     },
     {
       "id": "queue-factor-ab",
       "experiment": "factor-ab",
-      "priority": 16,
+      "priority": 19,
       "title": "機能を切り替えて効果を比較",
       "state": "C+Eで終了・旧計画",
       "worlds": 48,
@@ -4684,12 +5073,13 @@
       "active": false,
       "sources": [
         "src-c-exception"
-      ]
+      ],
+      "current": false
     },
     {
       "id": "queue-m2",
       "experiment": "m2",
-      "priority": 17,
+      "priority": 20,
       "title": "新案の再生成（不採用）",
       "state": "不採用・0h配分",
       "worlds": 60,
@@ -4701,11 +5091,12 @@
       "sources": [
         "src-q0b",
         "src-master"
-      ]
+      ],
+      "current": false
     },
     {
       "id": "queue-e3",
-      "priority": 18,
+      "priority": 21,
       "experiment": "e3",
       "title": "2026-10-07 E3 / mini r3混成場",
       "state": "計測完了・保存集計読取のみ",
@@ -4717,10 +5108,11 @@
       "active": false,
       "sources": [
         "src-results-e1-e2"
-      ]
+      ],
+      "current": false
     }
   ],
-  "note": "2026-10-08: E1–E3・E5–E10は保存集計読取済み、診断のみ。後続E8/E9の保存結果は読取済み。r3c−r3は−1.21で、先行帯の優位は再現しなかった（E8–E10欄）。実プロセス・実走hashの独立監査は未実施。 新規候補作成の停止は限定解除、時間予算はチームに委任（Codex主、miniをフル活用）。新しい提出hashは本人の新たな例外継承確認が必要。公式P60・G3/G4は未達。実消化未精算、MASTER旧キューとの不一致は未解消。",
+  "note": "次に行うのは時間干渉harnessの検証と、1日上限内のG3調査。残予算はUNKNOWN。以下は現在作業と完了・停止した履歴を区別して表示する。",
   "day_limit_hours": 6,
   "bundle": "forward100h・6h/日・110分/chunkを維持。実消化・残費未精算。G3準備/全監査込み14–15h、公式P60 12–13h＋照合1hは計画見積。",
   "side_jobs": [
@@ -4746,7 +5138,7 @@
       "title": "release / G3準備",
       "owner": "Claude",
       "state": "事前確認済み / G3 BLOCKED",
-      "note": "資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。 標準runtimeはrevision executorを直接installし、経済安全の強制拒否ゲートがない。候補内guardでは強制できず、prompt強化は安全保証ではなく効果未検証。malicious制御の検出テストPASSはruntimeのsafety FAILを示す。recorder未実装で実ログ監査はBLOCKED。",
+      "note": "資料記録: r2/r3ともtypecheck・check:strategy・bundle・Docker selftest PASS。ci-local --fullはr2 pass 2331 / skip 9 / fail 0（2340件）、r3 pass 2337 / skip 9 / fail 0。selftestは各11件包含・revert 0・2 CPU/4GB、live week隔離なし・bridge。G4全体のPASSではない。 標準runtimeの安全FAILと完全収集不足は未解消。収集器・loader・要件4調査はPARTLY、オフライン試作は存在するが完全な実収集器は未成立。G3は必須・BLOCKED、実走なし。",
       "sources": [
         "src-release-r3",
         "src-r3-guard",
@@ -4771,24 +5163,22 @@
 <script type="application/json" id="data-budget">
 {
   "sources": [
-    "src-master",
-    "src-budget-update",
-    "src-ai",
-    "src-retro-oct06",
-    "src-release-runbook"
+    "src-budget-settlement",
+    "src-schedule-oct08",
+    "src-decisions-oct09"
   ],
   "total_hours": "100",
-  "interpretation": "forward100h運用を維持・起点実区間の精算待ち",
+  "interpretation": "10/4 01:00 JSTからのforward100h。正確な実消化・残量UNKNOWN",
   "start_at": "2026-10-04T01:00:00+09:00",
   "consumed_lower_bound_hours": "18.6",
   "consumed_exact_hours": null,
-  "note": "100hは総枠、残時間ではない。実消化・残費は未精算。RETRO概算はQ01約5.8h、Q02約4.4h、診断等約5h、合計約15h（推定）。既存予約を消化率や現在残費にしない。",
+  "note": "100hは総枠。10/4 01:00 JST起算、正確な実消化・残時間はUNKNOWN。既存記録の不整合・未記録費用があり、復元区間の小計を100hから差し引いて残量にしない。",
   "columns": [
     {
       "id": "budget-keep",
       "key": "keep_hours",
-      "title": "現行 KEEP",
-      "state": "rev 6: deepからG3へ5.2h振替済み、実走は全条件待ち"
+      "title": "旧KEEP予約（履歴）",
+      "state": "過去の配分。現在の利用可能枠・起動許可ではない"
     },
     {
       "id": "budget-amend",
@@ -4977,7 +5367,8 @@
     "sources": [
       "src-overnight",
       "src-rev10",
-      "src-retro-oct06"
+      "src-retro-oct06",
+      "src-budget-settlement"
     ],
     "window_start": "2026-10-05T00:26:00+09:00",
     "xa_smoke_minutes_each": 13,
@@ -4996,7 +5387,7 @@
     "remaining_reserved_hours": null,
     "next_full_cost_hours": null,
     "formula": "C_forward + R_remaining + N_next ≤ 100h",
-    "note": "旧夜間概算457分は当時の部分履歴。RETROの10/5〜6概算約15hも未精算であり、重複を未照合のまま足さない。2台の稼働時間・現在の残費は未検証。",
+    "note": "旧夜間概算457分は当時の部分履歴。RETROの10/5〜6概算約15hも未精算であり、重複を未照合のまま足さない。2台の稼働時間・現在の残費は未検証。 現在の精算はBUDGET-SETTLEMENT-2026-10-08.mdを参照。残量UNKNOWN。",
     "mix2_estimate_minutes": 100,
     "incz_estimate_minutes": 55,
     "historical_rev10": {
@@ -8089,14 +8480,68 @@
       "sources": [
         "src-retro-full-oct07"
       ]
+    },
+    {
+      "id": "dec-oct09-r3",
+      "date": "2026-10-09",
+      "due_date": null,
+      "title": "r3を保険・提出候補として維持",
+      "status": "decided",
+      "note": "r3を条件付きの保険・提出候補として維持する。r3cは研究版で、新しい提出hashへの例外継承には本人の再確認が必要。合格済みではなく、提出準備も未完了。",
+      "owner": "human",
+      "group": "current",
+      "sources": [
+        "src-decisions-oct09",
+        "src-results-e1-e2",
+        "src-g3-lock-r3"
+      ]
+    },
+    {
+      "id": "dec-oct09-g3",
+      "date": "2026-10-09",
+      "due_date": null,
+      "title": "G3は必須、別案調査は1日まで",
+      "status": "decided",
+      "note": "G3（自己改訂の実チェーン受入れ）は必須。外部観測の別案を1日上限で調査する。収集器・loader・取引境界の結論はいずれもPARTLY（部分可能）。試作の成功だけでは実走を始められない。 不成立ならBLOCKEDのまま本人が方針を判断。",
+      "owner": "human",
+      "group": "current",
+      "sources": [
+        "src-decisions-oct09"
+      ]
+    },
+    {
+      "id": "dec-oct09-dev-billing",
+      "date": "2026-10-09",
+      "due_date": null,
+      "title": "開発モデル課金は$0",
+      "status": "decided",
+      "note": "Claudeはサブスク枠、CodexはChatGPTログイン。OpenAI APIキーを使わない。枠が足りなければ本人に戻す。",
+      "owner": "human",
+      "group": "current",
+      "sources": [
+        "src-decisions-oct09"
+      ]
+    },
+    {
+      "id": "dec-oct09-ollama",
+      "date": "2026-10-09",
+      "due_date": null,
+      "title": "Ollama前払いは$0を維持",
+      "status": "decided",
+      "note": "10/28までにOllama鍵の有効性と無料枠量を本人が再確認。前払いは$0を維持し、不足時の支払額は本人が決める。",
+      "owner": "human",
+      "group": "current",
+      "sources": [
+        "src-decisions-oct09"
+      ]
     }
   ],
   "human_only": {
-    "status": "r3への例外継承を本人選択済み。送信・10/28最終確認は未完了",
+    "status": "r3維持・G3必須は決定済み。鍵・無料枠確認と最終提出は未完了",
     "items": [
-      "G3/G4/公式P60成立後に本人がフォーム送信",
-      "10/28 dec-007でOllama・ZIP・枠・鍵を最終確認",
-      "送信と受理を別記し10/31 23:59 JSTまでに照合"
+      "10/28までにOllama鍵の有効性と無料枠量を本人が再確認。前払いは$0を維持し、不足時の支払額は本人が決める。",
+      "G3の1日調査後の方針・各ゲート・候補変更を判断",
+      "鍵・支払い・運営フォームでの提出と受理確認"
     ],
     "decision_refs": [
       "dec-zeta-original",
@@ -8113,12 +8558,10 @@
       "dec-retro-final-submission"
     ],
     "sources": [
-      "src-c-exception",
-      "src-release-runbook",
-      "src-handoff-oct06",
-      "src-retro-full-oct07"
+      "src-decisions-oct09",
+      "src-schedule-oct08"
     ],
-    "note": "全体回顧§9の7件はopen。r3への例外継承など既決事項を再承認待ちに戻さず、新しいリスク・停止限定解除・予算精算・最終提出を本人判断する。 本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。"
+    "note": "G3調査が上限内に成立しない場合の方針、各ゲートの判断、候補変更、鍵・支払い・運営フォーム送信は本人が行う。エージェントはゲート免除を推奨しない。"
   },
   "ollama_report": {
     "evidence_kind": "本人報告",
@@ -8167,6 +8610,45 @@
   ],
   "note": "追記のみ。旧100件は全フィールド保持、8件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-122",
+      "timestamp": "2026-10-09T18:30:04+09:00",
+      "type": "決定",
+      "summary": "10/9 JST: r3維持・G3必須・費用$0の決定を反映。実現性調査とオフライン試作は統合済み。時間干渉は未測定、G3はBLOCKED。",
+      "sources": [
+        "src-decisions-oct09",
+        "src-g3-lock-r3"
+      ],
+      "time_basis": "ダッシュボードへの記録時刻。出来事・測定完了の時刻ではない。",
+      "event_date": "2026-10-09"
+    },
+    {
+      "id": "log-121",
+      "timestamp": "2026-10-09T18:30:04+09:00",
+      "type": "実装",
+      "summary": "10/9時点でrecorder/loader/要件4調査、CLI開始collector、loader probe、P60準備仕様はローカルmerge履歴で統合確認。G3証拠・実走とは別。",
+      "sources": [
+        "src-g3-req4",
+        "src-cli-binding",
+        "src-loader-probe",
+        "src-p60-spec"
+      ],
+      "time_basis": "ダッシュボードへの記録時刻。出来事・測定完了の時刻ではない。",
+      "event_date": "2026-10-09"
+    },
+    {
+      "id": "log-120",
+      "timestamp": "2026-10-09T18:30:04+09:00",
+      "type": "誤り",
+      "summary": "旧表示のfixed-bid-5gwei不在・E3結果待ち・10/14初回提出目標を訂正。固定相手とr3入力lockは登録済み、E3保存結果は読取済み、10/14は棚卸し。負荷校正とG3はBLOCKED。",
+      "sources": [
+        "src-g3-lock-r3",
+        "src-results-e1-e2",
+        "src-schedule-oct08"
+      ],
+      "time_basis": "ダッシュボードへの記録時刻。出来事・測定完了の時刻ではない。",
+      "event_date": "2026-10-09"
+    },
     {
       "id": "log-119",
       "timestamp": "2026-10-08T21:09:25+09:00",
@@ -9901,7 +10383,10 @@
         "forward-100h"
       ],
       "category": "予算",
-      "definition": "10/4以降に使う計算時間の100時間枠。過去消費は別記し、予約と実消化を混同しない。今回、正確な実消化は未精算。"
+      "definition": "2026-10-04 01:00 JST（日本標準時）からの開発100時間の総枠。実消化・残予約の精算が未完で正確な残量はUNKNOWN。経過時間や部分集計から残時間を作らない。",
+      "sources": [
+        "src-budget-settlement"
+      ]
     },
     {
       "id": "term-dec-007",
@@ -10066,6 +10551,90 @@
       "sources": [
         "src-v5"
       ]
+    },
+    {
+      "id": "term-loader",
+      "term": "loader（起動時の読込処理）",
+      "aliases": [
+        "loader"
+      ],
+      "category": "計測",
+      "definition": "標準ファイルを直接変えず、起動時に観測用の処理を加える方式。実効構成・時間への影響は別途確認が必要。",
+      "sources": [
+        "src-g3-loader"
+      ]
+    },
+    {
+      "id": "term-probe",
+      "term": "probe（観測用の処理）",
+      "aliases": [
+        "probe"
+      ],
+      "category": "計測",
+      "definition": "実行中の境界を記録する観測用の処理。オフライン試作は統合済みだが、時間干渉・実チェーンの完全な収集は未検証。",
+      "sources": [
+        "src-loader-probe"
+      ]
+    },
+    {
+      "id": "term-partly",
+      "term": "PARTLY（部分的に可能）",
+      "aliases": [
+        "PARTLY"
+      ],
+      "category": "計測",
+      "definition": "要件の一部に実現できる見通しがあるという調査判定。全要件の成立、ゲート合格、実走許可を意味しない。",
+      "sources": [
+        "src-g3-loader"
+      ]
+    },
+    {
+      "id": "term-unmeasured",
+      "term": "UNMEASURED（未測定）",
+      "aliases": [
+        "UNMEASURED"
+      ],
+      "category": "計測",
+      "definition": "測定器が有効と検証されておらず、干渉量の結果をまだ報告できない状態。影響ゼロを意味しない。",
+      "sources": [
+        "src-loader-probe"
+      ]
+    },
+    {
+      "id": "term-cli",
+      "term": "CLI（Command Line Interface）",
+      "aliases": [
+        "CLI"
+      ],
+      "category": "計測",
+      "definition": "コマンドを入力してプログラムを動かす操作方式。今回の開始collectorはモデル呼出の開始を対応付けるオフライン試作に限る。",
+      "sources": [
+        "src-cli-binding"
+      ]
+    },
+    {
+      "id": "term-pr",
+      "term": "PR（Pull Request、変更の統合依頼）",
+      "aliases": [
+        "PR"
+      ],
+      "category": "計測",
+      "definition": "変更内容をレビューして本流へ統合するための単位。mergeはコードや文書の統合であり、実測や提出ゲートの合格を意味しない。",
+      "sources": [
+        "src-loader-probe"
+      ]
+    },
+    {
+      "id": "term-conditional",
+      "term": "S_cond（Conditional Submission Candidate）",
+      "aliases": [
+        "S_cond"
+      ],
+      "category": "計測",
+      "definition": "内部資格の不合格を開示した条件付き提出候補というラベル。現在はr3を保険として維持し、G3・G4・公式P60などの必須条件は残る。",
+      "sources": [
+        "src-schedule-oct08"
+      ]
     }
   ]
 }
@@ -10142,20 +10711,20 @@
     {
       "label": "提出候補（条件付き）",
       "ref": "status.candidate.name",
-      "note": "S_cond・a03da518…3dff。資格合格・提出READYではない",
+      "note": "a03da518…3dff / 合格済みではなく、提出準備も未完了",
       "route": "results"
     },
     {
-      "label": "miniリハーサル chunk 1平均T",
-      "ref": "status.rehearsal.chunk1.t_candidate",
-      "note": "対multi-arb 43.63。本人引継ぎ・未検証、全60世界結果ではない",
-      "route": "results"
+      "label": "G3 · 改訂受入れ",
+      "ref": "status.g3_state",
+      "note": "必須。調査・試作は実走証拠ではない",
+      "route": "blockers"
     },
     {
-      "label": "本人が今やること",
-      "ref": "status.human_action",
-      "note": "r3の選択済み。初回目標10/14はゲート未達、日程不整合あり",
-      "route": "decisions"
+      "label": "開発予算の残り",
+      "ref": "status.budget_state",
+      "note": "100h総枠・10/4 01:00 JST起算。正確な残量は不明",
+      "route": "operations"
     },
     {
       "label": "提出締切 · JST",
@@ -10180,17 +10749,17 @@
     }
   ],
   "copy": {
-    "action_note": "本人がr3への例外継承を選択（C例外§8、§5のprompt変更規定を明示上書き）。r2とコード4ファイル同一、promptの名前・説明と1行だけ変更。G0・規約・P60・G3・G4は免除しない。 初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
-    "action_next": "10/28 dec-007未完了。Ollama・ZIP・利用枠・鍵の最終確認は本人。",
-    "diagnostic_notice": "夜間mini60世界・Air混成36世界とr3x6世界/3ペアは完了。r3x全3ペア悪化、1 seed・simplified Tのみ。Air G0 FAIL 7世界を保持。公式T・P60・G3/G4・資格は未検証。",
+    "action_note": "G3調査が上限内に成立しない場合の方針、各ゲートの判断、候補変更、鍵・支払い・運営フォーム送信は本人が行う。エージェントはゲート免除を推奨しない。",
+    "action_next": "10/28までにOllama鍵の有効性と無料枠量を本人が再確認。前払いは$0を維持し、不足時の支払額は本人が決める。",
+    "diagnostic_notice": "E1–E10は診断。混成場でr3はinc-zetaに約3.5 T劣り、r3cの改善は未確立。弱い参照場の強さを優勝の根拠にしない。G0 FAILを保持し、公式P60・G3・G4と分ける。",
     "qualification_notice": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
     "diagnostic_criteria": "Pは損益、Tは同じ相手の中での相対スコア。取引が増えることと、資格を満たすことは別です。",
     "plan_state": "S_cond / r3・G3 BLOCKED",
-    "plan_note": "初回提出目標10/14 JSTは今回の本人指定。ランブックは10/14を準備棚卸し、10/20以降の公式P60→10/24–27送信案としており日程は不整合・達成可否未検証。ゲートを免除せず、フォーム送信は本人。10/28 dec-007、10/29受理照合目標、締切10/31 23:59 JST。",
+    "plan_note": "10/14は準備棚卸し。公式P60の提供日は不明、最早10/20以降。10/24–27送信・10/29受理照合は条件付き目標。締切は固定。",
     "registration": "受理表示を本人が確認済み",
-    "provider_remaining": "運営モデル一覧・無料枠量・鍵の疎通",
-    "decisions_note": "既存24判断を全フィールド保持。全体回顧§9の7判断をopenで追加。C+E/r3例外継承は既決、限定再開は未承認。原条件4 FAIL・5/6 BLOCKEDは不変。"
+    "provider_remaining": "10/28までに本人が鍵の有効性・無料枠の量を確認。運営モデルとの対応も未確認。",
+    "decisions_note": "10/9の決定を現方針として表示。過去の判断・未決提案・署名は履歴に保持し、現在の再承認待ちへ戻さない。"
   },
   "roadmap_axis": [
     "10/4",
@@ -10226,6 +10795,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
   .run-metrics,.budget-values{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation:none!important;transition:none!important}}
+.change-strip{margin:0 0 24px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:12px}.change-strip ul{display:flex;flex-wrap:wrap;gap:8px 22px;margin:8px 0;padding:0;list-style:none}.change-strip li{min-width:0;overflow-wrap:anywhere}.change-strip figcaption,.next-lane figcaption,.prerequisites+figcaption{font-size:11px;color:var(--muted);margin-top:12px}.next-lane{margin-left:0;margin-right:0}.next-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;list-style:none;padding:0;margin:15px 0 0}.next-steps li{min-width:0;border-top:2px solid var(--line);padding-top:16px}.next-steps h3{font-size:16px;margin:10px 0}.next-steps p{font-size:13px;line-height:1.8;overflow-wrap:anywhere}.prerequisites{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 32px;padding-left:22px}.prerequisites li{min-width:0}.prerequisites p{font-size:13px;line-height:1.8}.footer ul{list-style:none;padding:0;font-size:11px}.footer li{margin:5px 0;overflow-wrap:anywhere}figure.card{margin-left:0;margin-right:0}@media(max-width:640px){.next-steps,.prerequisites{grid-template-columns:1fr}.next-steps{gap:16px}.change-strip ul{display:grid;gap:8px}}
 </style>
 </head>
 <body>
@@ -10285,17 +10855,21 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
   }
   function keyValues(obj) {return `<dl class="data-list">${Object.entries(obj).filter(([k])=>!['sources','id'].includes(k)).map(([k,v])=>`<div><dt>${esc(k)}</dt><dd>${rich(v===null?'未確認':Array.isArray(v)?v.join(' / '):typeof v==='object'?JSON.stringify(v):v)}</dd></div>`).join('')}</dl>${obj.sources?refs(obj.sources):''}`;}
   function kpis(){return `<div class="kpis">${D.ui.kpis.map(k=>{let value=read(k.ref);if(k.format==='deadline')value=dateOnly(value)+' '+value.slice(11,16);return `<article class="kpi"><div class="kpi-heading"><div class="kpi-label">${rich(k.label)}</div><a class="kpi-jump" href="#${k.route}" aria-label="${esc(k.label+'の詳細を見る')}">↗</a></div><div class="kpi-value ${String(value).length>7?'compact':''}">${rich(value)}</div><p class="kpi-note">${rich(k.note)}</p></article>`;}).join('')}</div>`;}
-  function prioritySteps(){const items=D.status.priority.progress_refs.map(lookupProgress),complete=items.filter(i=>i.state==='done').length;return `<div class="progress-head"><span>資格試験までの確認項目</span><span>${complete} / ${items.length} 完了</span></div><progress value="${complete}" max="${items.length}" aria-label="資格試験までの確認項目 ${complete} / ${items.length}"></progress><ol class="steps">${items.map((p,i)=>`<li class="step" data-record="progress.${esc(p.id)}"><span class="step-dot ${p.state}" aria-hidden="true">${p.state==='done'?'✓':i+1}</span><div class="step-label">${rich(p.title)}</div><div class="step-state">${esc(p.state_label||fmtState[p.state][0])}${p.verified===false?evidence('未検証'):''}${p.status==='BLOCKED'?evidence('BLOCKED'):''}</div></li>`).join('')}</ol><p class="scope-note">確認項目の完了数です。試験の合格率や計測の進行率ではありません。</p>`;}
+  function prioritySteps(){const items=D.status.priority.progress_refs.map(lookupProgress),complete=items.filter(i=>i.state==='done').length;return `<div class="progress-head"><span>提出までの確認項目</span><span>${complete} / ${items.length} 完了</span></div><progress value="${complete}" max="${items.length}" aria-label="提出までの確認項目 ${complete} / ${items.length}"></progress><ol class="steps">${items.map((p,i)=>`<li class="step" data-record="progress.${esc(p.id)}"><span class="step-dot ${p.state}" aria-hidden="true">${p.state==='done'?'✓':i+1}</span><div class="step-label">${rich(p.title)}</div><div class="step-state">${esc(p.state_label||fmtState[p.state][0])}${p.verified===false?evidence('未検証'):''}${p.status==='BLOCKED'?evidence('BLOCKED'):''}</div></li>`).join('')}</ol><p class="scope-note">確認項目の完了数です。試験の合格率や計測の進行率ではありません。</p>`;}
+  function eventList(items){return `<ol class="timeline">${items.map(e=>`<li${e.id?` data-record="status.recent.${esc(e.id)}"`:''}><span class="time-note">${dateOnly(e.date)} · ${esc(e.time_note)}</span><div class="timeline-title">${rich(e.title)}</div><p>${rich(e.text)}</p>${refs(e.sources)}</li>`).join('')}</ol>`;}
+  function nextLane(){return `<figure class="next-lane section" aria-labelledby="next-lane-title"><h2 id="next-lane-title">次の3手</h2><ol class="next-steps">${D.status.next_steps.map((step,i)=>`<li><span class="step-dot ${esc(step.state)}" aria-hidden="true">${i+1}</span><h3>${rich(step.title)}</h3>${chip(step.state,step.label)}<p>${rich(step.text)}</p>${refs(step.sources)}</li>`).join('')}</ol><figcaption>前提が成立した工程だけ進める。新しい提出候補には本人の確認が必要。</figcaption></figure>`;}
   function overview(){const s=D.status,r=read(D.plan.continuous_operation.current_run_ref),finalCheck=D.decisions.items.find(d=>d.id==='dec-007');return `${kpis()}
     <div class="summary-strip"><h2>${rich(s.headline)}</h2><p>${rich(s.subhead)}</p></div>
-    <div class="grid-2"><article class="card priority-card"><div class="card-title"><span class="mini-label">いまの最優先目標</span>${chip(s.priority.state,s.priority.state_label)}</div><h2 class="priority-title">${rich(s.priority.title)}</h2><p>${rich(s.priority.note)}</p>${prioritySteps()}${refs(s.priority.sources)}${link('results','診断と資格試験の結果を見る')}</article>
-    <article class="card action-box"><div class="card-title"><h2>本人が今やること</h2>${chip(D.status.human_action==='なし'?'done':'decision',D.status.human_action==='なし'?'対応不要':'要判断')}</div><div class="action-value">${esc(s.human_action)}</div><p>${rich(D.ui.copy.action_note)}</p><div class="next-action"><strong>提出前の本人確認 · ${dateOnly(finalCheck.due_date)}</strong><p>${rich(D.ui.copy.action_next)}</p></div>${evidence(D.decisions.ollama_report.evidence_kind)}${refs(D.decisions.ollama_report.sources)}${link('decisions','判断と確認予定を見る')}</article></div>
-    <div class="grid-2 section"><article class="card">${sectionTitle('直近の重要な出来事',`<span class="small muted">時刻不明の項目は推測しません</span>`)}<ol class="timeline">${s.recent.map(e=>{const r=e.run_ref?s[e.run_ref]:null;return `<li${e.id?` data-record="status.recent.${esc(e.id)}"`:""}>${r?.started_at?`<time datetime="${r.started_at}">${time(r.started_at)}</time>`:`<span class="time-note">${dateOnly(e.date)} · ${esc(e.time_note)}</span>`}<div class="timeline-title">${rich(e.title)}</div><p>${rich(e.text)}</p>${r?`<div class="run-label">${esc(r.name)} · ${r.worlds}世界</div>`:''}${e.repair_ref?`<div class="run-label">${esc(s[e.repair_ref].commit)} · ${s[e.repair_ref].tests} tests / ${s[e.repair_ref].red_controls} 赤対照</div>`:''}${refs(e.sources)}</li>`;}).join('')}</ol></article>
-    <article class="card"><div class="card-title"><h2>次のマイルストーン</h2>${chip(s.next_milestone.state,s.next_milestone.state_label)}</div><h3>${rich(s.next_milestone.title)}</h3><p class="card-sub">${rich(s.next_milestone.note)}</p><div class="notice section"><strong>${r.completed_at?'確認された完了時刻':'現在の計測の完了見込み'}</strong><br>${time(r.completed_at||r.expected_end)}${!r.completed_at&&r.expected_end?'頃':''}<br>${rich(r.note)}</div>${refs(s.next_milestone.sources)}${link('operations','実行状況と時間枠を見る')}</article></div>
+    <figure class="change-strip" aria-label="前回更新からの変更"><strong>${rich(s.changes.title)}</strong><ul>${s.changes.items.map(t=>`<li>${rich(t)}</li>`).join('')}</ul><figcaption>${rich(s.changes.caption)}</figcaption></figure>
+    <div class="grid-2 section"><article class="card priority-card"><div class="card-title"><span class="mini-label">いまの最優先目標</span>${chip(s.priority.state,s.priority.state_label)}</div><h2 class="priority-title">${rich(s.priority.title)}</h2><p>${rich(s.priority.note)}</p>${prioritySteps()}${refs(s.priority.sources)}${link('blockers','残る前提を見る')}</article>
+    <article class="card action-box"><div class="card-title"><h2>本人が今やること</h2>${chip('decision','本人作業')}</div><div class="action-value">${esc(s.human_action)}</div><p>${rich(D.ui.copy.action_note)}</p><div class="next-action"><strong>提出前の本人確認 · ${dateOnly(finalCheck.due_date)}</strong><p>${rich(D.ui.copy.action_next)}</p></div>${refs(D.decisions.human_only.sources)}${link('decisions','決定済みの方針を見る')}</article></div>
+    ${nextLane()}
+    <div class="grid-2 section"><article class="card">${sectionTitle('直近の変更')}${eventList(s.recent.slice(0,3))}${details('これまでの診断・重要な記録',eventList(s.recent.slice(3)))}</article>
+    <article class="card"><div class="card-title"><h2>次のマイルストーン</h2>${chip(s.next_milestone.state,s.next_milestone.state_label)}</div><h3>${rich(s.next_milestone.title)}</h3><p class="card-sub">${rich(s.next_milestone.note)}</p><div class="notice section"><strong>${r.completed_at?'確認された完了時刻':'進行中の作業 · 干渉は未測定'}</strong>${r.completed_at?`<br>${time(r.completed_at)}`:''}<p>${rich(r.note)}</p></div>${refs(s.next_milestone.sources)}${link('operations','実行状況と時間枠を見る')}</article></div>
     <div class="notice section">${rich(s.notice)}</div>`;}
-  function plan(){const steps=D.plan.protocol.filter(s=>s.start_date);const highlighted=D.milestones.items.filter(m=>m.highlight||['2026-10-17','2026-10-18','2026-10-25','2026-10-29','2026-10-31'].includes(m.date));return `<div class="summary-strip"><h2>${rich(D.plan.goal)}</h2><p>締切 ${time(D.plan.deadline_at)} · MASTER rev ${D.plan.revision} · ${rich(D.ui.copy.plan_note)}</p></div>
+  function plan(){const steps=D.plan.protocol.filter(s=>s.start_date);const highlighted=D.milestones.items.filter(m=>m.highlight);return `<div class="summary-strip"><h2>${rich(D.plan.goal)}</h2><p>締切 ${time(D.plan.deadline_at)} · MASTER rev ${D.plan.revision} · ${rich(D.ui.copy.plan_note)}</p></div>
     <section class="card">${sectionTitle('提出までのロードマップ',chip('blocked',D.ui.copy.plan_state))}<div class="roadmap-axis" aria-hidden="true"><span>工程 / 条件</span>${D.ui.roadmap_axis.map(d=>`<span>${esc(d)}</span>`).join('')}</div><ol>${steps.map((p,i)=>{const offset=Number(D.ui.roadmap_start_date.slice(8))-1,start=Number(p.start_date.slice(8))-offset,end=Number(p.end_date.slice(8))-offset+1;return `<li class="roadmap-row"><div class="roadmap-meta"><strong>Step ${i+1} · ${rich(p.label)}</strong><small>${esc(p.period)}</small>${chip(p.state)}</div><div class="roadmap-track" aria-label="${esc(p.period)}"><div class="roadmap-bar ${i===0?'current':''}" style="grid-column:${start}/${end}"><span class="sr-only">${esc(p.period)}</span></div></div></li>`;}).join('')}</ol><p class="roadmap-caption">帯は予定の期間です。日付が来ても、前の工程・資格・費用の条件を満たすまで開始しません。</p>${refs(D.plan.sources)}</section>
-    <div class="grid-equal section"><section class="card">${sectionTitle('重要な日程')}<ol class="milestone-list">${highlighted.map(m=>`<li><time datetime="${m.date}">${dateOnly(m.date)}</time><div>${chip(m.state)}<h3>${rich(m.title)}</h3><p>${rich(m.dependency)}</p><p>${rich(m.stop)}</p></div></li>`).join('')}</ol></section><div class="stack"><section class="card"><div class="card-title"><h2>先へ進むための条件</h2></div><ol class="timeline">${D.plan.gates.map(g=>`<li><h3>${rich(g.title)}</h3><p>${rich(g.state)}</p><p>${rich(g.resolve)}</p></li>`).join('')}</ol></section>${details('各Stepの入口・出口・停止条件',D.plan.protocol.map(p=>`<article class="section"><h3>${rich(p.title)}</h3><p class="scope-note">${rich(p.body)}</p><p class="scope-note">${rich(p.exit)}</p></article>`).join(''))}</div></div>
+    <div class="grid-equal section"><section class="card">${sectionTitle('重要な日程')}<ol class="milestone-list">${highlighted.map(m=>`<li><time datetime="${m.date}">${dateOnly(m.date)}</time><div>${chip(m.state)}<h3>${rich(m.title)}</h3><p>${rich(m.dependency)}</p><p>${rich(m.stop)}</p></div></li>`).join('')}</ol></section><div class="stack"><section class="card"><div class="card-title"><h2>先へ進むための条件</h2></div><ol class="timeline">${D.plan.gates.filter(g=>!['gate-g1','gate-final'].includes(g.id)).map(g=>`<li><h3>${rich(g.title)}</h3><p>${rich(g.state)}</p><p>${rich(g.resolve)}</p></li>`).join('')}</ol></section>${details('終了した探索ゲートの原条件',`<ol class="timeline">${D.plan.gates.filter(g=>['gate-g1','gate-final'].includes(g.id)).map(g=>`<li><h3>${rich(g.title)}</h3><p>${rich(g.state)}</p><p>${rich(g.resolve)}</p></li>`).join('')}</ol>`)}${details('各Stepの入口・出口・停止条件',D.plan.protocol.map(p=>`<article class="section"><h3>${rich(p.title)}</h3><p class="scope-note">${rich(p.body)}</p><p class="scope-note">${rich(p.exit)}</p></article>`).join(''))}</div></div>
     <div class="stack section">${details('毎日の計画をすべて見る',`<ol class="milestone-list">${D.milestones.items.map(m=>`<li><time datetime="${m.date}">${dateOnly(m.date)}</time><div><h3>${rich(m.title)}</h3><p>必要な条件：${rich(m.dependency)}</p><p>停止・変更条件：${rich(m.stop)}</p></div></li>`).join('')}</ol>`)}${details('競技の採点と守るルール',`<p>${rich(D.plan.win)}</p><ol class="timeline">${D.plan.rules.map(x=>`<li><p>${rich(x)}</p></li>`).join('')}</ol>${refs(D.plan.sources)}`)}</div>`;}
   function scopeText(s){return `${s.field} · ${s.regimes}レジーム · seed${s.seeds} · ${s.worlds}世界`;}
   function safetyText(path){
@@ -10306,34 +10880,40 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
     if(path==='results.q0_summary')return `noop割れ ${value.noop_below}。送信失敗 ${value.submit_failed}、mined revert ${value.mined_reverts}。`;
     return `noop割れ ${value.noop_below}。G0 ${value.g0_failed_worlds}世界FAIL。${value.safety}`;
   }
-  function comparison(mode){
+  function comparison(mode,history=false){
     const head=['候補エージェント','何を測ったか','結果','判定・出所'];
-    const rows=D.results.comparison[mode].map(row=>[
+    const selected=D.results.comparison[mode].map((row,index)=>({row,index})).filter(({row})=>mode!=='diagnostic'||history!==['status.e8e9','status.e10'].includes(row.scope_ref));
+    const rows=selected.map(({row})=>[
       `<strong>${rich(row.candidate)}</strong>`,
       `<div class="run-label">${rich(read(row.run_ref))}</div><p>${rich(scopeText(read(row.scope_ref)))}</p>`,
       (row.value_note?`<strong>${rich(row.value_note)}</strong>`:'')+(row.metrics?`<div class="metric-pair">${row.metrics.map(m=>`<p>${rich(m.label)} <b>${esc(read(m.candidate_ref))}</b>${m.baseline_ref?' / '+esc(read(m.baseline_ref)):''}</p>`).join('')}</div>`:'')+(row.metric_note?`<p class="scope-note">${rich(row.metric_note)}</p>`:'')+((row.detail||row.detail_ref)?`<p>${rich(row.detail||read(row.detail_ref))}</p>`:''),
       `${chip(row.state,row.state_label)}${row.verified===false?evidence('未検証'):''}${row.status==='BLOCKED'?evidence('BLOCKED'):''}<p>${rich(row.verdict)}</p>${row.safety_ref?`<p>${rich(safetyText(row.safety_ref))}</p>`:''}${refs(row.sources)}`
     ]);
-    return `<table class="comparison" role="table"><caption class="sr-only">${mode==='diagnostic'?'診断計測':'資格試験'}の候補比較</caption><thead><tr>${head.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map((row,index)=>`<tr data-record="results.comparison.${mode}.${index}">${row.map((v,i)=>`<td data-label="${head[i]}"><div>${v}</div></td>`).join('')}</tr>`).join('')}</tbody></table>`;
+    return `<table class="comparison" role="table"><caption class="sr-only">${mode==='diagnostic'?'診断計測':'資格試験'}の候補比較</caption><thead><tr>${head.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map((row,index)=>`<tr data-record="results.comparison.${mode}.${selected[index].index}">${row.map((v,i)=>`<td data-label="${head[i]}"><div>${v}</div></td>`).join('')}</tr>`).join('')}</tbody></table>`;
   }
   function results(){const mode=state.results;const keys=mode==='diagnostic'?['xa1','live','live_safety','mix1','dev5','dev4','dev4_regimes','dev3a','dev2','dev2_detail','dev1','d0','strategies','ranking','zeta']:['q0','q0b'];return `
-    <section class="card table-card results-primary"><div class="table-intro"><div class="subnav" role="group" aria-label="結果の種類"><button type="button" data-results="diagnostic" aria-pressed="${mode==='diagnostic'}">診断 · 原因と改善を調べる</button><button type="button" data-results="qualification" aria-pressed="${mode==='qualification'}">資格試験 · 合否を判定する</button></div><div class="card-title"><h2>${mode==='diagnostic'?'診断計測の比較':'資格試験の判定'}</h2>${evidence('measured引継ぎ / 原ログ未再監査')}</div><p class="card-sub">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_criteria:D.ui.copy.qualification_criteria)}</p></div>${comparison(mode)}<div class="table-foot">${rich(D.status.measurement_note)}</div></section><div class="section"><div class="notice ${mode==='diagnostic'?'':'warning'}">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_notice:D.ui.copy.qualification_notice)}</div></div>
+    <section class="card table-card results-primary"><div class="table-intro"><div class="subnav" role="group" aria-label="結果の種類"><button type="button" data-results="diagnostic" aria-pressed="${mode==='diagnostic'}">診断 · 原因と改善を調べる</button><button type="button" data-results="qualification" aria-pressed="${mode==='qualification'}">資格試験 · 合否を判定する</button></div><div class="card-title"><h2>${mode==='diagnostic'?'診断計測の比較':'資格試験の判定'}</h2>${evidence('measured引継ぎ / 原ログ未再監査')}</div><p class="card-sub">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_criteria:D.ui.copy.qualification_criteria)}</p></div>${comparison(mode)}${mode==='diagnostic'?details('以前の診断比較（E1–E7・旧候補・資格外の記録）',comparison(mode,true)):''}<div class="table-foot">${rich(D.status.measurement_note)}</div></section><div class="section"><div class="notice ${mode==='diagnostic'?'':'warning'}">${rich(mode==='diagnostic'?D.ui.copy.diagnostic_notice:D.ui.copy.qualification_notice)}</div></div>
+    <section class="card table-card section">${rawTable(D.status.preparation)}</section>
     <section class="section">${sectionTitle('測定の原表・条件')}<div class="stack">${keys.map(k=>details(D.results[k].title,rawTable(D.results[k]))).join('')}</div></section>
     <div class="stack section">${details('進捗台帳 · すべての作業項目',D.progress.workstreams.map(w=>`<section class="section"><h3>${esc(w)}</h3><ol class="milestone-list">${D.progress.items.filter(p=>p.workstream===w).map(p=>`<li data-record="progress.${esc(p.id)}"><div>${chip(p.state,p.state_label)}${p.verified===false?evidence('未検証'):''}${p.status==='BLOCKED'?evidence('BLOCKED'):''}</div><div><h3>${rich(p.title)}</h3><p>${rich(p.evidence)}</p>${refs(p.sources)}</div></li>`).join('')}</ol></section>`).join(''))}${details('固定版・過去の記録',keyValues(D.status.commits)+keyValues(D.status.q0b)+keyValues(D.status.dev1)+keyValues(D.status.repair_v2))}${details('過去の診断・設計の記録',rawTable(D.results.m1)+rawTable(D.results.fields)+D.results.research.concat(D.results.archive).map(r=>`<article class="section"><h3>${rich(r.title)}</h3><p class="scope-note">${rich(r.text)}</p>${refs(r.sources)}</article>`).join(''))}</div>`;}
-  function blockers(){const items=D.blockers.items.filter(b=>state.risk==='all'||(state.risk==='resolved'?b.status==='resolved':b.status!=='resolved'));return `<div class="subnav" role="group" aria-label="リスクの状態">${[['active','未解消'],['resolved','解消済み'],['all','すべて']].map(([k,l])=>`<button type="button" data-risk="${k}" aria-pressed="${state.risk===k}">${l}</button>`).join('')}</div><p class="scope-note">優先順位・可能性・影響は資料に基づく定性判断です。発生確率の実測ではありません。</p><div class="risk-list section">${items.map(b=>`<article class="card risk-card ${b.rank===1?'risk-first':''}"><div class="rank" aria-label="優先順位 ${b.rank}">${b.rank}</div><div><div class="risk-head"><div><h2>${rich(b.title)}</h2><div class="risk-meta"><span>${b.severity==='Critical'?'重要':b.severity==='Warning'?'注意':'記録'}</span><span>可能性 ${esc(b.likelihood)} · 影響 ${esc(b.impact)}</span>${owner(b.owner)}</div></div>${chip(b.status)}</div><dl class="risk-content"><div><dt>原因・根拠</dt><dd>${rich(b.evidence)}</dd></div><div><dt>このままだと</dt><dd>${rich(b.impact_note)}</dd></div></dl><div class="risk-action"><strong>次の対応</strong>${rich(b.mitigation)}</div>${refs(b.sources)}</div></article>`).join('')}</div>`;}
+  function prerequisiteFigure(){return `<figure class="card section"><h2>G3に残る前提</h2><ol class="prerequisites">${D.status.prerequisites.map(p=>`<li><h3>${rich(p.title)}</h3><p>${rich(p.text)}</p></li>`).join('')}</ol><figcaption>入力登録や試作が終わっても、実走前提と受入れ証拠は別に必要。</figcaption>${refs(D.status.prerequisite_sources)}</figure>`;}
+  function blockers(){const items=D.blockers.items.filter(b=>state.risk==='all'||(state.risk==='resolved'?b.status==='resolved':b.status!=='resolved'));return `<div class="subnav" role="group" aria-label="リスクの状態">${[['active','未解消'],['resolved','解消済み'],['all','すべて']].map(([k,l])=>`<button type="button" data-risk="${k}" aria-pressed="${state.risk===k}">${l}</button>`).join('')}</div><p class="scope-note">優先順位・可能性・影響は資料に基づく定性判断です。発生確率の実測ではありません。</p>${prerequisiteFigure()}<div class="risk-list section">${items.map(b=>`<article class="card risk-card ${b.rank===1?'risk-first':''}"><div class="rank" aria-label="優先順位 ${b.rank}">${b.rank}</div><div><div class="risk-head"><div><h2>${rich(b.title)}</h2><div class="risk-meta"><span>${b.severity==='Critical'?'重要':b.severity==='Warning'?'注意':'記録'}</span><span>可能性 ${esc(b.likelihood)} · 影響 ${esc(b.impact)}</span>${owner(b.owner)}</div></div>${chip(b.status)}</div><dl class="risk-content"><div><dt>原因・根拠</dt><dd>${rich(b.evidence)}</dd></div><div><dt>このままだと</dt><dd>${rich(b.impact_note)}</dd></div></dl><div class="risk-action"><strong>次の対応</strong>${rich(b.mitigation)}</div>${refs(b.sources)}</div></article>`).join('')}</div>`;}
   function decisionCard(d){const note=d.note.replace(/ 署名者=.*$/,'');return `<article class="card decision-card" data-decision="${esc(d.id)}"><div class="card-title"><h3>${rich(d.title)}</h3>${chip(d.status)}</div><div class="date-line">${owner(d.owner)}<span>記録日 ${dateOnly(d.date)}</span><span>期日 ${d.due_date?dateOnly(d.due_date):'指定なし'}</span></div><p>${rich(note)}</p>${d.origin?`<details><summary>決定の出所・署名を見る</summary><p>${rich(d.origin)}</p><p>署名者：${esc(d.signer)}<br>記録時刻：${time(d.signed_at)}</p><p>本人が委任した決定です。本人の署名として扱いません。</p></details>`:''}${refs(d.sources)}</article>`;}
-  function decisions(){const ds=D.decisions.items,rep=D.decisions.ollama_report;return `<div class="grid-2"><section class="card"><div class="card-title"><h2>本人の現在の作業</h2>${chip(D.status.human_action==='なし'?'done':'decision',D.status.human_action==='なし'?'対応不要':'要判断')}</div><h3 class="action-value">${esc(D.status.human_action)}</h3><p class="card-sub">${rich(D.decisions.human_only.note)}</p>${refs(D.decisions.human_only.sources)}</section><section class="card"><div class="card-title"><h2>${rich('Ollamaの登録状況')}</h2>${evidence(rep.evidence_kind)}</div><dl class="data-list"><div><dt>登録</dt><dd>${rich(D.ui.copy.registration)}</dd></div><div><dt>プラン / 残高</dt><dd>${esc(rep.plan)} / $${esc(rep.balance_usd)}</dd></div><div><dt>自動チャージ</dt><dd>${esc(rep.auto_reload)}</dd></div><div><dt>利用するモデルの前提</dt><dd>${esc(rep.assumed_model)}</dd></div><div><dt>残る確認</dt><dd>${rich(D.ui.copy.provider_remaining)}</dd></div></dl><p class="scope-note">${esc(rep.reported_at_note)}の本人報告。今回の画面・API監査ではありません。</p>${refs(rep.sources)}</section></div>
-    <section class="section">${sectionTitle('本人の確認予定・完了記録')}<div class="grid-equal">${ds.filter(d=>['dec-007','dec-008','dec-no-contact'].includes(d.id)).map(decisionCard).join('')}</div></section>
-    <section class="section">${sectionTitle('委任により確定した決定',`<small>Codex / 過去の記録名 Astra</small>`)}<div class="notice">${rich(D.ui.copy.decisions_note)}</div><div class="grid-equal section">${ds.filter(d=>d.group==='delegated').map(decisionCard).join('')}</div></section>
-    <section class="card table-card section">${rawTable(D.results.h1)}</section>
-    <div class="stack section">${details('既決の方針・旧案の履歴',`<div class="stack">${ds.filter(d=>d.group!=='delegated'&&!['dec-007','dec-008','dec-no-contact'].includes(d.id)).map(decisionCard).join('')}</div>`)}${details('AI契約・資格試験・失敗上限の詳細',rawTable({...D.plan.ai_parameters,title:'rev 6のENTRY単独契約（原記録・初期60）'})+keyValues(D.plan.ai_contract)+keyValues(D.plan.q0_requalification)+keyValues(D.plan.revert_contract)+keyValues(D.plan.cutover))}${details('登録報告の全項目',keyValues(rep))}</div>`;}
-  function operations(){const r=read(D.plan.continuous_operation.current_run_ref),b=D.budget;const active=D.queue.items.filter(q=>q.active);const queueHead=['順番・作業','状態・担当','規模・全量見積','開始条件'];return `<div class="grid-2"><section class="card running-card"><div class="card-title"><div><p class="eyebrow">CURRENT RUN</p><h2>${rich(r.name)}</h2></div>${chip(['running-results-pending','reported-running-unverified'].includes(r.state)?'running':r.state==='measured-diagnostic-complete'?'done':'pending',['running-results-pending','reported-running-unverified'].includes(r.state)?'計測中との引継ぎ・未確認':r.state==='measured-diagnostic-complete'?'診断完了の引継ぎ':'状態確認待ち')}</div><p class="card-sub">${rich(`${r.field} · seed${r.seeds??'未提示'} · ${r.regimes}レジーム / ${r.worlds??'未提示'}世界`)}</p><p class="scope-note">所要見込み ${r.expected_end&&r.started_at?Math.round((Date.parse(r.expected_end)-Date.parse(r.started_at))/60000)+'分':'未提示'}（開始と完了見込みの差・実測ではありません）</p><div class="run-metrics"><div><small>開始 · JST</small><strong>${r.started_at?r.started_at.slice(11,16):'未確認'}</strong></div><div><small>${r.completed_at?'完了確認':'完了見込み'} · JST</small><strong>${r.completed_at?r.completed_at.slice(11,16):r.expected_end?r.expected_end.slice(11,16)+'頃':'未確認'}</strong></div><div><small>確認済み完了数</small><strong>${r.completed_worlds===null?'未確認':r.completed_worlds}</strong></div></div><div class="notice">${rich(r.note)} 実消化は未精算。時間の経過から進行率は計算しません。</div>${refs(r.sources)}<p class="scope-note">${rich(active[0]?.dependency||'進行中の作業はありません。')}</p></section>
-    <section class="card"><div class="card-title"><h2>${rich('forward100hの消化')}</h2>${chip('warning',b.consumption_status)}</div><div class="budget-values"><div><small>今後の時間枠</small><strong>${esc(b.total_hours)} h</strong></div><div><small>枠内の実消化</small><strong>${b.consumed_forward_hours===null?'未確認':hours(b.consumed_forward_hours)}</strong></div><div><small>残り時間</small><strong>未確定</strong></div></div><p class="card-sub">過去の実測下限は ${esc(b.consumed_lower_bound_hours)} h以上。これは枠外の履歴です。開始・終了区間が未精算のため、${esc(b.total_hours)}hから引きません。</p><p class="scope-note">${rich(b.note)}</p>${refs(b.sources)}</section></div>
-    <section class="card section"><h2>夜間の消費概算・監視</h2><p>${rich(b.overnight.note)}</p><p>${rich(D.status.night_operation.note)}</p>${refs(b.overnight.sources)}</section>
+  function decisions(){const ds=D.decisions.items,rep=D.decisions.ollama_report;return `<div class="grid-2"><section class="card"><div class="card-title"><h2>本人の現在の作業</h2>${chip(D.status.human_action==='なし'?'done':'decision',D.status.human_action==='なし'?'対応不要':'本人作業')}</div><h3 class="action-value">${esc(D.status.human_action)}</h3><p class="card-sub">${rich(D.decisions.human_only.note)}</p>${refs(D.decisions.human_only.sources)}</section><section class="card"><div class="card-title"><h2>${rich('Ollamaの登録状況')}</h2>${evidence(rep.evidence_kind)}</div><dl class="data-list"><div><dt>登録</dt><dd>${rich(D.ui.copy.registration)}</dd></div><div><dt>プラン / 残高</dt><dd>${esc(rep.plan)} / $${esc(rep.balance_usd)}</dd></div><div><dt>自動チャージ</dt><dd>${esc(rep.auto_reload)}</dd></div><div><dt>利用するモデルの前提</dt><dd>${esc(rep.assumed_model)}</dd></div><div><dt>残る確認</dt><dd>${rich(D.ui.copy.provider_remaining)}</dd></div></dl><p class="scope-note">${esc(rep.reported_at_note)}の本人報告。今回の画面・API監査ではありません。</p>${refs(rep.sources)}</section></div>
+    <section class="section">${sectionTitle('決定済みの方針')}<div class="grid-equal">${ds.filter(d=>d.group==='current').map(decisionCard).join('')}</div></section>
+    <section class="section">${sectionTitle('本人の確認予定')}<div class="grid-equal">${ds.filter(d=>d.id==='dec-007').map(decisionCard).join('')}</div></section>
+    <div class="notice section">${rich(D.ui.copy.decisions_note)}</div>
+    <div class="stack section">${details('原判断・署名・過去の未決提案（当時の履歴）',`<div class="stack">${ds.filter(d=>d.group!=='current'&&d.id!=='dec-007').map(decisionCard).join('')}</div>`)}${details('旧H1・AI契約・資格試験・失敗上限',rawTable(D.results.h1)+rawTable({...D.plan.ai_parameters,title:'rev 6のENTRY単独契約（原記録・初期60）'})+keyValues(D.plan.ai_contract)+keyValues(D.plan.q0_requalification)+keyValues(D.plan.revert_contract)+keyValues(D.plan.cutover))}${details('初回登録報告の全項目（当時）',keyValues(rep))}</div>`;}
+  function queueTable(items,head){return `<table class="queue-table" role="table"><caption class="sr-only">優先順の実行キュー</caption><thead><tr>${head.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${items.map(q=>{const tone=q.active?'running':/不採用|完了|旧計画/.test(q.state)?'pending':'blocked';const cells=[`<strong>${q.priority}. ${rich(q.title)}</strong>`,`${chip(tone,q.state)}<p>${owner(q.owner)}</p>`,`${q.worlds==null?'世界数は対象外 / 時間未見積':q.worlds+'世界 / '+hours(q.hours)}<p class="scope-note">${rich(q.window)}</p>`,`${rich(q.dependency)}${refs(q.sources)}`];return `<tr>${cells.map((v,i)=>`<td data-label="${head[i]}"><div>${v}</div></td>`).join('')}</tr>`;}).join('')}</tbody></table>`;}
+  function operations(){const r=read(D.plan.continuous_operation.current_run_ref),b=D.budget;const queueHead=['順番・作業','状態・担当','規模・全量見積','開始条件'];return `<div class="grid-2"><section class="card running-card"><div class="card-title"><div><p class="eyebrow">CURRENT WORK</p><h2>${rich(r.name)}</h2></div>${chip(r.state==='measured-diagnostic-complete'?'done':'running',r.state==='measured-diagnostic-complete'?'診断完了の引継ぎ':r.state_label)}</div><p class="card-sub">${esc(r.branch)} · main未統合</p><p>${rich(r.note)}</p>${r.completed_at?`<p>確認された完了時刻：${time(r.completed_at)}</p>`:''}<p class="scope-note">${rich(r.provenance)}</p><p class="scope-note">${rich(r.handoff)}</p>${refs(r.sources)}</section>
+    <section class="card"><div class="card-title"><h2>${rich('forward100hの消化')}</h2>${chip('warning',b.consumption_status)}</div><div class="budget-values"><div><small>開発時間の総枠</small><strong>${esc(b.total_hours)} h</strong></div><div><small>枠内の実消化</small><strong>${b.consumed_forward_hours===null?'未確認':hours(b.consumed_forward_hours)}</strong></div><div><small>残り時間</small><strong>未確定</strong></div></div><p class="card-sub">過去の実測下限は ${esc(b.consumed_lower_bound_hours)} h以上。これは枠外の履歴です。開始・終了区間が未精算のため、${esc(b.total_hours)}hから引きません。</p><p class="scope-note">${rich(b.note)}</p>${refs(b.sources)}</section></div>
+    <section class="card section"><h2>${rich(D.status.infrastructure.title)}</h2><p>${rich(D.status.infrastructure.note)}</p><p class="scope-note">${rich(D.status.infrastructure.boundary)}</p>${refs(D.status.infrastructure.sources)}</section>
+    <details class="details-card section"><summary>旧運用・体制・予算配分の履歴</summary><div class="details-body"><section class="card section"><h2>夜間の消費概算・監視（履歴）</h2><p>${rich(b.overnight.note)}</p><p>${rich(D.status.night_operation.note)}</p>${refs(b.overnight.sources)}</section>
     <section class="card section">${sectionTitle('現在の体制・別ジョブ')}<div class="stack"><article><h3>${rich(D.status.team.primary)} 主 / ${rich(D.status.team.secondary)} 副</h3><p>${rich(D.status.team.unavailable)}</p><p>補助レビュー：${rich(D.status.team.support)}</p><p>独立レビュー：${rich(D.status.team.independent_review)}</p><p>入力方式：${rich(D.status.team.tool_policy)}</p><p class="scope-note">${rich(D.status.team.note)}</p>${refs(D.status.team.sources)}</article>${D.queue.side_jobs.map(j=>`<article><h3>${rich(j.title)}</h3><p>${rich(j.state)}</p><p>${rich(j.note)}</p>${refs(j.sources)}</article>`).join('')}</div></section>
     <section class="card section">${sectionTitle(D.plan.continuous_operation.title,chip('warning','運用接続は未確認'))}<p class="card-sub">${rich(D.plan.continuous_operation.note)}</p><p class="scope-note">${rich(D.status.repair_v5.note)}</p><div class="stack section">${details('段階・担当・最大待ち時間',rawTable({...D.plan.continuous_operation.stages,sources:D.plan.continuous_operation.sources,title:'1回目標'+D.plan.continuous_operation.iteration_target_minutes+'分・上限'+D.plan.continuous_operation.iteration_limit_minutes+'分、最大'+D.plan.continuous_operation.iteration_limit+'回（予算は別途確保）'}))}${details('Q0に進む診断screen',rawTable({...D.plan.continuous_operation.screen,sources:D.plan.continuous_operation.sources,title:'全'+D.plan.continuous_operation.validation_regimes+'×'+D.plan.continuous_operation.validation_seeds+'のfresh seed診断検証。資格試験は別集合'}))}</div>${refs(D.plan.continuous_operation.sources)}</section>
-    <section class="card table-card section"><div class="table-intro">${sectionTitle('実行キュー')}<p class="card-sub">${rich(D.queue.note)} 見積もりは全量分で、残り時間ではありません。</p></div><table class="queue-table" role="table"><caption class="sr-only">優先順の実行キュー</caption><thead><tr>${queueHead.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${D.queue.items.map(q=>{const tone=q.active?'running':/不採用/.test(q.state)?'pending':/停止|待ち|未解放/.test(q.state)?'blocked':'pending';const cells=[`<strong>${q.priority}. ${rich(q.title)}</strong>`,`${chip(tone,q.state)}<p>${owner(q.owner)}</p>`,`${q.worlds}世界 / ${hours(q.hours)}<p class="scope-note">${rich(q.window)}</p>`,`${rich(q.dependency)}${refs(q.sources)}`];return `<tr>${cells.map((v,i)=>`<td data-label="${queueHead[i]}"><div>${v}</div></td>`).join('')}</tr>`;}).join('')}</tbody></table></section>
-    <section class="grid-equal section"><div class="card">${sectionTitle(b.total_hours+'hの予約配分',`<small>現行 KEEP / rev ${D.plan.revision}</small>`)}<p class="card-sub">配分は実消化ではありません。下の棒は予約時間を表します。</p><div class="budget-allocation section">${b.rows.filter(r=>fraction(r.keep_hours)>0).map(r=>`<div class="budget-row"><div class="budget-row-title">${rich(r.title)}</div><div class="budget-row-value">${hours(r.keep_hours)}</div><div class="budget-row-track" aria-hidden="true"><div class="budget-row-fill" style="width:${fraction(r.keep_hours)/fraction(b.total_hours)*100}%"></div></div><div class="budget-row-note">${rich(r.accounting)}</div></div>`).join('')}</div>${refs(b.sources)}</div><div class="stack"><section class="card"><h2>追加実行を止めている費用</h2><p class="card-sub">${rich(b.on_note)}</p><div class="notice warning section">${rich(D.queue.bundle)}</div>${refs(b.sources)}</section>${details('予約の原数値・未採用案を照合',rawTable({header:['用途','現行KEEP h','旧AMEND h','会計区分・注記'],rows:b.rows.map(r=>[r.title,r.keep_hours,r.amend_hours,r.accounting+'。'+r.note]),sources:b.sources,title:'分数は原値 / 両列'+b.total_hours+'h。AMENDは未署名・不採用'}))}${details('時間概算・AI改訂の速度感度',rawTable({...b.on_sensitivity,title:'改訂ONの速度による見積もりの変化',sources:b.sources})+keyValues(b.consumption_estimate))}</div></section>`;}
+    </div></details>
+    <section class="card table-card section"><div class="table-intro">${sectionTitle('実行キュー')}<p class="card-sub">${rich(D.queue.note)} 見積もりは全量分で、残り時間ではありません。</p></div>${queueTable(D.queue.items.filter(q=>q.current),queueHead)}${details('完了・停止した実行キューの履歴',queueTable(D.queue.items.filter(q=>!q.current),queueHead))}</section>
+    <details class="details-card section"><summary>過去の予約配分・見積もり（現在の残量ではない）</summary><div class="details-body"><section class="grid-equal section"><div class="card">${sectionTitle(b.total_hours+'hの旧予約配分',`<small>履歴 / MASTER rev ${D.plan.revision}</small>`)}<p class="card-sub">過去の予約配分を保存しています。現在の残時間・追加実行枠ではありません。</p><div class="budget-allocation section">${b.rows.filter(r=>fraction(r.keep_hours)>0).map(r=>`<div class="budget-row"><div class="budget-row-title">${rich(r.title)}</div><div class="budget-row-value">${hours(r.keep_hours)}</div><div class="budget-row-track" aria-hidden="true"><div class="budget-row-fill" style="width:${fraction(r.keep_hours)/fraction(b.total_hours)*100}%"></div></div><div class="budget-row-note">${rich(r.accounting)}</div></div>`).join('')}</div>${refs(b.sources)}</div><div class="stack"><section class="card"><h2>追加実行を止めている費用</h2><p class="card-sub">${rich(b.on_note)}</p><div class="notice warning section">${rich(D.queue.bundle)}</div>${refs(b.sources)}</section>${details('予約の原数値・未採用案を照合',rawTable({header:['用途','現行KEEP h','旧AMEND h','会計区分・注記'],rows:b.rows.map(r=>[r.title,r.keep_hours,r.amend_hours,r.accounting+'。'+r.note]),sources:b.sources,title:'分数は原値 / 両列'+b.total_hours+'h。AMENDは未署名・不採用'}))}${details('時間概算・AI改訂の速度感度',rawTable({...b.on_sensitivity,title:'改訂ONの速度による見積もりの変化',sources:b.sources})+keyValues(b.consumption_estimate))}</div></section></div></details>`;}
   const normalize = value => String(value).normalize('NFKC').toLocaleLowerCase('ja');
   function filteredLogs(){const words=normalize(state.logQuery).trim().split(/\s+/).filter(Boolean);return D.log.items.filter(l=>(state.logType==='all'||l.type===state.logType)&&(state.logDate==='all'||l.timestamp.slice(0,10)===state.logDate)&&words.every(w=>normalize([l.id,l.summary,l.type,l.timestamp,l.event_date,l.time_basis,...l.sources.map(s=>sourceMap.get(s).title)].join(' ')).includes(w)));}
   function logItems(){const items=filteredLogs();return {count:items.length,html:items.length?`<ol>${items.map(l=>`<li class="log-entry"><div class="log-date"><time datetime="${l.timestamp}">${time(l.timestamp)}</time><small class="mono">${esc(l.id)}</small></div><div>${evidence(l.type)}<p class="log-summary">${rich(l.summary)}</p><details><summary>時刻の根拠・出来事の日付</summary><p>対象日 ${esc(l.event_date)} / ${esc(l.time_basis)}</p></details>${refs(l.sources)}</div></li>`).join('')}</ol>`:'<div class="empty"><strong>一致するログはありません</strong>検索語や種類・日付の条件を変えてください。</div>'};}
@@ -10348,7 +10928,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
   let activeTermButton=null;
   function closeTerm(focus=false){const pop=document.getElementById('term-popover');pop.hidden=true;if(activeTermButton){activeTermButton.setAttribute('aria-expanded','false');if(focus)activeTermButton.focus();}activeTermButton=null;}
   function showTerm(button){const t=terms.get(button.dataset.term);if(!t)return;closeTerm();activeTermButton=button;button.setAttribute('aria-expanded','true');const pop=document.getElementById('term-popover');pop.innerHTML=`<button type="button" class="close" data-close-term aria-label="説明を閉じる">×</button><span class="term-category">${esc(t.category)}</span><h2 id="term-popover-title">${esc(t.term)}</h2><p>${esc(t.definition)}</p><a href="#glossary/${t.id}">用語集で見る →</a>`;pop.hidden=false;pop.querySelector('button').focus();}
-  function render(focus=false){explained=new Set();closeTerm();const page=D.ui.pages.find(p=>p.key===state.page)||D.ui.pages[0];navigation();document.getElementById('breadcrumb-current').textContent=page.label;document.title=`${page.label} · ASCON`;document.getElementById('page').innerHTML=`<header class="page-heading"><div><p class="eyebrow">${esc(page.eyebrow)}</p><h1 id="page-title" tabindex="-1">${esc(page.label)}</h1><p class="page-description">${rich(page.description)}</p></div><div class="heading-aside">${esc(D.ui.brand)} / MASTER rev ${D.plan.revision}</div></header><div class="page-body">${renderers[state.page]()}</div>`;if(focus){document.getElementById('page-title').focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}}
+  function render(focus=false){explained=new Set();closeTerm();const page=D.ui.pages.find(p=>p.key===state.page)||D.ui.pages[0];navigation();document.getElementById('breadcrumb-current').textContent=page.label;document.title=`${page.label} · ASCON`;document.getElementById('page').innerHTML=`<header class="page-heading"><div><p class="eyebrow">${esc(page.eyebrow)}</p><h1 id="page-title" tabindex="-1">${esc(page.label)}</h1><p class="page-description">${rich(page.description)}</p></div><div class="heading-aside">${esc(D.ui.brand)} / 保存計画 rev ${D.plan.revision}</div></header><div class="page-body">${renderers[state.page]()}</div>`;if(focus){document.getElementById('page-title').focus({preventScroll:true});window.scrollTo({top:0,behavior:'instant'});}}
   function route(focus=false){const [page,term]=location.hash.slice(1).split('/');if(page==='main'){document.getElementById('main').focus();return;}state.page=renderers[page]?page:'overview';if(term&&state.page==='glossary'){state.termQuery='';state.termCategory='all';}render(focus);if(term&&terms.has(term)){document.getElementById(term)?.scrollIntoView({block:'center'});document.getElementById(term)?.focus({preventScroll:true});}}
   function updateLog(){explained=new Set();closeTerm();const found=logItems();document.getElementById('log-items').innerHTML=found.html;document.getElementById('log-count').textContent=`${found.count} / ${D.log.items.length} 件`;}
   function updateTerms(){const found=termItems();document.getElementById('term-items').innerHTML=found.html;document.getElementById('term-count').textContent=`${found.count} / ${D.glossary.items.length} 語`;}
@@ -10368,7 +10948,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
     document.getElementById('brand-name').textContent=D.ui.brand;document.getElementById('brand-sub').textContent=D.ui.tagline;
     document.getElementById('sidebar-foot').innerHTML=`<strong>提出締切 ${dateOnly(D.plan.deadline_at)}</strong>${D.plan.deadline_at.slice(11,16)} JST · MASTER rev ${D.plan.revision}<br>記録の更新はファイルの再読込で反映`;
     const updated=document.getElementById('updated-at');updated.textContent='更新 '+time(D.status.as_of);updated.setAttribute('datetime',D.status.as_of);
-    document.getElementById('footer').innerHTML=`<span>すべてJST · 原ログの再監査なし · 実行状況は引継ぎ時点</span><span>${D.log.items.length}件の履歴を保持 · ローカルデータ</span>`;
+    document.getElementById('footer').innerHTML=`<div><span>基準時点 ${esc(D.status.as_of.slice(0,10))} ${esc(D.status.as_of.slice(11,16))} JST · ${D.log.items.length}件の履歴 · ローカル保存資料のみ</span><p>原ログ・実機・オンライン規約の再監査なし。本人引継ぎとファイル確認を区別。</p><details><summary>根拠ファイル</summary><ul>${D.status.footer_sources.map(id=>{const s=sourceMap.get(id);return `<li><a href="../../${esc(s.path)}">${esc(s.path.split('/').pop())}</a></li>`;}).join('')}</ul></details></div>`;
     route();
   } catch(error) {const el=document.getElementById('render-error');el.hidden=false;el.className='error-box';el.textContent='記録を表示できません。データの形式を確認してください。 '+error.message;}
   // Read-only test surface: the same renderers and filters as the UI. No I/O or run access.
