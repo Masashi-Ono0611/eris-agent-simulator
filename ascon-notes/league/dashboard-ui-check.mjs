@@ -712,7 +712,7 @@ function assertOctoberStatus(views){
   }
   assert.match(policy,/1日/,'INVARIANT October bounded investigation');
   assert.match(policy,/\$0/,'INVARIANT October no billing approval');
-  assert.ok(overview.includes('資格合格・提出READYではない'),'INVARIANT October candidate is conditional');
+  assert.ok(overview.includes('合格済みではなく、提出準備も未完了'),'INVARIANT October candidate is conditional');
 }
 check('October current status separates decisions, preparation and unmeasured work',()=>{
   assertOctoberStatus(invariantViews());
