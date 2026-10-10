@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
+import { REDUCED, reducedDecisionChecks } from './timing-reduced.mjs';
+import { BUDGET_VERDICT } from './timing-budget.mjs';
 
 export const SWEEP = Object.freeze({ halfWidthMs: 12, stepMs: 0.5, sensitiveOffsetMs: -4 });
 export const CONTROL_THRESHOLDS = Object.freeze({ positiveMinMs: 3, positiveMaxMs: 9,
@@ -44,7 +46,8 @@ export function explorationQuality(points, limitMs = MAX_TRANSITION_WIDTH_MS) {
 // Pure selection. First upward 0.5 crossing, piecewise linear interpolation on
 // adjacent observed points, no smoothing/extrapolation. Endpoints use that same
 // interpolation for BOTH arms; strict coverage is required even if tails saturate.
-export function selectSweep(exploration) {
+export function selectSweep(exploration, protocol = 'legacy') {
+  assert.ok(['legacy', 'reduced'].includes(protocol), 'unknown protocol');
   assert.equal(exploration.mode, 'exploration', 'only exploration input is accepted');
   assert.equal(exploration.status, 'complete', 'exploration must be complete');
   const { config } = exploration;
@@ -79,18 +82,19 @@ export function selectSweep(exploration) {
   const endpoints = Object.fromEntries(['A', 'B'].map(arm => [arm,
     { low: interpolate(minDwellMs, arm), high: interpolate(maxDwellMs, arm) }]));
   assert.ok(Object.values(endpoints).every(p => p.low <= CONTROL_THRESHOLDS.lowMax && p.high >= CONTROL_THRESHOLDS.highMin), 'derived endpoints must bracket success and timeout');
-  const dwellPointsMs = Array.from({ length: 2 * SWEEP.halfWidthMs / SWEEP.stepMs + 1 },
+  const reduced = protocol === 'reduced';
+  const dwellPointsMs = reduced ? REDUCED.offsetsMs.map(offset => cMs + offset) : Array.from({ length: 2 * SWEEP.halfWidthMs / SWEEP.stepMs + 1 },
     (_, j) => minDwellMs + j * SWEEP.stepMs);
-  return { ...SWEEP, timeoutMs: config.timeoutMs, cMs, minDwellMs, maxDwellMs,
-    sensitiveDwellMs: cMs + SWEEP.sensitiveOffsetMs, dwellPointsMs, endpoints,
+  return { ...SWEEP, ...(reduced ? { protocol, stepMs: null, offsetsMs: REDUCED.offsetsMs, sensitiveOffsetMs: REDUCED.sensitiveOffsetMs } : {}), timeoutMs: config.timeoutMs, cMs, minDwellMs, maxDwellMs,
+    sensitiveDwellMs: cMs + (reduced ? REDUCED.sensitiveOffsetMs : SWEEP.sensitiveOffsetMs), dwellPointsMs, endpoints,
     interpolation: 'first upward A=0.5 crossing; adjacent-point linear interpolation; no extrapolation',
-    thresholds: CONTROL_THRESHOLDS, explorationQuality: quality };
+    thresholds: reduced ? REDUCED : CONTROL_THRESHOLDS, explorationQuality: quality };
 }
 
-export function loadSweep(path) {
+export function loadSweep(path, protocol = 'legacy') {
   const bytes = readFileSync(path);
   return { explorationFile: resolve(path), explorationSha256: createHash('sha256').update(bytes).digest('hex'),
-    ...selectSweep(JSON.parse(bytes)) };
+    ...selectSweep(JSON.parse(bytes), protocol) };
 }
 
 export function delayHitsByPhase(raw, arm) {
@@ -123,6 +127,14 @@ export function controlChecks(result, name) {
   if (!checks[0].passed) return checks;
   check('selectionRecorded', Boolean(result.config.sweepSelection?.explorationSha256), { selection: result.config.sweepSelection ?? null });
   const rows = result.summary.boundary;
+  if (result.config.protocol === 'reduced') {
+    const expected = result.config.dwellPointsMs;
+    check('reducedPlannedCounts', rows.length === REDUCED.points && rows.every((r, i) => r.dMs === expected[i]) &&
+      result.raw.length === REDUCED.controlTotalPairs && result.raw.filter(p => p.phase === 'warmup').length === REDUCED.warmupPairs &&
+      result.raw.filter(p => p.phase === 'boundary').length === REDUCED.points * REDUCED.controlPairs &&
+      result.raw.every(p => ['A', 'B'].every(a => p[a]?.decides?.length === REDUCED.measuredDecides)),
+      { actualPairs: result.raw.length, expectedPairs: REDUCED.controlTotalPairs, actualPoints: rows.length, expectedPoints: REDUCED.points });
+  }
   for (const row of rows) {
     const samples = result.raw.filter(p => p.phase === 'boundary' && p.durationMs === row.dMs);
     const ab = samples.filter(p => p.order === 'AB').length, ba = samples.filter(p => p.order === 'BA').length;
@@ -143,6 +155,10 @@ export function controlChecks(result, name) {
       { arm, actual: hits ?? null, minimum: name === 'positive' && arm === 'B' ? result.config.boundaryRepetitions : 0,
         maximum: name === 'positive' && arm === 'B' ? null : 0 });
   }
+  if (result.config.protocol === 'reduced') {
+    checks.push(...reducedDecisionChecks(result, name));
+    return checks;
+  }
   const shift = result.summary.boundaryShiftMs;
   if (name === 'positive') {
     check('positiveIntegratedDifference', Number.isFinite(shift) && shift >= 3 && shift <= 9, { actual: shift, min: 3, max: 9 });
@@ -161,5 +177,14 @@ export function storeControlVerdict(result, name, extraChecks = []) {
   result.controlAssertions = [...controlChecks(result, name), ...extraChecks];
   result.controlFailures = result.controlAssertions.filter(c => !c.passed);
   result.controlVerdict = result.controlFailures.length ? 'failed' : 'passed';
+  if (result.config?.protocol === 'reduced') {
+    result.controlCriteriaPassed = result.controlFailures.length === 0;
+    result.controlAssessment = result.controlCriteriaPassed ? 'criteria met' : 'criteria failed';
+    result.controlVerdict = REDUCED.controlInterpretation;
+  }
+  if (result.failure?.code === 'TIMING_BUDGET_EXCEEDED') {
+    result.verdict = result.controlVerdict = BUDGET_VERDICT;
+    result.controlCriteriaPassed = false;
+  }
   return result;
 }

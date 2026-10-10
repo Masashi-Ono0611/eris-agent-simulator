@@ -15,7 +15,12 @@ const descriptor = () => {
 };
 const emit = value => process.stdout.write(`${JSON.stringify(value)}\n`);
 emit({ ready: true, stockTimeoutMs: DECIDE_TIMEOUT_MS, toolchain: probeToolchain() });
-let executed = false;
+let executed = false, activeRunner;
+// Coordinator budget cancellation: close the current stock runner/Worker before
+// exiting. The coordinator records SIGKILL if this cannot finish within grace.
+process.once('SIGTERM', () => {
+  Promise.resolve().then(() => activeRunner?.close()).finally(() => process.exit(0));
+});
 for await (const line of createInterface({ input: process.stdin })) {
   const command = JSON.parse(line);
   if (command.finish) {
@@ -26,7 +31,7 @@ for await (const line of createInterface({ input: process.stdin })) {
   assert.equal(executed, false, 'one execution unit / StrategyRunner per arm process');
   executed = true;
   emit(await runTimingUnit(command, {
-    createRunner: source => new StrategyRunner(source, context, () => {}, command.timeoutMs, 15000),
+    createRunner: source => (activeRunner = new StrategyRunner(source, context, () => {}, command.timeoutMs, 15000)),
     descriptor, isTimeout: error => error instanceof DecideTimeoutError,
     delayHits: () => globalThis.__g3TimingDelayHits ?? 0,
   }));

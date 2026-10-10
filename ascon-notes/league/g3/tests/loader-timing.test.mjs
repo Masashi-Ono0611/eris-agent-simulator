@@ -4,6 +4,8 @@ import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { assertLoad, distribution, runExperiment, summarize, refusalResult, renderControlReport, artifactWriter } from '../loader/measure-timing.mjs';
 import { storeControlVerdict } from '../loader/timing-sweep.mjs';
+import { REDUCED } from '../loader/timing-reduced.mjs';
+import { testTimeoutMs } from '../loader/timing-budget.mjs';
 import { parseTimingEnvironment, assertFreshOutput } from '../loader/timing-options.mjs';
 
 test('load gate refuses high, invalid and unavailable load before any worker starts', () => {
@@ -19,19 +21,24 @@ test('quantiles keep signed paired differences and use linear interpolation', ()
 });
 
 const controls = {};
-const { values } = parseArgs({ options: { 'sweep-from': { type: 'string' } } });
-const config = { repetitions: 0, warmupPairs: 4, boundaryRepetitions: 16, ...parseTimingEnvironment(process.env),
+const { values } = parseArgs({ options: { 'sweep-from': { type: 'string' }, protocol: { type: 'string' }, 'budget-min': { type: 'string' } } });
+const selected = { ...parseTimingEnvironment(process.env),
+  ...(values.protocol ? { protocol: values.protocol } : {}),
+  ...(values['budget-min'] ? { budgetMin: Number(values['budget-min']) } : {}) };
+const config = { ...(selected.protocol === 'reduced' ? {} : { repetitions: 0, warmupPairs: 4, boundaryRepetitions: 16 }), ...selected,
   ...(values['sweep-from'] ? { sweepFrom: values['sweep-from'] } : {}) };
-let persist;
+let persist, outputPrefix;
 async function runControl(name, options, progress) {
   // Required for a measured run, but pure unit tests need no output or filesystem writes.
-  persist ??= artifactWriter(assertFreshOutput(process.env.G3_TIMING_CONTROL_OUTPUT,
-    fileURLToPath(new URL('./', import.meta.url))), renderControlReport);
+  outputPrefix ??= assertFreshOutput(process.env.G3_TIMING_CONTROL_OUTPUT, fileURLToPath(new URL('./', import.meta.url)));
+  persist ??= artifactWriter(outputPrefix, renderControlReport);
   let result;
-  try { result = await runExperiment(options, progress, plan => {
-    controls[name] = { ...plan, controlVerdict: 'not-run' };
+  const persistControl = plan => {
+    controls[name] = { ...plan, controlVerdict: plan.verdict ?? 'not-run' };
     persist(controls);
-  }); }
+  };
+  persistControl.partialPath = `${outputPrefix}.${name}.partial.jsonl`;
+  try { result = await runExperiment({ ...options, controlName: name }, progress, persistControl); }
   catch (error) {
     if (error.code !== 'TIMING_LOAD_REFUSED') throw error;
     result = refusalResult(error, options);
@@ -45,11 +52,14 @@ function verify(result, name) {
     passed: JSON.stringify(recomputed) === JSON.stringify(result.summary ?? null),
     values: { expected: recomputed, actual: result.summary ?? null } }]);
   persist(controls); // Persist assertion names and values before throwing.
-  assert.equal(result.controlVerdict, 'passed', JSON.stringify(result.controlFailures));
+  if (result.config.protocol === 'reduced') {
+    assert.equal(result.controlCriteriaPassed, true, JSON.stringify(result.controlFailures));
+    assert.equal(result.controlVerdict, 'descriptive only');
+  } else assert.equal(result.controlVerdict, 'passed', JSON.stringify(result.controlFailures));
 }
 
-test('positive control: measurement-only 6ms receive delay moves the stock deadline boundary', { timeout: 3600000 }, async t => {
-  const result = await runControl('positive', { ...config, seed: 91001, arms: [
+test('positive control: measurement-only 6ms receive delay moves the stock deadline boundary', { timeout: testTimeoutMs(config.budgetMin) }, async t => {
+  const result = await runControl('positive', { ...config, seed: REDUCED.positiveSeed, arms: [
     { name: 'probe', probe: true, delayMs: 0 }, { name: 'probe+6ms-control', probe: true, delayMs: 6 },
   ] }, update => t.diagnostic(JSON.stringify(update)));
   verify(result, 'positive');
@@ -58,8 +68,8 @@ test('positive control: measurement-only 6ms receive delay moves the stock deadl
     sensitive, delayHits: result.armDiagnostics[1].delayHits }));
 });
 
-test('negative control: identical probe arms have boundary difference within predeclared 2ms noise tolerance', { timeout: 3600000 }, async t => {
-  const result = await runControl('negative', { ...config, seed: 91002, arms: [
+test('negative control: identical probe arms have boundary difference within predeclared 2ms noise tolerance', { timeout: testTimeoutMs(config.budgetMin) }, async t => {
+  const result = await runControl('negative', { ...config, seed: REDUCED.negativeSeed, arms: [
     { name: 'probe-identical-A', probe: true, delayMs: 0 }, { name: 'probe-identical-B', probe: true, delayMs: 0 },
   ] }, update => t.diagnostic(JSON.stringify(update)));
   verify(result, 'negative');

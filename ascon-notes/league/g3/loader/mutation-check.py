@@ -23,7 +23,7 @@ MUTANTS = {
 
 
 def run_suite(test=TEST):
-    r = subprocess.run(['node', '--import', 'tsx', '--test', test], capture_output=True, text=True)
+    r = subprocess.run(['node', '--import', 'tsx', '--test', '--test-concurrency=1', test], capture_output=True, text=True)
     summary = [l for l in r.stdout.splitlines() if l.startswith(('ℹ pass', 'ℹ fail'))]
     if not summary:
         summary = [l for l in r.stdout.splitlines() if l.startswith(('# pass', '# fail'))]
@@ -97,6 +97,25 @@ def main():
                   'ascon-notes/league/g3/tests/timing-calibration.test.mjs', {
         'startup calibration gate bypassed': (
             'assertTimingCalibration(result.calibration);', 'void 0;'),
+    })
+
+
+    check_mutants('ascon-notes/league/g3/loader/timing-budget.mjs',
+                  'ascon-notes/league/g3/tests/timing-reduced.test.mjs', {
+        'reduced budget stop removed': (
+            "throw error(now() - started > limitMs ? 'elapsed' : 'projection');",
+            'void 0;'),
+    })
+    check_mutants('ascon-notes/league/g3/loader/timing-reduced.mjs',
+                  'ascon-notes/league/g3/tests/timing-reduced.test.mjs', {
+        'reduced positive two-sided band removed': (
+            'Number.isFinite(shift) && shift >= REDUCED.positiveMinMs && shift <= REDUCED.positiveMaxMs',
+            'Number.isFinite(shift)'),
+        'reduced interval check replaced by point estimate': (
+            'Number.isFinite(interval?.lower) && interval.lower > 0',
+            'Number.isFinite(row?.difference) && row.difference > 0'),
+        'reduced sensitive point moved to c-3': (
+            'sensitiveOffsetMs: -4', 'sensitiveOffsetMs: -3'),
     })
 
 

@@ -9,8 +9,11 @@ import { join, resolve } from 'node:path';
 import { loadSweep, delayHitsByPhase, explorationQuality, MAX_TRANSITION_WIDTH_MS } from './timing-sweep.mjs';
 import { auditRecords } from './audit-records.mjs';
 import { probeToolchain, toolchainEnvironment } from './probe-toolchain.mjs';
-import { DEFAULT_MAX_LOAD1, parseLoadOptions, parseTimingArgs, assertFreshOutput } from './timing-options.mjs';
+import { DEFAULT_MAX_LOAD1, parseLoadOptions, parseTimingArgs, assertFreshOutput, parseProtocolOptions } from './timing-options.mjs';
 import { CALIBRATION, calibrateTiming, assertTimingCalibration, renderCalibration } from './timing-calibration.mjs';
+
+import { REDUCED, blockPoint, trapezoid, bootstrapShift, reducedInference } from './timing-reduced.mjs';
+import { budgetMinutes, createBudget, partialJournal, stopTimingClient, BUDGET_VERDICT } from './timing-budget.mjs';
 
 const directory = fileURLToPath(new URL('./', import.meta.url));
 const root = fileURLToPath(new URL('../../../../', import.meta.url));
@@ -86,18 +89,20 @@ export function summarize(raw, config) {
     row.difference = row.n ? row.B.fraction - row.A.fraction : null;
     row.discordant = { onlyA: records.A.filter((d, i) => d.timedOut && !records.B[i].timedOut).length,
       onlyB: records.B.filter((d, i) => d.timedOut && !records.A[i].timedOut).length };
+    if (config.protocol === 'reduced') Object.assign(row, blockPoint(pairs));
     boundary.push(row);
   }
   // Signed area: positive means B times out sooner. No monotonicity fit or extrapolation.
   const boundaryShiftMs = boundary.every(r => r.n > 0)
-    ? config.stepMs * boundary.reduce((sum, r) => sum + r.difference, 0) : null;
+    ? (config.protocol === 'reduced' ? trapezoid(boundary) : config.stepMs * boundary.reduce((sum, r) => sum + r.difference, 0)) : null;
   const fixedCostEstimateMs = Object.fromEntries(['A', 'B'].map(arm => [arm,
     distribution(raw.filter(p => p.phase === phase && p.durationMs === 0 || p.phase === 'overhead')
       .flatMap(p => measuredRecords(p[arm])).map(d => d.wallMs ?? d.durations?.decide).filter(v => v !== undefined)).median]));
   const rewarm = rewarmAccounting(raw);
   return config.explore ? { rewarm, overhead, exploration: boundary, boundary: [], boundaryShiftMs: null,
     fixedCostEstimateMs, explorationQuality: explorationQuality(boundary, config.maxTransitionWidthMs) }
-    : { rewarm, overhead, boundary, boundaryShiftMs, fixedCostEstimateMs };
+    : { rewarm, overhead, boundary, boundaryShiftMs, fixedCostEstimateMs,
+      ...(config.protocol === 'reduced' ? { boundaryShiftIntervalMs: bootstrapShift(raw, dwellPoints(config)) } : {}) };
 }
 
 export function host(env = process.env) {
@@ -231,7 +236,27 @@ export function dwellPoints(config) {
 }
 
 export function prepareTimingConfig(options = {}, env = process.env) {
-  const config = { ...DEFAULTS, ...options, ...parseLoadOptions(options.maxLoad1, options.loadNote) };
+  const selected = parseProtocolOptions(options.protocol ?? env.G3_TIMING_PROTOCOL, options.budgetMin ?? env.G3_TIMING_BUDGET_MIN);
+  const config = { ...DEFAULTS, ...options, ...selected, ...parseLoadOptions(options.maxLoad1, options.loadNote) };
+  const control = config.controlName;
+  assert.ok(control === undefined || ['positive', 'negative'].includes(control), 'unknown control');
+  config.budgetMin = budgetMinutes(config.budgetMin, Boolean(control));
+  config.testTimeoutMarginMs = REDUCED.testTimeoutMarginMs;
+  config.shutdownGraceMs = REDUCED.shutdownGraceMs;
+  if (config.protocol === 'reduced') {
+    assert.ok(!config.explore, 'reduced is confirmation-only; use legacy exploration');
+    const fixed = { repetitions: control ? REDUCED.controlOverheadPairs : REDUCED.mainOverheadPairs,
+      boundaryRepetitions: control ? REDUCED.controlPairs : REDUCED.mainPairs,
+      warmupPairs: REDUCED.warmupPairs, warmupDecides: REDUCED.warmupDecides, measuredDecides: REDUCED.measuredDecides,
+      cooldownMs: REDUCED.cooldownMs, seed: control ? REDUCED[`${control}Seed`] : REDUCED.mainSeed };
+    for (const [key, value] of Object.entries(fixed)) assert.ok(options[key] === undefined || options[key] === value, `reduced fixes ${key}=${value}`);
+    Object.assign(config, fixed, { protocolConstants: REDUCED });
+    const expectedArms = control ? [{ name: 'probe-A', probe: true, delayMs: 0 },
+      { name: 'probe-B', probe: true, delayMs: control === 'positive' ? REDUCED.nominalDelayMs : 0 }] : DEFAULTS.arms;
+    if (options.arms) assert.deepEqual(options.arms.map(({ probe, delayMs }) => ({ probe, delayMs })),
+      expectedArms.map(({ probe, delayMs }) => ({ probe, delayMs })), 'reduced arm configuration');
+    config.arms = options.arms ?? expectedArms;
+  }
   const sweepFrom = options.sweepFrom ?? env.G3_TIMING_SWEEP_FROM;
   if (config.explore) {
     assert.ok(!sweepFrom, '--explore and --sweep-from are exclusive');
@@ -242,7 +267,7 @@ export function prepareTimingConfig(options = {}, env = process.env) {
     delete config.sweepSelection;
   } else {
     assert.ok(sweepFrom, 'confirmation requires --sweep-from or G3_TIMING_SWEEP_FROM');
-    const selection = loadSweep(sweepFrom);
+    const selection = loadSweep(sweepFrom, config.protocol);
     assert.ok(options.timeoutMs === undefined || options.timeoutMs === selection.timeoutMs, 'exploration T mismatch');
     Object.assign(config, { sweepFrom, sweepSelection: selection, timeoutMs: selection.timeoutMs,
       minOffsetMs: selection.minDwellMs - selection.timeoutMs, maxOffsetMs: selection.maxDwellMs - selection.timeoutMs,
@@ -255,141 +280,180 @@ export function prepareTimingConfig(options = {}, env = process.env) {
 // files. A killed process leaves the predeclared plan; archived files remain wx protected.
 export function artifactWriter(prefix, render) {
   let reserved = false;
-  return value => {
+  const write = value => {
     const json = `${JSON.stringify(value, null, 2)}\n`, markdown = render(value);
     writeFileSync(`${prefix}.json`, json, { flag: reserved ? 'w' : 'wx' });
     writeFileSync(`${prefix}.md`, markdown, { flag: reserved ? 'w' : 'wx' });
     reserved = true;
   };
+  write.partialPath = `${prefix}.partial.jsonl`;
+  return write;
 }
 
 export async function runExperiment(options = {}, progress = () => {}, persistPlan = () => {},
-  { calibrationOptions, readHost = host, launchArm = launch } = {}) {
+  { calibrationOptions, readHost = host, readLoad = () => os.loadavg(), launchArm = launch, inspectArm = inspectProbe,
+    now = () => performance.now(), setTimer = setTimeout, clearTimer = clearTimeout, pause = ms => new Promise(resolvePause => setTimeout(resolvePause, ms)) } = {}) {
+  const started = now();
   const config = prepareTimingConfig(options);
   for (const key of ['repetitions', 'boundaryRepetitions', 'warmupPairs', 'warmupDecides', 'measuredDecides']) {
     assert.ok(Number.isSafeInteger(config[key]) && config[key] >= 0, key);
   }
   assert.ok(config.warmupDecides > 0 && config.measuredDecides > 0);
-  assert.ok(config.boundaryRepetitions > 0 && config.stepMs > 0 && config.minOffsetMs < config.maxOffsetMs);
+  assert.ok(config.boundaryRepetitions > 0 && (config.protocol === 'reduced' || config.stepMs > 0) && config.minOffsetMs < config.maxOffsetMs);
   assert.ok(config.timeoutMs + config.minOffsetMs >= 0 && config.timeoutMs > 0);
-  assert.ok(Math.abs((config.maxOffsetMs - config.minOffsetMs) / config.stepMs - Math.round((config.maxOffsetMs - config.minOffsetMs) / config.stepMs)) < 1e-9);
+  if (config.protocol !== 'reduced') assert.ok(Math.abs((config.maxOffsetMs - config.minOffsetMs) / config.stepMs - Math.round((config.maxOffsetMs - config.minOffsetMs) / config.stepMs)) < 1e-9);
   assert.equal(config.arms.length, 2);
   assert.ok(Number.isFinite(config.cooldownMs) && config.cooldownMs >= 0);
-  const before = readHost();
-  const plan = { schema: 3, mode: config.explore ? 'exploration' : 'confirmation', status: 'planned',
-    plannedAt: new Date().toISOString(), config, hostBefore: before, hostAfter: before, raw: [],
-    calibration: { status: 'not-run', ...CALIBRATION }, summary: summarize([], config) };
-  await persistPlan(plan); // Durable JSON + Markdown BEFORE load check or launch.
-  try { assertLoad(before.loadAverage[0], config.maxLoad1); } // BEFORE spawning any process
-  catch (error) { error.hostBefore = before; error.plan = plan; throw error; }
-  const scratch = mkdtempSync(join(directory, '.timing-run-'));
-  const clients = [];
-  const raw = [], loadChecks = [];
-  const result = { ...plan, status: 'running', startedAt: new Date().toISOString(), config,
-    hostBefore: before, armToolchains: [], armDiagnostics: [], failedUnits: [], sourceHashes: {}, raw, loadChecks };
-  for (const name of ['measure-timing.mjs', 'timing-options.mjs', 'timing-sweep.mjs', 'timing-arm.mjs', 'timing-unit.mjs', 'timing-delay.mjs', 'timing-fixture.mjs', 'timing-wait.mjs', 'timing-calibration.mjs',
-    'probe-loader.mjs', 'probe-toolchain.mjs', 'probe-io.mjs', 'audit-records.mjs', 'offline-guard.mjs',
-    '../../../../example/agents/runtime/strategyRunner.ts', '../../../../example/agents/runtime/decideTimeout.ts']) {
-    result.sourceHashes[name] = createHash('sha256').update(readFileSync(new URL(name, import.meta.url))).digest('hex');
-  }
-  const random = randomGenerator(config.seed);
-  let index = 0;
-  const pair = async (phase, repetition, durationMs) => {
-    const isSweep = phase === 'boundary' || phase === 'exploration';
-    const offsetMs = isSweep ? durationMs - config.timeoutMs : 0;
-    const load = os.loadavg();
-    loadChecks.push({ pair: index, load });
-    assertLoad(load[0], config.maxLoad1);
-    const parity = isSweep ? repetition % 2 : index % 2;
-    const order = parity === 0 ? ['A', 'B'] : ['B', 'A'];
-    const sample = { index: index++, phase, repetition, offsetMs, order: order.join(''),
-      durationMs: isSweep ? durationMs : 0 };
-    result.failedUnits.push(sample); // Retain even if the load check before B fails.
-    for (const arm of order) {
-      // Fresh parent process for each unit; only this process owns its one runner.
-      // Check again before B: A may have spent substantial time re-warming.
-      const armLoad = os.loadavg();
-      loadChecks.push({ pair: sample.index, arm, load: armLoad });
-      assertLoad(armLoad[0], config.maxLoad1);
-      const i = arm === 'A' ? 0 : 1;
-      const sink = join(scratch, `${sample.index}-${arm}.jsonl`);
-      const client = launchArm(config.arms[i], sink);
-      clients.push(client);
-      try {
-        const ready = await client.receive();
-        assert.equal(ready.ready, true);
-        assert.deepEqual(ready.toolchain, probeToolchain());
-        if (!result.armToolchains.some(t => t.arm === arm)) result.armToolchains.push({ arm, ...ready.toolchain });
-        result.stockDefaultTimeoutMs = ready.stockTimeoutMs;
-        sample[arm] = await client.request({ durationMs: sample.durationMs,
-          timeoutMs: isSweep ? config.timeoutMs : 1000,
-          warmupDecides: config.warmupDecides, measuredDecides: config.measuredDecides });
-        const finished = await client.request({ finish: true });
-        assert.equal(finished.finished, true);
-        client.child.stdin.end();
-        assert.equal((await client.exited).code, 0);
-        assert.equal(sample[arm].delayHits, finished.delayHits);
-        if (config.arms[i].delayMs === 0) assert.equal(finished.delayHits, 0);
-        sample[arm].probe = config.arms[i].probe ? inspectProbe(sink, sample[arm]) : null;
-        if (sample[arm].status !== 'complete') throw Error(sample[arm].failure?.code ?? 'TIMING_UNIT_ABORTED');
-        assert.equal(sample[arm].measuredDecideCount, config.measuredDecides);
-        if (!isSweep) assert.ok(sample[arm].decides.every(d => !d.timedOut));
-      } finally {
-        if (client.child.exitCode === null) client.child.kill();
-        await client.exited;
-        clients.splice(clients.indexOf(client), 1);
+  const totalPairs = config.warmupPairs + config.repetitions + dwellPoints(config).length * config.boundaryRepetitions;
+  const budget = createBudget({ ...config, totalPairs }, { now, started, setTimer, clearTimer });
+  const journalPath = options.partialPath ?? persistPlan.partialPath;
+  assert.ok(config.protocol !== 'reduced' || journalPath, 'reduced requires an exclusive partial journal next to the output');
+  const journal = journalPath ? partialJournal(journalPath) : null;
+  try {
+    const before = readHost();
+    const plan = { schema: 3, mode: config.explore ? 'exploration' : 'confirmation', status: 'planned',
+      plannedAt: new Date().toISOString(), config, hostBefore: before, hostAfter: before, raw: [],
+      calibration: { status: 'not-run', ...CALIBRATION }, budget: budget.snapshot(), partialPath: journalPath ?? null, summary: summarize([], config) };
+    journal?.append({ type: 'plan', plan });
+    await persistPlan(plan); // Durable JSON + Markdown BEFORE load check or launch.
+    try { assertLoad(before.loadAverage[0], config.maxLoad1); } // BEFORE spawning any process
+    catch (error) {
+      journal?.append({ type: 'final', status: 'refused', failure: { code: error.code, load1: error.load1, threshold: error.threshold }, budget: budget.snapshot() });
+      error.hostBefore = before; error.plan = plan; throw error;
+    }
+    const scratch = mkdtempSync(join(directory, '.timing-run-'));
+    const clients = [];
+    const raw = [], loadChecks = [];
+    const result = { ...plan, status: 'running', startedAt: new Date().toISOString(), config,
+      hostBefore: before, armToolchains: [], armDiagnostics: [], failedUnits: [], sourceHashes: {}, raw, loadChecks };
+    for (const name of ['measure-timing.mjs', 'timing-options.mjs', 'timing-sweep.mjs', 'timing-arm.mjs', 'timing-unit.mjs', 'timing-delay.mjs', 'timing-fixture.mjs', 'timing-wait.mjs', 'timing-calibration.mjs', 'timing-reduced.mjs', 'timing-budget.mjs', 'TIMING-REDUCED-PROTOCOL-2026-10-10.md',
+      'probe-loader.mjs', 'probe-toolchain.mjs', 'probe-io.mjs', 'audit-records.mjs', 'offline-guard.mjs',
+      '../../../../example/agents/runtime/strategyRunner.ts', '../../../../example/agents/runtime/decideTimeout.ts']) {
+      result.sourceHashes[name] = createHash('sha256').update(readFileSync(new URL(name, import.meta.url))).digest('hex');
+    }
+    const random = randomGenerator(config.seed);
+    let index = 0;
+    const pair = async (phase, repetition, durationMs) => {
+      budget.check();
+      const pairStarted = now();
+      const isSweep = phase === 'boundary' || phase === 'exploration';
+      const offsetMs = isSweep ? durationMs - config.timeoutMs : 0;
+      const load = readLoad();
+      loadChecks.push({ pair: index, load });
+      assertLoad(load[0], config.maxLoad1);
+      const parity = isSweep ? repetition % 2 : index % 2;
+      const order = parity === 0 ? ['A', 'B'] : ['B', 'A'];
+      const sample = { index: index++, phase, repetition, offsetMs, order: order.join(''),
+        durationMs: isSweep ? durationMs : 0 };
+      result.failedUnits.push(sample); // Retain even if the load check before B fails.
+      for (const arm of order) {
+        // Fresh parent process for each unit; only this process owns its one runner.
+        // Check again before B: A may have spent substantial time re-warming.
+        budget.check();
+        const armLoad = readLoad();
+        loadChecks.push({ pair: sample.index, arm, load: armLoad });
+        assertLoad(armLoad[0], config.maxLoad1);
+        const i = arm === 'A' ? 0 : 1;
+        const sink = join(scratch, `${sample.index}-${arm}.jsonl`);
+        const client = launchArm(config.arms[i], sink);
+        clients.push(client);
+        try {
+          const ready = await budget.wait(() => client.receive());
+          assert.equal(ready.ready, true);
+          assert.deepEqual(ready.toolchain, probeToolchain());
+          if (!result.armToolchains.some(t => t.arm === arm)) result.armToolchains.push({ arm, ...ready.toolchain });
+          result.stockDefaultTimeoutMs = ready.stockTimeoutMs;
+          sample[arm] = await budget.wait(() => client.request({ durationMs: sample.durationMs,
+            timeoutMs: isSweep ? config.timeoutMs : 1000,
+            warmupDecides: config.warmupDecides, measuredDecides: config.measuredDecides }));
+          const finished = await budget.wait(() => client.request({ finish: true }));
+          assert.equal(finished.finished, true);
+          client.child.stdin.end();
+          assert.equal((await budget.wait(() => client.exited)).code, 0);
+          assert.equal(sample[arm].delayHits, finished.delayHits);
+          if (config.arms[i].delayMs === 0) assert.equal(finished.delayHits, 0);
+          sample[arm].probe = config.arms[i].probe ? inspectArm(sink, sample[arm]) : null;
+          if (sample[arm].status !== 'complete') throw Error(sample[arm].failure?.code ?? 'TIMING_UNIT_ABORTED');
+          assert.equal(sample[arm].measuredDecideCount, config.measuredDecides);
+          if (!isSweep) assert.ok(sample[arm].decides.every(d => !d.timedOut));
+        } finally {
+          const stopped = await stopTimingClient(client, { setTimer, clearTimer });
+          if (!stopped.alreadyExited) (result.armStops ??= []).push({ pair: sample.index, arm, ...stopped });
+          clients.splice(clients.indexOf(client), 1);
+        }
+      }
+      raw.push(sample);
+      result.failedUnits.pop();
+      result.budget = budget.completedPair(phase, now() - pairStarted);
+      journal?.append({ type: 'pair', sample, budget: result.budget });
+      budget.check();
+      if (index % 25 === 0) progress({ pairs: index, phase, load1: load[0], budget: result.budget });
+      // Outside all measured intervals, between complete pairs only.
+      if (config.cooldownMs) await budget.wait(() => pause(config.cooldownMs));
+    };
+    try {
+      budget.check();
+      result.calibration = await calibrateTiming(calibrationOptions);
+      result.budget = budget.snapshot();
+      journal?.append({ type: 'calibration', calibration: result.calibration, sourceHashes: result.sourceHashes, budget: result.budget });
+      await persistPlan(result); // Keep BOTH primitives' samples even when the gate aborts.
+      assertTimingCalibration(result.calibration);
+      budget.check();
+      for (let i = 0; i < config.warmupPairs; i++) await pair('warmup', i, 0);
+      for (let i = 0; i < config.repetitions; i++) await pair('overhead', i, 0);
+      const points = dwellPoints(config);
+      for (let repetition = 0; repetition < config.boundaryRepetitions; repetition++) {
+        // A new seeded shuffle each repetition; every d alternates AB/BA across repetitions.
+        for (const d of shuffled(points, random)) await pair(config.explore ? 'exploration' : 'boundary', repetition, d);
+      }
+      result.armDiagnostics = ['A', 'B'].map(arm => ({ arm,
+        delayHits: raw.reduce((sum, p) => sum + p[arm].delayHits, 0),
+        delayHitsByPhase: delayHitsByPhase(raw, arm),
+        probe: config.arms[arm === 'A' ? 0 : 1].probe ? {
+          measurementStructureChecked: raw.every(p => p[arm].probe?.measurementStructureChecked),
+          expectedTimeouts: raw.reduce((sum, p) => sum + p[arm].probe.expectedTimeouts, 0),
+        } : null,
+      }));
+      result.status = 'complete';
+    } catch (error) {
+      result.status = error.code === 'TIMING_BUDGET_EXCEEDED' ? 'incomplete' : 'aborted';
+      if (result.status === 'incomplete') result.verdict = BUDGET_VERDICT;
+      result.failure = { code: error.code ?? error.message, name: error.name, message: error.message,
+        actual: error.actual, expected: error.expected, operator: error.operator,
+        load1: error.load1, threshold: error.threshold,
+        primitive: error.primitive, requestedMs: error.requestedMs, reason: error.reason, budget: error.budget };
+    } finally {
+      for (const client of clients) {
+        const stopped = await stopTimingClient(client, { setTimer, clearTimer });
+        if (!stopped.alreadyExited) (result.armStops ??= []).push(stopped);
+      }
+      rmSync(scratch, { recursive: true, force: true });
+      result.hostAfter = readHost();
+      result.finishedAt = new Date().toISOString();
+      result.summary = summarize(raw, config);
+      if (config.explore && result.status === 'complete' && result.summary.explorationQuality.rejected) {
+        result.status = 'rejected';
+        result.failure = { code: 'TIMING_EXPLORATION_TOO_BLURRED', message: result.summary.explorationQuality.reason };
+      }
+      result.delayHitsByPhase = Object.fromEntries(['A', 'B'].map(arm => [arm, delayHitsByPhase(raw, arm)]));
+      result.maxObservedLoad1 = Math.max(before.loadAverage[0], result.hostAfter.loadAverage[0], ...loadChecks.map(c => c.load[0]));
+      if (result.hostAfter.loadAverage[0] > config.maxLoad1 && result.status === 'complete') {
+        result.status = 'aborted'; result.failure = { code: 'TIMING_LOAD_REFUSED_AFTER' };
       }
     }
-    raw.push(sample);
-    result.failedUnits.pop();
-    if (index % 25 === 0) progress({ pairs: index, phase, load1: load[0] });
-    // Outside all measured intervals, between complete pairs only.
-    if (config.cooldownMs) await new Promise(resolvePause => setTimeout(resolvePause, config.cooldownMs));
-  };
-  try {
-    result.calibration = await calibrateTiming(calibrationOptions);
-    await persistPlan(result); // Keep BOTH primitives' samples even when the gate aborts.
-    assertTimingCalibration(result.calibration);
-    for (let i = 0; i < config.warmupPairs; i++) await pair('warmup', i, 0);
-    for (let i = 0; i < config.repetitions; i++) await pair('overhead', i, 0);
-    const points = dwellPoints(config);
-    for (let repetition = 0; repetition < config.boundaryRepetitions; repetition++) {
-      // A new seeded shuffle each repetition; every d alternates AB/BA across repetitions.
-      for (const d of shuffled(points, random)) await pair(config.explore ? 'exploration' : 'boundary', repetition, d);
+    result.budget = budget.snapshot();
+    if (result.status === 'complete') {
+      try { budget.check(); } catch (error) {
+        result.status = 'incomplete'; result.verdict = BUDGET_VERDICT;
+        result.failure = { code: error.code, reason: error.reason, budget: error.budget };
+      }
     }
-    result.armDiagnostics = ['A', 'B'].map(arm => ({ arm,
-      delayHits: raw.reduce((sum, p) => sum + p[arm].delayHits, 0),
-      delayHitsByPhase: delayHitsByPhase(raw, arm),
-      probe: config.arms[arm === 'A' ? 0 : 1].probe ? {
-        measurementStructureChecked: raw.every(p => p[arm].probe?.measurementStructureChecked),
-        expectedTimeouts: raw.reduce((sum, p) => sum + p[arm].probe.expectedTimeouts, 0),
-      } : null,
-    }));
-    result.status = 'complete';
-  } catch (error) {
-    result.status = 'aborted';
-    result.failure = { code: error.code ?? error.message, name: error.name, message: error.message,
-      actual: error.actual, expected: error.expected, operator: error.operator,
-      load1: error.load1, threshold: error.threshold,
-      primitive: error.primitive, requestedMs: error.requestedMs };
-  } finally {
-    for (const client of clients) if (client.child.exitCode === null) client.child.kill();
-    await Promise.all(clients.map(c => c.exited));
-    rmSync(scratch, { recursive: true, force: true });
-    result.hostAfter = readHost();
-    result.finishedAt = new Date().toISOString();
-    result.summary = summarize(raw, config);
-    if (config.explore && result.status === 'complete' && result.summary.explorationQuality.rejected) {
-      result.status = 'rejected';
-      result.failure = { code: 'TIMING_EXPLORATION_TOO_BLURRED', message: result.summary.explorationQuality.reason };
-    }
-    result.delayHitsByPhase = Object.fromEntries(['A', 'B'].map(arm => [arm, delayHitsByPhase(raw, arm)]));
-    result.maxObservedLoad1 = Math.max(before.loadAverage[0], result.hostAfter.loadAverage[0], ...loadChecks.map(c => c.load[0]));
-    if (result.hostAfter.loadAverage[0] > config.maxLoad1 && result.status === 'complete') {
-      result.status = 'aborted'; result.failure = { code: 'TIMING_LOAD_REFUSED_AFTER' };
-    }
-  }
-  return result;
+    if (config.protocol === 'reduced') result.inference = reducedInference(result);
+    journal?.append({ type: 'final', status: result.status, verdict: result.verdict ?? null, failure: result.failure ?? null,
+      budget: result.budget, summary: result.summary, failedUnits: result.failedUnits, armStops: result.armStops ?? [] });
+    await persistPlan(result);
+    return result;
+  } finally { journal?.close(); }
 }
 
 // Pure rendering: only the supplied run's metadata; no archived values or hostname lookup.
@@ -402,6 +466,7 @@ export function renderHostAndLoad(result) {
     `Host (hostname-free): ${markdownText(identity)}. These results belong only to this run on this host; no Air measurements are reused.`,
     `Node / tsx (actual host runtime): ${markdownText(before.node)} / ${markdownText(before.tsx)}. toolchainOverride:${before.toolchainOverride ?? false}.`,
     ...(before.toolchainNote ? [markdownText(before.toolchainNote)] : []),
+    `Budget: ${config.budgetMin ?? 'legacy/unrecorded'} minutes; test cleanup/report margin: ${config.testTimeoutMarginMs ?? 'unrecorded'} ms. Budget state: ${JSON.stringify(result.budget ?? null)}.`,
     `Operative max-load1: **${config.maxLoad1}** (default: ${DEFAULT_MAX_LOAD1}).`,
     `Load note: ${markdownText(config.loadNote || '(none; default unchanged)')}.`,
     config.maxLoad1 !== DEFAULT_MAX_LOAD1
@@ -416,11 +481,15 @@ export function renderHostAndLoad(result) {
 export function refusalResult(error, options) {
   return { schema: 1, status: 'refused', finishedAt: new Date().toISOString(),
     mode: error.plan?.mode, config: error.plan?.config ?? { ...DEFAULTS, ...options, ...parseLoadOptions(options.maxLoad1, options.loadNote) },
-    hostBefore: error.hostBefore, hostAfter: host(), raw: [], calibration: error.plan?.calibration,
+    hostBefore: error.hostBefore, hostAfter: host(), raw: [], budget: error.plan?.budget, partialPath: error.plan?.partialPath, calibration: error.plan?.calibration,
     failure: { code: error.code, load1: error.load1, threshold: error.threshold } };
 }
 
 export function renderControlReport(controls) {
+  if (Object.values(controls).some(r => r.config.protocol === 'reduced')) {
+    return Object.entries(controls).map(([name, r]) => r.config.protocol === 'reduced'
+      ? renderReducedReport(r, name) : renderControlReport({ [name]: r })).join('\n');
+  }
   const lines = ['# 時間干渉ハーネスの対照実験', '',
     'loader-timing.test.mjs がこの実行のJSONから生成。production probeのoverheadの推定ではない。', '',
     '事前閾値: positiveの積分差3〜9ms、c−4msでtimeout割合増加≥0.5。negativeの積分差の絶対値≤2ms。',
@@ -444,6 +513,7 @@ export function renderControlReport(controls) {
 
 const f = value => value === null ? '—' : value.toFixed(6);
 export function renderReport(result) {
+  if (result.config.protocol === 'reduced') return renderReducedReport(result);
   if (result.mode === 'exploration') return renderExploration(result);
   const { config, summary } = result;
   const lines = ['# StrategyRunner プローブ時間干渉のオフライン計測', '',
@@ -500,6 +570,49 @@ export function renderReport(result) {
   return lines.join('\n');
 }
 
+export function renderReducedReport(result, controlName = result.config.controlName) {
+  const inference = result.inference ?? reducedInference(result);
+  const summary = result.summary;
+  const lines = [`# REDUCED timing ${controlName ?? 'main'}`, '',
+    'Pre-declared before the first reduced run; rules must not be edited after seeing results. Supporting study only; G3 evidenceではない。',
+    `Status: ${result.status}. Verdict: ${result.verdict ?? result.controlVerdict ?? 'not adjudicated'}.`,
+    `Control assessment: ${result.controlAssessment ?? 'not adjudicated'}; criteria passed: ${result.controlCriteriaPassed ?? false}.`,
+    `Failure: ${JSON.stringify(result.failure ?? null)}`, '',
+    renderHostAndLoad(result), renderCalibration(result), renderSweepPlan(result), renderRewarm(result), '',
+    'Declared constants (verbatim; includes every count, seed, threshold and margin):',
+    '```json', JSON.stringify(result.config.protocolConstants, null, 2), '```',
+    `Started: ${result.startedAt ?? 'not started'}; finished: ${result.finishedAt ?? 'not finished'}.`,
+    `Partial journal: ${markdownText(result.partialPath ?? 'not recorded')}. Arm shutdowns: ${JSON.stringify(result.armStops ?? [])}.`,
+    `Planned counts: ${result.config.boundaryRepetitions} pairs/point; ${result.config.boundaryRepetitions * result.config.measuredDecides} measured decides/arm/point; warmup pairs=${result.config.warmupPairs}; overhead pairs=${result.config.repetitions}.`,
+    `Seeded point-order shuffle: seed=${result.config.seed}; AB/BA alternate by repetition. Pair cooldown=${result.config.cooldownMs}ms.`,
+    `Primary main dwell: ${inference.primaryDwellMs}ms. Sensitive control dwell: ${result.config.sweepSelection.sensitiveDwellMs}ms.`,
+    'Intervals: nominal 95% block-effective Wilson/Newcombe, effective n = process pairs, not decisions. Arbitrary within-process correlation; independent stationary pairs and nonnegative within-pair arm covariance assumed. Pointwise intervals, no simultaneous coverage.',
+    '| d ms | blocks | decisions/arm | A fraction | B fraction | B-A | 95% lower | 95% upper |',
+    '| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |'];
+  for (const row of summary?.boundary ?? []) lines.push(`| ${row.dMs} | ${row.blocks} | ${row.n} | ${row.A.fraction} | ${row.B.fraction} | ${row.difference} | ${row.differenceInterval?.lower ?? 'unavailable'} | ${row.differenceInterval?.upper ?? 'unavailable'} |`);
+  lines.push('', `Signed sampled-curve shift (non-uniform trapezoid B-A): ${summary?.boundaryShiftMs ?? 'unavailable'} ms. Positive means more B timeouts.`,
+    `95% bootstrap-by-process-pair-block interval (ms): ${JSON.stringify(summary?.boundaryShiftIntervalMs ?? null)}.`,
+    'Bootstrap resamples whole pairs within each point and AB/BA stratum. Independent exchangeable blocks assumed; serial drift and grid interpolation error are not covered. Degenerate intervals do not prove a population point mass. Partial estimates are descriptive only.',
+    'Controls: lower interval bound at c-4 >0 AND signed area in [3,9]ms for positive; interval at c-4 contains 0 AND absolute area <=2ms for negative. Endpoint and structural guards also required. Both control verdicts are descriptive only: local hard-step derivation does not bound general coarse-grid error.',
+    `Assertions: ${JSON.stringify(result.controlAssertions ?? [])}`,
+    `Failures: ${JSON.stringify(result.controlFailures ?? [])}`,
+    `MDE design: ${JSON.stringify(inference.mde)}`,
+    `Optimistic rho=0 design: ${JSON.stringify(inference.optimisticMde)}`,
+    inference.interpretation, inference.qualification,
+    `Planning resolution target: ${REDUCED.planningResolutionMs}ms. Pre-declared sampled-area margin: ${JSON.stringify(inference.marginMs)}ms; complete interval inside margin: ${inference.intervalInsideMargin}.`,
+    'Counts alone cannot determine a continuous-shift MDE. The area MDE concerns the sampled trapezoid only. No claim beyond the recorded host, toolchain, load, fixture and deadline.',
+    'Order/time diagnostics (process-pair blocks in acquisition order):',
+    '```json', JSON.stringify((summary?.boundary ?? []).map(r => ({ dMs: r.dMs, ...r.blockDiagnostics })), null, 2), '```',
+    'd=0 overhead distributions (warmups excluded; 96 main decisions/arm do not establish a precise p99):',
+    '```json', JSON.stringify(summary?.overhead ?? null, null, 2), '```',
+    `Phase delay hits: ${JSON.stringify(result.delayHitsByPhase ?? {})}`,
+    `Maximum observed load1: ${result.maxObservedLoad1 ?? 'unrecorded'}.`,
+    'Probe audits and actual arm toolchains:', '```json', JSON.stringify({ diagnostics: result.armDiagnostics ?? [], toolchains: result.armToolchains ?? [] }, null, 2), '```',
+    'Source SHA-256:', '```json', JSON.stringify(result.sourceHashes ?? {}, null, 2), '```',
+    'Command:', '```sh', result.command ?? '(imported harness)', '```', '');
+  return lines.join('\n');
+}
+
 export function renderRewarm(result) {
   const stats = result.summary?.rewarm ?? rewarmAccounting(result.raw ?? []);
   const lines = [
@@ -540,6 +653,7 @@ export function renderExploration(result) {
 }
 
 export function renderRefusal(result) {
+  if (result.config.protocol === 'reduced') return renderReducedReport(result);
   return ['# StrategyRunner 時間干渉計測 — 開始拒否・未測定', '',
     '**測定未完了。per-call overhead・timeout境界差・等価性について結果はない。G3 evidenceではない。**', '',
     'このレポートはmeasure-timing.mjsが同時保存したJSONから生成した。負荷上限を超えたため、計測用の子プロセス/Workerを起動していない。', '',
@@ -569,7 +683,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     prefix = assertFreshOutput(parsed.output, directory);
   } catch (error) {
     console.error(error.message);
-    console.error('Usage: node ascon-notes/league/g3/loader/measure-timing.mjs --output <new-prefix> [--explore | --sweep-from <exploration.json>] [--max-load1 <number>] [--load-note <host and reason; required if threshold differs from 2.5>]');
+    console.error('Usage: node ascon-notes/league/g3/loader/measure-timing.mjs --output <new-prefix> [--explore | --sweep-from <exploration.json>] [--protocol legacy|reduced] [--budget-min <minutes>] [--max-load1 <number>] [--load-note <host and reason; required if threshold differs from 2.5>]');
     process.exitCode = 2;
   }
   if (prefix) {
