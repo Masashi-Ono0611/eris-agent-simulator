@@ -85,7 +85,7 @@ export function summarize(raw, config) {
     }
     row.difference = row.n ? row.B.fraction - row.A.fraction : null;
     row.discordant = { onlyA: records.A.filter((d, i) => d.timedOut && !records.B[i].timedOut).length,
-      onlyB: records.B.filter((d, i) => !d.timedOut && records.B[i].timedOut).length };
+      onlyB: records.B.filter((d, i) => d.timedOut && !records.A[i].timedOut).length };
     boundary.push(row);
   }
   // Signed area: positive means B times out sooner. No monotonicity fit or extrapolation.

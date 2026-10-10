@@ -108,6 +108,19 @@ const syntheticUnit = (timeouts, rewarmCount = 0) => ({ rewarmCount, discardedDe
   durations: { setSource: 1, start: 2, startReady: 3, close: 4 },
   decides: timeouts.map((timedOut, i) => ({ timedOut, wallMs: 10 + i * 2, fixtureElapsedMs: timedOut ? null : 0 })) });
 
+test('discordant counts: B-only and A-only timeouts are counted per index, not always zero', () => {
+  const config = { ...DEFAULTS, explore: false, dwellPointsMs: [0], stepMs: 0.5 };
+  const rawFor = (A, B) => [{ phase: 'boundary', durationMs: 0, order: 'AB', A: syntheticUnit(A), B: syntheticUnit(B) }];
+  // index0: only B timed out; index1: only A timed out; index2: both timed out; index3: neither.
+  const row = summarize(rawFor([false, true, true, false], [true, false, true, false]), config).boundary[0];
+  assert.deepEqual(row.discordant, { onlyA: 1, onlyB: 1 });
+  // B-only direction alone (the direction that signals probe interference) must be visible.
+  const onlyB = summarize(rawFor([false, false, false], [true, true, false]), config).boundary[0];
+  assert.deepEqual(onlyB.discordant, { onlyA: 0, onlyB: 2 });
+  const same = summarize(rawFor([true, false], [true, false]), config).boundary[0];
+  assert.deepEqual(same.discordant, { onlyA: 0, onlyB: 0 });
+});
+
 test('per-decide aggregation in exploration, main measurement and controls excludes all discarded records', () => {
   for (const explore of [true, false]) {
     const config = { ...DEFAULTS, explore, dwellPointsMs: [0], stepMs: 0.5 };
