@@ -543,7 +543,7 @@ check('AA text palette and responsive/reduced-motion provisions',()=>{
 check('a future reported completion renders without a forecast or live guessing',()=>{
   const run=currentRun(),before={...run};
   try{
-  Object.assign(run,{state:'measured-diagnostic-complete',expected_end:null,completed_at:'2026-10-05T00:41:00+09:00',completed_worlds:24,note:'test-only confirmed completion'});
+  Object.assign(run,{state:'measured-diagnostic-complete',state_label:'診断完了の引継ぎ',expected_end:null,completed_at:'2026-10-05T00:41:00+09:00',completed_worlds:24,note:'test-only confirmed completion'});
   app.state.page='operations';app.render();
   assert.ok(element('page').innerHTML.includes('診断完了の引継ぎ'));
   assert.ok(element('page').innerHTML.includes('00:41'));
@@ -683,8 +683,8 @@ check('current direction, recent events, next milestone and night operation come
   assertVisibleFields(rendered.operations,app.D.status.night_operation,['note']);
   for(const decision of app.D.decisions.items)assertVisibleFields(rendered.decisions,decision,['title']);
 });
-// 2026-10-10 evidence contract: preparation may finish while the gate and
-// probe measurement stay unresolved. Keep these semantic checks alongside the
+// 2026-10-11 evidence contract: the limited timing study is complete;
+// live observation and the G3 gate remain unresolved. Keep these semantic checks alongside the
 // existing historical-result and per-record warning controls.
 function assertOctoberStatus(views){
   const d=app.D,t=d.status.timing;
@@ -692,12 +692,14 @@ function assertOctoberStatus(views){
   assert.equal(d.status.budget_state,'UNKNOWN','INVARIANT October remaining budget unknown');
   assert.equal(d.budget.consumed_exact_hours,null,'INVARIANT October exact spend unknown');
   assert.equal(d.budget.consumed_forward_hours,null,'INVARIANT October forward spend unknown');
-  assert.equal(t.state,'controls-and-measurement-running','INVARIANT October controls and measurement pending');
+  assert.equal(t.state,'complete-limited-study','INVARIANT October study complete in limited scope');
+  assert.equal(t.interference_state,'measured-once-limited-setting','INVARIANT October interference scope');
+  assert.equal(t.g3_evidence,false,'INVARIANT October timing is not G3 evidence');
   assert.equal(t.verified,false,'INVARIANT October no independently verified interference');
-  assert.equal(t.exploration.state,'validated-exploration-reported','INVARIANT October exploration scope');
-  assert.equal(t.exploration.evidence_kind,'user-handoff','INVARIANT October exploration provenance');
+  assert.equal(t.exploration.state,'complete-recorded','INVARIANT October exploration scope');
+  assert.equal(t.exploration.evidence_kind,'saved-results-document','INVARIANT October exploration provenance');
   assert.equal(t.exploration.artifact_verified,false,'INVARIANT October exploration artifact absent');
-  assert.deepEqual([t.exploration.deadline_ms,t.exploration.transition_dwell_approx_ms,t.exploration.width_ms],[100,100,4],'INVARIANT October reported exploration values');
+  assert.deepEqual([t.exploration.deadline_ms,t.exploration.center_ms,t.exploration.grid_ms],[100,97.5,4],'INVARIANT October reported exploration values');
   const b=d.status.b03;
   assert.equal(b.state,'unresolved-user-accepted','INVARIANT October B03 unresolved');
   assert.equal(b.accepted_by,'user','INVARIANT October B03 user decision');
@@ -705,17 +707,41 @@ function assertOctoberStatus(views){
     assert.equal(b[key],false,`INVARIANT October B03 ${key}`);
   assert.equal(b.tooling_blocker_retained,true,'INVARIANT October B03 remains in tooling');
   assert.equal(b.tooling_representation,'open-user-decision','INVARIANT October tooling representation open');
-  assert.equal(t.result,null,'INVARIANT October no interference result');
-  assert.equal(t.merged,false,'INVARIANT October timing branch not merged');
+  assert.deepEqual(JSON.parse(JSON.stringify(t.result)),{
+    positive_injected_ms:6,positive_shift_ms:5.96875,positive_interval_ms:[5.78125,6.15625],
+    negative_shift_ms:0,negative_interval_ms:[0,0],negative_degenerate:true,control_verdict:'descriptive only',
+    signed_shift_ms:0.015625,interval_ms:[0,0.046875],margin_ms:[-2,2],interval_inside_margin:true,
+    median_overhead_ms:0.7253435000000081,conservative_mde_ms:[3.095343602811989,2.4008375736214673],
+    optimistic_mde_ms:[1.5476718014059945,1.2004187868107337],grid_ms:4,runs:1,hosts:1,load_thresholds:[2.5,3.5,5.0,8]
+  },'INVARIANT October recorded result and inference limits');
+  assert.equal(t.completed_at,'2026-10-11T00:06:50+09:00','INVARIANT October recorded completion');
+  assert.equal(d.progress.items.find(x=>x.id==='progress-probe-timing').state,'done','INVARIANT October timing progress complete');
+  assert.equal(d.queue.items.find(x=>x.id==='queue-probe-timing').active,false,'INVARIANT October measurement not running');
+  assert.equal(d.queue.items.find(x=>x.id==='queue-g3-bounded').owner,'human','INVARIANT October continuation user only');
+  assert.equal(d.queue.items.find(x=>x.id==='queue-offline-b04-b07').active,false,'INVARIANT October offline extension conditional');
+  assert.equal(t.merged,true,'INVARIANT October timing results merged');
   assert.equal(d.plan.continuous_operation.current_run_ref,'status.timing','INVARIANT October current work is timing');
   assert.equal(d.status.next_steps.length,3,'INVARIANT October next three steps');
   const overview=visibleText(views.overview),operations=visibleText(app.renderers.operations());
   for(const phrase of ['前回更新から','次の3手','G3','BLOCKED','10/28'])
     assert.ok(overview.includes(phrase),`INVARIANT October overview ${phrase}`);
   for(const step of d.status.next_steps)assertVisibleFields(views.overview,step,['title','text','label']);
-  for(const phrase of ['UNMEASURED','main未統合','not found in files','Spotlight','Atomics.wait','busy-spin','RUNNING','result pending','探索段階','幅4 ms','43→84 GiB'])
+  for(const phrase of ['COMPLETE','main統合済み','descriptive only','DEGENERATE','6 ms','5.97 ms','0.0156 ms','[0, 0.047] ms','±2 ms','+0.73 ms','3.1 ms','2.4 ms','相関1','相関0','1.5 / 1.2 ms','4 ms','0.7 ms','1 run','1 host','synthetic fixtures','StrategyRunner-level probe','2.5→3.5→5.0→8','失敗','NOT G3 evidence','not found in files','Spotlight','Atomics.wait','busy-spin','43→84 GiB','outside the repo, local to the Air','SHA-256','19ファイル'])
     assert.ok(operations.includes(phrase),`INVARIANT October operations ${phrase}`);
   assertVisibleFields(app.renderers.operations(),d.status.infrastructure,['note','boundary']);
+  for(const limit of t.limitations)assert.ok(operations.includes(limit),'INVARIANT October all limitations visible');
+  for(const phrase of ['descriptive only','DEGENERATE','3.1 ms','2.4 ms','相関1','相関0','1.5 / 1.2 ms','4 ms','0.7 ms','1 run','1 host','synthetic fixtures','StrategyRunner-level probe'])
+    assert.ok(t.limitations.join(' ').includes(phrase),`INVARIANT October limitation ${phrase}`);
+  for(const phrase of ['USER','本人のみ','継続','中止','範囲・費用・期限','条件付き','10/20','10/28','提出前の本人確認'])
+    assert.ok(overview.includes(phrase),`INVARIANT October next decision ${phrase}`);
+  const resultView=visibleText(app.renderers.results());
+  for(const n of [49,50,51,52,53,54,55,56])assert.ok(resultView.includes(`PR #${n}`),`INVARIANT October merged PR ${n}`);
+  for(const phrase of ['synthetic-only','B07/B04を閉じない','B04/B07を閉じない','B03/B07','prestart-check.py','inputs.lock.json'])
+    assert.ok(resultView.includes(phrase),`INVARIANT October preparation scope ${phrase}`);
+  // Old logs are immutable historical records. Current surfaces must lose stale claims.
+  const current=JSON.stringify([d.status.timing,d.status.next_steps,d.status.changes,d.queue.items.filter(x=>x.current),d.progress.items.find(x=>x.id==='progress-probe-timing')]);
+  assert.doesNotMatch(current,/RUNNING|result pending|mini offline|UNMEASURED|main未統合|next: run the reduced protocol/i,'INVARIANT October stale current timing');
+
   const policy=visibleText(views.decisions);
   for(const id of ['dec-oct09-r3','dec-oct09-g3','dec-oct09-dev-billing','dec-oct09-ollama']){
     const item=d.decisions.items.find(x=>x.id===id);
@@ -730,7 +756,7 @@ function assertOctoberStatus(views){
     assert.ok(item.sources.includes('src-decisions-oct10'),`INVARIANT October decision source ${id}`);
     assertVisibleFields(views.decisions,item,['title','note']);
   }
-  for(const phrase of ['運営は今出ている情報以上の強制はない、かつ、公式な方法はない、という判断で進めたい。','B03をあなたが残余リスクとして明示的に受け入れる','確認した事実ではなく','未送信で、送信しない','PASS・closedではない','REQUIRED_BLOCKERS','inputs.lock.json','本人の未決事項','エージェントは免除を推奨・決定しない'])
+  for(const phrase of ['運営は今出ている情報以上の強制はない、かつ、公式な方法はない、という判断で進めたい。','B03をあなたが残余リスクとして明示的に受け入れる','確認した事実ではなく','未送信（送信の決定は記録なし）','PASS・closedではない','REQUIRED_BLOCKERS','inputs.lock.json','本人の未決事項','エージェントは免除を推奨・決定しない'])
     assert.ok(policy.includes(phrase),`INVARIANT October risk boundary ${phrase}`);
   for(const phrase of ['B03','本人受容済み残余リスク','REQUIRED','BLOCKED','ツールでどう表現するか'])
     assert.ok(overview.includes(phrase),`INVARIANT October overview risk ${phrase}`);
@@ -738,7 +764,7 @@ function assertOctoberStatus(views){
   assert.match(policy,/\$0/,'INVARIANT October no billing approval');
   assert.ok(overview.includes('合格済みではなく、提出準備も未完了'),'INVARIANT October candidate is conditional');
 }
-check('October current status separates decisions, preparation and unmeasured work',()=>{
+check('October status separates completed timing, conditional work and blocked gates',()=>{
   assertOctoberStatus(invariantViews());
   const footer=element('footer').innerHTML;
   assert.ok(footer.includes('基準時点'));
@@ -757,7 +783,20 @@ check('October red controls reject false gate, budget and interference completio
     ['exact spend invented',d=>{d.budget.consumed_exact_hours=30;}],
     ['harness false validation',d=>{d.status.timing.state='validated';}],
     ['interference result invented',d=>{d.status.timing.result={delay:0};}],
-    ['timing false merge',d=>{d.status.timing.merged=true;}],
+    ['timing merge lost',d=>{d.status.timing.merged=false;}],
+    ['timing false G3 evidence',d=>{d.status.timing.g3_evidence=true;}],
+    ['interference falsely resolved',d=>{d.status.timing.interference_state='resolved';}],
+    ['control verdict inflated',d=>{d.status.timing.result.control_verdict='PASS';}],
+    ['overhead erased',d=>{d.status.timing.result.median_overhead_ms=0;}],
+    ['negative degeneracy removed',d=>{d.status.timing.result.negative_degenerate=false;}],
+    ['MDE understated',d=>{d.status.timing.result.conservative_mde_ms=[1,1];}],
+    ['optimistic MDE lost',d=>{d.status.timing.result.optimistic_mde_ms=null;}],
+    ['limits removed',d=>{d.status.timing.limitations=[];}],
+    ['failure thresholds erased',d=>{d.status.timing.result.load_thresholds=[8];}],
+    ['timing progress stale',d=>{d.progress.items.find(x=>x.id==='progress-probe-timing').state='running';}],
+    ['timing running again',d=>{d.queue.items.find(x=>x.id==='queue-probe-timing').active=true;}],
+    ['continuation delegated',d=>{d.queue.items.find(x=>x.id==='queue-g3-bounded').owner='Codex';}],
+    ['offline extension activated',d=>{d.queue.items.find(x=>x.id==='queue-offline-b04-b07').active=true;}],
     ['B03 false pass',d=>{d.status.b03.safety_pass=true;}],
     ['B03 false closure',d=>{d.status.b03.closed=true;}],
     ['B03 agent acceptance',d=>{d.status.b03.accepted_by='agent';}],
@@ -767,7 +806,7 @@ check('October red controls reject false gate, budget and interference completio
     ['B03 silently removed from tooling',d=>{d.status.b03.tooling_blocker_retained=false;}],
     ['tooling representation decided',d=>{d.status.b03.tooling_representation='resolved';}],
     ['exploration artifact verification invented',d=>{d.status.timing.exploration.artifact_verified=true;}],
-    ['exploration numerical result invented',d=>{d.status.timing.exploration.width_ms=0;}],
+    ['exploration numerical result invented',d=>{d.status.timing.exploration.grid_ms=0;}],
     ['B03 decision reopened',d=>{d.decisions.items.find(x=>x.id==='dec-oct10-b03').status='open';}],
     ['next step removed',d=>{d.status.next_steps.pop();}],
     ['G3 policy reopened',d=>{d.decisions.items.find(x=>x.id==='dec-oct09-g3').status='open';}]

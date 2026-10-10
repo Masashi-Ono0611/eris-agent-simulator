@@ -464,7 +464,7 @@
       "id": "src-loader-probe",
       "path": "ascon-notes/league/g3/loader/README.md",
       "title": "観測probeの試作",
-      "locator": "オフライン限定・時間干渉未測定。ローカルmerge履歴ab5ad98 / PR #43"
+      "locator": "PR #43時点のオフライン試作。時間計測の後続結果は10/11資料に記録。ローカルmerge履歴ab5ad98"
     },
     {
       "id": "src-p60-spec",
@@ -519,6 +519,54 @@
       "path": "ascon-notes/league/MINI-CLEANUP-2026-10-09.md",
       "title": "mini清掃の実施記録",
       "locator": "Data領域の空き43→84 GiB。現在容量の再測定ではない"
+    },
+    {
+      "id": "src-timing-results",
+      "path": "ascon-notes/league/g3/loader/TIMING-RESULTS-2026-10-11.md",
+      "title": "loader時間計測の完了結果",
+      "locator": "正負対照・主測定、MDE・粗い格子・失敗履歴・適用範囲"
+    },
+    {
+      "id": "src-timing-protocol",
+      "path": "ascon-notes/league/g3/loader/TIMING-REDUCED-PROTOCOL-2026-10-10.md",
+      "title": "縮小プロトコルの事前宣言",
+      "locator": "判定規則・費用停止・推論の限界"
+    },
+    {
+      "id": "src-timing-harness",
+      "path": "ascon-notes/league/g3/loader/TIMING-HARNESS.md",
+      "title": "時間計測harness",
+      "locator": "測定設計と実装の範囲"
+    },
+    {
+      "id": "src-b04-design",
+      "path": "ascon-notes/league/G3-B04-CAPTURE-DESIGN-2026-10-10.md",
+      "title": "B04取引境界の採取設計",
+      "locator": "部分結合・RPC記録・残る完全収集"
+    },
+    {
+      "id": "src-time-gaps",
+      "path": "ascon-notes/league/G3-TIME-LEDGER-GAPS-2026-10-10.md",
+      "title": "時間台帳と利用枠の不足",
+      "locator": "残時間UNKNOWN・本人確認・未確定区間"
+    },
+    {
+      "id": "src-b07-plan",
+      "path": "ascon-notes/league/G3-B07-R3-PORT-2026-10-10.md",
+      "title": "B07 r3移植計画",
+      "locator": "実行領域・manifest・state登録は未完"
+    },
+    {
+      "id": "src-b07-checker",
+      "path": "ascon-notes/league/g3/manifest-contract/README.md",
+      "title": "B07合成manifest契約チェック",
+      "locator": "synthetic-only、実manifest登録でもB07解消でもない"
+    },
+    {
+      "id": "src-b04-joiner",
+      "path": "ascon-notes/league/g3/posthoc-join/README.md",
+      "title": "B04合成データの部分結合器",
+      "locator": "synthetic-only、全境界の実観測でもB04解消でもない"
     }
   ]
 }
@@ -534,14 +582,22 @@
     "src-budget-settlement",
     "src-schedule-oct08",
     "src-decisions-oct10",
-    "src-g3-success-plan"
+    "src-g3-success-plan",
+    "src-timing-results",
+    "src-timing-protocol",
+    "src-timing-harness",
+    "src-b04-design",
+    "src-time-gaps",
+    "src-b07-plan",
+    "src-b07-checker",
+    "src-b04-joiner"
   ],
-  "as_of": "2026-10-10T14:45:36+09:00",
+  "as_of": "2026-10-11T00:21:55+09:00",
   "measurement_as_of": null,
-  "last_update": "10/10 JST: B03を本人が未解決の残余リスクとして受容。質問案は未送信（送信の決定は記録なし）。計画・経路表・dashboard・shell-ops規則は統合済み、mini清掃完了。timing対照・主測定はRUNNING、結果待ち。",
+  "last_update": "10/11 JST: mini縮小プロトコルの正負対照・主測定を記録（PR #56）。干渉は限定条件で1回測定。PR #49〜#55の設計・補助部品も統合済み。B03未解決・本人受容、G3 REQUIRED / BLOCKED、残時間UNKNOWNは維持。",
   "phase_id": "phase-first",
-  "headline": "B03は本人が残余リスクとして受容。G3はBLOCKED。",
-  "subhead": "B03の安全FAILは未解決。完全収集・同等性と他の必須前提は証拠待ち。spin探索は進んだが、probe干渉の結果はまだない。",
+  "headline": "時間計測はCOMPLETE。実観測の継続は本人判断、G3はREQUIRED / BLOCKED。",
+  "subhead": "B03の安全FAILは未解決。完全収集・同等性と他の必須前提は証拠待ち。probe干渉は限定条件で1回測定したのみ（結論は出していない）。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -715,11 +771,11 @@
       "src-dev2-repair"
     ]
   },
-  "human_action": "B03のツール表現を判断・10/28までに鍵と無料枠を確認",
+  "human_action": "要件2〜5の実観測を継続するか中止するかを判断・10/28 Ollama確認（本人のみ）",
   "priority": {
-    "title": "B03の残余リスクを保持し、G3の不足証拠を揃える",
+    "title": "測定結果を受け、実観測の継続範囲を本人と決める",
     "blocker_ref": "B01",
-    "note": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。 外部観測の1日調査上限は自動延長しない。",
+    "note": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。 外部観測の1日調査上限は自動延長しない。 要件2〜5の実観測を続けるなら範囲・費用・期限を明示し、止める選択肢も本人が判断する。タイミング測定だけで実走を許可しない。",
     "progress_refs": [
       "progress-release-r3",
       "progress-g3",
@@ -729,44 +785,52 @@
     "sources": [
       "src-decisions-oct10",
       "src-g3-success-plan",
-      "src-g3-req4"
+      "src-g3-req4",
+      "src-timing-results",
+      "src-time-gaps"
     ],
     "state": "blocked",
     "state_label": "必須 / BLOCKED"
   },
   "recent": [
     {
-      "id": "recent-b03-oct10",
-      "kind": "decision",
-      "title": "本人がB03の残余リスクを受容",
-      "text": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 主催者質問案は未送信で、送信しない。",
-      "date": "2026-10-10",
-      "time_note": "チャット・選択回答の記録日",
+      "id": "recent-timing-oct10",
+      "kind": "warning",
+      "title": "時間計測COMPLETE・干渉は限定条件で1回測定",
+      "text": "正負対照・主測定はCOMPLETE、PR #56で記録済み。符号付き移動量0.0156 ms、区間[0, 0.047] msは事前宣言±2 ms内。ただし干渉は「限定条件で1回測定」であり、解消扱いにしない。NOT G3 evidence。",
+      "date": "2026-10-11",
+      "time_note": "結果文書・ローカルPR #56 merge履歴",
       "sources": [
-        "src-decisions-oct10"
+        "src-timing-results"
       ]
     },
     {
       "id": "recent-preparation-oct10",
       "kind": "warning",
-      "title": "計画・経路表・運用整備が完了",
-      "text": "PR #45/#46（10/9）、#47とmasa-harness #427（10/10）はローカルmerge履歴で確認。mini清掃はData領域43→84 GiB。G3合格とは別。",
+      "title": "設計・合成部品を統合、B04/B07は未解消",
+      "text": "PR #49〜#53の設計・台帳・測定器・縮小プロトコルと、#54/#55のsynthetic-only部品を統合。B04/B07を閉じない。G3のprestart-check.pyとlockは未変更。",
       "date": "2026-10-10",
       "time_note": "JSTのローカル履歴と清掃記録",
       "sources": [
-        "src-g3-success-plan",
-        "src-mini-cleanup"
+        "src-timing-results",
+        "src-timing-protocol",
+        "src-timing-harness",
+        "src-b04-design",
+        "src-time-gaps",
+        "src-b07-plan",
+        "src-b07-checker",
+        "src-b04-joiner"
       ]
     },
     {
-      "id": "recent-timing-oct10",
-      "kind": "warning",
-      "title": "spin探索から対照・主測定へ",
-      "text": "別branchで進行中・main未統合。依頼者引継ぎ（10/10）：spin-based harnessはMac miniの探索段階で検証済み、T=100 msでdwell約100 msに鋭い遷移、幅4 ms、校正合格。正負対照・主測定はRUNNING。result pending, probe interference still UNMEASURED。A/B結論は出さない。",
+      "id": "recent-b03-oct10",
+      "kind": "decision",
+      "title": "本人がB03の残余リスクを受容",
+      "text": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 主催者質問案は未送信（送信の決定は記録なし）。",
       "date": "2026-10-10",
-      "time_note": "依頼者引継ぎ。新探索成果物はnot found in files",
+      "time_note": "チャット・選択回答の記録日",
       "sources": [
-        "src-g3-success-plan"
+        "src-decisions-oct10"
       ]
     },
     {
@@ -2550,46 +2614,52 @@
   "changes": {
     "title": "前回更新から",
     "items": [
-      "決定：B03を本人が受容・質問案は未送信（送信の決定は記録なし）",
-      "統合：PR #45/#46/#47・masa-harness #427／mini清掃43→84 GiB",
-      "継続：spin探索済み・対照/主測定RUNNING・干渉UNMEASURED"
+      "完了：Intel Mac miniの縮小時間計測を記録・PR #56統合。干渉は限定条件で1回測定。",
+      "統合：#49 B04設計 / #50 台帳不足 / #51 B07移植計画 / #52 harness / #53 事前宣言付き縮小プロトコル。",
+      "#54 B07 checker・#55 B04 joinerはsynthetic-only。B07/B04は閉じない。"
     ],
-    "caption": "B03は未解決のまま。文書・運用整備の完了はG3合格でもA/B結論でもない。",
+    "caption": "統合はローカルgit履歴で確認。測定・合成部品の完了はG3証拠ではない。B03未解決、残予算UNKNOWN。",
     "sources": [
-      "src-decisions-oct10",
-      "src-g3-success-plan",
-      "src-mini-cleanup"
+      "src-timing-results",
+      "src-timing-protocol",
+      "src-timing-harness",
+      "src-b04-design",
+      "src-time-gaps",
+      "src-b07-plan",
+      "src-b07-checker",
+      "src-b04-joiner"
     ]
   },
   "next_steps": [
     {
-      "title": "B04の採取設計を絞る",
-      "text": "作成済み経路表から不足を整理。B03受容は既決、ツール表現は本人の未決事項として残す。質問案は未送信（送信の決定は記録なし）。",
+      "title": "実観測を続けるか決める",
+      "text": "タイミング結果を受け、要件2〜5のlive観測を範囲・費用・期限付きで継続するか中止するかを本人が判断。B03受容は既決、ツールでの表現は未決。",
       "state": "blocked",
-      "label": "ツール未変更 / B03未解決",
+      "label": "USER · 本人のみ / 未決",
       "sources": [
-        "src-decisions-oct10",
-        "src-g3-paths",
-        "src-g3-success-plan"
-      ]
-    },
-    {
-      "title": "対照・主測定の結果を確認",
-      "text": "miniの正負対照・主測定はRUNNING。探索の引継ぎと保存証拠を照合し、結果が揃うまでprobe干渉はUNMEASURED。",
-      "state": "running",
-      "label": "result pending / main未統合",
-      "sources": [
-        "src-g3-success-plan"
-      ]
-    },
-    {
-      "title": "台帳とモデル確認を揃える",
-      "text": "Air・miniの未確定時間、次工程の予約、追加利用OFF・利用枠を整理。残量UNKNOWNをゼロにせず、追加起動条件を確認する。",
-      "state": "blocked",
-      "label": "他の必須前提は維持",
-      "sources": [
+        "src-timing-results",
         "src-g3-success-plan",
-        "src-budget-settlement",
+        "src-decisions-oct10"
+      ]
+    },
+    {
+      "title": "継続時のみ、オフライン拡張",
+      "text": "本人が継続を選んだ場合だけ、B04 joiner / B07 checkerを不足に沿って拡張。台帳・利用枠・予約の不足を整理し、残時間UNKNOWNのまま追加実走を始めない。",
+      "state": "blocked",
+      "label": "条件付き / G3はBLOCKED",
+      "sources": [
+        "src-b04-joiner",
+        "src-b07-checker",
+        "src-time-gaps"
+      ]
+    },
+    {
+      "title": "公式P60の版を待つ・Ollama確認",
+      "text": "公式P60の提供日は不明、最早10/20頃以降の確認窓。10/28のdec-007は本人のみ：Ollama鍵と無料枠を確認。開発課金$0・前払い$0を維持。",
+      "state": "pending",
+      "label": "P60待ち / 10/28はUSER",
+      "sources": [
+        "src-p60-spec",
         "src-decisions-oct09"
       ]
     }
@@ -2620,44 +2690,122 @@
   ],
   "timing": {
     "name": "loader probeの時間干渉調査",
-    "state": "controls-and-measurement-running",
-    "state_label": "RUNNING · 結果待ち / UNMEASURED",
-    "field": "miniで探索段階を検証済み（依頼者引継ぎ）",
+    "state": "complete-limited-study",
+    "state_label": "COMPLETE · 限定条件で1回測定",
+    "field": "Intel Mac mini / synthetic fixtures / StrategyRunner-level probe",
     "seeds": null,
     "regimes": null,
     "worlds": null,
     "completed_worlds": null,
-    "started_at": null,
+    "started_at": "2026-10-10T22:54:53+09:00",
     "expected_end": null,
-    "completed_at": null,
-    "result": null,
+    "completed_at": "2026-10-11T00:06:50+09:00",
+    "result": {
+      "positive_injected_ms": 6,
+      "positive_shift_ms": 5.96875,
+      "positive_interval_ms": [
+        5.78125,
+        6.15625
+      ],
+      "negative_shift_ms": 0,
+      "negative_interval_ms": [
+        0,
+        0
+      ],
+      "negative_degenerate": true,
+      "control_verdict": "descriptive only",
+      "signed_shift_ms": 0.015625,
+      "interval_ms": [
+        0,
+        0.046875
+      ],
+      "margin_ms": [
+        -2,
+        2
+      ],
+      "interval_inside_margin": true,
+      "median_overhead_ms": 0.7253435000000081,
+      "conservative_mde_ms": [
+        3.095343602811989,
+        2.4008375736214673
+      ],
+      "optimistic_mde_ms": [
+        1.5476718014059945,
+        1.2004187868107337
+      ],
+      "grid_ms": 4,
+      "runs": 1,
+      "hosts": 1,
+      "load_thresholds": [
+        2.5,
+        3.5,
+        5.0,
+        8
+      ]
+    },
     "verified": false,
-    "branch": "feat/g3-probe-timing-measure",
-    "merged": false,
+    "branch": "docs/timing-results-1011",
+    "merged": true,
     "sources": [
-      "src-g3-success-plan",
-      "src-loader-probe"
+      "src-timing-results",
+      "src-timing-protocol",
+      "src-timing-harness"
     ],
-    "note": "別branchで進行中・main未統合。依頼者引継ぎ（10/10）：spin-based harnessはMac miniの探索段階で検証済み、T=100 msでdwell約100 msに鋭い遷移、幅4 ms、校正合格。正負対照・主測定はRUNNING。result pending, probe interference still UNMEASURED。A/B結論は出さない。",
-    "provenance": "T/TIMING-SPIN-VALIDATION-2026-10-09.mdでspin修正の軽量検査記録を読取。新しいmini探索の原成果物・対照/主測定の完了結果は読取範囲では not found in files。G3計画§3/8/9に引継ぎと読取範囲を記録。",
-    "handoff": "旧Atomics.waitの過大待機からbusy-spinへ修正。Spotlight負荷の原因説明は従来の引継ぎで、今回ホストへ接続して独立確認していない。",
+    "note": "正負対照・主測定はCOMPLETE、PR #56で記録済み。符号付き移動量0.0156 ms、区間[0, 0.047] msは事前宣言±2 ms内。ただし干渉は「限定条件で1回測定」であり、解消扱いにしない。NOT G3 evidence。",
+    "provenance": "TIMING-RESULTS-2026-10-11.mdの保存表を読取。主測定終了は10/11 00:06:50 JST（表示は秒精度）。原データはrepo外、Airローカル（outside the repo, local to the Air）の /Users/masashi_mac_ssd/Developer/ascon-evidence-timing-2026-10-11/。SHA-256一覧の19ファイル一致は結果文書の記録で、今回の再照合ではない。",
+    "handoff": "失敗履歴を保持：Airの負荷拒否・中断、miniの拒否・中断、旧Atomics.waitの飽和・手動停止、広すぎる探索の棄却、busy-spin旧全設計の時間超過。負荷閾値2.5→3.5→5.0→8は失敗を見た後の変更。Spotlightの因果は未検証。",
     "exploration": {
-      "state": "validated-exploration-reported",
+      "state": "complete-recorded",
       "deadline_ms": 100,
-      "transition_dwell_approx_ms": 100,
-      "width_ms": 4,
-      "calibration": "passed-reported",
-      "evidence_kind": "user-handoff",
+      "center_ms": 97.5,
+      "grid_ms": 4,
+      "evidence_kind": "saved-results-document",
       "artifact_verified": false
+    },
+    "interference_state": "measured-once-limited-setting",
+    "g3_evidence": false,
+    "limitations": [
+      "対照の公表判定は descriptive only。正対照は注入6 msを約5.97 msとして回収。負対照0 msの区間[0, 0]はDEGENERATE（退化区間）で、母集団のばらつきがゼロとの証明ではない。",
+      "計画MDE（最小検出効果）は保守的な同一プロセス内相関1で条件付き移動3.1 ms / 面積2.4 ms：許容半幅2 msより大きい。楽観的な相関0では約1.5 / 1.2 msで半幅より小さい。検出力80%の条件付き計画近似で、仮定に依存する。",
+      "d=0の判断ごとの追加コスト中央値は約+0.73 ms。4 msの粗い格子では、この約0.7 msの追加コストを分解できない。",
+      "1 run・1 host・synthetic fixtures・StrategyRunner-level probeのみ。参照版と異なる実行環境。実botMain/Worker/Senderの全経路、要件2〜5のlive観測、全取引境界の収集は未完。B04/B07を閉じない。"
+    ],
+    "measurements": {
+      "title": "測定結果 · 保存表の丸め表示",
+      "header": [
+        "対象",
+        "観測値",
+        "解釈の境界"
+      ],
+      "rows": [
+        [
+          "正対照 / 負対照",
+          "6 ms → 約5.97 ms / 0 ms [0, 0]",
+          "descriptive only / 負対照は退化区間"
+        ],
+        [
+          "主測定の符号付き移動",
+          "0.0156 ms [0, 0.047] ms",
+          "事前宣言±2 ms内 / 格子上の面積"
+        ],
+        [
+          "d=0の判断コスト",
+          "中央値 約+0.73 ms",
+          "4 ms格子では約0.7 msを分解できない"
+        ]
+      ],
+      "sources": [
+        "src-timing-results"
+      ]
     }
   },
   "infrastructure": {
     "title": "Mac miniの運用整備",
-    "note": "mini清掃は実施済み。MINI-CLEANUP-2026-10-09.mdのData領域（/System/Volumes/Data）で空き43→84 GiBを記録。~/ascon-runのP60生ログは保持という従来引継ぎ。",
-    "boundary": "清掃文書の読取確認であり、現在の空き容量を再測定していない。chain-template転送完了・mini内構成の独立確認記録は not found in files。ホスト接続なし。",
+    "note": "miniはネットワーク切断後に復帰し再起動ではなかった、raw退避後にtiming作業dirを削除した、という依頼者引継ぎ。切断時間・原因・復帰・削除の記録は not found in files。証拠ディレクトリはrepo外、Airローカル（outside the repo, local to the Air）に存在する。",
+    "boundary": "保存先は /Users/masashi_mac_ssd/Developer/ascon-evidence-timing-2026-10-11/。SHA-256一覧あり、19ファイル一致は測定結果文書に記録。退避容量と追加清掃後のData空き容量は not found in files。MINI-CLEANUP-2026-10-09.mdは以前のData領域43→84 GiBのみ。現在容量の再測定・ホスト接続・削除確認なし。",
     "sources": [
       "src-mini-cleanup",
-      "src-remote-ops"
+      "src-timing-results"
     ]
   },
   "preparation": {
@@ -2691,7 +2839,7 @@
         "loader probe / PR #43",
         "2026-10-09",
         "オフライン試作",
-        "時間干渉・liveの完全収集は未測定"
+        "時間干渉は限定条件で1回測定。liveの完全収集は未成立"
       ],
       [
         "要件4実現性",
@@ -2728,9 +2876,57 @@
         "2026-10-10",
         "別repoで統合済み",
         "運用規則。timing作業のmerge・測定成功ではない"
+      ],
+      [
+        "B04採取設計 / PR #49",
+        "2026-10-10",
+        "設計を統合",
+        "実境界の完全収集は未成立"
+      ],
+      [
+        "時間台帳の不足 / PR #50",
+        "2026-10-10",
+        "不足を文書化",
+        "残時間UNKNOWN"
+      ],
+      [
+        "B07 r3移植計画 / PR #51",
+        "2026-10-10",
+        "計画を統合",
+        "実manifest・依存・state登録は未完"
+      ],
+      [
+        "timing harness / PR #52",
+        "2026-10-10",
+        "測定器を統合",
+        "StrategyRunnerレベルの補助研究"
+      ],
+      [
+        "縮小プロトコル / PR #53",
+        "2026-10-10",
+        "事前宣言付き規則",
+        "G3実走の許可ではない"
+      ],
+      [
+        "B07 manifest checker / PR #54",
+        "2026-10-10",
+        "synthetic-only",
+        "B07/B04を閉じない。実登録なし"
+      ],
+      [
+        "B04 post-hoc joiner / PR #55",
+        "2026-10-10",
+        "synthetic-only",
+        "B04/B07を閉じない。完全収集なし"
+      ],
+      [
+        "timing結果 / PR #56",
+        "2026-10-11",
+        "COMPLETE / 限定条件で1回",
+        "NOT G3 evidence / descriptive only"
       ]
     ],
-    "note": "ローカルgitのmerge記録（JST）を確認、§9に記録。masa-harness #427は別repo ~/.claude。オンライン再照合なし。timing作業は別branchの未コミット変更で未統合。",
+    "note": "PR #49〜#56の統合日はローカルgitのmerge commit時刻をJSTで確認。前回表示に未反映だった統合を含む。GitHubへのオンライン照合なし。従来の#45〜#47・別repo masa-harness #427は既存計画の記録を保持。prestart-check.py・inputs.lock.jsonは未変更でB03/B07等を列挙し、G3開始を止める。",
     "sources": [
       "src-g3-recorder",
       "src-cli-binding",
@@ -2739,10 +2935,26 @@
       "src-g3-req4",
       "src-p60-spec",
       "src-g3-success-plan",
-      "src-g3-paths"
+      "src-g3-paths",
+      "src-timing-results",
+      "src-timing-protocol",
+      "src-timing-harness",
+      "src-b04-design",
+      "src-time-gaps",
+      "src-b07-plan",
+      "src-b07-checker",
+      "src-b04-joiner"
     ]
   },
   "footer_sources": [
+    "src-timing-results",
+    "src-timing-protocol",
+    "src-timing-harness",
+    "src-b04-design",
+    "src-time-gaps",
+    "src-b07-plan",
+    "src-b07-checker",
+    "src-b04-joiner",
     "src-decisions-oct10",
     "src-g3-success-plan",
     "src-g3-paths",
@@ -3522,15 +3734,16 @@
       "id": "day-2026-10-09",
       "date": "2026-10-09",
       "title": "G3必須・課金$0を決定／外部観測を調査",
-      "dependency": "r3維持。時間干渉harnessは未検証・別branch。",
-      "stop": "外部観測の調査は1日上限。未測定をPASSにせず、成立しなければ本人へ戻す。",
-      "state": "running",
+      "dependency": "r3維持。時間計測は10/11に完了記録。要件2〜5の実観測は本人の継続判断待ち。",
+      "stop": "外部観測の1日調査上限は自動延長しない。継続するなら範囲・費用・期限を本人が判断。",
+      "state": "blocked",
       "highlight": true,
       "decision_refs": [],
       "sources": [
         "src-schedule-oct08",
         "src-decisions-oct09",
-        "src-p60-spec"
+        "src-p60-spec",
+        "src-timing-results"
       ]
     },
     {
@@ -4445,13 +4658,15 @@
       "workstream": "基盤",
       "title": "G3調査・オフライン試作の統合",
       "state": "done",
-      "evidence": "recorder・loader・要件4はPARTLY。CLI開始collectorは要件1のみ、loader probeも実走証拠ではない。",
+      "evidence": "recorder・loader・要件4はPARTLY。CLI開始collectorは要件1のみ、loader probeも実走証拠ではない。 #54/#55はsynthetic-onlyの補助部品。B07/B04未解消。",
       "sources": [
         "src-g3-recorder",
         "src-cli-binding",
         "src-g3-loader",
         "src-loader-probe",
-        "src-g3-req4"
+        "src-g3-req4",
+        "src-b07-checker",
+        "src-b04-joiner"
       ]
     },
     {
@@ -4467,12 +4682,15 @@
     {
       "id": "progress-probe-timing",
       "workstream": "基盤",
-      "title": "観測probeの時間干渉harness",
-      "state": "running",
-      "evidence": "別branchで進行中・main未統合。測定器は未検証で、probeの干渉結果は存在しない。最初の試行は負荷guardで拒否、正対照はtimeoutへの飽和で不成立。待機時間の超過を診断し、busy-spin（時計を見ながら待つ処理）と校正への修正を実装中。",
+      "title": "loader時間計測の記録（G3証拠ではない）",
+      "state": "done",
+      "evidence": "正負対照・主測定はCOMPLETE、PR #56で記録済み。符号付き移動量0.0156 ms、区間[0, 0.047] msは事前宣言±2 ms内。ただし干渉は「限定条件で1回測定」であり、解消扱いにしない。NOT G3 evidence。 計画MDE（最小検出効果）は保守的な同一プロセス内相関1で条件付き移動3.1 ms / 面積2.4 ms：許容半幅2 msより大きい。楽観的な相関0では約1.5 / 1.2 msで半幅より小さい。検出力80%の条件付き計画近似で、仮定に依存する。",
       "sources": [
-        "src-loader-probe"
-      ]
+        "src-timing-results",
+        "src-timing-protocol",
+        "src-timing-harness"
+      ],
+      "state_label": "COMPLETE / 限定条件で1回"
     }
   ]
 }
@@ -4508,7 +4726,7 @@
       "impact": "致命",
       "owner": "Codex",
       "evidence": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。 B04の完全収集と同等性、自然改訂fixture等は未成立。",
-      "mitigation": "B04採取設計、timing対照/主測定の結果、台帳と利用枠を整理。ツール表現は本人判断。エージェントは免除を推奨・決定しない。",
+      "mitigation": "タイミング完了結果を受け、要件2〜5のlive観測の継続・中止と範囲・費用・期限を本人が判断。B04/B07の合成部品は未解消を保持。台帳と利用枠の不足を整理。ツール表現は本人判断。エージェントは免除を推奨・決定しない。",
       "status": "open",
       "sources": [
         "src-decisions-oct09",
@@ -4516,7 +4734,10 @@
         "src-g3-lock-r3",
         "src-g3-req4",
         "src-decisions-oct10",
-        "src-g3-success-plan"
+        "src-g3-success-plan",
+        "src-timing-results",
+        "src-b04-joiner",
+        "src-b07-checker"
       ],
       "impact_note": "G3を通過できず、提出READYにできない"
     },
@@ -4597,12 +4818,13 @@
       "impact": "大",
       "owner": "Claude",
       "evidence": "運用テンプレートには時間台帳とtelemetry分類がある。Mac miniへの反映は本人引継ぎで、現在のホスト状態は未検証。",
-      "mitigation": "時間干渉は未測定。負荷guardを迂回せず、占有・入力固定・監視・費用の入口条件を満たす。取消済みの旧夜間ハートビートは使わない。",
+      "mitigation": "時間干渉は限定条件で1回測定。実走の干渉・完全性は未検証。占有・入力固定・監視・費用の入口条件を満たす。取消済みの旧夜間ハートビートは使わない。",
       "status": "open",
       "sources": [
         "src-remote-ops",
         "src-loader-probe",
-        "src-decisions-oct09"
+        "src-decisions-oct09",
+        "src-timing-results"
       ],
       "impact_note": "結果を資格証拠に使えなくなる"
     },
@@ -4862,38 +5084,40 @@
   ],
   "items": [
     {
-      "id": "queue-probe-timing",
-      "experiment": "probe-timing",
-      "title": "時間干渉の正負対照・主測定",
-      "state": "RUNNING / 結果待ち / UNMEASURED",
-      "worlds": null,
-      "hours": null,
-      "window": "本人方針の上限・前提内",
-      "dependency": "別branchで進行中・main未統合。依頼者引継ぎ（10/10）：spin-based harnessはMac miniの探索段階で検証済み、T=100 msでdwell約100 msに鋭い遷移、幅4 ms、校正合格。正負対照・主測定はRUNNING。result pending, probe interference still UNMEASURED。A/B結論は出さない。",
-      "owner": "Codex",
-      "active": true,
-      "current": true,
-      "sources": [
-        "src-g3-success-plan"
-      ],
-      "priority": 1
-    },
-    {
       "id": "queue-g3-bounded",
       "experiment": "g3-bounded",
-      "title": "B04採取設計・B03ツール表現の整理",
-      "state": "1日上限 / PARTLY",
+      "title": "要件2〜5の実観測：継続か中止か",
+      "state": "USER / 本人判断待ち",
       "worlds": null,
       "hours": null,
-      "window": "本人方針の上限・前提内",
-      "dependency": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。",
-      "owner": "Codex",
+      "window": "範囲・費用・期限を本人が決める",
+      "dependency": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。 タイミング結果を受け、要件2〜5のlive観測を範囲・費用・期限付きで継続するか中止するかを本人が判断。B03受容は既決、ツールでの表現は未決。",
+      "owner": "human",
       "active": false,
       "current": true,
       "sources": [
         "src-g3-paths",
         "src-g3-success-plan",
-        "src-decisions-oct10"
+        "src-decisions-oct10",
+        "src-timing-results"
+      ],
+      "priority": 1
+    },
+    {
+      "id": "queue-offline-b04-b07",
+      "experiment": "offline-b04-b07",
+      "title": "B04 joiner / B07 checkerのオフライン拡張",
+      "state": "BLOCKED / 本人の継続判断が前提",
+      "worlds": null,
+      "hours": null,
+      "window": "本人が継続範囲を決めた後",
+      "dependency": "本人が継続を選んだ場合だけ、B04 joiner / B07 checkerを不足に沿って拡張。台帳・利用枠・予約の不足を整理し、残時間UNKNOWNのまま追加実走を始めない。",
+      "owner": "Codex",
+      "active": false,
+      "current": true,
+      "sources": [
+        "src-b04-joiner",
+        "src-b07-checker"
       ],
       "priority": 2
     },
@@ -4912,7 +5136,8 @@
       "sources": [
         "src-budget-settlement",
         "src-schedule-oct08",
-        "src-decisions-oct09"
+        "src-decisions-oct09",
+        "src-time-gaps"
       ],
       "priority": 3
     },
@@ -5231,9 +5456,28 @@
         "src-results-e1-e2"
       ],
       "current": false
+    },
+    {
+      "id": "queue-probe-timing",
+      "experiment": "probe-timing",
+      "title": "時間干渉の正負対照・主測定",
+      "state": "COMPLETE / 限定条件で1回測定",
+      "worlds": null,
+      "hours": null,
+      "window": "10/11 JST 完了記録",
+      "dependency": "正負対照・主測定はCOMPLETE、PR #56で記録済み。符号付き移動量0.0156 ms、区間[0, 0.047] msは事前宣言±2 ms内。ただし干渉は「限定条件で1回測定」であり、解消扱いにしない。NOT G3 evidence。",
+      "owner": "Codex",
+      "active": false,
+      "current": false,
+      "sources": [
+        "src-timing-results",
+        "src-timing-protocol",
+        "src-timing-harness"
+      ],
+      "priority": 22
     }
   ],
-  "note": "次の作業はB04採取設計・B03のツール表現論点、進行中のtiming結果照合、台帳とモデル確認。残予算UNKNOWN、G3 BLOCKED。",
+  "note": "時間計測は完了記録済み。次は要件2〜5の実観測について本人判断。継続時だけB04/B07をオフライン拡張。台帳・利用枠の不足は保持。残予算UNKNOWN、G3 REQUIRED / BLOCKED。",
   "day_limit_hours": 6,
   "bundle": "forward100h・6h/日・110分/chunkを維持。実消化・残費未精算。G3準備/全監査込み14–15h、公式P60 12–13h＋照合1hは計画見積。",
   "side_jobs": [
@@ -8165,7 +8409,7 @@
       "due_date": null,
       "title": "運営についての本人の判断・前提",
       "status": "decided",
-      "note": "「運営は今出ている情報以上の強制はない、かつ、公式な方法はない、という判断で進めたい。」（チャット原文）。運営の強制範囲を確認した事実ではなく、ファイル不在からの事実認定でもない。G3-B03-B04-PATHS-2026-10-10.mdの主催者質問案は未送信で、送信しない。",
+      "note": "「運営は今出ている情報以上の強制はない、かつ、公式な方法はない、という判断で進めたい。」（チャット原文）。運営の強制範囲を確認した事実ではなく、ファイル不在からの事実認定でもない。G3-B03-B04-PATHS-2026-10-10.mdの主催者質問案は未送信（送信の決定は記録なし）。",
       "owner": "human",
       "group": "current",
       "sources": [
@@ -8688,7 +8932,7 @@
     "items": [
       "prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。",
       "10/28までにOllama鍵の有効性と無料枠量を本人が再確認。前払いは$0を維持し、不足時の支払額は本人が決める。",
-      "G3の1日調査後の方針・各ゲート・候補変更を判断",
+      "タイミング結果を受け、要件2〜5のlive観測を範囲・費用・期限付きで継続するか中止するかを本人が判断。B03受容は既決、ツールでの表現は未決。",
       "鍵・支払い・運営フォームでの提出と受理確認"
     ],
     "decision_refs": [
@@ -8759,6 +9003,25 @@
   ],
   "note": "追記のみ。旧100件は全フィールド保持、8件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-124",
+      "timestamp": "2026-10-11T00:21:55+09:00",
+      "type": "レビュー",
+      "summary": "10/11 JST: mini縮小プロトコルの正負対照・主測定を記録（PR #56）。干渉は限定条件で1回測定。PR #49〜#55の設計・補助部品も統合済み。B03未解決・本人受容、G3 REQUIRED / BLOCKED、残時間UNKNOWNは維持。 #54/#55はsynthetic-only、B04/B07を閉じない。mini切断・復帰・作業dir削除は依頼者引継ぎのみ。切断時間・退避容量・追加清掃後容量の根拠はnot found in files。旧ログの進行中表記は記録当時の履歴として保持。",
+      "sources": [
+        "src-timing-results",
+        "src-timing-protocol",
+        "src-timing-harness",
+        "src-b04-design",
+        "src-time-gaps",
+        "src-b07-plan",
+        "src-b07-checker",
+        "src-b04-joiner",
+        "src-mini-cleanup"
+      ],
+      "time_basis": "ダッシュボードへの記録時刻。計測や統合の実時刻ではない。",
+      "event_date": "2026-10-11"
+    },
     {
       "id": "log-123",
       "timestamp": "2026-10-10T14:45:36+09:00",
@@ -10911,7 +11174,7 @@
     }
   ],
   "copy": {
-    "action_note": "B03受容は既決。本人受容済み残余リスクをツールでどう表現するかは未決。1日調査後の継続範囲・予約、鍵・利用枠・支払い・提出は本人判断。エージェントは免除を推奨せず、決定もしない。",
+    "action_note": "時間計測は完了。要件2〜5の実観測は、本人が範囲・費用・期限を決めて継続するか中止するかを判断。B03受容は既決、ツールでどう表現するかは未決。",
     "action_next": "10/28までにOllama鍵の有効性と無料枠量を本人が再確認。前払いは$0を維持し、不足時の支払額は本人が決める。",
     "diagnostic_notice": "E1–E10は診断。混成場でr3はinc-zetaに約3.5 T劣り、r3cの改善は未確立。弱い参照場の強さを優勝の根拠にしない。G0 FAILを保持し、公式P60・G3・G4と分ける。",
     "qualification_notice": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
@@ -10921,7 +11184,7 @@
     "plan_note": "10/14は準備棚卸し。公式P60の提供日は不明、最早10/20以降。10/24–27送信・10/29受理照合は条件付き目標。締切は固定。",
     "registration": "受理表示を本人が確認済み",
     "provider_remaining": "10/28までに本人が鍵の有効性・無料枠の量を確認。運営モデルとの対応も未確認。",
-    "decisions_note": "10/9の決定を現方針として表示。過去の判断・未決提案・署名は履歴に保持し、現在の再承認待ちへ戻さない。"
+    "decisions_note": "10/9・10/10の決定を現方針として表示。過去の判断・未決提案・署名は履歴に保持し、現在の再承認待ちへ戻さない。"
   },
   "roadmap_axis": [
     "10/4",
@@ -11027,7 +11290,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
     <article class="card action-box"><div class="card-title"><h2>本人が今やること</h2>${chip('decision','本人作業')}</div><div class="action-value">${esc(s.human_action)}</div><p>${rich(D.ui.copy.action_note)}</p><div class="next-action"><strong>提出前の本人確認 · ${dateOnly(finalCheck.due_date)}</strong><p>${rich(D.ui.copy.action_next)}</p></div>${refs(D.decisions.human_only.sources)}${link('decisions','決定済みの方針を見る')}</article></div>
     ${nextLane()}
     <div class="grid-2 section"><article class="card">${sectionTitle('直近の変更')}${eventList(s.recent.slice(0,3))}${details('これまでの診断・重要な記録',eventList(s.recent.slice(3)))}</article>
-    <article class="card"><div class="card-title"><h2>次のマイルストーン</h2>${chip(s.next_milestone.state,s.next_milestone.state_label)}</div><h3>${rich(s.next_milestone.title)}</h3><p class="card-sub">${rich(s.next_milestone.note)}</p><div class="notice section"><strong>${r.completed_at?'確認された完了時刻':'進行中の作業 · 干渉は未測定'}</strong>${r.completed_at?`<br>${time(r.completed_at)}`:''}<p>${rich(r.note)}</p></div>${refs(s.next_milestone.sources)}${link('operations','実行状況と時間枠を見る')}</article></div>
+    <article class="card"><div class="card-title"><h2>次のマイルストーン</h2>${chip(s.next_milestone.state,s.next_milestone.state_label)}</div><h3>${rich(s.next_milestone.title)}</h3><p class="card-sub">${rich(s.next_milestone.note)}</p><div class="notice section"><strong>${r.completed_at?'確認された完了時刻':'完了時刻は未確認'}</strong>${r.completed_at?`<br>${time(r.completed_at)}`:''}<p>${rich(r.note)}</p></div>${refs(s.next_milestone.sources)}${link('operations','実行状況と時間枠を見る')}</article></div>
     <div class="notice section">${rich(s.notice)}</div>`;}
   function plan(){const steps=D.plan.protocol.filter(s=>s.start_date);const highlighted=D.milestones.items.filter(m=>m.highlight);return `<div class="summary-strip"><h2>${rich(D.plan.goal)}</h2><p>締切 ${time(D.plan.deadline_at)} · MASTER rev ${D.plan.revision} · ${rich(D.ui.copy.plan_note)}</p></div>
     <section class="card">${sectionTitle('提出までのロードマップ',chip('blocked',D.ui.copy.plan_state))}<div class="roadmap-axis" aria-hidden="true"><span>工程 / 条件</span>${D.ui.roadmap_axis.map(d=>`<span>${esc(d)}</span>`).join('')}</div><ol>${steps.map((p,i)=>{const offset=Number(D.ui.roadmap_start_date.slice(8))-1,start=Number(p.start_date.slice(8))-offset,end=Number(p.end_date.slice(8))-offset+1;return `<li class="roadmap-row"><div class="roadmap-meta"><strong>Step ${i+1} · ${rich(p.label)}</strong><small>${esc(p.period)}</small>${chip(p.state)}</div><div class="roadmap-track" aria-label="${esc(p.period)}"><div class="roadmap-bar ${i===0?'current':''}" style="grid-column:${start}/${end}"><span class="sr-only">${esc(p.period)}</span></div></div></li>`;}).join('')}</ol><p class="roadmap-caption">帯は予定の期間です。日付が来ても、前の工程・資格・費用の条件を満たすまで開始しません。</p>${refs(D.plan.sources)}</section>
@@ -11067,7 +11330,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
     <div class="notice section">${rich(D.ui.copy.decisions_note)}</div>
     <div class="stack section">${details('原判断・署名・過去の未決提案（当時の履歴）',`<div class="stack">${ds.filter(d=>d.group!=='current'&&d.id!=='dec-007').map(decisionCard).join('')}</div>`)}${details('旧H1・AI契約・資格試験・失敗上限',rawTable(D.results.h1)+rawTable({...D.plan.ai_parameters,title:'rev 6のENTRY単独契約（原記録・初期60）'})+keyValues(D.plan.ai_contract)+keyValues(D.plan.q0_requalification)+keyValues(D.plan.revert_contract)+keyValues(D.plan.cutover))}${details('初回登録報告の全項目（当時）',keyValues(rep))}</div>`;}
   function queueTable(items,head){return `<table class="queue-table" role="table"><caption class="sr-only">優先順の実行キュー</caption><thead><tr>${head.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${items.map(q=>{const tone=q.active?'running':/不採用|完了|旧計画/.test(q.state)?'pending':'blocked';const cells=[`<strong>${q.priority}. ${rich(q.title)}</strong>`,`${chip(tone,q.state)}<p>${owner(q.owner)}</p>`,`${q.worlds==null?'世界数は対象外 / 時間未見積':q.worlds+'世界 / '+hours(q.hours)}<p class="scope-note">${rich(q.window)}</p>`,`${rich(q.dependency)}${refs(q.sources)}`];return `<tr>${cells.map((v,i)=>`<td data-label="${head[i]}"><div>${v}</div></td>`).join('')}</tr>`;}).join('')}</tbody></table>`;}
-  function operations(){const r=read(D.plan.continuous_operation.current_run_ref),b=D.budget;const queueHead=['順番・作業','状態・担当','規模・全量見積','開始条件'];return `<div class="grid-2"><section class="card running-card"><div class="card-title"><div><p class="eyebrow">CURRENT WORK</p><h2>${rich(r.name)}</h2></div>${chip(r.state==='measured-diagnostic-complete'?'done':'running',r.state==='measured-diagnostic-complete'?'診断完了の引継ぎ':r.state_label)}</div><p class="card-sub">${esc(r.branch)} · main未統合</p><p>${rich(r.note)}</p>${r.completed_at?`<p>確認された完了時刻：${time(r.completed_at)}</p>`:''}<p class="scope-note">${rich(r.provenance)}</p><p class="scope-note">${rich(r.handoff)}</p>${refs(r.sources)}</section>
+  function operations(){const r=read(D.plan.continuous_operation.current_run_ref),b=D.budget;const queueHead=['順番・作業','状態・担当','規模・全量見積','開始条件'];return `<div class="grid-2"><section class="card running-card"><div class="card-title"><div><p class="eyebrow">CURRENT WORK</p><h2>${rich(r.name)}</h2></div>${chip(r.completed_at?'done':'pending',r.state_label)}</div><p class="card-sub">${esc(r.branch)} · ${r.merged?'main統合済み':'未統合'}</p><p>${rich(r.note)}</p>${rawTable(r.measurements)}<ul>${r.limitations.map(text=>`<li>${rich(text)}</li>`).join('')}</ul>${r.completed_at?`<p>確認された完了時刻：${time(r.completed_at)}</p>`:''}<p class="scope-note">${rich(r.provenance)}</p><p class="scope-note">${rich(r.handoff)}</p>${refs(r.sources)}</section>
     <section class="card"><div class="card-title"><h2>${rich('forward100hの消化')}</h2>${chip('warning',b.consumption_status)}</div><div class="budget-values"><div><small>開発時間の総枠</small><strong>${esc(b.total_hours)} h</strong></div><div><small>枠内の実消化</small><strong>${b.consumed_forward_hours===null?'未確認':hours(b.consumed_forward_hours)}</strong></div><div><small>残り時間</small><strong>未確定</strong></div></div><p class="card-sub">過去の実測下限は ${esc(b.consumed_lower_bound_hours)} h以上。これは枠外の履歴です。開始・終了区間が未精算のため、${esc(b.total_hours)}hから引きません。</p><p class="scope-note">${rich(b.note)}</p>${refs(b.sources)}</section></div>
     <section class="card section"><h2>${rich(D.status.infrastructure.title)}</h2><p>${rich(D.status.infrastructure.note)}</p><p class="scope-note">${rich(D.status.infrastructure.boundary)}</p>${refs(D.status.infrastructure.sources)}</section>
     <details class="details-card section"><summary>旧運用・体制・予算配分の履歴</summary><div class="details-body"><section class="card section"><h2>夜間の消費概算・監視（履歴）</h2><p>${rich(b.overnight.note)}</p><p>${rich(D.status.night_operation.note)}</p>${refs(b.overnight.sources)}</section>
