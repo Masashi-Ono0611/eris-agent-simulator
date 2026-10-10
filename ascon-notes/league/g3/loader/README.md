@@ -178,3 +178,30 @@ epoch 持越し・復帰、自然改訂、botMain version closure、全 read/sub
 提出 ZIP / live run 同等性、現行オンライン規約は検証していない。
 ネットワーク、Docker、Anvil、backtest、SSH、モデル呼出、commit/push は行わない。
 既存 G3 監査器・manifest・要件の判定は変更しない。
+
+## 要件2の人工記録結合器（2026-10-11追加）
+
+[`source-join.mjs`](source-join.mjs) は既存の記録形式を受け取る純粋な後処理関数
+`joinSourceApplications({schema: 1, provenance: "SYNTHETIC", records})` を提供する。
+[`SYNTHETIC-source-join.mjs`](../tests/fixtures/SYNTHETIC-source-join.mjs) は人工入力の生成器。
+本機能からローダー、実行器、ネットワークを起動しない。
+
+同期呼出し前後の時刻区間、SHA-256（Secure Hash Algorithm 256-bit、内容ハッシュ）、
+版、実行器、生成世代を結び、`firstDecisionId`（最初の判断の識別子）を出す。
+この識別子の根拠は親の `worker_post` のみで、実worker内の判断開始を観測した値ではない。
+`firstDecisionBasis: "parent-worker_post"` と `workerExecutionVerified: false` を明記する。
+版は人工入力の明示指定。元モジュールのハッシュ範囲は入口ファイルのみ。
+選択後に判断がない版、同版の再選択で対象が曖昧な場合、記録欠落は `BLOCKED`。
+時刻逆転・誤結合は `FAIL`。正常な人工記録だけ `CONTRACT_OK_ON_SYNTHETIC` とし、
+常に `g3Status: "BLOCKED"`、`liveRecorderVerified: false` を出す。
+
+```sh
+node --test ascon-notes/league/g3/tests/source-join.test.mjs
+node ascon-notes/league/g3/loader/source-join-mutation.mjs
+```
+
+変異検査は時刻逆転条件を除去したコピーで、正対照テストがexit 1になることを確認する。
+元の実装ファイルには書かない。今回の検査は人工記録のみで、既存ローダーを起動した
+記録との結合は未検証。`callBlock`（改訂呼出し時のブロック番号）は生成せず、
+G3監査器への直接接続も行わない。テスト一覧、要件2〜5の期限と未完了は
+[期限計画](../../G3-REQ25-PLAN-2026-10-11.md) に記載した。
