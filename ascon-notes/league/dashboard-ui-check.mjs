@@ -250,7 +250,8 @@ const retainedDecisions=['dec-original','dec-deep','dec-no-contact','dec-008','d
   'dec-full-executor','dec-rev10-direction','dec-zeta-original','dec-zeta-qualification','dec-pr-split','dec-c-exception-r3',
   'dec-retro-allocation','dec-retro-limited-lifting','dec-retro-risk-acceptance','dec-retro-revision-risk',
   'dec-retro-originality-loss','dec-retro-budget-schedule','dec-retro-final-submission',
-  'dec-oct09-r3','dec-oct09-g3','dec-oct09-dev-billing','dec-oct09-ollama'];
+  'dec-oct09-r3','dec-oct09-g3','dec-oct09-dev-billing','dec-oct09-ollama',
+  'dec-oct10-organizer','dec-oct10-b03'];
 function assertDecisions(views){
   const ids=app.D.decisions.items.map(d=>d.id);
   for(const id of retainedDecisions)assert.ok(ids.includes(id),`INVARIANT retained decision ${id}`);
@@ -682,7 +683,7 @@ check('current direction, recent events, next milestone and night operation come
   assertVisibleFields(rendered.operations,app.D.status.night_operation,['note']);
   for(const decision of app.D.decisions.items)assertVisibleFields(rendered.decisions,decision,['title']);
 });
-// 2026-10-09 evidence contract: preparation may finish while the gate and
+// 2026-10-10 evidence contract: preparation may finish while the gate and
 // probe measurement stay unresolved. Keep these semantic checks alongside the
 // existing historical-result and per-record warning controls.
 function assertOctoberStatus(views){
@@ -691,7 +692,19 @@ function assertOctoberStatus(views){
   assert.equal(d.status.budget_state,'UNKNOWN','INVARIANT October remaining budget unknown');
   assert.equal(d.budget.consumed_exact_hours,null,'INVARIANT October exact spend unknown');
   assert.equal(d.budget.consumed_forward_hours,null,'INVARIANT October forward spend unknown');
-  assert.equal(t.state,'harness-unvalidated','INVARIANT October harness not validated');
+  assert.equal(t.state,'controls-and-measurement-running','INVARIANT October controls and measurement pending');
+  assert.equal(t.verified,false,'INVARIANT October no independently verified interference');
+  assert.equal(t.exploration.state,'validated-exploration-reported','INVARIANT October exploration scope');
+  assert.equal(t.exploration.evidence_kind,'user-handoff','INVARIANT October exploration provenance');
+  assert.equal(t.exploration.artifact_verified,false,'INVARIANT October exploration artifact absent');
+  assert.deepEqual([t.exploration.deadline_ms,t.exploration.transition_dwell_approx_ms,t.exploration.width_ms],[100,100,4],'INVARIANT October reported exploration values');
+  const b=d.status.b03;
+  assert.equal(b.state,'unresolved-user-accepted','INVARIANT October B03 unresolved');
+  assert.equal(b.accepted_by,'user','INVARIANT October B03 user decision');
+  for(const key of ['safety_pass','closed','organizer_premise_verified','question_sent','question_will_send'])
+    assert.equal(b[key],false,`INVARIANT October B03 ${key}`);
+  assert.equal(b.tooling_blocker_retained,true,'INVARIANT October B03 remains in tooling');
+  assert.equal(b.tooling_representation,'open-user-decision','INVARIANT October tooling representation open');
   assert.equal(t.result,null,'INVARIANT October no interference result');
   assert.equal(t.merged,false,'INVARIANT October timing branch not merged');
   assert.equal(d.plan.continuous_operation.current_run_ref,'status.timing','INVARIANT October current work is timing');
@@ -700,7 +713,7 @@ function assertOctoberStatus(views){
   for(const phrase of ['前回更新から','次の3手','G3','BLOCKED','10/28'])
     assert.ok(overview.includes(phrase),`INVARIANT October overview ${phrase}`);
   for(const step of d.status.next_steps)assertVisibleFields(views.overview,step,['title','text','label']);
-  for(const phrase of ['UNMEASURED','main未統合','not found in files','Spotlight','Atomics.wait','busy-spin'])
+  for(const phrase of ['UNMEASURED','main未統合','not found in files','Spotlight','Atomics.wait','busy-spin','RUNNING','result pending','探索段階','幅4 ms','43→84 GiB'])
     assert.ok(operations.includes(phrase),`INVARIANT October operations ${phrase}`);
   assertVisibleFields(app.renderers.operations(),d.status.infrastructure,['note','boundary']);
   const policy=visibleText(views.decisions);
@@ -710,6 +723,17 @@ function assertOctoberStatus(views){
     assert.ok(item.sources.includes('src-decisions-oct09'),`INVARIANT October policy provenance ${id}`);
     assert.ok(policy.includes(item.title),`INVARIANT October policy displayed ${id}`);
   }
+  for(const id of ['dec-oct10-organizer','dec-oct10-b03']){
+    const item=d.decisions.items.find(x=>x.id===id);
+    assert.equal(item?.status,'decided',`INVARIANT October user decision ${id}`);
+    assert.equal(item.owner,'human',`INVARIANT October decision owner ${id}`);
+    assert.ok(item.sources.includes('src-decisions-oct10'),`INVARIANT October decision source ${id}`);
+    assertVisibleFields(views.decisions,item,['title','note']);
+  }
+  for(const phrase of ['運営は今出ている情報以上の強制はない、かつ、公式な方法はない、という判断で進めたい。','B03をあなたが残余リスクとして明示的に受け入れる','確認した事実ではなく','未送信で、送信しない','PASS・closedではない','REQUIRED_BLOCKERS','inputs.lock.json','本人の未決事項','エージェントは免除を推奨・決定しない'])
+    assert.ok(policy.includes(phrase),`INVARIANT October risk boundary ${phrase}`);
+  for(const phrase of ['B03','本人受容済み残余リスク','REQUIRED','BLOCKED','ツールでどう表現するか'])
+    assert.ok(overview.includes(phrase),`INVARIANT October overview risk ${phrase}`);
   assert.match(policy,/1日/,'INVARIANT October bounded investigation');
   assert.match(policy,/\$0/,'INVARIANT October no billing approval');
   assert.ok(overview.includes('合格済みではなく、提出準備も未完了'),'INVARIANT October candidate is conditional');
@@ -734,6 +758,17 @@ check('October red controls reject false gate, budget and interference completio
     ['harness false validation',d=>{d.status.timing.state='validated';}],
     ['interference result invented',d=>{d.status.timing.result={delay:0};}],
     ['timing false merge',d=>{d.status.timing.merged=true;}],
+    ['B03 false pass',d=>{d.status.b03.safety_pass=true;}],
+    ['B03 false closure',d=>{d.status.b03.closed=true;}],
+    ['B03 agent acceptance',d=>{d.status.b03.accepted_by='agent';}],
+    ['organizer premise asserted as fact',d=>{d.status.b03.organizer_premise_verified=true;}],
+    ['organizer question sent',d=>{d.status.b03.question_sent=true;}],
+    ['organizer question rescheduled',d=>{d.status.b03.question_will_send=true;}],
+    ['B03 silently removed from tooling',d=>{d.status.b03.tooling_blocker_retained=false;}],
+    ['tooling representation decided',d=>{d.status.b03.tooling_representation='resolved';}],
+    ['exploration artifact verification invented',d=>{d.status.timing.exploration.artifact_verified=true;}],
+    ['exploration numerical result invented',d=>{d.status.timing.exploration.width_ms=0;}],
+    ['B03 decision reopened',d=>{d.decisions.items.find(x=>x.id==='dec-oct10-b03').status='open';}],
     ['next step removed',d=>{d.status.next_steps.pop();}],
     ['G3 policy reopened',d=>{d.decisions.items.find(x=>x.id==='dec-oct09-g3').status='open';}]
   ])rejectMutation(label,mutate,assertOctoberStatus);
