@@ -1,0 +1,7 @@
+{
+  "runId": "synthetic-world",
+  "runStartBlock": 100,
+  "finalBlock": 104,
+  "violations": [],
+  "notice": "synthetic-only / not G3 evidence"
+}
