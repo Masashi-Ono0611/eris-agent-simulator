@@ -1,0 +1,37 @@
+{
+  "absoluteGitDir": "/synthetic/git/worktrees/r3-test",
+  "branch": "synthetic/r3-test",
+  "candidateDir": "ascon-synthetic-r3",
+  "candidateId": "cand",
+  "candidateSha256": "1b017279605655c013de18953196baa8febd247396e4e8b45cb77c27eee0771d",
+  "eval": "/synthetic/eval-r3",
+  "evalFiles": {
+    "example/agents/ascon-synthetic-r3/agent.ts": "fdc2e2f153171df65310e97e65228ceea5238e1617ed16b3b35c022eac76fdc7",
+    "example/agents/ascon-synthetic-r3/prompt.md": "3a1aae8a1437dcecb38b9bc70555582d29c92b3cd204e2094a2684f252b1529b",
+    "synthetic/common.ts": "71090d5bfb4942b9761d502fa99db8fb5b5bfff0b0698b2dff36326b3f386d20"
+  },
+  "files": {
+    "example/agents/ascon-synthetic-r3/agent.ts": "fdc2e2f153171df65310e97e65228ceea5238e1617ed16b3b35c022eac76fdc7",
+    "example/agents/ascon-synthetic-r3/prompt.md": "3a1aae8a1437dcecb38b9bc70555582d29c92b3cd204e2094a2684f252b1529b",
+    "synthetic/common.ts": "71090d5bfb4942b9761d502fa99db8fb5b5bfff0b0698b2dff36326b3f386d20"
+  },
+  "head": "1111111111111111111111111111111111111111",
+  "mainRef": "2222222222222222222222222222222222222222",
+  "release": "r3",
+  "schema": "synthetic-source-manifest-contract-v1",
+  "scope": "synthetic-only / not G3 evidence",
+  "skippedPaths": [
+    "synthetic/excluded.txt"
+  ],
+  "source": "/synthetic/source-r3",
+  "tool": "/synthetic/tool-r3",
+  "toolFiles": {
+    "synthetic-check.py": "687ec77bc27b02f8a5745ee379ee4ab625ac315a1c460231967bb084569f2d94"
+  },
+  "view": "/synthetic/view-r3",
+  "viewFiles": {
+    "example/agents/ascon-synthetic-r3/agent.ts": "fdc2e2f153171df65310e97e65228ceea5238e1617ed16b3b35c022eac76fdc7",
+    "example/agents/ascon-synthetic-r3/prompt.md": "3a1aae8a1437dcecb38b9bc70555582d29c92b3cd204e2094a2684f252b1529b",
+    "synthetic/common.ts": "71090d5bfb4942b9761d502fa99db8fb5b5bfff0b0698b2dff36326b3f386d20"
+  }
+}
