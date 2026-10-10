@@ -4,18 +4,19 @@
 
 ブラウザでファイルを開くと概要が表示されます。`#results`、`#decisions`、`#log` などで直接ページを指定でき、戻る・進むにも対応します。保存後の更新はファイルの再読み込みで反映します。実行中プロセスやサービスをポーリングする機能はありません。
 
-## 2026-10-09の更新・検査契約
+## 2026-10-10の更新・検査契約
 
-現況は `DECISIONS-2026-10-09.md`、`G3-LOCK-R3-2026-10-08.md`、実現性調査、`P60-PREP-SPEC-2026-10-08.md`、`BUDGET-SETTLEMENT-2026-10-08.md` を優先して照合します。MASTER rev 14の旧工程や未決提案を現在の状態として再表示しません。
+現況は `DECISIONS-2026-10-10.md`、更新済み `G3-SUCCESS-PLAN-2026-10-09.md`、`G3-B03-B04-PATHS-2026-10-10.md`、`MINI-CLEANUP-2026-10-09.md`、`DECISIONS-2026-10-09.md`、`G3-LOCK-R3-2026-10-08.md`、実現性調査、`P60-PREP-SPEC-2026-10-08.md`、`BUDGET-SETTLEMENT-2026-10-08.md` を優先して照合します。MASTER rev 14の旧工程や未決提案を現在の状態として再表示しません。
 
 - `status.changes` は前回からの変更、`status.next_steps` は次の3手。どちらも既存の概要本文に描画します。
-- 現在作業は `status.timing`。`result=null`・`merged=false`・未検証を維持し、干渉の測定が成立するまで結果を作りません。別worktreeの未コミット資料は名前と読取範囲だけを記し、参照先不在のリンクを生成しません。
-- miniへの転送・清掃など、repoで確認できない本人引継ぎは `status.infrastructure` に明示。根拠値がない場合は `not found in files` と記します。
+- 現在作業は `status.timing`。状態は `controls-and-measurement-running`、正負対照・主測定はRUNNING / result pending、干渉はUNMEASURED。`result=null`・`merged=false`・`verified=false`を維持します。探索段階の校正合格・T=100 ms・dwell約100 ms・幅4 msは依頼者引継ぎで、原成果物は読取範囲では `not found in files`。`exploration.artifact_verified=false`とし、探索をA/B結論へ転用しません。別worktreeへの不在リンクを生成しません。
+- mini清掃は `status.infrastructure` にData領域の空き43→84 GiBを清掃記録から反映。現在容量の再測定ではありません。転送等の確認記録がないものは `not found in files` と区別します。
 - `status.preparation` は統合済み作業の範囲。merge日はローカルgitのcommit時刻をJSTへ変換して生成します。G3の実走・合格日へ転用しません。
+- `status.b03` は `unresolved-user-accepted`。受容者は本人、PASS・closed・運営前提の事実認定はfalse。質問案は未送信で送信しません。B03はツールに残り、表現は `open-user-decision`。他のG3前提はREQUIRED / 証拠なしならBLOCKED、エージェントは免除を推奨・決定しません。
 - 新決定は `decisions.items` の `group=current`。旧判断・署名とログは変更せず履歴へ収めます。現在のキューは `current=true`、残る旧キューと予算配分は折りたたみで保持します。
 - footerは `status.as_of`・`status.footer_sources` とログ件数から描画します。件数・日付・値をrendererへ手入力しません。候補hashは根拠文書の記録値で、今回の再計算ではありません。
 
-`dashboard-ui-check.mjs` は、新決定の保持と表示、G3 BLOCKED、残量UNKNOWN、時間干渉UNMEASURED、未統合、次の3手、footerの実ファイル参照を検査します。虚偽の合格・残量・測定結果・統合などを注入する反例検査もあります。旧判断削除の反例は追加された判断も対象です。
+`dashboard-ui-check.mjs` は、新決定の保持と表示、B03の未解決・本人受容と未変更ツール、G3 BLOCKED、残量UNKNOWN、探索の引継ぎと対照/主測定RUNNING、時間干渉UNMEASURED、未統合、次の3手、footerの実ファイル参照を検査します。虚偽の合格・残量・測定結果・統合などを注入する反例検査もあります。旧判断削除の反例は追加された判断も対象です。
 
 現況更新の必須検査は下記の2スクリプトと `git diff --check`。`check-plan-consistency.py` は古いMASTER契約の履歴検査であり、本スナップショットをMASTER rev 14へ戻すためには使いません。型検査は `npm run typecheck`。実測・モデル・Dockerを起動する検査ではありません。
 
@@ -28,7 +29,7 @@
 | 進捗・結果 | 比較表を最初の内容セクションに表示。診断／資格試験の切替、run・母集団・出所、原表、進捗台帳と過去の記録 |
 | ブロッカー・リスク | 優先順位、原因、影響、対応、担当。未解消／解消済み／全件の切替 |
 | 判断 | 本人の予定、登録報告、委任決定、署名・原判断・旧案の詳細 |
-| 実行キュー・予算 | 時間干渉harnessの未検証・未統合、mini運用の本人引継ぎ、残量UNKNOWN、現在のキューと旧運用・予約の履歴 |
+| 実行キュー・予算 | 時間干渉の結果待ち・未統合、spin探索の引継ぎ・mini清掃記録、残量UNKNOWN、現在のキューと旧運用・予約の履歴 |
 | 更新ログ | 件数はJSONから自動表示。全履歴を保持。全文検索＋種類＋記録日（JST）の絞り込み。IDは小さな注記だけ |
 | 用語集 | 件数はJSONから自動表示。名前・略語・説明検索、分類フィルタ、参照資料 |
 
