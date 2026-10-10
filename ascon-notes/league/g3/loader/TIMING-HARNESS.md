@@ -335,3 +335,64 @@ Worker or measurement). They assert both named aborts and the exact 1ms boundary
 Two new `--fast` mutants remove the abort and bypass the startup gate; each must
 be killed. Real exploration, controls, measurement and Mac mini validation of the
 new primitive remain unverified. The earlier smoke above predates this correction.
+
+## Explicit REDUCED protocol (pre-declared; real runs pending)
+
+See [the immutable pre-declaration](TIMING-REDUCED-PROTOCOL-2026-10-10.md).
+`--protocol reduced` / `G3_TIMING_PROTOCOL=reduced` opts into seven non-uniform
+points, W=5/N=4, controls 24 pairs/point, main 64 pairs/point, two discarded
+warmup pairs, and 24 main overhead pairs. Without the option, the legacy grid,
+counts and statistical decisions remain available. REDUCED rejects `--explore`;
+first obtain a complete accepted exploration using the exploration protocol.
+
+Budget is per experiment, including calibration. `--budget-min` or
+`G3_TIMING_BUDGET_MIN` overrides the defaults (controls 30, main 90 minutes).
+The resource guard also applies to the legacy design; its larger sample size
+may stop as incomplete under these budgets. Test timeout is budget + 120 seconds,
+not an independent fixed one-hour deadline. Completed pairs are fsynced to a
+new append-only `.partial.jsonl` file; controls have separate
+`.positive.partial.jsonl` and `.negative.partial.jsonl` journals next to their
+shared JSON/Markdown. Existing journals also prevent reusing a prefix.
+
+A projected or elapsed overrun yields `incomplete / INCONCLUSIVE (budget)`;
+active arms receive a graceful SIGTERM/runner close, with a recorded SIGKILL
+fallback after 5 seconds. A partial result is never passed. The journal preserves
+the plan, exact exploration SHA, calibration, each complete pair and final state.
+The final JSON retains available incomplete arm records. The journal is not a
+resume command; reruns require a new output prefix and must not selectively
+replace an unsuccessful run.
+
+REDUCED uses block-effective Wilson/Newcombe point intervals and a whole-pair,
+point/order-stratified bootstrap interval for the non-uniform trapezoid area.
+Controls report **descriptive only**, plus `controlCriteriaPassed` and individual
+assertions. This is deliberately distinct from the legacy `passed` verdict:
+the local hard-step band derivation does not bound general coarse-grid error.
+A control test succeeds only if all descriptive criteria and existing guards
+hold. This is not proof of calibrated detection power. Do not start the main
+run after failed/incomplete controls. Even satisfied descriptive controls cannot
+support a stronger inferential conclusion than the pre-declaration allows.
+
+Examples for the later Mac mini run only (not run by this implementation task):
+
+```sh
+# Reuse the host/toolchain/load settings and NEW prefixes defined above.
+G3_PROBE_EXPECT_NODE="$g3_expected_node" G3_PROBE_EXPECT_TSX="$g3_expected_tsx" \
+  G3_TIMING_PROTOCOL=reduced G3_TIMING_BUDGET_MIN=30 \
+  G3_TIMING_CONTROL_OUTPUT="$g3_controls" G3_TIMING_SWEEP_FROM="$g3_exploration.json" \
+  G3_TIMING_MAX_LOAD1=3.5 G3_TIMING_LOAD_NOTE="$g3_load_note" \
+  node --import tsx --test --test-concurrency=1 ascon-notes/league/g3/tests/loader-timing.test.mjs
+
+# Only after inspecting both completed descriptive control assessments.
+G3_PROBE_EXPECT_NODE="$g3_expected_node" G3_PROBE_EXPECT_TSX="$g3_expected_tsx" \
+  node ascon-notes/league/g3/loader/measure-timing.mjs --protocol reduced --budget-min 90 \
+  --output "$g3_measurement" --sweep-from "$g3_exploration.json" \
+  --max-load1 3.5 --load-note "$g3_load_note"
+```
+
+Fast `timing-reduced.test.mjs` tests use injected clocks, calibration primitives,
+load sources, fake arm clients and synthetic probe audits; they never launch a
+real timing arm. `mutation-check.py --fast` additionally kills removal of the
+budget stop, removal of the positive band, substitution of a point estimate for
+the interval test, and movement of the sensitive point. The separately requested
+`loader-probe.test.mjs` tests offline probe fixtures (some instantiate stock
+Workers); they are not timing exploration/control/main runs.
