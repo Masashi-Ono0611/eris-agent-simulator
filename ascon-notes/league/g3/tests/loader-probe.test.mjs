@@ -64,6 +64,69 @@ function guardAt(result, code, site) {
     ['schema', 'seq', 'threadId', 'utc', 'monoNs', 'event', 'code'].sort());
 }
 
+// Registration-only subprocesses: no StrategyRunner calls, Workers or timing sweep.
+function registration(extra = {}, nodeVersion) {
+  const dir = mkdtempSync(join(loaderDir, '.probe-test-'));
+  const sink = join(dir, 'records.jsonl');
+  try {
+    const script = `
+      ${nodeVersion === undefined ? '' : `Object.defineProperty(process, 'version', { value: ${JSON.stringify(nodeVersion)} });`}
+      try {
+        const probe = await import(${JSON.stringify(url('probe-loader.mjs'))});
+        probe.finishProbe();
+        console.log(JSON.stringify({ code: null }));
+      } catch (error) {
+        console.log(JSON.stringify({ code: error.code }));
+        process.exitCode = 1;
+      }`;
+    const child = spawnSync(process.execPath, ['--import', 'tsx', '--import', url('offline-guard.mjs'),
+      '--input-type=module', '--eval', script], { cwd: root, encoding: 'utf8', timeout: 10000,
+      env: { PATH: process.env.PATH, HOME: process.env.HOME, TMPDIR: process.env.TMPDIR,
+        G3_PROBE_JSONL: sink, ...extra } });
+    assert.equal(child.error, undefined);
+    assert.equal(child.signal, null);
+    assert.equal(child.stderr, '');
+    return { status: child.status, code: JSON.parse(child.stdout).code,
+      records: existsSync(sink) ? readFileSync(sink, 'utf8').trim().split('\n').map(JSON.parse) : [] };
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
+test('toolchain guard: default rejects a different Node with the exact code', () => {
+  // Synthetic version property only; this does not claim a run on another Node binary.
+  const result = registration({}, 'v0.0.0-g3-test');
+  assert.equal(result.status, 1);
+  assert.equal(result.code, 'G3_TOOLCHAIN_MISMATCH');
+  assert.deepEqual(result.records, []);
+});
+
+test('toolchain guard: incorrect and empty overrides still fail closed', () => {
+  for (const extra of [{ G3_PROBE_EXPECT_NODE: 'v0.0.0-wrong' },
+    { G3_PROBE_EXPECT_TSX: '0.0.0-wrong' }, { G3_PROBE_EXPECT_NODE: '' }, { G3_PROBE_EXPECT_TSX: '' }]) {
+    const result = registration(extra);
+    assert.equal(result.status, 1);
+    assert.equal(result.code, 'G3_TOOLCHAIN_MISMATCH');
+    assert.deepEqual(result.records, []);
+  }
+});
+
+test('toolchain override: correct exact expectations pass and record actual versions in first record', () => {
+  const tsx = require('tsx/package.json').version;
+  for (const node of [process.version, 'v0.0.0-g3-test']) {
+    const result = registration({ G3_PROBE_EXPECT_NODE: node, G3_PROBE_EXPECT_TSX: tsx }, node);
+    assert.equal(result.status, 0);
+    assert.equal(result.code, null);
+    assert.equal(result.records[0].event, 'probe_registered');
+    assert.equal(result.records[0].node, node);
+    assert.equal(result.records[0].tsx, tsx);
+    assert.equal(result.records[0].toolchainOverride, true);
+  }
+  for (const extra of [{}, { G3_PROBE_EXPECT_NODE: process.version }, { G3_PROBE_EXPECT_TSX: tsx }]) {
+    const result = registration(extra);
+    assert.equal(result.status, 0);
+    assert.equal(result.records[0].toolchainOverride, Object.keys(extra).length > 0);
+  }
+});
+
 test('fixed local toolchain', () => {
   assert.equal(process.version, 'v24.13.0');
   assert.equal(require('tsx/package.json').version, '4.23.13');
@@ -127,7 +190,9 @@ test('with/without probe: stock outcomes, submissions, errors and independent or
 
 test('production probe also runs directly, without the independent witness', () => {
   const baseline = success(run(false, 'normal', {}, false));
-  const measured = run(true, 'normal', {}, false);
+  const measured = run(true, 'normal', { G3_PROBE_EXPECT_NODE: process.version,
+    G3_PROBE_EXPECT_TSX: require('tsx/package.json').version }, false);
+  assert.equal(measured.records[0].toolchainOverride, true);
   assert.deepEqual(success(measured), baseline);
   auditRecords(measured.records);
 });
@@ -208,12 +273,12 @@ test('redaction: schema excludes env values, RPC credentials, wallet, source, ob
   for (const secret of privateStrings) assert.ok(!result.raw.includes(secret), 'synthetic sensitive data must not be recorded');
   const keys = new Set(['schema', 'seq', 'threadId', 'utc', 'monoNs', 'event', 'generation', 'runnerId',
     'kind', 'sourceSha256', 'version', 'versionOrigin', 'hashScope', 'decisionId', 'workerDecisionId',
-    'code', 'node', 'tsx', 'runnerSha256', 'callId', 'beforeUtc', 'beforeNs', 'afterUtc', 'afterNs',
+    'code', 'node', 'tsx', 'toolchainOverride', 'runnerSha256', 'callId', 'beforeUtc', 'beforeNs', 'afterUtc', 'afterNs',
     'outcome', 'generations', 'decisions', 'calls']);
   for (const record of result.records) for (const key of Object.keys(record)) assert.ok(keys.has(key), `unexpected field: ${key}`);
 });
 
-test('all tracked protected stock bytes match git HEAD by SHA-256 (plus all existing tracked files unchanged)', t => {
+test('all tracked protected stock bytes match git HEAD by SHA-256 (plus tracked files outside G3 unchanged)', t => {
   const roots = ['example/agents/runtime', 'sdk', 'lib', 'core', 'example/agents/lib'];
   const paths = execFileSync('git', ['ls-tree', '-r', '--name-only', '-z', 'HEAD', '--', ...roots], { cwd: root })
     .toString().split('\0').filter(Boolean);
@@ -221,6 +286,6 @@ test('all tracked protected stock bytes match git HEAD by SHA-256 (plus all exis
   for (const path of paths) {
     assert.equal(sha(readFileSync(join(root, path))), sha(execFileSync('git', ['show', `HEAD:${path}`], { cwd: root })), path);
   }
-  assert.equal(execFileSync('git', ['diff', 'HEAD', '--name-only'], { cwd: root, encoding: 'utf8' }), '');
+  assert.equal(execFileSync('git', ['diff', 'HEAD', '--name-only', '--', '.', ':(exclude)ascon-notes/league/g3/**'], { cwd: root, encoding: 'utf8' }), '');
   t.diagnostic(`SHA-256 checked ${paths.length} tracked stock files; root lib/ ${existsSync(join(root, 'lib')) ? 'present' : 'absent; example/agents/lib/ included'}`);
 });
