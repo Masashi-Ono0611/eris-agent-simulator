@@ -205,3 +205,91 @@ node ascon-notes/league/g3/loader/source-join-mutation.mjs
 記録との結合は未検証。`callBlock`（改訂呼出し時のブロック番号）は生成せず、
 G3監査器への直接接続も行わない。テスト一覧、要件2〜5の期限と未完了は
 [期限計画](../../G3-REQ25-PLAN-2026-10-11.md) に記載した。
+
+## 要件3の人工判断結合器（2026-10-11追加）
+
+[`decision-join.mjs`](decision-join.mjs) の純粋関数 `joinDecisions(input)` は、
+[期限計画の要件3(a)](../../G3-REQ25-PLAN-2026-10-11.md#要件3-全判断世代読出し履歴returnsubmit)
+にある人工契約を検査する。計画内の候補名 `decision-contract.mjs` に対応する実装。
+SYNTHETIC（人工）専用で、実行環境・別スレッドの作業実行器（worker）を起動しない。
+既存 `source-join` の純粋関数・固定診断コード・正対照・メモリ上の変異検査という構成を踏襲する。
+高水準の読出し・試行を表す新しい人工形式なので、既存ローダーの記録をそのまま入力できない。
+既存の `source-join` と記録監査器は変更していない。
+
+入力は次の構造を持つ。`expected` は記録列から算出しない独立した人工期待集合。
+[`SYNTHETIC-decision-join.mjs`](../tests/fixtures/SYNTHETIC-decision-join.mjs) では
+期待値を別に明示し、記録を削除する正対照でも期待値を残す。
+
+```js
+{
+  schema: 1,
+  provenance: 'SYNTHETIC',
+  clockBasis: 'synthetic-single-clock',
+  expected: { starts: [], finishes: [], reads: [], actions: [] },
+  records: []
+}
+```
+
+上記は構造の説明であり、空の開始集合・記録では `BLOCKED` となる。
+4つの期待配列はすべて明示が必要。読出しや出力のゼロ件も明示的な空配列で表し、
+欠落を空配列・ゼロ・安全値へ補完しない。
+
+| 入力 | 照合する内容 |
+| --- | --- |
+| `expected.starts` | 判断識別子、実行器、生成世代、世代内判断識別子、版、送信有無。v0（初期版）とnoop（取引しない判断）も含める |
+| `expected.finishes` | 独立した完了識別子集合と、`noop` / `return` / `throw` / `not_dispatched`（未送信）の終端種別 |
+| `expected.reads` | 判断ごとの読出し識別子、呼出順番号、解決順番号、方法、引数ハッシュ、整数または例外の結果形式 |
+| `expected.actions` | 判断・経路（`return` または `ctx.submit`）・経路内順番、内容ハッシュ、通常／遅着、親の処理（送信済み／破棄／未送信） |
+| `records` | 世代生成、判断開始、親からの送信、worker開始、読出し呼出し／解決、出力試行／親処理、worker完了、判断完了のイベント列 |
+
+各イベントには共有連番 `seq`、`utc`（UTC: Coordinated Universal Time、協定世界時）、
+`monoNs`（単調時計のナノ秒文字列）を要求する。物理行順は共有連番で整列する。
+この人工形式は単一時計を宣言し、単調時計と協定世界時を**別々に**逆転検査する。
+単調時計が正常でも協定世界時だけの逆転を `FAIL / REQ3_TIME_ORDER` にする。
+同時刻は許すが、開始→送信→worker開始→worker完了→判断完了の連番順は検査する。
+この時計条件を、実スレッド間の計測へ一般化しない。
+
+読出方法は `getBalance` と `getAllowance` の人工契約に限定する。
+引数は `{encoding: 'sha256', sha256: ...}`。
+SHA-256（Secure Hash Algorithm 256-bit、256ビットの内容ハッシュ）の一致を比較し、
+引数本文は返さない。整数は `{type: 'integer', decimal: '900719925474099312345'}` のように
+十進文字列で桁を保つ。例外は `{type: 'exception', name: 'Error', messageSha256: ...}` とし、
+名前は `Error` / `TypeError` / `RangeError` に限定する。例外本文や呼出履歴本文は返さない。
+呼出順と解決順を別々に保存・検査するため、並列読出しの解決順で呼出番号を付け替えると失敗する。
+他の結果型・読出方法はこの形式の対象外であり、不明な値を成功へ変換しない。
+
+同じ内容ハッシュの返却と送信試行も、経路と経路内順番で別々に保持する。
+遅着submitはworker完了・判断完了より後の試行として表し、親の破棄まで照合する。
+`sent` は人工の親処理ラベルであり、実取引の送信や採掘の証明ではない。
+通信に出ない試行の削除、親の破棄を送信済みへ変更、旧世代結果の付替えは `FAIL`。
+独立期待集合にある出力試行の消失も人工契約の確定矛盾として `FAIL / REQ3_ACTION_MISSING`。
+開始・完了・世代生成・読出し・親処理の欠落は `BLOCKED`。
+生成世代を持たない未送信判断は `generation` と `workerDecisionId` を明示的な `null` にし、
+worker開始・完了時刻を作らない。
+
+出力の判定語は `CONTRACT_OK_ON_SYNTHETIC` / `BLOCKED` / `FAIL` の3種類だけ。
+人工由来の指定がなければ内容検査に進まず `BLOCKED`。
+常に `g3Status: 'BLOCKED'`、`liveRecorderVerified: false` を返す。
+正常時だけ `decisions` に判断・workerの開始／完了時刻、読出し履歴、経路別試行を返し、
+欠落や矛盾があれば空の `decisions` と固定の診断コードを返す。
+入力を変更せず、余分な本文・秘密フィールドは入れ子も含めて転記しない。
+
+```sh
+node --test ascon-notes/league/g3/tests/decision-join.test.mjs ascon-notes/league/g3/tests/source-join.test.mjs
+node ascon-notes/league/g3/loader/decision-join-mutation.mjs
+bun run typecheck
+bun test ./ascon-notes/league/g3/tests/decision-join.test.mjs ./ascon-notes/league/g3/tests/source-join.test.mjs
+git diff --check
+```
+
+テストを先に追加し、実装未存在の `ERR_MODULE_NOT_FOUND`、終了コード1を確認してから実装した。
+Codex実行環境のNode `v26.8.2`（別途、Claudeが再実行したNode `v24.13.0`でも同じ結果）で新規165件と既存31件、計196件が成功、失敗・省略は0件。
+変異検査は協定世界時逆転・世代帰属の検査を個別に削除し、さらに読出し期待集合の欠測を
+空配列へ補完するコピーを実行する。3つとも対応する正対照が1件失敗し、子テストは終了コード1。
+変異検査自身はその検出を確認して終了コード0。元ファイルには書き込まない。
+
+未検証: 実workerの全判断・省略・読出し・送信試行の採取、独立期待集合の実際の生成元、
+標準実行環境の記録との接続、実チェーン、経済値、実時間制限、子終了、状態持越し・復帰。
+引数・出力ハッシュの採取元や内容の真正性も認定しない。
+実観測を含む要件3全体とG3（Gate 3、自己改訂の実チェーン受入判定）は `BLOCKED` のまま。
+この追加は計画の要件3(a)だけを実装した記録であり、既存計画書の過去の実行記録は更新していない。
