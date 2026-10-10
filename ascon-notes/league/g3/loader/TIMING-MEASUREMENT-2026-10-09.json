@@ -1,0 +1,4958 @@
+{
+  "schema": 1,
+  "status": "aborted",
+  "startedAt": "2026-10-09T03:03:43.061Z",
+  "config": {
+    "repetitions": 240,
+    "boundaryRepetitions": 24,
+    "timeoutMs": 100,
+    "minOffsetMs": -30,
+    "maxOffsetMs": 30,
+    "stepMs": 0.5,
+    "warmupPairs": 10,
+    "seed": 20261009,
+    "maxLoad1": 2.5,
+    "cooldownMs": 300,
+    "arms": [
+      {
+        "name": "A-stock",
+        "probe": false,
+        "delayMs": 0
+      },
+      {
+        "name": "B-probe",
+        "probe": true,
+        "delayMs": 0
+      }
+    ]
+  },
+  "hostBefore": {
+    "node": "v24.13.0",
+    "tsx": "4.23.13",
+    "platform": "darwin",
+    "release": "27.0.0",
+    "arch": "arm64",
+    "cpuModel": "Apple M5",
+    "logicalCpus": 10,
+    "loadAverage": [
+      2.0205078125,
+      2.9189453125,
+      3.814453125
+    ]
+  },
+  "sourceHashes": {
+    "measure-timing.mjs": "9728690d58f2b1ccc01490fc6f8548ee77f9341973a4f5072077291b1d4b8acf",
+    "timing-arm.mjs": "eb209c5f9edfbded3f44cc63837c9907b3e7fac14d9d7586cdfb3ea579b2602a",
+    "timing-delay.mjs": "50121c98614143ae3aa79506e28c41080f95934ffc4272141828c2f180c2a087",
+    "timing-fixture.mjs": "a77c236e6cab534976771c6d1c89fd560f7092e6ca131e5d07c3e2cb3491e57e",
+    "probe-loader.mjs": "e8ca482a13ea7a843abb1958f215cb4c6a45bced075b899da2c6c1bf7736cd72",
+    "probe-io.mjs": "399971cd54870a3c9a5f2d6f993d9ddf1cbc0ca0ad7ffc8132bc2e906cafd6fb",
+    "audit-records.mjs": "f8d0ab73f92bf1fbe683a0725a9565c50e6b92525171f9ef77f3507f3dd6e84c",
+    "offline-guard.mjs": "d656cc065832476dbe53be0d0526323bce7f6df89990c48e8cabdcc868b1202c",
+    "../../../../example/agents/runtime/strategyRunner.ts": "4078993ced9321c2e14674942b86dfb8cd1b53dc343e256755bd5c284bf4bfd9",
+    "../../../../example/agents/runtime/decideTimeout.ts": "ba99e81e0c94bd8d6b0b3a762c8c77b7ff9d7ca4452bf3ce38b31e93a8baad69"
+  },
+  "raw": [
+    {
+      "index": 0,
+      "phase": "warmup",
+      "repetition": 0,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0027500000000060254,
+          "start": 187.74933400000003,
+          "startReady": 0.0016669999999976426,
+          "decide": 0.49654099999997925,
+          "close": 0.9196660000000065
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0019169999999917309
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.4919170000000008,
+          "start": 184.74333299999998,
+          "startReady": 0.12641700000000355,
+          "decide": 0.8789580000000115,
+          "close": 1.167541999999969
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002250000000003638
+      }
+    },
+    {
+      "index": 1,
+      "phase": "warmup",
+      "repetition": 1,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 1.4062910000000102,
+          "start": 221.53941600000007,
+          "startReady": 0.09216600000002018,
+          "decide": 1.114041000000043,
+          "close": 0.9442090000000007
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002583999999956177
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.0005000000001018634,
+          "start": 179.59295799999995,
+          "startReady": 0.0012080000001333246,
+          "decide": 0.7100830000001679,
+          "close": 3.5326669999999467
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.003500000000030923
+      }
+    },
+    {
+      "index": 2,
+      "phase": "warmup",
+      "repetition": 2,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0028750000001309672,
+          "start": 216.38016700000003,
+          "startReady": 0.0012500000000272848,
+          "decide": 0.5425000000000182,
+          "close": 0.6824169999999867
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0017909999999119464
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.3842090000000553,
+          "start": 182.37408400000004,
+          "startReady": 0.09987499999988358,
+          "decide": 0.8693749999999909,
+          "close": 0.7839999999998781
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0025000000000545697
+      }
+    },
+    {
+      "index": 3,
+      "phase": "warmup",
+      "repetition": 3,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 1.1001249999999345,
+          "start": 209.23799999999983,
+          "startReady": 0.14216699999997218,
+          "decide": 0.38675000000012005,
+          "close": 0.811916999999994
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0017909999996845727
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.00037500000007639755,
+          "start": 179.6702089999999,
+          "startReady": 0.0012500000002546585,
+          "decide": 1.0682080000001406,
+          "close": 0.6642499999998108
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.00204200000007404
+      }
+    },
+    {
+      "index": 4,
+      "phase": "warmup",
+      "repetition": 4,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0020839999997406267,
+          "start": 213.90583300000026,
+          "startReady": 0.002749999999650754,
+          "decide": 0.5284579999997732,
+          "close": 0.7777500000001965
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.00179100000013932
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.20754200000010314,
+          "start": 177.66879199999994,
+          "startReady": 0.18545899999980975,
+          "decide": 0.80074999999988,
+          "close": 0.8354580000000169
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002375000000029104
+      }
+    },
+    {
+      "index": 5,
+      "phase": "warmup",
+      "repetition": 5,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 1.4675000000002,
+          "start": 207.50199999999995,
+          "startReady": 0.11737500000026557,
+          "decide": 0.7856669999996484,
+          "close": 0.7784169999999904
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002250000000003638
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.0004169999997429841,
+          "start": 177.0753749999999,
+          "startReady": 0.001040999999986525,
+          "decide": 0.5275420000002669,
+          "close": 0.6475000000000364
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0020829999998568383
+      }
+    },
+    {
+      "index": 6,
+      "phase": "warmup",
+      "repetition": 6,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.001916999999593827,
+          "start": 209.46062500000062,
+          "startReady": 0.0014170000004014582,
+          "decide": 0.5235000000002401,
+          "close": 0.6824169999999867
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0020000000004074536
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.36645900000075926,
+          "start": 178.51141600000028,
+          "startReady": 0.12108299999999872,
+          "decide": 0.7781249999998181,
+          "close": 0.7929170000006707
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0021660000002157176
+      }
+    },
+    {
+      "index": 7,
+      "phase": "warmup",
+      "repetition": 7,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 1.6372080000001006,
+          "start": 212.81795899999997,
+          "startReady": 0.09708300000056624,
+          "decide": 1.001208000000588,
+          "close": 0.7705000000005384
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0026659999994080863
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.0004579999995257822,
+          "start": 177.33037500000046,
+          "startReady": 0.0009999999992942321,
+          "decide": 0.5305410000000848,
+          "close": 0.7184580000002825
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0020000000004074536
+      }
+    },
+    {
+      "index": 8,
+      "phase": "warmup",
+      "repetition": 8,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0023330000003625173,
+          "start": 206.39441700000043,
+          "startReady": 0.0015000000003055902,
+          "decide": 0.7157079999997222,
+          "close": 3.395499999999629
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.003499999999803549
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.3623749999997017,
+          "start": 178.60333300000002,
+          "startReady": 0.09595900000022084,
+          "decide": 0.8399580000004789,
+          "close": 0.8488749999996799
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002124999999978172
+      }
+    },
+    {
+      "index": 9,
+      "phase": "warmup",
+      "repetition": 9,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 1.3002919999998994,
+          "start": 210.87958400000025,
+          "startReady": 0.0900420000007216,
+          "decide": 1.0609580000000278,
+          "close": 0.7690000000002328
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002375000000029104
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.0005410000003394089,
+          "start": 177.31637499999943,
+          "startReady": 0.0015000000003055902,
+          "decide": 1.1438749999997526,
+          "close": 0.6648329999998168
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.004541000000244821
+      }
+    },
+    {
+      "index": 10,
+      "phase": "overhead",
+      "repetition": 0,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0013330000001587905,
+          "start": 212.47162500000013,
+          "startReady": 0.0014160000000629225,
+          "decide": 0.7163329999993948,
+          "close": 3.6897909999997864
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.00370900000052643
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.2089589999995951,
+          "start": 184.10041700000056,
+          "startReady": 0.10758299999997689,
+          "decide": 0.3336669999998776,
+          "close": 0.8023329999996349
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0023330000003625173
+      }
+    },
+    {
+      "index": 11,
+      "phase": "overhead",
+      "repetition": 1,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 1.4329999999999927,
+          "start": 212.00645799999984,
+          "startReady": 0.12674999999944703,
+          "decide": 0.360250000000633,
+          "close": 0.8016669999997248
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002124999999978172
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.0004579999995257822,
+          "start": 177.06566699999985,
+          "startReady": 0.001457999999729509,
+          "decide": 0.5314999999991414,
+          "close": 0.6844579999997222
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.001916999999593827
+      }
+    },
+    {
+      "index": 12,
+      "phase": "overhead",
+      "repetition": 2,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0024170000015146798,
+          "start": 201.16512499999953,
+          "startReady": 0.0007089999999152496,
+          "decide": 0.5305829999997513,
+          "close": 0.7697079999998095
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0018749999999272404
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.3976249999996071,
+          "start": 178.70104199999878,
+          "startReady": 0.29487500000141154,
+          "decide": 0.5627079999994749,
+          "close": 0.756333999999697
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0024999999986903276
+      }
+    },
+    {
+      "index": 13,
+      "phase": "overhead",
+      "repetition": 3,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 0.5457920000008016,
+          "start": 209.523333000001,
+          "startReady": 0.09458300000005693,
+          "decide": 0.4696249999997235,
+          "close": 0.8674579999988055
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.00225000000136788
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.00033400000029359944,
+          "start": 179.71941700000025,
+          "startReady": 0.00112500000068394,
+          "decide": 0.5789170000007289,
+          "close": 0.6897500000013679
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0024159999993571546
+      }
+    },
+    {
+      "index": 14,
+      "phase": "overhead",
+      "repetition": 4,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0015000000003055902,
+          "start": 208.6299999999992,
+          "startReady": 0.0009169999993901001,
+          "decide": 0.5254160000004049,
+          "close": 0.715249999999287
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.001916999999593827
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.37087500000052387,
+          "start": 178.9142499999998,
+          "startReady": 0.13945799999964947,
+          "decide": 0.41587500000059663,
+          "close": 0.8144579999989219
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.00204200000007404
+      }
+    },
+    {
+      "index": 15,
+      "phase": "overhead",
+      "repetition": 5,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 1.0158749999991414,
+          "start": 211.32145899999887,
+          "startReady": 0.09870800000135205,
+          "decide": 1.357125000000451,
+          "close": 4.135459000000992
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.006750000000465661
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.000249999999141437,
+          "start": 179.72904200000085,
+          "startReady": 0.0008339999985764734,
+          "decide": 0.5388330000005226,
+          "close": 0.6993750000001455
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002207999999882304
+      }
+    },
+    {
+      "index": 16,
+      "phase": "overhead",
+      "repetition": 6,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0013330000001587905,
+          "start": 213.35583399999996,
+          "startReady": 0.000959000000875676,
+          "decide": 0.7557500000002619,
+          "close": 4.3290410000008706
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.004957999999533058
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.2511670000003505,
+          "start": 180.6197919999995,
+          "startReady": 0.0909590000010212,
+          "decide": 1.0415420000008453,
+          "close": 0.7614170000015292
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002207999999882304
+      }
+    },
+    {
+      "index": 17,
+      "phase": "overhead",
+      "repetition": 7,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 0.8431669999990845,
+          "start": 211.5164590000004,
+          "startReady": 0.10425000000032014,
+          "decide": 1.1016670000008162,
+          "close": 0.8526670000010199
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0028750000001309672
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.00016599999980826396,
+          "start": 181.1615409999995,
+          "startReady": 0.0011670000003505265,
+          "decide": 0.5430419999993319,
+          "close": 0.6895829999994021
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002082999999402091
+      }
+    },
+    {
+      "index": 18,
+      "phase": "overhead",
+      "repetition": 8,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0014590000009775395,
+          "start": 218.1854999999996,
+          "startReady": 0.0008330000000569271,
+          "decide": 0.5647079999998823,
+          "close": 0.7066670000003796
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0020839999997406267
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.4159170000002632,
+          "start": 181.78279199999997,
+          "startReady": 0.12250000000130967,
+          "decide": 0.4806669999998121,
+          "close": 3.585292000001573
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.005957999999736785
+      }
+    },
+    {
+      "index": 19,
+      "phase": "overhead",
+      "repetition": 9,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 1.309624999999869,
+          "start": 214.31658400000015,
+          "startReady": 0.09858300000087183,
+          "decide": 1.1252910000002885,
+          "close": 0.787625000000844
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002375000000029104
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.0002920000006270129,
+          "start": 179.73941699999887,
+          "startReady": 0.0007909999985713512,
+          "decide": 0.7204579999997804,
+          "close": 3.490625000000364
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0033750000002328306
+      }
+    },
+    {
+      "index": 20,
+      "phase": "overhead",
+      "repetition": 10,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0005000000001018634,
+          "start": 208.93091699999968,
+          "startReady": 0.0009589999990566866,
+          "decide": 0.5473750000001019,
+          "close": 0.7331669999985024
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0020839999997406267
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.37054100000023027,
+          "start": 181.49074999999903,
+          "startReady": 0.09050000000024738,
+          "decide": 1.0271670000001905,
+          "close": 0.8063329999986308
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0025420000001759036
+      }
+    },
+    {
+      "index": 21,
+      "phase": "overhead",
+      "repetition": 11,
+      "offsetMs": 0,
+      "order": "BA",
+      "durationMs": 0,
+      "B": {
+        "durations": {
+          "setSource": 1.3002500000002328,
+          "start": 216.48058300000048,
+          "startReady": 0.1347910000004049,
+          "decide": 0.9584169999998267,
+          "close": 0.8096659999991971
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002334000000701053
+      },
+      "A": {
+        "durations": {
+          "setSource": 0.0002500000009604264,
+          "start": 179.60062500000095,
+          "startReady": 0.0009579999987181509,
+          "decide": 0.5255419999994047,
+          "close": 0.702541000000565
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.001958000000740867
+      }
+    },
+    {
+      "index": 22,
+      "phase": "overhead",
+      "repetition": 12,
+      "offsetMs": 0,
+      "order": "AB",
+      "durationMs": 0,
+      "A": {
+        "durations": {
+          "setSource": 0.0017499999994470272,
+          "start": 218.057417,
+          "startReady": 0.003250000001571607,
+          "decide": 0.7195830000000569,
+          "close": 3.413250000001426
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.0033750000002328306
+      },
+      "B": {
+        "durations": {
+          "setSource": 0.2306669999998121,
+          "start": 183.1959999999999,
+          "startReady": 0.11945799999921292,
+          "decide": 0.35337499999877764,
+          "close": 0.765332999999373
+        },
+        "timedOut": false,
+        "fixtureElapsedMs": 0.002082999999402091
+      }
+    }
+  ],
+  "loadChecks": [
+    {
+      "pair": 0,
+      "load": [
+        2.0205078125,
+        2.9189453125,
+        3.814453125
+      ]
+    },
+    {
+      "pair": 1,
+      "load": [
+        1.9384765625,
+        2.88671875,
+        3.7978515625
+      ]
+    },
+    {
+      "pair": 2,
+      "load": [
+        1.9384765625,
+        2.88671875,
+        3.7978515625
+      ]
+    },
+    {
+      "pair": 3,
+      "load": [
+        1.9384765625,
+        2.88671875,
+        3.7978515625
+      ]
+    },
+    {
+      "pair": 4,
+      "load": [
+        1.9384765625,
+        2.88671875,
+        3.7978515625
+      ]
+    },
+    {
+      "pair": 5,
+      "load": [
+        1.9384765625,
+        2.88671875,
+        3.7978515625
+      ]
+    },
+    {
+      "pair": 6,
+      "load": [
+        1.9384765625,
+        2.88671875,
+        3.7978515625
+      ]
+    },
+    {
+      "pair": 7,
+      "load": [
+        1.9384765625,
+        2.88671875,
+        3.7978515625
+      ]
+    },
+    {
+      "pair": 8,
+      "load": [
+        2.0234375,
+        2.88818359375,
+        3.79296875
+      ]
+    },
+    {
+      "pair": 9,
+      "load": [
+        2.0234375,
+        2.88818359375,
+        3.79296875
+      ]
+    },
+    {
+      "pair": 10,
+      "load": [
+        2.0234375,
+        2.88818359375,
+        3.79296875
+      ]
+    },
+    {
+      "pair": 11,
+      "load": [
+        2.0234375,
+        2.88818359375,
+        3.79296875
+      ]
+    },
+    {
+      "pair": 12,
+      "load": [
+        2.0234375,
+        2.88818359375,
+        3.79296875
+      ]
+    },
+    {
+      "pair": 13,
+      "load": [
+        2.0234375,
+        2.88818359375,
+        3.79296875
+      ]
+    },
+    {
+      "pair": 14,
+      "load": [
+        2.0234375,
+        2.88818359375,
+        3.79296875
+      ]
+    },
+    {
+      "pair": 15,
+      "load": [
+        2.0234375,
+        2.88818359375,
+        3.79296875
+      ]
+    },
+    {
+      "pair": 16,
+      "load": [
+        2.341796875,
+        2.939453125,
+        3.8056640625
+      ]
+    },
+    {
+      "pair": 17,
+      "load": [
+        2.341796875,
+        2.939453125,
+        3.8056640625
+      ]
+    },
+    {
+      "pair": 18,
+      "load": [
+        2.341796875,
+        2.939453125,
+        3.8056640625
+      ]
+    },
+    {
+      "pair": 19,
+      "load": [
+        2.341796875,
+        2.939453125,
+        3.8056640625
+      ]
+    },
+    {
+      "pair": 20,
+      "load": [
+        2.341796875,
+        2.939453125,
+        3.8056640625
+      ]
+    },
+    {
+      "pair": 21,
+      "load": [
+        2.341796875,
+        2.939453125,
+        3.8056640625
+      ]
+    },
+    {
+      "pair": 22,
+      "load": [
+        2.341796875,
+        2.939453125,
+        3.8056640625
+      ]
+    },
+    {
+      "pair": 23,
+      "load": [
+        2.71435546875,
+        3.0068359375,
+        3.82421875
+      ]
+    }
+  ],
+  "stockDefaultTimeoutMs": 5000,
+  "failure": {
+    "code": "TIMING_LOAD_REFUSED",
+    "load1": 2.71435546875,
+    "threshold": 2.5
+  },
+  "hostAfter": {
+    "node": "v24.13.0",
+    "tsx": "4.23.13",
+    "platform": "darwin",
+    "release": "27.0.0",
+    "arch": "arm64",
+    "cpuModel": "Apple M5",
+    "logicalCpus": 10,
+    "loadAverage": [
+      2.71435546875,
+      3.0068359375,
+      3.82421875
+    ]
+  },
+  "finishedAt": "2026-10-09T03:03:59.253Z",
+  "summary": {
+    "overhead": {
+      "setSource": {
+        "A": {
+          "n": 13,
+          "median": 0.0005000000001018634,
+          "p95": 0.002016800000274087,
+          "p99": 0.0023369600012665605,
+          "max": 0.0024170000015146798
+        },
+        "B": {
+          "n": 13,
+          "median": 0.4159170000002632,
+          "p95": 1.3589749999999183,
+          "p99": 1.4181949999999777,
+          "max": 1.4329999999999927
+        },
+        "pairedDelta": {
+          "n": 13,
+          "median": 0.4144579999992857,
+          "p95": 1.3586165999997317,
+          "p99": 1.4177569200003197,
+          "max": 1.432542000000467
+        }
+      },
+      "start": {
+        "A": {
+          "n": 13,
+          "median": 201.16512499999953,
+          "p95": 218.10865019999983,
+          "p99": 218.17013003999963,
+          "max": 218.1854999999996
+        },
+        "B": {
+          "n": 13,
+          "median": 184.10041700000056,
+          "p95": 215.1821836000003,
+          "p99": 216.22090312000043,
+          "max": 216.48058300000048
+        },
+        "pairedDelta": {
+          "n": 13,
+          "median": -22.464083000000755,
+          "p95": 35.7164577999998,
+          "p99": 36.647257959999585,
+          "max": 36.87995799999953
+        }
+      },
+      "startReady": {
+        "A": {
+          "n": 13,
+          "median": 0.0009589999990566866,
+          "p95": 0.0021748000004663454,
+          "p99": 0.003034960001350553,
+          "max": 0.003250000001571607
+        },
+        "B": {
+          "n": 13,
+          "median": 0.10758299999997689,
+          "p95": 0.20162480000035407,
+          "p99": 0.2762249600011999,
+          "max": 0.29487500000141154
+        },
+        "pairedDelta": {
+          "n": 13,
+          "median": 0.10616699999991397,
+          "p95": 0.20079100000075392,
+          "p99": 0.27549100000134774,
+          "max": 0.2941660000014963
+        }
+      },
+      "decide": {
+        "A": {
+          "n": 13,
+          "median": 0.5473750000001019,
+          "p95": 0.734574799999973,
+          "p99": 0.7515149600002041,
+          "max": 0.7557500000002619
+        },
+        "B": {
+          "n": 13,
+          "median": 0.5627079999994749,
+          "p95": 1.2180246000003532,
+          "p99": 1.3293049200004314,
+          "max": 1.357125000000451
+        },
+        "pairedDelta": {
+          "n": 13,
+          "median": 0.032124999999723514,
+          "p95": 0.6624918000008616,
+          "p99": 0.787131960000115,
+          "max": 0.8182919999999285
+        }
+      },
+      "close": {
+        "A": {
+          "n": 13,
+          "median": 0.715249999999287,
+          "p95": 3.945491000000219,
+          "p99": 4.25233100000074,
+          "max": 4.3290410000008706
+        },
+        "B": {
+          "n": 13,
+          "median": 0.8063329999986308,
+          "p95": 3.80535880000134,
+          "p99": 4.069438960001062,
+          "max": 4.135459000000992
+        },
+        "pairedDelta": {
+          "n": 13,
+          "median": 0.09920799999963492,
+          "p95": 3.101608600001054,
+          "p99": 3.3691889200008878,
+          "max": 3.4360840000008466
+        }
+      }
+    },
+    "boundary": [
+      {
+        "dMs": 70,
+        "offsetMs": -30,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 70.5,
+        "offsetMs": -29.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 71,
+        "offsetMs": -29,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 71.5,
+        "offsetMs": -28.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 72,
+        "offsetMs": -28,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 72.5,
+        "offsetMs": -27.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 73,
+        "offsetMs": -27,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 73.5,
+        "offsetMs": -26.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 74,
+        "offsetMs": -26,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 74.5,
+        "offsetMs": -25.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 75,
+        "offsetMs": -25,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 75.5,
+        "offsetMs": -24.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 76,
+        "offsetMs": -24,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 76.5,
+        "offsetMs": -23.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 77,
+        "offsetMs": -23,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 77.5,
+        "offsetMs": -22.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 78,
+        "offsetMs": -22,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 78.5,
+        "offsetMs": -21.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 79,
+        "offsetMs": -21,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 79.5,
+        "offsetMs": -20.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 80,
+        "offsetMs": -20,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 80.5,
+        "offsetMs": -19.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 81,
+        "offsetMs": -19,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 81.5,
+        "offsetMs": -18.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 82,
+        "offsetMs": -18,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 82.5,
+        "offsetMs": -17.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 83,
+        "offsetMs": -17,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 83.5,
+        "offsetMs": -16.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 84,
+        "offsetMs": -16,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 84.5,
+        "offsetMs": -15.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 85,
+        "offsetMs": -15,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 85.5,
+        "offsetMs": -14.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 86,
+        "offsetMs": -14,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 86.5,
+        "offsetMs": -13.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 87,
+        "offsetMs": -13,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 87.5,
+        "offsetMs": -12.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 88,
+        "offsetMs": -12,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 88.5,
+        "offsetMs": -11.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 89,
+        "offsetMs": -11,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 89.5,
+        "offsetMs": -10.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 90,
+        "offsetMs": -10,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 90.5,
+        "offsetMs": -9.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 91,
+        "offsetMs": -9,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 91.5,
+        "offsetMs": -8.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 92,
+        "offsetMs": -8,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 92.5,
+        "offsetMs": -7.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 93,
+        "offsetMs": -7,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 93.5,
+        "offsetMs": -6.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 94,
+        "offsetMs": -6,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 94.5,
+        "offsetMs": -5.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 95,
+        "offsetMs": -5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 95.5,
+        "offsetMs": -4.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 96,
+        "offsetMs": -4,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 96.5,
+        "offsetMs": -3.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 97,
+        "offsetMs": -3,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 97.5,
+        "offsetMs": -2.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 98,
+        "offsetMs": -2,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 98.5,
+        "offsetMs": -1.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 99,
+        "offsetMs": -1,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 99.5,
+        "offsetMs": -0.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 100,
+        "offsetMs": 0,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 100.5,
+        "offsetMs": 0.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 101,
+        "offsetMs": 1,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 101.5,
+        "offsetMs": 1.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 102,
+        "offsetMs": 2,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 102.5,
+        "offsetMs": 2.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 103,
+        "offsetMs": 3,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 103.5,
+        "offsetMs": 3.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 104,
+        "offsetMs": 4,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 104.5,
+        "offsetMs": 4.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 105,
+        "offsetMs": 5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 105.5,
+        "offsetMs": 5.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 106,
+        "offsetMs": 6,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 106.5,
+        "offsetMs": 6.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 107,
+        "offsetMs": 7,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 107.5,
+        "offsetMs": 7.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 108,
+        "offsetMs": 8,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 108.5,
+        "offsetMs": 8.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 109,
+        "offsetMs": 9,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 109.5,
+        "offsetMs": 9.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 110,
+        "offsetMs": 10,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 110.5,
+        "offsetMs": 10.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 111,
+        "offsetMs": 11,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 111.5,
+        "offsetMs": 11.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 112,
+        "offsetMs": 12,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 112.5,
+        "offsetMs": 12.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 113,
+        "offsetMs": 13,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 113.5,
+        "offsetMs": 13.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 114,
+        "offsetMs": 14,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 114.5,
+        "offsetMs": 14.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 115,
+        "offsetMs": 15,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 115.5,
+        "offsetMs": 15.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 116,
+        "offsetMs": 16,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 116.5,
+        "offsetMs": 16.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 117,
+        "offsetMs": 17,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 117.5,
+        "offsetMs": 17.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 118,
+        "offsetMs": 18,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 118.5,
+        "offsetMs": 18.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 119,
+        "offsetMs": 19,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 119.5,
+        "offsetMs": 19.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 120,
+        "offsetMs": 20,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 120.5,
+        "offsetMs": 20.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 121,
+        "offsetMs": 21,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 121.5,
+        "offsetMs": 21.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 122,
+        "offsetMs": 22,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 122.5,
+        "offsetMs": 22.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 123,
+        "offsetMs": 23,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 123.5,
+        "offsetMs": 23.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 124,
+        "offsetMs": 24,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 124.5,
+        "offsetMs": 24.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 125,
+        "offsetMs": 25,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 125.5,
+        "offsetMs": 25.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 126,
+        "offsetMs": 26,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 126.5,
+        "offsetMs": 26.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 127,
+        "offsetMs": 27,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 127.5,
+        "offsetMs": 27.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 128,
+        "offsetMs": 28,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 128.5,
+        "offsetMs": 28.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 129,
+        "offsetMs": 29,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 129.5,
+        "offsetMs": 29.5,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      },
+      {
+        "dMs": 130,
+        "offsetMs": 30,
+        "n": 0,
+        "A": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": null,
+          "successfulFixtureMs": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "difference": null,
+        "discordant": {
+          "onlyA": 0,
+          "onlyB": 0
+        }
+      }
+    ],
+    "boundaryShiftMs": null
+  },
+  "maxObservedLoad1": 2.71435546875,
+  "command": "node ascon-notes/league/g3/loader/measure-timing.mjs --output ascon-notes/league/g3/loader/TIMING-MEASUREMENT-2026-10-09"
+}

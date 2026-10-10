@@ -1,0 +1,3200 @@
+{
+  "positive": {
+    "schema": 1,
+    "status": "aborted",
+    "startedAt": "2026-10-09T03:06:34.701Z",
+    "config": {
+      "repetitions": 0,
+      "boundaryRepetitions": 16,
+      "timeoutMs": 80,
+      "minOffsetMs": -12,
+      "maxOffsetMs": 4,
+      "stepMs": 2,
+      "warmupPairs": 4,
+      "seed": 91001,
+      "maxLoad1": 2.5,
+      "cooldownMs": 1500,
+      "arms": [
+        {
+          "name": "probe",
+          "probe": true,
+          "delayMs": 0
+        },
+        {
+          "name": "probe+6ms-control",
+          "probe": true,
+          "delayMs": 6
+        }
+      ]
+    },
+    "hostBefore": {
+      "node": "v24.13.0",
+      "tsx": "4.23.13",
+      "platform": "darwin",
+      "release": "27.0.0",
+      "arch": "arm64",
+      "cpuModel": "Apple M5",
+      "logicalCpus": 10,
+      "loadAverage": [
+        1.64013671875,
+        2.462890625,
+        3.46435546875
+      ]
+    },
+    "sourceHashes": {
+      "measure-timing.mjs": "6428bfad2b3e063c0d5ae5bd576719974fd4cf0b1e785c7bc67c86f0b828abf3",
+      "timing-arm.mjs": "eb209c5f9edfbded3f44cc63837c9907b3e7fac14d9d7586cdfb3ea579b2602a",
+      "timing-delay.mjs": "50121c98614143ae3aa79506e28c41080f95934ffc4272141828c2f180c2a087",
+      "timing-fixture.mjs": "a77c236e6cab534976771c6d1c89fd560f7092e6ca131e5d07c3e2cb3491e57e",
+      "probe-loader.mjs": "e8ca482a13ea7a843abb1958f215cb4c6a45bced075b899da2c6c1bf7736cd72",
+      "probe-io.mjs": "399971cd54870a3c9a5f2d6f993d9ddf1cbc0ca0ad7ffc8132bc2e906cafd6fb",
+      "audit-records.mjs": "f8d0ab73f92bf1fbe683a0725a9565c50e6b92525171f9ef77f3507f3dd6e84c",
+      "offline-guard.mjs": "d656cc065832476dbe53be0d0526323bce7f6df89990c48e8cabdcc868b1202c",
+      "../../../../example/agents/runtime/strategyRunner.ts": "4078993ced9321c2e14674942b86dfb8cd1b53dc343e256755bd5c284bf4bfd9",
+      "../../../../example/agents/runtime/decideTimeout.ts": "ba99e81e0c94bd8d6b0b3a762c8c77b7ff9d7ca4452bf3ce38b31e93a8baad69"
+    },
+    "raw": [
+      {
+        "index": 0,
+        "phase": "warmup",
+        "repetition": 0,
+        "offsetMs": 0,
+        "order": "AB",
+        "durationMs": 0,
+        "A": {
+          "durations": {
+            "setSource": 0.3579170000000005,
+            "start": 194.224584,
+            "startReady": 0.11720800000000509,
+            "decide": 0.9301669999999831,
+            "close": 1.3225830000000087
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 0.0023749999999722604
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.23091600000000767,
+            "start": 189.06554200000002,
+            "startReady": 0.15595899999999574,
+            "decide": 6.817791,
+            "close": 1.229582999999991
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 0.0024169999999799074
+        }
+      },
+      {
+        "index": 1,
+        "phase": "warmup",
+        "repetition": 1,
+        "offsetMs": 0,
+        "order": "BA",
+        "durationMs": 0,
+        "B": {
+          "durations": {
+            "setSource": 1.4328750000001946,
+            "start": 216.06954100000007,
+            "startReady": 0.093166999999994,
+            "decide": 7.233541000000059,
+            "close": 0.8788329999997586
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 0.0034580000001369626
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.17858400000022812,
+            "start": 180.72750000000042,
+            "startReady": 0.1277909999998883,
+            "decide": 0.40516699999989214,
+            "close": 0.8974590000002536
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 0.0026250000000800355
+        }
+      },
+      {
+        "index": 2,
+        "phase": "warmup",
+        "repetition": 2,
+        "offsetMs": 0,
+        "order": "AB",
+        "durationMs": 0,
+        "A": {
+          "durations": {
+            "setSource": 1.2885409999998956,
+            "start": 210.35141699999986,
+            "startReady": 0.13737500000024738,
+            "decide": 0.8610410000001139,
+            "close": 0.8144160000001648
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 0.0026250000000800355
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2114169999999831,
+            "start": 183.67033300000003,
+            "startReady": 0.09529199999997218,
+            "decide": 6.443500000000313,
+            "close": 0.7984589999996388
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 0.0028330000004643807
+        }
+      },
+      {
+        "index": 3,
+        "phase": "warmup",
+        "repetition": 3,
+        "offsetMs": 0,
+        "order": "BA",
+        "durationMs": 0,
+        "B": {
+          "durations": {
+            "setSource": 1.241874999999709,
+            "start": 211.9584159999995,
+            "startReady": 0.11099999999987631,
+            "decide": 6.364416999999776,
+            "close": 0.8713749999997162
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 0.002207999999882304
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.1571669999993901,
+            "start": 180.1563329999999,
+            "startReady": 0.10979200000019773,
+            "decide": 0.43683300000066083,
+            "close": 0.8126670000001468
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 0.0025420000001759036
+        }
+      },
+      {
+        "index": 4,
+        "phase": "boundary",
+        "repetition": 0,
+        "offsetMs": -2,
+        "order": "AB",
+        "durationMs": 78,
+        "A": {
+          "durations": {
+            "setSource": 1.0774169999995138,
+            "start": 211.61341599999923,
+            "startReady": 0.16404199999942648,
+            "decide": 83.52562500000022,
+            "close": 0.1240830000006099
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.1974579999996422,
+            "start": 180.8196250000001,
+            "startReady": 0.15745799999967858,
+            "decide": 83.58850000000075,
+            "close": 0.12970800000039162
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 5,
+        "phase": "boundary",
+        "repetition": 0,
+        "offsetMs": 4,
+        "order": "AB",
+        "durationMs": 84,
+        "A": {
+          "durations": {
+            "setSource": 1.6150000000016007,
+            "start": 220.30633300000045,
+            "startReady": 0.12125000000014552,
+            "decide": 83.51070800000161,
+            "close": 0.13933300000098825
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.33091699999931734,
+            "start": 196.26833400000032,
+            "startReady": 0.08829199999854609,
+            "decide": 82.68950000000041,
+            "close": 0.10879100000056496
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 6,
+        "phase": "boundary",
+        "repetition": 0,
+        "offsetMs": 2,
+        "order": "AB",
+        "durationMs": 82,
+        "A": {
+          "durations": {
+            "setSource": 1.0896250000005239,
+            "start": 209.15391700000146,
+            "startReady": 0.13845799999944575,
+            "decide": 83.71012500000143,
+            "close": 0.1362089999984164
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.27141599999959,
+            "start": 185.31666699999914,
+            "startReady": 0.1382499999999709,
+            "decide": 82.74754200000098,
+            "close": 0.14479100000062317
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 7,
+        "phase": "boundary",
+        "repetition": 0,
+        "offsetMs": -12,
+        "order": "AB",
+        "durationMs": 68,
+        "A": {
+          "durations": {
+            "setSource": 0.683458999999857,
+            "start": 191.2027079999989,
+            "startReady": 0.12437499999941792,
+            "decide": 77.16241699999955,
+            "close": 1.1801660000000993
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 76.0447920000006
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.20737499999995634,
+            "start": 185.32416700000067,
+            "startReady": 0.15616699999918637,
+            "decide": 79.81583300000057,
+            "close": 1.0809170000011363
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 72.8453329999993
+        }
+      },
+      {
+        "index": 8,
+        "phase": "boundary",
+        "repetition": 0,
+        "offsetMs": -8,
+        "order": "AB",
+        "durationMs": 72,
+        "A": {
+          "durations": {
+            "setSource": 1.262457999999242,
+            "start": 211.22154200000114,
+            "startReady": 0.1578750000007858,
+            "decide": 81.81137500000114,
+            "close": 0.12545800000043528
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2339159999992262,
+            "start": 185.2079590000012,
+            "startReady": 0.1492499999985739,
+            "decide": 82.82979200000045,
+            "close": 0.120375000002241
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 9,
+        "phase": "boundary",
+        "repetition": 0,
+        "offsetMs": -10,
+        "order": "AB",
+        "durationMs": 70,
+        "A": {
+          "durations": {
+            "setSource": 1.4741659999999683,
+            "start": 210.38579200000095,
+            "startReady": 0.11562500000218279,
+            "decide": 77.96570799999972,
+            "close": 1.237874999998894
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 76.88595799999894
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2642909999995027,
+            "start": 184.94137500000215,
+            "startReady": 0.12316700000155834,
+            "decide": 86.15870799999902,
+            "close": 0.12137499999880674
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 10,
+        "phase": "boundary",
+        "repetition": 0,
+        "offsetMs": 0,
+        "order": "AB",
+        "durationMs": 80,
+        "A": {
+          "durations": {
+            "setSource": 0.955707999997685,
+            "start": 206.27537499999744,
+            "startReady": 0.13816599999699974,
+            "decide": 83.6909999999989,
+            "close": 0.14712499999950523
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2598330000000715,
+            "start": 191.17341599999781,
+            "startReady": 0.16308399999979883,
+            "decide": 83.570208000001,
+            "close": 0.11379200000010314
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 11,
+        "phase": "boundary",
+        "repetition": 0,
+        "offsetMs": -6,
+        "order": "AB",
+        "durationMs": 74,
+        "A": {
+          "durations": {
+            "setSource": 1.349500000000262,
+            "start": 218.83145800000057,
+            "startReady": 0.11949999999706051,
+            "decide": 82.82733300000109,
+            "close": 0.16887499999938882
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2769159999988915,
+            "start": 187.4810830000024,
+            "startReady": 0.11366700000144192,
+            "decide": 88.69149999999718,
+            "close": 0.1071669999982987
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 12,
+        "phase": "boundary",
+        "repetition": 0,
+        "offsetMs": -4,
+        "order": "AB",
+        "durationMs": 76,
+        "A": {
+          "durations": {
+            "setSource": 0.7900000000008731,
+            "start": 212.43695899999875,
+            "startReady": 0.09087499999805004,
+            "decide": 77.3762089999982,
+            "close": 1.2252499999995052
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 76.01833400000032
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.21574999999938882,
+            "start": 185.57058300000062,
+            "startReady": 0.13154099999883329,
+            "decide": 83.5345840000009,
+            "close": 0.12325000000055297
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 13,
+        "phase": "boundary",
+        "repetition": 1,
+        "offsetMs": 2,
+        "order": "BA",
+        "durationMs": 82,
+        "B": {
+          "durations": {
+            "setSource": 1.3136669999985315,
+            "start": 211.26900000000023,
+            "startReady": 0.13624999999956344,
+            "decide": 83.45966699999917,
+            "close": 0.14470799999980954
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.23333400000046822,
+            "start": 188.32608299999993,
+            "startReady": 0.10104199999841512,
+            "decide": 83.68379199999981,
+            "close": 0.1266670000004524
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 14,
+        "phase": "boundary",
+        "repetition": 1,
+        "offsetMs": -2,
+        "order": "BA",
+        "durationMs": 78,
+        "B": {
+          "durations": {
+            "setSource": 1.3379169999971054,
+            "start": 212.83166699999856,
+            "startReady": 0.10358300000007148,
+            "decide": 87.85750000000189,
+            "close": 0.12004199999864795
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.25345799999922747,
+            "start": 187.6660419999971,
+            "startReady": 0.1053329999995185,
+            "decide": 78.59745800000019,
+            "close": 1.1914580000011483
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 78.00654199999917
+        }
+      },
+      {
+        "index": 15,
+        "phase": "boundary",
+        "repetition": 1,
+        "offsetMs": -8,
+        "order": "BA",
+        "durationMs": 72,
+        "B": {
+          "durations": {
+            "setSource": 1.4449580000000424,
+            "start": 215.1439169999976,
+            "startReady": 0.0873329999994894,
+            "decide": 88.22245800000019,
+            "close": 0.12075000000186265
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.22058300000207964,
+            "start": 187.9620419999992,
+            "startReady": 0.11641700000109267,
+            "decide": 82.31941700000243,
+            "close": 0.13070800000059535
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 16,
+        "phase": "boundary",
+        "repetition": 1,
+        "offsetMs": 4,
+        "order": "BA",
+        "durationMs": 84,
+        "B": {
+          "durations": {
+            "setSource": 1.3824580000000424,
+            "start": 208.61945800000103,
+            "startReady": 0.11516699999992852,
+            "decide": 83.59320799999841,
+            "close": 0.12045799999759765
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.20524999999906868,
+            "start": 187.52383299999929,
+            "startReady": 0.09575000000040745,
+            "decide": 83.4552079999994,
+            "close": 0.1427079999994021
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 17,
+        "phase": "boundary",
+        "repetition": 1,
+        "offsetMs": -4,
+        "order": "BA",
+        "durationMs": 76,
+        "B": {
+          "durations": {
+            "setSource": 1.319415999998455,
+            "start": 211.5022089999984,
+            "startReady": 0.13624999999592546,
+            "decide": 84.01958300000115,
+            "close": 0.12841699999989942
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.19316699999762932,
+            "start": 183.12233399999968,
+            "startReady": 0.10162500000296859,
+            "decide": 83.40204200000153,
+            "close": 0.1413749999992433
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 18,
+        "phase": "boundary",
+        "repetition": 1,
+        "offsetMs": 0,
+        "order": "BA",
+        "durationMs": 80,
+        "B": {
+          "durations": {
+            "setSource": 1.1049169999969308,
+            "start": 211.187417000001,
+            "startReady": 0.11662500000238651,
+            "decide": 83.49070799999754,
+            "close": 0.12420800000109011
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.2249999999985448,
+            "start": 187.95383399999992,
+            "startReady": 0.09883299999637529,
+            "decide": 81.9963329999955,
+            "close": 0.14516700000240235
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 19,
+        "phase": "boundary",
+        "repetition": 1,
+        "offsetMs": -10,
+        "order": "BA",
+        "durationMs": 70,
+        "B": {
+          "durations": {
+            "setSource": 1.4320840000000317,
+            "start": 217.03424999999697,
+            "startReady": 0.11516699999629054,
+            "decide": 83.3741250000021,
+            "close": 0.11512500000389991
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.24545900000521215,
+            "start": 185.30875000000378,
+            "startReady": 0.11533300000155577,
+            "decide": 70.87358300000051,
+            "close": 1.204916000002413
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 70.1805830000012
+        }
+      },
+      {
+        "index": 20,
+        "phase": "boundary",
+        "repetition": 1,
+        "offsetMs": -6,
+        "order": "BA",
+        "durationMs": 74,
+        "B": {
+          "durations": {
+            "setSource": 1.170749999997497,
+            "start": 211.72495799999888,
+            "startReady": 0.11475000000064028,
+            "decide": 81.9361659999995,
+            "close": 0.11325000000215368
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.24124999999912689,
+            "start": 186.41654199999903,
+            "startReady": 0.10966699999698903,
+            "decide": 78.52895799999533,
+            "close": 1.2614170000015292
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 77.75166600000375
+        }
+      },
+      {
+        "index": 21,
+        "phase": "boundary",
+        "repetition": 1,
+        "offsetMs": -12,
+        "order": "BA",
+        "durationMs": 68,
+        "B": {
+          "durations": {
+            "setSource": 1.4259999999994761,
+            "start": 200.80687500000204,
+            "startReady": 0.1428749999977299,
+            "decide": 76.99962499999674,
+            "close": 0.966415999995661
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 69.82754099999875
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.19991599999775644,
+            "start": 183.80637500000012,
+            "startReady": 0.12024999999994179,
+            "decide": 77.26441700000578,
+            "close": 1.196791000002122
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 76.06212500000402
+        }
+      },
+      {
+        "index": 22,
+        "phase": "boundary",
+        "repetition": 2,
+        "offsetMs": 0,
+        "order": "AB",
+        "durationMs": 80,
+        "A": {
+          "durations": {
+            "setSource": 1.3067079999964335,
+            "start": 213.24633300000278,
+            "startReady": 0.1321250000037253,
+            "decide": 83.55395899999712,
+            "close": 0.12945799999579322
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.24129199999879347,
+            "start": 189.82474999999977,
+            "startReady": 0.1358749999999418,
+            "decide": 83.455375000005,
+            "close": 0.10166699999535922
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 23,
+        "phase": "boundary",
+        "repetition": 2,
+        "offsetMs": -10,
+        "order": "AB",
+        "durationMs": 70,
+        "A": {
+          "durations": {
+            "setSource": 1.10095800000272,
+            "start": 210.99095800000214,
+            "startReady": 0.12058299999625888,
+            "decide": 79.55962500000169,
+            "close": 2.452791999996407
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 78.05804100000387
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.23637500000040745,
+            "start": 187.82937500000116,
+            "startReady": 0.11987499999668216,
+            "decide": 85.05437499999971,
+            "close": 0.11750000000029104
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 24,
+        "phase": "boundary",
+        "repetition": 2,
+        "offsetMs": 2,
+        "order": "AB",
+        "durationMs": 82,
+        "A": {
+          "durations": {
+            "setSource": 0.8783330000005662,
+            "start": 193.8319580000025,
+            "startReady": 0.14762500000506407,
+            "decide": 83.5414579999997,
+            "close": 0.13620799999625888
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.21504200000345008,
+            "start": 188.88150000000314,
+            "startReady": 0.12108400000579422,
+            "decide": 82.09712500000023,
+            "close": 0.12099999999918509
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 25,
+        "phase": "boundary",
+        "repetition": 2,
+        "offsetMs": -8,
+        "order": "AB",
+        "durationMs": 72,
+        "A": {
+          "durations": {
+            "setSource": 1.3464579999999842,
+            "start": 211.6605830000044,
+            "startReady": 0.11141700000007404,
+            "decide": 73.11712499999703,
+            "close": 1.1566660000025877
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 72.01204200000211
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.20558300000266172,
+            "start": 185.8987500000003,
+            "startReady": 0.11554199999955017,
+            "decide": 88.031332999999,
+            "close": 0.13562500000261934
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 26,
+        "phase": "boundary",
+        "repetition": 2,
+        "offsetMs": -12,
+        "order": "AB",
+        "durationMs": 68,
+        "A": {
+          "durations": {
+            "setSource": 1.3574590000062017,
+            "start": 211.1128749999989,
+            "startReady": 0.11462500000197906,
+            "decide": 71.52070900000399,
+            "close": 1.0857919999980368
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 70.51958300000115
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.21529200000077253,
+            "start": 186.65387499999633,
+            "startReady": 0.12862499999755528,
+            "decide": 75.3648749999993,
+            "close": 0.9680829999997513
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 68.29516700000386
+        }
+      },
+      {
+        "index": 27,
+        "phase": "boundary",
+        "repetition": 2,
+        "offsetMs": -6,
+        "order": "AB",
+        "durationMs": 74,
+        "A": {
+          "durations": {
+            "setSource": 1.359667000004265,
+            "start": 212.84700000000157,
+            "startReady": 0.1126250000015716,
+            "decide": 83.4875419999953,
+            "close": 0.12712499999906868
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2093749999985448,
+            "start": 187.23345800000243,
+            "startReady": 0.12162499999976717,
+            "decide": 83.53591700000106,
+            "close": 0.15895799999998417
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 28,
+        "phase": "boundary",
+        "repetition": 2,
+        "offsetMs": -2,
+        "order": "AB",
+        "durationMs": 78,
+        "A": {
+          "durations": {
+            "setSource": 0.8055419999946025,
+            "start": 211.87625000000116,
+            "startReady": 0.1030830000017886,
+            "decide": 83.51495799999975,
+            "close": 0.16320899999846006
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2303749999991851,
+            "start": 188.37362500000017,
+            "startReady": 0.12279200000193669,
+            "decide": 85.64520900000207,
+            "close": 0.1333329999979469
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 29,
+        "phase": "boundary",
+        "repetition": 2,
+        "offsetMs": -4,
+        "order": "AB",
+        "durationMs": 76,
+        "A": {
+          "durations": {
+            "setSource": 1.260999999998603,
+            "start": 210.09658299999865,
+            "startReady": 0.15212500000052387,
+            "decide": 83.51000000000204,
+            "close": 0.11616700000013225
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2167909999989206,
+            "start": 191.00158300000476,
+            "startReady": 0.13720800000010058,
+            "decide": 84.92512500000157,
+            "close": 0.1339589999988675
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 30,
+        "phase": "boundary",
+        "repetition": 2,
+        "offsetMs": 4,
+        "order": "AB",
+        "durationMs": 84,
+        "A": {
+          "durations": {
+            "setSource": 0.9739159999953699,
+            "start": 211.15412499999366,
+            "startReady": 0.11233299999730662,
+            "decide": 84.25070799999958,
+            "close": 0.12937500000407454
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.21074999999837019,
+            "start": 187.76600000000326,
+            "startReady": 0.1045419999936712,
+            "decide": 83.51024999999936,
+            "close": 0.13824999999633292
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 31,
+        "phase": "boundary",
+        "repetition": 3,
+        "offsetMs": -2,
+        "order": "BA",
+        "durationMs": 78,
+        "B": {
+          "durations": {
+            "setSource": 1.2540420000004815,
+            "start": 211.8996249999982,
+            "startReady": 0.11704199999803677,
+            "decide": 85.9375,
+            "close": 0.19158400000014808
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.2139999999999418,
+            "start": 185.05741700000362,
+            "startReady": 0.13616700000420678,
+            "decide": 83.546666000002,
+            "close": 0.12166599999909522
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 32,
+        "phase": "boundary",
+        "repetition": 3,
+        "offsetMs": -6,
+        "order": "BA",
+        "durationMs": 74,
+        "B": {
+          "durations": {
+            "setSource": 1.370999999999185,
+            "start": 212.10970799998904,
+            "startReady": 0.13712499999383,
+            "decide": 88.4445829999895,
+            "close": 0.14404199999989942
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.2509579999896232,
+            "start": 189.0397920000105,
+            "startReady": 0.08758300000044983,
+            "decide": 83.58675000000221,
+            "close": 0.16920799999206793
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 33,
+        "phase": "boundary",
+        "repetition": 3,
+        "offsetMs": 0,
+        "order": "BA",
+        "durationMs": 80,
+        "B": {
+          "durations": {
+            "setSource": 1.3066660000040429,
+            "start": 211.41929099999834,
+            "startReady": 0.11524999998800922,
+            "decide": 88.85741699999198,
+            "close": 0.12875000000349246
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.20387499999196734,
+            "start": 187.1907910000009,
+            "startReady": 0.11058300000149757,
+            "decide": 83.53862500000105,
+            "close": 0.12058299999625888
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 34,
+        "phase": "boundary",
+        "repetition": 3,
+        "offsetMs": -12,
+        "order": "BA",
+        "durationMs": 68,
+        "B": {
+          "durations": {
+            "setSource": 1.2180419999931473,
+            "start": 209.9897090000013,
+            "startReady": 0.12216600000101607,
+            "decide": 83.99508300000161,
+            "close": 0.1073340000002645
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.18733300000894815,
+            "start": 190.60704199998872,
+            "startReady": 0.08908299999893643,
+            "decide": 70.4607079999987,
+            "close": 0.988167000003159
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 69.83395799998834
+        }
+      },
+      {
+        "index": 35,
+        "phase": "boundary",
+        "repetition": 3,
+        "offsetMs": 2,
+        "order": "BA",
+        "durationMs": 82,
+        "B": {
+          "durations": {
+            "setSource": 1.1138749999954598,
+            "start": 213.3902500000113,
+            "startReady": 0.11699999999837019,
+            "decide": 82.5278330000001,
+            "close": 0.11937500000931323
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.25237500001094304,
+            "start": 187.33095799999137,
+            "startReady": 0.11579199999687262,
+            "decide": 83.70595799999137,
+            "close": 0.13420900001074187
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 36,
+        "phase": "boundary",
+        "repetition": 3,
+        "offsetMs": -10,
+        "order": "BA",
+        "durationMs": 70,
+        "B": {
+          "durations": {
+            "setSource": 1.3026669999962905,
+            "start": 208.5329170000041,
+            "startReady": 0.12158300000010058,
+            "decide": 85.80829199998698,
+            "close": 0.10562499999650754
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.1784170000028098,
+            "start": 184.45300000000861,
+            "startReady": 0.11566599999787286,
+            "decide": 76.50079099999857,
+            "close": 1.1794999999983702
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 75.88312499999302
+        }
+      },
+      {
+        "index": 37,
+        "phase": "boundary",
+        "repetition": 3,
+        "offsetMs": 4,
+        "order": "BA",
+        "durationMs": 84,
+        "B": {
+          "durations": {
+            "setSource": 1.2235420000070008,
+            "start": 204.55229199999303,
+            "startReady": 0.10354199999710545,
+            "decide": 83.31175000000803,
+            "close": 0.10412499999802094
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.14279199999873526,
+            "start": 183.95141700000386,
+            "startReady": 0.09170800000720192,
+            "decide": 83.51720800000476,
+            "close": 0.14233399998920504
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 38,
+        "phase": "boundary",
+        "repetition": 3,
+        "offsetMs": -4,
+        "order": "BA",
+        "durationMs": 76,
+        "B": {
+          "durations": {
+            "setSource": 1.3802920000016456,
+            "start": 214.6195000000007,
+            "startReady": 0.11066600000776816,
+            "decide": 86.8969999999972,
+            "close": 0.13316700000723358
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.21983299999556039,
+            "start": 185.87629199998628,
+            "startReady": 0.11400000000139698,
+            "decide": 79.34320899999875,
+            "close": 1.164875000002212
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 78.75479199999245
+        }
+      },
+      {
+        "index": 39,
+        "phase": "boundary",
+        "repetition": 3,
+        "offsetMs": -8,
+        "order": "BA",
+        "durationMs": 72,
+        "B": {
+          "durations": {
+            "setSource": 1.0957080000080168,
+            "start": 203.64800000000105,
+            "startReady": 0.08645899999828544,
+            "decide": 81.53066699999908,
+            "close": 0.1159159999951953
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.1672919999982696,
+            "start": 182.96729200000118,
+            "startReady": 0.12645799999882001,
+            "decide": 81.74608300000546,
+            "close": 0.13225000000966247
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 40,
+        "phase": "boundary",
+        "repetition": 4,
+        "offsetMs": 2,
+        "order": "AB",
+        "durationMs": 82,
+        "A": {
+          "durations": {
+            "setSource": 1.2969999999913853,
+            "start": 215.8233340000006,
+            "startReady": 0.10166600000229664,
+            "decide": 83.65108299998974,
+            "close": 0.14274999999906868
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.22245899999688845,
+            "start": 187.07850000000326,
+            "startReady": 0.11745900000096299,
+            "decide": 83.49120799999218,
+            "close": 0.11912500001199078
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 41,
+        "phase": "boundary",
+        "repetition": 4,
+        "offsetMs": 4,
+        "order": "AB",
+        "durationMs": 84,
+        "A": {
+          "durations": {
+            "setSource": 1.0264999999926658,
+            "start": 219.44995799999742,
+            "startReady": 0.11504099999729078,
+            "decide": 82.47724999999627,
+            "close": 0.11979199999768753
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.21458400000119582,
+            "start": 186.36529200000223,
+            "startReady": 0.1113749999931315,
+            "decide": 83.36708400001226,
+            "close": 0.1027920000051381
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 42,
+        "phase": "boundary",
+        "repetition": 4,
+        "offsetMs": -10,
+        "order": "AB",
+        "durationMs": 70,
+        "A": {
+          "durations": {
+            "setSource": 0.7202919999981532,
+            "start": 213.02208399999654,
+            "startReady": 0.09491600000183098,
+            "decide": 75.5566669999971,
+            "close": 1.2101669999974547
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 74.47704200001317
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2474579999980051,
+            "start": 189.16700000000128,
+            "startReady": 0.1324590000003809,
+            "decide": 85.41362500000105,
+            "close": 0.11662499999511056
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 43,
+        "phase": "boundary",
+        "repetition": 4,
+        "offsetMs": -12,
+        "order": "AB",
+        "durationMs": 68,
+        "A": {
+          "durations": {
+            "setSource": 0.5821670000004815,
+            "start": 223.3543340000033,
+            "startReady": 0.1027499999909196,
+            "decide": 73.66208400001051,
+            "close": 1.1966249999968568
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 72.52791699999943
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.228333000006387,
+            "start": 187.6535409999924,
+            "startReady": 0.12337499999557622,
+            "decide": 78.22558299999218,
+            "close": 1.1514999999926658
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 71.0324580000015
+        }
+      },
+      {
+        "index": 44,
+        "phase": "boundary",
+        "repetition": 4,
+        "offsetMs": -6,
+        "order": "AB",
+        "durationMs": 74,
+        "A": {
+          "durations": {
+            "setSource": 1.0958749999990687,
+            "start": 226.2182499999908,
+            "startReady": 0.09408300000359304,
+            "decide": 82.32595800000126,
+            "close": 0.1334999999962747
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2172089999949094,
+            "start": 188.62041699999827,
+            "startReady": 0.1058750000083819,
+            "decide": 83.48537500000384,
+            "close": 0.12695800000801682
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 45,
+        "phase": "boundary",
+        "repetition": 4,
+        "offsetMs": -4,
+        "order": "AB",
+        "durationMs": 76,
+        "A": {
+          "durations": {
+            "setSource": 1.1255419999943115,
+            "start": 224.45595800000592,
+            "startReady": 0.10808399999223184,
+            "decide": 83.43654199999582,
+            "close": 0.1321250000037253
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2308329999941634,
+            "start": 202.40716699999757,
+            "startReady": 0.0812080000032438,
+            "decide": 83.36841700000514,
+            "close": 0.14075000000593718
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 46,
+        "phase": "boundary",
+        "repetition": 4,
+        "offsetMs": -8,
+        "order": "AB",
+        "durationMs": 72,
+        "A": {
+          "durations": {
+            "setSource": 1.0690000000031432,
+            "start": 224.0458329999965,
+            "startReady": 0.09924999999930151,
+            "decide": 74.41616700000304,
+            "close": 1.1950419999920996
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 73.18108300000313
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2308340000017779,
+            "start": 187.3976660000044,
+            "startReady": 0.09041599999181926,
+            "decide": 81.55774999999267,
+            "close": 0.12325000000419095
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 47,
+        "phase": "boundary",
+        "repetition": 4,
+        "offsetMs": -2,
+        "order": "AB",
+        "durationMs": 78,
+        "A": {
+          "durations": {
+            "setSource": 0.9084589999984019,
+            "start": 218.24150000000373,
+            "startReady": 0.09533299999020528,
+            "decide": 82.1789579999895,
+            "close": 0.1341670000110753
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.21904200001154095,
+            "start": 192.76033400000597,
+            "startReady": 0.1124580000032438,
+            "decide": 83.49687500001164,
+            "close": 0.10462499999266583
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 48,
+        "phase": "boundary",
+        "repetition": 4,
+        "offsetMs": 0,
+        "order": "AB",
+        "durationMs": 80,
+        "A": {
+          "durations": {
+            "setSource": 1.0253749999974389,
+            "start": 217.43241700000362,
+            "startReady": 0.11229200000525452,
+            "decide": 83.44870799999626,
+            "close": 0.12141599999449681
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.24049999999988358,
+            "start": 190.91720799999894,
+            "startReady": 0.13437500000873115,
+            "decide": 88.18345899999258,
+            "close": 0.11520899999595713
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 49,
+        "phase": "boundary",
+        "repetition": 5,
+        "offsetMs": -4,
+        "order": "BA",
+        "durationMs": 76,
+        "B": {
+          "durations": {
+            "setSource": 0.9503750000003492,
+            "start": 213.58724999999686,
+            "startReady": 0.09658299999136943,
+            "decide": 83.69395900001109,
+            "close": 0.12945799999579322
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.18087500000547152,
+            "start": 188.27754199999617,
+            "startReady": 0.12258399999700487,
+            "decide": 81.3065409999981,
+            "close": 0.12354200000117999
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 50,
+        "phase": "boundary",
+        "repetition": 5,
+        "offsetMs": -6,
+        "order": "BA",
+        "durationMs": 74,
+        "B": {
+          "durations": {
+            "setSource": 1.1133330000011483,
+            "start": 214.88329100000556,
+            "startReady": 0.09654199999931734,
+            "decide": 82.59833300000173,
+            "close": 0.12116699999023695
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.2263750000129221,
+            "start": 190.83533299999544,
+            "startReady": 0.12245799999800511,
+            "decide": 82.72229200000584,
+            "close": 0.12266700000327546
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 51,
+        "phase": "boundary",
+        "repetition": 5,
+        "offsetMs": 2,
+        "order": "BA",
+        "durationMs": 82,
+        "B": {
+          "durations": {
+            "setSource": 0.5010409999958938,
+            "start": 203.15737499999523,
+            "startReady": 0.09733400000550319,
+            "decide": 82.84870800000499,
+            "close": 0.12770799999998417
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.20141699998930562,
+            "start": 189.9392499999958,
+            "startReady": 0.11924999998882413,
+            "decide": 83.46733400000085,
+            "close": 0.13766700000269338
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 52,
+        "phase": "boundary",
+        "repetition": 5,
+        "offsetMs": 4,
+        "order": "BA",
+        "durationMs": 84,
+        "B": {
+          "durations": {
+            "setSource": 1.0700829999987036,
+            "start": 214.489167000007,
+            "startReady": 0.09733299999788869,
+            "decide": 86.32437499999651,
+            "close": 0.2253340000024764
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.2151249999878928,
+            "start": 190.63487500000338,
+            "startReady": 0.12145800000871532,
+            "decide": 82.95279100000334,
+            "close": 0.11666599998716265
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 53,
+        "phase": "boundary",
+        "repetition": 5,
+        "offsetMs": 0,
+        "order": "BA",
+        "durationMs": 80,
+        "B": {
+          "durations": {
+            "setSource": 1.0527080000028946,
+            "start": 214.7841250000056,
+            "startReady": 0.1023340000101598,
+            "decide": 83.35800000000745,
+            "close": 0.11162500000500586
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.20070799998939037,
+            "start": 192.73033299999952,
+            "startReady": 0.13054100000590552,
+            "decide": 83.38187499999185,
+            "close": 0.10558400000445545
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 54,
+        "phase": "boundary",
+        "repetition": 5,
+        "offsetMs": -12,
+        "order": "BA",
+        "durationMs": 68,
+        "B": {
+          "durations": {
+            "setSource": 0.8747500000026776,
+            "start": 212.85220800001116,
+            "startReady": 0.12525000001187436,
+            "decide": 83.97054200001003,
+            "close": 0.11154199999873526
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.19325000001117587,
+            "start": 185.9654579999915,
+            "startReady": 0.12054199998965487,
+            "decide": 76.48270900000352,
+            "close": 1.1205840000038734
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 76.0216250000085
+        }
+      },
+      {
+        "index": 55,
+        "phase": "boundary",
+        "repetition": 5,
+        "offsetMs": -8,
+        "order": "BA",
+        "durationMs": 72,
+        "B": {
+          "durations": {
+            "setSource": 0.6843749999970896,
+            "start": 212.1268340000097,
+            "startReady": 0.1143749999901047,
+            "decide": 88.17966700000397,
+            "close": 0.12037499999860302
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.23470799998904113,
+            "start": 187.54929199999606,
+            "startReady": 0.12075000000186265,
+            "decide": 81.50962500000605,
+            "close": 0.12695800000801682
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 56,
+        "phase": "boundary",
+        "repetition": 5,
+        "offsetMs": -10,
+        "order": "BA",
+        "durationMs": 70,
+        "B": {
+          "durations": {
+            "setSource": 0.46033299999544397,
+            "start": 210.22979099999066,
+            "startReady": 0.09149999999499414,
+            "decide": 76.98041600000579,
+            "close": 0.9971249999944121
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 70.01854200000525
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.17254200000024866,
+            "start": 186.5138750000042,
+            "startReady": 0.08504200000606943,
+            "decide": 78.52104200000758,
+            "close": 1.1587499999877764
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 78.03566700000374
+        }
+      },
+      {
+        "index": 57,
+        "phase": "boundary",
+        "repetition": 5,
+        "offsetMs": -2,
+        "order": "BA",
+        "durationMs": 78,
+        "B": {
+          "durations": {
+            "setSource": 1.067957999999635,
+            "start": 215.03949999999895,
+            "startReady": 0.11970799999835435,
+            "decide": 85.41649999999208,
+            "close": 0.11216699999931734
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.1905830000032438,
+            "start": 186.6245409999974,
+            "startReady": 0.09491600000183098,
+            "decide": 83.3901249999908,
+            "close": 0.12387500000477303
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 58,
+        "phase": "boundary",
+        "repetition": 6,
+        "offsetMs": -8,
+        "order": "AB",
+        "durationMs": 72,
+        "A": {
+          "durations": {
+            "setSource": 1.0519999999960419,
+            "start": 213.49254099999962,
+            "startReady": 0.10295899999618996,
+            "decide": 82.21587500000896,
+            "close": 0.1305829999910202
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.21345799999835435,
+            "start": 189.895709000004,
+            "startReady": 0.1164169999974547,
+            "decide": 79.02099999999336,
+            "close": 1.015916999996989
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 72.01404100000218
+        }
+      },
+      {
+        "index": 59,
+        "phase": "boundary",
+        "repetition": 6,
+        "offsetMs": 2,
+        "order": "AB",
+        "durationMs": 82,
+        "A": {
+          "durations": {
+            "setSource": 1.0587499999965075,
+            "start": 213.00058400000853,
+            "startReady": 0.09937500000523869,
+            "decide": 81.41366600000765,
+            "close": 0.12379199999850243
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.22541700000874698,
+            "start": 189.8044169999921,
+            "startReady": 0.09041599999181926,
+            "decide": 83.4931249999936,
+            "close": 0.09670900000492111
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 60,
+        "phase": "boundary",
+        "repetition": 6,
+        "offsetMs": -2,
+        "order": "AB",
+        "durationMs": 78,
+        "A": {
+          "durations": {
+            "setSource": 1.0020840000070166,
+            "start": 215.20579100000032,
+            "startReady": 0.09849999999278225,
+            "decide": 82.63158299999486,
+            "close": 0.12241700000595301
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.22745800000848249,
+            "start": 192.26050000000396,
+            "startReady": 0.09683399999630637,
+            "decide": 86.03170800000953,
+            "close": 0.10216700000455603
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 61,
+        "phase": "boundary",
+        "repetition": 6,
+        "offsetMs": -12,
+        "order": "AB",
+        "durationMs": 68,
+        "A": {
+          "durations": {
+            "setSource": 1.1651250000140863,
+            "start": 213.11920900001132,
+            "startReady": 0.11579100000381004,
+            "decide": 69.06112500000745,
+            "close": 1.7742920000018785
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 68.01254199999676
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2627079999947455,
+            "start": 186.90512499999022,
+            "startReady": 0.08724999999685679,
+            "decide": 84.08041699999012,
+            "close": 0.1123749999969732
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 62,
+        "phase": "boundary",
+        "repetition": 6,
+        "offsetMs": 4,
+        "order": "AB",
+        "durationMs": 84,
+        "A": {
+          "durations": {
+            "setSource": 0.9117919999989681,
+            "start": 213.85808400000678,
+            "startReady": 0.09254199999850243,
+            "decide": 82.38991699999315,
+            "close": 0.10708299999532755
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.21316600000136532,
+            "start": 189.6788749999978,
+            "startReady": 0.10345799999777228,
+            "decide": 83.44712500000605,
+            "close": 0.11462500000197906
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 63,
+        "phase": "boundary",
+        "repetition": 6,
+        "offsetMs": -10,
+        "order": "AB",
+        "durationMs": 70,
+        "A": {
+          "durations": {
+            "setSource": 0.8794999999954598,
+            "start": 200.61345799999253,
+            "startReady": 0.08591700000397395,
+            "decide": 70.57991599998786,
+            "close": 1.0766250000015134
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 70.01454099999683
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.19058399999630637,
+            "start": 198.0064999999886,
+            "startReady": 0.09570799999346491,
+            "decide": 86.35812499999884,
+            "close": 0.10766700000385754
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 64,
+        "phase": "boundary",
+        "repetition": 6,
+        "offsetMs": -6,
+        "order": "AB",
+        "durationMs": 74,
+        "A": {
+          "durations": {
+            "setSource": 0.9402080000145361,
+            "start": 206.37008399999468,
+            "startReady": 0.11708399999770336,
+            "decide": 83.33620799999335,
+            "close": 0.17024999999557622
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2658330000122078,
+            "start": 189.74591700002202,
+            "startReady": 0.10124999997788109,
+            "decide": 81.9432079999824,
+            "close": 0.11133300000801682
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 65,
+        "phase": "boundary",
+        "repetition": 6,
+        "offsetMs": 0,
+        "order": "AB",
+        "durationMs": 80,
+        "A": {
+          "durations": {
+            "setSource": 1.0950829999928828,
+            "start": 222.19991700001992,
+            "startReady": 0.099166999978479,
+            "decide": 83.35483299999032,
+            "close": 0.092333000007784
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.19687499999417923,
+            "start": 186.34375,
+            "startReady": 0.08424999998533167,
+            "decide": 82.38762500000303,
+            "close": 0.1008330000040587
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 66,
+        "phase": "boundary",
+        "repetition": 6,
+        "offsetMs": -4,
+        "order": "AB",
+        "durationMs": 76,
+        "A": {
+          "durations": {
+            "setSource": 1.0812079999886919,
+            "start": 216.0036250000121,
+            "startReady": 0.08866700000362471,
+            "decide": 83.4715000000142,
+            "close": 0.12383299999055453
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "B": {
+          "durations": {
+            "setSource": 0.2042080000101123,
+            "start": 187.62087499999325,
+            "startReady": 0.08591699998942204,
+            "decide": 83.39562500000466,
+            "close": 0.12066700001014397
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 67,
+        "phase": "boundary",
+        "repetition": 7,
+        "offsetMs": 2,
+        "order": "BA",
+        "durationMs": 82,
+        "B": {
+          "durations": {
+            "setSource": 1.026624999998603,
+            "start": 217.347374999983,
+            "startReady": 0.07908400002634153,
+            "decide": 83.49995800000033,
+            "close": 0.11541699999361299
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.19612499998765998,
+            "start": 188.02324999999837,
+            "startReady": 0.11262499997974373,
+            "decide": 83.42679200001294,
+            "close": 0.105916000000434
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      },
+      {
+        "index": 68,
+        "phase": "boundary",
+        "repetition": 7,
+        "offsetMs": -10,
+        "order": "BA",
+        "durationMs": 70,
+        "B": {
+          "durations": {
+            "setSource": 0.9668749999837019,
+            "start": 219.2630000000063,
+            "startReady": 0.09449999997741543,
+            "decide": 85.5854999999865,
+            "close": 0.1098749999946449
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.1759590000147,
+            "start": 186.25654099998064,
+            "startReady": 0.08704099999158643,
+            "decide": 79.19791700001224,
+            "close": 1.1487079999933485
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 78.03416700000525
+        }
+      },
+      {
+        "index": 69,
+        "phase": "boundary",
+        "repetition": 7,
+        "offsetMs": -12,
+        "order": "BA",
+        "durationMs": 68,
+        "B": {
+          "durations": {
+            "setSource": 0.5904589999991003,
+            "start": 217.9623750000028,
+            "startReady": 0.0878750000265427,
+            "decide": 76.73649999999907,
+            "close": 1.09170799999265
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 70.22449999998207
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.1939999999885913,
+            "start": 183.4684169999964,
+            "startReady": 0.11312500000349246,
+            "decide": 77.08904200000688,
+            "close": 1.0951670000213198
+          },
+          "timedOut": false,
+          "fixtureElapsedMs": 76.02237500000047
+        }
+      },
+      {
+        "index": 70,
+        "phase": "boundary",
+        "repetition": 7,
+        "offsetMs": -8,
+        "order": "BA",
+        "durationMs": 72,
+        "B": {
+          "durations": {
+            "setSource": 1.0334169999987353,
+            "start": 220.48408300001756,
+            "startReady": 0.09225000001606531,
+            "decide": 81.453125,
+            "close": 0.13741600001230836
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        },
+        "A": {
+          "durations": {
+            "setSource": 0.21675000002142042,
+            "start": 189.26604199997382,
+            "startReady": 0.1023750000167638,
+            "decide": 82.14983400001074,
+            "close": 0.11574999999720603
+          },
+          "timedOut": true,
+          "fixtureElapsedMs": null
+        }
+      }
+    ],
+    "loadChecks": [
+      {
+        "pair": 0,
+        "load": [
+          1.64013671875,
+          2.462890625,
+          3.46435546875
+        ]
+      },
+      {
+        "pair": 1,
+        "load": [
+          1.64013671875,
+          2.462890625,
+          3.46435546875
+        ]
+      },
+      {
+        "pair": 2,
+        "load": [
+          1.64013671875,
+          2.462890625,
+          3.46435546875
+        ]
+      },
+      {
+        "pair": 3,
+        "load": [
+          1.6689453125,
+          2.455078125,
+          3.45556640625
+        ]
+      },
+      {
+        "pair": 4,
+        "load": [
+          1.6689453125,
+          2.455078125,
+          3.45556640625
+        ]
+      },
+      {
+        "pair": 5,
+        "load": [
+          1.53515625,
+          2.4140625,
+          3.43505859375
+        ]
+      },
+      {
+        "pair": 6,
+        "load": [
+          1.53515625,
+          2.4140625,
+          3.43505859375
+        ]
+      },
+      {
+        "pair": 7,
+        "load": [
+          1.53515625,
+          2.4140625,
+          3.43505859375
+        ]
+      },
+      {
+        "pair": 8,
+        "load": [
+          1.4921875,
+          2.39013671875,
+          3.42041015625
+        ]
+      },
+      {
+        "pair": 9,
+        "load": [
+          1.4921875,
+          2.39013671875,
+          3.42041015625
+        ]
+      },
+      {
+        "pair": 10,
+        "load": [
+          1.53271484375,
+          2.38330078125,
+          3.41162109375
+        ]
+      },
+      {
+        "pair": 11,
+        "load": [
+          1.53271484375,
+          2.38330078125,
+          3.41162109375
+        ]
+      },
+      {
+        "pair": 12,
+        "load": [
+          1.53271484375,
+          2.38330078125,
+          3.41162109375
+        ]
+      },
+      {
+        "pair": 13,
+        "load": [
+          1.64990234375,
+          2.39306640625,
+          3.4091796875
+        ]
+      },
+      {
+        "pair": 14,
+        "load": [
+          1.64990234375,
+          2.39306640625,
+          3.4091796875
+        ]
+      },
+      {
+        "pair": 15,
+        "load": [
+          1.837890625,
+          2.41943359375,
+          3.41259765625
+        ]
+      },
+      {
+        "pair": 16,
+        "load": [
+          1.837890625,
+          2.41943359375,
+          3.41259765625
+        ]
+      },
+      {
+        "pair": 17,
+        "load": [
+          1.837890625,
+          2.41943359375,
+          3.41259765625
+        ]
+      },
+      {
+        "pair": 18,
+        "load": [
+          1.8505859375,
+          2.412109375,
+          3.404296875
+        ]
+      },
+      {
+        "pair": 19,
+        "load": [
+          1.8505859375,
+          2.412109375,
+          3.404296875
+        ]
+      },
+      {
+        "pair": 20,
+        "load": [
+          1.8623046875,
+          2.40478515625,
+          3.39599609375
+        ]
+      },
+      {
+        "pair": 21,
+        "load": [
+          1.8623046875,
+          2.40478515625,
+          3.39599609375
+        ]
+      },
+      {
+        "pair": 22,
+        "load": [
+          1.79296875,
+          2.38134765625,
+          3.3818359375
+        ]
+      },
+      {
+        "pair": 23,
+        "load": [
+          1.79296875,
+          2.38134765625,
+          3.3818359375
+        ]
+      },
+      {
+        "pair": 24,
+        "load": [
+          1.79296875,
+          2.38134765625,
+          3.3818359375
+        ]
+      },
+      {
+        "pair": 25,
+        "load": [
+          1.64892578125,
+          2.341796875,
+          3.36181640625
+        ]
+      },
+      {
+        "pair": 26,
+        "load": [
+          1.64892578125,
+          2.341796875,
+          3.36181640625
+        ]
+      },
+      {
+        "pair": 27,
+        "load": [
+          1.5966796875,
+          2.3193359375,
+          3.34765625
+        ]
+      },
+      {
+        "pair": 28,
+        "load": [
+          1.5966796875,
+          2.3193359375,
+          3.34765625
+        ]
+      },
+      {
+        "pair": 29,
+        "load": [
+          1.5966796875,
+          2.3193359375,
+          3.34765625
+        ]
+      },
+      {
+        "pair": 30,
+        "load": [
+          1.62890625,
+          2.31396484375,
+          3.33935546875
+        ]
+      },
+      {
+        "pair": 31,
+        "load": [
+          1.62890625,
+          2.31396484375,
+          3.33935546875
+        ]
+      },
+      {
+        "pair": 32,
+        "load": [
+          1.658203125,
+          2.30859375,
+          3.3310546875
+        ]
+      },
+      {
+        "pair": 33,
+        "load": [
+          1.658203125,
+          2.30859375,
+          3.3310546875
+        ]
+      },
+      {
+        "pair": 34,
+        "load": [
+          1.658203125,
+          2.30859375,
+          3.3310546875
+        ]
+      },
+      {
+        "pair": 35,
+        "load": [
+          1.765625,
+          2.31982421875,
+          3.3291015625
+        ]
+      },
+      {
+        "pair": 36,
+        "load": [
+          1.765625,
+          2.31982421875,
+          3.3291015625
+        ]
+      },
+      {
+        "pair": 37,
+        "load": [
+          1.8642578125,
+          2.3310546875,
+          3.3271484375
+        ]
+      },
+      {
+        "pair": 38,
+        "load": [
+          1.8642578125,
+          2.3310546875,
+          3.3271484375
+        ]
+      },
+      {
+        "pair": 39,
+        "load": [
+          2.03515625,
+          2.3583984375,
+          3.3310546875
+        ]
+      },
+      {
+        "pair": 40,
+        "load": [
+          2.03515625,
+          2.3583984375,
+          3.3310546875
+        ]
+      },
+      {
+        "pair": 41,
+        "load": [
+          2.03515625,
+          2.3583984375,
+          3.3310546875
+        ]
+      },
+      {
+        "pair": 42,
+        "load": [
+          2.0322265625,
+          2.35205078125,
+          3.3232421875
+        ]
+      },
+      {
+        "pair": 43,
+        "load": [
+          2.0322265625,
+          2.35205078125,
+          3.3232421875
+        ]
+      },
+      {
+        "pair": 44,
+        "load": [
+          2.029296875,
+          2.34619140625,
+          3.3154296875
+        ]
+      },
+      {
+        "pair": 45,
+        "load": [
+          2.029296875,
+          2.34619140625,
+          3.3154296875
+        ]
+      },
+      {
+        "pair": 46,
+        "load": [
+          2.029296875,
+          2.34619140625,
+          3.3154296875
+        ]
+      },
+      {
+        "pair": 47,
+        "load": [
+          2.02685546875,
+          2.34033203125,
+          3.3076171875
+        ]
+      },
+      {
+        "pair": 48,
+        "load": [
+          2.02685546875,
+          2.34033203125,
+          3.3076171875
+        ]
+      },
+      {
+        "pair": 49,
+        "load": [
+          1.9443359375,
+          2.31787109375,
+          3.2939453125
+        ]
+      },
+      {
+        "pair": 50,
+        "load": [
+          1.9443359375,
+          2.31787109375,
+          3.2939453125
+        ]
+      },
+      {
+        "pair": 51,
+        "load": [
+          1.94873046875,
+          2.3125,
+          3.2861328125
+        ]
+      },
+      {
+        "pair": 52,
+        "load": [
+          1.94873046875,
+          2.3125,
+          3.2861328125
+        ]
+      },
+      {
+        "pair": 53,
+        "load": [
+          1.94873046875,
+          2.3125,
+          3.2861328125
+        ]
+      },
+      {
+        "pair": 54,
+        "load": [
+          1.87255859375,
+          2.29052734375,
+          3.2724609375
+        ]
+      },
+      {
+        "pair": 55,
+        "load": [
+          1.87255859375,
+          2.29052734375,
+          3.2724609375
+        ]
+      },
+      {
+        "pair": 56,
+        "load": [
+          2.28271484375,
+          2.36865234375,
+          3.2939453125
+        ]
+      },
+      {
+        "pair": 57,
+        "load": [
+          2.28271484375,
+          2.36865234375,
+          3.2939453125
+        ]
+      },
+      {
+        "pair": 58,
+        "load": [
+          2.28271484375,
+          2.36865234375,
+          3.2939453125
+        ]
+      },
+      {
+        "pair": 59,
+        "load": [
+          2.33984375,
+          2.37890625,
+          3.2919921875
+        ]
+      },
+      {
+        "pair": 60,
+        "load": [
+          2.33984375,
+          2.37890625,
+          3.2919921875
+        ]
+      },
+      {
+        "pair": 61,
+        "load": [
+          2.232421875,
+          2.35595703125,
+          3.2783203125
+        ]
+      },
+      {
+        "pair": 62,
+        "load": [
+          2.232421875,
+          2.35595703125,
+          3.2783203125
+        ]
+      },
+      {
+        "pair": 63,
+        "load": [
+          2.29345703125,
+          2.3662109375,
+          3.2763671875
+        ]
+      },
+      {
+        "pair": 64,
+        "load": [
+          2.29345703125,
+          2.3662109375,
+          3.2763671875
+        ]
+      },
+      {
+        "pair": 65,
+        "load": [
+          2.29345703125,
+          2.3662109375,
+          3.2763671875
+        ]
+      },
+      {
+        "pair": 66,
+        "load": [
+          2.349609375,
+          2.37646484375,
+          3.2744140625
+        ]
+      },
+      {
+        "pair": 67,
+        "load": [
+          2.349609375,
+          2.37646484375,
+          3.2744140625
+        ]
+      },
+      {
+        "pair": 68,
+        "load": [
+          2.3212890625,
+          2.3701171875,
+          3.2666015625
+        ]
+      },
+      {
+        "pair": 69,
+        "load": [
+          2.3212890625,
+          2.3701171875,
+          3.2666015625
+        ]
+      },
+      {
+        "pair": 70,
+        "load": [
+          2.3212890625,
+          2.3701171875,
+          3.2666015625
+        ]
+      },
+      {
+        "pair": 71,
+        "load": [
+          2.69580078125,
+          2.44677734375,
+          3.2880859375
+        ]
+      }
+    ],
+    "stockDefaultTimeoutMs": 5000,
+    "failure": {
+      "code": "TIMING_LOAD_REFUSED",
+      "load1": 2.69580078125,
+      "threshold": 2.5
+    },
+    "hostAfter": {
+      "node": "v24.13.0",
+      "tsx": "4.23.13",
+      "platform": "darwin",
+      "release": "27.0.0",
+      "arch": "arm64",
+      "cpuModel": "Apple M5",
+      "logicalCpus": 10,
+      "loadAverage": [
+        2.69580078125,
+        2.44677734375,
+        3.2880859375
+      ]
+    },
+    "finishedAt": "2026-10-09T03:09:01.164Z",
+    "summary": {
+      "overhead": {
+        "setSource": {
+          "A": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "B": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "pairedDelta": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "start": {
+          "A": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "B": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "pairedDelta": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "startReady": {
+          "A": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "B": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "pairedDelta": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "decide": {
+          "A": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "B": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "pairedDelta": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        },
+        "close": {
+          "A": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "B": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          },
+          "pairedDelta": {
+            "n": 0,
+            "median": null,
+            "p95": null,
+            "p99": null,
+            "max": null
+          }
+        }
+      },
+      "boundary": [
+        {
+          "dMs": 68,
+          "offsetMs": -12,
+          "n": 8,
+          "A": {
+            "timeouts": 0,
+            "fraction": 0,
+            "successfulFixtureMs": {
+              "n": 8,
+              "median": 74.27477100000397,
+              "p95": 76.05605845000282,
+              "p99": 76.06091169000378,
+              "max": 76.06212500000402
+            }
+          },
+          "B": {
+            "timeouts": 3,
+            "fraction": 0.375,
+            "successfulFixtureMs": {
+              "n": 5,
+              "median": 70.22449999998207,
+              "p95": 72.48275799999973,
+              "p99": 72.77281799999939,
+              "max": 72.8453329999993
+            }
+          },
+          "difference": 0.375,
+          "discordant": {
+            "onlyA": 0,
+            "onlyB": 3
+          }
+        },
+        {
+          "dMs": 70,
+          "offsetMs": -10,
+          "n": 8,
+          "A": {
+            "timeouts": 0,
+            "fraction": 0,
+            "successfulFixtureMs": {
+              "n": 8,
+              "median": 76.38454149999598,
+              "p95": 78.05021010000382,
+              "p99": 78.05647482000386,
+              "max": 78.05804100000387
+            }
+          },
+          "B": {
+            "timeouts": 7,
+            "fraction": 0.875,
+            "successfulFixtureMs": {
+              "n": 1,
+              "median": 70.01854200000525,
+              "p95": 70.01854200000525,
+              "p99": 70.01854200000525,
+              "max": 70.01854200000525
+            }
+          },
+          "difference": 0.875,
+          "discordant": {
+            "onlyA": 0,
+            "onlyB": 7
+          }
+        },
+        {
+          "dMs": 72,
+          "offsetMs": -8,
+          "n": 8,
+          "A": {
+            "timeouts": 6,
+            "fraction": 0.75,
+            "successfulFixtureMs": {
+              "n": 2,
+              "median": 72.59656250000262,
+              "p95": 73.12263095000307,
+              "p99": 73.16939259000311,
+              "max": 73.18108300000313
+            }
+          },
+          "B": {
+            "timeouts": 7,
+            "fraction": 0.875,
+            "successfulFixtureMs": {
+              "n": 1,
+              "median": 72.01404100000218,
+              "p95": 72.01404100000218,
+              "p99": 72.01404100000218,
+              "max": 72.01404100000218
+            }
+          },
+          "difference": 0.125,
+          "discordant": {
+            "onlyA": 1,
+            "onlyB": 2
+          }
+        },
+        {
+          "dMs": 74,
+          "offsetMs": -6,
+          "n": 7,
+          "A": {
+            "timeouts": 6,
+            "fraction": 0.8571428571428571,
+            "successfulFixtureMs": {
+              "n": 1,
+              "median": 77.75166600000375,
+              "p95": 77.75166600000375,
+              "p99": 77.75166600000375,
+              "max": 77.75166600000375
+            }
+          },
+          "B": {
+            "timeouts": 7,
+            "fraction": 1,
+            "successfulFixtureMs": {
+              "n": 0,
+              "median": null,
+              "p95": null,
+              "p99": null,
+              "max": null
+            }
+          },
+          "difference": 0.1428571428571429,
+          "discordant": {
+            "onlyA": 0,
+            "onlyB": 1
+          }
+        },
+        {
+          "dMs": 76,
+          "offsetMs": -4,
+          "n": 7,
+          "A": {
+            "timeouts": 5,
+            "fraction": 0.7142857142857143,
+            "successfulFixtureMs": {
+              "n": 2,
+              "median": 77.38656299999639,
+              "p95": 78.61796909999285,
+              "p99": 78.72742741999252,
+              "max": 78.75479199999245
+            }
+          },
+          "B": {
+            "timeouts": 7,
+            "fraction": 1,
+            "successfulFixtureMs": {
+              "n": 0,
+              "median": null,
+              "p95": null,
+              "p99": null,
+              "max": null
+            }
+          },
+          "difference": 0.2857142857142857,
+          "discordant": {
+            "onlyA": 0,
+            "onlyB": 2
+          }
+        },
+        {
+          "dMs": 78,
+          "offsetMs": -2,
+          "n": 7,
+          "A": {
+            "timeouts": 6,
+            "fraction": 0.8571428571428571,
+            "successfulFixtureMs": {
+              "n": 1,
+              "median": 78.00654199999917,
+              "p95": 78.00654199999917,
+              "p99": 78.00654199999917,
+              "max": 78.00654199999917
+            }
+          },
+          "B": {
+            "timeouts": 7,
+            "fraction": 1,
+            "successfulFixtureMs": {
+              "n": 0,
+              "median": null,
+              "p95": null,
+              "p99": null,
+              "max": null
+            }
+          },
+          "difference": 0.1428571428571429,
+          "discordant": {
+            "onlyA": 0,
+            "onlyB": 1
+          }
+        },
+        {
+          "dMs": 80,
+          "offsetMs": 0,
+          "n": 7,
+          "A": {
+            "timeouts": 7,
+            "fraction": 1,
+            "successfulFixtureMs": {
+              "n": 0,
+              "median": null,
+              "p95": null,
+              "p99": null,
+              "max": null
+            }
+          },
+          "B": {
+            "timeouts": 7,
+            "fraction": 1,
+            "successfulFixtureMs": {
+              "n": 0,
+              "median": null,
+              "p95": null,
+              "p99": null,
+              "max": null
+            }
+          },
+          "difference": 0,
+          "discordant": {
+            "onlyA": 0,
+            "onlyB": 0
+          }
+        },
+        {
+          "dMs": 82,
+          "offsetMs": 2,
+          "n": 8,
+          "A": {
+            "timeouts": 8,
+            "fraction": 1,
+            "successfulFixtureMs": {
+              "n": 0,
+              "median": null,
+              "p95": null,
+              "p99": null,
+              "max": null
+            }
+          },
+          "B": {
+            "timeouts": 8,
+            "fraction": 1,
+            "successfulFixtureMs": {
+              "n": 0,
+              "median": null,
+              "p95": null,
+              "p99": null,
+              "max": null
+            }
+          },
+          "difference": 0,
+          "discordant": {
+            "onlyA": 0,
+            "onlyB": 0
+          }
+        },
+        {
+          "dMs": 84,
+          "offsetMs": 4,
+          "n": 7,
+          "A": {
+            "timeouts": 7,
+            "fraction": 1,
+            "successfulFixtureMs": {
+              "n": 0,
+              "median": null,
+              "p95": null,
+              "p99": null,
+              "max": null
+            }
+          },
+          "B": {
+            "timeouts": 7,
+            "fraction": 1,
+            "successfulFixtureMs": {
+              "n": 0,
+              "median": null,
+              "p95": null,
+              "p99": null,
+              "max": null
+            }
+          },
+          "difference": 0,
+          "discordant": {
+            "onlyA": 0,
+            "onlyB": 0
+          }
+        }
+      ],
+      "boundaryShiftMs": 3.8928571428571423
+    },
+    "maxObservedLoad1": 2.69580078125,
+    "controlVerdict": "failed"
+  }
+}

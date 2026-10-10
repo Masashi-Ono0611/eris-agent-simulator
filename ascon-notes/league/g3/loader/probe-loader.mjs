@@ -1,16 +1,22 @@
 import threads, { isMainThread, workerData } from 'node:worker_threads';
-import { syncBuiltinESMExports, createRequire } from 'node:module';
+import { syncBuiltinESMExports } from 'node:module';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { createHash } from 'node:crypto';
 import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { makeWriter, probeError } from './probe-io.mjs';
+import { probeToolchain } from './probe-toolchain.mjs';
 
 const registration = Symbol.for('g3.offline.probe.registration');
 if (globalThis[registration]) throw probeError('G3_DOUBLE_REGISTRATION');
 globalThis[registration] = true;
-const require = createRequire(import.meta.url);
-if (process.version !== 'v24.13.0' || require('tsx/package.json').version !== '4.23.13') {
+const toolchain = probeToolchain();
+if (!toolchain.toolchainOverride && (toolchain.node !== toolchain.expectedNode || toolchain.tsx !== toolchain.expectedTsx)) {
+  throw probeError('G3_TOOLCHAIN_MISMATCH');
+}
+
+// An opt-in changes expectations, never disables the exact-version guard.
+if (toolchain.toolchainOverride && (toolchain.node !== toolchain.expectedNode || toolchain.tsx !== toolchain.expectedTsx)) {
   throw probeError('G3_TOOLCHAIN_MISMATCH');
 }
 
@@ -135,7 +141,8 @@ if (!isMainThread) {
   };
   syncBuiltinESMExports();
   ({ StrategyRunner: StockRunner } = await import(runnerURL));
-  write('probe_registered', { node: process.version, tsx: require('tsx/package.json').version,
+  write('probe_registered', { node: toolchain.node, tsx: toolchain.tsx,
+    toolchainOverride: toolchain.toolchainOverride,
     runnerSha256: hash(readFileSync(fileURLToPath(runnerURL))) });
 
   const prototype = StockRunner.prototype;

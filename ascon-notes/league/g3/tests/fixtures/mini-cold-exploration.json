@@ -1,0 +1,305 @@
+{
+  "schema": 2,
+  "mode": "exploration",
+  "status": "complete",
+  "provenance": {
+    "description": "Exact config and per-point counts extracted from user-provided cold Mac mini exploration; no raw timing or host metadata copied.",
+    "sourceSha256": "362e8f06ea1fc69cdedffa5e485e3b09b9cc701b8ec98b9e662b9cc7e6ee3271"
+  },
+  "config": {
+    "timeoutMs": 100,
+    "boundaryRepetitions": 4,
+    "arms": [
+      {
+        "name": "explore-A",
+        "probe": true,
+        "delayMs": 0
+      },
+      {
+        "name": "explore-B",
+        "probe": true,
+        "delayMs": 0
+      }
+    ]
+  },
+  "summary": {
+    "exploration": [
+      {
+        "dMs": 0,
+        "n": 4,
+        "A": {
+          "timeouts": 0,
+          "fraction": 0
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": 0
+        }
+      },
+      {
+        "dMs": 5,
+        "n": 4,
+        "A": {
+          "timeouts": 0,
+          "fraction": 0
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": 0
+        }
+      },
+      {
+        "dMs": 10,
+        "n": 4,
+        "A": {
+          "timeouts": 0,
+          "fraction": 0
+        },
+        "B": {
+          "timeouts": 0,
+          "fraction": 0
+        }
+      },
+      {
+        "dMs": 15,
+        "n": 4,
+        "A": {
+          "timeouts": 3,
+          "fraction": 0.75
+        },
+        "B": {
+          "timeouts": 3,
+          "fraction": 0.75
+        }
+      },
+      {
+        "dMs": 20,
+        "n": 4,
+        "A": {
+          "timeouts": 2,
+          "fraction": 0.5
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 25,
+        "n": 4,
+        "A": {
+          "timeouts": 3,
+          "fraction": 0.75
+        },
+        "B": {
+          "timeouts": 3,
+          "fraction": 0.75
+        }
+      },
+      {
+        "dMs": 30,
+        "n": 4,
+        "A": {
+          "timeouts": 3,
+          "fraction": 0.75
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 35,
+        "n": 4,
+        "A": {
+          "timeouts": 3,
+          "fraction": 0.75
+        },
+        "B": {
+          "timeouts": 3,
+          "fraction": 0.75
+        }
+      },
+      {
+        "dMs": 40,
+        "n": 4,
+        "A": {
+          "timeouts": 3,
+          "fraction": 0.75
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 45,
+        "n": 4,
+        "A": {
+          "timeouts": 3,
+          "fraction": 0.75
+        },
+        "B": {
+          "timeouts": 2,
+          "fraction": 0.5
+        }
+      },
+      {
+        "dMs": 50,
+        "n": 4,
+        "A": {
+          "timeouts": 3,
+          "fraction": 0.75
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 55,
+        "n": 4,
+        "A": {
+          "timeouts": 3,
+          "fraction": 0.75
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 60,
+        "n": 4,
+        "A": {
+          "timeouts": 4,
+          "fraction": 1
+        },
+        "B": {
+          "timeouts": 3,
+          "fraction": 0.75
+        }
+      },
+      {
+        "dMs": 65,
+        "n": 4,
+        "A": {
+          "timeouts": 4,
+          "fraction": 1
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 70,
+        "n": 4,
+        "A": {
+          "timeouts": 4,
+          "fraction": 1
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 75,
+        "n": 4,
+        "A": {
+          "timeouts": 4,
+          "fraction": 1
+        },
+        "B": {
+          "timeouts": 3,
+          "fraction": 0.75
+        }
+      },
+      {
+        "dMs": 80,
+        "n": 4,
+        "A": {
+          "timeouts": 3,
+          "fraction": 0.75
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 85,
+        "n": 4,
+        "A": {
+          "timeouts": 4,
+          "fraction": 1
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 90,
+        "n": 4,
+        "A": {
+          "timeouts": 4,
+          "fraction": 1
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 95,
+        "n": 4,
+        "A": {
+          "timeouts": 4,
+          "fraction": 1
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 100,
+        "n": 4,
+        "A": {
+          "timeouts": 4,
+          "fraction": 1
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 105,
+        "n": 4,
+        "A": {
+          "timeouts": 4,
+          "fraction": 1
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      },
+      {
+        "dMs": 110,
+        "n": 4,
+        "A": {
+          "timeouts": 4,
+          "fraction": 1
+        },
+        "B": {
+          "timeouts": 4,
+          "fraction": 1
+        }
+      }
+    ]
+  }
+}
