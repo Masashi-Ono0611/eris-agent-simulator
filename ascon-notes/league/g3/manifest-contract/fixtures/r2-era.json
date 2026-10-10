@@ -1,0 +1,16 @@
+{
+  "absoluteGitDir": "/synthetic/git/worktrees/release-r2",
+  "branch": "release/r2-c0",
+  "files": {
+    "example/agents/ascon-synthetic-r2/agent.ts": "fdc2e2f153171df65310e97e65228ceea5238e1617ed16b3b35c022eac76fdc7",
+    "example/agents/ascon-synthetic-r2/prompt.md": "3a1aae8a1437dcecb38b9bc70555582d29c92b3cd204e2094a2684f252b1529b",
+    "synthetic/common.ts": "71090d5bfb4942b9761d502fa99db8fb5b5bfff0b0698b2dff36326b3f386d20"
+  },
+  "head": "ec80bb8222222222222222222222222222222222",
+  "mainRef": "2222222222222222222222222222222222222222",
+  "scope": "synthetic-only / not G3 evidence",
+  "skippedPaths": [
+    "synthetic/excluded.txt"
+  ],
+  "source": "/synthetic/release-r2"
+}
