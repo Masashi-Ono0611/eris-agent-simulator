@@ -293,3 +293,60 @@ Codex実行環境のNode `v26.8.2`（別途、Claudeが再実行したNode `v24.
 引数・出力ハッシュの採取元や内容の真正性も認定しない。
 実観測を含む要件3全体とG3（Gate 3、自己改訂の実チェーン受入判定）は `BLOCKED` のまま。
 この追加は計画の要件3(a)だけを実装した記録であり、既存計画書の過去の実行記録は更新していない。
+
+## 要件4の人工取引境界結合器（2026-10-11追加）
+
+[`boundary-join.mjs`](boundary-join.mjs) の純粋関数 `joinBoundaries(input)` は、
+要件4（実取引境界の残高・支出先別許可額・予約・ガス費と予備・receipt（採掘後の実行結果）・
+events/blocks との対応）のうち、既存の事後結合器 [`posthoc-join/join.py`](../posthoc-join/join.py)
+が `not_evaluated` とする J11（残高・支出許可額）、J12（予約・ガス）、J05 の境界〜取引ハッシュ部分、
+J09 と J14 の各1点だけを人工入力で検査する。差分の整理は
+[要件4の差分表](../../G3-REQ4-GAP-2026-10-11.md)。J06〜J08 は再計算せず、取引ごとに
+既存結合器の判定を投影した `posthoc: {J06, J07, J08}` を受け取り、`PASS` 以外を引き継ぐ。
+出力試行は要件3人工結合器の出力（判断識別子・経路・経路内順番・親処理）の投影として受け取る。
+どちらも人工入力で宣言された値で、既存結合器を実行した結果ではない。実際の `join.py` は
+receipt 全文を読めず J06 を常に `BLOCKED` とするため、その実出力を渡すと必ず `BLOCKED` になる。
+
+```js
+{
+  schema: 1, provenance: 'SYNTHETIC', worldId: '...', owner: '0x...',
+  attempts: [{ decisionId, path, ordinal, disposition }],           // sent / not_sent / discarded
+  transactions: [{ hash, worldId, origin, blockNumber, posthoc: { J06, J07, J08 } }],
+  boundaries: [{ boundaryId, attempt, outcome, observedAtBlock,     // outcome: sent / not_sent
+    legs: [{ token, spender, amount }],
+    txs: [{ hash, from, nonce, gasLimit, maxFeePerGasWei }],
+    evidence: [{ kind, owner, token?, spender?, value, availability, boundaryId, resolvedBlockNumber }] }],
+}
+```
+
+`kind` は `balance` / `allowance` / `reservation` / `ethBalance` / `pendingGas` / `gasReserve`。
+`availability` が `observed` 以外（`derived` 導出値、`missing` 欠測、`error` 読取失敗、`ambiguous` 曖昧）、
+別の境界・別のブロック断面・別 spender・別保有者の値は `BLOCKED`。値は十進文字列で BigInt 計算し、
+欠測を0にしない。最大ガス費は署名済み取引欄から `Σ gasLimit × maxFeePerGasWei` として導出し、
+自己申告値を受け取らない。同じ送信元・nonce（送信者の取引連番）の別ハッシュは合算せず `BLOCKED`。
+送信済み境界での残高（予約控除後）・spender 別許可額・ガス予備の不足は `FAIL`。
+未送信（送信前拒否）境界の超過は拒否理由になり得るため矛盾にしない。
+
+判定語は `CONTRACT_OK_ON_SYNTHETIC` / `BLOCKED` / `FAIL` のみ。常に `g3Status: 'BLOCKED'`、
+`liveRecorderVerified: false`。人工由来の指定がなければ内容を見ずに `BLOCKED`。入力を変更せず、
+世界識別子や余分な本文・秘密フィールドを出力に転記しない。
+
+```sh
+node --test ascon-notes/league/g3/tests/boundary-join.test.mjs ascon-notes/league/g3/tests/source-join.test.mjs ascon-notes/league/g3/tests/decision-join.test.mjs
+node ascon-notes/league/g3/loader/boundary-join-mutation.mjs
+git diff --check
+```
+
+テストと人工入力 [`SYNTHETIC-boundary-join.mjs`](../tests/fixtures/SYNTHETIC-boundary-join.mjs) を先に追加し、
+実装未存在で `ERR_MODULE_NOT_FOUND`、終了コード1を確認してから実装した。Node `v24.13.0` で
+新規106件と既存の要件2・要件3の計196件、合計302件が成功、失敗・省略0件。正対照は検査ごとに
+固定の診断コードの発火を確かめ、負対照（観測済みの0、境界ちょうどの残高、未送信境界の超過、
+物理順の変更）は誤検出しないことを確かめる。変異検査は、残高超過検査の削除、許可額照合から
+spender を外す、欠測値の0補完、既存判定の `BLOCKED` を引き継がない、同 nonce の合算、の5つを
+個別にメモリ上で適用し、各々対応する正対照1件が失敗（子テスト終了コード1、期待判定に対し
+実際は `CONTRACT_OK_ON_SYNTHETIC`）することを確認した。元ファイルには書き込まない。
+既存の要件2・要件3の変異検査と事後結合器の53件のテストも再実行し成功した（事後結合器は無変更）。
+
+未検証: 実際の送信直前の状態・送信待ち行列・Worker 内で捨てた試行の値の採取、予約・ガス予備の
+実際の生成元、receipt 全文、実チェーン実体の同定、通信記録（P01〜P07）、全試行の件数（J13）、
+既存結合器の実出力との接続、型検査。要件4全体と G3 は `BLOCKED` のまま。
