@@ -1,12 +1,24 @@
 import copy, datetime as dt, hashlib, json, os, shutil, stat, subprocess, sys, tempfile, unittest
 from unittest.mock import patch
 from pathlib import Path
-import chain
-from gates import strict_g0
 
 TOOLS = Path(__file__).resolve().parent
+# chain.py now requires explicit G3_CHAIN_SOURCE / G3_CHAIN_SOURCE_COMMIT / G3_CHAIN_BASE
+# and a source manifest in that base. Without them the launcher-dependent classes ERROR
+# (never skip): they need a reviewed view. ExplicitInputs below runs without them.
+try:
+    import chain
+    from gates import strict_g0
+    CHAIN_UNAVAILABLE=None
+except Exception as exc:
+    chain=None; CHAIN_UNAVAILABLE=type(exc).__name__+': '+str(exc)
 
-class RepositoryTools(unittest.TestCase):
+class NeedsChain(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if chain is None: raise RuntimeError('BLOCKED: chain.py not importable with current explicit inputs ('+CHAIN_UNAVAILABLE+')')
+
+class RepositoryTools(NeedsChain):
     def setUp(self):
         # Verify the checked-in tools against the checked-in manifest. Do not mix
         # this launcher's new pins with a previously staged /tmp tool snapshot.
@@ -52,8 +64,10 @@ class Gates(RepositoryTools):
             self.assertTrue(all('ERIS_AGENT_FROZEN' not in c['env'] for c in commands))
             run=next(c for c in commands if c['argv'][0]=='bash')
             self.assertEqual(run['env']['BACKTEST_EXTRA_ARGS'],'--blocks 360')
+        # Pair labels come from the commit-bound schedule (ON row ref[2], OFF row ref[3]).
+        self.assertEqual((ref[2]['regime'],ref[2]['seed'],ref[2]['mode'],ref[3]['mode']),('calm','49002','on','off'))
         paired=chain.world_commands(ref[3],True)[-2]['argv']
-        self.assertIn('g3-r2-ref-calm-49002-on',paired); self.assertEqual(paired[-2:],['g3-r2-ref-calm-49002-off','--json'])
+        self.assertIn(ref[2]['label'],paired); self.assertEqual(paired[-2:],[ref[3]['label'],'--json'])
     def test_dry_never_executes(self):
         from unittest.mock import patch
         with patch.object(sys,'argv',['chain.py','--dry-run']),patch.object(subprocess,'Popen',side_effect=AssertionError('process forbidden')),patch('builtins.print'):
@@ -86,7 +100,7 @@ class Gates(RepositoryTools):
         p=subprocess.run([sys.executable,'-B',str(TOOLS/'gates.py'),'revision-audit','test','on'],capture_output=True,text=True)
         self.assertEqual(p.returncode,2); self.assertEqual(json.loads(p.stdout)['status'],'BLOCKED')
 
-class BudgetLedger(unittest.TestCase):
+class BudgetLedger(NeedsChain):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory(dir=chain.BASE)
         self.addCleanup(self.temp.cleanup)
@@ -210,7 +224,146 @@ class ToolManifest(RepositoryTools):
     def test_persistent_default_path_and_temporary_home_blocked(self):
         with patch.dict(os.environ,{'HOME':'/Users/g3-ledger-test'}):
             self.assertEqual(chain.ledger_path(),Path('/Users/g3-ledger-test/.ascon-g3/budget-ledger.json'))
-        with patch.dict(os.environ,{'HOME':'/tmp/g3-chain/fake-home'}),self.assertRaisesRegex(chain.Stop,'BLOCKED'):
+        with patch.dict(os.environ,{'HOME':'/tmp/g3-ledger-test/fake-home'}),self.assertRaisesRegex(chain.Stop,'BLOCKED'):
             chain.ledger_path()
+
+R2_COMMIT='ec80bb89df22e4899695a4cf2ba131382e130481'
+NAMES=('G3_CHAIN_SOURCE','G3_CHAIN_SOURCE_COMMIT','G3_CHAIN_BASE')
+G3_PATH='ascon-notes/league/g3'
+VIEW_FILES=[G3_PATH+'/'+n for n in ('budget.json','schedule.tsv','ref-on.yaml','ref-off.yaml','inputs.lock.json','prestart-check.py')]+['config/regimes/'+n+'.yaml' for n in ('calm','crash','depeg')]
+
+def nontmp_dir(case):
+    td=tempfile.TemporaryDirectory(); case.addCleanup(td.cleanup)
+    root=Path(td.name)
+    if any(root.resolve().is_relative_to(Path(r).resolve()) for r in ('/tmp','/var/tmp')):
+        case.fail('these controls need TMPDIR outside /tmp and /var/tmp')
+    return root
+
+def git_show(rev,name):
+    return subprocess.check_output(['git','-C',str(TOOLS),'show',rev+':'+name])
+
+def synthetic_base(base,rev,source,commit):
+    """Test-only view: committed bytes of the files a dry run reads. Not make-view, not a real source."""
+    for name in VIEW_FILES:
+        p=base/'source-view'/name; p.parent.mkdir(parents=True,exist_ok=True); p.write_bytes(git_show(rev,name))
+    (base/'source-manifest.json').write_text(json.dumps({'source':str(source),'head':commit,'absoluteGitDir':str(source/'.git'),'files':{}}))
+
+class ExplicitInputs(unittest.TestCase):
+    """Positive controls: each new guard must fire (exit 2, named input) before any work."""
+    def setUp(self):
+        root=nontmp_dir(self); self.source=root/'source'; self.base=root/'base'
+        self.source.mkdir(); self.base.mkdir()
+        self.good={'G3_CHAIN_SOURCE':str(self.source),'G3_CHAIN_SOURCE_COMMIT':R2_COMMIT,'G3_CHAIN_BASE':str(self.base)}
+    def env(self,changes=()):
+        e={k:v for k,v in os.environ.items() if k not in NAMES}; e.update(self.good)
+        for k,v in changes:
+            if v is None: e.pop(k,None)
+            else: e[k]=v
+        return e
+    def cases(self):
+        absent=str(self.source/'absent')
+        out=[]
+        for name in ('G3_CHAIN_SOURCE','G3_CHAIN_BASE'):
+            out += [(name,None,'missing or empty'),(name,'','missing or empty'),(name,'relative/dir','absolute path'),
+                    (name,'/tmp','under /tmp'),(name,'/private/tmp','under /tmp'),(name,'/var/tmp','under /tmp'),
+                    (name,absent,'does not exist')]
+        out.append(('G3_CHAIN_BASE','/tmp/g3-chain','under /tmp'))  # the old r2 base is not accepted
+        out += [('G3_CHAIN_SOURCE_COMMIT',None,'missing or empty'),('G3_CHAIN_SOURCE_COMMIT','','missing or empty'),
+                ('G3_CHAIN_SOURCE_COMMIT','ec80bb8','40 lowercase hex'),('G3_CHAIN_SOURCE_COMMIT',R2_COMMIT[:39],'40 lowercase hex'),
+                ('G3_CHAIN_SOURCE_COMMIT',R2_COMMIT+'0','40 lowercase hex'),('G3_CHAIN_SOURCE_COMMIT','g'*40,'40 lowercase hex'),
+                ('G3_CHAIN_SOURCE_COMMIT',R2_COMMIT.upper(),'40 lowercase hex'),('G3_CHAIN_SOURCE_COMMIT',' '+R2_COMMIT,'40 lowercase hex')]
+        return out
+    def run_tool(self,argv,changes):
+        return subprocess.run(argv,env=self.env(changes),capture_output=True,text=True,timeout=60,cwd=self.base)
+    def check_blocked(self,argv,names,stdout=False):
+        for name,value,reason in self.cases():
+            if name not in names: continue
+            with self.subTest(tool=' '.join(map(str,argv[1:])),name=name,value=value):
+                p=self.run_tool(argv,[(name,value)])
+                text=p.stdout if stdout else p.stderr
+                self.assertEqual(p.returncode,2,text)
+                self.assertIn('BLOCKED',text); self.assertIn(name,text); self.assertIn(reason,text)
+                self.assertEqual(sorted(os.listdir(self.base)),[])  # nothing written before the guard
+    def test_chain_py_guards(self):
+        self.check_blocked([sys.executable,'-B',str(TOOLS/'chain.py'),'--dry-run'],NAMES)
+    def test_make_view_guards(self):
+        self.check_blocked([sys.executable,'-B',str(TOOLS/'make-view.py')],NAMES)
+    def test_revision_audit_guards(self):
+        self.check_blocked([sys.executable,'-B',str(TOOLS/'revision_audit.py'),str(self.base),'--mode','on'],NAMES,stdout=True)
+    def test_shell_entry_guards(self):
+        self.check_blocked(['bash',str(TOOLS/'g3-ref-chain.sh'),'--dry-run'],('G3_CHAIN_BASE',))
+    def test_node_tool_guards(self):
+        node=shutil.which('node')
+        self.assertIsNotNone(node,'node required for the .mjs guard controls')
+        self.check_blocked([node,str(TOOLS/'malicious.mjs')],('G3_CHAIN_SOURCE',))
+        self.check_blocked([node,str(TOOLS/'decide-budget-control.mjs')],('G3_CHAIN_SOURCE','G3_CHAIN_BASE'))
+        self.check_blocked([node,str(TOOLS/'timeout-control.mjs')],('G3_CHAIN_SOURCE','G3_CHAIN_BASE'))
+    def test_revision_audit_requires_deployment_in_base(self):
+        p=self.run_tool([sys.executable,'-B',str(TOOLS/'revision_audit.py'),str(self.base),'--mode','on'],[])
+        self.assertEqual(p.returncode,2); self.assertIn('placed directly in G3_CHAIN_BASE',p.stdout)
+    def test_r2_values_pass_input_guard_then_need_manifest(self):
+        # Explicit r2 commit passes the input guard; the launcher then stops at the next real check.
+        p=self.run_tool([sys.executable,'-B',str(TOOLS/'chain.py'),'--dry-run'],[])
+        self.assertEqual(p.returncode,2); self.assertIn('source-manifest.json missing',p.stderr)
+        self.assertNotIn('G3_CHAIN_SOURCE_COMMIT must',p.stderr)
+    def test_manifest_head_must_equal_explicit_commit(self):
+        synthetic_base(self.base,'HEAD',self.source,'0'*40)
+        p=self.run_tool([sys.executable,'-B',str(TOOLS/'chain.py'),'--dry-run'],[])
+        self.assertEqual(p.returncode,2); self.assertIn('head/source differ',p.stderr)
+    def test_r2_dry_run_reachable_only_when_explicit(self):
+        # Synthetic view from the committed r2 bytes (ec80bb8) plus explicit r2 commit:
+        # candidate dir and pair labels are derived from that view, not hardcoded.
+        synthetic_base(self.base,R2_COMMIT,self.source,R2_COMMIT)
+        p=self.run_tool([sys.executable,'-B',str(TOOLS/'chain.py'),'--dry-run'],[])
+        self.assertEqual(p.returncode,0,p.stderr)
+        self.assertIn('g3-r2-ref-calm-49002-on',p.stdout); self.assertNotIn('g3-r3-',p.stdout)
+        self.assertIn('G3_CHAIN_SOURCE_COMMIT='+R2_COMMIT,p.stdout)
+    def test_r3_dry_run_from_current_commit_bytes(self):
+        head=subprocess.check_output(['git','-C',str(TOOLS),'rev-parse','HEAD'],text=True).strip()
+        synthetic_base(self.base,head,self.source,head); self.good['G3_CHAIN_SOURCE_COMMIT']=head
+        p=self.run_tool([sys.executable,'-B',str(TOOLS/'chain.py'),'--dry-run'],[])
+        self.assertEqual(p.returncode,0,p.stderr)
+        self.assertIn('g3-r3-ref-calm-49002-on',p.stdout); self.assertNotIn('g3-r2-',p.stdout)
+    def test_candidate_mismatch_blocks(self):
+        head=subprocess.check_output(['git','-C',str(TOOLS),'rev-parse','HEAD'],text=True).strip()
+        synthetic_base(self.base,head,self.source,head); self.good['G3_CHAIN_SOURCE_COMMIT']=head
+        pre=self.base/'source-view'/G3_PATH/'prestart-check.py'
+        pre.write_text(pre.read_text().replace("CANDIDATE = 'example/agents/ascon-zeta-r3'","CANDIDATE = 'example/agents/ascon-zeta-r2'"))
+        p=self.run_tool([sys.executable,'-B',str(TOOLS/'chain.py'),'--dry-run'],[])
+        self.assertNotEqual(p.returncode,0); self.assertNotIn('g3-r3-ref-calm-49002-on',p.stdout)
+
+class MakeViewExactCommit(unittest.TestCase):
+    """make-view.py against a throwaway local git repository (no network)."""
+    def setUp(self):
+        root=nontmp_dir(self); self.repo=root/'repo'; self.repo.mkdir()
+        g=['git','-C',str(self.repo),'-c','user.name=t','-c','user.email=t@example.invalid','-c','commit.gpgsign=false','-c','core.hooksPath=/dev/null']
+        subprocess.run(g+['init','-q','-b','main'],check=True)
+        (self.repo/'a.txt').write_text('a\n'); (self.repo/'.env').write_text('SECRET=x\n')
+        subprocess.run(g+['add','a.txt','.env'],check=True); subprocess.run(g+['commit','-qm','x'],check=True)
+        self.head=subprocess.check_output(['git','-C',str(self.repo),'rev-parse','HEAD'],text=True).strip()
+        self.root=root
+    def run_view(self,commit,base):
+        base.mkdir()
+        env={k:v for k,v in os.environ.items() if k not in NAMES}
+        env.update(G3_CHAIN_SOURCE=str(self.repo),G3_CHAIN_SOURCE_COMMIT=commit,G3_CHAIN_BASE=str(base))
+        return subprocess.run([sys.executable,'-B',str(TOOLS/'make-view.py')],env=env,capture_output=True,text=True,timeout=60)
+    def test_exact_commit_view_and_manifest(self):
+        base=self.root/'base'; p=self.run_view(self.head,base)
+        self.assertEqual(p.returncode,0,p.stderr)
+        m=json.loads((base/'source-manifest.json').read_text())
+        self.assertEqual(m['head'],self.head); self.assertEqual(m['source'],str(self.repo))
+        gitdir=subprocess.check_output(['git','-C',str(self.repo),'rev-parse','--absolute-git-dir'],text=True).strip()
+        self.assertEqual(m['absoluteGitDir'],gitdir)
+        self.assertEqual(set(m['files']),{'a.txt'}); self.assertIn('.env',m['skippedPaths'])
+        self.assertEqual((base/'source-view'/'a.txt').read_text(),'a\n')
+        again=subprocess.run([sys.executable,'-B',str(TOOLS/'make-view.py')],env={**os.environ,'G3_CHAIN_SOURCE':str(self.repo),'G3_CHAIN_SOURCE_COMMIT':self.head,'G3_CHAIN_BASE':str(base)},capture_output=True,text=True)
+        self.assertEqual(again.returncode,2); self.assertIn('refuse overwriting',again.stderr)
+    def test_other_valid_commit_rejected(self):
+        # A well-formed explicit commit (r2's) that is not the source HEAD stops before writing.
+        base=self.root/'base2'; p=self.run_view(R2_COMMIT,base)
+        self.assertEqual(p.returncode,2); self.assertIn('HEAD differs',p.stderr); self.assertEqual(os.listdir(base),[])
+    def test_prefix_commit_rejected(self):
+        base=self.root/'base3'; p=self.run_view(self.head[:7],base)
+        self.assertEqual(p.returncode,2); self.assertIn('40 lowercase hex',p.stderr); self.assertEqual(os.listdir(base),[])
 
 if __name__=='__main__': unittest.main(verbosity=2)

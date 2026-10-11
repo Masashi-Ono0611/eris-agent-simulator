@@ -2,7 +2,7 @@
 """Offline, fail-closed G3 per-world evidence auditor. No simulation/provider/RPC calls.
 
 Stock files are always inventoried. g3-audit.json and agents/cand.audit-frames.jsonl
-are an explicit *future recorder contract*, not files present in ec80bb8 runs.
+are an explicit *future recorder contract*, not files present in earlier pinned-source runs.
 See REVISION-AUDIT.md. Exit: PASS=0, FAIL=1, BLOCKED=2.
 """
 import argparse
@@ -18,8 +18,31 @@ import subprocess
 import sys
 
 BASE = Path(__file__).resolve().parent
-SOURCE = Path('/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/release-r2')
 EXIT = {'PASS': 0, 'FAIL': 1, 'BLOCKED': 2}
+# Source path, source commit and eval base are REQUIRED explicit inputs (same names as
+# chain.py). No default and no fallback to an earlier round's worktree or commit.
+TEMP_ROOTS = ('/tmp', '/var/tmp')
+
+def explicit_inputs(environ=os.environ):
+    """Return (source, commit) or raise ValueError naming the missing/invalid input."""
+    def directory(name):
+        value = environ.get(name)
+        if not value: raise ValueError(name + ' missing or empty; explicit value required (no default)')
+        path = Path(value)
+        if not path.is_absolute(): raise ValueError(name + ' must be an absolute path')
+        if any(path.is_relative_to(r) or path.resolve().is_relative_to(Path(r).resolve()) for r in TEMP_ROOTS):
+            raise ValueError(name + ' must not be under /tmp or /var/tmp')
+        if not path.is_dir(): raise ValueError(name + ' does not exist or is not a directory')
+        return path
+    source = directory('G3_CHAIN_SOURCE')
+    commit = environ.get('G3_CHAIN_SOURCE_COMMIT')
+    if not commit: raise ValueError('G3_CHAIN_SOURCE_COMMIT missing or empty; explicit value required (no default)')
+    if not re.fullmatch(r'[0-9a-f]{40}', commit):
+        raise ValueError('G3_CHAIN_SOURCE_COMMIT must be exactly 40 lowercase hex characters (full commit, no prefix)')
+    # The auditor reads the manifest next to itself, so it must be deployed in the eval base.
+    if directory('G3_CHAIN_BASE').resolve() != BASE:
+        raise ValueError('revision_audit.py must be placed directly in G3_CHAIN_BASE')
+    return source, commit
 
 def sha(data): return hashlib.sha256(data).hexdigest()
 def timestamp(value):
@@ -29,8 +52,11 @@ def timestamp(value):
 def integer(v): return type(v) is int and v >= 0
 
 def replay(calls, frames):
-    # Bind the compile path and its local dependencies to the ec80bb8 exported view.
+    # Bind the compile path and its local dependencies to the explicit commit-bound view.
+    SOURCE, commit = explicit_inputs()
     manifest = json.loads((BASE/'source-manifest.json').read_text())
+    if manifest.get('head') != commit or manifest.get('source') != str(SOURCE):
+        raise ValueError('source manifest differs from explicit source inputs')
     prefixes = ('example/agents/runtime/', 'sdk/src/', 'ascon-notes/league/g3/')
     for name, digest in manifest['files'].items():
         if name.startswith(prefixes) and name.endswith(('.ts', '.mjs', '.json')):
@@ -297,6 +323,11 @@ def audit(root,mode):
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('run_dir',type=Path);parser.add_argument('--mode',choices=('on','off'),required=True)
-    args=parser.parse_args(); result=audit(args.run_dir,args.mode)
+    args=parser.parse_args()
+    try: explicit_inputs()
+    except ValueError as exc:
+        a=Auditor(args.run_dir,args.mode); a.blocked.append('BLOCKED: '+str(exc)); result=a.verdict()
+        print(json.dumps(result,indent=2,allow_nan=False));return EXIT['BLOCKED']
+    result=audit(args.run_dir,args.mode)
     print(json.dumps(result,indent=2,allow_nan=False));return EXIT[result['status']]
 if __name__=='__main__':sys.exit(main())

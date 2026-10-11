@@ -22,7 +22,49 @@ import time
 
 # Restrictive permissions apply to standalone initialization and imported helpers too.
 os.umask(0o077)
-BASE=Path('/tmp/g3-chain')
+
+class Stop(Exception):
+    def __init__(self, message, rc=2): super().__init__(message); self.rc=rc
+
+# Source path, source commit and eval base are REQUIRED explicit inputs. There is no
+# default and no fallback to any earlier round (r2 values work only when passed explicitly).
+INPUT_SOURCE='G3_CHAIN_SOURCE'
+INPUT_COMMIT='G3_CHAIN_SOURCE_COMMIT'
+INPUT_BASE='G3_CHAIN_BASE'
+INPUT_NAMES=(INPUT_SOURCE,INPUT_COMMIT,INPUT_BASE)
+TEMP_ROOTS=('/tmp','/var/tmp')
+
+def explicit_dir(environ,name):
+    value=environ.get(name)
+    if not value: raise Stop('BLOCKED: '+name+' missing or empty; explicit value required (no default)')
+    path=Path(value)
+    if not path.is_absolute(): raise Stop('BLOCKED: '+name+' must be an absolute path')
+    # macOS /tmp resolves to /private/tmp; check both the given and the resolved path.
+    if any(path.is_relative_to(root) or path.resolve().is_relative_to(Path(root).resolve()) for root in TEMP_ROOTS):
+        raise Stop('BLOCKED: '+name+' must not be under /tmp or /var/tmp')
+    if not path.is_dir(): raise Stop('BLOCKED: '+name+' does not exist or is not a directory')
+    return path
+
+def explicit_commit(environ):
+    value=environ.get(INPUT_COMMIT)
+    if not value: raise Stop('BLOCKED: '+INPUT_COMMIT+' missing or empty; explicit value required (no default)')
+    if not re.fullmatch(r'[0-9a-f]{40}',value):
+        raise Stop('BLOCKED: '+INPUT_COMMIT+' must be exactly 40 lowercase hex characters (full commit, no prefix)')
+    return value
+
+def required_inputs(environ):
+    return explicit_dir(environ,INPUT_SOURCE),explicit_commit(environ),explicit_dir(environ,INPUT_BASE)
+
+def import_stop(exc):
+    # Script use: clear message and nonzero exit. Library use: propagate (fail closed).
+    if __name__=='__main__':
+        print(str(exc),file=sys.stderr); sys.exit(exc.rc)
+    raise exc
+
+try: SOURCE,SOURCE_COMMIT,BASE=required_inputs(os.environ)
+except Stop as exc: import_stop(exc)
+# Children (gates, auditor, node controls) receive exactly the explicit inputs given here.
+EXPLICIT_ENV={INPUT_SOURCE:str(SOURCE),INPUT_COMMIT:SOURCE_COMMIT,INPUT_BASE:str(BASE)}
 TOOL_ROOT=BASE
 # Recorded tool manifest, kept inline to limit edits to the approved four files.
 # Refresh only after reviewing changed tool bytes; never derive expected hashes at run time.
@@ -30,18 +72,28 @@ TOOL_MANIFEST={
     'gates.py':'0acab461951dbd7b5f9d55c37244b127b7a09ec8a33367f047f28d8b73ac8c3b',
     'revision_audit.py':'f2ff12581e8bdbed29962ed1019aa2ba140cfcb05096f3c9cb5dc57b4d114f52',
 }
-SOURCE=Path('/Users/masashi_mac_ssd/Developer/ascon/.claude/worktrees/release-r2')
 VIEW=BASE/'source-view'
 EVAL=BASE/'eval'
 G3='ascon-notes/league/g3'
 LEAGUE='ascon-notes/league'
 F_MIX='F_mix r3 load calibration and real-chain validation absent; launcher remains F_ref-only'
 CHECKS={'candidate','inputs','trackedTree','upstreamByteEquality','upstreamRefPinned','seedAudit','disk','noAnvil','parentFrozenUnset','unitTimingOverrideAbsent','completeness'}
-MANIFEST=json.loads((BASE/'source-manifest.json').read_text())
-BUDGET=json.loads((VIEW/G3/'budget.json').read_text())
+try: MANIFEST=json.loads((BASE/'source-manifest.json').read_text())
+except FileNotFoundError: import_stop(Stop('BLOCKED: source-manifest.json missing in '+INPUT_BASE+'; run make-view.py with the same explicit inputs first'))
+if MANIFEST.get('head')!=SOURCE_COMMIT or MANIFEST.get('source')!=str(SOURCE):
+    import_stop(Stop('BLOCKED: source-manifest.json head/source differ from explicit '+INPUT_COMMIT+'/'+INPUT_SOURCE))
+try: BUDGET=json.loads((VIEW/G3/'budget.json').read_text())
+except FileNotFoundError: import_stop(Stop('BLOCKED: source view budget.json missing in '+INPUT_BASE))
 
-class Stop(Exception):
-    def __init__(self, message, rc=2): super().__init__(message); self.rc=rc
+def expected_candidate_dir():
+    """Candidate directory pinned by the commit-bound view, not by this launcher."""
+    text=(VIEW/G3/'prestart-check.py').read_text()
+    found=re.findall(r"^CANDIDATE = 'example/agents/([A-Za-z0-9._-]+)'$",text,re.M)
+    if len(found)!=1: raise Stop('BLOCKED: view prestart-check.py CANDIDATE not uniquely readable')
+    lock=json.loads((VIEW/G3/'inputs.lock.json').read_text())
+    if 'candidateDir' in lock and lock['candidateDir']!=found[0]:
+        raise Stop('BLOCKED: view lock candidateDir differs from view prestart CANDIDATE')
+    return found[0]
 
 def prestart_gate(doc, rc):
     """No completeness exemption: every unresolved prerequisite blocks."""
@@ -65,13 +117,16 @@ def rows():
     assert len(ref)==18 and len(normal)==36
     assert [(r['regime'],r['seed'],r['mode']) for r in ref]==[(reg,str(seed),mode) for reg in ['calm','crash','depeg'] for seed in range(49001,49004) for mode in (['on','off'] if seed==49002 else ['off','on'])]
     assert BUDGET['parallel']==1 and 0<BUDGET['maxChunkMinutes']<=110 and 0<BUDGET['maxDailyHours']<=6
+    candidate_dir=expected_candidate_dir()
+    prefixes={re.fullmatch(r'(g3-r[0-9]+)-ref-'+re.escape(r['regime'])+'-'+re.escape(r['seed'])+'-'+re.escape(r['mode']),r['label']) for r in ref}
+    assert None not in prefixes and len({m[1] for m in prefixes})==1
     for r in ref:
         assert (r['parallel'],r['blocks'],r['block_seconds'],r['base_port'],r['state'])==('1','360','2','8847','fresh-v0')
         assert r['roster']==G3+'/ref-'+r['mode']+'.yaml' and r['gate']=='UNVERIFIED'
         roster=json.loads('\n'.join(line for line in (VIEW/r['roster']).read_text().splitlines() if not line.startswith('#')))
         assert [a['id'] for a in roster['agents']]==['noop','multi-arb','clean-arb','cand']
         candidate=roster['agents'][-1]
-        assert candidate['dir']=='ascon-zeta-r2'
+        assert candidate['dir']==candidate_dir
         ce=candidate['env']
         assert ce.get('ERIS_AGENT_FROZEN')=='1' if r['mode']=='off' else 'ERIS_AGENT_FROZEN' not in ce
         assert all(a['env'].get('ERIS_AGENT_FROZEN')=='1' and a['wallet']=='AUTO' for a in roster['agents'][:-1])
@@ -107,6 +162,7 @@ def clean_env():
     # Retain the existing HOME only for the CLI's own auth; never inspect auth files.
     # All API keys, arbitrary ERIS_* variables, nested-session flags and dotenv hooks are absent.
     return {k:os.environ[k] for k in ['PATH','HOME','USER','LOGNAME'] if k in os.environ} | {
+        **EXPLICIT_ENV,
         'TMPDIR':str(BASE/'tmp'),'PYTHONDONTWRITEBYTECODE':'1','TSX_DISABLE_CACHE':'1','GIT_OPTIONAL_LOCKS':'0',
         'NPM_CONFIG_OFFLINE':'true','NPM_CONFIG_IGNORE_SCRIPTS':'true',
         'NPM_CONFIG_UPDATE_NOTIFIER':'false','NPM_CONFIG_CACHE':str(BASE/'npm-cache')}
@@ -150,7 +206,11 @@ def world_commands(r,paired=False,audit_cmd=None):
         command(py+[BASE/'gates.py','revision-audit',label,r['mode']]+(['--audit-cmd',audit_cmd] if audit_cmd else []),EVAL,log=label+'/revision-audit.json'),
         command(py+[LEAGUE+'/league-report.py',label]+base+['--manifest',label,'--ref','noop','--json'],EVAL,log=label+'/report.json')]
     if paired:
-        on='g3-r2-ref-'+reg+'-'+seed+'-on'; off='g3-r2-ref-'+reg+'-'+seed+'-off'
+        # Pair labels come from the commit-bound schedule row, never from a hardcoded round.
+        stem=label.removesuffix('-'+r['mode'])
+        if stem==label or not re.fullmatch(r'g3-r[0-9]+-ref-'+re.escape(reg)+'-'+re.escape(seed),stem):
+            raise Stop('BLOCKED: unexpected paired world label')
+        on=stem+'-on'; off=stem+'-off'
         commands += [command(py+[LEAGUE+'/g0.py',on,'--roster',G3+'/ref-on.yaml','--regimes',reg,'--seeds',seed,'--manifest',on,'--baseline',off,'--json'],EVAL,log=label+'/pair-g0.json'),
                      command(py+[BASE/'gates.py','strict-g0',BASE/label/'pair-g0.json'],EVAL,log=label+'/pair-strict-g0.json')]
     return commands
@@ -162,7 +222,7 @@ def idle():
 
 def source_check():
     sha=subprocess.check_output(['git','-C',str(SOURCE),'rev-parse','HEAD'],text=True).strip()
-    if sha!=MANIFEST['head']: raise Stop('FAIL: source HEAD changed',1)
+    if sha!=MANIFEST['head'] or sha!=SOURCE_COMMIT: raise Stop('FAIL: source HEAD changed',1)
     for name,digest in MANIFEST['files'].items():
         p=VIEW/name
         if p.is_symlink() or hashlib.sha256(p.read_bytes()).hexdigest()!=digest: raise Stop('FAIL: source view drift',1)
@@ -333,7 +393,8 @@ def main():
     if arg=='--dry-run':
         print('# F_REF ONLY: 18 normal worlds; all 18 F_mix = NOT RUN / BLOCKED.')
         print('# Conditional full plan, NOT an execution log. Each non-PASS stops. No completeness exemptions.')
-        print('# --run acquires /tmp/g3-chain/chain.lock; checks pgrep; reserves <=110min from $HOME/.ascon-g3/budget-ledger.json (6h/day; missing/corrupt = BLOCKED).')
+        print('# Explicit inputs: '+INPUT_SOURCE+'='+str(SOURCE)+' '+INPUT_COMMIT+'='+SOURCE_COMMIT+' '+INPUT_BASE+'='+str(BASE))
+        print('# --run acquires '+str(BASE/'chain.lock')+'; checks pgrep; reserves <=110min from $HOME/.ascon-g3/budget-ledger.json (6h/day; missing/corrupt = BLOCKED).')
         print('caffeinate -i -s -w "${LAUNCHER_PID}"')
         print('# Auth helper (only after PASS prestart + malicious): resolve executable claude; capture auth status --json without raw output.')
         print('# Project wrapper probe (single attempted call): xb-r-live-claude-timed.sh -p \'Reply exactly OK.\' --model haiku --max-turns 1 --tools \'\' --disable-slash-commands --strict-mcp-config --mcp-config \'{"mcpServers":{}}\' --setting-sources \'\' --no-session-persistence')
