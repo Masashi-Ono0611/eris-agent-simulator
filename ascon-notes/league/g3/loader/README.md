@@ -350,3 +350,65 @@ spender を外す、欠測値の0補完、既存判定の `BLOCKED` を引き継
 未検証: 実際の送信直前の状態・送信待ち行列・Worker 内で捨てた試行の値の採取、予約・ガス予備の
 実際の生成元、receipt 全文、実チェーン実体の同定、通信記録（P01〜P07）、全試行の件数（J13）、
 既存結合器の実出力との接続、型検査。要件4全体と G3 は `BLOCKED` のまま。
+
+## 要件5の人工ライフサイクル結合器（2026-10-11追加）
+
+[`lifecycle-join.mjs`](lifecycle-join.mjs) の純粋関数 `joinLifecycle(input)` は、要件5（時間切れ時の実300秒制限、
+子プロセス終了、遅着の適用なし、状態の持越し・復帰）のうち、
+[要件2〜5の計画](../../G3-REQ25-PLAN-2026-10-11.md) の要件5(a)「人工時計とイベント列に対するライフサイクル検査」だけを
+人工入力で実装したもの。ファイル名は計画書の候補名 `lifecycle-contract.mjs` ではなく、依頼に従い既存の結合器と揃えた。
+実時計・実子プロセス・状態ファイル・実モデルには接続せず、実行器も起動しない。計画の要件5(b)
+（実際の300秒制限、実子と子孫の終了追跡、遅着予定後から世界終了までの全採否・送信、実 epoch（状態を引き継ぐ期間）
+間の保存・再開、復帰後の元モジュール実行）は実観測が必要で、10/12 までに完了できないため要件全体は `BLOCKED` のまま。
+
+```js
+{
+  schema: 1, provenance: 'SYNTHETIC', worldId: '...', worldEndNs: '<十進ナノ秒>',
+  limits: { inferenceTimeoutMs: 300000, decisionBudgetMs: 5000 },
+  clock: { kind: 'synthetic', scale: 1, realTimeMeasured: false },
+  calls: [{ callId, decisionId, childId, outcome,                 // timed_out / completed
+    startedNs, childStartedNs, deadlineNs, timedOutNs?, killRequestedNs?, lateDueNs?, completedNs? }],
+  exits: [{ callId, childId, kind, atNs }],                        // kind: exit / close（kill要求とは独立）
+  lateWindows: [{ callId, fromNs, toNs }],                         // 遅着予定以後〜世界終了の観測区間
+  sourceEvents: [{ callId, atNs, action }],                        // reject / select / apply / submit
+  saves: [{ epoch, requestedNs, completedNs, stateHash, writtenHash }],
+  reloads: [{ epoch, fromEpoch, atNs, loadedHash }],
+  restore: { atNs, originalSourceHash, restoredSourceHash, managedVersion, generation,
+    firstDecision: { decisionId, atNs, generation, sourceHash } },
+}
+```
+
+検査の要点:
+
+- 推論呼出しの制限300000ミリ秒と判断の時間予算5000ミリ秒は別の契約。片方の値を他方に入れる、または期限を
+  5000ミリ秒で計算すると `FAIL`。時間切れの経過は300000〜301000ミリ秒（両端を含む）以外で `FAIL`。
+- `clock.scale` は人工の時間倍率で、経過時間はナノ秒差×倍率の BigInt で計算する。`realTimeMeasured: true`
+  や `kind` が `synthetic` 以外の宣言は `FAIL`。出力は常に `timeBasis: 'synthetic-clock-not-real-time'`。
+- kill 要求の欠落、独立した終了通知の欠落は `BLOCKED`。別の子の終了の結合、終了通知の重複、時刻の逆転は `FAIL`。
+  終了通知が欠けたまま `lateApplied: false` を作らない（不完全な記録では呼出し結果を返さない）。
+- 観測区間が遅着予定より後に始まる・世界終了前に切れる・無い場合は `BLOCKED`。時間切れ呼出しの
+  `apply` / `select` / `submit` は記録時刻に関係なく `FAIL`。
+- 保存完了なしは `BLOCKED`、次 epoch の再読込なしは `BLOCKED`。保存完了の書込みハッシュ・状態ハッシュ・
+  再読込ハッシュの不一致、次 epoch 以外への再読込、保存完了前の再読込は `FAIL`。
+- 復帰先が元ソースと違う、初回判断の世代・ソースが違う、復帰前の初回判断は `FAIL`。初回判断の欠落は `BLOCKED`。
+
+判定語は `CONTRACT_OK_ON_SYNTHETIC` / `BLOCKED` / `FAIL` のみ。常に `g3Status: 'BLOCKED'`、
+`liveRecorderVerified: false`。人工由来の指定がなければ内容を見ずに `BLOCKED`。入力を変更せず、
+世界識別子・ハッシュ・余分な本文や秘密フィールドを出力に転記しない。人工時計で300秒の契約が成立しても、
+実300秒を検証したことにはならない。
+
+```sh
+node --test ascon-notes/league/g3/tests/lifecycle-join.test.mjs
+node ascon-notes/league/g3/loader/lifecycle-join-mutation.mjs
+```
+
+テストと人工入力 [`SYNTHETIC-lifecycle-join.mjs`](../tests/fixtures/SYNTHETIC-lifecycle-join.mjs) を先に追加し、
+実装未存在で `ERR_MODULE_NOT_FOUND`、終了コード1を確認してから実装した。変異検査は、遅着適用の検査削除、
+契約境界の下限削除、終了通知の欠測を終了済み扱い、再読込ハッシュ照合の削除、実測宣言の受理、観測区間末尾の
+切詰め検査削除、の6つを個別にメモリ上で適用し、各々対応する正対照1件が失敗（期待判定に対し実際は
+`CONTRACT_OK_ON_SYNTHETIC`）することを確認した。元ファイルには書き込まない。
+
+未検証: 実際の300秒制限と実時間、実子プロセスと子孫の終了、遅着応答の実採取、全期間の全採否・選択・判断・送信、
+実 epoch 間の保存・再開、復帰後の元モジュール実行、既存監査器との整合、型検査（`tsc --noEmit` は終了コード0だが、
+`tsconfig.json` の対象は `sdk/` `core/` `example/agents/` `test/` の `.ts` だけで、新規 `.mjs` は検査されていない）。
+要件5全体と G3 は `BLOCKED` のまま。
