@@ -251,7 +251,8 @@ const retainedDecisions=['dec-original','dec-deep','dec-no-contact','dec-008','d
   'dec-retro-allocation','dec-retro-limited-lifting','dec-retro-risk-acceptance','dec-retro-revision-risk',
   'dec-retro-originality-loss','dec-retro-budget-schedule','dec-retro-final-submission',
   'dec-oct09-r3','dec-oct09-g3','dec-oct09-dev-billing','dec-oct09-ollama',
-  'dec-oct10-organizer','dec-oct10-b03'];
+  'dec-oct10-organizer','dec-oct10-b03',
+  'dec-oct11-req25','dec-oct11-dec007','dec-oct11-b03-tooling','dec-oct11-organizer'];
 function assertDecisions(views){
   const ids=app.D.decisions.items.map(d=>d.id);
   for(const id of retainedDecisions)assert.ok(ids.includes(id),`INVARIANT retained decision ${id}`);
@@ -706,7 +707,8 @@ function assertOctoberStatus(views){
   for(const key of ['safety_pass','closed','organizer_premise_verified','question_sent','question_will_send'])
     assert.equal(b[key],false,`INVARIANT October B03 ${key}`);
   assert.equal(b.tooling_blocker_retained,true,'INVARIANT October B03 remains in tooling');
-  assert.equal(b.tooling_representation,'open-user-decision','INVARIANT October tooling representation open');
+  // 2026-10-11: the user decided to keep the tooling unchanged (B03 still listed, still blocks start).
+  assert.equal(b.tooling_representation,'unchanged-by-user-decision','INVARIANT October tooling unchanged by user decision');
   assert.deepEqual(JSON.parse(JSON.stringify(t.result)),{
     positive_injected_ms:6,positive_shift_ms:5.96875,positive_interval_ms:[5.78125,6.15625],
     negative_shift_ms:0,negative_interval_ms:[0,0],negative_degenerate:true,control_verdict:'descriptive only',
@@ -758,11 +760,42 @@ function assertOctoberStatus(views){
   }
   for(const phrase of ['運営は今出ている情報以上の強制はない、かつ、公式な方法はない、という判断で進めたい。','B03をあなたが残余リスクとして明示的に受け入れる','確認した事実ではなく','未送信（送信の決定は記録なし）','PASS・closedではない','REQUIRED_BLOCKERS','inputs.lock.json','本人の未決事項','エージェントは免除を推奨・決定しない'])
     assert.ok(policy.includes(phrase),`INVARIANT October risk boundary ${phrase}`);
-  for(const phrase of ['B03','本人受容済み残余リスク','REQUIRED','BLOCKED','ツールでどう表現するか'])
+  for(const phrase of ['B03','本人受容済み残余リスク','REQUIRED','BLOCKED','ツールは変えない'])
     assert.ok(overview.includes(phrase),`INVARIANT October overview risk ${phrase}`);
   assert.match(policy,/1日/,'INVARIANT October bounded investigation');
   assert.match(policy,/\$0/,'INVARIANT October no billing approval');
   assert.ok(overview.includes('合格済みではなく、提出準備も未完了'),'INVARIANT October candidate is conditional');
+  // 2026-10-11 later: synthetic-only checkers for requirements 2-5 are merged; live observation is not done.
+  const r=d.status.req25;
+  assert.equal(r.state,'offline-checkers-merged-live-blocked','INVARIANT req25 state');
+  assert.equal(r.scope,'requirements-2-5-all','INVARIANT req25 scope');
+  assert.equal(r.deadline,'2026-10-12','INVARIANT req25 deadline');
+  assert.equal(r.auto_extend,false,'INVARIANT req25 deadline not auto-extended');
+  assert.equal(r.live_observation,'not-done','INVARIANT req25 live observation not done');
+  assert.equal(r.live_completable_by_deadline,false,'INVARIANT req25 live not completable by deadline');
+  assert.equal(r.synthetic_only,true,'INVARIANT req25 synthetic only');
+  assert.equal(r.g3_status,'BLOCKED','INVARIANT req25 checker g3Status blocked');
+  assert.equal(r.g3_evidence,false,'INVARIANT req25 not G3 evidence');
+  assert.equal(r.g3_evidence_count,0,'INVARIANT zero G3 evidence');
+  assert.deepEqual(JSON.parse(JSON.stringify(r.allowed_verdicts)),['CONTRACT_OK_ON_SYNTHETIC','BLOCKED','FAIL'],'INVARIANT req25 verdict vocabulary');
+  assert.deepEqual(JSON.parse(JSON.stringify(r.checkers.map(c=>[c.requirement,c.pr,c.merge_commit]))),[[2,58,'ea2f44a'],[3,59,'384cfa8'],[4,60,'ae7dc3f'],[5,61,'cee6fe6']],'INVARIANT req25 merged checkers');
+  assert.equal(r.node_tests_total,387,'INVARIANT req25 node tests');
+  assert.equal(r.node_tests_fail,0,'INVARIANT req25 node test failures');
+  assert.equal(d.progress.items.find(x=>x.id==='progress-req25-offline').state,'done','INVARIANT req25 offline progress');
+  assert.equal(d.progress.items.find(x=>x.id==='progress-req25-live').state,'blocked','INVARIANT req25 live progress blocked');
+  for(const id of ['dec-oct11-req25','dec-oct11-dec007','dec-oct11-b03-tooling','dec-oct11-organizer']){
+    const item=d.decisions.items.find(x=>x.id===id);
+    assert.equal(item?.status,'decided',`INVARIANT 10/11 user decision ${id}`);
+    assert.equal(item.owner,'human',`INVARIANT 10/11 decision owner ${id}`);
+    assert.ok(item.sources.includes('src-decisions-oct11'),`INVARIANT 10/11 decision source ${id}`);
+    assertVisibleFields(views.decisions,item,['title','note']);
+  }
+  assert.equal(d.decisions.items.find(x=>x.id==='dec-007').status,'open','INVARIANT dec-007 result not recorded as done');
+  for(const phrase of ['オフラインchecker','実観測は未実施','10/12','Ollama鍵','結果未共有','G3証拠は0件'])
+    assert.ok(overview.includes(phrase),`INVARIANT req25 overview ${phrase}`);
+  for(const n of [57,58,59,60,61])assert.ok(resultView.includes(`PR #${n}`),`INVARIANT 10/11 merged PR ${n}`);
+  const claims=JSON.stringify([d.status.headline,d.status.subhead,d.status.changes,d.status.next_steps,d.status.priority,d.status.req25,d.ui.copy]);
+  assert.doesNotMatch(claims,/実観測(?:は|を)?(?:完了|済み)|live observation (?:done|complete)|G3 ?(?:は)?PASS|G3証拠あり|verdict[^"]*PASS|B03[^"。]*(?:PASS済|解消済|closed済)|干渉なし|同等(?:性)?(?:を|が)?(?:確認|成立)|残り?\s*\d+(?:\.\d+)?\s*h/i,'INVARIANT req25 no false completion claims');
 }
 check('October status separates completed timing, conditional work and blocked gates',()=>{
   assertOctoberStatus(invariantViews());
@@ -809,7 +842,29 @@ check('October red controls reject false gate, budget and interference completio
     ['exploration numerical result invented',d=>{d.status.timing.exploration.grid_ms=0;}],
     ['B03 decision reopened',d=>{d.decisions.items.find(x=>x.id==='dec-oct10-b03').status='open';}],
     ['next step removed',d=>{d.status.next_steps.pop();}],
-    ['G3 policy reopened',d=>{d.decisions.items.find(x=>x.id==='dec-oct09-g3').status='open';}]
+    ['G3 policy reopened',d=>{d.decisions.items.find(x=>x.id==='dec-oct09-g3').status='open';}],
+    ['tooling representation reopened',d=>{d.status.b03.tooling_representation='open-user-decision';}],
+    ['req 2-5 live observation done',d=>{d.status.req25.live_observation='done';}],
+    ['req 2-5 live finishable by deadline',d=>{d.status.req25.live_completable_by_deadline=true;}],
+    ['req 2-5 live progress done',d=>{d.progress.items.find(x=>x.id==='progress-req25-live').state='done';}],
+    ['req 2-5 deadline auto-extended',d=>{d.status.req25.auto_extend=true;}],
+    ['req 2-5 scope narrowed',d=>{d.status.req25.scope='requirement-2-only';}],
+    ['checker G3 PASS',d=>{d.status.req25.g3_status='PASS';}],
+    ['checker verdict PASS',d=>{d.status.req25.allowed_verdicts.push('PASS');}],
+    ['checker as G3 evidence',d=>{d.status.req25.g3_evidence=true;}],
+    ['G3 evidence invented',d=>{d.status.req25.g3_evidence_count=1;}],
+    ['synthetic-only dropped',d=>{d.status.req25.synthetic_only=false;}],
+    ['node test count changed',d=>{d.status.req25.node_tests_total=400;}],
+    ['merged checker lost',d=>{d.status.req25.checkers.pop();}],
+    ['dec-007 result invented',d=>{d.decisions.items.find(x=>x.id==='dec-007').status='resolved';}],
+    ['10/11 decision deleted',d=>{d.decisions.items=d.decisions.items.filter(x=>x.id!=='dec-oct11-req25');}],
+    ['headline claims live done',d=>{d.status.headline='要件2〜5の実観測は完了。';}],
+    ['headline claims G3 PASS',d=>{d.status.headline='G3 PASS。';}],
+    ['changes claim checker verdict PASS',d=>{d.status.changes.items.push('checker verdict PASS');}],
+    ['remaining hours number',d=>{d.status.subhead+=' 残り40h';}],
+    ['no interference claimed',d=>{d.status.subhead+=' 干渉なし';}],
+    ['equivalence claimed',d=>{d.status.subhead+=' 同等性を確認';}],
+    ['B03 PASS claimed in text',d=>{d.status.priority.note+=' B03はPASS済み';}]
   ])rejectMutation(label,mutate,assertOctoberStatus);
 });
 console.log(`PASS dashboard UI: ${count} checks; ${app.D.ui.pages.length} page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
