@@ -609,6 +609,18 @@
       "path": "ascon-notes/league/g3/loader/lifecycle-join.mjs",
       "title": "要件5 ライフサイクル結合checker（synthetic-only）",
       "locator": "g3Status BLOCKED、合成時計で実時間ではない"
+    },
+    {
+      "id": "src-b07-audit",
+      "path": "ascon-notes/league/G3-B07-OFFLINE-AUDIT-2026-10-11.md",
+      "title": "B07 オフライン読取の監査（r3 manifest欄）",
+      "locator": "候補識別は確定、実行source・eval・tool pin・state dump等は未確定。B07はBLOCKEDのまま"
+    },
+    {
+      "id": "src-b07-draft",
+      "path": "ascon-notes/league/g3/manifest-contract/r3-manifest.DRAFT.json",
+      "title": "r3 manifest DRAFT（未登録の下書き）",
+      "locator": "未確定欄はnull＋nullReason。登録済みmanifestではなく、check.pyは未適用"
     }
   ]
 }
@@ -639,11 +651,13 @@
     "src-req2-checker",
     "src-req3-checker",
     "src-req4-checker",
-    "src-req5-checker"
+    "src-req5-checker",
+    "src-b07-audit",
+    "src-b07-draft"
   ],
-  "as_of": "2026-10-11T16:02:32+09:00",
+  "as_of": "2026-10-11T17:05:29+09:00",
   "measurement_as_of": null,
-  "last_update": "10/11 JST: 本人決定（要件2〜5の実観測を範囲=すべて・期限10/12で継続、dec-007は本人が本日確認、B03ツール不変、主催者質問は送らない）を記録。PR #57〜#61を統合し、要件2〜5のsynthetic-only checker 4本がそろった。実観測は未実施でBLOCKED、G3 REQUIRED / BLOCKED、G3証拠0件、残時間UNKNOWNは維持。",
+  "last_update": "10/11 JST: PR #63でB07のオフライン監査と未登録のr3 manifest DRAFTを統合。候補tree hashと候補5ファイルはlockと一致、chainツール13件はr2固定のまま。B07はBLOCKEDのまま（閉じていない）。要件2〜5の実観測は未実施、G3 REQUIRED / BLOCKED、G3証拠0件、残時間UNKNOWNは維持。",
   "phase_id": "phase-first",
   "headline": "要件2〜5のオフラインchecker 4本は統合済み。実観測は未実施でBLOCKED、G3はREQUIRED / BLOCKED。",
   "subhead": "4本はsynthetic-onlyでG3証拠ではない（G3証拠は0件）。実観測は計画上10/12までに完了できない。B03は未解決の本人受容済み残余リスク（PASSではない）。",
@@ -2691,12 +2705,13 @@
   "changes": {
     "title": "前回更新から",
     "items": [
-      "本人決定（10/11）：要件2〜5の実観測を範囲=すべて・期限10/12で継続（自動延長なし）。Ollama鍵・無料枠は本人が本日確認（結果は未共有）。B03のツールは変えない。主催者質問は送らず、公式の扱いは未確定のまま進める。",
-      "統合：#57 dashboard / #58 決定記録・要件2〜5計画・要件2 checker / #59 要件3 checker / #60 要件4 checker・差分分析 / #61 要件5 checker。",
-      "4 checkerはsynthetic-only：判定はCONTRACT_OK_ON_SYNTHETIC / BLOCKED / FAILだけで、g3Statusは常にBLOCKED。node test 387件pass（本更新で実行）。"
+      "統合：#62 dashboard / #63 B07のオフライン監査と未登録のr3 manifest DRAFT。候補tree hash a03da518…3dffと候補5ファイルはinputs.lock.jsonと一致。chainツール13件はr2固定（release-r2 / ec80bb8 / /tmp/g3-chain）のまま。",
+      "B07はBLOCKEDのまま（閉じていない）。DRAFTは登録済みmanifestではない。check.pyはsynthetic-onlyのため、DRAFTには意図的に実行していない。オフラインで決められない欄はnullと理由を記録：r3実行source（commit・path）、必須ファイル集合、eval領域、toolの再登録（本人レビューが必要）、state dump（Anvilが必要）、ZIP・観測器・CLIの束縛（Docker・認証が必要）。"
     ],
-    "caption": "要件2〜5の実観測は未実施で、計画上10/12までに完了できない。G3証拠は0件、G3はREQUIRED / BLOCKED。B03は本人受容済みの未解決リスクでPASSではない。残時間UNKNOWN。統合はローカルgit履歴で確認。",
+    "caption": "要件2〜5の実観測は未実施で、計画上10/12までに完了できない。B07はBLOCKED、G3証拠は0件、G3はREQUIRED / BLOCKED。B03は本人受容済みの未解決リスクでPASSではない。残時間UNKNOWN。統合はローカルgit履歴で確認。",
     "sources": [
+      "src-b07-audit",
+      "src-b07-draft",
       "src-decisions-oct11",
       "src-req25-plan",
       "src-req4-gap",
@@ -2709,12 +2724,13 @@
   "next_steps": [
     {
       "title": "Ollama鍵・無料枠の確認結果を共有する",
-      "text": "本人が10/11にOllama鍵の有効性と無料枠の量を確認（期限10/28の提出前確認の一部）。結果を本人から共有されるまで未確認として扱う。",
+      "text": "本人が10/11にOllama鍵の有効性と無料枠の量を確認（期限10/28の提出前の本人確認の一部）。結果を本人から共有されるまで未確認として扱う。公式P60の版は提供日不明で、最早10/20頃以降の確認窓（条件付き）。開発課金$0・前払い$0を維持。",
       "state": "blocked",
       "label": "USER · 本人のみ / 結果未共有",
       "sources": [
         "src-decisions-oct11",
-        "src-decisions-oct09"
+        "src-decisions-oct09",
+        "src-p60-spec"
       ]
     },
     {
@@ -2728,13 +2744,14 @@
       ]
     },
     {
-      "title": "公式P60の版を待つ",
-      "text": "公式P60の提供日は不明、最早10/20頃以降の確認窓。10/28は提出前の本人確認（dec-007の最終確認）。開発課金$0・前払い$0を維持。",
-      "state": "pending",
-      "label": "P60待ち / 条件付き",
+      "title": "B07のtool移植・再登録を本人がレビューする",
+      "text": "chainツール13件はr2固定のままで、r3のtool pinではない。移植とtool再登録には本人のレビューが必要。実行source・eval領域・state dump・ZIP等の欄も未確定で、B07はBLOCKEDのまま。エージェントは移植・再登録・起動をしない。",
+      "state": "blocked",
+      "label": "USER · 本人のみ / レビュー待ち",
       "sources": [
-        "src-p60-spec",
-        "src-decisions-oct09"
+        "src-b07-audit",
+        "src-b07-draft",
+        "src-b07-plan"
       ]
     }
   ],
@@ -3028,9 +3045,21 @@
         "2026-10-11",
         "synthetic-only",
         "合成時計で実300秒は未観測。G3証拠ではない"
+      ],
+      [
+        "dashboard / PR #62",
+        "2026-10-11",
+        "統合済み",
+        "表示更新。G3実走ではない"
+      ],
+      [
+        "B07オフライン監査・r3 manifest DRAFT / PR #63",
+        "2026-10-11",
+        "未登録の下書き",
+        "B07はBLOCKEDのまま。check.pyは未適用。G3証拠ではない"
       ]
     ],
-    "note": "PR #49〜#61の統合日はローカルgitのmerge commit時刻をJSTで確認。前回表示に未反映だった統合を含む。GitHubへのオンライン照合なし。従来の#45〜#47・別repo masa-harness #427は既存計画の記録を保持。prestart-check.py・inputs.lock.jsonは未変更でB03/B07等を列挙し、G3開始を止める。",
+    "note": "PR #49〜#63の統合日はローカルgitのmerge commit時刻をJSTで確認。前回表示に未反映だった統合を含む。GitHubへのオンライン照合なし。従来の#45〜#47・別repo masa-harness #427は既存計画の記録を保持。prestart-check.py・inputs.lock.jsonは未変更でB03/B07等を列挙し、G3開始を止める。",
     "sources": [
       "src-g3-recorder",
       "src-cli-binding",
@@ -3054,10 +3083,14 @@
       "src-req2-checker",
       "src-req3-checker",
       "src-req4-checker",
-      "src-req5-checker"
+      "src-req5-checker",
+      "src-b07-audit",
+      "src-b07-draft"
     ]
   },
   "footer_sources": [
+    "src-b07-audit",
+    "src-b07-draft",
     "src-decisions-oct11",
     "src-req25-plan",
     "src-req4-gap",
@@ -3147,7 +3180,7 @@
     ],
     "node_tests_total": 387,
     "node_tests_fail": 0,
-    "node_tests_note": "本更新で4つのtestファイルにnode --testを実行し387件pass。合成入力の契約検査であり、実観測・G3証拠ではない。",
+    "node_tests_note": "PR #62の更新時に4つのtestファイルにnode --testを実行し387件pass。合成入力の契約検査であり、実観測・G3証拠ではない。",
     "sources": [
       "src-decisions-oct11",
       "src-req25-plan",
@@ -3156,6 +3189,58 @@
       "src-req3-checker",
       "src-req4-checker",
       "src-req5-checker"
+    ]
+  },
+  "b07": {
+    "state": "offline-audit-merged-blocked",
+    "b07_status": "BLOCKED",
+    "closed": false,
+    "pr": 63,
+    "merge_commit": "68102ef",
+    "candidate_sha256": "a03da51869cf8c8160aaa25eb5f1e87cfa74a3a9dfdac3050945a71f7d143dff",
+    "candidate_hash_matches_lock": true,
+    "candidate_files_matching_lock": 5,
+    "chain_tools_r2_pinned": 13,
+    "r2_pins": [
+      "release-r2",
+      "ec80bb8",
+      "/tmp/g3-chain"
+    ],
+    "draft_registered": false,
+    "check_py_scope": "synthetic-only",
+    "check_py_run_on_draft": false,
+    "g3_evidence": false,
+    "undecided_fields": [
+      {
+        "field": "r3実行source（commit・path）",
+        "reason": "選定・レビューがファイルに無い"
+      },
+      {
+        "field": "必須ファイル集合",
+        "reason": "レビュー未了（観測した部分集合109件のみ）"
+      },
+      {
+        "field": "eval領域",
+        "reason": "r3専用の独立eval領域が無い"
+      },
+      {
+        "field": "toolの再登録",
+        "reason": "chainツールはr2固定。移植と本人レビュー付きの再登録が必要"
+      },
+      {
+        "field": "state dump",
+        "reason": "生成・ロードにAnvilが必要"
+      },
+      {
+        "field": "ZIP・観測器・CLIの束縛",
+        "reason": "Docker・認証が必要"
+      }
+    ],
+    "note": "候補識別（ID・dir・tree hash・5ファイル）はオフラインで確定し、inputs.lock.jsonと一致。lock・prestart-check.py・chainツールは変更していない。DRAFTは登録済みmanifestではなく、B07を閉じない。",
+    "sources": [
+      "src-b07-audit",
+      "src-b07-draft",
+      "src-b07-plan"
     ]
   }
 }
@@ -4899,6 +4984,18 @@
         "src-req25-plan"
       ],
       "state_label": "BLOCKED / 未実施"
+    },
+    {
+      "id": "progress-b07-offline-audit",
+      "workstream": "基盤",
+      "title": "B07 r3 manifestのオフライン監査（B07は未解消）",
+      "state": "blocked",
+      "evidence": "PR #63で監査文書と未登録のDRAFTを統合。候補tree hash a03da518…3dffと候補5ファイルはinputs.lock.jsonと一致。chainツール13件はr2固定。実行source・必須ファイル集合・eval領域・tool再登録（本人レビュー）・state dump（Anvil）・ZIP等の束縛（Docker・認証）は未確定でnull。check.pyはsynthetic-onlyのためDRAFTに未適用。",
+      "sources": [
+        "src-b07-audit",
+        "src-b07-draft"
+      ],
+      "state_label": "BLOCKED / 監査のみ・未登録"
     }
   ]
 }
@@ -4933,10 +5030,12 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Codex",
-      "evidence": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。 B04の完全収集と同等性、自然改訂fixture等は未成立。",
-      "mitigation": "タイミング完了結果を受け、要件2〜5のlive観測の継続・中止と範囲・費用・期限を本人が判断。B04/B07の合成部品は未解消を保持。台帳と利用枠の不足を整理。ツール表現は本人判断。エージェントは免除を推奨・決定しない。",
+      "evidence": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。 B04の完全収集と同等性、自然改訂fixture等は未成立。 G3のB07（r3のsource/eval/tool manifest）はPR #63のオフライン監査後もBLOCKED：候補識別はlockと一致したが、実行source・必須ファイル集合・eval領域・tool再登録・state dump・ZIP等の束縛は未確定。DRAFTは未登録。",
+      "mitigation": "タイミング完了結果を受け、要件2〜5のlive観測の継続・中止と範囲・費用・期限を本人が判断。B04/B07の合成部品は未解消を保持。B07のtool移植・再登録は本人レビューが先。台帳と利用枠の不足を整理。ツール表現は本人判断。エージェントは免除を推奨・決定しない。",
       "status": "open",
       "sources": [
+        "src-b07-audit",
+        "src-b07-draft",
         "src-decisions-oct09",
         "src-g3-prereq",
         "src-g3-lock-r3",
@@ -9264,8 +9363,20 @@
     "計画変更",
     "誤り"
   ],
-  "note": "追記のみ。旧100件は全フィールド保持、8件追加。最新状態は概要を参照。",
+  "note": "追記のみ。旧100件は全フィールド保持、9件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-127",
+      "timestamp": "2026-10-11T17:05:29+09:00",
+      "type": "実装",
+      "summary": "10/11 JST: PR #62（dashboard）とPR #63（B07のオフライン監査・未登録のr3 manifest DRAFT）を統合。候補tree hash a03da518…3dffと候補5ファイルはinputs.lock.jsonと一致。chainツール13件はr2固定（release-r2 / ec80bb8 / /tmp/g3-chain）。オフラインで決められない欄はnullと理由（実行source、必須ファイル集合、eval領域、tool再登録＝本人レビュー、state dump＝Anvil、ZIP・観測器・CLI＝Docker・認証）。DRAFTは登録済みmanifestではなく、check.pyはsynthetic-onlyのため未適用。B07はBLOCKEDのまま、G3 REQUIRED / BLOCKED、G3証拠0件、残時間UNKNOWN。",
+      "sources": [
+        "src-b07-audit",
+        "src-b07-draft"
+      ],
+      "time_basis": "ダッシュボードへの記録時刻。merge・監査の実時刻ではない。",
+      "event_date": "2026-10-11"
+    },
     {
       "id": "log-126",
       "timestamp": "2026-10-11T16:02:32+09:00",
