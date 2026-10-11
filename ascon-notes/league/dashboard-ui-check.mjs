@@ -796,6 +796,34 @@ function assertOctoberStatus(views){
   for(const n of [57,58,59,60,61])assert.ok(resultView.includes(`PR #${n}`),`INVARIANT 10/11 merged PR ${n}`);
   const claims=JSON.stringify([d.status.headline,d.status.subhead,d.status.changes,d.status.next_steps,d.status.priority,d.status.req25,d.ui.copy]);
   assert.doesNotMatch(claims,/実観測(?:は|を)?(?:完了|済み)|live observation (?:done|complete)|G3 ?(?:は)?PASS|G3証拠あり|verdict[^"]*PASS|B03[^"。]*(?:PASS済|解消済|closed済)|干渉なし|同等(?:性)?(?:を|が)?(?:確認|成立)|残り?\s*\d+(?:\.\d+)?\s*h/i,'INVARIANT req25 no false completion claims');
+  // 2026-10-11 PR #63: B07 offline audit + unregistered r3 manifest DRAFT. B07 stays BLOCKED.
+  const b7=d.status.b07;
+  assert.equal(b7.state,'offline-audit-merged-blocked','INVARIANT B07 audit state');
+  assert.equal(b7.b07_status,'BLOCKED','INVARIANT B07 blocked');
+  assert.equal(b7.closed,false,'INVARIANT B07 not closed');
+  assert.deepEqual([b7.pr,b7.merge_commit],[63,'68102ef'],'INVARIANT B07 audit merge');
+  assert.equal(b7.candidate_sha256,'a03da51869cf8c8160aaa25eb5f1e87cfa74a3a9dfdac3050945a71f7d143dff','INVARIANT B07 candidate tree hash');
+  assert.equal(b7.candidate_hash_matches_lock,true,'INVARIANT B07 candidate hash matches lock');
+  assert.equal(b7.candidate_files_matching_lock,5,'INVARIANT B07 five candidate files');
+  assert.equal(b7.chain_tools_r2_pinned,13,'INVARIANT B07 chain tools still r2');
+  assert.deepEqual(JSON.parse(JSON.stringify(b7.r2_pins)),['release-r2','ec80bb8','/tmp/g3-chain'],'INVARIANT B07 r2 pins');
+  assert.equal(b7.draft_registered,false,'INVARIANT B07 draft not registered');
+  assert.equal(b7.check_py_scope,'synthetic-only','INVARIANT B07 check.py synthetic only');
+  assert.equal(b7.check_py_run_on_draft,false,'INVARIANT B07 check.py not run on draft');
+  assert.equal(b7.g3_evidence,false,'INVARIANT B07 audit not G3 evidence');
+  assert.deepEqual(JSON.parse(JSON.stringify(b7.undecided_fields.map(f=>f.field))),['r3実行source（commit・path）','必須ファイル集合','eval領域','toolの再登録','state dump','ZIP・観測器・CLIの束縛'],'INVARIANT B07 undecided fields');
+  for(const f of b7.undecided_fields)assert.ok(f.reason,`INVARIANT B07 null reason ${f.field}`);
+  assert.equal(d.progress.items.find(x=>x.id==='progress-b07-offline-audit').state,'blocked','INVARIANT B07 progress blocked');
+  assert.equal(d.blockers.items.find(x=>x.id==='B01').status,'open','INVARIANT G3 blocker open');
+  assert.ok(resultView.includes('PR #62')&&resultView.includes('PR #63'),'INVARIANT 10/11 merged PR 62/63');
+  for(const phrase of ['B07はBLOCKEDのまま','登録済みmanifestではない','意図的に実行していない','本人レビュー','Anvil','Docker'])
+    assert.ok(overview.includes(phrase),`INVARIANT B07 overview ${phrase}`);
+  const userSteps=d.status.next_steps.filter(s=>/USER · 本人のみ/.test(s.label)).map(s=>s.title);
+  assert.equal(userSteps.length,3,'INVARIANT three user-only next steps');
+  for(const re of [/Ollama/,/10\/12以降の実観測/,/B07のtool移植・再登録/])
+    assert.ok(userSteps.some(t=>re.test(t)),`INVARIANT user-only step ${re}`);
+  const b7claims=JSON.stringify([d.status.headline,d.status.subhead,d.status.last_update,d.status.changes,d.status.next_steps,d.status.priority,d.status.b07,d.blockers.items.find(x=>x.id==='B01'),d.progress.items.find(x=>x.id==='progress-b07-offline-audit')]);
+  assert.doesNotMatch(b7claims,/B07(?:は|を)?(?:閉じた|解消済|解消した|closed|PASS)|(?:DRAFT|manifest)(?:は|を)?登録済み(?!manifestでは)|registered manifest(?! ?is not)|check\.py[^"。]*(?:実manifest|実入力)[^"。]*(?:検証済|合格|PASS|OK)|check\.py validated/i,'INVARIANT B07 no false closure claims');
 }
 check('October status separates completed timing, conditional work and blocked gates',()=>{
   assertOctoberStatus(invariantViews());
@@ -864,7 +892,25 @@ check('October red controls reject false gate, budget and interference completio
     ['remaining hours number',d=>{d.status.subhead+=' 残り40h';}],
     ['no interference claimed',d=>{d.status.subhead+=' 干渉なし';}],
     ['equivalence claimed',d=>{d.status.subhead+=' 同等性を確認';}],
-    ['B03 PASS claimed in text',d=>{d.status.priority.note+=' B03はPASS済み';}]
+    ['B03 PASS claimed in text',d=>{d.status.priority.note+=' B03はPASS済み';}],
+    ['B07 closed',d=>{d.status.b07.closed=true;}],
+    ['B07 status PASS',d=>{d.status.b07.b07_status='PASS';}],
+    ['B07 closed in text',d=>{d.status.changes.items.push('B07は解消済み');}],
+    ['B07 closed in log summary',d=>{d.status.last_update+=' B07を閉じた';}],
+    ['draft registered',d=>{d.status.b07.draft_registered=true;}],
+    ['draft registered in text',d=>{d.status.changes.items.push('DRAFTは登録済み');}],
+    ['check.py run on draft',d=>{d.status.b07.check_py_run_on_draft=true;}],
+    ['check.py validated real manifest',d=>{d.status.changes.items.push('check.pyで実manifestを検証済み');}],
+    ['check.py scope widened',d=>{d.status.b07.check_py_scope='real-input';}],
+    ['B07 audit as G3 evidence',d=>{d.status.b07.g3_evidence=true;}],
+    ['candidate hash altered',d=>{d.status.b07.candidate_sha256='0'.repeat(64);}],
+    ['candidate lock mismatch hidden',d=>{d.status.b07.candidate_hash_matches_lock=false;}],
+    ['r2 pins erased',d=>{d.status.b07.chain_tools_r2_pinned=0;}],
+    ['undecided field dropped',d=>{d.status.b07.undecided_fields.pop();}],
+    ['null reason erased',d=>{d.status.b07.undecided_fields[0].reason='';}],
+    ['B07 progress done',d=>{d.progress.items.find(x=>x.id==='progress-b07-offline-audit').state='done';}],
+    ['B07 user review delegated',d=>{d.status.next_steps[2].label='Claude / 自動';}],
+    ['G3 blocker closed',d=>{d.blockers.items.find(x=>x.id==='B01').status='resolved';}]
   ])rejectMutation(label,mutate,assertOctoberStatus);
 });
 console.log(`PASS dashboard UI: ${count} checks; ${app.D.ui.pages.length} page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
