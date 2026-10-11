@@ -73,15 +73,15 @@ const en = {
   // a ranking that will be misread.
   "home.practiceBadge": "practice",
   "home.practiceNote":
-    "Practice standings, not the official scoring. The competition is scored separately, from submitted bundles replayed over a scenario matrix — nothing here feeds into it.",
+    "Practice standings, not the official scoring. The competition is scored separately, by running the submitted agents over hidden scenarios — nothing here feeds into it.",
   "home.standingsFinal": "Standings · final",
   // The heading over the §4.7 notice, where there is no result to be final or provisional about.
   "home.standingsTitle": "Standings",
   "home.standingsThrough": "Standings · through interval {at}",
   "home.subtitlePractice":
-    "Score: each day of the period is one epoch. P is the agent's return over the day (end value ÷ start value − 1) rather than its USDC — the world never resets, so starting amounts drift apart, and a return asks what each agent did with what it had. T = 50 + 10 × (P − μ) / σ over the field, and the score is the plain average of T over the days. An agent that starts a day with less than a tenth of the field's median is not placed that day. With equal starts this is exactly the competition's ranking.",
+    "Score: each day of the period is one epoch. P is the agent's return over the day (end value ÷ start value − 1) rather than its USDC — the world never resets, so starting amounts drift apart, and a return asks what each agent did with what it had. T = 50 + 10 × (P − μ) / σ over all agents, and the score is the plain average of T over the days. An agent that starts a day with less than a tenth of the median across all agents is not placed that day. With equal starts this is exactly the competition's ranking.",
   "home.subtitle":
-    "Score: each epoch (one scenario run) gives every agent a deviation score T = 50 + 10 × (P − μ) / σ, where P is its USDC profit over the epoch and μ, σ are the field's. The score is the average of T over the epochs, later epochs weighted up to 1.5×. Regime columns are the agent's mean T in that regime. Click a row for the epoch-by-epoch breakdown.",
+    "Score: each epoch (one scenario run) gives every agent a deviation score T = 50 + 10 × (P − μ) / σ, where P is its USDC profit over the epoch and μ, σ are the mean and standard deviation of P over all agents. The score is the average of T over the epochs, later epochs weighted up to 1.5×. Regime columns are the agent's mean T in that regime. Click a row for the epoch-by-epoch breakdown.",
   "home.col.move": "move",
   "home.col.agent": "agent",
   "home.col.score":
@@ -147,11 +147,11 @@ const en = {
   "scenario.roundsBlocks": "{rounds} intervals × {blocks} blocks",
   "scenario.standings": "Scenario standings",
   "home.scenarios.aboutSeed":
-    "A seed is a label for market conditions. The fair-price path is reproducible per (regime, seed), but transaction timing and in-block ordering are not — the same scenario replayed twice gives different fills, which is why the competition measures over many scenarios.",
+    "A seed is a label for market conditions. The reference-price path is reproducible per (regime, seed), but transaction timing and in-block ordering are not — the same scenario replayed twice gives different fills, which is why the competition measures over many scenarios.",
   "home.scenarios.aboutRegimes":
     "Official regimes: calm, cex-drift, informed-flow, whale, lending-incident, crash, depeg, vuln, spike, depeg-persist, cdp-incident, and launch. A scenario is one (regime, seed) pair; a competition replays a whole set of them and ranks agents per regime.",
   "home.scenarios.aboutEpisodes":
-    "Stress events are randomized-but-deterministic overlays on the fair price (ramp, hold, decay), liquidity pulls that thin every AMM pool at once, and depegs where the environment leans on a stablecoin's pool until the window closes. Seeded victim positions make lending liquidations reachable for agents that watch health factors.",
+    "Stress events are randomized-but-deterministic overlays on the reference price (ramp, hold, decay), liquidity pulls that thin every AMM pool at once, and depegs where the environment leans on a stablecoin's pool until the window closes. Seeded positions that can be liquidated make lending liquidations reachable for agents that watch health factors.",
   "explorer.about.p1":
     "Everything on these pages is derived from the run's own recorded files: the standings and per-interval results, the reconstructed observations and event stream, every transaction, each agent's own decision log, and the per-venue market series.",
   "explorer.about.p2":
@@ -179,7 +179,7 @@ const en = {
   "rounds.col.logReturn": "Log return",
   "rounds.col.rank": "Rank",
   "rounds.bankrupt":
-    "asset value at or below zero (bankrupt — no floor, no freeze)",
+    "asset value at or below zero (bankrupt — no floor; negative values count as they are)",
   "rounds.deltaNote":
     "Δ value is the raw change in account value, market exposure included — a do-nothing agent still moves with the price. Log return is the same change as a log growth rate. Neither is the score, which is one number for the whole epoch. Rank is cumulative since the first interval; the arrow is its change over this interval.",
   "rounds.envDid": "What the environment did",
@@ -220,11 +220,11 @@ const en = {
   "agent.standing.rounds":
     "epochs scored",
   "agent.standing.explain":
-    "Every epoch this agent was scored in. T is where its profit sat in that epoch's field (50 = the field's mean, ±10 = one standard deviation); the score is the weighted average of T, so a strategy that wins big in one regime and loses in the rest can place below a steady one — the std of T is also the first tie-break.",
+    "Every epoch this agent was scored in. T is where its profit sat among all agents in that epoch (50 = their mean, ±10 = one standard deviation); the score is the weighted average of T, so a strategy that wins big in one regime and loses in the rest can place below a steady one — the std of T is also the first tie-break.",
   "agent.standing.explainPractice":
-    "Every day of the period this agent was scored in. P is its return over the day (end value ÷ start value − 1); T is where that return sat in the day's field (50 = the field's mean, ±10 = one standard deviation), and the score is the plain average of T over the days — every day counts the same.",
+    "Every day of the period this agent was scored in. P is its return over the day (end value ÷ start value − 1); T is where that return sat among all agents that day (50 = their mean, ±10 = one standard deviation), and the score is the plain average of T over the days — every day counts the same.",
   "agent.standing.belowFloor":
-    "Not placed on {n} day(s): it started them with less than a tenth of the field's median value. A return on that little is decided by fees and rounding, so those days are left out rather than scored.",
+    "Not placed on {n} day(s): it started them with less than a tenth of the median value across all agents. A return on that little is decided by fees and rounding, so those days are left out rather than scored.",
   "agent.standing.noSeries":
     "No interval detail for this agent — the scenario runs behind this competition were not collected, so the standing can be shown but not explained.",
   "agent.standing.mean":
@@ -274,7 +274,7 @@ const en = {
   "agent.noRounds":
     "no interval results yet — the per-interval series is built when the run finishes",
   "agent.roundsNote":
-    "An interval is the rules' evaluation interval — the leaderboard's running progress inside an epoch. Log return is the raw change of this agent's account value over the interval. The score is one number for the whole epoch (P = V_K − V_0, standardised over the field), not a function of these intervals.",
+    "An interval is the rules' evaluation interval — the leaderboard's running progress inside an epoch. Log return is the raw change of this agent's account value over the interval. The score is one number for the whole epoch (P = V_K − V_0, standardised over all agents), not a function of these intervals.",
   "agent.portfolio": "Portfolio value",
   "agent.portfolioRange": "Portfolio value · {from} → {to}",
   "agent.yLabel": "account value (USDC)",
@@ -301,7 +301,7 @@ const en = {
     "Pick an interval in the bar above and every panel below narrows to that interval's blocks.",
   "market.backToRun": "show the whole run →",
   "market.view.arb": "Cross-venue arb",
-  "market.view.price": "Fair price",
+  "market.view.price": "Reference price",
   "market.arbLegend":
     "▲ = a buy, ▼ = a sell, coloured by venue. The dashed line is the reference price. The lower pane plots the widest gap between venues against the {n}bps round-trip cost: above that line there was arbitrage to take.",
   "market.noVenue":
@@ -312,7 +312,7 @@ const en = {
   // thing a self-hosted participant files nowhere but their own disk. Their *included* transactions
   // are on the chain and appear in the explorer; what is not visible is what they sent and lost.
   "market.submissionsSelfHosted":
-    "{count} self-hosted participant(s) are not in this list — it is built from what agents report sending, and theirs is reported on their own machines. Their included transactions are in the explorer.",
+    "{count} self-hosted agent(s) are not in this list — it is built from what agents report sending, and a self-hosted agent reports on its own machine. Their included transactions are in the explorer.",
   "market.noSubmissions": "no agent submitted a transaction in this run",
   "market.sell": "sell",
   "market.buy": "buy",
@@ -363,7 +363,7 @@ const en = {
   // ---- environment events, as the scenario board's "what the environment did here" strip reads them ----
   "tape.kind.run": "RUN",
   "tape.kind.scenario": "SCENARIO",
-  "tape.kind.victimHf": "VICTIM HF",
+  "tape.kind.victimHf": "HEALTH FACTOR",
   "tape.kind.liquidation": "LIQUIDATION",
   "tape.kind.liquidity": "LIQUIDITY",
   "tape.kind.depeg": "DEPEG",
@@ -375,7 +375,7 @@ const en = {
   "tape.blocksN": "{n} blocks",
   "tape.schedule": "stress schedule: {types}",
   "tape.eventsN": "{n} events",
-  "tape.victimHf": "victim health factors at blk {block}",
+  "tape.victimHf": "health factors of liquidatable positions at blk {block}",
   "tape.liquidation": "liquidation at blk {block}",
   "tape.liquidityPull": "{venue} {market} depth {direction}",
   "tape.liquidityRestored": "{venue} depth restored",
@@ -385,7 +385,7 @@ const en = {
   "tape.trove": "trove liquidated ({borrower})",
   "tape.redemption": "eUSD redeemed for ETH (blk {block})",
   "tape.arbWindow": "{base} {buy}→{sell} gap open",
-  "tape.runCompleted": "run finished, scores reconstructed",
+  "tape.runCompleted": "run finished, value series reconstructed",
 
   // ---- venue panels (markets tabs) ----
   "vp.amm.label": "AMM",
@@ -461,17 +461,17 @@ const en = {
   "vp.col.borrowedCol": "Borrowed",
   "vp.col.utilizationCol": "Utilization",
   "vp.lending.reservesEmpty": "no reserve totals recorded in this run",
-  "vp.lending.worstHf": "Worst victim health factor",
+  "vp.lending.worstHf": "Worst health factor of liquidatable positions",
   "vp.lending.liquidatable": "liquidatable",
   "vp.lending.aboveLine": "above the liquidation line",
-  "vp.lending.victimChart": "Seeded victim health factor (worst)",
+  "vp.lending.victimChart": "Health factor of liquidatable positions (worst)",
   "vp.lending.minHf": "Min HF",
   "vp.lending.liquidationLine": "liquidation",
   "vp.lending.liquidations": "Liquidations",
-  "vp.col.victim": "Victim",
+  "vp.col.victim": "Position",
   "vp.col.healthFactor": "Health factor",
   "vp.col.remainingDebt": "Remaining debt",
-  "vp.lending.liquidationsEmpty": "no victim was liquidated in this run",
+  "vp.lending.liquidationsEmpty": "no liquidatable position was liquidated in this run",
   "vp.lending.accountsTitle": "Agent accounts at the run's final block",
   "vp.col.debt": "Debt",
   "vp.lending.accountsEmpty":
@@ -561,13 +561,13 @@ const en = {
 
   "vp.scenario.label": "Scenario",
   "vp.scenario.caption":
-    "What the environment did to this run. Its schedule is drawn from the seed before the first block: each episode is a trapezoid — it ramps up, holds, then decays — laid over the fair-price walk. The draw is random but reproducible, so the same seed always replays the same windows. This tab covers the whole run rather than the interval you picked, because a scenario is a property of the run.",
+    "What the environment did to this run. Its schedule is drawn from the seed before the first block: each episode is a trapezoid — it ramps up, holds, then decays — laid over the reference-price walk. The draw is random but reproducible, so the same seed always replays the same windows. This tab covers the whole run rather than the interval you picked, because a scenario is a property of the run.",
   "vp.scenario.seed": "Seed",
   "vp.scenario.seedSub":
     "flow seed {flow} · the label for this run's market conditions",
   "vp.scenario.scheduled": "Scheduled events",
   "vp.scenario.scheduledNone":
-    "none — the fair-price walk was the only thing moving",
+    "none — the reference-price walk was the only thing moving",
   "vp.scenario.window": "Run window",
   "vp.scenario.windowSub": "{blocks} blocks · {rounds} intervals",
   "vp.scenario.scheduleTitle":
@@ -578,13 +578,13 @@ const en = {
   "vp.col.mag": "Mag",
   "vp.col.outcome": "Outcome",
   "vp.scenario.scheduleEmpty":
-    "no stress event was scheduled — this run is the fair-price walk and the order flow, nothing else",
+    "no stress event was scheduled — this run is the reference-price walk and the order flow, nothing else",
   "vp.scenario.neverFired": "never fired",
   "vp.scenario.failed": "failed",
   "vp.scenario.restored": "restored",
   "vp.scenario.leftInPlace": "left in place",
   "vp.scenario.firedBlocks": "{n} blk {from}–{to}",
-  "vp.scenario.crash": "overlay on the fair price — see the price chart",
+  "vp.scenario.crash": "overlay on the reference price — see the price chart",
   "vp.scenario.flipped": "{type} (drawn as {from})",
   "vp.scenario.recovered": "{pct}% recovered",
   "vp.scenario.cexDrift": "changes the price walk — see the price chart",
@@ -598,7 +598,7 @@ const en = {
   "vp.scenario.notableEmpty":
     "nothing was liquidated, redeemed or slashed, and no arb window stayed open long enough to be reported",
   "vp.scenario.liquidation": "liquidation",
-  "vp.scenario.liquidationText": "victim {victim} liquidated at HF {hf}",
+  "vp.scenario.liquidationText": "position {victim} liquidated at HF {hf}",
   "vp.scenario.troveLiquidated": "trove liquidated",
   "vp.scenario.troveText": "{borrower} · {debt} eUSD",
   "vp.scenario.redemption": "redemption",
@@ -628,7 +628,7 @@ const en = {
   "pos.spMark": "absorbs liquidated debt",
   "pos.spNote": "paid in discounted collateral when a Trove is liquidated",
   "pos.surplus": "Liquity collateral surplus",
-  "pos.surplusMark": "valued at the WETH fair",
+  "pos.surplusMark": "valued at the WETH reference price",
   "pos.surplusNote": "left by a closed Trove (full redemption or Recovery-Mode liquidation); claimable with claimCollateral()",
   "pos.eusdSpot": "eUSD (spot)",
   "pos.eusdNote": "redeemable against the riskiest Trove at par",
@@ -686,8 +686,8 @@ const en = {
   "home.status.live": "an epoch is running now",
   "home.chart.title": "Score by epoch",
   "home.chart.subtitle":
-    "Cumulative score after each completed epoch — the same number as the table, replayed epoch by epoch. The top {n} are drawn in colour, the rest in grey; 50 is the field's average. Click a name to follow it.",
-  "home.chart.mean": "field average",
+    "Cumulative score after each completed epoch — the same number as the table, replayed epoch by epoch. The top {n} are drawn in colour, the rest in grey; 50 is the average across all agents. Click a name to follow it.",
+  "home.chart.mean": "average of all agents",
   "home.chart.empty": "The chart appears once two epochs have been scored.",
   "home.chart.legend": "top {n}",
   "home.col.delta": "Δ",
@@ -710,7 +710,7 @@ const en = {
   "world.col.contracts": "contracts · state",
   "world.block": "block {n}",
   "world.blockRange": "blocks {from}\u2013{to}",
-  "world.fair": "fair {price}",
+  "world.fair": "reference {price}",
   "world.emptyBlock": "no transaction in this block",
   "world.moreTxs": "+{n} more in the same block",
   "world.reverted": "{n} reverted",
@@ -733,7 +733,7 @@ const en = {
   "world.chip.balance": "balance {usd} USDC",
   "world.chip.pnl": "gain {pnl}",
   "world.chip.unscored": "no scored mark yet",
-  "world.thinking": "Agent Log",
+  "world.thinking": "Decision log",
   "world.openAgent": "{id}'s page →",
   "world.pickAgent": "Pick a wallet on the board to follow its own account of the run — the action it chose each block, and the reason it gave.",
   "world.logsWithheld":
@@ -742,11 +742,11 @@ const en = {
     "{id} runs on its owner's machine, so its reasoning is written there and never reaches this dashboard.",
   "world.logNotYet": "{id} has not written anything by this block yet.",
   "world.logSilent": "{id} logged no decisions in this window.",
-  "world.chart.price": "Venue price against fair",
-  "world.chart.fairLegend": "fair",
+  "world.chart.price": "Venue price against the reference price",
+  "world.chart.fairLegend": "reference price",
   "world.chart.balance": "Account value at each scored boundary",
   "world.chart.selectedLegend": "selected",
-  "world.chart.fieldLegend": "the field",
+  "world.chart.fieldLegend": "other agents",
   "world.chart.noBalance": "not scored yet",
   "world.thisBlock": "This block",
   "world.stat.txs": "transactions in the block",
@@ -931,7 +931,7 @@ const en = {
   "overview.scoring.tipP":
     "P is the change in the agent's total asset value over the epoch, in USDC: its value at the last block minus its value at the first.",
   "overview.scoring.tipT":
-    "T places P in that epoch's field: μ and σ are the mean and population standard deviation of P over every agent in the epoch, the benchmark excluded. 50 is the field's average; 10 points is one standard deviation.",
+    "T places P among all agents in that epoch: μ and σ are the mean and population standard deviation of P over every agent in the epoch, the benchmark excluded. 50 is the average across all agents; 10 points is one standard deviation.",
   "overview.scoring.tipW":
     "The score averages T with weights rising evenly from {first} for the first epoch to {last} for the last, so the ranking can still move late in the week.",
   "overview.scoring.tipTies":
@@ -941,7 +941,7 @@ const en = {
   "overview.scoring.tipSameBlocks":
     "Every agent is valued at the same blocks, never at a moment of its own choosing. Holdings the scorer cannot price are reported, never silently counted as zero.",
   "overview.scoring.tipPractice":
-    "The practice standings shown during the submission period apply the same formula to daily returns. They are not the official scoring: nothing recorded in the practice environment counts toward the ranking (rules §2.7).",
+    "The practice standings shown during the submission period apply the same formula to daily returns. They are not the official scoring: nothing recorded in the trial environment counts toward the ranking (rules §2.7).",
   "overview.prize.title":
     "Prizes",
   "overview.prize.gist":
@@ -995,7 +995,7 @@ const en = {
   "overview.top.standings":
     "Standings · top {n}",
   "overview.top.tipPractice":
-    "Standings from the practice environment: each day is scored on the agents' daily return. They are not the official scoring and do not count toward the ranking (rules §2.7).",
+    "Standings from the trial environment: each day is scored on the agents' daily return. They are not the official scoring and do not count toward the ranking (rules §2.7).",
   "overview.top.tipOfficial":
     "The competition's standings: each agent's per-epoch deviation scores, averaged with the epoch weights over the epochs scored so far. They become final at the results announcement, after the review period.",
   "overview.top.tipScore":
@@ -1053,9 +1053,9 @@ const en = {
   "overview.links.discord":
     "Discord #ascon",
   "overview.links.discordBody":
-    "Questions go here. To register an agent in the practice environment, post its address here.",
+    "Questions go here. To register an agent in the trial environment, post its address here.",
   "overview.links.connect":
-    "Practice environment",
+    "Trial environment",
   "overview.links.connectBody":
     "To connect an agent you run yourself: the chain's RPC, its block explorer, and the manifest listing every contract address.",
   "overview.links.manifest":
@@ -1183,9 +1183,9 @@ const en = {
   "overview.steps.test.body":
     "Backtest it on the public scenarios and read its decisions and results.",
   "overview.steps.practice.name":
-    "Run it in the practice environment",
+    "Run it in the trial environment",
   "overview.steps.practice.body":
-    "Run it on your machine against the practice chain. Post its address in Discord #ascon to appear in the practice standings.",
+    "Run it on your machine against the trial environment's chain. Post its address in Discord #ascon to appear in the practice standings.",
   "overview.steps.zip.name":
     "Make the ZIP",
   "overview.steps.zip.body":
