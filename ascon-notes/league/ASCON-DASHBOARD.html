@@ -567,6 +567,48 @@
       "path": "ascon-notes/league/g3/posthoc-join/README.md",
       "title": "B04合成データの部分結合器",
       "locator": "synthetic-only、全境界の実観測でもB04解消でもない"
+    },
+    {
+      "id": "src-decisions-oct11",
+      "path": "ascon-notes/league/DECISIONS-2026-10-11.md",
+      "title": "本人の決定記録 2026-10-11",
+      "locator": "要件2〜5の実観測を10/12まで継続・dec-007本日確認・B03ツール不変・主催者質問は送らない"
+    },
+    {
+      "id": "src-req25-plan",
+      "path": "ascon-notes/league/G3-REQ25-PLAN-2026-10-11.md",
+      "title": "G3記録器 要件2〜5の10/12期限計画",
+      "locator": "実観測は10/12までに完了できない。判定語はCONTRACT_OK_ON_SYNTHETIC / BLOCKED / FAIL"
+    },
+    {
+      "id": "src-req4-gap",
+      "path": "ascon-notes/league/G3-REQ4-GAP-2026-10-11.md",
+      "title": "G3要件4 既存結合器との差分",
+      "locator": "要件4全体は成立させない。G3はBLOCKED"
+    },
+    {
+      "id": "src-req2-checker",
+      "path": "ascon-notes/league/g3/loader/source-join.mjs",
+      "title": "要件2 source結合checker（synthetic-only）",
+      "locator": "g3Status BLOCKED、liveRecorderVerified false"
+    },
+    {
+      "id": "src-req3-checker",
+      "path": "ascon-notes/league/g3/loader/decision-join.mjs",
+      "title": "要件3 判断結合checker（synthetic-only）",
+      "locator": "g3Status BLOCKED、liveRecorderVerified false"
+    },
+    {
+      "id": "src-req4-checker",
+      "path": "ascon-notes/league/g3/loader/boundary-join.mjs",
+      "title": "要件4 取引境界結合checker（synthetic-only）",
+      "locator": "g3Status BLOCKED、liveRecorderVerified false"
+    },
+    {
+      "id": "src-req5-checker",
+      "path": "ascon-notes/league/g3/loader/lifecycle-join.mjs",
+      "title": "要件5 ライフサイクル結合checker（synthetic-only）",
+      "locator": "g3Status BLOCKED、合成時計で実時間ではない"
     }
   ]
 }
@@ -590,14 +632,21 @@
     "src-time-gaps",
     "src-b07-plan",
     "src-b07-checker",
-    "src-b04-joiner"
+    "src-b04-joiner",
+    "src-decisions-oct11",
+    "src-req25-plan",
+    "src-req4-gap",
+    "src-req2-checker",
+    "src-req3-checker",
+    "src-req4-checker",
+    "src-req5-checker"
   ],
-  "as_of": "2026-10-11T00:21:55+09:00",
+  "as_of": "2026-10-11T16:02:32+09:00",
   "measurement_as_of": null,
-  "last_update": "10/11 JST: mini縮小プロトコルの正負対照・主測定を記録（PR #56）。干渉は限定条件で1回測定。PR #49〜#55の設計・補助部品も統合済み。B03未解決・本人受容、G3 REQUIRED / BLOCKED、残時間UNKNOWNは維持。",
+  "last_update": "10/11 JST: 本人決定（要件2〜5の実観測を範囲=すべて・期限10/12で継続、dec-007は本人が本日確認、B03ツール不変、主催者質問は送らない）を記録。PR #57〜#61を統合し、要件2〜5のsynthetic-only checker 4本がそろった。実観測は未実施でBLOCKED、G3 REQUIRED / BLOCKED、G3証拠0件、残時間UNKNOWNは維持。",
   "phase_id": "phase-first",
-  "headline": "時間計測はCOMPLETE。実観測の継続は本人判断、G3はREQUIRED / BLOCKED。",
-  "subhead": "B03の安全FAILは未解決。完全収集・同等性と他の必須前提は証拠待ち。probe干渉は限定条件で1回測定したのみ（結論は出していない）。",
+  "headline": "要件2〜5のオフラインchecker 4本は統合済み。実観測は未実施でBLOCKED、G3はREQUIRED / BLOCKED。",
+  "subhead": "4本はsynthetic-onlyでG3証拠ではない（G3証拠は0件）。実観測は計画上10/12までに完了できない。B03は未解決の本人受容済み残余リスク（PASSではない）。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -771,11 +820,11 @@
       "src-dev2-repair"
     ]
   },
-  "human_action": "要件2〜5の実観測を継続するか中止するかを判断・10/28 Ollama確認（本人のみ）",
+  "human_action": "Ollama鍵・無料枠の確認結果を共有・10/12以降に実観測を続けるか中止するかを判断（本人のみ）",
   "priority": {
-    "title": "測定結果を受け、実観測の継続範囲を本人と決める",
+    "title": "要件2〜5の実観測：10/12以降の扱いを本人が決める",
     "blocker_ref": "B01",
-    "note": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。 外部観測の1日調査上限は自動延長しない。 要件2〜5の実観測を続けるなら範囲・費用・期限を明示し、止める選択肢も本人が判断する。タイミング測定だけで実走を許可しない。",
+    "note": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。B03のツールは変えない（10/11本人決定）。 要件2〜5の実観測は範囲=すべて・期限10/12で継続中だが未実施で、計画上期限内に完了できない。期限は自動延長しない。合成checkerはG3証拠ではない。",
     "progress_refs": [
       "progress-release-r3",
       "progress-g3",
@@ -783,6 +832,8 @@
       "progress-g4"
     ],
     "sources": [
+      "src-decisions-oct11",
+      "src-req25-plan",
       "src-decisions-oct10",
       "src-g3-success-plan",
       "src-g3-req4",
@@ -793,6 +844,32 @@
     "state_label": "必須 / BLOCKED"
   },
   "recent": [
+    {
+      "id": "recent-req25-oct11",
+      "kind": "warning",
+      "title": "要件2〜5の合成checkerを統合、実観測はBLOCKED",
+      "text": "PR #58〜#61で要件2〜5のsynthetic-only checkerを統合（node test 387件pass）。判定はCONTRACT_OK_ON_SYNTHETIC / BLOCKED / FAILのみでG3証拠ではない。実観測は未実施、計画上10/12までに完了できない。",
+      "date": "2026-10-11",
+      "time_note": "ローカルgitのmerge履歴と計画文書",
+      "sources": [
+        "src-req25-plan",
+        "src-req2-checker",
+        "src-req3-checker",
+        "src-req4-checker",
+        "src-req5-checker"
+      ]
+    },
+    {
+      "id": "recent-decisions-oct11",
+      "kind": "decision",
+      "title": "本人が要件2〜5の期限付き継続を決定",
+      "text": "範囲=要件2〜5すべて、期限10/12（自動延長なし）。Ollama鍵・無料枠は本人が本日確認、結果は未共有。B03のツールは変えない（PASS・closedではない）。主催者質問は送らない。",
+      "date": "2026-10-11",
+      "time_note": "決定文書の記録日",
+      "sources": [
+        "src-decisions-oct11"
+      ]
+    },
     {
       "id": "recent-timing-oct10",
       "kind": "warning",
@@ -2614,50 +2691,47 @@
   "changes": {
     "title": "前回更新から",
     "items": [
-      "完了：Intel Mac miniの縮小時間計測を記録・PR #56統合。干渉は限定条件で1回測定。",
-      "統合：#49 B04設計 / #50 台帳不足 / #51 B07移植計画 / #52 harness / #53 事前宣言付き縮小プロトコル。",
-      "#54 B07 checker・#55 B04 joinerはsynthetic-only。B07/B04は閉じない。"
+      "本人決定（10/11）：要件2〜5の実観測を範囲=すべて・期限10/12で継続（自動延長なし）。Ollama鍵・無料枠は本人が本日確認（結果は未共有）。B03のツールは変えない。主催者質問は送らず、公式の扱いは未確定のまま進める。",
+      "統合：#57 dashboard / #58 決定記録・要件2〜5計画・要件2 checker / #59 要件3 checker / #60 要件4 checker・差分分析 / #61 要件5 checker。",
+      "4 checkerはsynthetic-only：判定はCONTRACT_OK_ON_SYNTHETIC / BLOCKED / FAILだけで、g3Statusは常にBLOCKED。node test 387件pass（本更新で実行）。"
     ],
-    "caption": "統合はローカルgit履歴で確認。測定・合成部品の完了はG3証拠ではない。B03未解決、残予算UNKNOWN。",
+    "caption": "要件2〜5の実観測は未実施で、計画上10/12までに完了できない。G3証拠は0件、G3はREQUIRED / BLOCKED。B03は本人受容済みの未解決リスクでPASSではない。残時間UNKNOWN。統合はローカルgit履歴で確認。",
     "sources": [
-      "src-timing-results",
-      "src-timing-protocol",
-      "src-timing-harness",
-      "src-b04-design",
-      "src-time-gaps",
-      "src-b07-plan",
-      "src-b07-checker",
-      "src-b04-joiner"
+      "src-decisions-oct11",
+      "src-req25-plan",
+      "src-req4-gap",
+      "src-req2-checker",
+      "src-req3-checker",
+      "src-req4-checker",
+      "src-req5-checker"
     ]
   },
   "next_steps": [
     {
-      "title": "実観測を続けるか決める",
-      "text": "タイミング結果を受け、要件2〜5のlive観測を範囲・費用・期限付きで継続するか中止するかを本人が判断。B03受容は既決、ツールでの表現は未決。",
+      "title": "Ollama鍵・無料枠の確認結果を共有する",
+      "text": "本人が10/11にOllama鍵の有効性と無料枠の量を確認（期限10/28の提出前確認の一部）。結果を本人から共有されるまで未確認として扱う。",
+      "state": "blocked",
+      "label": "USER · 本人のみ / 結果未共有",
+      "sources": [
+        "src-decisions-oct11",
+        "src-decisions-oct09"
+      ]
+    },
+    {
+      "title": "10/12以降の実観測を決める",
+      "text": "要件2〜5の実観測は未実施で、計画上10/12までに完了できない。期限は自動延長しない。10/12を過ぎて継続するか中止するかを、範囲・費用・期限付きで本人が判断。G3はREQUIRED / BLOCKED。",
       "state": "blocked",
       "label": "USER · 本人のみ / 未決",
       "sources": [
-        "src-timing-results",
-        "src-g3-success-plan",
-        "src-decisions-oct10"
+        "src-decisions-oct11",
+        "src-req25-plan"
       ]
     },
     {
-      "title": "継続時のみ、オフライン拡張",
-      "text": "本人が継続を選んだ場合だけ、B04 joiner / B07 checkerを不足に沿って拡張。台帳・利用枠・予約の不足を整理し、残時間UNKNOWNのまま追加実走を始めない。",
-      "state": "blocked",
-      "label": "条件付き / G3はBLOCKED",
-      "sources": [
-        "src-b04-joiner",
-        "src-b07-checker",
-        "src-time-gaps"
-      ]
-    },
-    {
-      "title": "公式P60の版を待つ・Ollama確認",
-      "text": "公式P60の提供日は不明、最早10/20頃以降の確認窓。10/28のdec-007は本人のみ：Ollama鍵と無料枠を確認。開発課金$0・前払い$0を維持。",
+      "title": "公式P60の版を待つ",
+      "text": "公式P60の提供日は不明、最早10/20頃以降の確認窓。10/28は提出前の本人確認（dec-007の最終確認）。開発課金$0・前払い$0を維持。",
       "state": "pending",
-      "label": "P60待ち / 10/28はUSER",
+      "label": "P60待ち / 条件付き",
       "sources": [
         "src-p60-spec",
         "src-decisions-oct09"
@@ -2924,9 +2998,39 @@
         "2026-10-11",
         "COMPLETE / 限定条件で1回",
         "NOT G3 evidence / descriptive only"
+      ],
+      [
+        "dashboard / PR #57",
+        "2026-10-11",
+        "統合済み",
+        "表示更新。G3実走ではない"
+      ],
+      [
+        "決定記録・要件2〜5計画・要件2 checker / PR #58",
+        "2026-10-11",
+        "synthetic-only",
+        "実観測は10/12までに完了できない。G3証拠ではない"
+      ],
+      [
+        "要件3 checker / PR #59",
+        "2026-10-11",
+        "synthetic-only",
+        "実判断入口は未観測。G3証拠ではない"
+      ],
+      [
+        "要件4 checker・差分分析 / PR #60",
+        "2026-10-11",
+        "synthetic-only",
+        "要件4全体は不成立。G3証拠ではない"
+      ],
+      [
+        "要件5 checker / PR #61",
+        "2026-10-11",
+        "synthetic-only",
+        "合成時計で実300秒は未観測。G3証拠ではない"
       ]
     ],
-    "note": "PR #49〜#56の統合日はローカルgitのmerge commit時刻をJSTで確認。前回表示に未反映だった統合を含む。GitHubへのオンライン照合なし。従来の#45〜#47・別repo masa-harness #427は既存計画の記録を保持。prestart-check.py・inputs.lock.jsonは未変更でB03/B07等を列挙し、G3開始を止める。",
+    "note": "PR #49〜#61の統合日はローカルgitのmerge commit時刻をJSTで確認。前回表示に未反映だった統合を含む。GitHubへのオンライン照合なし。従来の#45〜#47・別repo masa-harness #427は既存計画の記録を保持。prestart-check.py・inputs.lock.jsonは未変更でB03/B07等を列挙し、G3開始を止める。",
     "sources": [
       "src-g3-recorder",
       "src-cli-binding",
@@ -2943,10 +3047,24 @@
       "src-time-gaps",
       "src-b07-plan",
       "src-b07-checker",
-      "src-b04-joiner"
+      "src-b04-joiner",
+      "src-decisions-oct11",
+      "src-req25-plan",
+      "src-req4-gap",
+      "src-req2-checker",
+      "src-req3-checker",
+      "src-req4-checker",
+      "src-req5-checker"
     ]
   },
   "footer_sources": [
+    "src-decisions-oct11",
+    "src-req25-plan",
+    "src-req4-gap",
+    "src-req2-checker",
+    "src-req3-checker",
+    "src-req4-checker",
+    "src-req5-checker",
     "src-timing-results",
     "src-timing-protocol",
     "src-timing-harness",
@@ -2977,9 +3095,67 @@
     "question_sent": false,
     "question_will_send": false,
     "tooling_blocker_retained": true,
-    "tooling_representation": "open-user-decision",
+    "tooling_representation": "unchanged-by-user-decision",
     "sources": [
-      "src-decisions-oct10"
+      "src-decisions-oct10",
+      "src-decisions-oct11"
+    ]
+  },
+  "req25": {
+    "state": "offline-checkers-merged-live-blocked",
+    "scope": "requirements-2-5-all",
+    "deadline": "2026-10-12",
+    "auto_extend": false,
+    "lead": "Codex",
+    "extra_billing": false,
+    "allowed_verdicts": [
+      "CONTRACT_OK_ON_SYNTHETIC",
+      "BLOCKED",
+      "FAIL"
+    ],
+    "synthetic_only": true,
+    "g3_status": "BLOCKED",
+    "g3_evidence": false,
+    "g3_evidence_count": 0,
+    "live_observation": "not-done",
+    "live_completable_by_deadline": false,
+    "checkers": [
+      {
+        "requirement": 2,
+        "pr": 58,
+        "merge_commit": "ea2f44a",
+        "source": "src-req2-checker"
+      },
+      {
+        "requirement": 3,
+        "pr": 59,
+        "merge_commit": "384cfa8",
+        "source": "src-req3-checker"
+      },
+      {
+        "requirement": 4,
+        "pr": 60,
+        "merge_commit": "ae7dc3f",
+        "source": "src-req4-checker"
+      },
+      {
+        "requirement": 5,
+        "pr": 61,
+        "merge_commit": "cee6fe6",
+        "source": "src-req5-checker"
+      }
+    ],
+    "node_tests_total": 387,
+    "node_tests_fail": 0,
+    "node_tests_note": "本更新で4つのtestファイルにnode --testを実行し387件pass。合成入力の契約検査であり、実観測・G3証拠ではない。",
+    "sources": [
+      "src-decisions-oct11",
+      "src-req25-plan",
+      "src-req4-gap",
+      "src-req2-checker",
+      "src-req3-checker",
+      "src-req4-checker",
+      "src-req5-checker"
     ]
   }
 }
@@ -3764,7 +3940,7 @@
     {
       "id": "day-2026-10-11",
       "date": "2026-10-11",
-      "title": "残前提の整理（調査上限の延長なし）",
+      "title": "要件2〜5の合成checker統合・実観測は未実施",
       "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
       "stop": "10/9の1日上限を自動延長しない。追加調査・実走は本人方針と前提を確認。",
       "state": "blocked",
@@ -3773,15 +3949,17 @@
       "sources": [
         "src-schedule-oct08",
         "src-decisions-oct09",
-        "src-p60-spec"
+        "src-p60-spec",
+        "src-decisions-oct11",
+        "src-req25-plan"
       ]
     },
     {
       "id": "day-2026-10-12",
       "date": "2026-10-12",
-      "title": "残前提の整理（調査上限の延長なし）",
+      "title": "要件2〜5実観測の期限（自動延長しない）",
       "dependency": "G3・予算・公式適用版など前工程が成立した場合だけ。提供日未定のため日程は条件付き。",
-      "stop": "10/9の1日上限を自動延長しない。追加調査・実走は本人方針と前提を確認。",
+      "stop": "10/12を過ぎても自動延長せず本人が再確認。実観測は計画上期限内に完了できない。G3はBLOCKEDのまま。",
       "state": "blocked",
       "highlight": false,
       "decision_refs": [
@@ -3791,7 +3969,9 @@
       "sources": [
         "src-schedule-oct08",
         "src-decisions-oct09",
-        "src-p60-spec"
+        "src-p60-spec",
+        "src-decisions-oct11",
+        "src-req25-plan"
       ]
     },
     {
@@ -4691,6 +4871,34 @@
         "src-timing-harness"
       ],
       "state_label": "COMPLETE / 限定条件で1回"
+    },
+    {
+      "id": "progress-req25-offline",
+      "workstream": "基盤",
+      "title": "要件2〜5の合成専用checker（G3証拠ではない）",
+      "state": "done",
+      "evidence": "PR #58〜#61で要件2・3・4・5のchecker 4本を統合。node test 387件pass（本更新で実行）。判定はCONTRACT_OK_ON_SYNTHETIC / BLOCKED / FAILのみ、g3Statusは常にBLOCKED。合成入力の契約検査で、実観測・G3証拠ではない。",
+      "sources": [
+        "src-req25-plan",
+        "src-req4-gap",
+        "src-req2-checker",
+        "src-req3-checker",
+        "src-req4-checker",
+        "src-req5-checker"
+      ],
+      "state_label": "synthetic-only / NOT G3 evidence"
+    },
+    {
+      "id": "progress-req25-live",
+      "workstream": "基盤",
+      "title": "要件2〜5の実観測",
+      "state": "blocked",
+      "evidence": "未実施。取得口・由来の検証・実チェーンと実時間の記録が必要で、計画上10/12までに完了できない。期限は自動延長しない。G3はREQUIRED / BLOCKED。",
+      "sources": [
+        "src-decisions-oct11",
+        "src-req25-plan"
+      ],
+      "state_label": "BLOCKED / 未実施"
     }
   ]
 }
@@ -5086,16 +5294,18 @@
     {
       "id": "queue-g3-bounded",
       "experiment": "g3-bounded",
-      "title": "要件2〜5の実観測：継続か中止か",
-      "state": "USER / 本人判断待ち",
+      "title": "要件2〜5の実観測：10/12以降に続けるか中止か",
+      "state": "USER / 10/12以降は本人判断待ち",
       "worlds": null,
       "hours": null,
-      "window": "範囲・費用・期限を本人が決める",
-      "dependency": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。 タイミング結果を受け、要件2〜5のlive観測を範囲・費用・期限付きで継続するか中止するかを本人が判断。B03受容は既決、ツールでの表現は未決。",
+      "window": "10/12まで継続（範囲=すべて）。期限は自動延長しない",
+      "dependency": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。B03のツールは変えない（10/11本人決定）。 要件2〜5の実観測は未実施で、計画上10/12までに完了できない。合成checker 4本（#58〜#61）はG3証拠ではない。10/12以降の継続・中止は範囲・費用・期限付きで本人が判断。",
       "owner": "human",
       "active": false,
       "current": true,
       "sources": [
+        "src-decisions-oct11",
+        "src-req25-plan",
         "src-g3-paths",
         "src-g3-success-plan",
         "src-decisions-oct10",
@@ -5111,13 +5321,14 @@
       "worlds": null,
       "hours": null,
       "window": "本人が継続範囲を決めた後",
-      "dependency": "本人が継続を選んだ場合だけ、B04 joiner / B07 checkerを不足に沿って拡張。台帳・利用枠・予約の不足を整理し、残時間UNKNOWNのまま追加実走を始めない。",
+      "dependency": "10/11に要件2〜5の合成checker（#58〜#61）を統合済み。B04 joiner / B07 checker本体の不足に沿った拡張は未着手で、本人の範囲判断が前提。残時間UNKNOWNのまま追加実走を始めない。",
       "owner": "Codex",
       "active": false,
       "current": true,
       "sources": [
         "src-b04-joiner",
-        "src-b07-checker"
+        "src-b07-checker",
+        "src-req4-gap"
       ],
       "priority": 2
     },
@@ -8925,6 +9136,58 @@
       "sources": [
         "src-decisions-oct09"
       ]
+    },
+    {
+      "date": "2026-10-11",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "sources": [
+        "src-decisions-oct11"
+      ],
+      "id": "dec-oct11-req25",
+      "due_date": "2026-10-12",
+      "title": "要件2〜5の実観測を範囲=すべて・期限10/12で継続",
+      "note": "期限超過は自動延長せず本人が再確認。Codex主体・追加課金なし。G3はPASSにしない。実観測は計画上10/12までに完了できない。"
+    },
+    {
+      "date": "2026-10-11",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "sources": [
+        "src-decisions-oct11"
+      ],
+      "id": "dec-oct11-dec007",
+      "due_date": "2026-10-28",
+      "title": "dec-007（Ollama鍵・無料枠）を本人が10/11に確認",
+      "note": "本人の作業。結果は本人から共有を受けるまで未確認。dec-007自体の記録は変更しない。"
+    },
+    {
+      "date": "2026-10-11",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "sources": [
+        "src-decisions-oct11"
+      ],
+      "id": "dec-oct11-b03-tooling",
+      "due_date": null,
+      "title": "B03のツール表現は変えない",
+      "note": "prestart-check.py / inputs.lock.jsonはB03を列挙し開始を止めるまま。B03は本人受容済みの未解決残余リスクで、PASSでもclosedでもない。"
+    },
+    {
+      "date": "2026-10-11",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "sources": [
+        "src-decisions-oct11"
+      ],
+      "id": "dec-oct11-organizer",
+      "due_date": null,
+      "title": "主催者質問は送らず、公式の扱いは未確定として進める",
+      "note": "質問案は未送信のまま残す。公式の取り扱いが確定したという意味ではない。"
     }
   ],
   "human_only": {
@@ -9003,6 +9266,33 @@
   ],
   "note": "追記のみ。旧100件は全フィールド保持、8件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-126",
+      "timestamp": "2026-10-11T16:02:32+09:00",
+      "type": "実装",
+      "summary": "10/11 JST: PR #57〜#61を統合（#57 dashboard、#58 決定記録・要件2〜5計画・要件2 checker、#59 要件3、#60 要件4・差分分析、#61 要件5）。4 checkerはsynthetic-onlyで判定はCONTRACT_OK_ON_SYNTHETIC / BLOCKED / FAILのみ、g3Statusは常にBLOCKED。node test 387件pass。実観測は未実施、G3証拠0件、G3 REQUIRED / BLOCKED、残時間UNKNOWN。",
+      "sources": [
+        "src-req25-plan",
+        "src-req4-gap",
+        "src-req2-checker",
+        "src-req3-checker",
+        "src-req4-checker",
+        "src-req5-checker"
+      ],
+      "time_basis": "ダッシュボードへの記録時刻。merge・テスト実行の実時刻ではない。",
+      "event_date": "2026-10-11"
+    },
+    {
+      "id": "log-125",
+      "timestamp": "2026-10-11T16:02:32+09:00",
+      "type": "決定",
+      "summary": "10/11 JST: 本人決定。要件2〜5の実観測を範囲=すべて・期限10/12で継続（自動延長なし、Codex主体・追加課金なし）。dec-007は本人が本日確認、結果は未共有で未確認。B03のツールは変えない（PASS・closedではない）。主催者質問は送らず、公式の扱いは未確定のまま進める。",
+      "sources": [
+        "src-decisions-oct11"
+      ],
+      "time_basis": "ダッシュボードへの記録時刻。決定の実時刻ではない。",
+      "event_date": "2026-10-11"
+    },
     {
       "id": "log-124",
       "timestamp": "2026-10-11T00:21:55+09:00",
@@ -11174,8 +11464,8 @@
     }
   ],
   "copy": {
-    "action_note": "時間計測は完了。要件2〜5の実観測は、本人が範囲・費用・期限を決めて継続するか中止するかを判断。B03受容は既決、ツールでどう表現するかは未決。",
-    "action_next": "10/28までにOllama鍵の有効性と無料枠量を本人が再確認。前払いは$0を維持し、不足時の支払額は本人が決める。",
+    "action_note": "要件2〜5のオフラインchecker 4本は統合済み（synthetic-only、G3証拠ではない）。実観測は10/12期限で継続中だが未実施で、期限内に完了できない。10/12以降の継続・中止は本人が判断。B03のツールは変えない。",
+    "action_next": "本人が10/11にOllama鍵の有効性と無料枠量を確認。結果は未共有で未確認。前払いは$0を維持し、不足時の支払額は本人が決める。",
     "diagnostic_notice": "E1–E10は診断。混成場でr3はinc-zetaに約3.5 T劣り、r3cの改善は未確立。弱い参照場の強さを優勝の根拠にしない。G0 FAILを保持し、公式P60・G3・G4と分ける。",
     "qualification_notice": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
@@ -11184,7 +11474,7 @@
     "plan_note": "10/14は準備棚卸し。公式P60の提供日は不明、最早10/20以降。10/24–27送信・10/29受理照合は条件付き目標。締切は固定。",
     "registration": "受理表示を本人が確認済み",
     "provider_remaining": "10/28までに本人が鍵の有効性・無料枠の量を確認。運営モデルとの対応も未確認。",
-    "decisions_note": "10/9・10/10の決定を現方針として表示。過去の判断・未決提案・署名は履歴に保持し、現在の再承認待ちへ戻さない。"
+    "decisions_note": "10/9・10/10・10/11の決定を現方針として表示。過去の判断・未決提案・署名は履歴に保持し、現在の再承認待ちへ戻さない。"
   },
   "roadmap_axis": [
     "10/4",

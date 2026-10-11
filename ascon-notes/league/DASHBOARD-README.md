@@ -6,18 +6,19 @@
 
 ## 2026-10-11の更新・検査契約
 
-現況は `g3/loader/TIMING-RESULTS-2026-10-11.md`、`g3/loader/TIMING-REDUCED-PROTOCOL-2026-10-10.md`、B04採取設計・B07移植計画・時間台帳不足（10/10）、`g3/manifest-contract/README.md`、`g3/posthoc-join/README.md`、`DECISIONS-2026-10-10.md`、更新済み `G3-SUCCESS-PLAN-2026-10-09.md`、`G3-B03-B04-PATHS-2026-10-10.md`、`MINI-CLEANUP-2026-10-09.md`、`DECISIONS-2026-10-09.md`、`G3-LOCK-R3-2026-10-08.md`、実現性調査、`P60-PREP-SPEC-2026-10-08.md`、`BUDGET-SETTLEMENT-2026-10-08.md` を優先して照合します。MASTER rev 14の旧工程や未決提案を現在の状態として再表示しません。
+現況は `DECISIONS-2026-10-11.md`、`G3-REQ25-PLAN-2026-10-11.md`、`G3-REQ4-GAP-2026-10-11.md`、`g3/loader/{source,decision,boundary,lifecycle}-join.mjs`、`g3/loader/TIMING-RESULTS-2026-10-11.md`、`g3/loader/TIMING-REDUCED-PROTOCOL-2026-10-10.md`、B04採取設計・B07移植計画・時間台帳不足（10/10）、`g3/manifest-contract/README.md`、`g3/posthoc-join/README.md`、`DECISIONS-2026-10-10.md`、更新済み `G3-SUCCESS-PLAN-2026-10-09.md`、`G3-B03-B04-PATHS-2026-10-10.md`、`MINI-CLEANUP-2026-10-09.md`、`DECISIONS-2026-10-09.md`、`G3-LOCK-R3-2026-10-08.md`、実現性調査、`P60-PREP-SPEC-2026-10-08.md`、`BUDGET-SETTLEMENT-2026-10-08.md` を優先して照合します。MASTER rev 14の旧工程や未決提案を現在の状態として再表示しません。
 
 - `status.changes` は前回からの変更、`status.next_steps` は次の3手。どちらも既存の概要本文に描画します。
 - `status.timing` は `complete-limited-study` / COMPLETE、`merged=true`。正負対照・主測定の保存値を `result` に保持し、`verified=false` は今回の独立再計測を意味しない境界として維持。干渉は `measured-once-limited-setting`、G3証拠はfalse。対照は descriptive only、退化区間、保守的／楽観的MDE、格子解像度、追加コスト、失敗後の閾値変更、単一run・host・合成fixture・StrategyRunner範囲を本文に表示する。
-- `status.next_steps` は実観測の継続／中止を本人が範囲・費用・期限付きで決定 → 継続時のみB04/B07のオフライン拡張 → 公式P60待ちと10/28本人Ollama確認。成功計画§8の作成・結果待ち工程は完了結果に合わせて置き換える。実走は許可しない。
+- `status.next_steps` は dec-007（Ollama鍵・無料枠）の本人確認結果の共有 → 10/12以降に実観測を続けるか中止するかの本人判断 → 公式P60待ちと10/28の提出前本人確認。実走は許可しない。
+- `status.req25` は10/11の要件2〜5の状態。範囲=すべて、期限 `2026-10-12`、`auto_extend=false`。PR #58〜#61のchecker 4本はsynthetic-onlyで、判定語は `CONTRACT_OK_ON_SYNTHETIC / BLOCKED / FAIL` のみ、`g3_status=BLOCKED`、`g3_evidence=false`、`g3_evidence_count=0`。`live_observation=not-done`、`live_completable_by_deadline=false`（G3-REQ25-PLAN）。node test 387件は今回 `node --test` で4ファイルを実行した値。残時間は数値を書かない。
 - `status.infrastructure` はファイル確認と依頼者引継ぎを分離。mini切断・復帰・timing作業dir削除の実施記録、切断時間・退避容量・追加清掃後容量は `not found in files`。清掃文書には以前のData空き43→84 GiBのみ。repo外・Airローカルの証拠ディレクトリとSHA-256一覧は存在確認、19ファイル一致は結果文書の記録であり再照合ではない。未確認の数値を補わない。
-- `status.preparation` は統合済み作業の範囲。PR #49〜#56のmerge日はローカルgitのcommit時刻をJSTへ変換して生成します。#54/#55はsynthetic-onlyでB07/B04を閉じません。prestart-check.py・lockのB03/B07等は保持。G3の実走・合格日へ転用しません。
-- `status.b03` は `unresolved-user-accepted`。受容者は本人、PASS・closed・運営前提の事実認定はfalse。質問案は未送信で送信しません。B03はツールに残り、表現は `open-user-decision`。他のG3前提はREQUIRED / 証拠なしならBLOCKED、エージェントは免除を推奨・決定しません。
-- 新決定は `decisions.items` の `group=current`。旧判断・署名とログは変更せず履歴へ収めます。現在のキューは `current=true`、残る旧キューと予算配分は折りたたみで保持します。
+- `status.preparation` は統合済み作業の範囲。PR #49〜#61のmerge日はローカルgitのcommit時刻をJSTへ変換して生成します。#54/#55はsynthetic-onlyでB07/B04を閉じません。prestart-check.py・lockのB03/B07等は保持。G3の実走・合格日へ転用しません。
+- `status.b03` は `unresolved-user-accepted`。受容者は本人、PASS・closed・運営前提の事実認定はfalse。質問案は未送信で送信しません。B03はツールに残り、10/11の本人決定でツールは変えない（表現は `unchanged-by-user-decision`）。他のG3前提はREQUIRED / 証拠なしならBLOCKED、エージェントは免除を推奨・決定しません。
+- 新決定は `decisions.items` の `group=current`。10/11は `dec-oct11-req25` / `dec-oct11-dec007` / `dec-oct11-b03-tooling` / `dec-oct11-organizer` の4件を追加。dec-007自体は open のまま変更せず、結果は本人の共有まで未確認。旧判断・署名とログは変更せず履歴へ収めます。現在のキューは `current=true`、残る旧キューと予算配分は折りたたみで保持します。
 - footerは `status.as_of`・`status.footer_sources` とログ件数から描画します。件数・日付・値をrendererへ手入力しません。候補hashは根拠文書の記録値で、今回の再計算ではありません。
 
-`dashboard-ui-check.mjs` は、新決定の保持と表示、B03の未解決・本人受容と未変更ツール、G3 BLOCKED、残量UNKNOWN、時間計測の完了記録・全数値と限界、PR #49〜#56統合・synthetic-only境界、次の3手の本人判断、footerの実ファイル参照を検査します。測定値・対照判定・MDEの改変、限界の削除、偽のG3証拠化、測定中への逆戻り、本人判断の委任・拡張着手を拒否する反例に更新。既存の履歴・判断保護は保持します。
+`dashboard-ui-check.mjs` は、新決定（10/11の4件を含む）の保持と表示、`status.req25` の範囲・期限・未完了の実観測・synthetic-only・判定語・G3証拠0件・PR #57〜#61・387件、B03の未解決・本人受容と未変更ツール、G3 BLOCKED、残量UNKNOWN、時間計測の完了記録・全数値と限界、PR #49〜#56統合・synthetic-only境界、次の3手の本人判断、footerの実ファイル参照を検査します。測定値・対照判定・MDEの改変、限界の削除、偽のG3証拠化、測定中への逆戻り、本人判断の委任・拡張着手を拒否する反例に更新。10/11には「要件2〜5の実観測完了」「G3 PASS」「checker判定PASS」「G3証拠化」「期限の自動延長」「dec-007の結果の捏造」「残時間の数値」「干渉なし・同等性」「B03 PASS」などを拒否する22反例を追加。既存の履歴・判断保護は保持します。
 
 現況更新の必須検査は下記の2スクリプトと `git diff --check`。`check-plan-consistency.py` は古いMASTER契約の履歴検査であり、本スナップショットをMASTER rev 14へ戻すためには使いません。型検査は `npm run typecheck`。実測・モデル・Dockerを起動する検査ではありません。
 
