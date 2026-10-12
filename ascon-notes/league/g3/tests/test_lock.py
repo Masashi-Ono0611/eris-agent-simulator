@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -27,19 +28,50 @@ register = load('register', G3 / 'register-inputs.py')
 pre = register.pre
 
 
-def gate_modules():
-    # The legacy launcher reads as-built /tmp files during import. Supply ONLY
-    # inert test config in memory; never create/renew a real source manifest.
+TEMP_ROOTS = ('/tmp', '/var/tmp')
+
+
+def outside_temp_roots(path):
+    path = Path(path)
+    return not any(path.is_relative_to(r) or path.resolve().is_relative_to(Path(r).resolve())
+                   for r in TEMP_ROOTS)
+
+
+def test_base_dir():
+    # TEST-ONLY base for the launcher's required G3_CHAIN_BASE. It is a fresh, empty,
+    # private directory removed in tearDownClass; it is NOT an eval area for real runs.
+    # The launcher rejects /tmp and /var/tmp, so prefer the platform temp dir
+    # (macOS: /var/folders/...) and fall back to ~/.cache only if that is under /tmp.
+    for parent in (Path(tempfile.gettempdir()), Path.home() / '.cache'):
+        if outside_temp_roots(parent):
+            parent.mkdir(parents=True, exist_ok=True)
+            base = Path(tempfile.mkdtemp(prefix='g3-test-lock-base-', dir=parent))
+            if outside_temp_roots(base):
+                return base
+            shutil.rmtree(base)
+    raise RuntimeError('no test base directory outside /tmp and /var/tmp')
+
+
+def gate_modules(base):
+    # The launcher needs explicit source/commit/base and reads the source manifest and
+    # budget during import. Supply ONLY inert test config in memory: source = this
+    # checkout (read-only here), commit = its current HEAD, base = a test-only empty dir.
+    # Never create/renew a real source manifest or view.
+    source = ROOT
+    commit = subprocess.run(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'], check=True,
+                            capture_output=True, text=True).stdout.strip()
     read = Path.read_text
     def config(path, *args, **kwargs):
-        if path == Path('/tmp/g3-chain/source-manifest.json'):
-            return '{}'
-        if path == Path('/tmp/g3-chain/source-view/ascon-notes/league/g3/budget.json'):
+        if path == base / 'source-manifest.json':
+            return json.dumps({'head': commit, 'source': str(source)})
+        if path == base / 'source-view/ascon-notes/league/g3/budget.json':
             return read(G3 / 'budget.json')
         return read(path, *args, **kwargs)
+    env = {'G3_CHAIN_SOURCE': str(source), 'G3_CHAIN_SOURCE_COMMIT': commit,
+           'G3_CHAIN_BASE': str(base)}
     mask = os.umask(0o077)
     try:
-        with patch.object(Path, 'read_text', config):
+        with patch.dict(os.environ, env), patch.object(Path, 'read_text', config):
             chain = load('test_r3_chain', G3 / 'chain/chain.py')
         with patch.dict(sys.modules, {'chain': chain}):
             gates = load('test_r3_gates', G3 / 'chain/gates.py')
@@ -130,7 +162,26 @@ class Registration(unittest.TestCase):
 class StartControls(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.chain, cls.gates = gate_modules()
+        cls.base = test_base_dir()
+        try:
+            cls.chain, cls.gates = gate_modules(cls.base)
+        except BaseException:
+            shutil.rmtree(cls.base)
+            raise
+
+    @classmethod
+    def tearDownClass(cls):
+        # The launcher import and these controls must not write into the base.
+        leftovers = sorted(p.name for p in cls.base.iterdir())
+        shutil.rmtree(cls.base)
+        if leftovers:
+            raise AssertionError('test base was written: ' + ', '.join(leftovers))
+
+    def test_explicit_inputs_are_test_local(self):
+        self.assertEqual(self.chain.BASE, self.base)
+        self.assertTrue(outside_temp_roots(self.base))
+        self.assertEqual(self.chain.SOURCE, ROOT)
+        self.assertRegex(self.chain.SOURCE_COMMIT, r'^[0-9a-f]{40}$')
 
     def green(self):
         return {'status': 'PASS', 'checks': {

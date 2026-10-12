@@ -70,7 +70,7 @@ TOOL_ROOT=BASE
 # Refresh only after reviewing changed tool bytes; never derive expected hashes at run time.
 TOOL_MANIFEST={
     'gates.py':'0acab461951dbd7b5f9d55c37244b127b7a09ec8a33367f047f28d8b73ac8c3b',
-    'revision_audit.py':'f2ff12581e8bdbed29962ed1019aa2ba140cfcb05096f3c9cb5dc57b4d114f52',
+    'revision_audit.py':'62b6620d99b574f193460e2ee6462d7ad5808892bf16ff9cf6086df9aba8bdcf',
 }
 VIEW=BASE/'source-view'
 EVAL=BASE/'eval'

@@ -20,7 +20,9 @@ spec.loader.exec_module(pre)
 ADDITIONS = ['register-inputs.py', 'tests/test_lock.py', 'chain/chain.py',
              'chain/gates.py', 'chain/revision_audit.py', 'chain/revision_replay.mjs',
              'chain/malicious.mjs', 'chain/make-view.py', 'chain/g3-ref-chain.sh',
-             'chain/test_chain.py']
+             'chain/test_chain.py', 'chain/decide-budget-control.mjs',
+             'chain/timeout-control.mjs', 'chain/timeout-child.cjs',
+             'chain/test_revision_audit.py', 'chain/revision_exchange.mjs']
 
 
 def roster(path):
