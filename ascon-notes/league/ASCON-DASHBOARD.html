@@ -621,6 +621,24 @@
       "path": "ascon-notes/league/g3/manifest-contract/r3-manifest.DRAFT.json",
       "title": "r3 manifest DRAFT（未登録の下書き）",
       "locator": "未確定欄はnull＋nullReason。登録済みmanifestではなく、check.pyは未適用"
+    },
+    {
+      "id": "src-b07-source-proposal",
+      "path": "ascon-notes/league/G3-B07-R3-SOURCE-PROPOSAL-2026-10-11.md",
+      "title": "B07 r3 実行source・必要ファイル・独立eval・ツール移植の決定案",
+      "locator": "§0 新事実（release-r2 HEAD 5b713a4、/tmp/g3-chain/source-manifest.json不在）、§1〜4 提案。提案でありB07を閉じない"
+    },
+    {
+      "id": "src-b07-port-diff",
+      "path": "ascon-notes/league/G3-B07-R3-PORT-DIFF-2026-10-11.md",
+      "title": "B07 chainツールのr2固定を外す移植差分とlock再登録",
+      "locator": "§1 必須入力（既定値なし）、§3 変更9件、§6 lock再登録13キー・テスト・prestart FAIL。B07はBLOCKED"
+    },
+    {
+      "id": "src-inputs-lock",
+      "path": "ascon-notes/league/g3/inputs.lock.json",
+      "title": "G3 入力lock（PR #66で再登録）",
+      "locator": "13キー変更（更新8・新規5）。候補hashとblocked一覧は不変"
     }
   ]
 }
@@ -653,14 +671,17 @@
     "src-req4-checker",
     "src-req5-checker",
     "src-b07-audit",
-    "src-b07-draft"
+    "src-b07-draft",
+    "src-b07-source-proposal",
+    "src-b07-port-diff",
+    "src-inputs-lock"
   ],
-  "as_of": "2026-10-11T17:05:29+09:00",
+  "as_of": "2026-10-12T09:24:38+09:00",
   "measurement_as_of": null,
-  "last_update": "10/11 JST: PR #63でB07のオフライン監査と未登録のr3 manifest DRAFTを統合。候補tree hashと候補5ファイルはlockと一致、chainツール13件はr2固定のまま。B07はBLOCKEDのまま（閉じていない）。要件2〜5の実観測は未実施、G3 REQUIRED / BLOCKED、G3証拠0件、残時間UNKNOWNは維持。",
+  "last_update": "10/12 JST: PR #64（dashboard）・#65（B07 r3 source提案と本人決定5〜8）・#66（chainツール13件中9件の移植とlock再登録）を統合。評価領域の具体パスは本人が ~/Developer/ascon-g3-eval/ に決定（決定9、ディレクトリ未作成・未実行）。B07はBLOCKEDのまま（閉じていない）。10/12は要件2〜5の実観測の期限当日で、実観測は未実施・今日中に完了できない。期限は自動延長せず、続けるかは本人の未決判断。G3 REQUIRED / BLOCKED、G3証拠0件、残時間UNKNOWN。",
   "phase_id": "phase-first",
-  "headline": "要件2〜5のオフラインchecker 4本は統合済み。実観測は未実施でBLOCKED、G3はREQUIRED / BLOCKED。",
-  "subhead": "4本はsynthetic-onlyでG3証拠ではない（G3証拠は0件）。実観測は計画上10/12までに完了できない。B03は未解決の本人受容済み残余リスク（PASSではない）。",
+  "headline": "要件2〜5の実観測は期限10/12に到達、未実施でBLOCKED。G3はREQUIRED / BLOCKED。",
+  "subhead": "オフラインchecker 4本はsynthetic-onlyでG3証拠ではない（G3証拠は0件）。期限は自動延長せず、実観測を続けるかは本人が決める（未決）。B07はchainツール移植・lock再登録後もBLOCKED。B03は未解決の本人受容済み残余リスク（PASSではない）。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -2705,11 +2726,17 @@
   "changes": {
     "title": "前回更新から",
     "items": [
-      "統合：#62 dashboard / #63 B07のオフライン監査と未登録のr3 manifest DRAFT。候補tree hash a03da518…3dffと候補5ファイルはinputs.lock.jsonと一致。chainツール13件はr2固定（release-r2 / ec80bb8 / /tmp/g3-chain）のまま。",
-      "B07はBLOCKEDのまま（閉じていない）。DRAFTは登録済みmanifestではない。check.pyはsynthetic-onlyのため、DRAFTには意図的に実行していない。オフラインで決められない欄はnullと理由を記録：r3実行source（commit・path）、必須ファイル集合、eval領域、toolの再登録（本人レビューが必要）、state dump（Anvilが必要）、ZIP・観測器・CLIの束縛（Docker・認証が必要）。"
+      "統合：#64 dashboard / #65 B07 r3 source提案と本人決定5〜8 / #66 chainツールの移植とlock再登録。決定5〜8：r3 sourceは40桁で固定したcommitを専用worktreeに置く／必要ファイルは全件view＋レビュー済みの必須集合／評価領域は/tmp外／未登録ツール5件をすべてlockへ登録。",
+      "#66：chainツール13件中9件を移植し、G3_CHAIN_SOURCE・G3_CHAIN_SOURCE_COMMIT（40桁の小文字16進）・G3_CHAIN_BASEを既定値なしの必須入力にした（不足・不正は終了コード2で停止）。lockは13キー変更（更新8・新規登録5）、候補hash a03da518…3dffは不変。lock差分は本人レビュー済み（10/12チャット「OK」）。r2の旧base /tmp/g3-chainは拒否されるため、r2証拠の再現には/tmp外のbaseが要る。",
+      "決定9（10/12）：評価領域の具体パスは ~/Developer/ascon-g3-eval/（/tmp外・Git管理外）。ディレクトリは未作成で、そこでは何も実行していない。",
+      "B07はBLOCKEDのまま（閉じていない）。DRAFTは登録済みmanifestではない。check.pyはsynthetic-onlyのため意図的に実行していない。残り：r3 source commitの確定と専用worktree、make-view・chainの実行、state dump（Anvilが必要）、ZIP・観測器・CLIの束縛（Docker・認証が必要）。prestart-check.pyはseedAuditとcompletenessでFAIL（#66前のorigin/mainでも同じ2項目がFAIL）。",
+      "新たに判明：/tmp/g3-chain/source-manifest.jsonは存在しない（原因未特定）。release-r2 worktreeのHEADは5b713a4で、旧make-viewが期待したec80bb8ではない（#66でcommitは入力の40桁一致に変更）。"
     ],
-    "caption": "要件2〜5の実観測は未実施で、計画上10/12までに完了できない。B07はBLOCKED、G3証拠は0件、G3はREQUIRED / BLOCKED。B03は本人受容済みの未解決リスクでPASSではない。残時間UNKNOWN。統合はローカルgit履歴で確認。",
+    "caption": "10/12は要件2〜5の実観測の期限当日。実観測は未実施で今日中に完了できず、期限は自動延長しない。続けるかは本人の判断（未決）。B07はBLOCKED、G3証拠は0件、G3はREQUIRED / BLOCKED。B03は本人受容済みの未解決リスクでPASSではない。残時間UNKNOWN。統合はローカルgit履歴で確認。",
     "sources": [
+      "src-b07-source-proposal",
+      "src-b07-port-diff",
+      "src-inputs-lock",
       "src-b07-audit",
       "src-b07-draft",
       "src-decisions-oct11",
@@ -2734,24 +2761,24 @@
       ]
     },
     {
-      "title": "10/12以降の実観測を決める",
-      "text": "要件2〜5の実観測は未実施で、計画上10/12までに完了できない。期限は自動延長しない。10/12を過ぎて継続するか中止するかを、範囲・費用・期限付きで本人が判断。G3はREQUIRED / BLOCKED。",
+      "title": "10/12以降の実観測を続けるか決める",
+      "text": "10/12は要件2〜5の実観測の期限当日。実観測は未実施で、今日中に完了できない。期限は自動延長しない。継続するか中止するかを、範囲・費用・期限付きで本人が判断（未決）。G3はREQUIRED / BLOCKED。",
       "state": "blocked",
-      "label": "USER · 本人のみ / 未決",
+      "label": "USER · 本人のみ / 期限到達・未決",
       "sources": [
         "src-decisions-oct11",
         "src-req25-plan"
       ]
     },
     {
-      "title": "B07のtool移植・再登録を本人がレビューする",
-      "text": "chainツール13件はr2固定のままで、r3のtool pinではない。移植とtool再登録には本人のレビューが必要。実行source・eval領域・state dump・ZIP等の欄も未確定で、B07はBLOCKEDのまま。エージェントは移植・再登録・起動をしない。",
+      "title": "B07の残り作業（r3 source確定・評価領域の作成・実行）",
+      "text": "r3 source commitの40桁確定と専用worktree、決定済みパス ~/Developer/ascon-g3-eval/ の作成、make-view・chainの実行は未着手。state dumpはAnvil、ZIP・観測器・CLIの束縛はDocker・認証が必要。B07はBLOCKEDのまま。",
       "state": "blocked",
-      "label": "USER · 本人のみ / レビュー待ち",
+      "label": "BLOCKED · 未着手 / 実行は本人の許可後",
       "sources": [
-        "src-b07-audit",
-        "src-b07-draft",
-        "src-b07-plan"
+        "src-b07-port-diff",
+        "src-b07-source-proposal",
+        "src-decisions-oct11"
       ]
     }
   ],
@@ -3057,9 +3084,27 @@
         "2026-10-11",
         "未登録の下書き",
         "B07はBLOCKEDのまま。check.pyは未適用。G3証拠ではない"
+      ],
+      [
+        "dashboard / PR #64",
+        "2026-10-11",
+        "統合済み",
+        "表示更新。G3実走ではない"
+      ],
+      [
+        "B07 r3 source提案・本人決定5〜8 / PR #65",
+        "2026-10-11",
+        "方針決定（文書）",
+        "移植・登録・実行ではない。B07はBLOCKEDのまま"
+      ],
+      [
+        "chainツール移植・lock再登録 / PR #66",
+        "2026-10-12",
+        "9件移植・13キー再登録",
+        "make-view・chain未実行。B07はBLOCKEDのまま。G3証拠ではない"
       ]
     ],
-    "note": "PR #49〜#63の統合日はローカルgitのmerge commit時刻をJSTで確認。前回表示に未反映だった統合を含む。GitHubへのオンライン照合なし。従来の#45〜#47・別repo masa-harness #427は既存計画の記録を保持。prestart-check.py・inputs.lock.jsonは未変更でB03/B07等を列挙し、G3開始を止める。",
+    "note": "PR #49〜#66の統合日はローカルgitのmerge commit時刻をJSTで確認。前回表示に未反映だった統合を含む。GitHubへのオンライン照合なし。従来の#45〜#47・別repo masa-harness #427は既存計画の記録を保持。inputs.lock.jsonはPR #66でchainツール等13キーを再登録（候補hash・blocked一覧は不変）。prestart-check.pyは未変更で、B03/B07等を列挙しG3開始を止める。",
     "sources": [
       "src-g3-recorder",
       "src-cli-binding",
@@ -3085,10 +3130,16 @@
       "src-req4-checker",
       "src-req5-checker",
       "src-b07-audit",
-      "src-b07-draft"
+      "src-b07-draft",
+      "src-b07-source-proposal",
+      "src-b07-port-diff",
+      "src-inputs-lock"
     ]
   },
   "footer_sources": [
+    "src-b07-source-proposal",
+    "src-b07-port-diff",
+    "src-inputs-lock",
     "src-b07-audit",
     "src-b07-draft",
     "src-decisions-oct11",
@@ -3189,10 +3240,13 @@
       "src-req3-checker",
       "src-req4-checker",
       "src-req5-checker"
-    ]
+    ],
+    "deadline_reached": true,
+    "continuation_decision": "open-user",
+    "deadline_note": "10/12は期限当日。実観測は未実施で今日中に完了できない。自動延長せず、続けるかは本人の未決判断。"
   },
   "b07": {
-    "state": "offline-audit-merged-blocked",
+    "state": "tools-ported-lock-reregistered-blocked",
     "b07_status": "BLOCKED",
     "closed": false,
     "pr": 63,
@@ -3200,8 +3254,8 @@
     "candidate_sha256": "a03da51869cf8c8160aaa25eb5f1e87cfa74a3a9dfdac3050945a71f7d143dff",
     "candidate_hash_matches_lock": true,
     "candidate_files_matching_lock": 5,
-    "chain_tools_r2_pinned": 13,
-    "r2_pins": [
+    "chain_tools_r2_pinned_at_audit": 13,
+    "r2_pins_at_audit": [
       "release-r2",
       "ec80bb8",
       "/tmp/g3-chain"
@@ -3213,19 +3267,19 @@
     "undecided_fields": [
       {
         "field": "r3実行source（commit・path）",
-        "reason": "選定・レビューがファイルに無い"
+        "reason": "方針は決定5（40桁commitを専用worktreeに固定）。実commitの確定と専用worktreeは未作成"
       },
       {
         "field": "必須ファイル集合",
-        "reason": "レビュー未了（観測した部分集合109件のみ）"
+        "reason": "方針は決定6（全件view＋レビュー済み必須集合）。実集合は未作成"
       },
       {
-        "field": "eval領域",
-        "reason": "r3専用の独立eval領域が無い"
+        "field": "評価領域の作成",
+        "reason": "パスは決定9で ~/Developer/ascon-g3-eval/。ディレクトリ未作成・未実行"
       },
       {
-        "field": "toolの再登録",
-        "reason": "chainツールはr2固定。移植と本人レビュー付きの再登録が必要"
+        "field": "make-view・chainの実行",
+        "reason": "実sourceに対しdry-runもrunも未実施"
       },
       {
         "field": "state dump",
@@ -3236,11 +3290,67 @@
         "reason": "Docker・認証が必要"
       }
     ],
-    "note": "候補識別（ID・dir・tree hash・5ファイル）はオフラインで確定し、inputs.lock.jsonと一致。lock・prestart-check.py・chainツールは変更していない。DRAFTは登録済みmanifestではなく、B07を閉じない。",
+    "note": "候補識別（ID・dir・tree hash・5ファイル）はPR #63でオフライン確定しlockと一致。PR #66でchainツール13件中9件を移植しlockを再登録（候補hashは不変）。DRAFTは登録済みmanifestではなく、B07を閉じない。prestart-check.pyは未変更。",
+    "port": {
+      "proposal_pr": 65,
+      "proposal_merge": "a16f7e7",
+      "port_pr": 66,
+      "port_merge": "1feb95f",
+      "user_decisions": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "chain_tools_total": 13,
+      "chain_tools_changed": 9,
+      "chain_tools_unchanged": 4,
+      "required_inputs": [
+        "G3_CHAIN_SOURCE",
+        "G3_CHAIN_SOURCE_COMMIT",
+        "G3_CHAIN_BASE"
+      ],
+      "input_defaults": false,
+      "commit_format": "40 lowercase hex",
+      "fail_closed_exit_code": 2,
+      "tmp_base_rejected": true,
+      "r2_old_base_accepted": false,
+      "lock_keys_changed": 13,
+      "lock_keys_updated": 8,
+      "lock_keys_newly_registered": 5,
+      "candidate_sha256_unchanged": true,
+      "user_lock_diff_approval": {
+        "date": "2026-10-12",
+        "basis": "本人のチャット「OK」（依頼者引継ぎ）"
+      },
+      "eval_path": "~/Developer/ascon-g3-eval/",
+      "eval_path_decided": true,
+      "eval_dir_created": false,
+      "chain_run_in_eval": false,
+      "make_view_run": false,
+      "source_commit_fixed": false,
+      "prestart_check": {
+        "result": "FAIL",
+        "failing": [
+          "seedAudit",
+          "completeness"
+        ],
+        "same_failures_on_main_before_pr66": true,
+        "note": "10/12に読取のみで実行。trackedTreeは作業中の未commit差分にのみ依存。G3合格を意味しない"
+      },
+      "findings": [
+        "/tmp/g3-chain/source-manifest.jsonは存在しない（原因未特定）",
+        "release-r2 worktreeのHEADは5b713a4。旧make-viewはec80bb8を期待（#66で入力commitの40桁一致に変更）"
+      ]
+    },
     "sources": [
       "src-b07-audit",
       "src-b07-draft",
-      "src-b07-plan"
+      "src-b07-plan",
+      "src-b07-source-proposal",
+      "src-b07-port-diff",
+      "src-inputs-lock"
     ]
   }
 }
@@ -4988,14 +5098,17 @@
     {
       "id": "progress-b07-offline-audit",
       "workstream": "基盤",
-      "title": "B07 r3 manifestのオフライン監査（B07は未解消）",
+      "title": "B07 r3移行（監査・移植・lock再登録まで。B07は未解消）",
       "state": "blocked",
-      "evidence": "PR #63で監査文書と未登録のDRAFTを統合。候補tree hash a03da518…3dffと候補5ファイルはinputs.lock.jsonと一致。chainツール13件はr2固定。実行source・必須ファイル集合・eval領域・tool再登録（本人レビュー）・state dump（Anvil）・ZIP等の束縛（Docker・認証）は未確定でnull。check.pyはsynthetic-onlyのためDRAFTに未適用。",
+      "evidence": "PR #63で監査とDRAFT（未登録）、#65で本人決定5〜8、#66でchainツール13件中9件を移植しlockを13キー再登録（候補hash不変、本人レビュー済み）。評価領域パスは決定9で ~/Developer/ascon-g3-eval/（未作成）。r3 source commit確定・専用worktree・make-view/chain実行・state dump（Anvil）・ZIP等の束縛（Docker・認証）は未了。check.pyはsynthetic-onlyのためDRAFTに未適用。",
       "sources": [
         "src-b07-audit",
-        "src-b07-draft"
+        "src-b07-draft",
+        "src-b07-source-proposal",
+        "src-b07-port-diff",
+        "src-inputs-lock"
       ],
-      "state_label": "BLOCKED / 監査のみ・未登録"
+      "state_label": "BLOCKED / 移植・再登録済み・未実行"
     }
   ]
 }
@@ -5030,8 +5143,8 @@
       "likelihood": "高",
       "impact": "致命",
       "owner": "Codex",
-      "evidence": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。 B04の完全収集と同等性、自然改訂fixture等は未成立。 G3のB07（r3のsource/eval/tool manifest）はPR #63のオフライン監査後もBLOCKED：候補識別はlockと一致したが、実行source・必須ファイル集合・eval領域・tool再登録・state dump・ZIP等の束縛は未確定。DRAFTは未登録。",
-      "mitigation": "タイミング完了結果を受け、要件2〜5のlive観測の継続・中止と範囲・費用・期限を本人が判断。B04/B07の合成部品は未解消を保持。B07のtool移植・再登録は本人レビューが先。台帳と利用枠の不足を整理。ツール表現は本人判断。エージェントは免除を推奨・決定しない。",
+      "evidence": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。本人受容済み残余リスクをツールでどう表現するかは本人の未決事項。 B04の完全収集と同等性、自然改訂fixture等は未成立。 G3のB07（r3のsource/eval/tool manifest）はPR #63のオフライン監査後もBLOCKED：候補識別はlockと一致したが、実行source・必須ファイル集合・eval領域・tool再登録・state dump・ZIP等の束縛は未確定。DRAFTは未登録。 PR #66でchainツール9件を移植しlockを再登録したが、B07はBLOCKEDのまま：r3 source commit・専用worktree・評価領域（パス決定済み・未作成）・make-view/chain実行・state dump・ZIP等の束縛は未了。prestart-check.pyはseedAudit・completenessでFAIL。",
+      "mitigation": "タイミング完了結果を受け、要件2〜5のlive観測の継続・中止と範囲・費用・期限を本人が判断。B04/B07の合成部品は未解消を保持。B07のtool移植・lock再登録は本人レビュー済み、残りは実行系。台帳と利用枠の不足を整理。ツール表現は本人判断。エージェントは免除を推奨・決定しない。",
       "status": "open",
       "sources": [
         "src-b07-audit",
@@ -5044,7 +5157,10 @@
         "src-g3-success-plan",
         "src-timing-results",
         "src-b04-joiner",
-        "src-b07-checker"
+        "src-b07-checker",
+        "src-b07-source-proposal",
+        "src-b07-port-diff",
+        "src-inputs-lock"
       ],
       "impact_note": "G3を通過できず、提出READYにできない"
     },
@@ -9287,6 +9403,79 @@
       "due_date": null,
       "title": "主催者質問は送らず、公式の扱いは未確定として進める",
       "note": "質問案は未送信のまま残す。公式の取り扱いが確定したという意味ではない。"
+    },
+    {
+      "date": "2026-10-11",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "sources": [
+        "src-decisions-oct11",
+        "src-b07-source-proposal"
+      ],
+      "id": "dec-oct11-b07-source",
+      "due_date": null,
+      "title": "B07 r3 sourceは40桁で固定したcommitを専用worktreeに置く",
+      "note": "決定5。移植PRのmerge後のcommitを使う。commit確定と専用worktree作成は未了。"
+    },
+    {
+      "date": "2026-10-11",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "sources": [
+        "src-decisions-oct11",
+        "src-b07-source-proposal"
+      ],
+      "id": "dec-oct11-b07-files",
+      "due_date": null,
+      "title": "必要ファイルは全件view＋レビュー済みの必須集合",
+      "note": "決定6。実集合は未作成。"
+    },
+    {
+      "date": "2026-10-11",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "sources": [
+        "src-decisions-oct11",
+        "src-b07-source-proposal",
+        "src-b07-port-diff"
+      ],
+      "id": "dec-oct11-b07-eval",
+      "due_date": null,
+      "title": "評価領域は/tmp外の専用ディレクトリ",
+      "note": "決定7。具体パスは10/12の決定9で ~/Developer/ascon-g3-eval/（Git管理外）。ディレクトリ未作成・未実行。"
+    },
+    {
+      "date": "2026-10-11",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "sources": [
+        "src-decisions-oct11",
+        "src-b07-source-proposal",
+        "src-b07-port-diff"
+      ],
+      "id": "dec-oct11-b07-lock",
+      "due_date": null,
+      "title": "未登録のchainツール5件をすべてlockへ登録",
+      "note": "決定8。PR #66で再登録し、lock差分は10/12に本人がレビュー（チャット「OK」）。B07は閉じていない。"
+    },
+    {
+      "date": "2026-10-12",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "sources": [
+        "src-decisions-oct11",
+        "src-b07-source-proposal",
+        "src-b07-port-diff"
+      ],
+      "id": "dec-oct12-b07-eval-path",
+      "due_date": null,
+      "title": "評価領域の具体パスは ~/Developer/ascon-g3-eval/",
+      "note": "決定9（10/12）。/tmp外・Git管理外。パスを決めただけでディレクトリは未作成、何も実行していない。B07はBLOCKEDのまま。"
     }
   ],
   "human_only": {
@@ -9363,8 +9552,22 @@
     "計画変更",
     "誤り"
   ],
-  "note": "追記のみ。旧100件は全フィールド保持、9件追加。最新状態は概要を参照。",
+  "note": "追記のみ。旧100件は全フィールド保持、10件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-128",
+      "timestamp": "2026-10-12T09:24:38+09:00",
+      "type": "実装",
+      "summary": "10/12 JST: PR #64（dashboard）・#65（B07 r3 source提案と本人決定5〜8）・#66（chainツール13件中9件を移植、3入力を既定値なしの必須化、lock 13キー再登録・候補hash不変、本人が10/12にlock差分をレビュー）を統合。評価領域パスは決定9で ~/Developer/ascon-g3-eval/（未作成・未実行）。prestart-check.pyはseedAudit・completenessでFAIL（#66前と同じ）。B07はBLOCKEDのまま。10/12は要件2〜5の実観測期限で、未実施・今日中に完了不可・自動延長なし、継続は本人の未決判断。G3 REQUIRED / BLOCKED、G3証拠0件、残時間UNKNOWN。",
+      "sources": [
+        "src-b07-source-proposal",
+        "src-b07-port-diff",
+        "src-inputs-lock",
+        "src-decisions-oct11"
+      ],
+      "time_basis": "ダッシュボードへの記録時刻。merge・本人決定の実時刻ではない。",
+      "event_date": "2026-10-12"
+    },
     {
       "id": "log-127",
       "timestamp": "2026-10-11T17:05:29+09:00",
