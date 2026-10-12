@@ -8,7 +8,16 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import revision_audit as ra
-import chain
+# chain.py requires explicit G3_CHAIN_SOURCE / G3_CHAIN_SOURCE_COMMIT / G3_CHAIN_BASE and a
+# source manifest; tests that drive the launcher ERROR (never skip) when it is unavailable.
+try:
+    import chain
+    CHAIN_UNAVAILABLE=None
+except Exception as exc:
+    chain=None; CHAIN_UNAVAILABLE=type(exc).__name__+': '+str(exc)
+
+def need_chain():
+    if chain is None: raise RuntimeError('BLOCKED: chain.py not importable with current explicit inputs ('+CHAIN_UNAVAILABLE+')')
 
 BASE=Path(__file__).resolve().parent
 
@@ -140,10 +149,12 @@ class AuditTests(unittest.TestCase):
         p=subprocess.run([sys.executable,'-B',str(BASE/'gates.py'),'revision-audit',str(self.root),'on','--audit-cmd',f'{sys.executable} -B {script}'],capture_output=True,text=True)
         self.assertEqual(p.returncode,2);self.assertEqual(json.loads(p.stdout)['status'],'BLOCKED')
     def test_chain_passes_hook_without_shell(self):
-        r=chain.rows()[1][0];commands=chain.world_commands(r,audit_cmd='python3 -B /tmp/g3-chain/revision_audit.py')
+        need_chain();cmd='python3 -B '+str(chain.BASE/'revision_audit.py')
+        r=chain.rows()[1][0];commands=chain.world_commands(r,audit_cmd=cmd)
         audit=next(c for c in commands if 'revision-audit' in c['argv'])
-        self.assertEqual(audit['argv'][-2:],['--audit-cmd','python3 -B /tmp/g3-chain/revision_audit.py'])
+        self.assertEqual(audit['argv'][-2:],['--audit-cmd',cmd])
     def test_gate_stops_next_command(self):
+        need_chain()
         for status in ('FAIL','BLOCKED'):
             fixture(self.root)
             if status=='FAIL':update(self.root,'agents/cand.llm.jsonl',lambda d:d[1].update(block=119),True)
