@@ -639,6 +639,42 @@
       "path": "ascon-notes/league/g3/inputs.lock.json",
       "title": "G3 入力lock（PR #66で再登録）",
       "locator": "13キー変更（更新8・新規5）。候補hashとblocked一覧は不変"
+    },
+    {
+      "id": "src-decisions-oct14",
+      "path": "ascon-notes/league/DECISIONS-2026-10-14.md",
+      "title": "10/14本人決定",
+      "locator": "判断10〜12。外部環境を変えず、測れない項目は本人受容、実行可能な項目を進める。"
+    },
+    {
+      "id": "src-g3-gap-oct14",
+      "path": "ascon-notes/league/G3-GAP-CLASSIFICATION-2026-10-14.md",
+      "title": "G3不足分類 10/14",
+      "locator": "全60行中55行を分類。A=2、A?=2、B=17、C=34。G3はREQUIRED/BLOCKED。"
+    },
+    {
+      "id": "src-seedaudit-oct14",
+      "path": "ascon-notes/league/G3-SEEDAUDIT-TRIAGE-2026-10-14.md",
+      "title": "seedAudit配置別確認 10/14",
+      "locator": "全worktreeとrepo親の全兄弟フォルダーを走査。hitsは配置依存。47件の内訳は未確認。"
+    },
+    {
+      "id": "src-auditor-design-oct14",
+      "path": "ascon-notes/league/G3-AUDITOR-DESIGN-2026-10-14.md",
+      "title": "G3 auditor設計 10/14",
+      "locator": "3 slices、11 checks、positive 13、negative 11。設計のみ。"
+    },
+    {
+      "id": "src-b07-eval-oct14",
+      "path": "ascon-notes/league/G3-B07-EVAL-AREA-2026-10-14.md",
+      "title": "B07評価領域 10/14",
+      "locator": "miniでview作成とmanifest照合を記録。B07・G3はBLOCKED。"
+    },
+    {
+      "id": "src-c-exception-target",
+      "path": "ascon-notes/league/C-EXCEPTION-01-2026-10-06.md",
+      "title": "C-EXCEPTION-01",
+      "locator": "10/14 JSTの初回提出目標。未達として記録。"
     }
   ]
 }
@@ -674,14 +710,19 @@
     "src-b07-draft",
     "src-b07-source-proposal",
     "src-b07-port-diff",
-    "src-inputs-lock"
+    "src-inputs-lock",
+    "src-decisions-oct14",
+    "src-g3-gap-oct14",
+    "src-seedaudit-oct14",
+    "src-auditor-design-oct14",
+    "src-b07-eval-oct14"
   ],
-  "as_of": "2026-10-12T09:24:38+09:00",
+  "as_of": "2026-10-14T19:57:14+09:00",
   "measurement_as_of": null,
-  "last_update": "10/12 JST: PR #64（dashboard）・#65（B07 r3 source提案と本人決定5〜8）・#66（chainツール13件中9件の移植とlock再登録）を統合。評価領域の具体パスは本人が ~/Developer/ascon-g3-eval/ に決定（決定9、ディレクトリ未作成・未実行）。B07はBLOCKEDのまま（閉じていない）。10/12は要件2〜5の実観測の期限当日で、実観測は未実施・今日中に完了できない。期限は自動延長せず、続けるかは本人の未決判断。G3 REQUIRED / BLOCKED、G3証拠0件、残時間UNKNOWN。",
+  "last_update": "10/14 JST: PR #68〜#71をorigin/mainのローカル履歴で確認。G3分類と判断10〜12、seedAuditの配置依存FAIL、auditor設計のみ、B07評価領域の作成・make-view成功を反映。B07は未完、G3 REQUIRED / BLOCKED、証拠0件。10/14の初回提出目標は未達。",
   "phase_id": "phase-first",
-  "headline": "要件2〜5の実観測は期限10/12に到達、未実施でBLOCKED。G3はREQUIRED / BLOCKED。",
-  "subhead": "オフラインchecker 4本はsynthetic-onlyでG3証拠ではない（G3証拠は0件）。期限は自動延長せず、実観測を続けるかは本人が決める（未決）。B07はchainツール移植・lock再登録後もBLOCKED。B03は未解決の本人受容済み残余リスク（PASSではない）。",
+  "headline": "2026-10-14の状態",
+  "subhead": "PR #68〜#71を反映。B07とG3はBLOCKEDのまま。オフラインcheckerはsynthetic-onlyでG3証拠は0件。実観測なし、prestart-check.pyはFAIL、残時間UNKNOWN。",
   "q0b": {
     "state": "failed",
     "candidate": "opus-1",
@@ -855,11 +896,11 @@
       "src-dev2-repair"
     ]
   },
-  "human_action": "Ollama鍵・無料枠の確認結果を共有・10/12以降に実観測を続けるか中止するかを判断（本人のみ）",
+  "human_action": "本人：lock再登録後の差分レビュー（merge前）",
   "priority": {
-    "title": "要件2〜5の実観測：10/12以降の扱いを本人が決める",
+    "title": "G3をBLOCKEDのまま、実行可能な不足を順に埋める",
     "blocker_ref": "B01",
-    "note": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。G3は内部ゲートとして必須、他の前提はREQUIRED、証拠なしならBLOCKEDのまま。 prestart-check.pyのREQUIRED_BLOCKERSとinputs.lock.jsonはB03を列挙し、開始を止めるまま。B03のツールは変えない（10/11本人決定）。 要件2〜5の実観測は範囲=すべて・期限10/12で継続中だが未実施で、計画上期限内に完了できない。期限は自動延長しない。合成checkerはG3証拠ではない。",
+    "note": "Aとして本人が受容したのはB03とB09eの2件だけ。B09eもPASSではない。A?のR4f・B09cは本人確認までB/Cとして扱う。Bは17件、Cは34件。",
     "progress_refs": [
       "progress-release-r3",
       "progress-g3",
@@ -867,18 +908,58 @@
       "progress-g4"
     ],
     "sources": [
-      "src-decisions-oct11",
-      "src-req25-plan",
-      "src-decisions-oct10",
-      "src-g3-success-plan",
-      "src-g3-req4",
-      "src-timing-results",
-      "src-time-gaps"
+      "src-g3-gap-oct14",
+      "src-decisions-oct14"
     ],
     "state": "blocked",
-    "state_label": "必須 / BLOCKED"
+    "state_label": "REQUIRED / BLOCKED"
   },
   "recent": [
+    {
+      "id": "recent-b07-eval-oct14",
+      "kind": "implementation",
+      "title": "B07評価領域を作成しviewを確認",
+      "text": "PR #71の記録。固定source commitは08efedb5d9b04a843a9480a7840a6140bd5d2ea5。view 1573 files、manifest headとcandidate tree hashを照合。chain実走・state dump・必須ファイル集合レビューは未了。",
+      "date": "2026-10-14",
+      "time_note": "PR #71の記録文書。作業時刻ではない。",
+      "sources": [
+        "src-b07-eval-oct14"
+      ]
+    },
+    {
+      "id": "recent-auditor-design-oct14",
+      "kind": "design",
+      "title": "G3 auditorの3スライスを設計",
+      "text": "PR #70。v0 revert replay、HTTP call ID、traffic recorderの設計と対照を記録。実装・実走ではない。",
+      "date": "2026-10-14",
+      "time_note": "ローカルgit merge履歴",
+      "sources": [
+        "src-auditor-design-oct14"
+      ]
+    },
+    {
+      "id": "recent-seedaudit-oct14",
+      "kind": "warning",
+      "title": "seedAudit FAILの件数は置き場所で変わる",
+      "text": "PR #69の記録。scan scopeは全git worktreeとrepo rootの兄弟フォルダー。Air配置593、clean clone 47（内訳未確認）、mini home配置159＋権限エラー。FAILは継続。",
+      "date": "2026-10-14",
+      "time_note": "ローカルgit merge履歴とtriage文書",
+      "sources": [
+        "src-seedaudit-oct14"
+      ]
+    },
+    {
+      "id": "recent-gap-oct14",
+      "kind": "decision",
+      "title": "G3不足分類と本人判断10〜12を記録",
+      "text": "PR #68。A=2、A?=2、B=17、C=34。本人受容はB03とB09eのみ。G3はBLOCKED、免除・合格とは扱わない。miniでの実走を含め、実行可能な作業を進める。",
+      "date": "2026-10-14",
+      "time_note": "ローカルgit merge履歴",
+      "sources": [
+        "src-g3-gap-oct14",
+        "src-decisions-oct14"
+      ]
+    },
     {
       "id": "recent-req25-oct11",
       "kind": "warning",
@@ -1060,15 +1141,16 @@
     }
   ],
   "next_milestone": {
-    "title": "公式P60の版・提供日を確認する",
-    "note": "提供日は不明。10/20は最早の確認窓で、確定配布日ではない。G3と残予算が成立してから提出工程を進める。10/14は準備棚卸し、10/28は本人の鍵・無料枠確認。",
+    "title": "公式P60の版・提供日を確認（最早10/20頃）",
+    "note": "提供日はnot found in files。10/20は最早の確認窓。10/14の本人初回提出目標は未達。主催者締切は2026-10-31 23:59 JST。dec-007（10/28）の結果は未共有。",
     "sources": [
       "src-p60-spec",
       "src-schedule-oct08",
-      "src-decisions-oct09"
+      "src-decisions-oct14",
+      "src-c-exception-target"
     ],
     "state": "blocked",
-    "state_label": "版・提供日 UNKNOWN"
+    "state_label": "提供日 UNKNOWN / 条件付き"
   },
   "dev3b": {
     "name": "dev3b-xb-r",
@@ -2034,6 +2116,43 @@
   },
   "main_merges": [
     {
+      "pr": 71,
+      "commit": "143e2ba",
+      "timestamp": "2026-10-14T19:41:15+09:00",
+      "subject": "Merge pull request #71 from Masashi-Ono0611/docs/b07-eval-area-1014",
+      "sources": [
+        "src-b07-eval-oct14"
+      ]
+    },
+    {
+      "pr": 70,
+      "commit": "61ab333",
+      "timestamp": "2026-10-14T19:25:03+09:00",
+      "subject": "Merge pull request #70 from Masashi-Ono0611/docs/revision-audit-design-1014",
+      "sources": [
+        "src-auditor-design-oct14"
+      ]
+    },
+    {
+      "pr": 69,
+      "commit": "53c8003",
+      "timestamp": "2026-10-14T19:16:51+09:00",
+      "subject": "Merge pull request #69 from Masashi-Ono0611/docs/seedaudit-triage-1014",
+      "sources": [
+        "src-seedaudit-oct14"
+      ]
+    },
+    {
+      "pr": 68,
+      "commit": "08efedb",
+      "timestamp": "2026-10-14T19:09:16+09:00",
+      "subject": "Merge pull request #68 from Masashi-Ono0611/docs/g3-gap-classification-1014",
+      "sources": [
+        "src-g3-gap-oct14",
+        "src-decisions-oct14"
+      ]
+    },
+    {
       "pr": 15,
       "commit": "8c29964",
       "timestamp": "2026-10-06T18:02:58+09:00",
@@ -2446,7 +2565,7 @@
       "src-g3-diagnostic"
     ]
   },
-  "updated_at": "2026-10-10T14:45:36+09:00",
+  "updated_at": "2026-10-14T19:57:14+09:00",
   "retrospective": {
     "hypotheses": 42,
     "primary_counts": {
@@ -2724,61 +2843,51 @@
   "budget_state": "UNKNOWN",
   "billing": "開発モデル $0 / Ollama前払い $0",
   "changes": {
-    "title": "前回更新から",
+    "title": "10/14の更新",
     "items": [
-      "統合：#64 dashboard / #65 B07 r3 source提案と本人決定5〜8 / #66 chainツールの移植とlock再登録。決定5〜8：r3 sourceは40桁で固定したcommitを専用worktreeに置く／必要ファイルは全件view＋レビュー済みの必須集合／評価領域は/tmp外／未登録ツール5件をすべてlockへ登録。",
-      "#66：chainツール13件中9件を移植し、G3_CHAIN_SOURCE・G3_CHAIN_SOURCE_COMMIT（40桁の小文字16進）・G3_CHAIN_BASEを既定値なしの必須入力にした（不足・不正は終了コード2で停止）。lockは13キー変更（更新8・新規登録5）、候補hash a03da518…3dffは不変。lock差分は本人レビュー済み（10/12チャット「OK」）。r2の旧base /tmp/g3-chainは拒否されるため、r2証拠の再現には/tmp外のbaseが要る。",
-      "決定9（10/12）：評価領域の具体パスは ~/Developer/ascon-g3-eval/（/tmp外・Git管理外）。ディレクトリは未作成で、そこでは何も実行していない。",
-      "B07はBLOCKEDのまま（閉じていない）。DRAFTは登録済みmanifestではない。check.pyはsynthetic-onlyのため意図的に実行していない。残り：r3 source commitの確定と専用worktree、make-view・chainの実行、state dump（Anvilが必要）、ZIP・観測器・CLIの束縛（Docker・認証が必要）。prestart-check.pyはseedAuditとcompletenessでFAIL（#66前のorigin/mainでも同じ2項目がFAIL）。",
-      "新たに判明：/tmp/g3-chain/source-manifest.jsonは存在しない（原因未特定）。release-r2 worktreeのHEADは5b713a4で、旧make-viewが期待したec80bb8ではない（#66でcommitは入力の40桁一致に変更）。"
+      "PR #68：G3不足をA=2（B03・B09e、本人受容済み）、A?=2（R4f・B09c、確認まではB/C扱い）、B=17、C=34に分類。判断10〜12を記録。",
+      "PR #69：seedAuditは全worktreeとrepo親の全兄弟フォルダーを走査するため配置依存。Air worktree配置593、親が空のclean clone 47（内訳未確認）、miniのホーム配置159＋権限エラー。FAILを維持。",
+      "PR #70：G3 auditorの3スライス・11 checks・13 positive / 11 negative controlsを設計。設計のみ。",
+      "PR #71：miniにB07評価領域を作成。固定source 08efedb5…、view 1573 files、manifest head一致、tree hash a03da518…3dff一致。B07は未完。",
+      "進行中：revision_audit v0再生のslice 1。lock再登録と本人のlock差分レビューがmerge前に必要。進行状況の記録はfiles内でnot found in files。worker側recorder相談も継続中。"
     ],
-    "caption": "10/12は要件2〜5の実観測の期限当日。実観測は未実施で今日中に完了できず、期限は自動延長しない。続けるかは本人の判断（未決）。B07はBLOCKED、G3証拠は0件、G3はREQUIRED / BLOCKED。B03は本人受容済みの未解決リスクでPASSではない。残時間UNKNOWN。統合はローカルgit履歴で確認。",
+    "caption": "確認元はローカルgit log origin/mainと各PRで追加された資料。PR merge時刻はgitの記録、作業完了時刻ではない。10/12の内部live観測期限は到来し未実施。継続判断の記録はないが、10/14方針により実装可能な項目を進める。",
     "sources": [
-      "src-b07-source-proposal",
-      "src-b07-port-diff",
-      "src-inputs-lock",
-      "src-b07-audit",
-      "src-b07-draft",
-      "src-decisions-oct11",
-      "src-req25-plan",
-      "src-req4-gap",
-      "src-req2-checker",
-      "src-req3-checker",
-      "src-req4-checker",
-      "src-req5-checker"
+      "src-decisions-oct14",
+      "src-g3-gap-oct14",
+      "src-seedaudit-oct14",
+      "src-auditor-design-oct14",
+      "src-b07-eval-oct14"
     ]
   },
   "next_steps": [
     {
-      "title": "Ollama鍵・無料枠の確認結果を共有する",
-      "text": "本人が10/11にOllama鍵の有効性と無料枠の量を確認（期限10/28の提出前の本人確認の一部）。結果を本人から共有されるまで未確認として扱う。公式P60の版は提供日不明で、最早10/20頃以降の確認窓（条件付き）。開発課金$0・前払い$0を維持。",
-      "state": "blocked",
-      "label": "USER · 本人のみ / 結果未共有",
+      "title": "revision_audit v0 replay slice 1を進める",
+      "text": "Codexが実装中との引継ぎ。PR #70は設計のみ。変更後にlockを再登録し、merge前に本人がlock差分をレビューする。実装進捗の記録はfiles内でnot found in files。",
+      "state": "running",
+      "label": "Codex · 進行中 / lock差分レビュー後にmerge",
       "sources": [
-        "src-decisions-oct11",
-        "src-decisions-oct09",
-        "src-p60-spec"
+        "src-auditor-design-oct14"
       ]
     },
     {
-      "title": "10/12以降の実観測を続けるか決める",
-      "text": "10/12は要件2〜5の実観測の期限当日。実観測は未実施で、今日中に完了できない。期限は自動延長しない。継続するか中止するかを、範囲・費用・期限付きで本人が判断（未決）。G3はREQUIRED / BLOCKED。",
-      "state": "blocked",
-      "label": "USER · 本人のみ / 期限到達・未決",
+      "title": "worker側recorder設計を相談する",
+      "text": "agmsgでmasa-codexへ相談中との引継ぎ。応答・結論・実装はfiles内でnot found in files。",
+      "state": "running",
+      "label": "Codex · 相談中",
       "sources": [
-        "src-decisions-oct11",
-        "src-req25-plan"
+        "src-g3-gap-oct14",
+        "src-auditor-design-oct14"
       ]
     },
     {
-      "title": "B07の残り作業（r3 source確定・評価領域の作成・実行）",
-      "text": "r3 source commitの40桁確定と専用worktree、決定済みパス ~/Developer/ascon-g3-eval/ の作成、make-view・chainの実行は未着手。state dumpはAnvil、ZIP・観測器・CLIの束縛はDocker・認証が必要。B07はBLOCKEDのまま。",
-      "state": "blocked",
-      "label": "BLOCKED · 未着手 / 実行は本人の許可後",
+      "title": "seedAudit hitの内訳を仕分ける",
+      "text": "配置依存のFAILは維持。clean cloneの47件は内訳not found in files。自己予約、実使用、計画行を分ける。seedや検査器の変更は含めない。",
+      "state": "pending",
+      "label": "Codex · 次",
       "sources": [
-        "src-b07-port-diff",
-        "src-b07-source-proposal",
-        "src-decisions-oct11"
+        "src-seedaudit-oct14",
+        "src-g3-gap-oct14"
       ]
     }
   ],
@@ -2919,7 +3028,7 @@
   },
   "infrastructure": {
     "title": "Mac miniの運用整備",
-    "note": "miniはネットワーク切断後に復帰し再起動ではなかった、raw退避後にtiming作業dirを削除した、という依頼者引継ぎ。切断時間・原因・復帰・削除の記録は not found in files。証拠ディレクトリはrepo外、Airローカル（outside the repo, local to the Air）に存在する。",
+    "note": "miniはネットワーク切断後に復帰し再起動ではなかった、raw退避後にtiming作業dirを削除した、という依頼者引継ぎ。切断時間・原因・復帰・削除の記録は not found in files。証拠ディレクトリはrepo外、Airローカル（outside the repo, local to the Air）に存在する。 ASCONの重い作業はMac mini、Airは他作業で高負荷という依頼者引継ぎ。負荷時のAir pre-push CI reproductionは10秒test limitでtimeoutし、miniではpassしたとの記録も依頼者引継ぎ。対応する証拠ファイルはnot found in files。本更新では再実行していない。",
     "boundary": "保存先は /Users/masashi_mac_ssd/Developer/ascon-evidence-timing-2026-10-11/。SHA-256一覧あり、19ファイル一致は測定結果文書に記録。退避容量と追加清掃後のData空き容量は not found in files。MINI-CLEANUP-2026-10-09.mdは以前のData領域43→84 GiBのみ。現在容量の再測定・ホスト接続・削除確認なし。",
     "sources": [
       "src-mini-cleanup",
@@ -3137,38 +3246,11 @@
     ]
   },
   "footer_sources": [
-    "src-b07-source-proposal",
-    "src-b07-port-diff",
-    "src-inputs-lock",
-    "src-b07-audit",
-    "src-b07-draft",
-    "src-decisions-oct11",
-    "src-req25-plan",
-    "src-req4-gap",
-    "src-req2-checker",
-    "src-req3-checker",
-    "src-req4-checker",
-    "src-req5-checker",
-    "src-timing-results",
-    "src-timing-protocol",
-    "src-timing-harness",
-    "src-b04-design",
-    "src-time-gaps",
-    "src-b07-plan",
-    "src-b07-checker",
-    "src-b04-joiner",
-    "src-decisions-oct10",
-    "src-g3-success-plan",
-    "src-g3-paths",
-    "src-mini-cleanup",
-    "src-decisions-oct09",
-    "src-g3-lock-r3",
-    "src-results-e1-e2",
-    "src-g3-prereq",
-    "src-g3-load",
-    "src-g3-req4",
-    "src-p60-spec",
-    "src-budget-settlement"
+    "src-decisions-oct14",
+    "src-g3-gap-oct14",
+    "src-seedaudit-oct14",
+    "src-auditor-design-oct14",
+    "src-b07-eval-oct14"
   ],
   "b03": {
     "state": "unresolved-user-accepted",
@@ -3242,11 +3324,12 @@
       "src-req5-checker"
     ],
     "deadline_reached": true,
-    "continuation_decision": "open-user",
-    "deadline_note": "10/12は期限当日。実観測は未実施で今日中に完了できない。自動延長せず、続けるかは本人の未決判断。"
+    "continuation_decision": "not-recorded",
+    "deadline_note": "10/12の実観測期限は到来。実観測は未実施で、延長記録なし。10/14の本人方針は、技術的に進められる項目をエージェントが進めること。",
+    "policy_as_of": "2026-10-14"
   },
   "b07": {
-    "state": "tools-ported-lock-reregistered-blocked",
+    "state": "eval-area-created-view-built-blocked",
     "b07_status": "BLOCKED",
     "closed": false,
     "pr": 63,
@@ -3266,31 +3349,23 @@
     "g3_evidence": false,
     "undecided_fields": [
       {
-        "field": "r3実行source（commit・path）",
-        "reason": "方針は決定5（40桁commitを専用worktreeに固定）。実commitの確定と専用worktreeは未作成"
+        "field": "必須ファイル集合のレビュー",
+        "reason": "全件viewは作成したが、レビュー済み必須集合は未確定。"
       },
       {
-        "field": "必須ファイル集合",
-        "reason": "方針は決定6（全件view＋レビュー済み必須集合）。実集合は未作成"
-      },
-      {
-        "field": "評価領域の作成",
-        "reason": "パスは決定9で ~/Developer/ascon-g3-eval/。ディレクトリ未作成・未実行"
-      },
-      {
-        "field": "make-view・chainの実行",
-        "reason": "実sourceに対しdry-runもrunも未実施"
+        "field": "chain実走",
+        "reason": "評価領域でchainを実行した記録はnot found in files。"
       },
       {
         "field": "state dump",
-        "reason": "生成・ロードにAnvilが必要"
+        "reason": "生成・ロードにAnvilが必要。"
       },
       {
         "field": "ZIP・観測器・CLIの束縛",
-        "reason": "Docker・認証が必要"
+        "reason": "Docker・認証が必要。"
       }
     ],
-    "note": "候補識別（ID・dir・tree hash・5ファイル）はPR #63でオフライン確定しlockと一致。PR #66でchainツール13件中9件を移植しlockを再登録（候補hashは不変）。DRAFTは登録済みmanifestではなく、B07を閉じない。prestart-check.pyは未変更。",
+    "note": "PR #71でminiの評価領域を作成し、make-view成功、view 1573 files、manifest head・candidate tree hashの一致を記録。必須ファイル集合レビュー、chain実走、state dump、ZIP等の束縛は未了。B07はBLOCKED、G3証拠ではない。",
     "port": {
       "proposal_pr": 65,
       "proposal_merge": "a16f7e7",
@@ -3326,10 +3401,10 @@
       },
       "eval_path": "~/Developer/ascon-g3-eval/",
       "eval_path_decided": true,
-      "eval_dir_created": false,
+      "eval_dir_created": true,
       "chain_run_in_eval": false,
-      "make_view_run": false,
-      "source_commit_fixed": false,
+      "make_view_run": true,
+      "source_commit_fixed": true,
       "prestart_check": {
         "result": "FAIL",
         "failing": [
@@ -3337,7 +3412,19 @@
           "completeness"
         ],
         "same_failures_on_main_before_pr66": true,
-        "note": "10/12に読取のみで実行。trackedTreeは作業中の未commit差分にのみ依存。G3合格を意味しない"
+        "note": "10/12に読取のみで実行。trackedTreeは作業中の未commit差分にのみ依存。G3合格を意味しない",
+        "triage": {
+          "scan_scope": "all git worktrees plus every sibling directory of repo root",
+          "hit_counts_by_layout": {
+            "Air_worktree_layout": 593,
+            "clean_clone_empty_parent": 47,
+            "Mac_mini_home_layout": 159
+          },
+          "clean_clone_composition": "not found in files",
+          "Mac_mini_permission_errors": true,
+          "result": "FAIL",
+          "source": "src-seedaudit-oct14"
+        }
       },
       "findings": [
         "/tmp/g3-chain/source-manifest.jsonは存在しない（原因未特定）",
@@ -3351,6 +3438,61 @@
       "src-b07-source-proposal",
       "src-b07-port-diff",
       "src-inputs-lock"
+    ],
+    "latest_pr": 71,
+    "latest_merge": "143e2ba",
+    "source_commit": "08efedb5d9b04a843a9480a7840a6140bd5d2ea5",
+    "eval_area": {
+      "created_on": "2026-10-14",
+      "host": "Mac mini",
+      "source_commit": "08efedb5d9b04a843a9480a7840a6140bd5d2ea5",
+      "make_view": "ok",
+      "view_files": 1573,
+      "manifest_head_matches_commit": true,
+      "candidate_tree_hash_matches_view_source_lock": true,
+      "candidate_sha256": "a03da51869cf8c8160aaa25eb5f1e87cfa74a3a9dfdac3050945a71f7d143dff",
+      "source": "src-b07-eval-oct14",
+      "display_path": "~/Developer/ascon-g3-eval/"
+    }
+  },
+  "summary_lines": [
+    {
+      "label": "完了",
+      "text": "PR #68〜#71を統合。B07評価領域 ~/Developer/ascon-g3-eval/ を作成。make-viewで1573 files、manifest headを照合。"
+    },
+    {
+      "label": "未完了・BLOCKED",
+      "text": "B07は未完了。G3はREQUIRED / BLOCKED、証拠0件。実観測なし、prestart-check.pyはFAIL。"
+    },
+    {
+      "label": "次",
+      "text": "v0再生スライス1、worker側記録器の設計相談、seedAudit仕分け。lock再登録後は本人が差分を確認。"
+    }
+  ],
+  "g3_gap_classification": {
+    "date": "2026-10-14",
+    "rows_total": 60,
+    "rows_counted": 55,
+    "categories": {
+      "A": 2,
+      "A?": 2,
+      "B": 17,
+      "C": 34
+    },
+    "accepted_by_user": [
+      "B03",
+      "B09e"
+    ],
+    "a_question_items": [
+      "R4f",
+      "B09c"
+    ],
+    "a_question_treatment": "B/C until user confirms premise",
+    "g3_status": "REQUIRED / BLOCKED",
+    "g3_evidence_count": 0,
+    "sources": [
+      "src-g3-gap-oct14",
+      "src-decisions-oct14"
     ]
   }
 }
@@ -5098,17 +5240,69 @@
     {
       "id": "progress-b07-offline-audit",
       "workstream": "基盤",
-      "title": "B07 r3移行（監査・移植・lock再登録まで。B07は未解消）",
+      "title": "B07 r3移行（view作成まで。B07は未解消）",
       "state": "blocked",
-      "evidence": "PR #63で監査とDRAFT（未登録）、#65で本人決定5〜8、#66でchainツール13件中9件を移植しlockを13キー再登録（候補hash不変、本人レビュー済み）。評価領域パスは決定9で ~/Developer/ascon-g3-eval/（未作成）。r3 source commit確定・専用worktree・make-view/chain実行・state dump（Anvil）・ZIP等の束縛（Docker・認証）は未了。check.pyはsynthetic-onlyのためDRAFTに未適用。",
+      "evidence": "PR #63監査とDRAFT、#65本人決定、#66 tool移植とlock再登録、#71 mini評価領域作成・make-view成功を記録。固定source 08efedb5d9b04a843a9480a7840a6140bd5d2ea5、view 1573 files、manifest headとcandidate tree hash一致。必須ファイル集合レビュー、chain実走、state dump、ZIP等の束縛は未了。prestart-check.pyはFAIL。",
       "sources": [
         "src-b07-audit",
         "src-b07-draft",
         "src-b07-source-proposal",
         "src-b07-port-diff",
-        "src-inputs-lock"
+        "src-inputs-lock",
+        "src-b07-eval-oct14"
       ],
       "state_label": "BLOCKED / 移植・再登録済み・未実行"
+    },
+    {
+      "id": "progress-g3-gap-classification-oct14",
+      "workstream": "基盤",
+      "title": "G3不足分類と本人判断10〜12の記録",
+      "state": "done",
+      "evidence": "PR #68で55件を分類（A=2、A?=2、B=17、C=34）。本人受容はB03・B09eのみ。G3の合格・免除ではない。",
+      "sources": [
+        "src-g3-gap-oct14",
+        "src-decisions-oct14"
+      ]
+    },
+    {
+      "id": "progress-seedaudit-triage-oct14",
+      "workstream": "基盤",
+      "title": "seedAudit FAILの配置依存を確認",
+      "state": "done",
+      "evidence": "PR #69の記録。scan scopeは全worktreeとrepo親の全兄弟。Air 593、親が空のclean clone 47（内訳not found in files）、mini home 159＋権限エラー。FAIL維持。",
+      "sources": [
+        "src-seedaudit-oct14"
+      ]
+    },
+    {
+      "id": "progress-auditor-design-oct14",
+      "workstream": "基盤",
+      "title": "G3 auditor設計（実装ではない）",
+      "state": "done",
+      "evidence": "PR #70で3 slices・11 checks・13 positive / 11 negative controlsを設計。実装・実走なし。",
+      "sources": [
+        "src-auditor-design-oct14"
+      ]
+    },
+    {
+      "id": "progress-b07-eval-area-oct14",
+      "workstream": "基盤",
+      "title": "B07評価領域とviewの準備",
+      "state": "done",
+      "evidence": "PR #71のmini記録。source commit 08efedb5d9b04a843a9480a7840a6140bd5d2ea5、make-view OK、1573 files、manifest headとcandidate tree hashの照合。一部準備だけでB07/G3はBLOCKED。",
+      "sources": [
+        "src-b07-eval-oct14"
+      ]
+    },
+    {
+      "id": "progress-revision-audit-v0-slice1",
+      "workstream": "基盤",
+      "title": "revision_audit v0 replay slice 1",
+      "state": "running",
+      "evidence": "現在進行中との依頼者引継ぎ（branch feat/revision-audit-v0-replay-1014）。この進捗の詳細はfiles内でnot found in files。変更後はlock再登録が必要で、merge前に本人がlock差分をレビューする。G3証拠ではない。",
+      "sources": [
+        "src-auditor-design-oct14"
+      ]
     }
   ]
 }
@@ -5507,45 +5701,93 @@
   ],
   "items": [
     {
-      "id": "queue-g3-bounded",
-      "experiment": "g3-bounded",
-      "title": "要件2〜5の実観測：10/12以降に続けるか中止か",
-      "state": "USER / 10/12以降は本人判断待ち",
+      "id": "queue-revision-audit-v0-slice1",
+      "experiment": "revision-audit-v0-slice1",
+      "priority": 1,
+      "title": "revision_audit v0 replay slice 1",
+      "state": "進行中 / Codex",
       "worlds": null,
       "hours": null,
-      "window": "10/12まで継続（範囲=すべて）。期限は自動延長しない",
-      "dependency": "B03は未解決の本人受容済み残余リスク。PASS・closedではない。B03のツールは変えない（10/11本人決定）。 要件2〜5の実観測は未実施で、計画上10/12までに完了できない。合成checker 4本（#58〜#61）はG3証拠ではない。10/12以降の継続・中止は範囲・費用・期限付きで本人が判断。",
-      "owner": "human",
+      "window": "実装中。lock再登録と本人の差分レビュー後にmerge判断",
+      "dependency": "現在進行中との依頼者引継ぎ。設計文書はあるが実装状況はfiles内でnot found in files。変更後はlockを再登録し、merge前に本人がlock差分をレビューする。",
+      "owner": "Codex",
+      "active": true,
+      "current": true,
+      "sources": [
+        "src-auditor-design-oct14"
+      ]
+    },
+    {
+      "id": "queue-worker-recorder-consult",
+      "experiment": "worker-recorder-consult",
+      "priority": 2,
+      "title": "worker側recorder設計の相談",
+      "state": "進行中 / 相談待ち",
+      "worlds": null,
+      "hours": null,
+      "window": "agmsgでmasa-codexへ相談中",
+      "dependency": "相談の送信・応答記録はfiles内でnot found in files。結論・実装・計測は未完。",
+      "owner": "Codex",
+      "active": true,
+      "current": true,
+      "sources": [
+        "src-g3-gap-oct14",
+        "src-auditor-design-oct14"
+      ]
+    },
+    {
+      "id": "queue-seedaudit-classification",
+      "experiment": "seedaudit-classification",
+      "priority": 3,
+      "title": "seedAudit hitの内訳と扱いを仕分け",
+      "state": "次 / composition unverified",
+      "worlds": null,
+      "hours": null,
+      "window": "scan scopeを固定したうえで、clean clone 47件の内訳から確認",
+      "dependency": "PR #69で配置依存は確認。47件の内訳はnot found in files。seed予約・実使用・計画行の区分は未完。seedや検査器は変更しない。",
+      "owner": "Codex",
       "active": false,
       "current": true,
       "sources": [
+        "src-seedaudit-oct14",
+        "src-g3-gap-oct14"
+      ]
+    },
+    {
+      "id": "queue-g3-bounded",
+      "experiment": "g3-bounded",
+      "title": "要件2〜5の実観測（期限到来・未実施）",
+      "state": "期限到来 / 実観測未実施",
+      "worlds": null,
+      "hours": null,
+      "window": "10/12期限到来。延長の記録なし。",
+      "dependency": "実観測は未実施。10/14方針は技術的に進められる項目を進めること。G3はREQUIRED / BLOCKED、証拠0件。",
+      "owner": "human",
+      "active": false,
+      "current": false,
+      "sources": [
         "src-decisions-oct11",
-        "src-req25-plan",
-        "src-g3-paths",
-        "src-g3-success-plan",
-        "src-decisions-oct10",
-        "src-timing-results"
+        "src-decisions-oct14",
+        "src-req25-plan"
       ],
-      "priority": 1
+      "priority": 4
     },
     {
       "id": "queue-offline-b04-b07",
       "experiment": "offline-b04-b07",
       "title": "B04 joiner / B07 checkerのオフライン拡張",
-      "state": "BLOCKED / 本人の継続判断が前提",
+      "state": "設計済み / 実装待ち",
       "worlds": null,
       "hours": null,
-      "window": "本人が継続範囲を決めた後",
-      "dependency": "10/11に要件2〜5の合成checker（#58〜#61）を統合済み。B04 joiner / B07 checker本体の不足に沿った拡張は未着手で、本人の範囲判断が前提。残時間UNKNOWNのまま追加実走を始めない。",
+      "window": "v0 replay slice 1の後に継続",
+      "dependency": "PR #70は設計のみ。現在はslice 1実装中。worker側記録器相談も継続。いずれも実走やG3証拠ではない。",
       "owner": "Codex",
       "active": false,
-      "current": true,
+      "current": false,
       "sources": [
-        "src-b04-joiner",
-        "src-b07-checker",
-        "src-req4-gap"
+        "src-auditor-design-oct14"
       ],
-      "priority": 2
+      "priority": 5
     },
     {
       "id": "queue-budget-settlement",
@@ -5565,12 +5807,12 @@
         "src-decisions-oct09",
         "src-time-gaps"
       ],
-      "priority": 3
+      "priority": 6
     },
     {
       "id": "queue-first-mix",
       "experiment": "first-mix",
-      "priority": 4,
+      "priority": 7,
       "title": "G3の同一ホスト負荷校正",
       "state": "負荷校正未完・BLOCKED",
       "worlds": null,
@@ -5588,7 +5830,7 @@
     {
       "id": "queue-first-g3",
       "experiment": "first-g3",
-      "priority": 5,
+      "priority": 8,
       "title": "AI改訂の最小動作確認",
       "state": "BLOCKED・本体未実施",
       "worlds": 46,
@@ -5607,7 +5849,7 @@
     {
       "id": "queue-first-p60",
       "experiment": "first-p60",
-      "priority": 6,
+      "priority": 9,
       "title": "公開60シナリオで回帰確認",
       "state": "版・提供日不明 / BLOCKED",
       "worlds": 60,
@@ -5623,7 +5865,7 @@
     },
     {
       "id": "queue-mixed-r3",
-      "priority": 7,
+      "priority": 10,
       "experiment": "mixed-r3",
       "title": "Air r3混成場計測",
       "state": "計測完了・診断のみ / G0 FAIL 7世界",
@@ -5640,7 +5882,7 @@
     },
     {
       "id": "queue-rehearsal-r3",
-      "priority": 8,
+      "priority": 11,
       "experiment": "rehearsal-r3",
       "title": "mini r3 P60リハーサル",
       "state": "計測完了・診断のみ",
@@ -5657,7 +5899,7 @@
     },
     {
       "id": "queue-zeta-prep",
-      "priority": 9,
+      "priority": 12,
       "experiment": "zeta-prep",
       "title": "r3条件付き候補固定",
       "state": "完了・資格合格ではない",
@@ -5675,7 +5917,7 @@
     },
     {
       "id": "queue-pr-split",
-      "priority": 10,
+      "priority": 13,
       "experiment": "pr-split",
       "title": "PR #5–15統合",
       "state": "完了・保存済み履歴",
@@ -5692,7 +5934,7 @@
     },
     {
       "id": "queue-q-zeta-02",
-      "priority": 11,
+      "priority": 14,
       "experiment": "q-zeta-02",
       "title": "Q-ZETA-02の独立60世界資格試験",
       "state": "完了・条件4 FAIL / 原5/6 BLOCKED",
@@ -5717,7 +5959,7 @@
         "src-rev13"
       ],
       "experiment": "dev1-evidence",
-      "priority": 12,
+      "priority": 15,
       "state": "incz診断完了・履歴",
       "worlds": 12,
       "hours": null,
@@ -5728,7 +5970,7 @@
     {
       "id": "queue-q0b-evidence",
       "experiment": "q0b-evidence",
-      "priority": 13,
+      "priority": 16,
       "title": "Q0b安全・G0履歴・時間証跡の補完",
       "state": "証跡精算のみ・再走なし",
       "worlds": 0,
@@ -5750,7 +5992,7 @@
         "src-c-exception"
       ],
       "experiment": "q0-requal",
-      "priority": 14,
+      "priority": 17,
       "state": "C+Eで終了・旧計画",
       "worlds": 60,
       "hours": "5",
@@ -5763,7 +6005,7 @@
     {
       "id": "queue-mix-design",
       "experiment": "mix-design",
-      "priority": 15,
+      "priority": 18,
       "title": "F_mixと最小改訂受付の設計",
       "state": "準備済み・起動BLOCKED",
       "worlds": 0,
@@ -5782,7 +6024,7 @@
     {
       "id": "queue-q0m",
       "experiment": "q0m",
-      "priority": 16,
+      "priority": 19,
       "title": "混成場での資格試験案（不採用）",
       "state": "不採用・旧未署名記録",
       "worlds": 60,
@@ -5804,7 +6046,7 @@
         "src-c-exception"
       ],
       "experiment": "ai-implementation",
-      "priority": 17,
+      "priority": 20,
       "state": "C+Eで終了・旧計画",
       "worlds": 0,
       "hours": null,
@@ -5821,7 +6063,7 @@
         "src-c-exception"
       ],
       "experiment": "ai-d-control",
-      "priority": 18,
+      "priority": 21,
       "state": "C+Eで終了・旧計画",
       "worlds": 48,
       "hours": "52/15",
@@ -5834,7 +6076,7 @@
     {
       "id": "queue-factor-ab",
       "experiment": "factor-ab",
-      "priority": 19,
+      "priority": 22,
       "title": "機能を切り替えて効果を比較",
       "state": "C+Eで終了・旧計画",
       "worlds": 48,
@@ -5851,7 +6093,7 @@
     {
       "id": "queue-m2",
       "experiment": "m2",
-      "priority": 20,
+      "priority": 23,
       "title": "新案の再生成（不採用）",
       "state": "不採用・0h配分",
       "worlds": 60,
@@ -5868,7 +6110,7 @@
     },
     {
       "id": "queue-e3",
-      "priority": 21,
+      "priority": 24,
       "experiment": "e3",
       "title": "2026-10-07 E3 / mini r3混成場",
       "state": "計測完了・保存集計読取のみ",
@@ -5900,10 +6142,10 @@
         "src-timing-protocol",
         "src-timing-harness"
       ],
-      "priority": 22
+      "priority": 25
     }
   ],
-  "note": "時間計測は完了記録済み。次は要件2〜5の実観測について本人判断。継続時だけB04/B07をオフライン拡張。台帳・利用枠の不足は保持。残予算UNKNOWN、G3 REQUIRED / BLOCKED。",
+  "note": "10/14の現行キューを先頭に表示。実行可能な技術作業を進める。実走・費用・時間見積が未確定なら開始しない。残時間はUNKNOWN。",
   "day_limit_hours": 6,
   "bundle": "forward100h・6h/日・110分/chunkを維持。実消化・残費未精算。G3準備/全監査込み14–15h、公式P60 12–13h＋照合1hは計画見積。",
   "side_jobs": [
@@ -9445,7 +9687,7 @@
       "id": "dec-oct11-b07-eval",
       "due_date": null,
       "title": "評価領域は/tmp外の専用ディレクトリ",
-      "note": "決定7。具体パスは10/12の決定9で ~/Developer/ascon-g3-eval/（Git管理外）。ディレクトリ未作成・未実行。"
+      "note": "決定7。具体パスは10/12の決定9で ~/Developer/ascon-g3-eval/（Git管理外）。10/12時点はディレクトリ未作成・未実行（10/14にPR #71でminiに作成済み・make-view実行済み。B07はBLOCKEDのまま）。"
     },
     {
       "date": "2026-10-11",
@@ -9475,7 +9717,48 @@
       "id": "dec-oct12-b07-eval-path",
       "due_date": null,
       "title": "評価領域の具体パスは ~/Developer/ascon-g3-eval/",
-      "note": "決定9（10/12）。/tmp外・Git管理外。パスを決めただけでディレクトリは未作成、何も実行していない。B07はBLOCKEDのまま。"
+      "note": "決定9（10/12）。/tmp外・Git管理外。10/12時点はパスを決めただけでディレクトリは未作成、何も実行していなかった（10/14にPR #71でminiに作成済み・make-view実行済み）。B07はBLOCKEDのまま。"
+    },
+    {
+      "id": "dec-oct14-policy",
+      "date": "2026-10-14",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "due_date": null,
+      "title": "測定不能項目を受容し、実行可能な作業を進める",
+      "note": "決定10。外部環境は変えない。仕組み上測れない項目だけを本人受容の未解決として扱い、それ以外はminiでの実走診断も含めてエージェントが進める。Codex主担当、指定がなければgpt-6-luna。",
+      "sources": [
+        "src-decisions-oct14"
+      ]
+    },
+    {
+      "id": "dec-oct14-b09e",
+      "date": "2026-10-14",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "due_date": null,
+      "title": "B09eを測定不能として受容",
+      "note": "決定11。本人受容済みの未解決項目。PASSではない。B03とB09eの2件のみを受容。",
+      "sources": [
+        "src-decisions-oct14",
+        "src-g3-gap-oct14"
+      ]
+    },
+    {
+      "id": "dec-oct14-aquestion",
+      "date": "2026-10-14",
+      "owner": "human",
+      "group": "current",
+      "status": "decided",
+      "due_date": null,
+      "title": "R4f・B09cは本人確認までB/C扱い",
+      "note": "決定12。前提が確認できればAへ変更する。本人確認まではエージェントが進める側として扱う。",
+      "sources": [
+        "src-decisions-oct14",
+        "src-g3-gap-oct14"
+      ]
     }
   ],
   "human_only": {
@@ -9554,6 +9837,64 @@
   ],
   "note": "追記のみ。旧100件は全フィールド保持、10件追加。最新状態は概要を参照。",
   "items": [
+    {
+      "id": "log-133",
+      "timestamp": "2026-10-14T19:57:14+09:00",
+      "type": "計画変更",
+      "summary": "10/14時点の引継ぎ。10/12内部期限のlive observationは未実施、継続判断の記録はない。本人の10/14方針によりengineerable workを進める。10/14の本人初回提出目標は未達。G3 REQUIRED / BLOCKED、証拠0件。",
+      "sources": [
+        "src-decisions-oct14",
+        "src-g3-gap-oct14",
+        "src-c-exception-target"
+      ],
+      "time_basis": "ダッシュボード更新時刻。作業実施時刻ではない。",
+      "event_date": "2026-10-14"
+    },
+    {
+      "id": "log-132",
+      "timestamp": "2026-10-14T19:41:15+09:00",
+      "type": "実装",
+      "summary": "PR #71 merge 143e2ba。miniにB07評価領域を作成。source commit 08efedb5d9b04a843a9480a7840a6140bd5d2ea5、make-view OK、view 1573 files、manifest headとtree hash a03da518…3dffの一致を記録。B07は未完。",
+      "sources": [
+        "src-b07-eval-oct14"
+      ],
+      "time_basis": "ローカルgitのmerge commit記録時刻。評価領域作成時刻ではない。",
+      "event_date": "2026-10-14"
+    },
+    {
+      "id": "log-131",
+      "timestamp": "2026-10-14T19:25:03+09:00",
+      "type": "計画変更",
+      "summary": "PR #70 merge 61ab333。G3 auditorの3 slices、11 checks、13 positive / 11 negative controlsを設計。設計のみで、slice 1実装・実走・G3証拠ではない。",
+      "sources": [
+        "src-auditor-design-oct14"
+      ],
+      "time_basis": "ローカルgitのmerge commit記録時刻。",
+      "event_date": "2026-10-14"
+    },
+    {
+      "id": "log-130",
+      "timestamp": "2026-10-14T19:16:51+09:00",
+      "type": "実測",
+      "summary": "PR #69 merge 53c8003。seedAuditはall git worktreesとrepo parentのall sibling directoriesを走査するため配置依存。Air worktree 593、empty-parent clean clone 47（composition unverified）、mini home layout 159＋permission errors。FAILを維持。",
+      "sources": [
+        "src-seedaudit-oct14"
+      ],
+      "time_basis": "ローカルgitのmerge commit記録時刻。hit count自体の測定時刻ではない。",
+      "event_date": "2026-10-14"
+    },
+    {
+      "id": "log-129",
+      "timestamp": "2026-10-14T19:09:16+09:00",
+      "type": "決定",
+      "summary": "PR #68 merge 08efedb。G3分類A=2（B03・B09e本人受容）、A?=2（R4f・B09cは確認までB/C）、B=17、C=34。判断10〜12を反映。G3はBLOCKEDのまま。",
+      "sources": [
+        "src-g3-gap-oct14",
+        "src-decisions-oct14"
+      ],
+      "time_basis": "ローカルgitのmerge commit記録時刻。",
+      "event_date": "2026-10-14"
+    },
     {
       "id": "log-128",
       "timestamp": "2026-10-12T09:24:38+09:00",
@@ -11778,8 +12119,8 @@
     }
   ],
   "copy": {
-    "action_note": "要件2〜5のオフラインchecker 4本は統合済み（synthetic-only、G3証拠ではない）。実観測は10/12期限で継続中だが未実施で、期限内に完了できない。10/12以降の継続・中止は本人が判断。B03のツールは変えない。",
-    "action_next": "本人が10/11にOllama鍵の有効性と無料枠量を確認。結果は未共有で未確認。前払いは$0を維持し、不足時の支払額は本人が決める。",
+    "action_note": "G3はREQUIRED / BLOCKED。10/14の方針に沿い、測れる技術課題を進める。本人作業はmerge前のlock差分レビューなど、記録された確認に限る。",
+    "action_next": "Ollama鍵・無料枠の結果未共有。dec-007（10/28期限）まで本人からの共有待ち。10/12の内部観測期限は到来し未実施。開発モデル課金$0、Ollama前払い$0。",
     "diagnostic_notice": "E1–E10は診断。混成場でr3はinc-zetaに約3.5 T劣り、r3cの改善は未確立。弱い参照場の強さを優勝の根拠にしない。G0 FAILを保持し、公式P60・G3・G4と分ける。",
     "qualification_notice": "Q-ZETA-01/02条件4 FAILを保持（9/60、8/60世界）。Q02はminiで60世界完了、G0全PASS、平均T 58.91対42.34、12/12。原条件5/6は完全証跡不足でBLOCKED。C5/C6は保存証拠限定の受容であり原契約PASSではない。旧資格hashの結果をr3へ再認定しない。",
     "qualification_criteria": "平均T ≥ multi-arb、各レジーム平均(T−Tnoop) ≥ 0、安全条件などを検査します。",
@@ -11788,7 +12129,7 @@
     "plan_note": "10/14は準備棚卸し。公式P60の提供日は不明、最早10/20以降。10/24–27送信・10/29受理照合は条件付き目標。締切は固定。",
     "registration": "受理表示を本人が確認済み",
     "provider_remaining": "10/28までに本人が鍵の有効性・無料枠の量を確認。運営モデルとの対応も未確認。",
-    "decisions_note": "10/9・10/10・10/11の決定を現方針として表示。過去の判断・未決提案・署名は履歴に保持し、現在の再承認待ちへ戻さない。"
+    "decisions_note": "10/14の決定10〜12を現方針として表示。過去の判断・未決提案・署名は履歴に保持する。"
   },
   "roadmap_axis": [
     "10/4",
@@ -11888,6 +12229,7 @@ input,select,button{max-width:100%;min-width:0}.term{white-space:normal;overflow
   function eventList(items){return `<ol class="timeline">${items.map(e=>`<li${e.id?` data-record="status.recent.${esc(e.id)}"`:''}><span class="time-note">${dateOnly(e.date)} · ${esc(e.time_note)}</span><div class="timeline-title">${rich(e.title)}</div><p>${rich(e.text)}</p>${refs(e.sources)}</li>`).join('')}</ol>`;}
   function nextLane(){return `<figure class="next-lane section" aria-labelledby="next-lane-title"><h2 id="next-lane-title">次の3手</h2><ol class="next-steps">${D.status.next_steps.map((step,i)=>`<li><span class="step-dot ${esc(step.state)}" aria-hidden="true">${i+1}</span><h3>${rich(step.title)}</h3>${chip(step.state,step.label)}<p>${rich(step.text)}</p>${refs(step.sources)}</li>`).join('')}</ol><figcaption>前提が成立した工程だけ進める。新しい提出候補には本人の確認が必要。</figcaption></figure>`;}
   function overview(){const s=D.status,r=read(D.plan.continuous_operation.current_run_ref),finalCheck=D.decisions.items.find(d=>d.id==='dec-007');return `${kpis()}
+    <section class="summary-strip" aria-label="3行サマリー">${s.summary_lines.map(line=>`<p><strong>${rich(line.label)}：</strong>${rich(line.text)}</p>`).join('')}</section>
     <div class="summary-strip"><h2>${rich(s.headline)}</h2><p>${rich(s.subhead)}</p></div>
     <figure class="change-strip" aria-label="前回更新からの変更"><strong>${rich(s.changes.title)}</strong><ul>${s.changes.items.map(t=>`<li>${rich(t)}</li>`).join('')}</ul><figcaption>${rich(s.changes.caption)}</figcaption></figure>
     <div class="grid-2 section"><article class="card priority-card"><div class="card-title"><span class="mini-label">いまの最優先目標</span>${chip(s.priority.state,s.priority.state_label)}</div><h2 class="priority-title">${rich(s.priority.title)}</h2><p>${rich(s.priority.note)}</p>${prioritySteps()}${refs(s.priority.sources)}${link('blockers','残る前提を見る')}</article>

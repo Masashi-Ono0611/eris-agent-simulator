@@ -4,13 +4,31 @@
 
 ブラウザでファイルを開くと概要が表示されます。`#results`、`#decisions`、`#log` などで直接ページを指定でき、戻る・進むにも対応します。保存後の更新はファイルの再読み込みで反映します。実行中プロセスやサービスをポーリングする機能はありません。
 
-## 2026-10-11〜12の更新・検査契約
+## 2026-10-14の現況
+
+この節を現況の基準にします。10/11〜12の記述は当時の履歴です。正本はHTML内のJSONで、ローカル `git log origin/main` と下記の記録ファイルに照合しました。
+
+- PR #68〜#71を統合。PR merge commitと記録時刻は `status.main_merges` に保持。
+- G3不足55件の分類は A=2（B03・B09eを本人受容）、A?=2（R4f・B09cは前提確認までB/C扱い）、B=17、C=34。G3はREQUIRED / BLOCKED、証拠0件。受容をPASSや免除にしない。
+- seedAuditはFAILのまま。全git worktreeとrepo rootの兄弟フォルダーを走査するため配置依存。Air worktree配置593 hits、親が空のclean clone 47 hits（内訳not found in files）、mini home配置159 hitsと権限エラー。
+- auditorは3 slices・11 checks・13 positive / 11 negative controlsの設計のみ。slice 1は実装中との依頼者引継ぎで、進捗の証拠はnot found in files。lock再登録後、merge前に本人がlock差分をレビューする。
+- miniのB07評価領域、pinned source `08efedb5d9b04a843a9480a7840a6140bd5d2ea5`、1573ファイルのview、manifest headとcandidate tree hashの一致、make-view成功は記録済み。chain実走等が残り、B07はBLOCKED。
+- 10/12の内部live観測期限は到来し、観測なし。継続判断の記録はない。10/14の本人方針により、測れる技術課題をエージェントが進める。10/14の初回提出目標は未達。残り開発時間とdec-007結果はUNKNOWN / 未共有。主催者締切は10/31 23:59 JST。
+- 重い作業はMac mini、Airは他作業で高負荷という依頼者引継ぎ。Air上pre-push CIの10秒test limit timeoutとminiでのpassも本人引継ぎだが、対応する証拠ファイルはnot found in files。本更新では再実行していない。
+- 概要の `status.summary_lines` は「完了／未完了・BLOCKED／次」の3行。`status.next_steps` はslice 1、worker側recorder相談、seedAudit仕分けの3手。未確認事項には `not found in files` を記す。
+- 10/14の追加ログは `log-129`〜`log-133`。以前の128件は全フィールドを保持。決定10〜12を追加し、以前の決定は削除・変更しない。
+
+主な出典: `DECISIONS-2026-10-14.md`、`G3-GAP-CLASSIFICATION-2026-10-14.md`、`G3-SEEDAUDIT-TRIAGE-2026-10-14.md`、`G3-AUDITOR-DESIGN-2026-10-14.md`、`G3-B07-EVAL-AREA-2026-10-14.md`。初回提出目標は `C-EXCEPTION-01-2026-10-06.md` を参照。
+
+`dashboard-ui-check.mjs` は上記の件数・出所・B07進捗を固定値で確認し、「B07 closed」「live observation done」「slice 1 merged」「prestart PASS」「G3 PASS」などの偽の完了表示を反例で拒否します。clean clone 47 hitsの内訳は未確認のまま固定します。
+
+## 2026-10-11〜12の更新・検査契約（履歴。現況は上記10/14節を優先）
 
 現況は `G3-B07-R3-PORT-DIFF-2026-10-11.md`（§6 lock再登録を含む）、`G3-B07-R3-SOURCE-PROPOSAL-2026-10-11.md`、`g3/inputs.lock.json`（PR #66）、`G3-B07-OFFLINE-AUDIT-2026-10-11.md`、`g3/manifest-contract/r3-manifest.DRAFT.json`、`DECISIONS-2026-10-11.md`、`G3-REQ25-PLAN-2026-10-11.md`、`G3-REQ4-GAP-2026-10-11.md`、`g3/loader/{source,decision,boundary,lifecycle}-join.mjs`、`g3/loader/TIMING-RESULTS-2026-10-11.md`、`g3/loader/TIMING-REDUCED-PROTOCOL-2026-10-10.md`、B04採取設計・B07移植計画・時間台帳不足（10/10）、`g3/manifest-contract/README.md`、`g3/posthoc-join/README.md`、`DECISIONS-2026-10-10.md`、更新済み `G3-SUCCESS-PLAN-2026-10-09.md`、`G3-B03-B04-PATHS-2026-10-10.md`、`MINI-CLEANUP-2026-10-09.md`、`DECISIONS-2026-10-09.md`、`G3-LOCK-R3-2026-10-08.md`、実現性調査、`P60-PREP-SPEC-2026-10-08.md`、`BUDGET-SETTLEMENT-2026-10-08.md` を優先して照合します。MASTER rev 14の旧工程や未決提案を現在の状態として再表示しません。
 
 - `status.changes` は前回からの変更、`status.next_steps` は次の3手。どちらも既存の概要本文に描画します。
 - `status.timing` は `complete-limited-study` / COMPLETE、`merged=true`。正負対照・主測定の保存値を `result` に保持し、`verified=false` は今回の独立再計測を意味しない境界として維持。干渉は `measured-once-limited-setting`、G3証拠はfalse。対照は descriptive only、退化区間、保守的／楽観的MDE、格子解像度、追加コスト、失敗後の閾値変更、単一run・host・合成fixture・StrategyRunner範囲を本文に表示する。
-- `status.next_steps` は3手。本人のみは2手：dec-007（Ollama鍵・無料枠）の本人確認結果の共有（10/28の提出前本人確認・公式P60待ちを併記）→ 10/12（期限当日・自動延長なし）以降に実観測を続けるか中止するかの本人判断（未決）。3手目はB07の残り作業（r3 source commit確定・専用worktree・評価領域の作成・make-view/chain実行）で、BLOCKED・未着手、実行は本人の許可後。実走は許可しない。
+- 10/12時点の `status.next_steps` は3手。現在の3手は上記10/14節を参照。
 - `status.b07` はPR #63（merge `68102ef`）のB07オフライン監査。`b07_status=BLOCKED`、`closed=false`。候補tree hash `a03da518…3dff` と候補5ファイルはlock一致。監査時点ではchainツール13件がr2固定（release-r2 / ec80bb8 / /tmp/g3-chain）で、オフラインで決められない6欄（実行source、必須ファイル集合、eval領域、tool再登録＝本人レビュー、state dump＝Anvil、ZIP・観測器・CLI＝Docker・認証）は理由付きで保持した（監査時点の状態。10/12のPR #66でツール移植とlock再登録、eval領域パスの決定が進んだ。下記）。DRAFTは `draft_registered=false`、check.pyはsynthetic-onlyで `check_py_run_on_draft=false`。G3証拠ではない。G3のB07はダッシュボードのblocker ID `B07`（負荷校正）とは別で、G3集約行 `B01` と進捗 `progress-b07-offline-audit` に記録する。10/12にPR #64〜#66を反映：`state=tools-ported-lock-reregistered-blocked`。監査時の値は `chain_tools_r2_pinned_at_audit` / `r2_pins_at_audit` として保持。`status.b07.port` はchainツール13件中9件の移植、3入力（G3_CHAIN_SOURCE / G3_CHAIN_SOURCE_COMMIT=40桁小文字16進 / G3_CHAIN_BASE）の既定値なし・終了コード2、`/tmp` base拒否（r2の旧base `/tmp/g3-chain` も拒否）、lock 13キー変更（更新8・新規5）、候補hash不変、本人のlock差分レビュー（10/12チャット「OK」、依頼者引継ぎ）、評価領域パス `~/Developer/ascon-g3-eval/`（決定9・未作成・未実行）、prestart-check.pyのFAIL（seedAudit・completeness、#66前のmainでも同じ）、新事実2件（`/tmp/g3-chain/source-manifest.json` 不在、release-r2 HEAD 5b713a4）を持つ。本人決定5〜9は `dec-oct11-b07-*` 4件と `dec-oct12-b07-eval-path`。
 - `status.req25` は10/11の要件2〜5の状態。範囲=すべて、期限 `2026-10-12`、`auto_extend=false`。PR #58〜#61のchecker 4本はsynthetic-onlyで、判定語は `CONTRACT_OK_ON_SYNTHETIC / BLOCKED / FAIL` のみ、`g3_status=BLOCKED`、`g3_evidence=false`、`g3_evidence_count=0`。`live_observation=not-done`、`live_completable_by_deadline=false`（G3-REQ25-PLAN）。node test 387件は今回 `node --test` で4ファイルを実行した値。残時間は数値を書かない。
 - `status.infrastructure` はファイル確認と依頼者引継ぎを分離。mini切断・復帰・timing作業dir削除の実施記録、切断時間・退避容量・追加清掃後容量は `not found in files`。清掃文書には以前のData空き43→84 GiBのみ。repo外・Airローカルの証拠ディレクトリとSHA-256一覧は存在確認、19ファイル一致は結果文書の記録であり再照合ではない。未確認の数値を補わない。
@@ -77,7 +95,7 @@ JSTは `TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z'`、またはPython `ZoneInfo('
 
 IDは全ブロックで一意。progressは `done/running/pending/failed/blocked`、担当は `human/Claude/Codex`。署名の原記録にあるAstraは改名しません。出所は既存ファイルに限り、絶対path・`..`・外部URL・symlink・`upstream-eval`・生の測定出力・秘密への参照を入れません。
 
-ログは追記のみ。訂正は新しい `誤り` エントリにし、時刻を降順に保ちます。既存95件を全件・全フィールド保持し、rev 14では本人承認・移管実績・分割PR・zeta-prepと独立意見・夜間運用訂正の5件を新しい順に追加しました。rev 10/11の結果待ちは当時の履歴として残します。旧60件/65件/rev 7の68件/rev 8の73件/rev 9の78件/rev 10の84件/rev 11の87件/rev 12の91件/rev 13の95件のdigestをすべて検査します。既存20判断レコード（rev 10の未決提案を含む）も全フィールド不変です。本人承認3件を追加し23件。旧未決レコードは当時の履歴であり、現在の方針を再承認待ちへ戻しません。本文は該当節へ統合し、末尾の追補で現況を上書きしません。原時刻が不明なら記録時刻と `time_basis` を明示し、出来事の時刻を作りません。dev3aの17:39 JSTは本人提示の分精度で、ISO形式の秒00は保存表現です。
+ログは追記のみ。訂正は新しい `誤り` エントリにし、時刻を降順に保ちます。rev 14では既存95件を保持し、当時の5件を追加。10/14時点ではさらに元の128件を全件・全フィールド保持し、log-129〜log-133を追加しました。rev 10/11の結果待ちは当時の履歴として残します。旧60件/65件/rev 7の68件/rev 8の73件/rev 9の78件/rev 10の84件/rev 11の87件/rev 12の91件/rev 13の95件のdigestをすべて検査します。既存20判断レコード（rev 10の未決提案を含む）も全フィールド不変です。本人承認3件を追加し23件。旧未決レコードは当時の履歴であり、現在の方針を再承認待ちへ戻しません。本文は該当節へ統合し、末尾の追補で現況を上書きしません。原時刻が不明なら記録時刻と `time_basis` を明示し、出来事の時刻を作りません。dev3aの17:39 JSTは本人提示の分精度で、ISO形式の秒00は保存表現です。
 
 ## rev 14時点の証拠・計画境界（履歴、現況ではない）
 
