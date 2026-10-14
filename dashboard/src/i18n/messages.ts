@@ -73,15 +73,15 @@ const en = {
   // a ranking that will be misread.
   "home.practiceBadge": "practice",
   "home.practiceNote":
-    "Practice standings, not the official scoring. The competition is scored separately, from submitted bundles replayed over a scenario matrix — nothing here feeds into it.",
+    "Practice standings, not the official scoring. The competition is scored separately, by running the submitted agents over hidden scenarios — nothing here feeds into it.",
   "home.standingsFinal": "Standings · final",
   // The heading over the §4.7 notice, where there is no result to be final or provisional about.
   "home.standingsTitle": "Standings",
   "home.standingsThrough": "Standings · through interval {at}",
   "home.subtitlePractice":
-    "Score: each day of the period is one epoch. P is the agent's return over the day (end value ÷ start value − 1) rather than its USDC — the world never resets, so starting amounts drift apart, and a return asks what each agent did with what it had. T = 50 + 10 × (P − μ) / σ over the field, and the score is the plain average of T over the days. An agent that starts a day with less than a tenth of the field's median is not placed that day. With equal starts this is exactly the competition's ranking.",
+    "Score: each day of the period is one epoch. P is the agent's return over the day (end value ÷ start value − 1) rather than its USDC — the world never resets, so starting amounts drift apart, and a return asks what each agent did with what it had. T = 50 + 10 × (P − μ) / σ over all agents, and the score is the plain average of T over the days. An agent that starts a day with less than a tenth of the median across all agents is not placed that day. With equal starts this is exactly the competition's ranking.",
   "home.subtitle":
-    "Score: each epoch (one scenario run) gives every agent a deviation score T = 50 + 10 × (P − μ) / σ, where P is its USDC profit over the epoch and μ, σ are the field's. The score is the average of T over the epochs, later epochs weighted up to 1.5×. Regime columns are the agent's mean T in that regime. Click a row for the epoch-by-epoch breakdown.",
+    "Score: each epoch (one scenario run) gives every agent a deviation score T = 50 + 10 × (P − μ) / σ, where P is its USDC profit over the epoch and μ, σ are the mean and standard deviation of P over all agents. The score is the average of T over the epochs, later epochs weighted up to 1.5×. Regime columns are the agent's mean T in that regime. Click a row for the epoch-by-epoch breakdown.",
   "home.col.move": "move",
   "home.col.agent": "agent",
   "home.col.score":
@@ -147,11 +147,11 @@ const en = {
   "scenario.roundsBlocks": "{rounds} intervals × {blocks} blocks",
   "scenario.standings": "Scenario standings",
   "home.scenarios.aboutSeed":
-    "A seed is a label for market conditions. The fair-price path is reproducible per (regime, seed), but transaction timing and in-block ordering are not — the same scenario replayed twice gives different fills, which is why the competition measures over many scenarios.",
+    "A seed is a label for market conditions. The reference-price path is reproducible per (regime, seed), but transaction timing and in-block ordering are not — the same scenario replayed twice gives different fills, which is why the competition measures over many scenarios.",
   "home.scenarios.aboutRegimes":
     "Official regimes: calm, cex-drift, informed-flow, whale, lending-incident, crash, depeg, vuln, spike, depeg-persist, cdp-incident, and launch. A scenario is one (regime, seed) pair; a competition replays a whole set of them and ranks agents per regime.",
   "home.scenarios.aboutEpisodes":
-    "Stress events are randomized-but-deterministic overlays on the fair price (ramp, hold, decay), liquidity pulls that thin every AMM pool at once, and depegs where the environment leans on a stablecoin's pool until the window closes. Seeded victim positions make lending liquidations reachable for agents that watch health factors.",
+    "Stress events are randomized-but-deterministic overlays on the reference price (ramp, hold, decay), liquidity pulls that thin every AMM pool at once, and depegs where the environment leans on a stablecoin's pool until the window closes. Seeded positions that can be liquidated make lending liquidations reachable for agents that watch health factors.",
   "explorer.about.p1":
     "Everything on these pages is derived from the run's own recorded files: the standings and per-interval results, the reconstructed observations and event stream, every transaction, each agent's own decision log, and the per-venue market series.",
   "explorer.about.p2":
@@ -179,7 +179,7 @@ const en = {
   "rounds.col.logReturn": "Log return",
   "rounds.col.rank": "Rank",
   "rounds.bankrupt":
-    "asset value at or below zero (bankrupt — no floor, no freeze)",
+    "asset value at or below zero (bankrupt — no floor; negative values count as they are)",
   "rounds.deltaNote":
     "Δ value is the raw change in account value, market exposure included — a do-nothing agent still moves with the price. Log return is the same change as a log growth rate. Neither is the score, which is one number for the whole epoch. Rank is cumulative since the first interval; the arrow is its change over this interval.",
   "rounds.envDid": "What the environment did",
@@ -220,11 +220,11 @@ const en = {
   "agent.standing.rounds":
     "epochs scored",
   "agent.standing.explain":
-    "Every epoch this agent was scored in. T is where its profit sat in that epoch's field (50 = the field's mean, ±10 = one standard deviation); the score is the weighted average of T, so a strategy that wins big in one regime and loses in the rest can place below a steady one — the std of T is also the first tie-break.",
+    "Every epoch this agent was scored in. T is where its profit sat among all agents in that epoch (50 = their mean, ±10 = one standard deviation); the score is the weighted average of T, so a strategy that wins big in one regime and loses in the rest can place below a steady one — the std of T is also the first tie-break.",
   "agent.standing.explainPractice":
-    "Every day of the period this agent was scored in. P is its return over the day (end value ÷ start value − 1); T is where that return sat in the day's field (50 = the field's mean, ±10 = one standard deviation), and the score is the plain average of T over the days — every day counts the same.",
+    "Every day of the period this agent was scored in. P is its return over the day (end value ÷ start value − 1); T is where that return sat among all agents that day (50 = their mean, ±10 = one standard deviation), and the score is the plain average of T over the days — every day counts the same.",
   "agent.standing.belowFloor":
-    "Not placed on {n} day(s): it started them with less than a tenth of the field's median value. A return on that little is decided by fees and rounding, so those days are left out rather than scored.",
+    "Not placed on {n} day(s): it started them with less than a tenth of the median value across all agents. A return on that little is decided by fees and rounding, so those days are left out rather than scored.",
   "agent.standing.noSeries":
     "No interval detail for this agent — the scenario runs behind this competition were not collected, so the standing can be shown but not explained.",
   "agent.standing.mean":
@@ -274,7 +274,7 @@ const en = {
   "agent.noRounds":
     "no interval results yet — the per-interval series is built when the run finishes",
   "agent.roundsNote":
-    "An interval is the rules' evaluation interval — the leaderboard's running progress inside an epoch. Log return is the raw change of this agent's account value over the interval. The score is one number for the whole epoch (P = V_K − V_0, standardised over the field), not a function of these intervals.",
+    "An interval is the rules' evaluation interval — the leaderboard's running progress inside an epoch. Log return is the raw change of this agent's account value over the interval. The score is one number for the whole epoch (P = V_K − V_0, standardised over all agents), not a function of these intervals.",
   "agent.portfolio": "Portfolio value",
   "agent.portfolioRange": "Portfolio value · {from} → {to}",
   "agent.yLabel": "account value (USDC)",
@@ -301,7 +301,7 @@ const en = {
     "Pick an interval in the bar above and every panel below narrows to that interval's blocks.",
   "market.backToRun": "show the whole run →",
   "market.view.arb": "Cross-venue arb",
-  "market.view.price": "Fair price",
+  "market.view.price": "Reference price",
   "market.arbLegend":
     "▲ = a buy, ▼ = a sell, coloured by venue. The dashed line is the reference price. The lower pane plots the widest gap between venues against the {n}bps round-trip cost: above that line there was arbitrage to take.",
   "market.noVenue":
@@ -312,7 +312,7 @@ const en = {
   // thing a self-hosted participant files nowhere but their own disk. Their *included* transactions
   // are on the chain and appear in the explorer; what is not visible is what they sent and lost.
   "market.submissionsSelfHosted":
-    "{count} self-hosted participant(s) are not in this list — it is built from what agents report sending, and theirs is reported on their own machines. Their included transactions are in the explorer.",
+    "{count} self-hosted agent(s) are not in this list — it is built from what agents report sending, and a self-hosted agent reports on its own machine. Their included transactions are in the explorer.",
   "market.noSubmissions": "no agent submitted a transaction in this run",
   "market.sell": "sell",
   "market.buy": "buy",
@@ -363,7 +363,7 @@ const en = {
   // ---- environment events, as the scenario board's "what the environment did here" strip reads them ----
   "tape.kind.run": "RUN",
   "tape.kind.scenario": "SCENARIO",
-  "tape.kind.victimHf": "VICTIM HF",
+  "tape.kind.victimHf": "HEALTH FACTOR",
   "tape.kind.liquidation": "LIQUIDATION",
   "tape.kind.liquidity": "LIQUIDITY",
   "tape.kind.depeg": "DEPEG",
@@ -375,7 +375,7 @@ const en = {
   "tape.blocksN": "{n} blocks",
   "tape.schedule": "stress schedule: {types}",
   "tape.eventsN": "{n} events",
-  "tape.victimHf": "victim health factors at blk {block}",
+  "tape.victimHf": "health factors of liquidatable positions at blk {block}",
   "tape.liquidation": "liquidation at blk {block}",
   "tape.liquidityPull": "{venue} {market} depth {direction}",
   "tape.liquidityRestored": "{venue} depth restored",
@@ -385,7 +385,7 @@ const en = {
   "tape.trove": "trove liquidated ({borrower})",
   "tape.redemption": "eUSD redeemed for ETH (blk {block})",
   "tape.arbWindow": "{base} {buy}→{sell} gap open",
-  "tape.runCompleted": "run finished, scores reconstructed",
+  "tape.runCompleted": "run finished, value series reconstructed",
 
   // ---- venue panels (markets tabs) ----
   "vp.amm.label": "AMM",
@@ -461,17 +461,17 @@ const en = {
   "vp.col.borrowedCol": "Borrowed",
   "vp.col.utilizationCol": "Utilization",
   "vp.lending.reservesEmpty": "no reserve totals recorded in this run",
-  "vp.lending.worstHf": "Worst victim health factor",
+  "vp.lending.worstHf": "Worst health factor of liquidatable positions",
   "vp.lending.liquidatable": "liquidatable",
   "vp.lending.aboveLine": "above the liquidation line",
-  "vp.lending.victimChart": "Seeded victim health factor (worst)",
+  "vp.lending.victimChart": "Health factor of liquidatable positions (worst)",
   "vp.lending.minHf": "Min HF",
   "vp.lending.liquidationLine": "liquidation",
   "vp.lending.liquidations": "Liquidations",
-  "vp.col.victim": "Victim",
+  "vp.col.victim": "Position",
   "vp.col.healthFactor": "Health factor",
   "vp.col.remainingDebt": "Remaining debt",
-  "vp.lending.liquidationsEmpty": "no victim was liquidated in this run",
+  "vp.lending.liquidationsEmpty": "no liquidatable position was liquidated in this run",
   "vp.lending.accountsTitle": "Agent accounts at the run's final block",
   "vp.col.debt": "Debt",
   "vp.lending.accountsEmpty":
@@ -561,13 +561,13 @@ const en = {
 
   "vp.scenario.label": "Scenario",
   "vp.scenario.caption":
-    "What the environment did to this run. Its schedule is drawn from the seed before the first block: each episode is a trapezoid — it ramps up, holds, then decays — laid over the fair-price walk. The draw is random but reproducible, so the same seed always replays the same windows. This tab covers the whole run rather than the interval you picked, because a scenario is a property of the run.",
+    "What the environment did to this run. Its schedule is drawn from the seed before the first block: each episode is a trapezoid — it ramps up, holds, then decays — laid over the reference-price walk. The draw is random but reproducible, so the same seed always replays the same windows. This tab covers the whole run rather than the interval you picked, because a scenario is a property of the run.",
   "vp.scenario.seed": "Seed",
   "vp.scenario.seedSub":
     "flow seed {flow} · the label for this run's market conditions",
   "vp.scenario.scheduled": "Scheduled events",
   "vp.scenario.scheduledNone":
-    "none — the fair-price walk was the only thing moving",
+    "none — the reference-price walk was the only thing moving",
   "vp.scenario.window": "Run window",
   "vp.scenario.windowSub": "{blocks} blocks · {rounds} intervals",
   "vp.scenario.scheduleTitle":
@@ -578,13 +578,13 @@ const en = {
   "vp.col.mag": "Mag",
   "vp.col.outcome": "Outcome",
   "vp.scenario.scheduleEmpty":
-    "no stress event was scheduled — this run is the fair-price walk and the order flow, nothing else",
+    "no stress event was scheduled — this run is the reference-price walk and the order flow, nothing else",
   "vp.scenario.neverFired": "never fired",
   "vp.scenario.failed": "failed",
   "vp.scenario.restored": "restored",
   "vp.scenario.leftInPlace": "left in place",
   "vp.scenario.firedBlocks": "{n} blk {from}–{to}",
-  "vp.scenario.crash": "overlay on the fair price — see the price chart",
+  "vp.scenario.crash": "overlay on the reference price — see the price chart",
   "vp.scenario.flipped": "{type} (drawn as {from})",
   "vp.scenario.recovered": "{pct}% recovered",
   "vp.scenario.cexDrift": "changes the price walk — see the price chart",
@@ -598,7 +598,7 @@ const en = {
   "vp.scenario.notableEmpty":
     "nothing was liquidated, redeemed or slashed, and no arb window stayed open long enough to be reported",
   "vp.scenario.liquidation": "liquidation",
-  "vp.scenario.liquidationText": "victim {victim} liquidated at HF {hf}",
+  "vp.scenario.liquidationText": "position {victim} liquidated at HF {hf}",
   "vp.scenario.troveLiquidated": "trove liquidated",
   "vp.scenario.troveText": "{borrower} · {debt} eUSD",
   "vp.scenario.redemption": "redemption",
@@ -628,7 +628,7 @@ const en = {
   "pos.spMark": "absorbs liquidated debt",
   "pos.spNote": "paid in discounted collateral when a Trove is liquidated",
   "pos.surplus": "Liquity collateral surplus",
-  "pos.surplusMark": "valued at the WETH fair",
+  "pos.surplusMark": "valued at the WETH reference price",
   "pos.surplusNote": "left by a closed Trove (full redemption or Recovery-Mode liquidation); claimable with claimCollateral()",
   "pos.eusdSpot": "eUSD (spot)",
   "pos.eusdNote": "redeemable against the riskiest Trove at par",
@@ -686,8 +686,8 @@ const en = {
   "home.status.live": "an epoch is running now",
   "home.chart.title": "Score by epoch",
   "home.chart.subtitle":
-    "Cumulative score after each completed epoch — the same number as the table, replayed epoch by epoch. The top {n} are drawn in colour, the rest in grey; 50 is the field's average. Click a name to follow it.",
-  "home.chart.mean": "field average",
+    "Cumulative score after each completed epoch — the same number as the table, replayed epoch by epoch. The top {n} are drawn in colour, the rest in grey; 50 is the average across all agents. Click a name to follow it.",
+  "home.chart.mean": "average of all agents",
   "home.chart.empty": "The chart appears once two epochs have been scored.",
   "home.chart.legend": "top {n}",
   "home.col.delta": "Δ",
@@ -710,7 +710,7 @@ const en = {
   "world.col.contracts": "contracts · state",
   "world.block": "block {n}",
   "world.blockRange": "blocks {from}\u2013{to}",
-  "world.fair": "fair {price}",
+  "world.fair": "reference {price}",
   "world.emptyBlock": "no transaction in this block",
   "world.moreTxs": "+{n} more in the same block",
   "world.reverted": "{n} reverted",
@@ -733,7 +733,7 @@ const en = {
   "world.chip.balance": "balance {usd} USDC",
   "world.chip.pnl": "gain {pnl}",
   "world.chip.unscored": "no scored mark yet",
-  "world.thinking": "Agent Log",
+  "world.thinking": "Decision log",
   "world.openAgent": "{id}'s page →",
   "world.pickAgent": "Pick a wallet on the board to follow its own account of the run — the action it chose each block, and the reason it gave.",
   "world.logsWithheld":
@@ -742,11 +742,11 @@ const en = {
     "{id} runs on its owner's machine, so its reasoning is written there and never reaches this dashboard.",
   "world.logNotYet": "{id} has not written anything by this block yet.",
   "world.logSilent": "{id} logged no decisions in this window.",
-  "world.chart.price": "Venue price against fair",
-  "world.chart.fairLegend": "fair",
+  "world.chart.price": "Venue price against the reference price",
+  "world.chart.fairLegend": "reference price",
   "world.chart.balance": "Account value at each scored boundary",
   "world.chart.selectedLegend": "selected",
-  "world.chart.fieldLegend": "the field",
+  "world.chart.fieldLegend": "other agents",
   "world.chart.noBalance": "not scored yet",
   "world.thisBlock": "This block",
   "world.stat.txs": "transactions in the block",
@@ -931,7 +931,7 @@ const en = {
   "overview.scoring.tipP":
     "P is the change in the agent's total asset value over the epoch, in USDC: its value at the last block minus its value at the first.",
   "overview.scoring.tipT":
-    "T places P in that epoch's field: μ and σ are the mean and population standard deviation of P over every agent in the epoch, the benchmark excluded. 50 is the field's average; 10 points is one standard deviation.",
+    "T places P among all agents in that epoch: μ and σ are the mean and population standard deviation of P over every agent in the epoch, the benchmark excluded. 50 is the average across all agents; 10 points is one standard deviation.",
   "overview.scoring.tipW":
     "The score averages T with weights rising evenly from {first} for the first epoch to {last} for the last, so the ranking can still move late in the week.",
   "overview.scoring.tipTies":
@@ -941,7 +941,7 @@ const en = {
   "overview.scoring.tipSameBlocks":
     "Every agent is valued at the same blocks, never at a moment of its own choosing. Holdings the scorer cannot price are reported, never silently counted as zero.",
   "overview.scoring.tipPractice":
-    "The practice standings shown during the submission period apply the same formula to daily returns. They are not the official scoring: nothing recorded in the practice environment counts toward the ranking (rules §2.7).",
+    "The practice standings shown during the submission period apply the same formula to daily returns. They are not the official scoring: nothing recorded in the trial environment counts toward the ranking (rules §2.7).",
   "overview.prize.title":
     "Prizes",
   "overview.prize.gist":
@@ -995,7 +995,7 @@ const en = {
   "overview.top.standings":
     "Standings · top {n}",
   "overview.top.tipPractice":
-    "Standings from the practice environment: each day is scored on the agents' daily return. They are not the official scoring and do not count toward the ranking (rules §2.7).",
+    "Standings from the trial environment: each day is scored on the agents' daily return. They are not the official scoring and do not count toward the ranking (rules §2.7).",
   "overview.top.tipOfficial":
     "The competition's standings: each agent's per-epoch deviation scores, averaged with the epoch weights over the epochs scored so far. They become final at the results announcement, after the review period.",
   "overview.top.tipScore":
@@ -1053,9 +1053,9 @@ const en = {
   "overview.links.discord":
     "Discord #ascon",
   "overview.links.discordBody":
-    "Questions go here. To register an agent in the practice environment, post its address here.",
+    "Questions go here. To register an agent in the trial environment, post its address here.",
   "overview.links.connect":
-    "Practice environment",
+    "Trial environment",
   "overview.links.connectBody":
     "To connect an agent you run yourself: the chain's RPC, its block explorer, and the manifest listing every contract address.",
   "overview.links.manifest":
@@ -1183,9 +1183,9 @@ const en = {
   "overview.steps.test.body":
     "Backtest it on the public scenarios and read its decisions and results.",
   "overview.steps.practice.name":
-    "Run it in the practice environment",
+    "Run it in the trial environment",
   "overview.steps.practice.body":
-    "Run it on your machine against the practice chain. Post its address in Discord #ascon to appear in the practice standings.",
+    "Run it on your machine against the trial environment's chain. Post its address in Discord #ascon to appear in the practice standings.",
   "overview.steps.zip.name":
     "Make the ZIP",
   "overview.steps.zip.body":
@@ -1250,14 +1250,14 @@ const ja: Record<MessageKey, string> = {
     "{total} 本中 {missing} 本のシナリオ run が未回収です。順位には含まれますが、評価区間の詳細は表示できません。",
   "home.practiceBadge": "練習",
   "home.practiceNote":
-    "これは練習順位で、公式採点ではありません。公式競技は提出バンドルをシナリオ行列で再生して別途採点され、ここの結果は一切反映されません。",
+    "これは練習順位で、公式採点ではありません。公式競技は提出されたエージェントを非公開のシナリオで実行して別途採点され、ここの結果は一切反映されません。",
   "home.standingsFinal": "順位表 · 最終",
   "home.standingsTitle": "順位表",
   "home.standingsThrough": "順位表 · 評価区間 {at} 時点",
   "home.subtitlePractice":
-    "平均得点: 期間の 1 日を 1 エポックとします。P はその日の USDC 損益ではなくリターン（終値 ÷ 始値 − 1）です。この world はリセットされないので元手が人によってずれていき、リターンにすることで「手持ちで何をしたか」を比べます。その日の得点は偏差値 T = 50 + 10 × (P − μ) / σ（全員横断）で、平均得点は得点の日ごとの単純平均です。その日の始値が場の中央値の 1/10 未満のエージェントは、その日は採点しません。全員の元手が同じなら、本番の順位と完全に一致します。",
+    "平均得点: 期間の 1 日を 1 エポックとします。P はその日の USDC 損益ではなくリターン（終了時の資産価値 ÷ 開始時の資産価値 − 1）です。試行環境はリセットされないので初期資本がエージェントごとにずれていき、リターンにすることで「手持ちで何をしたか」を比べます。その日の得点は偏差値 T = 50 + 10 × (P − μ) / σ（μ・σ は全エージェントの P の平均と標準偏差）で、平均得点は得点の日ごとの単純平均です。その日の開始時の資産価値が全エージェントの中央値の 1/10 未満のエージェントは、その日は採点しません。全員の初期資本が同じなら、本番の順位と完全に一致します。",
   "home.subtitle":
-    "平均得点: 各エポック（1 シナリオの run）で、エポック中の USDC 損益 P から得点（偏差値）T = 50 + 10 × (P − μ) / σ を全員横断で出し（μ・σ は場全体）、得点をエポック通しで平均した値です（後のエポックほど重みが大きく、最大 1.5 倍）。レジーム列はそのレジームでの得点の平均。行をクリックするとエポックごとの内訳が見られます。",
+    "平均得点: 各エポック（1 シナリオの run）で、エポック中の USDC 損益 P から得点（偏差値）T = 50 + 10 × (P − μ) / σ を出し（μ・σ は全エージェントの P の平均と標準偏差）、得点をエポック通しで平均した値です（後のエポックほど重みが大きく、最大 1.5 倍）。レジーム列はそのレジームでの得点の平均。行をクリックするとエポックごとの内訳が見られます。",
   "home.col.move": "変動",
   "home.col.agent": "エージェント",
   "home.col.score":
@@ -1265,23 +1265,23 @@ const ja: Record<MessageKey, string> = {
   "home.col.netPnl": "純損益",
   "home.scoreTitle":
     "採点エポック {n} · タイブレーク: 得点の標準偏差 {std}、最悪エポックの得点 {worst}",
-  "home.noteOpens": "{types} の窓が {n} シナリオで開始",
-  "home.noteOpensOne": "{types} の窓が 1 シナリオで開始",
-  "home.noteOpen": "{n} 個の窓が継続中",
-  "home.noteOpenOne": "1 個の窓が継続中",
+  "home.noteOpens": "{n} シナリオで {types} が始まりました",
+  "home.noteOpensOne": "1 シナリオで {types} が始まりました",
+  "home.noteOpen": "{n} 件のイベントが進行中",
+  "home.noteOpenOne": "1 件のイベントが進行中",
   "home.noteNoMove": "順位変動なし",
   "home.noteMoved": "{n} 体の順位が変動",
   "home.noteMovedOne": "1 体の順位が変動",
 
   "home.scenarios.title": "シナリオ",
   "home.scenarios.subtitle":
-    "1 行 1 世界。レジームとシードの組、その世界の首位、環境がそこで起こす予定のイベントを並べています。行をクリックすると開きます。1 つのシナリオは分布からの 1 ドローであって結果ではありません — 結果は上の順位表です。",
+    "1 行が 1 つの世界です。レジームとシードの組、その世界の首位、環境がそこで起こす予定のイベントを並べています。行をクリックすると開きます。1 つのシナリオは多数あり得る展開のうちの 1 つにすぎず、それ自体は結果ではありません。結果は上の順位表です。",
   "home.scenarios.col.scenario": "シナリオ",
   "home.scenarios.col.rounds": "評価区間",
   "home.scenarios.col.leader": "首位",
   "home.scenarios.col.events": "環境イベント",
   "home.scenarios.eventsTitle":
-    "シードから引かれた時限イベントです。「予定なし」は世界が静かだったという意味ではありません。cex-drift のようなレジームは、窓を開けずに run 全体を形づくることがあります。",
+    "シードから引かれた時限イベントです。「予定なし」は世界が静かだったという意味ではありません。cex-drift のように、期間を区切らず run 全体の値動きを変えるレジームもあります。",
   "home.scenarios.roundsAt": "{at} / {n}",
   "home.scenarios.ended": "終了",
   "home.scenarios.endedTitle":
@@ -1290,7 +1290,7 @@ const ja: Record<MessageKey, string> = {
   "home.scenarios.noLeader": "結果はまだありません",
   "home.scenarios.missing": "このシナリオの評価区間の詳細は回収されていません",
   "home.scenarios.leaderTitle":
-    "選択中の評価区間までの首位。P = V_k − V_0（USDC）で判定 — このエポックの得点（偏差値）のもとになる量",
+    "選択中の評価区間までの首位。P = V_k − V_0（USDC）で判定。このエポックの得点（偏差値）のもとになる量",
 
   "units.title": "単位の関係",
   "units.competition": "競技",
@@ -1310,22 +1310,22 @@ const ja: Record<MessageKey, string> = {
   "scenario.roundsBlocks": "{rounds} 評価区間 × {blocks} ブロック",
   "scenario.standings": "シナリオ内順位",
   "home.scenarios.aboutSeed":
-    "シードは市場条件のラベルです。フェア価格の経路は (レジーム, シード) ごとに再現可能ですが、tx のタイミングと着順は再現されません — 同じシナリオを 2 回再生しても約定は変わります。だから競技は多数のシナリオで測ります。",
+    "シードは市場条件のラベルです。参照価格の経路は (レジーム, シード) ごとに再現可能ですが、tx のタイミングと着順は再現されません。同じシナリオを 2 回再生しても約定は変わります。だから競技は多数のシナリオで測ります。",
   "home.scenarios.aboutRegimes":
-    "公式レジーム: calm・cex-drift・informed-flow・whale・lending-incident・crash・depeg・vuln・spike・depeg-persist・cdp-incident・launch。シナリオは 1 つの (レジーム, シード) の組で、競技はそのセット全体を再生してレジームごとに順位を付けます。",
+    "公式レジーム: 平常（calm）・CEX ドリフト（cex-drift）・方向性フロー（informed-flow）・大口注文（whale）・貸借インシデント（lending-incident）・クラッシュ（crash）・ステーブルコインのデペッグ（depeg）・新規プールの出現（vuln）・スパイク（spike）・デペッグの持続（depeg-persist）・CDP インシデント（cdp-incident）・新規トークンの上場（launch）。シナリオは 1 つの (レジーム, シード) の組で、競技はそのセット全体を再生してレジームごとに順位を付けます。",
   "home.scenarios.aboutEpisodes":
-    "ストレスイベントは、フェア価格に重ねるランダム化された決定論オーバーレイ（ramp・hold・decay）、全 AMM プールを同時に薄くする流動性引き抜き、環境がステーブルのプールを窓の間だけ売り続けるデペグです。シード由来の victim ポジションがあるため、健全性係数を見ているエージェントには清算機会が届きます。",
+    "ストレスイベントには、参照価格に一時的な値動き（立ち上がり・維持・減衰の 3 段）を重ねるもの、全 AMM プールを同時に薄くする流動性の引き抜き、環境がイベントの期間だけステーブルコインをプールへ売り続けるデペッグがあります。値動きの大きさと時期はシードから決まり、同じシードなら同じになります。シードから作られた清算されうる建玉があるので、ヘルスファクターを見ているエージェントには清算の機会があります。",
   "explorer.about.p1":
-    "このページ群の全てが run 自身の記録ファイルから導かれます: 順位と評価区間ごとの結果、再構成された観測とイベント列、全トランザクション、各エージェント自身の判断ログ、そして venue 別の市場系列です。",
+    "このダッシュボードの表示はすべて run 自身の記録ファイルから作られています。対象は順位と評価区間ごとの結果、再構成された観測とイベント列、全トランザクション、各エージェント自身の判断ログ、そして venue 別の市場系列です。",
   "explorer.about.p2":
-    "真実の出典はチェーンです: 数値系列はすべて run 終了後にオンチェーン読み取りから再構成されます。ログが与えるのは理由・意図・帰属だけです。",
+    "数値の根拠はチェーンです。数値の系列はすべて run 終了後にオンチェーン読み取りから再構成されます。ログが与えるのは理由・意図・帰属だけです。",
   "explorer.about.p3":
-    "run の進行中はログファイルを tail し、チェーンを RPC で読みます — 価格・ブロック・イベントテープ・判断ログはその場で更新されます。得点と venue 別系列は run 終了と同時に現れます。",
+    "run の進行中はログファイルを tail し、チェーンを RPC で読みます。価格・ブロック・イベントテープ・判断ログはその場で更新されます。得点と venue 別系列は run 終了と同時に現れます。",
   "explorer.about.p4":
     "ローカルの Blockscout エクスプローラ（npm run explorer）が深掘り用ツールです。起動していれば、ページ上の全トランザクション・アドレス・ブロックがリンクになります。",
 
   "rounds.segmentTitle": "評価区間 {i} · ブロック {from}–{to} · {tx}",
-  "rounds.txOutside": "tx 数は数えていません — この表示はこれらのブロックを含みません",
+  "rounds.txOutside": "tx 数は数えていません。この表示にはこれらのブロックが含まれません",
   "rounds.txNotStarted": "未開始",
   "rounds.txN": "{n} tx",
   "rounds.heading": "評価区間 {i}",
@@ -1333,15 +1333,15 @@ const ja: Record<MessageKey, string> = {
   "rounds.openExplorer": "エクスプローラで開く →",
   "rounds.close": "閉じる ✕",
   "rounds.notScored":
-    "この評価区間の結果はありません — この run は評価区間の系列を記録していません",
+    "この評価区間の結果はありません。この run は評価区間の系列を記録していません",
   "rounds.scoredLater":
-    "採点は run 終了後 — 結果はチェーン履歴から再構成されます",
+    "採点は run 終了後です。結果はチェーン履歴から再構成されます",
   "rounds.col.agent": "エージェント",
   "rounds.col.delta": "Δ資産",
   "rounds.col.logReturn": "対数リターン",
   "rounds.col.rank": "順位",
   "rounds.bankrupt":
-    "資産価値がゼロ以下（破産。床処理も凍結も無し）",
+    "資産価値がゼロ以下（破産。床処理なし、負の値のまま算入）",
   "rounds.deltaNote":
     "Δ資産は市場エクスポージャー込みの生の資産変化で、何もしないエージェントでも価格と一緒に動きます。対数リターンは同じ変化を対数成長率で表したものです。どちらも得点ではありません（得点はエポック全体で 1 つの数字です）。順位は最初の評価区間からの累積、矢印はこの評価区間での変動です。",
   "rounds.envDid": "環境が行ったこと",
@@ -1356,14 +1356,14 @@ const ja: Record<MessageKey, string> = {
   "rounds.progress": "{done}/{total} 評価区間",
   "rounds.progressBlocks": "{done}/{total} 評価区間 × {blocks} ブロック",
   "rounds.noRounds":
-    "この run には評価区間がありません — 評価区間 1 つ分に満たない長さです",
+    "この run には評価区間がありません。評価区間 1 つ分に満たない長さです",
   "rounds.left": "残り {t}",
   "rounds.replayPct": "リプレイ {pct}%",
 
   "agent.tab.standing": "総合成績",
   "agent.tab.overview": "概要",
   "agent.tab.rounds": "評価区間",
-  "agent.tab.positions": "建玉",
+  "agent.tab.positions": "ポジション",
   "agent.tab.trades": "取引履歴",
   "agent.tab.log": "判断ログ",
   "agent.back": "← 戻る",
@@ -1381,13 +1381,13 @@ const ja: Record<MessageKey, string> = {
   "agent.standing.rounds":
     "採点エポック数",
   "agent.standing.explain":
-    "このエージェントが採点された全エポックです。得点はそのエポックの場の中での損益の位置を表す偏差値です（50 = 場の平均、±10 = 標準偏差 1 つ分）。平均得点は得点の加重平均なので、1 つのレジームで大勝ちして他で負ける戦略は、安定した戦略より下に来ることがあります。得点の標準偏差は最初のタイブレークでもあります。",
+    "このエージェントが採点された全エポックです。得点はそのエポックの全エージェントの中での損益の位置を表す偏差値です（50 = 全エージェントの平均、±10 = 標準偏差 1 つ分）。平均得点は得点の加重平均なので、1 つのレジームで大勝ちして他で負ける戦略は、安定した戦略より下に来ることがあります。得点の標準偏差は最初のタイブレークでもあります。",
   "agent.standing.explainPractice":
-    "このエージェントが採点された期間中の全日です。P はその日のリターン（終値 ÷ 始値 − 1）、得点はそのリターンがその日の場の中でどこにあったかを表す偏差値です（50 = 場の平均、±10 = 標準偏差 1 つ分）。平均得点は得点の日ごとの単純平均で、どの日も同じ重みです。",
+    "このエージェントが採点された期間中の全日です。P はその日のリターン（終了時の資産価値 ÷ 開始時の資産価値 − 1）、得点はそのリターンがその日の全エージェントの中でどこにあったかを表す偏差値です（50 = 全エージェントの平均、±10 = 標準偏差 1 つ分）。平均得点は得点の日ごとの単純平均で、どの日も同じ重みです。",
   "agent.standing.belowFloor":
-    "{n} 日は採点していません: その日の始値が場の中央値の 1/10 未満でした。その程度の元手ではリターンが手数料と端数で決まるので、採点せずに外しています。",
+    "{n} 日は採点していません: その日の開始時の資産価値が全エージェントの中央値の 1/10 未満でした。その程度の資産ではリターンが手数料と端数で決まるので、採点せずに外しています。",
   "agent.standing.noSeries":
-    "このエージェントの評価区間の詳細がありません — 競技のシナリオ run が未回収のため、順位は示せても説明はできません。",
+    "このエージェントの評価区間の詳細がありません。競技のシナリオ run が未回収のため、順位は示せても説明はできません。",
   "agent.standing.mean":
     "得点の平均",
   "agent.standing.std":
@@ -1416,29 +1416,29 @@ const ja: Record<MessageKey, string> = {
     "0 · {n} エポックが表示範囲外（両端のビンに積算）",
   "agent.histogram.clippedOne":
     "0 · 1 エポックが表示範囲外（端のビンに積算）",
-  "agent.openPositions": "建玉",
+  "agent.openPositions": "ポジション",
   "agent.positions.empty":
-    "最終ブロック時点で建玉なし — フラットで終えたか、venue 別記録が始まる前の run です",
+    "最終ブロック時点でポジションなし。すべて閉じて終えたか、venue 別の記録が始まる前の run です",
   "agent.positions.col.venue": "Venue",
   "agent.positions.col.kind": "種別",
   "agent.positions.col.size": "サイズ",
   "agent.positions.col.mark": "マーク",
   "agent.positions.col.detail": "詳細",
   "agent.noValueSeries":
-    "資産系列はまだありません — 曲線は採点スナップショットから作られ、run 終了時に届きます",
-  "agent.decisionLive": "判断ログ — ライブ ↓",
+    "資産系列はまだありません。曲線は採点スナップショットから作られ、run 終了時に届きます",
+  "agent.decisionLive": "判断ログ · ライブ ↓",
   "agent.selfHosted": "自己ホスト参加者",
   "agent.selfHostedLog":
-    "この参加者はエージェントを自分のマシンで動かしているため、判断ログはそちらにあり、ここには届きません。このページに出ているのはすべてチェーン由来です（取引・建玉・得点）。",
+    "この参加者はエージェントを自分のマシンで動かしているため、判断ログはそちらにあり、ここには届きません。このページに出ているのはすべてチェーン由来です（取引・ポジション・得点）。",
   "agent.noRounds":
-    "評価区間の結果はまだありません — 評価区間の系列は run 終了時に作られます",
+    "評価区間の結果はまだありません。評価区間の系列は run 終了時に作られます",
   "agent.roundsNote":
-    "評価区間は規約の評価区間（§0.1）で、エポック内でのリーダーボードの途中経過です。対数リターンはその評価区間でのこのエージェントの総資産価値の変化そのものです。得点はエポック全体で 1 つの数字（P = V_K − V_0 を場全体で標準化）で、評価区間の関数ではありません。",
+    "評価区間は規約の評価区間（§0.1）で、エポック内でのリーダーボードの途中経過です。対数リターンはその評価区間でのこのエージェントの資産価値の変化そのものです。得点はエポック全体で 1 つの数字（P = V_K − V_0 を全エージェントの中で標準化）で、評価区間の関数ではありません。",
   "agent.portfolio": "資産推移",
   "agent.portfolioRange": "資産推移 · {from} → {to}",
-  "agent.yLabel": "資産評価額 (USDC)",
+  "agent.yLabel": "資産価値 (USDC)",
   "agent.xLabel": "ブロック",
-  "agent.lineLabel": "総資産価値",
+  "agent.lineLabel": "資産価値",
   "agent.trades.col.hash": "Tx ハッシュ",
   "agent.trades.col.block": "ブロック",
   "agent.trades.col.method": "メソッド",
@@ -1459,7 +1459,7 @@ const ja: Record<MessageKey, string> = {
     "上の帯で評価区間を選ぶと、下のパネルがすべてその評価区間のブロックに絞られます。",
   "market.backToRun": "run 全体に戻す →",
   "market.view.arb": "venue 間裁定",
-  "market.view.price": "フェア価格",
+  "market.view.price": "参照価格",
   "market.arbLegend":
     "▲ は買い、▼ は売りで、色は venue を表します。破線は参照価格です。下段は venue 間の最大価格差を往復コスト {n}bps と並べたもので、この線より上にある間は裁定の余地があったということです。",
   "market.noVenue":
@@ -1467,7 +1467,7 @@ const ja: Record<MessageKey, string> = {
   "market.standings": "順位",
   "market.submissions": "エージェントの送信 tx ↓",
   "market.submissionsSelfHosted":
-    "自己ホストの参加者 {count} 名はこの一覧に出ません — これは各エージェントの自己申告から作られており、彼らの申告はそれぞれのマシンにあります。ブロックに入った tx は explorer で見られます。",
+    "自己ホストのエージェント {count} 体はこの一覧に出ません。一覧は各エージェントの自己申告から作っており、自己ホストのエージェントの申告はそれぞれのマシンにあります。ブロックに入った tx は explorer で見られます。",
   "market.noSubmissions":
     "この run でトランザクションを送ったエージェントはいません",
   "market.sell": "売",
@@ -1478,21 +1478,21 @@ const ja: Record<MessageKey, string> = {
   "explorer.indexed": "索引済みブロック {n}",
   "explorer.indexedPct": " · 索引 {p}%",
   "explorer.offline":
-    "Blockscout が起動していません — `npm run explorer` で起動すると tx・ブロック・アドレスをここから開けます（チェーンをリセットした後は `npm run explorer:reset`）",
+    "Blockscout が起動していません。`npm run explorer` で起動すると tx・ブロック・アドレスをここから開けます（チェーンをリセットした後は `npm run explorer:reset`）",
   "explorer.offlineAudience":
     "ブロックエクスプローラへのリンクは利用できません。以下はすべて、この run 自身が記録した「ブロックに入った内容」です。",
   "explorer.probing": "ローカルエクスプローラを確認中…",
   "explorer.notIndexed":
-    "この run のトランザクションが索引されていません — エクスプローラが別のチェーンを保持しています。`npm run explorer:reset` を実行してください",
+    "この run のトランザクションが索引されていません。エクスプローラが別のチェーンを保持しています。`npm run explorer:reset` を実行してください",
   "explorer.behind": "チェーンより {n} ブロック遅れ",
   "explorer.search": "tx ハッシュ / ブロック / エージェント / アドレスを検索…",
   "explorer.hint.tx": "トランザクションハッシュ",
   "explorer.hint.address": "ウォレットアドレス",
   "explorer.hint.block": "ブロック番号",
   "explorer.hint.agent": "エージェント → ウォレットアドレス",
-  "explorer.hint.unknown": "完全一致なし — 下の一覧を絞り込み中",
+  "explorer.hint.unknown": "完全一致なし · 下の一覧を絞り込み中",
   "explorer.open": "Blockscout で開く ↗ (Enter)",
-  "explorer.localOnly": "エクスプローラ停止中 — ローカル一致のみ表示",
+  "explorer.localOnly": "エクスプローラ停止中 · ローカル一致のみ表示",
   "explorer.wholeRun": "run 全体（{n} 評価区間）",
   "explorer.roundOption": "評価区間 {i} · blk {from}–{to}",
   "explorer.scopeBlocks": "ブロック {from}–{to}",
@@ -1515,19 +1515,19 @@ const ja: Record<MessageKey, string> = {
 
   "tape.kind.run": "RUN",
   "tape.kind.scenario": "シナリオ",
-  "tape.kind.victimHf": "健全性",
+  "tape.kind.victimHf": "ヘルスファクター",
   "tape.kind.liquidation": "清算",
   "tape.kind.liquidity": "流動性",
-  "tape.kind.depeg": "デペグ",
+  "tape.kind.depeg": "デペッグ",
   "tape.kind.lstSlash": "スラッシュ",
   "tape.kind.trove": "トローブ",
   "tape.kind.redemption": "償還",
-  "tape.kind.arbWindow": "裁定窓",
+  "tape.kind.arbWindow": "裁定機会",
   "tape.runStarted": "run 開始 · {protocols}",
   "tape.blocksN": "{n} ブロック",
   "tape.schedule": "ストレス予定: {types}",
   "tape.eventsN": "{n} 件",
-  "tape.victimHf": "victim の健全性係数 (blk {block})",
+  "tape.victimHf": "清算されうる建玉のヘルスファクター (blk {block})",
   "tape.liquidation": "清算発生 (blk {block})",
   "tape.liquidityPull": "{venue} {market} の板が{direction}",
   "tape.liquidityRestored": "{venue} の板が回復",
@@ -1538,7 +1538,7 @@ const ja: Record<MessageKey, string> = {
   "tape.redemption": "eUSD を ETH に償還 (blk {block})",
   "tape.arbWindow": "{base} {buy}→{sell} に差が発生",
   "tape.runCompleted":
-    "run 終了、得点の再構成完了",
+    "run 終了 · 資産価値の系列を再構成済み",
 
   "vp.amm.label": "AMM",
   "vp.amm.caption":
@@ -1551,16 +1551,16 @@ const ja: Record<MessageKey, string> = {
   "vp.amm.swapVolume": "スワップ出来高 · {base}",
   "vp.amm.swapsN": "{n} スワップ",
   "vp.amm.depthChart": "プール深度 · {base}",
-  "vp.amm.quotesTitle": "最終ブロックの実行可能クォート · {base}",
+  "vp.amm.quotesTitle": "最終ブロックで約定できる価格 · {base}",
   "vp.col.venue": "Venue",
   "vp.col.mid": "中値",
   "vp.col.sell": "売り",
   "vp.col.buy": "買い",
   "vp.col.depth": "深度",
-  "vp.amm.quotesEmpty": "この run に venue クォートの記録がありません",
+  "vp.amm.quotesEmpty": "この run に venue 別の約定価格の記録がありません",
   "vp.amm.note": "venue 別の深度は run 終了後に表示されます",
   "vp.amm.sampledNote":
-    "venue の系列は run 中に評価区間の境界ごとに記録したサンプルです（{n} 点、{every} ブロックごと）。tx 単位の出来高と取引マーカーは run 終了後の再構成が要るため、期間の閉じた日には出ません。",
+    "venue の系列は run 中に評価区間の境界ごとに記録したサンプルです（{n} 点、{every} ブロックごと）。tx 単位の出来高と取引マーカーは run 終了後の再構成が要るため、終了した日には表示されません。",
   "vp.amm.swapsTitle": "エージェントのスワップ · {base}",
   "vp.col.block": "ブロック",
   "vp.col.agent": "エージェント",
@@ -1568,7 +1568,7 @@ const ja: Record<MessageKey, string> = {
   "vp.col.size": "サイズ",
   "vp.col.price": "価格",
   "vp.amm.swapsEmpty":
-    "この資産のスワップは検出されませんでした — 誰も取引しなかったか、venue 別記録が始まる前の run です",
+    "この資産のスワップは検出されませんでした。誰も取引しなかったか、venue 別の記録が始まる前の run です",
   "vp.side.buy": "買い",
   "vp.side.sell": "売り",
 
@@ -1601,7 +1601,7 @@ const ja: Record<MessageKey, string> = {
 
   "vp.lending.label": "レンディング",
   "vp.lending.caption":
-    "Aave v3。担保の価格を決めるオラクルは環境が書き込み、1 ブロック遅れて届きます。したがってエージェントが読む健全性係数は、それを割る価格より常に 1 ブロック古い値です。画面上はまだ安全に見えるポジションが、チェーン上では既に清算可能ということが起こります。",
+    "Aave v3。担保の価格を決めるオラクルは環境が書き込み、1 ブロック遅れて届きます。したがってエージェントが読むヘルスファクターは、清算につながる価格より常に 1 ブロック古い値です。画面上はまだ安全に見えるポジションが、チェーン上では既に清算可能ということが起こります。",
   "vp.lending.supplied": "総供給",
   "vp.lending.borrowed": "総借入",
   "vp.lending.utilization": "利用率 {v}",
@@ -1613,17 +1613,17 @@ const ja: Record<MessageKey, string> = {
   "vp.col.borrowedCol": "借入",
   "vp.col.utilizationCol": "利用率",
   "vp.lending.reservesEmpty": "この run にリザーブ残高の記録がありません",
-  "vp.lending.worstHf": "victim の最悪健全性係数",
+  "vp.lending.worstHf": "清算されうる建玉の最低ヘルスファクター",
   "vp.lending.liquidatable": "清算可能",
   "vp.lending.aboveLine": "清算ラインより上",
-  "vp.lending.victimChart": "victim の健全性係数（最悪値）",
+  "vp.lending.victimChart": "清算されうる建玉のヘルスファクター（最低値）",
   "vp.lending.minHf": "最小 HF",
   "vp.lending.liquidationLine": "清算ライン",
   "vp.lending.liquidations": "清算",
-  "vp.col.victim": "Victim",
-  "vp.col.healthFactor": "健全性係数",
+  "vp.col.victim": "建玉",
+  "vp.col.healthFactor": "ヘルスファクター",
   "vp.col.remainingDebt": "残債",
-  "vp.lending.liquidationsEmpty": "この run で清算された victim はいません",
+  "vp.lending.liquidationsEmpty": "この run で清算された建玉はありません",
   "vp.lending.accountsTitle": "run 最終ブロック時点のエージェント口座",
   "vp.col.debt": "負債",
   "vp.lending.accountsEmpty":
@@ -1633,23 +1633,23 @@ const ja: Record<MessageKey, string> = {
 
   "vp.stable.label": "ステーブルコイン",
   "vp.stable.caption":
-    "ここでのステーブルコインの価格は、仮定ではなく実測です。マークはそのコインのプールの売り・買い両方向の実行可能価格の幾何平均なので、ペグが外れていれば外れたまま表示されます。eUSD だけは下に床があります。常に最もリスクの高いトローブから $1 分の担保と交換できるため、そのディスカウントは予想ではなく行使できる請求権です。",
+    "ここでのステーブルコインの価格は、仮定ではなく実測です。マークはそのコインのプールの売り・買い両方向の約定価格の幾何平均なので、ペグが外れていれば外れたまま表示されます。eUSD だけは下に床があります。常に最もリスクの高いトローブから $1 分の担保と交換できるため、そのディスカウントは予想ではなく行使できる請求権です。",
   "vp.stable.price": "{symbol} 価格",
-  "vp.stable.deepest": "最安 {v} · par 比 {bps}",
-  "vp.stable.noQuote": "プールが値を返さず — par を仮置き",
+  "vp.stable.deepest": "最安 {v} · 基準価格比 {bps}",
+  "vp.stable.noQuote": "プールが値を返さず、基準価格（$1）を仮置き",
   "vp.stable.tcr": "システム TCR",
   "vp.stable.recovery": "リカバリーモード",
   "vp.stable.aboveCcr": "CCR (1.5) より上",
   "vp.stable.troves": "オープン中トローブ",
   "vp.stable.riskiest": "最低 ICR {v}",
   "vp.stable.debt": "eUSD 債務",
-  "vp.stable.spSub": "安定プール {v} eUSD",
+  "vp.stable.spSub": "スタビリティプール {v} eUSD",
   "vp.stable.redemptionFee": "償還手数料",
   "vp.stable.borrowingSub": "借入 {v}bps",
   "vp.stable.eusdPrice": "eUSD 価格",
   "vp.stable.eusdVenueRead": "eUSD（venue 読み取り）",
   "vp.stable.tcrChart": "システム担保率",
-  "vp.stable.ccrLine": "CCR — リカバリーモード",
+  "vp.stable.ccrLine": "CCR（リカバリーモード）",
   "vp.stable.feesChart": "償還 / 借入手数料",
   "vp.stable.redemptionLine": "償還",
   "vp.stable.borrowingLine": "借入",
@@ -1658,7 +1658,7 @@ const ja: Record<MessageKey, string> = {
   "vp.col.ethOut": "ETH 受取",
   "vp.col.ethFee": "ETH 手数料",
   "vp.stable.redemptionsEmpty":
-    "この run で eUSD を償還した者はいません — ディスカウントが償還手数料を超えなかったか、誰も試みませんでした",
+    "この run で eUSD を償還したエージェントはいません。ディスカウントが償還手数料を超えなかったか、誰も試みませんでした",
   "vp.stable.troveLiqTitle": "トローブ清算",
   "vp.col.borrower": "借り手",
   "vp.col.mode": "モード",
@@ -1666,35 +1666,35 @@ const ja: Record<MessageKey, string> = {
   "vp.stable.modeNormal": "通常",
   "vp.stable.troveLiqEmpty": "清算されたトローブはありません",
   "vp.stable.priceChart": "ステーブルコイン価格（対 USDC）",
-  "vp.stable.parLine": "par",
-  "vp.stable.depegPressure": "デペグ圧力",
+  "vp.stable.parLine": "基準価格",
+  "vp.stable.depegPressure": "デペッグ圧力",
   "vp.stable.depegSub": "環境の売りが {n} ブロック",
-  "vp.stable.depegTitle": "デペグ窓（環境の売り）",
+  "vp.stable.depegTitle": "デペッグ期間（環境の売り）",
   "vp.col.stable": "ステーブル",
   "vp.col.targetShare": "深度に対する目標比率",
   "vp.col.sold": "売却量",
   "vp.stable.depegEmpty":
-    "この run で環境がペグを崩しに行くことはありませんでした",
+    "この run で環境によるデペッグはありませんでした",
   "vp.stable.note": "この run にステーブルコイン市場はありません",
 
   "vp.lst.label": "LST",
   "vp.lst.caption":
-    "非 rebasing の LST は、同じ資産に価格を 2 つ持ちます。1 つは vault が負う償還レートで、これは出金キューの向こう側にあります。もう 1 つは二次市場のプールが今すぐ払う価格です。2 つの差が利益になるのは、キューを待てる場合だけです。",
+    "非 rebasing の LST は、同じ資産に価格を 2 つ持ちます。1 つは vault が負う償還レートで、受け取るには出金キューで待つ必要があります。もう 1 つは二次市場のプールが今すぐ払う価格です。2 つの差が利益になるのは、キューを待てる場合だけです。",
   "vp.lst.rate": "償還レート",
-  "vp.lst.rateSub": "vault が 1 LST あたりに負う額 — par",
+  "vp.lst.rateSub": "vault が 1 LST あたりに負う額（額面）",
   "vp.lst.market": "市場価格",
   "vp.lst.marketSub": "プールが今払う額",
   "vp.lst.discount": "ディスカウント",
-  "vp.lst.discountSub": "market < par。出金キューがあるから持続し得ます",
+  "vp.lst.discountSub": "市場価格 < 償還レート。出金キューがあるので続くことがあります",
   "vp.lst.queue": "出金キュー",
   "vp.lst.queueSub": "出金遅延 {n} ブロック",
   "vp.lst.reserve": "報酬リザーブ",
-  "vp.lst.reserveEmpty": "枯渇 — 利回りは停止",
+  "vp.lst.reserveEmpty": "枯渇。利回りは停止",
   "vp.lst.apy": "APY {v}%",
   "vp.lst.rateChart": "償還レート vs 市場価格",
-  "vp.lst.rateLine": "償還レート (par)",
+  "vp.lst.rateLine": "償還レート（額面）",
   "vp.lst.marketLine": "市場価格",
-  "vp.lst.discountChart": "par からのディスカウント",
+  "vp.lst.discountChart": "償還レートからのディスカウント",
   "vp.lst.discountLine": "ディスカウント",
   "vp.lst.queueChart": "出金キュー長",
   "vp.lst.queueLine": "待機中の出金",
@@ -1713,47 +1713,47 @@ const ja: Record<MessageKey, string> = {
 
   "vp.scenario.label": "シナリオ",
   "vp.scenario.caption":
-    "環境がこの run に対して行ったことです。予定は最初のブロックより前にシードから引かれます。各イベントは台形で、立ち上がり（ramp）・維持（hold）・減衰（decay）の順にフェア価格の上へ重なります。引き方はランダムですが再現可能なので、同じシードは必ず同じ窓を再生します。このタブは選んだ評価区間ではなく run 全体を表示します。シナリオは run の属性だからです。",
+    "環境がこの run に対して行ったことです。予定は最初のブロックより前にシードから引かれます。各イベントは台形で、立ち上がり（ramp）・維持（hold）・減衰（decay）の順に参照価格の上へ重なります。引き方はランダムですが再現可能なので、同じシードなら必ず同じ期間に同じイベントが起きます。このタブは選んだ評価区間ではなく run 全体を表示します。シナリオは run の属性だからです。",
   "vp.scenario.seed": "シード",
   "vp.scenario.seedSub": "フローシード {flow} · この run の市場条件のラベル",
   "vp.scenario.scheduled": "予定イベント",
-  "vp.scenario.scheduledNone": "なし — 動いていたのはフェア価格の walk だけ",
+  "vp.scenario.scheduledNone": "なし。動いていたのは参照価格のランダムウォークだけです",
   "vp.scenario.window": "run の範囲",
   "vp.scenario.windowSub": "{blocks} ブロック · {rounds} 評価区間",
   "vp.scenario.scheduleTitle": "ストレス予定（run 開始時にシードから決定）",
   "vp.col.event": "イベント",
-  "vp.col.windowShape": "窓 · ramp/hold/decay",
+  "vp.col.windowShape": "期間 · ramp/hold/decay",
   "vp.col.rounds": "評価区間",
   "vp.col.mag": "強度",
   "vp.col.outcome": "結果",
   "vp.scenario.scheduleEmpty":
-    "ストレスイベントの予定なし — この run はフェア価格の walk とオーダーフローだけです",
-  "vp.scenario.neverFired": "発火せず",
+    "ストレスイベントの予定なし。この run で動いていたのは参照価格のランダムウォークと注文フローだけです",
+  "vp.scenario.neverFired": "発生せず",
   "vp.scenario.failed": "失敗",
   "vp.scenario.restored": "復元済み",
   "vp.scenario.leftInPlace": "そのまま維持",
   "vp.scenario.firedBlocks": "{n} blk {from}–{to}",
-  "vp.scenario.crash": "フェア価格へのオーバーレイ — 価格チャート参照",
+  "vp.scenario.crash": "参照価格に重ねた値動き（価格チャート参照）",
   "vp.scenario.flipped": "{type}（{from} から反転）",
   "vp.scenario.recovered": "{pct}% 回復",
-  "vp.scenario.cexDrift": "価格 walk 自体を変更 — 価格チャート参照",
-  "vp.scenario.flowTrend": "オーダーフローを傾ける — スワップ出来高参照",
+  "vp.scenario.cexDrift": "ランダムウォーク自体を変更（価格チャート参照）",
+  "vp.scenario.flowTrend": "注文フローを一方向に偏らせる（スワップ出来高参照）",
   "vp.scenario.venueEvents": "venue イベント",
-  "vp.scenario.venueEventsSub": "清算・償還・スラッシュ・開いた裁定窓",
+  "vp.scenario.venueEventsSub": "清算・償還・スラッシュ・裁定機会",
   "vp.scenario.notableTitle": "venue で起きたこと（ブロック順）",
   "vp.col.round": "評価区間",
   "vp.col.detail": "詳細",
   "vp.scenario.notableEmpty":
-    "清算・償還・スラッシュはなく、報告されるほど長く開いた裁定窓もありませんでした",
+    "清算・償還・スラッシュはなく、記録されるほど長く続いた裁定機会もありませんでした",
   "vp.scenario.liquidation": "清算",
-  "vp.scenario.liquidationText": "victim {victim} を HF {hf} で清算",
+  "vp.scenario.liquidationText": "建玉 {victim} を HF {hf} で清算",
   "vp.scenario.troveLiquidated": "トローブ清算",
   "vp.scenario.troveText": "{borrower} · {debt} eUSD",
   "vp.scenario.redemption": "償還",
   "vp.scenario.redemptionText": "{eusd} eUSD を {eth} ETH に償還",
   "vp.scenario.lstSlash": "LST スラッシュ",
   "vp.scenario.lstSlashText": "償還レート {before} → {after}",
-  "vp.scenario.arbWindow": "裁定窓",
+  "vp.scenario.arbWindow": "裁定機会",
   "vp.scenario.arbWindowText": "{base} {buy}→{sell} が {bps}bps で継続",
 
   "pos.kind.stake": "ステーク",
@@ -1766,7 +1766,7 @@ const ja: Record<MessageKey, string> = {
   "pos.entry": "建値 {v}",
   "pos.entryNone": "建値 —",
   "pos.collateralNote": "証拠金 {v}",
-  "pos.par": "par {v} WETH",
+  "pos.par": "額面 {v} WETH",
   "pos.queue": "キュー: 受取可 {claimable} / 待機 {pending}（{n} 件）",
   "pos.queueOne": "キュー: 受取可 {claimable} / 待機 {pending}（1 件）",
   "pos.noQueue": "出金待ちなし",
@@ -1775,16 +1775,16 @@ const ja: Record<MessageKey, string> = {
   "pos.spMark": "清算債務を吸収",
   "pos.spNote": "トローブ清算時に割引価格の担保で支払われる",
   "pos.surplus": "Liquity 担保余剰",
-  "pos.surplusMark": "WETH の fair で評価",
+  "pos.surplusMark": "WETH の参照価格で評価",
   "pos.surplusNote": "閉じたトローブ（全額償還・Recovery Mode 清算）の残り。claimCollateral() で受け取れる",
   "pos.eusdSpot": "eUSD（現物）",
-  "pos.eusdNote": "最もリスクの高いトローブに対し par で償還可能",
+  "pos.eusdNote": "最もリスクの高いトローブに対し基準価格（$1）で償還可能",
   "pos.aave": "Aave 口座",
   "pos.debtNote": "負債 {v}",
   "pos.noDebt": "借入なし",
 
   "err.noRuns":
-    "runs/ に run が見つかりません — まず `npm run sim:realtime` を 1 回完走させてください",
+    "runs/ に run が見つかりません。まず `npm run sim:realtime` を 1 回完走させてください",
 
   // ---- 公開ビュー（server/runsApi.ts の audience モード）と試行環境 ----
   "mode.audienceBadge": "公開ビュー",
@@ -1798,7 +1798,7 @@ const ja: Record<MessageKey, string> = {
     "この環境では順位を掲示しません（規約 §4.7: 試行環境は順位を掲示しない）。シナリオ・市場・エクスプローラは閲覧できます。",
   "home.col.flags": "注記",
   "home.flagsTitle":
-    "採点上のペナルティではなく記録された事実です（規約 §4.4.2: 止まった agent も残したポジションで採点される）: {flags}",
+    "採点上のペナルティではなく記録された事実です（規約 §4.4.2: 止まったエージェントも残したポジションで採点される）: {flags}",
   "home.search": "エージェント名・参加単位で絞り込み…",
   "home.showMore": "全 {n} 行を表示",
   "home.showLess": "上位 {n} 行だけ表示",
@@ -1807,10 +1807,10 @@ const ja: Record<MessageKey, string> = {
   "home.participantsNote":
     "参加単位: 同じ参加単位で登録されたエージェントを 1 行にまとめ、高い方の平均得点で並べます。各行に採点されたエージェントを示します。",
   "home.col.participant": "参加単位",
-  "home.col.countedAgent": "採点 agent",
+  "home.col.countedAgent": "採点エージェント",
   "home.col.agents": "エージェント",
   "home.scenarios.audienceEvents":
-    "公開ビュー: 既に開いたイベントだけを表示し、これから開く窓は競技中は伏せます。",
+    "公開ビュー: 既に始まったイベントだけを表示し、これから起きるイベントは競技中は伏せます。",
   "scenario.hidden": "エポック {s}",
   "home.scenarios.eventsWithheld": "競技中は非表示",
   "agent.audienceLog": "競技中は表示しません",
@@ -1831,14 +1831,14 @@ const ja: Record<MessageKey, string> = {
   "home.chart.title":
     "平均得点の推移",
   "home.chart.subtitle":
-    "完走したエポックごとの平均得点（そのエポックまでの累積）。表と同じ数字をエポック単位で再生したもので、上位 {n} 体を色付き、他は灰色で描きます。50 が場の平均です。名前をクリックすると追跡します。",
-  "home.chart.mean": "場の平均",
+    "完走したエポックごとの平均得点（そのエポックまでの累積）。表と同じ数字をエポック単位で再生したもので、上位 {n} 体を色付き、他は灰色で描きます。50 が全エージェントの平均です。名前をクリックすると追跡します。",
+  "home.chart.mean": "全体の平均",
   "home.chart.empty": "2 エポック採点されるとグラフが出ます。",
   "home.chart.legend": "上位 {n}",
   "home.col.delta": "Δ",
-  "home.col.form": "フォーム",
+  "home.col.form": "エポック別得点",
   "home.formTitle":
-    "エポックごとの得点（古い順）— {n} 本採点、直近 {latest}",
+    "エポックごとの得点（古い順）。{n} 本採点、直近 {latest}",
   "home.col.txs": "tx",
   "home.col.reverts": "revert",
   "home.details": "詳細",
@@ -1854,7 +1854,7 @@ const ja: Record<MessageKey, string> = {
   "world.col.contracts": "コントラクト · 状態",
   "world.block": "ブロック {n}",
   "world.blockRange": "ブロック {from}〜{to}",
-  "world.fair": "フェア {price}",
+  "world.fair": "参照価格 {price}",
   "world.emptyBlock": "このブロックに取引なし",
   "world.moreTxs": "同じブロックにあと {n} 件",
   "world.reverted": "{n} 件 revert",
@@ -1877,7 +1877,7 @@ const ja: Record<MessageKey, string> = {
   "world.chip.balance": "残高 {usd} USDC",
   "world.chip.pnl": "損益 {pnl}",
   "world.chip.unscored": "まだ採点されていません",
-  "world.thinking": "Agent Log",
+  "world.thinking": "判断ログ",
   "world.openAgent": "{id} のページ →",
   "world.pickAgent": "盤面のウォレットを選ぶと、そのエージェント自身の記録が出ます。毎ブロックどの行動を選び、どういう理由だったかです。",
   "world.logsWithheld":
@@ -1886,9 +1886,9 @@ const ja: Record<MessageKey, string> = {
     "{id} は所有者のマシンで動いているため、推論はそちらに書かれ、このダッシュボードには届きません。",
   "world.logNotYet": "{id} はこのブロックまでに何も書いていません。",
   "world.logSilent": "{id} はこの区間で判断を記録していません。",
-  "world.chart.price": "各 venue の価格とフェア",
-  "world.chart.fairLegend": "フェア",
-  "world.chart.balance": "採点境界ごとの口座評価額",
+  "world.chart.price": "各 venue の価格と参照価格",
+  "world.chart.fairLegend": "参照価格",
+  "world.chart.balance": "評価区間の境界ごとの資産価値",
   "world.chart.selectedLegend": "選択中",
   "world.chart.fieldLegend": "他のエージェント",
   "world.chart.noBalance": "まだ採点されていません",
@@ -1915,7 +1915,7 @@ const ja: Record<MessageKey, string> = {
   "home.standingsSoFar": "順位表 · ここまで",
   "cursor.soFar": "ここまで · {n} 評価区間",
   "home.unscoredTitle":
-    "{n} 個のエポックに記録はありますが、そこでは採点されていません。開始時点の資産評価額が無いためです（途中から登録された場合にこうなります）。規約 §4.4.2 では、そのエポックは 0 として数えるのではなく平均得点から外します。",
+    "{n} 個のエポックに記録はありますが、そこでは採点されていません。開始時点の資産価値が無いためです（途中から登録された場合にこうなります）。規約 §4.4.2 では、そのエポックは 0 として数えるのではなく平均得点から外します。",
   "home.unscoredBadge": "{n} エポックで未採点",
 
   "home.noStandings.title": "順位はまだありません",
@@ -1931,7 +1931,7 @@ const ja: Record<MessageKey, string> = {
   "home.find.go": "開く →",
   "home.find.noMatch":
     "その名前・アドレスの登録エージェントはいません。「開く」でトランザクションを検索できます。",
-  "home.find.address": "{id} — このアドレスで登録されています",
+  "home.find.address": "{id}: このアドレスで登録されています",
 
   "home.scenarios.failed": "未実施: {reason}",
   "home.scenarios.failedTitle":
@@ -1943,9 +1943,9 @@ const ja: Record<MessageKey, string> = {
   "agent.standing.throughRound": "評価区間 {at} 時点",
   "agent.standing.finalNote": "最終結果",
   "agent.standing.unscored":
-    "この競技の {n} 個のエポックでは採点されていません。そこでは開始時点の資産評価額が無いためで、途中から登録するとこうなります。該当エポックは 0 として数えるのではなく平均得点から外します（規約 §4.4.2）。",
+    "この競技の {n} 個のエポックでは採点されていません。そこでは開始時点の資産価値が無いためで、途中から登録するとこうなります。該当エポックは 0 として数えるのではなく平均得点から外します（規約 §4.4.2）。",
   "agent.unscoredHere":
-    "この run はこのエージェントを採点していません。run の最初の境界時点の評価額が無く、その区間の損益を計算できないためです。取引と建玉は下に出ています。",
+    "この run はこのエージェントを採点していません。run の最初の境界時点の資産価値が無く、その区間の損益を計算できないためです。取引とポジションは下に出ています。",
 
   "explorer.showMore": "さらに {n} 件表示",
   "explorer.searchAll": "範囲内の全 {n} 件から検索しています",
@@ -1957,20 +1957,20 @@ const ja: Record<MessageKey, string> = {
   "vp.scenario.scheduledWithheld":
     "競技中は非表示です（規約 §3.3）。予定が無かったという意味ではありません",
   "vp.scenario.scheduledNonePast":
-    "まだ開いたイベントはありません。この先の窓は期間中は公開しません",
-  "vp.scenario.scheduledPast": "既に閉じた窓",
+    "まだ始まったイベントはありません。これから起きるイベントは期間中は公開しません",
+  "vp.scenario.scheduledPast": "既に終わったイベント",
   "vp.scenario.windowRounds": "{rounds} 評価区間",
-  "vp.scenario.scheduleTitlePast": "既に閉じたイベント",
+  "vp.scenario.scheduleTitlePast": "既に終わったイベント",
   "vp.scenario.scheduleWithheld":
     "このエポックにどのイベントが含まれるかは、競技中は公開しません（規約 §3.3）。結果発表とともに公開されます（規約 §7.2）。",
   "vp.scenario.scheduleEmptyPast":
-    "この期間ではまだ閉じたイベントがありません。現在開いている窓やこれからの窓は一覧に出ません",
+    "この期間ではまだ終わったイベントがありません。進行中のイベントとこれから起きるイベントは一覧に出ません",
   "vp.scenario.firingNotLive":
-    "ライブ表示では未取得です。窓の中の発火は窓が閉じてから配信されるので、ページを再読み込みすると表示されます",
+    "ライブ表示では未取得です。イベント中に起きたことはイベントが終わってから配信されるので、ページを再読み込みすると表示されます",
   "vp.withheld.scenarioEvents":
-    "競技中は公開しません（規約 §3.3）。エポックの中で清算・償還・スラッシュがあったかどうかはそのシナリオを示すためです。結果発表とともに公開されます（規約 §7.2）。何も起きなかったという意味ではありません",
+    "競技中は公開しません（規約 §3.3）。エポックの中で清算・償還・スラッシュがあったかどうかで、どのシナリオか分かってしまうためです。結果発表とともに公開されます（規約 §7.2）。何も起きなかったという意味ではありません",
   "vp.withheld.liveEvents":
-    "ライブ表示はイベントの窓の中で起きたことを受け取りません。窓が閉じてから配信されるので、その後に閉じた窓の記録はページを再読み込みすると表示されます",
+    "ライブ表示には、イベント中に起きたことは届きません。イベントが終わってから配信されるので、終わったイベントの記録はページを再読み込みすると表示されます",
 
   // ---- ヘッダと概要ページ（issue #183）。値は data/competitionInfo.ts ----
   "tip.about":
@@ -1980,7 +1980,7 @@ const ja: Record<MessageKey, string> = {
   "nav.overview":
     "概要",
   "header.home":
-    "ASCON ダッシュボード — 概要",
+    "ASCON ダッシュボード · 概要",
   "header.nav":
     "ダッシュボードのページ",
   "header.register":
@@ -2064,7 +2064,7 @@ const ja: Record<MessageKey, string> = {
   "overview.scoring.tipEpoch":
     "1 エポック = 1 シナリオの実行で、{blocks} ブロック（約 {min} 分）です。ライブ週に {k} エポックを実行し、各エポックは全エージェントが同じ資産から始めます。",
   "overview.scoring.tipP":
-    "P はそのエポックでの総資産価値の変化（USDC）です。最後のブロックの資産価値から、最初のブロックの資産価値を引いたもの。",
+    "P はそのエポックでの資産価値の変化（USDC）です。最後のブロックの資産価値から、最初のブロックの資産価値を引いた値です。",
   "overview.scoring.tipT":
     "得点 T は、P をそのエポックの全体の中に位置付けた偏差値です。μ・σ はそのエポックの全エージェントの P の平均と母集団標準偏差で、ベンチマークは含みません。50 が全体の平均、10 ポイントが標準偏差 1 つ分です。",
   "overview.scoring.tipW":
@@ -2074,7 +2074,7 @@ const ja: Record<MessageKey, string> = {
   "overview.scoring.tipBankrupt":
     "資産を失っても失格ではありません。資産価値がゼロ以下でも、床を設けずにそのまま得点（偏差値）に入ります。",
   "overview.scoring.tipSameBlocks":
-    "全エージェントを同じブロックで評価します。エージェントが選んだ時点で評価されることはありません。価格を付けられない保有は、黙って 0 にせず報告します。",
+    "全エージェントを同じブロックで評価します。エージェントが選んだ時点で評価されることはありません。価格を付けられない保有は、0 として扱わずに報告します。",
   "overview.scoring.tipPractice":
     "提出期間中に表示する練習順位は、同じ式を日次リターンに当てはめたもので、公式の採点ではありません。試行環境での記録は、順位の評価に一切用いません（規約 §2.7）。",
   "overview.prize.title":
@@ -2122,17 +2122,17 @@ const ja: Record<MessageKey, string> = {
   "overview.submission.tipSees":
     "エージェントが読めるのは確定したオンチェーンの状態だけで、他のエージェントの未確定のトランザクションは見えません。",
   "overview.top.practice":
-    "練習順位 · 上位 {n} 名",
+    "練習順位 · 上位 {n} 体",
   "overview.top.soFar":
-    "途中経過 · 上位 {n} 名",
+    "途中経過 · 上位 {n} 体",
   "overview.top.final":
-    "最終結果 · 上位 {n} 名",
+    "最終結果 · 上位 {n} 体",
   "overview.top.standings":
-    "順位 · 上位 {n} 名",
+    "順位 · 上位 {n} 体",
   "overview.top.tipPractice":
     "試行環境の練習順位です。1 日ごとに、各エージェントの日次リターンで採点しています。公式の採点ではなく、順位の評価には算入しません（規約 §2.7）。",
   "overview.top.tipOfficial":
-    "競技の順位です。これまでに採点したエポックの得点（偏差値）を、回次の重みで平均した平均得点で並べています。審査期間を経て、結果発表で確定します。",
+    "競技の順位です。これまでに採点したエポックの得点（偏差値）を、回次（何本目のエポックか）に応じた重みで平均した平均得点で並べています。審査期間を経て、結果発表で確定します。",
   "overview.top.tipScore":
     "エージェントをクリックすると、エポックごとの内訳が見られます。",
   "overview.top.all":
@@ -2188,9 +2188,9 @@ const ja: Record<MessageKey, string> = {
   "overview.links.discord":
     "Discord #ascon",
   "overview.links.discordBody":
-    "質問はここへ。練習環境にエージェントを登録するときも、ここにアドレスを投稿します。",
+    "質問はここへ。試行環境にエージェントを登録するときも、ここにアドレスを投稿します。",
   "overview.links.connect":
-    "練習環境への接続",
+    "試行環境への接続",
   "overview.links.connectBody":
     "自分で動かすエージェントをつなぐための、チェーンの RPC、ブロックエクスプローラ、全コントラクトのアドレスを載せた環境マニフェスト。",
   "overview.links.manifest":
@@ -2198,15 +2198,15 @@ const ja: Record<MessageKey, string> = {
 
   // ---- 順位表パネルの「？」（以前は列見出しのツールチップ） ----
   "home.info.columns":
-    "Δ は直前に完了したエポックからの順位の変化です（上のバーをスクラブしている間は直前の評価区間から）。フォームはエポックごとの得点を古い順に並べた線で、点線が 50、横の数字は採点されたエポック数です。レジーム列はそのレジームでの得点の平均で、平均得点の説明であって別の順位ではありません。",
+    "Δ は直前に完了したエポックからの順位の変化です（上のバーで評価区間を動かしている間は直前の評価区間から）。エポック別得点は、エポックごとの得点を古い順に並べた線で、点線が 50、横の数字は採点されたエポック数です。レジーム列はそのレジームでの得点の平均で、平均得点の説明であって別の順位ではありません。",
   "home.info.notes":
     "注記は記録された事実（プロセスの停止など）で、減点ではありません（規約 §4.4.2）。一覧はホバーするか、エージェントのページで見られます。",
   "home.info.netPnl":
-    "純損益（USDC）は両端を run 最終時点の価格で評価するため、run の終わりにしか存在しません。スクラブ中は完走時の値を灰色で表示します。参考値であって得点ではありません。",
+    "純損益（USDC）は両端を run 最終時点の価格で評価するため、run の終わりにしか存在しません。評価区間バーを動かしている間は完走時の値を灰色で表示します。参考値であって得点ではありません。",
   "home.info.details":
     "「詳細」で 2 列を足します。採点されたシナリオ全体で取り込まれたトランザクション数と、そのうち revert した数です。",
   "home.info.pin":
-    "☆ でエージェントをフォローすると、表とチャートで強調表示されます（このブラウザだけ）。",
+    "☆ でエージェントを追跡すると、表とチャートで強調表示されます（このブラウザだけ）。",
 
   // ---- シナリオ・マーケット・エクスプローラの「？」の中身（issue #183） ----
   "market.arbLegendLabel":
@@ -2220,7 +2220,7 @@ const ja: Record<MessageKey, string> = {
   "explorer.aboutPage":
     "左で選んでいる世界の全ブロックとトランザクションを、このダッシュボードの記録から表示します。トランザクションハッシュ・ブロック番号・エージェント名・ウォレットアドレスで検索でき、ブロックエクスプローラに接続しているときはそれぞれがリンクになります。",
   "scenario.standingsAbout":
-    "この世界での P = V_k − V_0（USDC）の順で、閉じた最後の評価区間までの値です。1 つの世界は分布からの 1 回の抽出で、結果ではありません。競技の順位は順位表ページにあります。",
+    "この世界での P = V_k − V_0（USDC）の順で、閉じた最後の評価区間までの値です。1 つの世界は多数あり得る展開のうちの 1 つにすぎず、それ自体は結果ではありません。競技の順位は順位表ページにあります。",
   "scenario.aboutBoard":
     "盤面: 左に全ウォレット、中央にチェーン、右に各 venue のコントラクト。トランザクションは送信元からチェーンを通って、呼び出したコントラクトへ描かれます。下のブロック軸で 1 ブロックずつ進められます。",
   "scenario.aboutInteract":
@@ -2318,9 +2318,9 @@ const ja: Record<MessageKey, string> = {
   "overview.steps.test.body":
     "公開シナリオで backtest して、判断と結果を読みます。",
   "overview.steps.practice.name":
-    "練習環境で動かす",
+    "試行環境で動かす",
   "overview.steps.practice.body":
-    "自分のマシンから練習環境のチェーンにつなぎます。Discord #ascon にアドレスを投稿すると、練習順位に載ります。",
+    "自分のマシンから試行環境のチェーンにつなぎます。Discord #ascon にアドレスを投稿すると、練習順位に載ります。",
   "overview.steps.zip.name":
     "ZIP を作る",
   "overview.steps.zip.body":
