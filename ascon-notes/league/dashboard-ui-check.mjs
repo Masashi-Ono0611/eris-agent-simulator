@@ -253,7 +253,8 @@ const retainedDecisions=['dec-original','dec-deep','dec-no-contact','dec-008','d
   'dec-oct09-r3','dec-oct09-g3','dec-oct09-dev-billing','dec-oct09-ollama',
   'dec-oct10-organizer','dec-oct10-b03',
   'dec-oct11-req25','dec-oct11-dec007','dec-oct11-b03-tooling','dec-oct11-organizer',
-  'dec-oct11-b07-source','dec-oct11-b07-files','dec-oct11-b07-eval','dec-oct11-b07-lock','dec-oct12-b07-eval-path'];
+  'dec-oct11-b07-source','dec-oct11-b07-files','dec-oct11-b07-eval','dec-oct11-b07-lock','dec-oct12-b07-eval-path',
+  'dec-oct14-policy','dec-oct14-b09e','dec-oct14-aquestion'];
 function assertDecisions(views){
   const ids=app.D.decisions.items.map(d=>d.id);
   for(const id of retainedDecisions)assert.ok(ids.includes(id),`INVARIANT retained decision ${id}`);
@@ -685,9 +686,7 @@ check('current direction, recent events, next milestone and night operation come
   assertVisibleFields(rendered.operations,app.D.status.night_operation,['note']);
   for(const decision of app.D.decisions.items)assertVisibleFields(rendered.decisions,decision,['title']);
 });
-// 2026-10-11 evidence contract: the limited timing study is complete;
-// live observation and the G3 gate remain unresolved. Keep these semantic checks alongside the
-// existing historical-result and per-record warning controls.
+// Historical timing and gate checks remain immutable. Current status is refreshed through 2026-10-14.
 function assertOctoberStatus(views){
   const d=app.D,t=d.status.timing;
   assert.equal(d.status.g3_state,'BLOCKED','INVARIANT October G3 blocked');
@@ -726,23 +725,31 @@ function assertOctoberStatus(views){
   assert.equal(d.plan.continuous_operation.current_run_ref,'status.timing','INVARIANT October current work is timing');
   assert.equal(d.status.next_steps.length,3,'INVARIANT October next three steps');
   const overview=visibleText(views.overview),operations=visibleText(app.renderers.operations());
-  for(const phrase of ['前回更新から','次の3手','G3','BLOCKED','10/28'])
+  for(const phrase of ['完了','未完了・BLOCKED','次','10/14の更新','次の3手','G3','BLOCKED','10/28'])
     assert.ok(overview.includes(phrase),`INVARIANT October overview ${phrase}`);
+  assert.equal(d.status.summary_lines.length,3,'INVARIANT three-line overview summary');
+  assert.match(views.overview,/aria-label="3行サマリー"/,'INVARIANT overview summary at top');
+  assert.ok(overview.includes('PR #68〜#71を統合'),'INVARIANT summary records merged work');
+  assert.ok(overview.includes('G3はREQUIRED / BLOCKED、証拠0件'),'INVARIANT summary keeps G3 blocked');
+  assert.ok(overview.includes('v0再生スライス1'),'INVARIANT summary names next action');
+  assert.deepEqual(JSON.parse(JSON.stringify(d.status.summary_lines.map(x=>x.label))),['完了','未完了・BLOCKED','次'],'INVARIANT summary line labels');
   for(const step of d.status.next_steps)assertVisibleFields(views.overview,step,['title','text','label']);
+  assert.deepEqual(JSON.parse(JSON.stringify(d.status.next_steps.map(s=>s.title))),['revision_audit v0 replay slice 1を進める','worker側recorder設計を相談する','seedAudit hitの内訳を仕分ける'],'INVARIANT current next actions');
+  assert.deepEqual(JSON.parse(JSON.stringify(d.status.next_steps.map(s=>s.label))),['Codex · 進行中 / lock差分レビュー後にmerge','Codex · 相談中','Codex · 次'],'INVARIANT next action owners and gates');
   for(const phrase of ['COMPLETE','main統合済み','descriptive only','DEGENERATE','6 ms','5.97 ms','0.0156 ms','[0, 0.047] ms','±2 ms','+0.73 ms','3.1 ms','2.4 ms','相関1','相関0','1.5 / 1.2 ms','4 ms','0.7 ms','1 run','1 host','synthetic fixtures','StrategyRunner-level probe','2.5→3.5→5.0→8','失敗','NOT G3 evidence','not found in files','Spotlight','Atomics.wait','busy-spin','43→84 GiB','outside the repo, local to the Air','SHA-256','19ファイル'])
     assert.ok(operations.includes(phrase),`INVARIANT October operations ${phrase}`);
   assertVisibleFields(app.renderers.operations(),d.status.infrastructure,['note','boundary']);
   for(const limit of t.limitations)assert.ok(operations.includes(limit),'INVARIANT October all limitations visible');
   for(const phrase of ['descriptive only','DEGENERATE','3.1 ms','2.4 ms','相関1','相関0','1.5 / 1.2 ms','4 ms','0.7 ms','1 run','1 host','synthetic fixtures','StrategyRunner-level probe'])
     assert.ok(t.limitations.join(' ').includes(phrase),`INVARIANT October limitation ${phrase}`);
-  for(const phrase of ['USER','本人のみ','継続','中止','範囲・費用・期限','条件付き','10/20','10/28','提出前の本人確認'])
+  for(const phrase of ['条件付き','10/20','10/28','提出前の本人確認'])
     assert.ok(overview.includes(phrase),`INVARIANT October next decision ${phrase}`);
   const resultView=visibleText(app.renderers.results());
   for(const n of [49,50,51,52,53,54,55,56])assert.ok(resultView.includes(`PR #${n}`),`INVARIANT October merged PR ${n}`);
   for(const phrase of ['synthetic-only','B07/B04を閉じない','B04/B07を閉じない','B03/B07','prestart-check.py','inputs.lock.json'])
     assert.ok(resultView.includes(phrase),`INVARIANT October preparation scope ${phrase}`);
   // Old logs are immutable historical records. Current surfaces must lose stale claims.
-  const current=JSON.stringify([d.status.timing,d.status.next_steps,d.status.changes,d.queue.items.filter(x=>x.current),d.progress.items.find(x=>x.id==='progress-probe-timing')]);
+  const current=JSON.stringify([d.status.timing,d.status.changes,d.queue.items.find(x=>x.id==='queue-probe-timing'),d.progress.items.find(x=>x.id==='progress-probe-timing')]);
   assert.doesNotMatch(current,/RUNNING|result pending|mini offline|UNMEASURED|main未統合|next: run the reduced protocol/i,'INVARIANT October stale current timing');
 
   const policy=visibleText(views.decisions);
@@ -763,6 +770,24 @@ function assertOctoberStatus(views){
     assert.ok(policy.includes(phrase),`INVARIANT October risk boundary ${phrase}`);
   for(const phrase of ['B03','本人受容済み残余リスク','REQUIRED','BLOCKED','ツールは変えない'])
     assert.ok(overview.includes(phrase),`INVARIANT October overview risk ${phrase}`);
+  assert.deepEqual(JSON.parse(JSON.stringify(d.status.g3_gap_classification.categories)),{A:2,'A?':2,B:17,C:34},'INVARIANT 10/14 G3 counts');
+  assert.deepEqual(JSON.parse(JSON.stringify(d.status.g3_gap_classification.accepted_by_user)),['B03','B09e'],'INVARIANT only B03 and B09e accepted');
+  assert.deepEqual(JSON.parse(JSON.stringify(d.status.g3_gap_classification.a_question_items)),['R4f','B09c'],'INVARIANT A? items remain conditional');
+  const triage=d.status.b07.port.prestart_check.triage;
+  assert.equal(d.status.b07.port.prestart_check.result,'FAIL','INVARIANT seedAudit/prestart still FAIL');
+  assert.deepEqual(JSON.parse(JSON.stringify(triage.hit_counts_by_layout)),{Air_worktree_layout:593,clean_clone_empty_parent:47,Mac_mini_home_layout:159},'INVARIANT layout-dependent seedAudit hits');
+  assert.equal(triage.clean_clone_composition,'not found in files','INVARIANT clean-clone hit composition unknown');
+  assert.equal(triage.Mac_mini_permission_errors,true,'INVARIANT Mac mini permission errors retained');
+  assert.deepEqual(JSON.parse(JSON.stringify(d.status.main_merges.slice(0,4).map(x=>[x.pr,x.commit]))),[[71,'143e2ba'],[70,'61ab333'],[69,'53c8003'],[68,'08efedb']],'INVARIANT latest origin/main merges');
+  const designSource=d.sources.sources.find(x=>x.id==='src-auditor-design-oct14');
+  assert.ok(designSource?.path.endsWith('G3-AUDITOR-DESIGN-2026-10-14.md'),'INVARIANT auditor design source');
+  for(const id of ['dec-oct14-policy','dec-oct14-b09e','dec-oct14-aquestion']){
+    const item=d.decisions.items.find(x=>x.id===id);
+    assert.equal(item?.status,'decided',`INVARIANT 10/14 decision ${id}`);
+    assert.equal(item.owner,'human',`INVARIANT 10/14 decision owner ${id}`);
+    assert.ok(item.sources.includes('src-decisions-oct14'),`INVARIANT 10/14 decision source ${id}`);
+    assertVisibleFields(views.decisions,item,['title','note']);
+  }
   assert.match(policy,/1日/,'INVARIANT October bounded investigation');
   assert.match(policy,/\$0/,'INVARIANT October no billing approval');
   assert.ok(overview.includes('合格済みではなく、提出準備も未完了'),'INVARIANT October candidate is conditional');
@@ -795,11 +820,11 @@ function assertOctoberStatus(views){
   for(const phrase of ['オフラインchecker','実観測は未実施','10/12','Ollama鍵','結果未共有','G3証拠は0件'])
     assert.ok(overview.includes(phrase),`INVARIANT req25 overview ${phrase}`);
   for(const n of [57,58,59,60,61])assert.ok(resultView.includes(`PR #${n}`),`INVARIANT 10/11 merged PR ${n}`);
-  const claims=JSON.stringify([d.status.headline,d.status.subhead,d.status.changes,d.status.next_steps,d.status.priority,d.status.req25,d.ui.copy]);
-  assert.doesNotMatch(claims,/実観測(?:は|を)?(?:完了|済み)|live observation (?:done|complete)|G3 ?(?:は)?PASS|G3証拠あり|verdict[^"]*PASS|B03[^"。]*(?:PASS済|解消済|closed済)|干渉なし|同等(?:性)?(?:を|が)?(?:確認|成立)|残り?\s*\d+(?:\.\d+)?\s*h/i,'INVARIANT req25 no false completion claims');
+  const claims=JSON.stringify([d.status.headline,d.status.subhead,d.status.changes,d.status.next_steps,d.status.priority,d.status.req25,d.status.summary_lines,d.ui.copy]);
+  assert.doesNotMatch(claims,/実観測(?:は|を)?(?:完了|済み)|live observation (?:done|complete)|G3 ?(?:は)?PASS|G3証拠あり|verdict[^"]*PASS|B03[^"。]*(?:PASS済|解消済|closed済)|slice\s*1[^"]*(?:merged|完了)|干渉なし|同等(?:性)?(?:を|が)?(?:確認|成立)|残り?\s*\d+(?:\.\d+)?\s*h/i,'INVARIANT req25 no false completion claims');
   // 2026-10-11 PR #63: B07 offline audit + unregistered r3 manifest DRAFT. B07 stays BLOCKED.
   const b7=d.status.b07;
-  assert.equal(b7.state,'tools-ported-lock-reregistered-blocked','INVARIANT B07 state after port');
+  assert.equal(b7.state,'eval-area-created-view-built-blocked','INVARIANT B07 latest eval area state');
   assert.equal(b7.b07_status,'BLOCKED','INVARIANT B07 blocked');
   assert.equal(b7.closed,false,'INVARIANT B07 not closed');
   assert.deepEqual([b7.pr,b7.merge_commit],[63,'68102ef'],'INVARIANT B07 audit merge');
@@ -812,18 +837,14 @@ function assertOctoberStatus(views){
   assert.equal(b7.check_py_scope,'synthetic-only','INVARIANT B07 check.py synthetic only');
   assert.equal(b7.check_py_run_on_draft,false,'INVARIANT B07 check.py not run on draft');
   assert.equal(b7.g3_evidence,false,'INVARIANT B07 audit not G3 evidence');
-  assert.deepEqual(JSON.parse(JSON.stringify(b7.undecided_fields.map(f=>f.field))),['r3実行source（commit・path）','必須ファイル集合','評価領域の作成','make-view・chainの実行','state dump','ZIP・観測器・CLIの束縛'],'INVARIANT B07 undecided fields');
+  assert.deepEqual(JSON.parse(JSON.stringify(b7.undecided_fields.map(f=>f.field))),['必須ファイル集合のレビュー','chain実走','state dump','ZIP・観測器・CLIの束縛'],'INVARIANT B07 remaining fields');
   for(const f of b7.undecided_fields)assert.ok(f.reason,`INVARIANT B07 null reason ${f.field}`);
   assert.equal(d.progress.items.find(x=>x.id==='progress-b07-offline-audit').state,'blocked','INVARIANT B07 progress blocked');
   assert.equal(d.blockers.items.find(x=>x.id==='B01').status,'open','INVARIANT G3 blocker open');
   assert.ok(resultView.includes('PR #62')&&resultView.includes('PR #63'),'INVARIANT 10/11 merged PR 62/63');
-  for(const phrase of ['B07はBLOCKEDのまま','登録済みmanifestではない','意図的に実行していない','本人レビュー','Anvil','Docker','~/Developer/ascon-g3-eval/','未作成','自動延長しない','本人の判断'])
+  for(const phrase of ['B07は未完了','G3はREQUIRED / BLOCKED','lock差分をレビュー','~/Developer/ascon-g3-eval/','1573 files','make-view'])
     assert.ok(overview.includes(phrase),`INVARIANT B07 overview ${phrase}`);
-  const userSteps=d.status.next_steps.filter(s=>/USER · 本人のみ/.test(s.label)).map(s=>s.title);
-  // 2026-10-12: eval path decided by the user (decision 9); user-only items are dec-007 result and live-observation continuation.
-  assert.equal(userSteps.length,2,'INVARIANT two user-only next steps');
-  for(const re of [/Ollama/,/10\/12以降の実観測を続けるか/])
-    assert.ok(userSteps.some(t=>re.test(t)),`INVARIANT user-only step ${re}`);
+  assert.equal(d.status.human_action,'本人：lock再登録後の差分レビュー（merge前）','INVARIANT only recorded human action');
   const b7claims=JSON.stringify([d.status.headline,d.status.subhead,d.status.last_update,d.status.changes,d.status.next_steps,d.status.priority,d.status.b07,d.blockers.items.find(x=>x.id==='B01'),d.progress.items.find(x=>x.id==='progress-b07-offline-audit')]);
   // 2026-10-12 PRs #64-#66: 9 of 13 chain tools ported, lock re-registered (user-reviewed), eval path decided but not created.
   const pt=b7.port;
@@ -840,8 +861,13 @@ function assertOctoberStatus(views){
   assert.equal(pt.user_lock_diff_approval.date,'2026-10-12','INVARIANT B07 user lock approval');
   assert.equal(pt.eval_path,'~/Developer/ascon-g3-eval/','INVARIANT B07 eval path');
   assert.equal(pt.eval_path_decided,true,'INVARIANT B07 eval path decided by user');
-  for(const key of ['eval_dir_created','chain_run_in_eval','make_view_run','source_commit_fixed'])
-    assert.equal(pt[key],false,`INVARIANT B07 not done ${key}`);
+  assert.equal(pt.eval_dir_created,true,'INVARIANT B07 eval area created');
+  assert.equal(pt.make_view_run,true,'INVARIANT B07 make-view completed');
+  assert.equal(pt.source_commit_fixed,true,'INVARIANT B07 source commit pinned');
+  assert.equal(pt.chain_run_in_eval,false,'INVARIANT B07 chain not run');
+  assert.deepEqual([b7.source_commit,b7.eval_area.view_files],["08efedb5d9b04a843a9480a7840a6140bd5d2ea5",1573],'INVARIANT B07 pinned source and view count');
+  assert.equal(b7.eval_area.manifest_head_matches_commit,true,'INVARIANT B07 manifest head');
+  assert.equal(b7.eval_area.candidate_tree_hash_matches_view_source_lock,true,'INVARIANT B07 candidate tree hash matches');
   assert.equal(pt.prestart_check.result,'FAIL','INVARIANT prestart FAIL');
   assert.deepEqual(JSON.parse(JSON.stringify(pt.prestart_check.failing)),['seedAudit','completeness'],'INVARIANT prestart failing checks');
   assert.equal(pt.prestart_check.same_failures_on_main_before_pr66,true,'INVARIANT prestart failures predate PR 66');
@@ -852,13 +878,21 @@ function assertOctoberStatus(views){
     assert.equal(item.owner,'human',`INVARIANT B07 decision owner ${id}`);
     assertVisibleFields(views.decisions,item,['title','note']);
   }
-  const b7step=d.status.next_steps.find(x=>/B07の残り作業/.test(x.title));
-  assert.ok(b7step&&b7step.state==='blocked'&&/本人の許可後/.test(b7step.label),'INVARIANT B07 remaining work blocked and gated on user permission');
+  assert.equal(d.decisions.items.find(x=>x.id==='dec-oct12-b07-eval-path')?.status,'decided','INVARIANT B07 eval path decision retained');
+  assert.equal(d.progress.items.find(x=>x.id==='progress-b07-eval-area-oct14').state,'done','INVARIANT eval area prep recorded');
+  assert.equal(d.progress.items.find(x=>x.id==='progress-revision-audit-v0-slice1').state,'running','INVARIANT slice 1 remains in progress');
+  assert.equal(d.queue.items.find(x=>x.id==='queue-revision-audit-v0-slice1').active,true,'INVARIANT slice 1 current');
+  assert.equal(d.queue.items.find(x=>x.id==='queue-revision-audit-v0-slice1').owner,'Codex','INVARIANT Codex owns slice 1');
+  assert.match(d.status.next_steps[0].label,/lock差分レビュー後にmerge/,'INVARIANT lock review before merge');
+  assert.match(d.status.next_steps[0].text,/進捗の記録はfiles内でnot found in files/,'INVARIANT implementation progress provenance');
+  assert.equal(d.status.next_steps[1].state,'running','INVARIANT worker recorder consult in progress');
+  assert.match(d.status.next_steps[1].text,/not found in files/,'INVARIANT worker consult provenance');
   assert.equal(r.deadline_reached,true,'INVARIANT req25 deadline reached');
-  assert.equal(r.continuation_decision,'open-user','INVARIANT req25 continuation is an open user decision');
+  assert.equal(r.continuation_decision,'not-recorded','INVARIANT no separate live continuation decision recorded');
+  assert.equal(r.policy_as_of,'2026-10-14','INVARIANT 10/14 engineerable-work policy');
   for(const n of [64,65,66])assert.ok(resultView.includes(`PR #${n}`),`INVARIANT merged PR ${n}`);
-  const oct12=JSON.stringify([d.status.headline,d.status.subhead,d.status.last_update,d.status.changes,d.status.next_steps,d.status.priority,d.status.req25.deadline_note,d.status.b07.note,d.status.b07.undecided_fields,pt.findings,pt.prestart_check.note,d.blockers.items.find(x=>x.id==='B01'),d.progress.items.find(x=>x.id==='progress-b07-offline-audit')]);
-  assert.doesNotMatch(oct12,/prestart[^"。]*(?:PASS|合格)|(?:評価領域|eval)[^"。]*(?:作成済|作成した|created)|ascon-g3-eval[^"。]*(?:で|に)(?:chain|make-view)[^"。]*(?:実行済|実行した)|実観測[^"。]*(?:自動(?:で)?継続|自動延長(?:した|済))|期限[^"。]*延長(?:した|済)/i,'INVARIANT 10/12 no false prestart/eval/live-continuation claims');
+  const oct14=JSON.stringify([d.status.headline,d.status.subhead,d.status.last_update,d.status.changes,d.status.next_steps,d.status.priority,d.status.req25,d.status.b07,d.status.summary_lines,pt.findings,pt.prestart_check.note,d.blockers.items.find(x=>x.id==='B01'),d.progress.items.find(x=>x.id==='progress-b07-offline-audit')]);
+  assert.doesNotMatch(oct14,/prestart[^"。]*(?:PASS|合格)|ascon-g3-eval[^"。]*(?:で|に)chain[^"。]*(?:実行済|実行した)|実観測[^"。]*(?:自動(?:で)?継続|自動延長(?:した|済))|期限[^"。]*延長(?:した|済)|B07[^"。]*(?:閉じた|closed済)|G3[^"。]*PASS|残り\s*\d+(?:\.\d+)?\s*h/i,'INVARIANT 10/14 no false completion or time claims');
   assert.doesNotMatch(b7claims,/B07(?:は|を)?(?:閉じた|解消済|解消した|closed|PASS)|(?:DRAFT|manifest)(?:は|を)?登録済み(?!manifestでは)|registered manifest(?! ?is not)|check\.py[^"。]*(?:実manifest|実入力)[^"。]*(?:検証済|合格|PASS|OK)|check\.py validated/i,'INVARIANT B07 no false closure claims');
 }
 check('October status separates completed timing, conditional work and blocked gates',()=>{
@@ -945,18 +979,21 @@ check('October red controls reject false gate, budget and interference completio
     ['undecided field dropped',d=>{d.status.b07.undecided_fields.pop();}],
     ['null reason erased',d=>{d.status.b07.undecided_fields[0].reason='';}],
     ['B07 progress done',d=>{d.progress.items.find(x=>x.id==='progress-b07-offline-audit').state='done';}],
-    ['B07 remaining work self-authorized',d=>{d.status.next_steps[2].label='Claude / 自動';}],
+    ['slice 1 merge gate removed',d=>{d.status.next_steps[0].label='Codex / merge ready';}],
+    ['live observation falsely complete',d=>{d.status.changes.items.push('実観測は完了');}],
+    ['slice 1 falsely merged',d=>{d.status.changes.items.push('slice 1 merged');}],
     ['G3 blocker closed',d=>{d.blockers.items.find(x=>x.id==='B01').status='resolved';}],
     ['B07 closed after port',d=>{d.status.changes.items.push('B07はclosed');}],
+    ['B07 falsely closed in summary',d=>{d.status.summary_lines[1].text='B07はclosed。G3 PASS。';}],
     ['prestart PASS flag',d=>{d.status.b07.port.prestart_check.result='PASS';}],
     ['prestart PASS in text',d=>{d.status.changes.items.push('prestart-check.pyはPASS');}],
     ['prestart failure blamed on PR 66',d=>{d.status.b07.port.prestart_check.same_failures_on_main_before_pr66=false;}],
-    ['eval dir created flag',d=>{d.status.b07.port.eval_dir_created=true;}],
-    ['eval dir created in text',d=>{d.status.changes.items.push('評価領域 ~/Developer/ascon-g3-eval/ を作成済み');}],
+    ['eval area creation erased',d=>{d.status.b07.port.eval_dir_created=false;}],
+    ['B07 close claim in text',d=>{d.status.changes.items.push('B07はclosed');}],
     ['chain run in eval flag',d=>{d.status.b07.port.chain_run_in_eval=true;}],
     ['chain run in eval text',d=>{d.status.changes.items.push('ascon-g3-evalでchainを実行済み');}],
-    ['make-view run',d=>{d.status.b07.port.make_view_run=true;}],
-    ['source commit fixed',d=>{d.status.b07.port.source_commit_fixed=true;}],
+    ['make-view run erased',d=>{d.status.b07.port.make_view_run=false;}],
+    ['source commit pin erased',d=>{d.status.b07.port.source_commit_fixed=false;}],
     ['eval path undecided again',d=>{d.status.b07.port.eval_path_decided=false;}],
     ['input defaults restored',d=>{d.status.b07.port.input_defaults=true;}],
     ['tmp base accepted',d=>{d.status.b07.port.tmp_base_rejected=false;}],
@@ -968,8 +1005,11 @@ check('October red controls reject false gate, budget and interference completio
     ['deadline auto-extended in text',d=>{d.status.last_update+=' 期限を延長した';}],
     ['continuation decided by agent',d=>{d.status.req25.continuation_decision='continue';}],
     ['deadline not reached',d=>{d.status.req25.deadline_reached=false;}],
-    ['continuation step delegated',d=>{d.status.next_steps[1].label='Codex / 自動';}],
-    ['decision 9 deleted',d=>{d.decisions.items=d.decisions.items.filter(x=>x.id!=='dec-oct12-b07-eval-path');}]
+    ['worker consult falsely resolved',d=>{d.status.next_steps[1].state='done';}],
+    ['decision 9 deleted',d=>{d.decisions.items=d.decisions.items.filter(x=>x.id!=='dec-oct12-b07-eval-path');}],
+    ['10/14 acceptance policy removed',d=>{d.decisions.items=d.decisions.items.filter(x=>x.id!=='dec-oct14-b09e');}],
+    ['10/14 gap counts altered',d=>{d.status.g3_gap_classification.categories.B=18;}],
+    ['seedAudit clean-clone composition invented',d=>{d.status.b07.port.prestart_check.triage.clean_clone_composition='verified';}]
   ])rejectMutation(label,mutate,assertOctoberStatus);
 });
 console.log(`PASS dashboard UI: ${count} checks; ${app.D.ui.pages.length} page renderers + qualification view; search/filter/navigation/tooltips/escaping`);
