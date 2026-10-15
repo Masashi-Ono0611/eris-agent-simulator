@@ -12,13 +12,23 @@ python3 infra/submission/scan-submission.py <agent.zip|dir> [--json]
 
 Checks: zip-bomb (compression ratio, declared size, file count, path traversal), native/binary blobs,
 oversized files; source red flags in .ts/.js — child_process/exec, eval/Function/vm, raw sockets
-(net/dns/tls), fs writes, chain cheatcodes (anvil_/evm_setBalance/setStorageAt), outbound HTTP/WS
-(WARN — confirm it targets the allowed RPC/LLM), process.env reads (WARN); package.json install
+(net/dns/tls), chain cheatcodes (anvil_/evm_setBalance/setStorageAt), fs writes (WARN — confirm the
+target; reads are not a finding), outbound HTTP/WS (WARN — confirm it targets the allowed RPC/LLM),
+process.env reads (WARN); package.json install
 lifecycle hooks (supply-chain) and non-registry deps; hardcoded secrets and crypto-miner signatures.
 
 Calibration: all 24 `example/agents/*` accept (0 BLOCK); a sample agent using child_process + fetch +
-fs writes + a cheatcode + a postinstall hook is rejected (4 BLOCK). Not a sandbox and not exhaustive —
+a cheatcode + a postinstall hook is rejected (3 BLOCK; its fs writes are a WARN). Not a sandbox and not exhaustive —
 the runtime container is the real boundary; this rejects the obvious stuff early.
+
+### Files: reads pass, writes are a WARN
+
+Rules §4.7.1 gives each agent a persistent directory (`ERIS_AGENT_STATE_DIR`) and leaves what goes
+in it to the participant. Reading back what the reference runtime saved there (`versions.json`, the
+model's `memory`) needs `node:fs`, and the rule used to match the import itself — a read-only use was
+a BLOCK labelled "filesystem writes". Now reading is not a finding, and writing is a **WARN**: the
+same section allows it, and the container bounds it (read-only rootfs, a 512 MiB `/tmp`, the state
+quota the coordinator measures). The operator checks that the target is one of those two.
 
 ### What the cheatcode rule cannot see (issue #216)
 
