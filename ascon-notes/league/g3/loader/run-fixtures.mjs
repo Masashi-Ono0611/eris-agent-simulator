@@ -103,6 +103,14 @@ if (mode === 'double') {
   await runner.close();
   probe?.finishProbe();
   process.stdout.write(JSON.stringify({ events, counts: globalThis[Symbol.for('g3.test.witness')] }) + '\n');
+} else if (mode === 'multi-submit') {
+  runner.setSource(executor(`ctx.submit({type:"noop",reason:"first"});
+    ctx.submit({type:"noop",reason:"second"}); return {type:"noop",reason:"done"};`, 1));
+  await runner.start();
+  await decide();
+  await runner.close();
+  probe?.finishProbe();
+  process.stdout.write(JSON.stringify({ events, counts: globalThis[Symbol.for('g3.test.witness')] }) + '\n');
 } else {
   assert.throws(() => fetch('https://g3-must-never-resolve.invalid'), { code: 'G3_OFFLINE_NETWORK' });
   assert.throws(() => spawn('g3-must-never-execute'), { code: 'G3_OFFLINE_CHILD' });

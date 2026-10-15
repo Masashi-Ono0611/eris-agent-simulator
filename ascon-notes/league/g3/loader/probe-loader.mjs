@@ -6,6 +6,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { makeWriter, probeError } from './probe-io.mjs';
 import { probeToolchain } from './probe-toolchain.mjs';
+import { hashActionIdentity } from './worker-action-identity.mjs';
 
 const registration = Symbol.for('g3.offline.probe.registration');
 if (globalThis[registration]) throw probeError('G3_DOUBLE_REGISTRATION');
@@ -113,6 +114,7 @@ if (!isMainThread) {
       generations.push(generation);
       write('worker_create', fields);
       const decisions = new Map();
+      const submitOrdinals = new Map();
       const post = this.postMessage;
       this.postMessage = function (...args) {
         healthy();
@@ -127,9 +129,15 @@ if (!isMainThread) {
       this.on('message', message => {
         verifyAttachment(generation);
         const type = ['ready', 'result', 'submit', 'log', 'error'].includes(message.type) ? message.type : 'unknown';
-        write(`worker_${type}`, { ...fields,
-          ...(type === 'ready' ? {} : { workerDecisionId: message.id, decisionId: decisions.get(message.id) ?? null }),
-        });
+        const identity = type === 'ready' ? {} : {
+          workerDecisionId: message.id, decisionId: decisions.get(message.id) ?? null,
+        };
+        if (type === 'submit') {
+          const submitOrdinal = (submitOrdinals.get(message.id) ?? 0) + 1;
+          submitOrdinals.set(message.id, submitOrdinal);
+          write('worker_submit', { ...fields, ...identity, submitOrdinal,
+            actionSha256: hashActionIdentity(message.action) });
+        } else write(`worker_${type}`, { ...fields, ...identity });
       });
       this.on('error', () => { write('worker_error_event', fields); });
       this.on('exit', code => {

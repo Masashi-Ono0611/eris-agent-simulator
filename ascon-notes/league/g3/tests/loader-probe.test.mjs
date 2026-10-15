@@ -7,6 +7,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { auditRecords } from '../loader/audit-records.mjs';
+import { hashActionIdentity } from '../loader/worker-action-identity.mjs';
 
 const loaderDir = fileURLToPath(new URL('../loader/', import.meta.url));
 const root = fileURLToPath(new URL('../../../../', import.meta.url));
@@ -197,6 +198,39 @@ test('production probe also runs directly, without the independent witness', () 
   auditRecords(measured.records);
 });
 
+test('parent probe receipts bind the received submit action and per-decision ordinal', () => {
+  const measured = run(true, 'multi-submit');
+  assert.equal(measured.status, 0, measured.stderr);
+  const receipts = measured.records.filter(record => record.event === 'worker_submit');
+  assert.equal(receipts.length, 2);
+  assert.deepEqual(receipts.map(record => record.submitOrdinal), [1, 2]);
+  assert.equal(receipts[0].workerDecisionId, receipts[1].workerDecisionId);
+  assert.ok(receipts.every(record => Number.isSafeInteger(record.decisionId)));
+  assert.deepEqual(receipts.map(record => record.actionSha256), [
+    hashActionIdentity({ type: 'noop', reason: 'first' }),
+    hashActionIdentity({ type: 'noop', reason: 'second' }),
+  ]);
+  assert.ok(receipts.every(record => !('action' in record)), 'raw action data must not be recorded');
+});
+
+test('action identity fails closed when the bounded canonical form is incomplete', () => {
+  const longArray = Array.from({ length: 33 }, (_, index) => index);
+  const longObject = Object.fromEntries(Array.from({ length: 33 }, (_, index) => [`k${index}`, index]));
+  const deep = { a: { b: { c: { d: { e: 1 } } } } };
+  const circular = {};
+  circular.self = circular;
+  assert.equal(hashActionIdentity({ action: longArray }), null, 'arrays beyond the cap must not collide');
+  assert.equal(hashActionIdentity(longObject), null, 'objects beyond the cap must not collide');
+  assert.equal(hashActionIdentity(deep), null, 'depth-limited shapes must remain unidentifiable');
+  assert.equal(hashActionIdentity(circular), null, 'cyclic shapes must remain unidentifiable');
+  assert.equal(hashActionIdentity({ amount: Number.NaN }), null, 'noncanonical numbers must not hash as null');
+  assert.equal(hashActionIdentity({ amount: -0 }), null, 'negative zero must not hash as zero');
+  assert.equal(hashActionIdentity({ amount: 1n }), null, 'different BigInt values must not share a marker hash');
+  assert.equal(hashActionIdentity(new Map([['amount', 1]])), null, 'Map contents must not disappear');
+  assert.equal(hashActionIdentity(new Date(1)), null, 'Date values must not disappear');
+  assert.equal(hashActionIdentity(new Uint8Array([1, 2, 3])), null, 'typed-array values must not be silently capped');
+});
+
 test('source selection during an in-flight decision keeps old generation/version through its result', () => {
   const baseline = success(run(false, 'inflight'));
   const measured = run(true, 'inflight');
@@ -274,11 +308,11 @@ test('redaction: schema excludes env values, RPC credentials, wallet, source, ob
   const keys = new Set(['schema', 'seq', 'threadId', 'utc', 'monoNs', 'event', 'generation', 'runnerId',
     'kind', 'sourceSha256', 'version', 'versionOrigin', 'hashScope', 'decisionId', 'workerDecisionId',
     'code', 'node', 'tsx', 'toolchainOverride', 'runnerSha256', 'callId', 'beforeUtc', 'beforeNs', 'afterUtc', 'afterNs',
-    'outcome', 'generations', 'decisions', 'calls']);
+    'submitOrdinal', 'actionSha256', 'outcome', 'generations', 'decisions', 'calls']);
   for (const record of result.records) for (const key of Object.keys(record)) assert.ok(keys.has(key), `unexpected field: ${key}`);
 });
 
-test('all tracked protected stock bytes match git HEAD by SHA-256 (plus tracked files outside G3 unchanged)', t => {
+test('all tracked protected stock bytes match git HEAD by SHA-256 (only scoped recorder note may change outside G3)', t => {
   const roots = ['example/agents/runtime', 'sdk', 'lib', 'core', 'example/agents/lib'];
   const paths = execFileSync('git', ['ls-tree', '-r', '--name-only', '-z', 'HEAD', '--', ...roots], { cwd: root })
     .toString().split('\0').filter(Boolean);
@@ -286,6 +320,8 @@ test('all tracked protected stock bytes match git HEAD by SHA-256 (plus tracked 
   for (const path of paths) {
     assert.equal(sha(readFileSync(join(root, path))), sha(execFileSync('git', ['show', `HEAD:${path}`], { cwd: root })), path);
   }
-  assert.equal(execFileSync('git', ['diff', 'HEAD', '--name-only', '--', '.', ':(exclude)ascon-notes/league/g3/**'], { cwd: root, encoding: 'utf8' }), '');
+  const outsideG3Changes = execFileSync('git', ['diff', 'HEAD', '--name-only', '--', '.', ':(exclude)ascon-notes/league/g3/**'],
+    { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean);
+  assert.deepEqual(outsideG3Changes.filter(path => path !== 'ascon-notes/league/G3-WORKER-RECORDER-PROTO-2026-10-14.md'), []);
   t.diagnostic(`SHA-256 checked ${paths.length} tracked stock files; root lib/ ${existsSync(join(root, 'lib')) ? 'present' : 'absent; example/agents/lib/ included'}`);
 });

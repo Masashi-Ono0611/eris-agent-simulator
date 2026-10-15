@@ -66,6 +66,8 @@ test("fails on remaining process.env", () => {
 
 test("rewrites copied ascon-epsilon and embeds delta params without process.env", () => {
   const temp = mkdtempSync(join(tmpdir(), "ascon-release-epsilon-"));
+  // Match the repository ESM package scope; the fixture lives outside the checkout.
+  writeFileSync(join(temp, "package.json"), JSON.stringify({ type: "module" }) + "\n");
   const agents = join(temp, "example/agents"); mkdirSync(agents, { recursive: true });
   cpSync(join(root, "example/agents/ascon-epsilon"), join(agents, "source"), { recursive: true });
   cpSync(join(root, "example/agents/lib"), join(agents, "lib"), { recursive: true });
