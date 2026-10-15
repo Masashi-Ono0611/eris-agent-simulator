@@ -41,8 +41,19 @@ CODE_RULES = [
      "raw network sockets / DNS (egress beyond the RPC)"),
     ("WARN", r"\bfetch\s*\(|require\(\s*['\"]https?['\"]|node:https?|\baxios\b|node-fetch|\bundici\b|new\s+WebSocket|require\(\s*['\"]ws['\"]",
      "outbound HTTP/WebSocket (external LLM/oracle/exfiltration -- confirm target is the allowed RPC/LLM)"),
-    ("BLOCK", r"require\(\s*['\"]fs['\"]|node:fs|writeFileSync|createWriteStream|fs\.write|mkdirSync|rmSync|unlinkSync",
-     "filesystem writes (disk-fill / tampering)"),
+    # Reading files is not a finding: rules §4.7.1 gives each agent a persistent directory
+    # (ERIS_AGENT_STATE_DIR) and leaves what goes in it to the participant, and an agent that reads
+    # back what the reference runtime saved there (versions.json, the model's memory) needs `fs` to
+    # do it. This rule used to match the import itself, so a read-only use was a BLOCK labelled
+    # "filesystem writes". Writing is not forbidden either -- the same section allows it -- and the
+    # container is what bounds it (read-only rootfs, a size-capped /tmp, the state quota measured by
+    # the coordinator), so a write is a WARN for the operator to check the target, not a BLOCK.
+    # Generic names (rm, cp, open, ...) count only on an fs-like receiver or in an import from fs,
+    # because `link(` or `.write(` alone is ordinary code.
+    ("WARN", r"\b(writeFile|writeFileSync|appendFile|appendFileSync|createWriteStream|writeSync|writev|writevSync|mkdir|mkdirSync|mkdtemp|mkdtempSync|rmSync|rmdir|rmdirSync|unlink|unlinkSync|renameSync|truncate|truncateSync|ftruncate|ftruncateSync|copyFile|copyFileSync|cpSync|symlink|symlinkSync|linkSync|chmod|chmodSync|chown|chownSync|utimes|utimesSync)\s*\("
+     r"|\b\w*(fs|Fs|FS|promises)\w*\s*\.\s*(rm|cp|link|rename|write|open)\s*\("
+     r"|import\s*\{[^}]*\b(rm|cp|link|rename|write|open)\b[^}]*\}\s*from\s*['\"](node:)?fs(/promises)?['\"]",
+     "writes files (permitted in ERIS_AGENT_STATE_DIR and /tmp, rules §4.7.1; the rootfs is read-only) -- confirm the target and that it stays within the state quota"),
     ("BLOCK", r"anvil_[a-zA-Z]+|hardhat_[a-zA-Z]+|evm_(setBalance|snapshot|revert|mine|setAccountStorage)|setStorageAt|impersonateAccount|setBalance",
      "chain cheatcode / privileged RPC (only valid on the dev chain; forbidden)"),
     # Issue #216 (5): the rule above is a line-level regex, and a method name assembled at runtime
