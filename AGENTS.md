@@ -27,3 +27,9 @@
 
 ## 完了条件
 変更は `npm run typecheck` と関連テストが通ってから報告する。Docker / 外部ネットワークが要る検証を実行できなかった場合は「未検証」と明記する。
+
+## Pregate と G3 Stage2 の参照資料
+
+- Pregate の選択・実行条件: [ascon-notes/pregate.md](ascon-notes/pregate.md)
+- Stage2 guard prototype の仕様と限界: [ascon-notes/league/g3/stage2/README.md](ascon-notes/league/g3/stage2/README.md)
+- G3 Stage2 の現在の停止状態と計画資料: [ascon-notes/league/G3-STAGE2-RUNBOOK-2026-10-14.md](ascon-notes/league/G3-STAGE2-RUNBOOK-2026-10-14.md)

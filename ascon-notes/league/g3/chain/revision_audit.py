@@ -21,7 +21,10 @@ BASE = Path(__file__).resolve().parent
 EXIT = {'PASS': 0, 'FAIL': 1, 'BLOCKED': 2}
 # Source path, source commit and eval base are REQUIRED explicit inputs (same names as
 # chain.py). No default and no fallback to an earlier round's worktree or commit.
-TEMP_ROOTS = ('/tmp', '/var/tmp')
+TEMP_ROOTS = ('/tmp', '/var/tmp', '/private/tmp', '/private/var/tmp')
+
+def under_temp_root(path):
+    return any(path.is_relative_to(r) or path.resolve().is_relative_to(Path(r).resolve()) for r in TEMP_ROOTS)
 
 def explicit_inputs(environ=os.environ):
     """Return (source, commit) or raise ValueError naming the missing/invalid input."""
@@ -30,7 +33,7 @@ def explicit_inputs(environ=os.environ):
         if not value: raise ValueError(name + ' missing or empty; explicit value required (no default)')
         path = Path(value)
         if not path.is_absolute(): raise ValueError(name + ' must be an absolute path')
-        if any(path.is_relative_to(r) or path.resolve().is_relative_to(Path(r).resolve()) for r in TEMP_ROOTS):
+        if under_temp_root(path):
             raise ValueError(name + ' must not be under /tmp or /var/tmp')
         if not path.is_dir(): raise ValueError(name + ' does not exist or is not a directory')
         return path

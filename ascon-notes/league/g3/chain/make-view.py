@@ -2,7 +2,9 @@ import hashlib, io, json, os, re, subprocess, sys, tarfile
 from pathlib import Path
 # Source path, source commit and eval base are REQUIRED explicit inputs (same names as
 # chain.py). No default; no fallback to any earlier round's worktree, commit or /tmp base.
-TEMP_ROOTS=('/tmp','/var/tmp')
+TEMP_ROOTS=('/tmp','/var/tmp','/private/tmp','/private/var/tmp')
+def under_temp_root(path):
+    return any(path.is_relative_to(root) or path.resolve().is_relative_to(Path(root).resolve()) for root in TEMP_ROOTS)
 def stop(message):
     print('BLOCKED: '+message,file=sys.stderr); sys.exit(2)
 def explicit_dir(name):
@@ -10,7 +12,7 @@ def explicit_dir(name):
     if not value: stop(name+' missing or empty; explicit value required (no default)')
     path=Path(value)
     if not path.is_absolute(): stop(name+' must be an absolute path')
-    if any(path.is_relative_to(root) or path.resolve().is_relative_to(Path(root).resolve()) for root in TEMP_ROOTS):
+    if under_temp_root(path):
         stop(name+' must not be under /tmp or /var/tmp')
     if not path.is_dir(): stop(name+' does not exist or is not a directory')
     return path

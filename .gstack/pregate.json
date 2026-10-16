@@ -1,0 +1,53 @@
+{
+  "$schema": "https://github.com/garrytan/gstack/docs/pregate.md#pregate-v1",
+  "runner": "PREGATE_TEST_TIMEOUT_SECONDS=1800 python3 scripts/pregate-runner.py {files}",
+  "dependencies": {
+    "AGENTS.md": [
+      "test/ascon-league.test.ts",
+      "ascon-notes/league/g3/stage2/test_stage2_guard.py"
+    ],
+    "scripts/pregate-runner.py": [
+      "test/pregate_runner_test.py",
+      "test/pregate_chain_test.py"
+    ],
+    "scripts/pregate-chain-tests.py": [
+      "test/pregate_chain_test.py"
+    ],
+    "test/pregate_chain_test.py": [
+      "test/pregate_chain_test.py"
+    ],
+    "ascon-notes/pregate.md": [
+      "test/pregate_runner_test.py",
+      "test/pregate_chain_test.py"
+    ],
+    "ascon-notes/league/g3/chain/**": [
+      "ascon-notes/league/g3/chain/test_chain.py",
+      "ascon-notes/league/g3/chain/test_revision_audit.py"
+    ],
+    "ascon-notes/league/g3/inputs.lock.json": [
+      "ascon-notes/league/g3/chain/test_chain.py",
+      "ascon-notes/league/g3/chain/test_revision_audit.py"
+    ],
+    "ascon-notes/league/g3/register-inputs.py": [
+      "ascon-notes/league/g3/chain/test_chain.py",
+      "ascon-notes/league/g3/chain/test_revision_audit.py"
+    ],
+    "ascon-notes/league/g3/stage2/stage2_guard.py": [
+      "ascon-notes/league/g3/stage2/test_stage2_guard.py"
+    ],
+    "ascon-notes/league/g3/stage2/test_stage2_guard.py": [
+      "ascon-notes/league/g3/stage2/test_stage2_guard.py"
+    ],
+    "ascon-notes/league/g3/stage2/README.md": [
+      "ascon-notes/league/g3/stage2/test_stage2_guard.py"
+    ],
+    "ascon-notes/league/G3-STAGE2-RUNBOOK-2026-10-14.md": [
+      "ascon-notes/league/g3/stage2/test_stage2_guard.py"
+    ]
+  },
+  "selection": {},
+  "warn": [],
+  "strays": {
+    "allow": []
+  }
+}

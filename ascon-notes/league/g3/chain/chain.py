@@ -32,7 +32,10 @@ INPUT_SOURCE='G3_CHAIN_SOURCE'
 INPUT_COMMIT='G3_CHAIN_SOURCE_COMMIT'
 INPUT_BASE='G3_CHAIN_BASE'
 INPUT_NAMES=(INPUT_SOURCE,INPUT_COMMIT,INPUT_BASE)
-TEMP_ROOTS=('/tmp','/var/tmp')
+TEMP_ROOTS=('/tmp','/var/tmp','/private/tmp','/private/var/tmp')
+
+def under_temp_root(path):
+    return any(path.is_relative_to(root) or path.resolve().is_relative_to(Path(root).resolve()) for root in TEMP_ROOTS)
 
 def explicit_dir(environ,name):
     value=environ.get(name)
@@ -40,7 +43,7 @@ def explicit_dir(environ,name):
     path=Path(value)
     if not path.is_absolute(): raise Stop('BLOCKED: '+name+' must be an absolute path')
     # macOS /tmp resolves to /private/tmp; check both the given and the resolved path.
-    if any(path.is_relative_to(root) or path.resolve().is_relative_to(Path(root).resolve()) for root in TEMP_ROOTS):
+    if under_temp_root(path):
         raise Stop('BLOCKED: '+name+' must not be under /tmp or /var/tmp')
     if not path.is_dir(): raise Stop('BLOCKED: '+name+' does not exist or is not a directory')
     return path
@@ -70,7 +73,8 @@ TOOL_ROOT=BASE
 # Refresh only after reviewing changed tool bytes; never derive expected hashes at run time.
 TOOL_MANIFEST={
     'gates.py':'0acab461951dbd7b5f9d55c37244b127b7a09ec8a33367f047f28d8b73ac8c3b',
-    'revision_audit.py':'62b6620d99b574f193460e2ee6462d7ad5808892bf16ff9cf6086df9aba8bdcf',
+    'revision_audit.py':'a07ee7b00a2346b5614360cb1fc434babfdcb51fde5257e7893a20c621f9e056',
+    'revision_replay.mjs':'da9caa262d84c72fc84bb764d0d99a87620d3d7abbe4e3e8e6af929c3e4456e0',
 }
 VIEW=BASE/'source-view'
 EVAL=BASE/'eval'
@@ -278,8 +282,8 @@ def ledger_path():
     if not home or not Path(home).is_absolute():
         raise Stop('BLOCKED: absolute HOME required for persistent budget ledger')
     path=Path(home)/'.ascon-g3'/'budget-ledger.json'
-    # macOS /tmp resolves to /private/tmp; neither is a persistent ledger location.
-    if any(path.resolve().is_relative_to(Path(root).resolve()) for root in ('/tmp','/var/tmp')):
+    # Literal and resolved macOS temp aliases are never persistent ledger locations.
+    if under_temp_root(path):
         raise Stop('BLOCKED: budget ledger must live outside temporary storage')
     return path
 

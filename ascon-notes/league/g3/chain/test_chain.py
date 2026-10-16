@@ -179,7 +179,7 @@ class BudgetLedger(NeedsChain):
 
 class ToolManifest(RepositoryTools):
     def test_recorded_manifest_matches(self):
-        self.assertEqual(set(chain.TOOL_MANIFEST),{'gates.py','revision_audit.py'})
+        self.assertEqual(set(chain.TOOL_MANIFEST),{'gates.py','revision_audit.py','revision_replay.mjs'})
         chain.tool_check()
 
     def test_recorded_manifest_equals_recomputed_bytes(self):
@@ -226,6 +226,8 @@ class ToolManifest(RepositoryTools):
             self.assertEqual(chain.ledger_path(),Path('/Users/g3-ledger-test/.ascon-g3/budget-ledger.json'))
         with patch.dict(os.environ,{'HOME':'/tmp/g3-ledger-test/fake-home'}),self.assertRaisesRegex(chain.Stop,'BLOCKED'):
             chain.ledger_path()
+        with patch.dict(os.environ,{'HOME':'/private/var/tmp/g3-ledger-test/fake-home'}),self.assertRaisesRegex(chain.Stop,'BLOCKED'):
+            chain.ledger_path()
 
 R2_COMMIT='ec80bb89df22e4899695a4cf2ba131382e130481'
 NAMES=('G3_CHAIN_SOURCE','G3_CHAIN_SOURCE_COMMIT','G3_CHAIN_BASE')
@@ -266,6 +268,7 @@ class ExplicitInputs(unittest.TestCase):
         for name in ('G3_CHAIN_SOURCE','G3_CHAIN_BASE'):
             out += [(name,None,'missing or empty'),(name,'','missing or empty'),(name,'relative/dir','absolute path'),
                     (name,'/tmp','under /tmp'),(name,'/private/tmp','under /tmp'),(name,'/var/tmp','under /tmp'),
+                    (name,'/private/var/tmp','under /tmp'),
                     (name,absent,'does not exist')]
         out.append(('G3_CHAIN_BASE','/tmp/g3-chain','under /tmp'))  # the old r2 base is not accepted
         out += [('G3_CHAIN_SOURCE_COMMIT',None,'missing or empty'),('G3_CHAIN_SOURCE_COMMIT','','missing or empty'),

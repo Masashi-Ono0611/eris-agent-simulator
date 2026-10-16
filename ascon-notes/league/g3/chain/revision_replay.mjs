@@ -1,11 +1,18 @@
 // Non-sending replay. The worker uses stock compileExecutor; the parent owns the 5s deadline.
 import {Worker, isMainThread, parentPort, workerData} from 'node:worker_threads';
 import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
 import {pathToFileURL} from 'node:url';
 import {performance} from 'node:perf_hooks';
 const root = isMainThread ? process.argv[2] : workerData.root;
 const url = p => pathToFileURL(`${root}/${p}`).href;
 globalThis.fetch = async () => { throw Error('offline network prohibited'); };
+if(!isMainThread){
+  const requireFromRoot=createRequire(`${root}/package.json`);
+  const tsxApi=pathToFileURL(requireFromRoot.resolve('tsx/esm/api')).href;
+  const {register}=await import(tsxApi);
+  register();
+}
 const {parseRevision, compileExecutor} = await import(url('example/agents/runtime/improve.ts'));
 const {auditAction} = await import(url('ascon-notes/league/g3/harness.mjs'));
 const {agentActionSchemaFor} = await import(url('sdk/src/actionSchema.ts'));
