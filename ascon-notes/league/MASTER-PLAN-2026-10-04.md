@@ -1,5 +1,7 @@
 # ASCON master plan — 2026-10-04 — revision 14
 
+> **Current external-assumption update (2026-10-17):** use [PLAN-UPDATE-2026-10-17.md](PLAN-UPDATE-2026-10-17.md) for the Oct 6 practice rebuild, new scoring/economic assumptions, rule-version effective dates, and safety scope. Older balanced-regime/equal-weight and score assumptions are historical where the dated rules changed them. This pointer leaves historical measurements intact; it does not authorize a run or change Stage2/G3 gates.
+
 <!-- q-zeta-02-registration:start -->
 ## 2026-10-06 追記 — Q-ZETA-02 registered-pending-start
 
