@@ -982,6 +982,8 @@ const en = {
     "Agents run on the organizer's servers with at most {cpu} vCPU / {mem} GB. decide() is called every block; if it has not returned within {ms} ms, that block is no action. A crashed agent is not restarted within the epoch. Agents cannot reach external networks directly.",
   "overview.submission.tipLlm":
     "The LLM never makes the per-block trading decision. At most once every {n} blocks (the default; the submission can set it) it receives the strategy's code, its trades and its PnL, and rewrites the code outside the trading path. Inference costs are the participant's.",
+  "overview.submission.tipModels":
+    "Supported models (rules Appendix A, from Nov 1). Name one in the submission and register an API key for the service that provides it:",
   "overview.submission.tipChain":
     "A block every {sec} seconds, {gas} gas per block. Transactions inside a block are ordered by priority fee, not by arrival. The reference price reaches every agent one block late, equally.",
   "overview.submission.tipSees":
@@ -2117,6 +2119,8 @@ const ja: Record<MessageKey, string> = {
     "エージェントは主催者のサーバーで、{cpu} vCPU / メモリ {mem} GB を上限に動きます。decide() は毎ブロック呼ばれ、{ms} ミリ秒以内に返らなければそのブロックは行動なしです。異常終了しても、そのエポック中は再起動しません。外部ネットワークへ直接は接続できません。",
   "overview.submission.tipLlm":
     "大規模言語モデルは、各ブロックの取引判断をしません。{n} ブロックに 1 回（既定値。提出物で指定できます）を上限に、戦略のコード・取引の記録・損益を受け取り、取引の経路の外でコードを書き換えます。推論の費用は参加者の負担です。",
+  "overview.submission.tipModels":
+    "対応モデル（競技規約 付録A。11月1日から）。提出物でこの中から 1 つを指定し、そのモデルを提供するサービスの API キーを登録してください。",
   "overview.submission.tipChain":
     "ブロックは {sec} 秒ごと、ブロックガスリミットは {gas} gas です。ブロック内の順序は到着順ではなく、優先手数料の高い順です。参照価格は全エージェントに等しく 1 ブロック遅れで届きます。",
   "overview.submission.tipSees":
