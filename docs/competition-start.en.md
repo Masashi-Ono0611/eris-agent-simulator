@@ -707,7 +707,7 @@ agents:
 | `codex` / `codex:<model>` | spawns `codex exec` | ChatGPT subscription (`codex login`) |
 | `claude-cli` / `claude-cli:<model>` | spawns `claude -p` | Claude subscription |
 | `claude…` (a model name starting with `claude`) | the Anthropic API | `ANTHROPIC_API_KEY` |
-| `openai:<model>`, or a name starting with `gpt-` / `o1` / `o3` / `o4` | OpenAI-compatible chat completions | `OPENAI_API_KEY` (`OPENAI_BASE_URL` for a compatible endpoint) |
+| `openai:<model>`, or a name starting with `gpt-<digit>` / `gpt-oss-<size>` / `o1` / `o3` / `o4` | OpenAI-compatible chat completions; the pro and codex models (`…-pro`, `…codex…`) are called on the Responses API, the only place OpenAI serves them | `OPENAI_API_KEY` (`OPENAI_BASE_URL` for a compatible endpoint) |
 | anything else (default) | the ollama family | `ERIS_OLLAMA_BASE_URL` (Ollama Cloud by default) + `OLLAMA_API_KEY` |
 
 > **In the competition no key reaches your agent.** Inference goes through the operator's proxy

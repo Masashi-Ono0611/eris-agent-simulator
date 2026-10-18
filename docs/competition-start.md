@@ -501,7 +501,7 @@ agents:
 | `codex` / `codex:<model>` | `codex exec` を起動 | ChatGPT サブスク（`codex login`） |
 | `claude-cli` / `claude-cli:<model>` | `claude -p` を起動 | Claude サブスク |
 | `claude...`（`claude` で始まるモデル名） | Anthropic API | `ANTHROPIC_API_KEY` |
-| `openai:<model>` または `gpt-` / `o1` / `o3` / `o4` で始まるモデル名 | OpenAI 互換 chat completions | `OPENAI_API_KEY`（互換エンドポイントは `OPENAI_BASE_URL`） |
+| `openai:<model>`、または `gpt-<数字>…` / `gpt-oss-<サイズ>` / `o1` / `o3` / `o4` で始まるモデル名 | OpenAI 互換 chat completions。pro 系と codex 系（`…-pro`・`…codex…`）は OpenAI が Responses API でしか提供しないので、そちらで呼びます | `OPENAI_API_KEY`（互換エンドポイントは `OPENAI_BASE_URL`） |
 | それ以外（既定） | Ollama 系 | `ERIS_OLLAMA_BASE_URL`（既定 Ollama Cloud）+ `OLLAMA_API_KEY` |
 
 > **本番では鍵はエージェントに渡りません。** 推論は運営のプロキシ経由で（規約 §2.3・§2.5）、使えるモデルはプロキシの一覧（§2.5 で公表）に限られ、全ての往復が記録されます。ローカルで `ERIS_INFERENCE_BASE_URL` を設定すると同じ経路を試せます（`infra/inference-proxy/README.md`）。
