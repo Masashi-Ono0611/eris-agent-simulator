@@ -13,6 +13,7 @@ import { CompetitionPicker } from "@/components/CompetitionPicker";
 import { Panel, toneColor } from "@/components/competitionUi";
 import {
   CONSTRAINTS,
+  INFERENCE_SERVICES,
   DISCORD_URL,
   LEADERBOARD_PRIZES_JPY,
   LEADERBOARD_TOTAL_JPY,
@@ -688,6 +689,12 @@ function SubmissionTip({ locale }: { locale: Locale }) {
           n: CONSTRAINTS.reviseEveryBlocks,
         })}
       </TipText>
+      <TipText>{t("overview.submission.tipModels")}</TipText>
+      {INFERENCE_SERVICES.map((service) => (
+        <TipText key={service.name}>
+          {service.name}: {service.models.join(", ")}
+        </TipText>
+      ))}
       <TipText>
         {t("overview.submission.tipChain", {
           sec: CONSTRAINTS.blockTimeSec,

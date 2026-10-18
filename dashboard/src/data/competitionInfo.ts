@@ -183,6 +183,62 @@ export const CONSTRAINTS = {
   blockGasLimit: 30_000_000,
 };
 
+// ---- inference (rules §2.5 and Appendix A; published 2026-10-18, effective 2026-11-01) ----
+
+/**
+ * The designated inference services and the models a submission may name (rules Appendix A). The
+ * rules say a model the provider retires stops being usable and that models added later are posted
+ * here, so this list is the one participants read; keep it equal to Appendix A.
+ */
+export const INFERENCE_SERVICES: { name: string; models: string[] }[] = [
+  {
+    name: "Anthropic API",
+    models: [
+      "claude-fable-5-1",
+      "claude-fable-5",
+      "claude-opus-5-5",
+      "claude-opus-5",
+      "claude-opus-4-8",
+      "claude-opus-4-7",
+      "claude-opus-4-6",
+      "claude-sonnet-5-5",
+      "claude-sonnet-5",
+      "claude-sonnet-4-6",
+      "claude-haiku-5-5",
+      "claude-haiku-4-5",
+    ],
+  },
+  {
+    name: "OpenAI API",
+    models: ["gpt-6-astra", "gpt-6.1-sol", "gpt-6-luna"],
+  },
+  {
+    name: "Ollama Cloud",
+    models: [
+      "gpt-oss (20b, 120b)",
+      "glm-5.3",
+      "glm-5.3-flash",
+      "glm-5.2",
+      "deepseek-v4-pro",
+      "deepseek-v4.1-flash",
+      "kimi-k3",
+      "kimi-k2.7-code",
+      "kimi-k2.6",
+      "minimax-m3",
+      "minimax-m2.7",
+      "mistral-large-4",
+      "mistral-large-3",
+      "nemotron-3-ultra",
+      "nemotron-3-super",
+      "nemotron-3-nano",
+      "gemma4",
+      "beam",
+      "muse-spark-open",
+      "clef",
+    ],
+  },
+];
+
 // ---- where things are ----
 
 /** ascon.dev (NyxFoundation/ascon-web `src/links.ts`). */
