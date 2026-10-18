@@ -80,10 +80,12 @@ const post = (base: string, path: string, body: unknown, headers: Record<string,
     body: JSON.stringify(body),
   });
 
-test("only the three inference paths exist; everything else is 404", async () => {
+test("only the four inference paths exist; everything else is 404", async () => {
   await withProxy({}, async (base) => {
     assert.equal((await post(base, "/v1/files", { model: "gpt-x" })).status, 404);
-    assert.equal((await post(base, "/v1/responses", { model: "gpt-x" })).status, 404);
+    // POST /v1/responses is allowed (the pro and codex models live there); a stored response by id
+    // is not -- that is the dead-drop the path list exists to close.
+    assert.equal((await post(base, "/v1/responses/resp_123", { model: "gpt-x" })).status, 404);
     const health = await fetch(`${base}/healthz`);
     assert.equal(health.status, 200);
     // Liveness and nothing else: this proxy sits on every agent's network, so a count of calls or of
@@ -841,3 +843,18 @@ test("the keys file is validated: a provider the proxy does not know, an empty k
   assert.deepEqual(loadParticipantKeys({ participants: { a: { openai: "k" } } }), { a: { openai: "k" } });
 });
 
+
+test("/v1/responses forwards to the upstream's /responses; stored references are refused", async () => {
+  await withProxy({ config: { ...config, maxCallsPerMinute: 0 } }, async (base, seen) => {
+    const r = await post(base, "/v1/responses", { model: "gpt-x", instructions: "s", input: [{ role: "user", content: "hi" }] });
+    assert.equal(r.status, 200);
+    assert.equal(seen[0].url, "https://up.example/v1/responses");
+    assert.equal(seen[0].headers.authorization, "Bearer sk-upstream");
+    assert.equal(seen[0].body.model, "gpt-x-2026");
+    for (const key of ["previous_response_id", "conversation", "prompt", "store"]) {
+      const refused = await post(base, "/v1/responses", { model: "gpt-x", input: [], [key]: "x" });
+      assert.equal(refused.status, 403, key);
+    }
+    assert.equal(seen.length, 1);
+  });
+});

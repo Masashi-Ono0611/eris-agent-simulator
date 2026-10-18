@@ -5,7 +5,8 @@
 // so the operator runs this proxy on the agents' network and the agent talks to it instead of to
 // the provider. The proxy does four things and deliberately nothing more:
 //
-//   1. allowed paths only      /api/chat (Ollama), /v1/chat/completions (OpenAI-compatible),
+//   1. allowed paths only      /api/chat (Ollama), /v1/chat/completions and /v1/responses (OpenAI;
+//                              the pro and codex models are served on the Responses API only),
 //                              /v1/messages (Anthropic). Everything else is 404 -- a provider's Files
 //                              API, stored prompts or fine-tune endpoints on the same host would
 //                              otherwise be a dead-drop for a human to feed a frozen agent.
@@ -260,7 +261,18 @@ function asksForStream(provider: Provider, body: Record<string, unknown>): boole
 const PATHS: Record<string, Provider> = {
   "/api/chat": "ollama",
   "/v1/chat/completions": "openai",
+  "/v1/responses": "openai",
   "/v1/messages": "anthropic",
+};
+
+// Where each allowed path goes on the model's upstream base (`upstream` in models.yaml): the path
+// with its version prefix dropped, because the base already carries it (`https://api.openai.com/v1`,
+// `https://ollama.com/api`). Decided by the path, not the provider, now that one provider has two.
+const UPSTREAM_SUFFIX: Record<string, string> = {
+  "/api/chat": "/chat",
+  "/v1/chat/completions": "/chat/completions",
+  "/v1/responses": "/responses",
+  "/v1/messages": "/messages",
 };
 
 // Body keys that name something stored on the provider's side or otherwise outside what the
@@ -268,6 +280,7 @@ const PATHS: Record<string, Provider> = {
 const REJECTED_KEYS: Record<Provider, string[]> = {
   openai: [
     "previous_response_id",
+    "conversation",
     "prompt",
     "prompt_cache_key",
     "store",
@@ -708,12 +721,7 @@ export function createInferenceProxy(opts: ProxyOptions): http.Server {
 
     // ---- forward ----
     const upstream = entry.upstream.replace(/\/$/, "");
-    const target =
-      provider === "ollama"
-        ? `${upstream}/chat`
-        : provider === "openai"
-          ? `${upstream}/chat/completions`
-          : `${upstream}/messages`;
+    const target = `${upstream}${UPSTREAM_SUFFIX[url.pathname]}`;
     const headers: Record<string, string> = { "content-type": "application/json" };
     if (provider === "anthropic") {
       if (key) headers["x-api-key"] = key;

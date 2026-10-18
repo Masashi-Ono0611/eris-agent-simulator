@@ -304,7 +304,7 @@ The provider is selected by the frontmatter `model` name:
 |---|---|---|
 | `gpt-oss:120b` etc. (default) | Ollama (default Ollama Cloud `https://ollama.com/api`; point at local `http://127.0.0.1:11434/api` via `ERIS_OLLAMA_BASE_URL`) | `OLLAMA_API_KEY` / `ERIS_OLLAMA_API_KEY` (not needed for local ollama) |
 | starts with `claude...` | Anthropic SDK (structured output via tool use) | `ANTHROPIC_API_KEY` |
-| `openai:<model>`, or starts with `gpt-` / `o1` / `o3` / `o4` | OpenAI-compatible chat completions (`response_format: json_object`) | `OPENAI_API_KEY` (+ `OPENAI_BASE_URL` for a compatible endpoint) |
+| `openai:<model>`, or `gpt-<digit>…` / `gpt-oss-<size>` / `o1` / `o3` / `o4` | OpenAI-compatible chat completions (`response_format: json_object`); the pro and codex models (`…-pro`, `…codex…`) go to the Responses API (`text.format: json_object`), where OpenAI serves them | `OPENAI_API_KEY` (+ `OPENAI_BASE_URL` for a compatible endpoint) |
 | `codex` / `codex:<model>` | Codex CLI (spawns `codex exec` in a read-only sandbox) | ChatGPT subscription (`codex login`; **no API key**) |
 | `claude-cli` / `claude-cli:<model>` | Claude Code CLI (spawns `claude -p` with all built-in tools disallowed) | Claude subscription (Claude Code OAuth login; **no API key**) |
 
