@@ -133,6 +133,8 @@ const USAGE = `usage: npm run backtest -- (--regime <name|path> --seed <N> | --s
                          when an epoch has no startsAt or the starts are out of list order
   --repeat <N>           repeat each scenario N times (calibration diagnostic; standings take the median P. default 1)
   --port <N>             port for the backtest-only anvil (default 8547)
+  --anvil-host <addr>    address that anvil listens on (default 127.0.0.1). The live week's RPC
+                         gateway is a container on a docker bridge and cannot reach loopback
   --state <dir>          state dump directory (default ${STATE_DIR_DEFAULT})
   --keep-anvil           keep anvil running after exit (for debugging)
   --agent-sandbox <process|docker>
@@ -307,7 +309,13 @@ async function main(): Promise<void> {
       `--repeat must be a positive integer (got ${flags.repeat})`,
     );
   const port = Number(flags.port ?? "8547");
-  const rpcUrl = `http://127.0.0.1:${port}`;
+  // The address the backtest anvil listens on (default loopback). In the live week's topology the
+  // agents reach the chain only through the RPC gateway, a container on a docker bridge, and a
+  // bridge cannot reach the host's loopback: the gateway needs anvil on an address the bridge can
+  // route to (the docker bridge's gateway IP, or 0.0.0.0 behind a firewall). This process still
+  // talks to it locally.
+  const anvilHost = flags["anvil-host"] ?? "127.0.0.1";
+  const rpcUrl = `http://${anvilHost === "0.0.0.0" ? "127.0.0.1" : anvilHost}:${port}`;
   const stateDirAbs = resolve(ROOT, flags.state ?? STATE_DIR_DEFAULT);
   // Issue #77. Off by default, so every stored matrix stays comparable with the ones before it.
   // The scenarios of a matrix run in list order and the coordinator runs in this process, so
@@ -590,13 +598,20 @@ async function main(): Promise<void> {
         `Specify a different port with --port`,
     );
   console.error(
-    `[backtest] starting anvil (--load-state ${statePath} / port ${port})`,
+    `[backtest] starting anvil (--load-state ${statePath} / ${anvilHost}:${port})`,
   );
+  if (anvilHost !== "127.0.0.1")
+    console.error(
+      `[backtest] anvil listens on ${anvilHost}, beyond loopback: its anvil_* / evm_* methods are open ` +
+        "to whatever can reach that address. Keep the port closed to everything but the RPC gateway",
+    );
   const anvil: ChildProcess = spawn(
     "anvil",
     [
       "--port",
       String(port),
+      "--host",
+      anvilHost,
       // Same calibration as the deployer's anvil (deployer/src/anvil.ts startAnvil) for
       // code-size and base-fee. When you change those there, match them here.
       // Two deliberate differences: --order fees aligns with production realtime, and the
