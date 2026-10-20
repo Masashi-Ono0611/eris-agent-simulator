@@ -79,7 +79,7 @@ wallet**, registered with the operator. Nothing else is handed out, and nothing 
 ### 1. Create a wallet and register its address
 
 Your trading capital arrives when your address is registered: every registered address receives the
-same endowment, once. Registering is the `/faucet` command on Discord (below), which takes an address
+same endowment, once. Registering is a post to the operator on Discord (below), which takes an address
 -- so the first step is a key of your own. (The Aave deployment does contain the vendor's test `Faucet`, but it is owner-only and the
 Pool does not accept the test tokens it mints -- their reserves are deactivated.)
 
@@ -97,28 +97,28 @@ own machine, outside the repository (a file with `chmod 600`, or your shell's se
 fresh key for this devnet: never reuse one that holds anything real. Nobody — the operator included —
 will ever ask you for it.
 
-**Register the address with `/faucet` on Discord.** In the Discord server you joined at registration
-(rules §1), run:
+**Register the address with the operator on Discord.** In the ASCON channel of the Discord server you
+joined at registration (rules §1), post three things:
 
 ```
-/faucet agent_id:<the name your agent shows under — lowercase letters, digits and hyphens> address:0x…
+team: <your participant unit — the handle or team name you registered under>
+agent id: <the name your agent shows under — lowercase letters, digits and hyphens>
+address: 0x…
 ```
 
-- **You need the participant role.** It is given to the Discord usernames on the registration form,
-  on a periodic sync; if you registered after the last sync, `/faucet` looks you up on the form
-  again when you run it.
-- **One agent per Discord account.** A second agent, or tying two agents to one participant unit
-  (rules §2.2), goes through the operator: post `team` / `agent id` / `address` in the ASCON channel.
+- **One agent per participant unit** (rules §2.2). The operator checks the team against the
+  registration form before registering.
 - **Check the address before you send.** Nobody verifies that you hold its key, and registrations are
-  add-only: a mistyped address is funded, and nobody can ever move that agent. The reply repeats the
-  address for this reason.
+  add-only: a mistyped address is funded, and nobody can ever move that agent. The operator's reply
+  repeats the address for this reason.
+- Registrations are handled by hand, so allow up to a day for the reply.
 
 Only the address. An address is public by design — it is what the dashboard and the explorer show
 your transactions under — while a key posted anywhere has to be treated as everyone's key.
 
-**What happens next.** The bot adds the address to the period's registration list, and within about
-a minute the chain credits it with the endowment every agent gets: native ETH for gas, and the trading
-assets. The bot waits for that and replies with the address's balances (only you see the reply). The amounts are the manifest's `funding` (`ethWei`, `wethWei`, `usdcUnits`, and `wbtcUnits`
+**What happens next.** The operator adds the address to the period's registration list, and within
+about a minute the chain credits it with the endowment every agent gets: native ETH for gas, and the
+trading assets. The operator replies once the balances are on chain. The amounts are the manifest's `funding` (`ethWei`, `wethWei`, `usdcUnits`, and `wbtcUnits`
 for the rest of the basket). Your address then appears in the manifest's `participants`. The standings
 place you from the **next day**: the day you register has no starting value for you, so it is left out
 of your score rather than counted as zero.
@@ -135,12 +135,12 @@ curl -s -X POST "$RPC_URL" \
 
 A non-zero `result` is your ETH. The dashboard's "Find your agent" takes the address too.
 
-- **A second agent** needs a second key and a post to the operator (`/faucet` takes one per account).
-  A participant unit may enter two (rules §2.2); each is registered, funded and scored separately.
+- **One agent per participant unit**, as in the live week (rules §2.2). There is no second agent.
 - **Registrations are add-only.** To move to a new address, ask the operator for a **new** agent id; an
   existing id cannot be pointed somewhere else.
 - **Starting over** — capital spent, or a strategy you want to measure from a clean slate — is the same:
-  a new key, a new id. It is scored from the day after, and the old record stays as it was.
+  a new key, a new id, which replaces your unit's previous agent. It is scored from the day after, and
+  the old record stays as it was.
 
 ### 2. Fetch and read the manifest
 
@@ -469,8 +469,9 @@ agents:
 `command` / `args` / `dir` / `env` on an external entry are **refused**, not ignored: a roster that
 silently kept them would read as if the operator were running the agent.
 
-`participant` names the **participant unit** of rules §2.2 — a person or a team that may enter two
-agents and is scored on the higher. Two entries with the same value are that unit's two submissions.
+`participant` names the **participant unit** of rules §2.2 — a person or a team, which runs one agent.
+Two entries with the same value are the same unit's earlier and later agent (a restart under a new id),
+not two agents competing at once.
 It travels with the agent into `agents_registered`, the manifest, `summary.json` and `matrix.json`;
 the standings still rank agents, and collapsing a unit to its better one is the reader's step.
 
@@ -481,12 +482,11 @@ with the roster it started with, and a different one is refused. A period runs f
 participants register throughout, so the config can name a second list that is re-read while the
 chain runs.
 
-Most participants register themselves with the Discord `/faucet` bot ([step 1 of the participant
-section](#1-create-a-wallet-and-register-its-address); setup and operation in
-[`infra/discord-faucet/`](../../infra/discord-faucet/README.md)), which appends to this file the way
-`register.sh` does. The rest — a second agent, a unit's two agents, a new address — post `team` /
-`agent id` / `address` in the ASCON Discord channel; each post becomes one entry, with `participant`
-set to the team. A post that carries anything that looks like a private key is a key
+Participants post `team` / `agent id` / `address` in the ASCON Discord channel ([step 1 of the
+participant section](#1-create-a-wallet-and-register-its-address)); each post becomes one entry, with
+`participant` set to the team, added with `register.sh`. The `/faucet` bot in
+[`infra/discord-faucet/`](../../infra/discord-faucet/README.md) is not deployed for this competition.
+Check the team against the registration form, and that it has no other live agent (rules §2.2). A post that carries anything that looks like a private key is a key
 that has to be discarded: tell them, and register nothing from it.
 
 ```yaml
