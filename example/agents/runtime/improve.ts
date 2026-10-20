@@ -265,6 +265,55 @@ export function parseRevision(raw: unknown, language: "typescript" | "python" = 
   };
 }
 
+export type ReplyJson =
+  | { ok: true; value: unknown; form: "bare" | "fenced" }
+  | { ok: false; reason: string };
+
+// A fence line: three backticks at the start of a line. Inside a JSON string a newline is always
+// escaped, so a line that starts with a fence can only be markup around the JSON, never part of it.
+const FENCE_LINE = /^\s*```/;
+
+// Take the revision JSON out of the model's reply. Two shapes are accepted:
+//   bare    the whole reply is the JSON object (what the prompt asks for)
+//   fenced  exactly one fenced block, labelled `json` or not, possibly with prose around it; the
+//           prose is discarded
+// Anything else is rejected, and that is the point. The revision context carries text other
+// participants' contracts wrote (revert reasons), so a reply can quote a revision-shaped object
+// that is not the model's answer. Picking "the first JSON in the reply" would install the quote.
+// With one fenced block the model's own block is the only candidate; a quoted object that is itself
+// fenced makes two blocks, which is ambiguous and refused. A reply holding nothing but the quoted
+// object was always accepted by the bare rule, so this widens no path.
+export function extractRevisionJson(raw: string): ReplyJson {
+  const text = raw.trim();
+  try {
+    return { ok: true, value: JSON.parse(text), form: "bare" };
+  } catch {
+    // fall through to the fenced shape
+  }
+  const lines = text.split(/\r?\n/);
+  const fences: number[] = [];
+  lines.forEach((line, i) => {
+    if (FENCE_LINE.test(line)) fences.push(i);
+  });
+  if (fences.length === 0) return { ok: false, reason: "response was not valid JSON" };
+  if (fences.length % 2 !== 0)
+    return { ok: false, reason: "response was not valid JSON: unclosed code fence" };
+  if (fences.length > 2)
+    return {
+      ok: false,
+      reason: `response was ambiguous: ${fences.length / 2} fenced blocks, expected one`,
+    };
+  const [open, close] = fences;
+  const label = lines[open].trim().slice(3).trim().toLowerCase();
+  if (label !== "" && label !== "json")
+    return { ok: false, reason: `response was not valid JSON: fenced block is \`${label}\`, not json` };
+  try {
+    return { ok: true, value: JSON.parse(lines.slice(open + 1, close).join("\n")), form: "fenced" };
+  } catch {
+    return { ok: false, reason: "response was not valid JSON: fenced block does not parse" };
+  }
+}
+
 // A compiled executor: the same shape as a rule agent's decide, so the trading loop does not care
 // which one it is holding.
 export type Executor = (
@@ -541,13 +590,12 @@ export function buildRevisionSystem(
     ``,
     `## What to return`,
     ``,
-    `Exactly one JSON object, no prose around it. Three answers are available:`,
+    `Exactly one JSON object and nothing else: no prose before or after it, and no code fence`,
+    `around it. Three answers are available (the text after each is a label, not part of the answer):`,
     ``,
-    "```json",
-    `{ "notes": "why", "${field}": "<${python ? "complete strategy.py" : "new body"}>" }   // install this as the strategy`,
-    `{ "notes": "why", "${field}": null }           // leave it alone`,
-    `{ "notes": "why", "revertTo": 1 }                // go back to an earlier version`,
-    "```",
+    `    { "notes": "why", "${field}": "<${python ? "complete strategy.py" : "new body"}>" }   -- install this as the strategy`,
+    `    { "notes": "why", "${field}": null }           -- leave it alone`,
+    `    { "notes": "why", "revertTo": 1 }                -- go back to an earlier version`,
     ``,
     `Any of the three may also carry \`"memory": "..."\` — a short note to your next self. It is`,
     `kept next to the version history and handed back to you at the next revision, including in a`,

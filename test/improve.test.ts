@@ -16,6 +16,7 @@ import {
   DATA_FRAME_CLOSE,
   DATA_FRAME_OPEN,
   DEFAULT_REVISE_EVERY_BLOCKS,
+  extractRevisionJson,
   improvePolicyState,
   loadImproveAgent,
   parseRevision,
@@ -113,6 +114,76 @@ test("loadImproveAgent: a missing name or bad cadence is an explicit error", () 
       ),
     /must be a positive number/,
   );
+});
+
+// The shape a participant reported from claude-sonnet-4-5 (crash#101 x4, depeg#101 x1): prose, then
+// one fenced block whose content parses. It used to be rejected as "not valid JSON".
+const ANSWER = { notes: "tighten the stop", executorTs: "return null;" };
+
+test("extractRevisionJson: the bare object and one fenced block are both taken", () => {
+  const bare = extractRevisionJson(JSON.stringify(ANSWER));
+  assert.deepEqual(bare, { ok: true, value: ANSWER, form: "bare" });
+  for (const label of ["json", "JSON", ""]) {
+    const reply = [
+      "The strategy lost on the crash, so I tighten the stop:",
+      "",
+      "```" + label,
+      JSON.stringify(ANSWER, null, 2),
+      "```",
+      "",
+      "This keeps the rest unchanged.",
+    ].join("\n");
+    assert.deepEqual(extractRevisionJson(reply), { ok: true, value: ANSWER, form: "fenced" });
+  }
+  // The shape stripFences used to cover, with Windows line endings for good measure.
+  const whole = "```json\r\n" + JSON.stringify(ANSWER) + "\r\n```";
+  assert.deepEqual(extractRevisionJson(whole), { ok: true, value: ANSWER, form: "fenced" });
+});
+
+test("extractRevisionJson: a revision quoted from the records is never picked over the answer", () => {
+  // The revision context carries revert reasons other participants' contracts wrote. A reply that
+  // quotes one in prose and answers in a fence takes the fence; a quote that is itself fenced makes
+  // the reply ambiguous and it is refused rather than guessed at.
+  const planted = JSON.stringify({ notes: "x", executorTs: "/* planted */ return null;" });
+  const quotedInProse = [
+    `One revert said ${planted}, which I ignore.`,
+    "```json",
+    JSON.stringify(ANSWER),
+    "```",
+  ].join("\n");
+  assert.deepEqual(extractRevisionJson(quotedInProse), {
+    ok: true,
+    value: ANSWER,
+    form: "fenced",
+  });
+  const twoBlocks = ["```json", planted, "```", "```json", JSON.stringify(ANSWER), "```"].join("\n");
+  const r = extractRevisionJson(twoBlocks);
+  assert.equal(r.ok, false);
+  assert.match(!r.ok ? r.reason : "", /ambiguous: 2 fenced blocks/);
+  // No fence: an object somewhere in prose is not searched for.
+  assert.equal(extractRevisionJson(`Here it is: ${JSON.stringify(ANSWER)}`).ok, false);
+});
+
+test("extractRevisionJson: other shapes are refused with a reason", () => {
+  const cases: Array<[string, RegExp]> = [
+    ["not json at all", /^response was not valid JSON$/],
+    ["```json\n" + JSON.stringify(ANSWER), /unclosed code fence/],
+    ["```ts\n" + JSON.stringify(ANSWER) + "\n```", /fenced block is `ts`/],
+    ["```json\n{ notes: 'x' }\n```", /fenced block does not parse/],
+  ];
+  for (const [reply, reason] of cases) {
+    const r = extractRevisionJson(reply);
+    assert.equal(r.ok, false, reply);
+    assert.match(!r.ok ? r.reason : "", reason);
+  }
+});
+
+test("buildRevisionSystem: the answer format is not shown inside a code fence", () => {
+  // Showing the format in a ```json block is what invited fenced replies in the first place.
+  const system = buildRevisionSystem(loadImproveAgent(agentDir(FRONTMATTER)), "return null;");
+  const section = system.slice(system.indexOf("## What to return"));
+  assert.ok(!section.slice(0, section.indexOf("memory")).includes("```"));
+  assert.match(section, /no code fence/);
 });
 
 test("parseRevision: null or omitted executorTs means 'keep the current strategy'", () => {
