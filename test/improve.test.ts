@@ -178,12 +178,19 @@ test("extractRevisionJson: other shapes are refused with a reason", () => {
   }
 });
 
-test("buildRevisionSystem: the answer format is not shown inside a code fence", () => {
-  // Showing the format in a ```json block is what invited fenced replies in the first place.
+test("buildRevisionSystem: the reply format is the one extractRevisionJson takes", () => {
+  // The prompt asks for what models do anyway (one fenced block, prose allowed around it), so a
+  // model following its habit lands on an accepted shape. Asking for "no fence" instead invited
+  // the bare-JSON-plus-prose reply, which is refused.
   const system = buildRevisionSystem(loadImproveAgent(agentDir(FRONTMATTER)), "return null;");
-  const section = system.slice(system.indexOf("## What to return"));
-  assert.ok(!section.slice(0, section.indexOf("memory")).includes("```"));
-  assert.match(section, /no code fence/);
+  const section = system.slice(system.indexOf("## What to return"), system.indexOf("Any of the three"));
+  assert.match(section, /exactly one ```json fenced block/);
+  assert.match(section, /no other fenced block/);
+  // The example the prompt shows is itself an accepted reply.
+  const example = section.slice(section.search(/^```json$/m), section.lastIndexOf("```") + 3);
+  const r = extractRevisionJson(`For example:\n${example}`);
+  assert.equal(r.ok, true);
+  assert.equal(parseRevision(r.ok ? r.value : null).ok, true);
 });
 
 test("parseRevision: null or omitted executorTs means 'keep the current strategy'", () => {
