@@ -264,6 +264,7 @@ agents:
 | `--agent-state-root <dir>` | Carry each agent's persistent state across the scenarios, in list order (issue #77). Off by default. Checkpoints the root after every completed scenario so a resume can restore the right starting point |
 | `--repeat <N>` | Repeat each scenario N times (default 1). A calibration diagnostic; standings take the median |
 | `--port <N>` | Port for the backtest-dedicated anvil (default 8547; use a different port for parallel runs) |
+| `--anvil-host <addr>` | Address the backtest anvil listens on (default `127.0.0.1`). In the live week the agents reach the chain only through the RPC gateway, a container on a docker bridge that cannot reach the host's loopback; give the bridge's gateway IP (e.g. `172.17.0.1`) and point the gateway's `UPSTREAM` there. anvil's `anvil_*` / `evm_*` methods are then open to anything that reaches that address, so keep the port firewalled |
 | `--state <dir>` | State dump directory (default `backtest/state`) |
 | `--keep-anvil` | Keep anvil alive after exit (for reading receipts in post-hoc analysis / debugging) |
 | `--score-every <N>` | Reconstruct the value cross-section every Nth block instead of every block. Score-neutral (only the first and last cross-sections reach `summary.json`); it just coarsens the equity curve in `events.jsonl` |
