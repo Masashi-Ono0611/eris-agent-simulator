@@ -16,6 +16,8 @@
     "backtest": "tsx core/src/cli/backtest.ts",
     "competition": "tsx core/src/cli/competition.ts",
     "inference-proxy": "tsx core/src/cli/inferenceProxy.ts",
+    "inference-keys": "tsx scripts/inferenceKeys.ts",
+    "submission-ledger": "tsx scripts/submissionLedger.ts",
     "agent-state": "tsx core/src/cli/agentState.ts",
     "gen:local-constants": "tsx scripts/genLocalConstants.ts",
     "gen:local-constants:from-dump": "tsx scripts/constantsFromDump.ts",

@@ -88,9 +88,26 @@ npm run inference-proxy -- --models models.yaml --keys ~/.eris-secrets/inference
 | `GET /healthz` | `{"ok":true,"credentials":"participant"}` (`"operator"` without `--keys`). The matrix runner refuses to start a live week unless the proxy at `ERIS_INFERENCE_BASE_URL` (or `ERIS_INFERENCE_PROBE_URL`, when the agents' URL is a container-network name this host cannot resolve) answers `participant` |
 | the file's mode | refused unless readable by this user only (`chmod 600`) |
 
-Build the file from the credential form's answers (one row per participant unit), keep it off the
-repository, and delete it after the event (rules §2.5: the organizer uses it only to run that
-participant's agent and deletes it promptly after the competition). The record never contains a
+Build the file from the credential form's answers with `npm run inference-keys`
+(`scripts/inferenceKeys.ts`), keep it off the repository, and delete it after the event:
+
+```bash
+# Google Forms -> responses -> Download (.csv)
+npm run inference-keys -- ~/ascon/credentials.csv --out ~/.eris-secrets/inference-keys.yaml \
+    --roster config/competition/field.yaml          # optional: who has no key, whose key has no roster entry
+```
+
+| | |
+|---|---|
+| columns | found by header: timestamp (`タイムスタンプ` / `Timestamp`), the unit's handle (`識別子` / `ハンドル` / `handle`, then `参加単位` / `チーム` / `team`), provider (`サービス` / `provider`), key (`API キー` / `key`). A form with one key column per provider (`OpenAI API key`, `Anthropic API key`) is read as one answer per column. Ambiguous or unfamiliar headers stop with the header list; then name them with `--map map.yaml` (`timestamp:` / `unit:` / `provider:` / `key:`, or `providerKeys: {openai: <header>, ...}`) |
+| rows | one per (unit, provider). A later answer (form timestamp, then row order) replaces the earlier one for that provider only |
+| provider | `OpenAI`, `Anthropic (Claude)`, `Ollama Cloud`, ... are normalized to `openai` / `anthropic` / `ollama`; anything else is an error. With no provider column, `sk-ant-` / `sk-` decide and any other key is an error |
+| checks | the handle must be a roster id (`^[a-zA-Z0-9][a-zA-Z0-9_-]*$`, not `runtime` / `lib`), the key non-empty with no whitespace. A key that does not look like its provider's (`sk-ant-` for Anthropic, `sk-` for OpenAI, no `sk-` for Ollama, under 20 characters) is a warning, not an error. Any error writes nothing unless `--skip-invalid` |
+| output | mode 600 from the first byte (temp file + rename), refused if the file exists unless `--force`, then read back through `loadParticipantKeys` -- the proxy's own loader |
+| the report | counts, units, providers, and keys masked to at most the first 4 and last 2 characters. **No key value is ever printed** |
+
+Rules §2.5: the organizer uses the file only to run that participant's agent and deletes it
+promptly after the competition. The record never contains a
 key: upstream headers are not recorded, only the request body and the response.
 
 ## Recording and replay (rules §2.4)
