@@ -18,6 +18,9 @@ agents:
   - id: opus-1
     wallet: AUTO
     env: { ERIS_AGENT_FROZEN: "1" }
+  - id: opus-2
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
   - id: venue-arb
     wallet: AUTO
     env: { ERIS_AGENT_FROZEN: "1" }

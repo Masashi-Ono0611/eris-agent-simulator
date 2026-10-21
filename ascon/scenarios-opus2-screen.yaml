@@ -1,0 +1,3 @@
+# opus-2 screen: busy and stressed regimes at public seed 101 (4 scenarios).
+regimes: [informed-flow, spike, crash, calm]
+seeds: [101]
