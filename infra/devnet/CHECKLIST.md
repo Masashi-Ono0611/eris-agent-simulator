@@ -9,6 +9,7 @@
 | [1. リハーサル](#1-リハーサル26h) | on-demand EC2 × 2（非公開） | 26h | Claude |
 | [2. 本番短縮版](#2-本番短縮版約-1h) | 本番 box | 起動から最初の 2 評価区間（約 1h） | devnet 運用担当者 |
 | [3. 定常点検](#3-定常点検) | 本番 box | 毎日（切替の後に 5 分）+ 毎週 | devnet 運用担当者 |
+| [6. ライブ週](#6-ライブ週) | 本番 box | 11/1〜11/8: エポックごと + 毎日 | 運営 |
 
 **使い方**: 実施のたびに GitHub issue を 1 本立て（題: `devnet 受け入れ <段> <日付> (<commit>)`）、
 該当する節をそのまま貼って、チェックと `記録:` 欄を埋める。runbook 自体は書き換えない。直すべき点が
@@ -525,3 +526,72 @@ docker agent が書けてコンテナより長生きするのは `ERIS_AGENT_STA
 `runs/` 側（ログ）は coordinator 自身の `events.jsonl` / `blocks.csv` と同じディスクなので、quota を
 掛けるなら state と同じ方法で `runs/` を別ボリュームにする。ログだけを分けることは mount の形
 （ファイル単位の bind）上できない。
+
+## 6. ライブ週
+
+練習 devnet ではなく、ライブ週（11/1 00:00〜11/8 00:00 JST、k = 60）の点検。切替の手順は
+[infra/live-week/README.md](../live-week/README.md)（`cutover.sh` / `run-week.sh`）。項目は 2026-10-20 の
+リハーサル（12 エポック、運営の記録 ascon-ops#7）で実際に見たもの。各エポックの終わり（168 分ごとの枠の中、
+エポック自体は約 12 分 + 準備）と、毎日 1 回まとめて見る。
+
+```sh
+# ライブ用 checkout のルートで
+SEC=${ERIS_LIVE_SECRETS:-~/live-secrets}
+MD=$(cat "$SEC/matrix-dir")                     # runs/matrix-<id>
+LOG=~/run-week-live.log
+N=$(node --import tsx scripts/liveWeek.ts images "$SEC/field.yaml" | wc -l)   # 起動する agent 数（noop 込み）
+```
+
+### 6.1 エポックごと
+
+- [ ] **posture 行がエポックごとに 1 回出ている**: `grep -c '\[live-week\] posture checked' $LOG` が、
+  ここまでに始まったエポック数（再起動で再実行した分を含む）と一致する。出ていないエポックは隔離・鍵・
+  推論プロキシ・state root のどれかが欠けたまま走っている可能性がある（runner は拒否するはずなので、
+  出ていなければ runner が止まっている）
+- [ ] **agents ready が N/N**: `grep '\[agents\] .* ready' $LOG | tail -3` が `N/N ready`。`0/N` や
+  `still booting at the 180 s bound` はホストの負荷で起動が遅れている（issue #311。リハーサルでは 60 秒の
+  上限を 14 回中 4 回超えた）。続くなら CPU とメモリを見て、Discord で告知する
+- [ ] **matrix.json の完了エポックがすべて agents 付き**:
+  ```sh
+  python3 -c "import json,sys; m=json.load(open(sys.argv[1])); sc=m.get('scenarios',[]); \
+  print('done', sum(1 for s in sc if s.get('agents')), '/', m.get('scenariosPlanned')); \
+  [print('NO RESULT s=%s %s' % (s['s'], s.get('error','')[:120])) for s in sc if not s.get('agents')]; \
+  [print('flags s=%s %s' % (s['s'], s['flags'])) for s in sc if s.get('flags')]" "$MD/matrix.json"
+  ```
+  `NO RESULT` があれば runner を止めて同じコマンドで再開する（`--resume` が同じ seed で再実行する。
+  リハーサルの s=7 はこれで回復した）。`flags`（プロセス死亡など）は記録して判断する
+- [ ] **推論プロキシ**: `curl -s 127.0.0.1:8790/healthz` が `{"ok":true,"credentials":"participant"}`。
+  `ls runs/inference-live/` に改訂する agent ごとの `<id>.jsonl` があり、`wc -l` がエポックごとに増える。
+  上流の失敗は次で数える（リハーサルは全件 200）:
+  `python3 -c "import json,glob; [print(f, sum(1 for l in open(f) if json.loads(l).get('status',200)>=400)) for f in glob.glob('runs/inference-live/*.jsonl')]"`
+- [ ] **fee cap 監査**: 終わったエポックの run ディレクトリごとに
+  `python3 infra/submission/audit-run.py <runDir>`（`runDir` は matrix.json の各エポックの値）が
+  `0 hard`。HARD はそのエポックの無効化（§4.4.2）を検討する対象、WARN は記録して目で見る
+- [ ] **コンテナの中からの経路**（エポック中に 1 回。`eris-noop` は baseline なので常にいる）:
+  ```sh
+  rpc() { docker exec eris-noop node -e "fetch('http://ascon-rpc-gateway-live:8546',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'$1',params:$2})}).then(r=>console.log('$1',r.status),e=>console.log('$1','unreachable',e.cause?.code))"; }
+  rpc eth_blockNumber '[]'                                              # 200
+  rpc anvil_setBalance '["0x0000000000000000000000000000000000000001","0x1"]'   # 403
+  docker exec eris-noop node -e "fetch('https://1.1.1.1').then(()=>console.log('INTERNET REACHABLE'),()=>console.log('no route out: ok'))"
+  ```
+  `anvil_setBalance` が 403 でない、またはインターネットに届くなら、runner を止めてから原因を調べる
+- [ ] **ディスク**: `df -h . "$(cat $SEC/state-root)" /var/lib/docker` の空きが減り続けていないか、
+  `du -sh "$MD" runs/inference-live runs/rpc-gateway-live "$(cat $SEC/state-root)"`、
+  `du -sh ~/.foundry/anvil/tmp`（anvil が 1 ブロックごとの state を書く版がある。動いている anvil の分は消さない）
+- [ ] **バックアップ**: `$MD`、`<state root>/.snapshots/`、`runs/inference-live/`、`runs/rpc-gateway-live/` を
+  日付付きで box の外へ（matrix.json は原子的に書かれる、#262）
+
+### 6.2 毎日
+
+- [ ] 6.1 を、その日のエポック全部について一度に流す（posture 行の数・`NO RESULT` 0・audit 0 hard）
+- [ ] 公開ダッシュボード（audience モード）で live の matrix の順位が出ていて、seed と未来の窓が出ていない
+- [ ] `docker network ls --format '{{.Name}}' | grep -c '^ag-'` が N 前後で増え続けていない（`infra/docker-agent/reap.sh`）
+- [ ] 秘密のディレクトリ（`$SEC`）のバックアップが最新（`matrix-dir` と `state-root` は初回起動で書かれる）
+- [ ] 無効化・再実行・再起動があれば、その時刻と理由を運営の記録（ascon-ops#49）と Discord に残す
+
+### 6.3 止まったとき
+
+- 同じコマンドで再開する: `bash infra/live-week/run-week.sh live`（tmux の `live-week` の中で）。
+  完了済みは skip、途中のエポックは同じ seed で最初から、agent の状態は直前のエポックの終わりから
+- 完了したエポックを無効にする（§4.4.2）: runner を止めて `bash infra/live-week/run-week.sh void <s> <理由>`、
+  それから再開。後続のエポックは再実行されない（扱いは運営の判断）
