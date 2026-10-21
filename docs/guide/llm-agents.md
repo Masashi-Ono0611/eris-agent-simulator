@@ -76,6 +76,12 @@ The model returns one JSON object:
 `"executorTs": null` means **keep the current strategy**, and that is often the right answer: a
 strategy that is working does not need help.
 
+The prompt asks for the bare object. A reply that puts it in one fenced block (labelled `json` or not)
+is taken too, and the prose around the block is dropped. A reply with two or more blocks, a block in
+another language, or a revision-shaped object both inside and outside the block is refused: the
+context carries text other participants' contracts wrote, and the runtime does not guess which
+object is the model's answer.
+
 **Nothing reverts automatically.** Undoing a change is the model's call, made with `revertTo` and the
 version number — the context it receives lists every version, when it went in, and what the agent
 was worth at the time. An automatic "revert when value went down" would need a threshold and there

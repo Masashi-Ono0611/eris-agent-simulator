@@ -199,6 +199,15 @@ test("extractRevisionJson: other shapes are refused with a reason", () => {
   }
 });
 
+test("buildRevisionSystem: the answer format is not shown inside a code fence", () => {
+  // The prompt asks for no fence, so its own example must not wear one. The parser still takes a
+  // reply in one fenced block (above); this is about not contradicting the instruction.
+  const system = buildRevisionSystem(loadImproveAgent(agentDir(FRONTMATTER)), "return null;");
+  const section = system.slice(system.indexOf("## What to return"));
+  assert.ok(!section.slice(0, section.indexOf("memory")).includes("```"));
+  assert.match(section, /no code fence/);
+});
+
 test("parseRevision: null or omitted executorTs means 'keep the current strategy'", () => {
   // Not an error case: declining to touch a working strategy is the behavior ADR 0018 wants, and
   // models express it both ways.
