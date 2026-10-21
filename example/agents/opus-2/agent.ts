@@ -162,6 +162,9 @@ export const PARAMS = {
    *  them keeps it from flipping on every sample). */
   bidRaiseRevertRate: 0.4,
   bidLowerRevertRate: 0.15,
+  /** Raise only while the agent's last included transaction sat at or past this index in its
+   *  block; a revert that lands first in the block is not an auction problem. */
+  bidLateTxIndex: 5,
   /** Fewer recent included transactions than this is not evidence either way. */
   bidMinSample: 6,
   /** Blocks to wait after a step before the next one, so a step is judged on what it caused. */
@@ -254,19 +257,30 @@ export function bidShareFor(
   round: number,
   blocksRemaining: number,
 ): BidState {
-  if (blocksRemaining > state.lastBlocksRemaining) {
+  // A missing or broken countdown keeps the last good one, so a gap in it can neither fake a new
+  // epoch nor hide the next real one.
+  const countdownOk = Number.isFinite(blocksRemaining);
+  if (countdownOk && blocksRemaining > state.lastBlocksRemaining) {
     return { ...initialBidState(), lastBlocksRemaining: blocksRemaining };
   }
-  const next = { ...state, lastBlocksRemaining: blocksRemaining };
-  if (competition === undefined) return next;
+  const next = countdownOk ? { ...state, lastBlocksRemaining: blocksRemaining } : state;
+  if (competition === undefined || !Number.isFinite(round)) return next;
   const rate = competition.recentRevertRate;
   const sample = competition.recentSampleSize;
   if (!Number.isFinite(rate) || !Number.isFinite(sample)) return next;
   if (sample < PARAMS.bidMinSample) return next;
   if (round - state.lastStepRound < PARAMS.bidCooldownBlocks) return next;
+  // Paying more for position only helps when position is the problem: raise only while the
+  // agent's own transactions are landing behind others.
+  const late =
+    competition.lastTxIndex !== null &&
+    Number.isFinite(competition.lastTxIndex) &&
+    competition.lastTxIndex >= PARAMS.bidLateTxIndex;
   let share = state.share;
-  if (rate >= PARAMS.bidRaiseRevertRate) share += PARAMS.bidShareStep;
-  else if (rate <= PARAMS.bidLowerRevertRate) share -= PARAMS.bidShareStep;
+  if (rate >= PARAMS.bidRaiseRevertRate) {
+    if (!late) return next;
+    share += PARAMS.bidShareStep;
+  } else if (rate <= PARAMS.bidLowerRevertRate) share -= PARAMS.bidShareStep;
   else return next;
   share = clamp(share, PARAMS.bidProfitShare, PARAMS.bidShareMax);
   // Rounded so repeated steps land back on the base exactly instead of a hair above it.
@@ -350,6 +364,9 @@ export function priorityFeeBid(
   obs: AgentObservation,
   expectedProfitUsd: number,
   gasUnits = PARAMS.bidGasUnits,
+  /** Only the cross-venue legs pass the controller's share: they are what lands late and reverts.
+   *  Every other module bids at the base share, as in opus-1. */
+  share = PARAMS.bidProfitShare,
 ): string {
   const def = big(obs.limits?.defaultPriorityFeePerGasWei) || 1n;
   const max = big(obs.limits?.maxPriorityFeePerGasWei) || def;
@@ -357,7 +374,7 @@ export function priorityFeeBid(
   if (!(ethUsd > 0) || !(expectedProfitUsd > 0) || gasUnits <= 0) {
     return (def > max ? max : def).toString();
   }
-  const budgetUsd = expectedProfitUsd * bid.share;
+  const budgetUsd = expectedProfitUsd * share;
   const affordableWei = BigInt(
     Math.max(0, Math.floor(((budgetUsd / ethUsd) * 1e18) / gasUnits)),
   );
@@ -611,7 +628,7 @@ function crossVenueModule(
           slippageBps: PARAMS.xvSlippageBps,
         },
       ],
-      maxPriorityFeePerGasWei: priorityFeeBid(obs, plan.profitUsd, PARAMS.bidGasUnits * 2),
+      maxPriorityFeePerGasWei: priorityFeeBid(obs, plan.profitUsd, PARAMS.bidGasUnits * 2, bid.share),
     };
     // Reserve so a later module cannot spend the same balance twice in one block. The two legs net
     // to no change in the holding, so the *holding* is left alone -- only the claim on it is taken.

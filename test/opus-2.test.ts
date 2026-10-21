@@ -10,17 +10,17 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { AgentObservation } from "@eris/sdk/types.js";
 
-const { PARAMS, bidShareFor, initialBidState } = await import(
+const { PARAMS, bidShareFor, initialBidState, priorityFeeBid } = await import(
   "../example/agents/opus-2/agent.js"
 );
 
 type Competition = NonNullable<AgentObservation["competition"]>;
 
-function comp(rate: number, sample: number): Competition {
+function comp(rate: number, sample: number, lastTxIndex: number | null = 20): Competition {
   return {
     maxCompetitorPriorityFeeWei: "0",
     maxBlockPriorityFeeWei: "0",
-    lastTxIndex: 20,
+    lastTxIndex,
     recentRevertRate: rate,
     recentSampleSize: sample,
   };
@@ -103,4 +103,51 @@ test("a new epoch (blocksRemaining rises) resets to the base share", () => {
 test("non-finite inputs are ignored", () => {
   const s = bidShareFor(initialBidState(), comp(Number.NaN, 10), 100, 300);
   assert.equal(s.share, BASE);
+});
+
+test("reverts while landing early in the block are not an auction problem: no raise", () => {
+  const early = bidShareFor(initialBidState(), comp(0.9, 10, PARAMS.bidLateTxIndex - 1), 100, 300);
+  assert.equal(early.share, BASE);
+  const none = bidShareFor(initialBidState(), comp(0.9, 10, null), 100, 300);
+  assert.equal(none.share, BASE);
+  const late = bidShareFor(initialBidState(), comp(0.9, 10, PARAMS.bidLateTxIndex), 100, 300);
+  assert.ok(late.share > BASE);
+});
+
+test("a non-finite round cannot bypass or poison the cooldown", () => {
+  let s = bidShareFor(initialBidState(), comp(0.9, 10), 100, 300);
+  const once = s.share;
+  s = bidShareFor(s, comp(0.9, 10), Number.NaN, 299);
+  assert.equal(s.share, once);
+  assert.equal(s.lastStepRound, 100);
+  s = bidShareFor(s, comp(0.9, 10), 100 + COOL, 298);
+  assert.ok(s.share > once, "a poisoned cooldown blocked the next legitimate step");
+});
+
+test("a missing countdown neither fakes a new epoch nor hides the next one", () => {
+  let s = bidShareFor(initialBidState(), comp(0.9, 10), 100, 30);
+  const raised = s.share;
+  s = bidShareFor(s, comp(0.5, 3), 101, Number.POSITIVE_INFINITY);
+  assert.equal(s.share, raised, "a gap in the countdown reset the controller");
+  assert.equal(s.lastBlocksRemaining, 30);
+  s = bidShareFor(s, comp(0.5, 3), 102, 359);
+  assert.equal(s.share, BASE, "the real epoch boundary after the gap was missed");
+});
+
+test("priorityFeeBid spends the share it is given; the default is opus-1's", () => {
+  // A rival bid that 12% of the profit cannot reach but 30% can.
+  const ethUsd = 4000;
+  const profitUsd = 10;
+  const gas = PARAMS.bidGasUnits;
+  const at = (share: number) => (profitUsd * share / ethUsd) * 1e18 / gas;
+  const rivalWei = BigInt(Math.floor(((at(0.12) + at(0.3)) / 2) / 1.2));
+  const obs = {
+    fairPricesUsd: { WETH: ethUsd },
+    fairPriceUsdcPerWeth: ethUsd,
+    limits: { defaultPriorityFeePerGasWei: "1", maxPriorityFeePerGasWei: (10n ** 15n).toString() },
+    competition: { ...comp(0.9, 10), maxCompetitorPriorityFeeWei: rivalWei.toString() },
+  } as unknown as AgentObservation;
+  assert.equal(priorityFeeBid(obs, profitUsd), "1", "the base share should not reach the rival");
+  assert.equal(priorityFeeBid(obs, profitUsd, gas, PARAMS.bidProfitShare), "1");
+  assert.ok(BigInt(priorityFeeBid(obs, profitUsd, gas, 0.3)) > rivalWei, "0.3 should outbid the rival");
 });
