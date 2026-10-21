@@ -652,6 +652,7 @@ async function assertLiveWeekPosture(
     use: { marketRegistry: config.agentMarkets },
     venueAdmin: config.enabledProtocols.includes("aave") ? AAVE.AclAdmin : undefined,
     sandbox: config.agentSandbox,
+    agentsReadyTimeoutSec: config.agentsReadyTimeoutSec,
     agents,
     env: process.env,
   });

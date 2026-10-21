@@ -92,7 +92,7 @@
 
 - `external: true` または鍵なしのエントリは**起動しない**。代わりに `agent_external_registered` を emit する。これが無いと「参加者が接続しなかった run」と「coordinator が起動に失敗した run」が区別できない（どちらも無取引に見える）。
 - 起動したプロセスには `onExit` を付ける。**途中で死んだエージェントは黙って取引をやめる**ので、`summary.json` 上は「動かないことを選んだ」エージェントと見分けがつかない。`agent_process_exited` と `processExitedEarly` に残す。
-- **エポックの時計は場が揃うまで待つ**（issue #94。`core/src/realtime/agentsReady.ts`）。automine を切った後・interval mining を始める前に、起動した全 agent が自分のログに `runtime_start` を書くまで待つ（`run.agentsReadyTimeoutSec`、既定 60 秒）。実測（2026-09-07、docker 32 体）では `interval_mining_started` が +24 s、`runtime_start` が +86〜99 s で、360 ブロックのエポックの先頭 ~45 ブロックと `windowFrac 0.10` の窓が誰も見ていないうちに過ぎていた。待っている間 anvil はブロックを作らない（agent が `runtime_start` までに必要とするのは read だけ。approve は funding で済んでいる）。external チェーンではシーケンサのブロックが `runStartBlock` の前に流れるだけ。外部参加者は待たない（こちらが起動していない）。結果は `agents_ready`（`ready[].afterMs` / `late` / `exited` / `timedOut`）に残り、上限で打ち切ったときは late の agent が最初のブロックを見ていないことが記録になる
+- **エポックの時計は場が揃うまで待つ**（issue #94。`core/src/realtime/agentsReady.ts`）。automine を切った後・interval mining を始める前に、起動した全 agent が自分のログに `runtime_start` を書くまで待つ（`run.agentsReadyTimeoutSec`、既定 180 秒。ライブ週は 120 秒未満を拒否。issue #311）。実測（2026-09-07、docker 32 体）では `interval_mining_started` が +24 s、`runtime_start` が +86〜99 s で、360 ブロックのエポックの先頭 ~45 ブロックと `windowFrac 0.10` の窓が誰も見ていないうちに過ぎていた。待っている間 anvil はブロックを作らない（agent が `runtime_start` までに必要とするのは read だけ。approve は funding で済んでいる）。external チェーンではシーケンサのブロックが `runStartBlock` の前に流れるだけ。外部参加者は待たない（こちらが起動していない）。結果は `agents_ready`（`ready[].afterMs` / `late` / `exited` / `timedOut`）に残り、上限で打ち切ったときは late の agent が最初のブロックを見ていないことが記録になる
 
 ### [F] ブロックループ
 

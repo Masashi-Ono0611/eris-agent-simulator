@@ -179,8 +179,9 @@ npm run backtest -- --scenarios plan.yaml --agents field.yaml --follow-schedule 
 - **A plan under a key file is the live week, and its posture is refused rather than warned about**
   (`core/src/realtime/liveWeek.ts`): public environment keys (admin / keeper / setup / deployer, or a
   state dump whose Aave admin is an anvil test account), `agentSandbox: process`, `command`/`args`
-  roster entries, and docker agents without `ERIS_AGENT_ISOLATE=1` + `ERIS_AGENT_INTERNAL=1` or in
-  bind-mount mode. Checked once per regime before the first wait, and again by each epoch; a refusal
+  roster entries, docker agents without `ERIS_AGENT_ISOLATE=1` + `ERIS_AGENT_INTERNAL=1` or in
+  bind-mount mode, and `run.agentsReadyTimeoutSec` below 120 or 0 (issue #311: the epoch clock would
+  start while a docker field is still booting; the default is 180). Checked once per regime before the first wait, and again by each epoch; a refusal
   stops the week instead of becoming an excluded epoch. `ERIS_ALLOW_PUBLIC_ROLE_KEYS` does not apply.
   Rehearse the plan with `--scenario-key public`, which is not the live week.
 - **`--agent-state-root` is part of that posture.** The rules carry each unit's internal state —

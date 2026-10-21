@@ -38,6 +38,16 @@ import {
   type RoleKeyUse,
 } from "./roleKeyGuard.js";
 
+/**
+ * The shortest agents-ready bound the live week accepts (`run.agentsReadyTimeoutSec`, issue #311).
+ * An agent still booting at the bound misses the epoch's first blocks, and how long a docker field
+ * takes to boot is a property of the host's load, not of the agents: 32 agents took 86-99 s (#94), and
+ * the 2026-10-20 rehearsal's 11 agents passed 60 s in 4 of 14 epoch starts. The default (180) is
+ * above this; the floor is there so a regime or roster that lowers it, or sets 0 (no wait), cannot
+ * start the week.
+ */
+export const LIVE_WEEK_MIN_AGENTS_READY_SEC = 120;
+
 /** The matrix runner's override that marks one epoch as the live week's (honoured from nowhere else). */
 export const LIVE_WEEK_OVERRIDE = "ERIS_LIVE_WEEK";
 
@@ -63,6 +73,7 @@ export function liveWeekRefusals(opts: {
   use: RoleKeyUse;
   venueAdmin?: Address;
   sandbox: "process" | "docker";
+  agentsReadyTimeoutSec: number;
   agents: ReadonlyArray<AgentSpec>;
   env: Record<string, string | undefined>;
   platform?: NodeJS.Platform;
@@ -90,6 +101,16 @@ export function liveWeekRefusals(opts: {
     reasons.push(
       `run.agentSandbox is ${opts.sandbox}: submitted agents would run as plain processes on this ` +
         "host, outside the rules §2.3 caps and the network isolation (infra/docker-agent/run-agent.sh)",
+    );
+
+  // Issue #311: an agent still booting when the epoch clock starts misses its first blocks, for a
+  // reason that is the host's load rather than the agent.
+  if (opts.agentsReadyTimeoutSec < LIVE_WEEK_MIN_AGENTS_READY_SEC)
+    reasons.push(
+      `run.agentsReadyTimeoutSec is ${opts.agentsReadyTimeoutSec}` +
+        (opts.agentsReadyTimeoutSec === 0 ? " (no wait)" : "") +
+        `: the epoch clock would start before a docker field has booted (32 agents took 86-99 s, ` +
+        `issue #94). Set it to at least ${LIVE_WEEK_MIN_AGENTS_READY_SEC}, or leave it at the default`,
     );
 
   // Rules §2.5: every agent revises through the operator's proxy, on the participant's own

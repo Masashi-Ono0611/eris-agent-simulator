@@ -11,9 +11,10 @@ export const DECIDE_TIMEOUT_MS = 5000;
 // decision bound on purpose: §2.3 bounds a decision, not a `tsx` compile, and reusing 5,000 ms for
 // the module load killed 13 of 31 agents at boot on a loaded host ("strategy worker startup
 // exceeded 5000ms" -> exit 1 -> the agent is dead for the epoch, issue #100 / #93 F-J). Sixty
-// seconds is the coordinator's own agents-ready bound (`run.agentsReadyTimeoutSec`, PR #97): an
-// agent that has not loaded by then has already missed the first block. A module that spins forever
-// is still cut off, just not one that merely compiles slowly.
+// seconds was the coordinator's agents-ready bound when this was set (`run.agentsReadyTimeoutSec`,
+// PR #97; 180 since issue #311). It bounds only the module load, one part of the boot the
+// coordinator waits for. A module that spins forever is still cut off, just not one that merely
+// compiles slowly.
 export const STRATEGY_STARTUP_TIMEOUT_MS = 60_000;
 
 // After this many consecutive failed decisions (a throw, a crash, a timeout) the runner stops
