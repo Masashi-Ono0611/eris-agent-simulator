@@ -22,6 +22,10 @@ case "$FAKE" in
   allfail) echo '{"scenariosPlanned":2,"scenarios":[{"regime":"calm","seed":1,"agents":null},{"regime":"crash","seed":1}]}' ;;
   zero)    echo '{"scenariosPlanned":0,"scenarios":[]}' ;;
   dupe)    echo "{\"scenariosPlanned\":2,\"scenarios\":[{\"regime\":\"calm\",\"seed\":1,\"agents\":$A},{\"regime\":\"calm\",\"seed\":1,\"agents\":$A}]}" ;;
+  swapid)  B='[{"id":"a"},{"id":"a"}]'
+           echo "{\"scenariosPlanned\":2,\"scenarios\":[{\"regime\":\"calm\",\"seed\":1,\"agents\":$A},{\"regime\":\"crash\",\"seed\":1,\"agents\":$B}]}" ;;
+  failrow) echo "{\"scenariosPlanned\":2,\"scenarios\":[{\"regime\":\"calm\",\"seed\":1,\"agents\":$A},{\"regime\":\"crash\",\"seed\":1,\"agents\":$A},{\"regime\":\"calm\",\"seed\":1,\"agents\":null}]}" ;;
+  hang)    sleep 307 & sleep 307; exit 0 ;;
 esac > "$d/matrix.json"
 echo "wrote $d/matrix.json and standings.json"
 exit "${FAKE_RC:-0}"
@@ -40,6 +44,19 @@ FAKE=allfail check "all scenarios failed, rc 0" 1 bash ascon/eval/run-matrix.sh 
 FAKE=zero check "zero planned scenarios" 1 bash ascon/eval/run-matrix.sh zero roster.yaml sc.yaml 9
 FAKE=dupe check "duplicate fills a missing scenario" 1 bash ascon/eval/run-matrix.sh dupe roster.yaml sc.yaml 9
 FAKE=good check "agent count mismatch" 1 bash ascon/eval/run-matrix.sh count roster1.yaml sc.yaml 9
+FAKE=swapid check "right count, wrong agent ids" 1 bash ascon/eval/run-matrix.sh swapid roster.yaml sc.yaml 9
+FAKE=failrow check "complete set plus a failed duplicate" 1 bash ascon/eval/run-matrix.sh failrow roster.yaml sc.yaml 9
+# Interrupted mid-run: the backtest's own children must be gone before the locks are released.
+FAKE=hang bash ascon/eval/run-matrix.sh hang roster.yaml sc.yaml 9 > /dev/null 2>&1 &
+runner=$!
+sleep 2
+kill -TERM "$runner"; wait "$runner"; got=$?
+sleep 1
+left="$(pgrep -f 'sleep 307' | wc -l | tr -d ' ')"
+printf '%-36s want 1 got %s, %s sleepers left, locks %s  %s\n' "interrupted run" "$got" "$left" \
+  "$(ls -d backtest/state/.run-matrix.lock logs/hang.lock 2>/dev/null | wc -l | tr -d ' ')" \
+  "$([ "$got" = 1 ] && [ "$left" = 0 ] && ! ls -d backtest/state/.run-matrix.lock logs/hang.lock >/dev/null 2>&1 && echo OK || echo MISMATCH)"
+[ "$got" = 1 ] && [ "$left" = 0 ] || { fails=1; pkill -f 'sleep 307'; }
 FAKE=good FAKE_RC=3 check "complete output, backtest exit 3" 1 bash ascon/eval/run-matrix.sh rc3 roster.yaml sc.yaml 9
 mkdir backtest/state/.run-matrix.lock
 FAKE=good check "state dir already in use" 2 bash ascon/eval/run-matrix.sh locked roster.yaml sc.yaml 9

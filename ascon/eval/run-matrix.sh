@@ -25,7 +25,17 @@ mkdir "$name_lock" 2>/dev/null || { echo "EXIT_$name=- VERDICT=BLOCKED another r
 state_lock=""
 child=""
 cleanup() {
-  [ -n "$child" ] && kill "$child" 2>/dev/null && wait "$child" 2>/dev/null
+  # The backtest runs in its own process group (set -m below), so this stops its anvil and agent
+  # workers too, before the locks that keep a second run out are released.
+  if [ -n "$child" ]; then
+    kill -TERM -- "-$child" 2>/dev/null
+    wait "$child" 2>/dev/null
+    for _ in 1 2 3 4 5 6 7 8 9 10; do
+      kill -0 -- "-$child" 2>/dev/null || break
+      sleep 1
+    done
+    kill -KILL -- "-$child" 2>/dev/null
+  fi
   [ -n "$state_lock" ] && rmdir "$state_lock" 2>/dev/null
   rmdir "$name_lock" 2>/dev/null
 }
@@ -48,8 +58,10 @@ state_lock="$sdir/.run-matrix.lock"
 
 args=(--scenarios "$scenarios" --agents "$roster" --agent-sandbox process --port "$port")
 [ -n "$state" ] && args+=(--state "$state")
+set -m
 npm run backtest -- "${args[@]}" >> "$log" 2>&1 &
 child=$!
+set +m
 wait "$child"
 rc=$?
 child=""

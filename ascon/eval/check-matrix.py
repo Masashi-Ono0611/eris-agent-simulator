@@ -26,7 +26,8 @@ spec = open(scenarios).read()
 wanted = {(r, int(s)) for r in flow_list(spec, "regimes") for s in flow_list(spec, "seeds")}
 if not wanted:
     fail("the scenario file asks for no scenarios")
-expected = len(re.findall(r"(?m)^\s*-\s+id:\s*\S", open(roster).read()))
+roster_ids = sorted(re.findall(r"(?m)^\s*-\s+id:\s*([^\s#]+)", open(roster).read()))
+expected = len(roster_ids)
 if expected == 0:
     fail("roster has no agents")
 
@@ -40,11 +41,13 @@ if not isinstance(planned, int) or planned <= 0:
 if planned != len(wanted):
     fail(f"planned {planned} scenarios, the scenario file asks for {len(wanted)}")
 
+rows = [(r.get("regime"), r.get("seed")) for r in results]
 done = [(r.get("regime"), r.get("seed")) for r in results if r.get("agents")]
 problems = []
 missing = sorted(wanted - set(done))
-extra = sorted(set(done) - wanted)
-dupes = sorted({k for k in done if done.count(k) > 1})
+# Over every row, failed ones included: a failed extra or repeated scenario is still wrong output.
+extra = sorted(set(rows) - wanted, key=str)
+dupes = sorted({k for k in rows if rows.count(k) > 1}, key=str)
 if missing:
     problems.append(f"{len(wanted) - len(missing)}/{len(wanted)} scenarios have results; missing "
                     + ", ".join(f"{r}#{s}" for r, s in missing))
@@ -52,10 +55,10 @@ if extra:
     problems.append("not asked for: " + ", ".join(f"{r}#{s}" for r, s in extra))
 if dupes:
     problems.append("more than one result: " + ", ".join(f"{r}#{s}" for r, s in dupes))
-bad = [f"{r['regime']}#{r['seed']}={len(r['agents'])}" for r in results
-       if r.get("agents") and len(r["agents"]) != expected]
+bad = [f"{r['regime']}#{r['seed']}" for r in results
+       if r.get("agents") and sorted(str(a.get("id")) for a in r["agents"]) != roster_ids]
 if bad:
-    problems.append(f"agent count != roster {expected}: " + ", ".join(bad))
+    problems.append(f"agents != the roster's {expected} ids, each once: " + ", ".join(bad))
 if problems:
     fail("; ".join(problems))
 print(f"PASS {len(wanted)}/{len(wanted)} scenarios, {expected} agents each, {matrix}")
