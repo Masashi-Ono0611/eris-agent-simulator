@@ -3,7 +3,7 @@
 // backtest failed with 401. The rest of the file -- deployer and wallet keys -- must stay out.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { INFERENCE_ENV_LOCAL, loadEnvLocal } from "../core/src/cli/bootstrapEnv.js";
@@ -11,9 +11,14 @@ import { INFERENCE_ENV_LOCAL, loadEnvLocal } from "../core/src/cli/bootstrapEnv.
 const ROOT = resolve(import.meta.dirname, "..");
 
 function withEnvFile(body: string, run: (path: string) => void): void {
-  const path = join(mkdtempSync(join(tmpdir(), "eris-envfile-")), "env");
-  writeFileSync(path, body);
-  run(path);
+  const dir = mkdtempSync(join(tmpdir(), "eris-envfile-"));
+  try {
+    const path = join(dir, "env");
+    writeFileSync(path, body);
+    run(path);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 }
 
 test("loadEnvLocal with `only` loads the listed names and nothing else", () => {
