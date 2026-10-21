@@ -197,3 +197,39 @@ lines, and a clean accept case).
 not whether `eris-agent:<team-id>` exists afterwards — a tag left by the previous accepted ZIP would
 otherwise be reported as this one's digest. The extracted directory is removed, the previous image
 stays, and the previous digest stays the team's current one in the ledger.
+
+## Acceptance ledger (rules §2.2)
+
+A unit may replace its submission up to 5 times a day, and the **last accepted** one is evaluated.
+`scripts/submissionLedger.ts` (also `infra/submission/ledger.sh`, `npm run submission-ledger`) keeps
+that record as JSONL, one line per `accept-submission.sh` run. Set `ERIS_SUBMISSION_LEDGER` and the
+script records itself; unset, it behaves exactly as before:
+
+```sh
+ERIS_SUBMISSION_LEDGER=~/ascon/ledger.jsonl infra/submission/accept-submission.sh submissions/team-alice.zip team-alice
+```
+
+| field | |
+|---|---|
+| `unit`, `result` | `ACCEPT` / `REJECT` |
+| `at`, `jstDay` | UTC time; the JST calendar day the rules count in |
+| `zip`, `zipSha256` | the received file's name and sha256 |
+| `imageDigest` | ACCEPT only: the id `accept-submission.sh` printed (the replay audit's other end) |
+| `reason` | REJECT only: the message the script stopped with |
+| `acceptedToday`, `overLimit` | the unit's ACCEPTs on that JST day, this one included; `overLimit: true` past 5 |
+
+With the ledger set, a unit that already has 5 ACCEPTs today is **refused before the scan** and the
+refusal is recorded. `ERIS_SUBMISSION_OVER_LIMIT=1` turns that into a warning (a replacement the
+operator agreed to); the line still gets `overLimit: true`. REJECTs do not count towards the 5.
+If the ACCEPT line cannot be written the script exits 2 and says to record the digest by hand.
+
+```sh
+infra/submission/ledger.sh check --ledger ~/ascon/ledger.jsonl --unit team-alice   # exit 3 = no submissions left today
+infra/submission/ledger.sh final --ledger ~/ascon/ledger.jsonl --deadline 2026-10-31T15:00:00Z
+```
+
+`final` prints the last ACCEPT per unit as a table (time, digest, ZIP sha256, number of accepts, any
+REJECTs after it, days over the limit) and as the `agents:` block for the field config
+(`- id: <unit>` / `wallet: AUTO`). `--deadline` drops lines at or after it (10/31 24:00 JST is
+`2026-10-31T15:00:00Z`); `--format table|yaml` prints one of the two. `record` is what the script
+calls (`--unit --result [--zip --digest --reason --at]`), for a line that has to be added by hand.
