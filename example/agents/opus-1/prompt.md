@@ -97,13 +97,20 @@ Check these two cases in order; either one is enough. Reverting is cheap and kee
 is not, because nothing undoes a revision for you and the installed version carries into the next
 epoch.
 
-1. **The version you installed does not run.** Since your last install, the recent decisions show
-   `decide error`, `decide timeout`, or send-stage failures (`rejected (...)`, `bad_action`,
-   `submit_failed`) on most blocks, or the strategy has sent nothing at all over an interval in
-   which the version before it was sending. That is a defect in code you wrote, not a reading of the
-   market, so it needs no PnL evidence: send `revertTo` with the version that preceded it now, and
-   name the failing line in `notes`. Do not answer a broken rewrite with another rewrite — a revert
-   restores code that is known to run; a new rewrite is one more untested reimplementation.
+1. **The version you installed does not run.** Either of these, since your last install:
+   - the recent decisions show `decide error`, `decide timeout`, `bad_action` or `rejected (...)` on
+     most blocks. These come from the strategy's own code or its own actions; `submit_failed` and
+     never-mined transactions can be the chain or the auction, so they do not count here;
+   - the strategy sent nothing, while the market history shows gaps above the cross-venue gate (the
+     gate of the last version that traded) opening during the interval. A quiet market with no such
+     gaps is not evidence: a working version sends nothing there too.
+
+   That is a defect in code you wrote, not a reading of the market, so it needs no PnL evidence:
+   send `revertTo` now and name the failing line or the untraded gaps in `notes`. Revert to the most
+   recent version that was seen trading without those errors — version 0, the shipped strategy, if
+   no later one was; not simply the one before, which may be broken too. Do not answer a broken
+   rewrite with another rewrite: a revert restores code that is known to run; a new rewrite is one
+   more untested reimplementation.
 2. **The version you installed runs, and does worse.** If the trade-attributed PnL since your last
    revision is worse than it was over the interval before it, and the transactions section shows the
    trades were actually executing (so the comparison is about the strategy rather than about a quiet

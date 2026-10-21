@@ -12,6 +12,11 @@
 set -u
 agent="${1:?agent}"; mode="${2:?fake|real}"; blocks="${3:?blocks}"; every="${4:-10}"; model="${5:-}"
 root="$(cd "$(dirname "$0")/../.." && pwd)"; cd "$root" || exit 2
+# The values below go into a YAML roster unescaped, so accept only plain identifiers and numbers.
+printf '%s\n' "$agent" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9_-]*$' || { echo "BLOCKED: agent id must be [A-Za-z0-9_-]" >&2; exit 2; }
+printf '%s\n' "$blocks $every" | grep -Eq '^[0-9]+ [0-9]+$' || { echo "BLOCKED: blocks and every must be integers" >&2; exit 2; }
+[ -z "$model" ] || printf '%s\n' "$model" | grep -Eq '^[A-Za-z0-9._:-]+$' || { echo "BLOCKED: model must be [A-Za-z0-9._:-]" >&2; exit 2; }
+# Not safe to run twice at once for the same agent: the copy below is reserved by name only.
 src="example/agents/$agent"; copy="example/agents/revtest-$agent"
 [ -f "$src/prompt.md" ] || { echo "BLOCKED: $src/prompt.md not found" >&2; exit 2; }
 [ -e "$copy" ] && { echo "BLOCKED: $copy already exists" >&2; exit 2; }
