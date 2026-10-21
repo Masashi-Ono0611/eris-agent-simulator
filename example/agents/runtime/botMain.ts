@@ -77,6 +77,7 @@ import {
   buildRevisionSystem,
   compileExecutor,
   DEFAULT_REVISE_EVERY_BLOCKS,
+  extractRevisionJson,
   improvePolicyState,
   loadImproveAgent,
   parseRevision,
@@ -1135,17 +1136,21 @@ async function main(): Promise<void> {
           });
           throw error;
         }
-        let parsedJson: unknown;
-        try {
-          parsedJson = JSON.parse(stripFences(raw));
-        } catch {
-          record(
-            { kind: "rejected", reason: "response was not valid JSON" },
-            block,
-          );
+        const extracted = extractRevisionJson(raw);
+        if (!extracted.ok) {
+          record({ kind: "rejected", reason: extracted.reason }, block);
           return;
         }
-        const parsed = parseRevision(parsedJson, language);
+        // Said, because the prose is dropped: the reply was not the bare object the prompt asked
+        // for. The full reply stays in the call log (ERIS_IMPROVE_LOG_CALLS). Not a
+        // `revision <kind>` reason: the outcome is the record below.
+        if (extracted.form === "fenced")
+          agentLog({
+            round: block,
+            reason: "llm reply: revision taken from its one fenced block, prose around it dropped",
+            state: { model },
+          });
+        const parsed = parseRevision(extracted.value, language);
         if (!parsed.ok) {
           record({ kind: "rejected", reason: parsed.reason }, block);
           return;
@@ -1266,12 +1271,6 @@ async function main(): Promise<void> {
       void maybeRevise(block);
     });
   }
-}
-
-function stripFences(text: string): string {
-  const t = text.trim();
-  const m = t.match(/^```(?:json)?\n([\s\S]*?)\n```$/);
-  return m ? m[1] : t;
 }
 
 main().catch((error) => {

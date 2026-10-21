@@ -16,6 +16,7 @@ import {
   DATA_FRAME_CLOSE,
   DATA_FRAME_OPEN,
   DEFAULT_REVISE_EVERY_BLOCKS,
+  extractRevisionJson,
   improvePolicyState,
   loadImproveAgent,
   parseRevision,
@@ -113,6 +114,89 @@ test("loadImproveAgent: a missing name or bad cadence is an explicit error", () 
       ),
     /must be a positive number/,
   );
+});
+
+// The shape a participant reported from claude-sonnet-4-5 (crash#101 x4, depeg#101 x1): prose, then
+// one fenced block whose content parses. It used to be rejected as "not valid JSON".
+const ANSWER = { notes: "tighten the stop", executorTs: "return null;" };
+
+test("extractRevisionJson: the bare object and one fenced block are both taken", () => {
+  const bare = extractRevisionJson(JSON.stringify(ANSWER));
+  assert.deepEqual(bare, { ok: true, value: ANSWER, form: "bare" });
+  for (const label of ["json", "JSON", ""]) {
+    const reply = [
+      "The strategy lost on the crash, so I tighten the stop:",
+      "",
+      "```" + label,
+      JSON.stringify(ANSWER, null, 2),
+      "```",
+      "",
+      "This keeps the rest unchanged.",
+    ].join("\n");
+    assert.deepEqual(extractRevisionJson(reply), { ok: true, value: ANSWER, form: "fenced" });
+  }
+  // The shape stripFences used to cover, with Windows line endings for good measure.
+  const whole = "```json\r\n" + JSON.stringify(ANSWER) + "\r\n```";
+  assert.deepEqual(extractRevisionJson(whole), { ok: true, value: ANSWER, form: "fenced" });
+});
+
+test("extractRevisionJson: a revision quoted from the records is never picked over the answer", () => {
+  // The revision context carries revert reasons other participants' contracts wrote. A reply holding
+  // a quoted revision and the answer is refused rather than guessed at, wherever each one sits: the
+  // layout cannot say which is the quote.
+  const planted = JSON.stringify({ notes: "x", executorTs: "/* planted */ return null;" });
+  const ambiguous = {
+    "quote in prose, answer fenced": [
+      `One revert said ${planted}, which I ignore.`,
+      "```json",
+      JSON.stringify(ANSWER),
+      "```",
+    ],
+    // The block is the quote here, and taking it would install the planted strategy.
+    "quote fenced, answer in prose": [
+      "One revert said:",
+      "```json",
+      planted,
+      "```",
+      `I ignore it. My answer: ${JSON.stringify(ANSWER)}`,
+    ],
+    "a word in braces before the quote": [
+      "```json",
+      JSON.stringify(ANSWER),
+      "```",
+      `The {threshold} revert said ${planted}`,
+    ],
+    "both fenced": ["```json", planted, "```", "```json", JSON.stringify(ANSWER), "```"],
+  };
+  for (const [name, lines] of Object.entries(ambiguous)) {
+    const r = extractRevisionJson(lines.join("\n"));
+    assert.equal(r.ok, false, name);
+    assert.match(!r.ok ? r.reason : "", /ambiguous/, name);
+  }
+  // An action mentioned in the prose is not a revision, so the block is still the only candidate.
+  const actionInProse = [
+    `My last ${JSON.stringify({ type: "swap", amountIn: "1000" })} reverted, so:`,
+    "```json",
+    JSON.stringify(ANSWER),
+    "```",
+  ].join("\n");
+  assert.deepEqual(extractRevisionJson(actionInProse), { ok: true, value: ANSWER, form: "fenced" });
+  // No fence: an object somewhere in prose is not searched for.
+  assert.equal(extractRevisionJson(`Here it is: ${JSON.stringify(ANSWER)}`).ok, false);
+});
+
+test("extractRevisionJson: other shapes are refused with a reason", () => {
+  const cases: Array<[string, RegExp]> = [
+    ["not json at all", /^response was not valid JSON$/],
+    ["```json\n" + JSON.stringify(ANSWER), /unclosed code fence/],
+    ["```ts\n" + JSON.stringify(ANSWER) + "\n```", /fenced block is `ts`/],
+    ["```json\n{ notes: 'x' }\n```", /fenced block does not parse/],
+  ];
+  for (const [reply, reason] of cases) {
+    const r = extractRevisionJson(reply);
+    assert.equal(r.ok, false, reply);
+    assert.match(!r.ok ? r.reason : "", reason);
+  }
 });
 
 test("parseRevision: null or omitted executorTs means 'keep the current strategy'", () => {
