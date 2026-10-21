@@ -6,6 +6,9 @@
 //   /runs/<id>/<artifact>            the artifact file itself
 //   /runs/<id>/tail/<file>?offset=N  incremental tail of a jsonl/csv artifact (live mode)
 //
+// The same handler is also mounted, behind a bearer token, as the sponsor's view
+// (`/sponsor/runs/...`, server/sponsor.ts): the audience redactions below, plus the decision logs.
+//
 // It lived inside vite.config.ts, as a dev-server plugin, on the assumption that the dashboard is a
 // local viewer over local output. ADR 0021 §5 breaks that assumption: on the practice devnet the
 // artifacts are on the coordinator's machine and the participants are not, so the operator hosts
@@ -127,6 +130,12 @@ export type DashboardMode = {
   audience: boolean;
   /** False for the trial environment: rules §4.7, it posts no standings. */
   standings: boolean;
+  /**
+   * The sponsor's view (server/sponsor.ts): everything the audience gets, plus the participants'
+   * decision logs. Only ever true behind the sponsor's token; reported so a reader can tell the two
+   * apart. Absent from the public mode.json.
+   */
+  sponsor?: boolean;
 };
 
 export type RunsApiOptions = Partial<DashboardMode> & {
@@ -195,16 +204,44 @@ const HIDDEN_REGIME = "hidden";
 // `resume/` is a practice period's checkpoint directory (core/src/realtime/periodResume.ts): its
 // state.json carries the seed and the episode plan, and what a resume cut from the artifacts sits
 // under resume/cut-*/ with the artifacts' own file names -- which the list above would admit.
+//
+// `inference/` is where the inference proxy's records go by convention
+// (`--record runs/<competition>/inference`, infra/inference-proxy/README.md), one
+// `<agentId>.jsonl` per agent. An agent id is a participant's handle, so an agent called "market"
+// would have put `inference/market.jsonl` -- one participant's raw LLM exchanges -- through the
+// list above under an artifact's name. They are the sponsor's to read (server/sponsor.ts), through
+// its own mount, never the audience's.
 function audienceAllows(rel: string): boolean {
   const parts = rel.split("/");
   const base = parts[parts.length - 1] ?? "";
   if (
     parts.includes("agents") ||
     parts.includes("disclosures") ||
-    parts.includes("resume")
+    parts.includes("resume") ||
+    parts.includes("inference")
   )
     return false;
   return AUDIENCE_FILES.has(base);
+}
+
+/**
+ * The sponsor's view: the audience's files, plus a participant's decision log and LLM-exchange log
+ * (`agents/<id>.jsonl`, `agents/<id>.llm.jsonl`) -- a file directly inside a run's `agents/`
+ * directory, nothing below it. The environment's answer key (`disclosures/`), a period's
+ * checkpoints (`resume/`, which hold the seed) and anything off the list stay withheld exactly as
+ * for the audience: the sponsor is shown what the participants did, not what the scenario is.
+ */
+export function sponsorAllows(rel: string): boolean {
+  if (audienceAllows(rel)) return true;
+  const parts = rel.split("/");
+  if (parts.includes("disclosures") || parts.includes("resume") || parts.includes("inference"))
+    return false;
+  return (
+    parts.length >= 2 &&
+    parts[parts.length - 2] === "agents" &&
+    parts.indexOf("agents") === parts.length - 2 &&
+    /^[^.][^/]*\.jsonl$/.test(parts[parts.length - 1] ?? "")
+  );
 }
 
 type Json = Record<string, unknown>;
@@ -671,10 +708,18 @@ function normalizeRel(rel: string): string | null {
 
 export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
   const root = path.resolve(runsDir);
+  const sponsor = options.sponsor === true;
+  // The sponsor's view is the audience's redaction with more files: never the operator's.
   const mode: DashboardMode = {
-    audience: options.audience ?? false,
+    audience: sponsor || (options.audience ?? false),
     standings: options.standings ?? true,
+    ...(sponsor ? { sponsor: true } : {}),
   };
+  const allows = sponsor ? sponsorAllows : audienceAllows;
+  // An answer to a token-bearing request must never sit in a shared cache, where the next reader
+  // -- with no token -- would be served it. `public, immutable` on a finished run's files is right
+  // for the public view and exactly wrong here.
+  const cacheFor = (policy: string): string => (sponsor ? "private, no-store" : policy);
   const allowlist =
     options.competitions && options.competitions.length > 0
       ? [...new Set(options.competitions)]
@@ -1078,8 +1123,8 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
     cacheControl: string,
   ): void {
     res.setHeader("content-type", contentType);
-    res.setHeader("cache-control", cacheControl);
-    res.setHeader("vary", "accept-encoding");
+    res.setHeader("cache-control", cacheFor(cacheControl));
+    res.setHeader("vary", sponsor ? "accept-encoding, authorization" : "accept-encoding");
     const small = typeof body === "string" && body.length < 1024;
     if (!small && acceptsGzip(req)) {
       res.setHeader("content-encoding", "gzip");
@@ -1205,7 +1250,7 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
       if (
         !file ||
         !/\.(jsonl|csv)$/.test(file) ||
-        (mode.audience && !audienceAllows(checked)) ||
+        (mode.audience && !allows(checked)) ||
         !admitted
       ) {
         res.statusCode = mode.audience || !admitted ? 404 : 403;
@@ -1230,7 +1275,7 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
           : null;
       fs.stat(file, (err, stat) => {
         res.setHeader("content-type", "application/json");
-        res.setHeader("cache-control", CACHE_NONE);
+        res.setHeader("cache-control", cacheFor(CACHE_NONE));
         if (err || !stat.isFile()) {
           res.end(JSON.stringify({ offset: 0, text: "", missing: true }));
           return;
@@ -1339,7 +1384,7 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
       return true;
     }
     const checked = relOf(file);
-    if ((mode.audience && !audienceAllows(checked)) || !admitsPath(checked)) {
+    if ((mode.audience && !allows(checked)) || !admitsPath(checked)) {
       // 404, not 403: for the audience an unpublished file does not exist, and a different status
       // for "exists but withheld" would confirm what is there to withhold. The same for a run
       // outside the allowlist: it is not on this server as far as a reader can tell.

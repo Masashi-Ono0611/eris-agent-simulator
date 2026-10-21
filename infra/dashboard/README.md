@@ -27,7 +27,7 @@ cd infra/monitoring && docker compose restart ascon-dashboard
 |---|---|
 | `dashboard/src/**` — the bundle | the next page load after the build |
 | a run's files under `runs/` | the next index poll |
-| `dashboard/server/**` — the runs API, the audience redaction, the competition allowlist, `/healthz` | only after `docker compose restart ascon-dashboard` |
+| `dashboard/server/**` — the runs API, the audience redaction, the competition allowlist, the sponsor view, `/healthz` | only after `docker compose restart ascon-dashboard` |
 
 Which way round this goes matters more than it looks, because the public/operator split lives in
 `dashboard/server/runsApi.ts`: issues #198, #202, #203 and #204 were each a fix to what that file
@@ -202,6 +202,82 @@ rm -f dashboard/dist/.built-at && systemctl --user start eris-dashboard-sync.ser
 
 If the server cannot reach the explorer, the dashboard hides the links and says so ("Block-explorer
 links are unavailable") — which is also what a missing explorer looks like.
+
+## Sponsor view
+
+The sponsor's real-time access to processed run data is a token-gated mount of the runs API on this
+same server: `/sponsor/runs/*` (the public view's artifacts with the public view's redactions, plus
+the participants' decision logs) and `/sponsor/inference/*` (the inference proxy's per-agent
+records). What it serves and withholds, and the rules of the door, are in
+[`docs/guide/dashboard.md`, "Sponsor view"](../../docs/guide/dashboard.md#sponsor-view-sponsor-bearer-token);
+the code is `dashboard/server/sponsor.ts`. **It is off until the token file is configured**, and
+then every `/sponsor/*` path is a 404 as before.
+
+**Do not issue a token before the sponsor's written commitment has been received** (the privacy
+policy requires it before any data is provided; the operator's tracking issue records it). Turning
+the mount on with no tokens in the file is harmless — nobody is admitted — but a token is access.
+
+### Turning it on
+
+Three settings in `infra/monitoring/.env`, all **container** paths. The compose file mounts
+`$ASCON_LOGS/dashboard-sponsor/` at `/var/lib/eris-sponsor/` — writable, because the checkout at
+`/eris` is read-only and the access record has to be appended somewhere:
+
+| variable | value | what |
+|---|---|---|
+| `ERIS_DASHBOARD_SPONSOR_TOKENS_FILE` | `/var/lib/eris-sponsor/tokens` | the token digests. Setting it turns the mount on |
+| `ERIS_DASHBOARD_SPONSOR_ACCESS_LOG` | `/var/lib/eris-sponsor/access.jsonl` | the access record. **Required**: unset or unwritable = every sponsor request is 503 |
+| `ERIS_DASHBOARD_INFERENCE_DIR` | `/eris/runs/<competition>/inference` | the inference proxy's `--record` directory ([`infra/inference-proxy/README.md`](../inference-proxy/README.md)). Unset = `/sponsor/inference/*` is 404 |
+
+```sh
+# Create the directory as yourself first: if docker creates it, it is root's and the issue
+# script below cannot write the token file.
+mkdir -p "$ASCON_LOGS/dashboard-sponsor" && chmod 700 "$ASCON_LOGS/dashboard-sponsor"
+touch "$ASCON_LOGS/dashboard-sponsor/tokens" && chmod 600 "$ASCON_LOGS/dashboard-sponsor/tokens"
+
+# The settings are environment, and the mount is new: recreate, not just restart.
+cd infra/monitoring && docker compose up -d --no-deps dashboard
+docker logs ascon-dashboard 2>&1 | grep 'sponsor:'     # "on at /sponsor/ (tokens …, access log …, inference …)"
+```
+
+`ERIS_DASHBOARD_INFERENCE_DIR` names one competition's records, so it moves with the competition:
+edit it and `docker compose up -d --no-deps dashboard` again.
+
+### Issuing and revoking
+
+On the host, against the host path of the same file. Neither needs a restart — the server re-checks
+the file on every request:
+
+```sh
+export ERIS_DASHBOARD_SPONSOR_TOKENS_FILE="$ASCON_LOGS/dashboard-sponsor/tokens"
+infra/dashboard/issue-sponsor-token.sh issue <label>    # prints the token ONCE; record the label, not the token
+infra/dashboard/issue-sponsor-token.sh revoke <label>   # refused from the next request on
+infra/dashboard/issue-sponsor-token.sh list
+```
+
+The label is what the access record names against every request, so make it say who holds the
+token (`allied-ops`, `allied-research`), one label per person or system rather than one shared by
+all. The token goes to the sponsor once, over a channel agreed with them; it is not written
+anywhere on this box. Check it from outside:
+
+```sh
+curl -s -o /dev/null -w '%{http_code}\n' https://ascon-dash.nyx.foundation/sponsor/runs/index.json   # 401
+curl -s -H "Authorization: Bearer <token>" https://ascon-dash.nyx.foundation/sponsor/runs/mode.json  # {"audience":true,…,"sponsor":true}
+```
+
+### The access record
+
+`$ASCON_LOGS/dashboard-sponsor/access.jsonl`, one line per admitted request, written before the
+answer: `{"ts":"…","label":"allied-ops","method":"GET","path":"/sponsor/runs/<id>/blocks.csv"}`.
+It is append-only from the server's side and nothing rotates it; it is the record the privacy
+commitment asks for (who accessed what, when), so keep it for as long as the data-use period runs
+rather than letting a log rotation take it. The container runs as root, so the file is root's on the
+host; `sudo` or `docker exec ascon-dashboard cat /var/lib/eris-sponsor/access.jsonl` reads it.
+
+### A change to `sponsor.ts` or `runsApi.ts`
+
+Is server code: live only after `docker compose restart ascon-dashboard` (the table at the top of
+this file). That includes the redaction rules the sponsor view inherits from the public one.
 
 ## What it refuses to do
 
