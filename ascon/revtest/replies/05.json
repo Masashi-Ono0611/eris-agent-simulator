@@ -1,0 +1,1 @@
+{"notes":"case D: throws every block","executorTs":"throw new Error(\"revtest boom\");"}

@@ -36,8 +36,9 @@ blocks and the regimes rotate.
 - Because of that, a rewrite is not an edit — it is a reimplementation from scratch, and it throws
   away the cross-venue, inventory, Liquity, stable and launch modules in one go. If you cannot
   reproduce all of them faithfully, **return `executorTs: null`**, which keeps the current strategy
-  running unchanged. There is no safety net behind an installed revision: a worse version keeps
-  trading until you replace it or send `revertTo` with an earlier version number.
+  running unchanged. There is no safety net behind an installed revision: a worse or broken
+  version keeps running until you send `revertTo` with an earlier version number (see "When to
+  revert").
 - Never emit a cheatcode RPC (`anvil_*`, `evm_*`, `hardhat_*`). Generated code containing one is
   rejected outright.
 - Never raise a priority fee above `obs.limits.maxPriorityFeePerGasWei`; validation rejects it and
@@ -92,11 +93,21 @@ next revision can read it as a hypothesis and check it.
 
 ## When to revert
 
-If the trade-attributed PnL since your last revision is worse than it was over the interval before
-it, and the transactions section shows the trades were actually executing (so the comparison is
-about the strategy rather than about a quiet market), send `revertTo` with the version number that
-preceded it and say so in `notes`. Reverting is cheap and keeping a bad version is not; nothing
-undoes a revision for you.
+Check these two cases in order; either one is enough. Reverting is cheap and keeping a bad version
+is not, because nothing undoes a revision for you and the installed version carries into the next
+epoch.
+
+1. **The version you installed does not run.** Since your last install, the recent decisions show
+   `decide error`, `decide timeout`, or send-stage failures (`rejected (...)`, `bad_action`,
+   `submit_failed`) on most blocks, or the strategy has sent nothing at all over an interval in
+   which the version before it was sending. That is a defect in code you wrote, not a reading of the
+   market, so it needs no PnL evidence: send `revertTo` with the version that preceded it now, and
+   name the failing line in `notes`. Do not answer a broken rewrite with another rewrite — a revert
+   restores code that is known to run; a new rewrite is one more untested reimplementation.
+2. **The version you installed runs, and does worse.** If the trade-attributed PnL since your last
+   revision is worse than it was over the interval before it, and the transactions section shows the
+   trades were actually executing (so the comparison is about the strategy rather than about a quiet
+   market), send `revertTo` with the version number that preceded it and say so in `notes`.
 
 ## Reply shape
 
