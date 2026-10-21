@@ -177,9 +177,9 @@ export function resolveLlmProvider(model: string): LlmProvider {
     }
   }
   if (model.startsWith("openai:")) return { kind: "openai" };
-  // OpenAI's own names: gpt-<digit>... and the o-series. NOT gpt-oss, which is an open-weights
-  // model served by Ollama and the default here.
-  if (/^(gpt-\d|o[134](-|$))/.test(model)) return { kind: "openai" };
+  // OpenAI's own names: gpt-<digit>..., the o-series, and gpt-oss-<size> (OpenAI's id for its
+  // open-weights models). Ollama names the same models gpt-oss:<size>, with a colon, and keeps them.
+  if (/^(gpt-\d|gpt-oss-\d|o[134](-|$))/.test(model)) return { kind: "openai" };
   if (model.startsWith("claude")) return { kind: "anthropic" };
   return { kind: "ollama" };
 }
@@ -187,6 +187,13 @@ export function resolveLlmProvider(model: string): LlmProvider {
 // "openai:<model>" is the explicit form; the bare model name goes upstream.
 function openAiModelName(model: string): string {
   return model.startsWith("openai:") ? model.slice("openai:".length) : model;
+}
+
+// The pro and codex models are served on the Responses API only (rules Appendix A lists them).
+// Everything else stays on Chat Completions, which every OpenAI-compatible server behind
+// OPENAI_BASE_URL also speaks.
+export function openAiUsesResponses(model: string): boolean {
+  return /(^|-)pro($|-)|codex/.test(openAiModelName(model));
 }
 
 // A single LLM call. Returns the response text (a JSON string is expected). Parsing/validation is the caller's job (bot.ts).
@@ -223,6 +230,7 @@ async function callOpenAi(req: LlmRequest, limits: LlmLimits): Promise<LlmReply>
       );
     headers.authorization = `Bearer ${key}`;
   }
+  if (openAiUsesResponses(req.model)) return callOpenAiResponses(base, headers, req, limits);
   const res = await fetch(`${base}/chat/completions`, {
     method: "POST",
     headers,
@@ -261,6 +269,63 @@ async function callOpenAi(req: LlmRequest, limits: LlmLimits): Promise<LlmReply>
     usage: {
       inputTokens: data.usage?.prompt_tokens,
       outputTokens: data.usage?.completion_tokens,
+    },
+    warnings: [],
+  };
+}
+
+// The same call on the Responses API: the system prompt is `instructions`, the messages are
+// `input`, JSON mode is `text.format`, and the cap is `max_output_tokens`. The text comes back in
+// `output[].content[]` parts of type output_text (`output_text` at the top is an SDK helper, not
+// part of the HTTP response).
+async function callOpenAiResponses(
+  base: string,
+  headers: Record<string, string>,
+  req: LlmRequest,
+  limits: LlmLimits,
+): Promise<LlmReply> {
+  const res = await fetch(`${base}/responses`, {
+    method: "POST",
+    headers,
+    signal: AbortSignal.timeout(CALL_TIMEOUT_MS),
+    body: JSON.stringify({
+      model: openAiModelName(req.model),
+      instructions: req.system,
+      input: req.messages,
+      ...(req.json === false ? {} : { text: { format: { type: "json_object" } } }),
+      ...(limits.maxOutputTokens !== undefined
+        ? { max_output_tokens: limits.maxOutputTokens }
+        : {}),
+    }),
+  });
+  if (!res.ok)
+    throw new Error(`openai responses failed: ${res.status} ${await res.text()}`);
+  const data = (await res.json()) as {
+    status?: string;
+    incomplete_details?: { reason?: string } | null;
+    output?: Array<{
+      type?: string;
+      content?: Array<{ type?: string; text?: string }>;
+    }>;
+    usage?: { input_tokens?: number; output_tokens?: number };
+  };
+  if (data.status === "incomplete" && data.incomplete_details?.reason === "max_output_tokens")
+    throw new LlmOutputTruncatedError(
+      data.usage?.output_tokens ?? limits.maxOutputTokens,
+      'openai responses incomplete "max_output_tokens"',
+    );
+  const text = (data.output ?? [])
+    .filter((item) => item.type === "message")
+    .flatMap((item) => item.content ?? [])
+    .filter((part) => part.type === "output_text" && typeof part.text === "string")
+    .map((part) => part.text)
+    .join("");
+  if (text.trim() === "") throw new Error("openai responses returned empty content");
+  return {
+    text,
+    usage: {
+      inputTokens: data.usage?.input_tokens,
+      outputTokens: data.usage?.output_tokens,
     },
     warnings: [],
   };

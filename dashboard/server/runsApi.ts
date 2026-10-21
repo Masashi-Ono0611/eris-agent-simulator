@@ -6,6 +6,9 @@
 //   /runs/<id>/<artifact>            the artifact file itself
 //   /runs/<id>/tail/<file>?offset=N  incremental tail of a jsonl/csv artifact (live mode)
 //
+// The same handler is also mounted, behind a bearer token, as the sponsor's view
+// (`/sponsor/runs/...`, server/sponsor.ts): the audience redactions below, plus the decision logs.
+//
 // It lived inside vite.config.ts, as a dev-server plugin, on the assumption that the dashboard is a
 // local viewer over local output. ADR 0021 §5 breaks that assumption: on the practice devnet the
 // artifacts are on the coordinator's machine and the participants are not, so the operator hosts
@@ -75,6 +78,17 @@ const SCHEDULE_HEAD_BYTES = 4 * 1024 * 1024;
 // in memory at once. The client keeps polling with the returned offset until it catches up.
 const TAIL_CHUNK_BYTES = 4 * 1024 * 1024;
 
+// A byte count from the query string, as a whole number fs will take. `?offset=0.5` reached
+// createReadStream as `start: 0.5`, which throws synchronously inside the stat callback -- nothing
+// caught it, so one unauthenticated request took the whole server down, audience mode included.
+// Not-a-number is "absent" (the caller's fallback); everything else is floored and clamped.
+export function queryByteCount(raw: string | null, fallback: number): number {
+  if (raw === null) return fallback;
+  const n = Math.floor(Number(raw));
+  if (Number.isNaN(n)) return fallback;
+  return Math.min(Number.MAX_SAFE_INTEGER, Math.max(0, n));
+}
+
 // The index walks runs/ with a stat per directory. One viewer polling it is nothing; an audience
 // polling it every few seconds is the same walk repeated for the same answer, so it is held for a
 // moment. Short enough that a run appearing or going live shows up within a poll interval.
@@ -116,6 +130,12 @@ export type DashboardMode = {
   audience: boolean;
   /** False for the trial environment: rules §4.7, it posts no standings. */
   standings: boolean;
+  /**
+   * The sponsor's view (server/sponsor.ts): everything the audience gets, plus the participants'
+   * decision logs. Only ever true behind the sponsor's token; reported so a reader can tell the two
+   * apart. Absent from the public mode.json.
+   */
+  sponsor?: boolean;
 };
 
 export type RunsApiOptions = Partial<DashboardMode> & {
@@ -181,11 +201,47 @@ const AUDIENCE_FILES = new Set([
 
 const HIDDEN_REGIME = "hidden";
 
+// `resume/` is a practice period's checkpoint directory (core/src/realtime/periodResume.ts): its
+// state.json carries the seed and the episode plan, and what a resume cut from the artifacts sits
+// under resume/cut-*/ with the artifacts' own file names -- which the list above would admit.
+//
+// `inference/` is where the inference proxy's records go by convention
+// (`--record runs/<competition>/inference`, infra/inference-proxy/README.md), one
+// `<agentId>.jsonl` per agent. An agent id is a participant's handle, so an agent called "market"
+// would have put `inference/market.jsonl` -- one participant's raw LLM exchanges -- through the
+// list above under an artifact's name. They are the sponsor's to read (server/sponsor.ts), through
+// its own mount, never the audience's.
 function audienceAllows(rel: string): boolean {
   const parts = rel.split("/");
   const base = parts[parts.length - 1] ?? "";
-  if (parts.includes("agents") || parts.includes("disclosures")) return false;
+  if (
+    parts.includes("agents") ||
+    parts.includes("disclosures") ||
+    parts.includes("resume") ||
+    parts.includes("inference")
+  )
+    return false;
   return AUDIENCE_FILES.has(base);
+}
+
+/**
+ * The sponsor's view: the audience's files, plus a participant's decision log and LLM-exchange log
+ * (`agents/<id>.jsonl`, `agents/<id>.llm.jsonl`) -- a file directly inside a run's `agents/`
+ * directory, nothing below it. The environment's answer key (`disclosures/`), a period's
+ * checkpoints (`resume/`, which hold the seed) and anything off the list stay withheld exactly as
+ * for the audience: the sponsor is shown what the participants did, not what the scenario is.
+ */
+export function sponsorAllows(rel: string): boolean {
+  if (audienceAllows(rel)) return true;
+  const parts = rel.split("/");
+  if (parts.includes("disclosures") || parts.includes("resume") || parts.includes("inference"))
+    return false;
+  return (
+    parts.length >= 2 &&
+    parts[parts.length - 2] === "agents" &&
+    parts.indexOf("agents") === parts.length - 2 &&
+    /^[^.][^/]*\.jsonl$/.test(parts[parts.length - 1] ?? "")
+  );
 }
 
 type Json = Record<string, unknown>;
@@ -280,6 +336,40 @@ function redactSummary(file: Json): Json {
     });
   }
   return rest;
+}
+
+/**
+ * The file beside a competition's matrix.json that names the period it continues:
+ * `{"from": "<competition id>", "note": "<why>"}`. Written by the operator, never by the coordinator,
+ * which rewrites matrix.json from memory at every roll.
+ */
+export const CONTINUES_FILE = "continues.json";
+
+/**
+ * A period that continues an earlier one, as one competition (2026-10-08). A coordinator restart
+ * opens a new competition by design (infra/devnet/README.md), so when the practice chain was lost
+ * and restarted, the days already played would have dropped out of the standings. The practice
+ * period ranks every day on its own return from its own opening value (practiceReturn.ts), so the
+ * earlier period's days stand unchanged beside the new one's: its scenarios come first, as
+ * recorded (their runDirs name the earlier period's directory), and every day is renumbered in
+ * order. Only one level: the earlier period's own continues.json is not followed.
+ */
+export function continuedIndex(file: Json, earlier: Json, link: Json): Json {
+  const own = Array.isArray(file.scenarios) ? (file.scenarios as Json[]) : [];
+  const before = Array.isArray(earlier.scenarios)
+    ? (earlier.scenarios as Json[])
+    : [];
+  const scenarios = [...before, ...own].map((s, i) => ({ ...s, seed: i }));
+  return {
+    ...file,
+    scenariosPlanned: scenarios.length,
+    scenarios,
+    continues: {
+      from: link.from,
+      ...(typeof link.note === "string" ? { note: link.note } : {}),
+      days: before.length,
+    },
+  };
 }
 
 const REDACTED_JSON: Record<string, (file: Json) => Json> = {
@@ -618,10 +708,18 @@ function normalizeRel(rel: string): string | null {
 
 export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
   const root = path.resolve(runsDir);
+  const sponsor = options.sponsor === true;
+  // The sponsor's view is the audience's redaction with more files: never the operator's.
   const mode: DashboardMode = {
-    audience: options.audience ?? false,
+    audience: sponsor || (options.audience ?? false),
     standings: options.standings ?? true,
+    ...(sponsor ? { sponsor: true } : {}),
   };
+  const allows = sponsor ? sponsorAllows : audienceAllows;
+  // An answer to a token-bearing request must never sit in a shared cache, where the next reader
+  // -- with no token -- would be served it. `public, immutable` on a finished run's files is right
+  // for the public view and exactly wrong here.
+  const cacheFor = (policy: string): string => (sponsor ? "private, no-store" : policy);
   const allowlist =
     options.competitions && options.competitions.length > 0
       ? [...new Set(options.competitions)]
@@ -720,9 +818,48 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
   function scenarioRunIdOf(competitionId: string, runDir: string): string {
     const rel = runDir.replace(/^\.?\/?runs\//, "").replace(/^\/+/, "");
     if (rel.startsWith(`${competitionId}/`)) return rel;
-    const name = rel.split("/").filter(Boolean).pop() ?? rel;
     const cut = competitionId.lastIndexOf("/");
-    return `${cut === -1 ? "" : competitionId.slice(0, cut + 1)}${name}`;
+    const prefix = cut === -1 ? "" : competitionId.slice(0, cut + 1);
+    // A day of another period beside this one (`runs/<period>/<day>`), which a continued period
+    // lists (continues.json) -- the same rule as the dashboard's scenarioRunId.
+    if (rel.includes("/")) return `${prefix}${rel}`;
+    const name = rel.split("/").filter(Boolean).pop() ?? rel;
+    return `${prefix}${name}`;
+  }
+
+  /**
+   * A competition's index as it is served: its matrix.json, plus the days of the period it
+   * continues when a continues.json beside it names one (continuedIndex). Null when the
+   * competition has no readable matrix.json.
+   */
+  function competitionIndex(comp: string): Json | null {
+    const dir = path.join(root, comp);
+    let file: Json;
+    try {
+      file = JSON.parse(
+        fs.readFileSync(path.join(dir, "matrix.json"), "utf8"),
+      ) as Json;
+    } catch {
+      return null;
+    }
+    let link: Json;
+    try {
+      link = JSON.parse(
+        fs.readFileSync(path.join(dir, CONTINUES_FILE), "utf8"),
+      ) as Json;
+    } catch {
+      return file;
+    }
+    if (typeof link.from !== "string" || link.from === comp) return file;
+    let earlier: Json;
+    try {
+      earlier = JSON.parse(
+        fs.readFileSync(path.join(root, link.from, "matrix.json"), "utf8"),
+      ) as Json;
+    } catch {
+      return file;
+    }
+    return continuedIndex(file, earlier, link);
   }
 
   /**
@@ -745,16 +882,11 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
     const ids = new Set<string>();
     for (const comp of allowlist) {
       ids.add(comp);
-      let file: Json;
-      try {
-        file = JSON.parse(
-          fs.readFileSync(path.join(root, comp, "matrix.json"), "utf8"),
-        ) as Json;
-      } catch {
-        // not a competition (yet): the id itself stays admitted, so a period whose first segment
-        // has not opened is not a 404 for the seconds before it does
-        continue;
-      }
+      // The served index, so the days a continued period lists are admitted with it.
+      const file = competitionIndex(comp);
+      // not a competition (yet): the id itself stays admitted, so a period whose first segment
+      // has not opened is not a 404 for the seconds before it does
+      if (!file) continue;
       const scenarios = Array.isArray(file.scenarios)
         ? (file.scenarios as Json[])
         : [];
@@ -991,8 +1123,8 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
     cacheControl: string,
   ): void {
     res.setHeader("content-type", contentType);
-    res.setHeader("cache-control", cacheControl);
-    res.setHeader("vary", "accept-encoding");
+    res.setHeader("cache-control", cacheFor(cacheControl));
+    res.setHeader("vary", sponsor ? "accept-encoding, authorization" : "accept-encoding");
     const small = typeof body === "string" && body.length < 1024;
     if (!small && acceptsGzip(req)) {
       res.setHeader("content-encoding", "gzip");
@@ -1118,7 +1250,7 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
       if (
         !file ||
         !/\.(jsonl|csv)$/.test(file) ||
-        (mode.audience && !audienceAllows(checked)) ||
+        (mode.audience && !allows(checked)) ||
         !admitted
       ) {
         res.statusCode = mode.audience || !admitted ? 404 : 403;
@@ -1126,14 +1258,14 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
         return true;
       }
       const params = new URLSearchParams(query ?? "");
-      const offset = Math.max(0, Number(params.get("offset") ?? 0) || 0);
+      const offset = queryByteCount(params.get("offset"), 0);
       // An explicit cap, for readers that only want the head of a file. The run-start and
       // stress-schedule events are written before the first block, so they sit in the first few KB
       // of events.jsonl — reading 128KB of each of a matrix's 35 scenarios costs 4MB where reading
       // the files costs 102MB, for exactly the same answer.
       const limit = Math.min(
         TAIL_CHUNK_BYTES,
-        Math.max(1, Number(params.get("limit") ?? 0) || TAIL_CHUNK_BYTES),
+        Math.max(1, queryByteCount(params.get("limit"), 0) || TAIL_CHUNK_BYTES),
       );
       const redactEvents =
         mode.audience && path.basename(file) === "events.jsonl";
@@ -1143,7 +1275,7 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
           : null;
       fs.stat(file, (err, stat) => {
         res.setHeader("content-type", "application/json");
-        res.setHeader("cache-control", CACHE_NONE);
+        res.setHeader("cache-control", cacheFor(CACHE_NONE));
         if (err || !stat.isFile()) {
           res.end(JSON.stringify({ offset: 0, text: "", missing: true }));
           return;
@@ -1155,68 +1287,85 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
         }
         const end = Math.min(stat.size, start + limit) - 1;
         const chunks: Buffer[] = [];
-        fs.createReadStream(file, { start, end })
-          .on("data", (c) => chunks.push(c as Buffer))
-          .on("end", () => {
-            const raw = Buffer.concat(chunks);
-            if (!redactEvents && !redactBlocks) {
-              res.end(
-                JSON.stringify({ offset: end + 1, text: raw.toString("utf8") }),
-              );
-              return;
-            }
-            // Whole lines only: a line cut mid-way cannot be inspected, and half of a schedule is
-            // still a schedule. The client polls again from the returned offset.
-            const cut = raw.lastIndexOf(0x0a);
-            if (cut < 0) {
-              res.end(JSON.stringify({ offset: start, text: "" }));
-              return;
-            }
-            if (redactBlocks) {
-              const rows = raw.subarray(0, cut).toString("utf8").split("\n");
-              res.end(
-                JSON.stringify({
-                  offset: start + cut + 1,
-                  text: `${rows.map(redactBlocks).join("\n")}\n`,
-                }),
-              );
-              return;
-            }
-            const policy = schedulePolicyOf(file);
-            const cursor: RedactionCursor = {
-              lastBlock: null,
-              lookback: () => headBlockBefore(file, start),
-            };
-            const kept: string[] = [];
-            // Walked by byte offset, so that a held line can be the next request's start: the tail
-            // stops in front of it (and of everything after it -- the stream is ordered) and the
-            // client asks again from there. Skipping it instead would lose it for good.
-            let next = start + cut + 1;
-            let from = 0;
-            while (from < cut) {
-              const nl = raw.indexOf(0x0a, from);
-              const stop = nl < 0 || nl > cut ? cut : nl;
-              const line = raw.subarray(from, stop).toString("utf8");
-              if (line.trim()) {
-                const out = redactEvent(line, policy, cursor);
-                if (out === HOLD) {
-                  next = start + from;
-                  break;
-                }
-                if (out !== null) kept.push(out);
-              }
-              from = stop + 1;
-            }
+        // A throw here is in a callback, out of reach of the request handler's caller: answer with
+        // an empty chunk at the same offset rather than let it end the process.
+        const failed = () => {
+          if (!res.writableEnded) res.end(JSON.stringify({ offset: start, text: "" }));
+        };
+        const finish = () => {
+          const raw = Buffer.concat(chunks);
+          if (!redactEvents && !redactBlocks) {
+            res.end(
+              JSON.stringify({ offset: end + 1, text: raw.toString("utf8") }),
+            );
+            return;
+          }
+          // Whole lines only: a line cut mid-way cannot be inspected, and half of a schedule is
+          // still a schedule. The client polls again from the returned offset.
+          const cut = raw.lastIndexOf(0x0a);
+          if (cut < 0) {
+            res.end(JSON.stringify({ offset: start, text: "" }));
+            return;
+          }
+          if (redactBlocks) {
+            const rows = raw.subarray(0, cut).toString("utf8").split("\n");
             res.end(
               JSON.stringify({
-                offset: next,
-                text: kept.length > 0 ? `${kept.join("\n")}\n` : "",
+                offset: start + cut + 1,
+                text: `${rows.map(redactBlocks).join("\n")}\n`,
               }),
             );
+            return;
+          }
+          const policy = schedulePolicyOf(file);
+          const cursor: RedactionCursor = {
+            lastBlock: null,
+            lookback: () => headBlockBefore(file, start),
+          };
+          const kept: string[] = [];
+          // Walked by byte offset, so that a held line can be the next request's start: the tail
+          // stops in front of it (and of everything after it -- the stream is ordered) and the
+          // client asks again from there. Skipping it instead would lose it for good.
+          let next = start + cut + 1;
+          let from = 0;
+          while (from < cut) {
+            const nl = raw.indexOf(0x0a, from);
+            const stop = nl < 0 || nl > cut ? cut : nl;
+            const line = raw.subarray(from, stop).toString("utf8");
+            if (line.trim()) {
+              const out = redactEvent(line, policy, cursor);
+              if (out === HOLD) {
+                next = start + from;
+                break;
+              }
+              if (out !== null) kept.push(out);
+            }
+            from = stop + 1;
+          }
+          res.end(
+            JSON.stringify({
+              offset: next,
+              text: kept.length > 0 ? `${kept.join("\n")}\n` : "",
+            }),
+          );
+        };
+        let stream: fs.ReadStream;
+        try {
+          stream = fs.createReadStream(file, { start, end });
+        } catch {
+          failed();
+          return;
+        }
+        stream
+          .on("data", (c) => chunks.push(c as Buffer))
+          .on("end", () => {
+            try {
+              finish();
+            } catch {
+              failed();
+            }
           })
-          .on("error", () => {
-            res.end(JSON.stringify({ offset: start, text: "" }));
-          });
+          .on("error", failed);
       });
       return true;
     }
@@ -1235,7 +1384,7 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
       return true;
     }
     const checked = relOf(file);
-    if ((mode.audience && !audienceAllows(checked)) || !admitsPath(checked)) {
+    if ((mode.audience && !allows(checked)) || !admitsPath(checked)) {
       // 404, not 403: for the audience an unpublished file does not exist, and a different status
       // for "exists but withheld" would confirm what is there to withhold. The same for a run
       // outside the allowlist: it is not on this server as far as a reader can tell.
@@ -1264,6 +1413,20 @@ export function createRunsApi(runsDir: string, options: RunsApiOptions = {}) {
       mode.audience && base === "blocks.csv" ? blocksRedactionOf(file) : null;
     if (blocksRedact) {
       send(req, res, redactedLinesStream(file, blocksRedact), contentType, cache);
+      return true;
+    }
+    if (
+      base === "matrix.json" &&
+      fs.existsSync(path.join(path.dirname(file), CONTINUES_FILE))
+    ) {
+      const merged = competitionIndex(path.dirname(checked));
+      if (!merged) {
+        res.statusCode = 503;
+        res.end();
+        return true;
+      }
+      const out = mode.audience ? redactMatrix(merged) : merged;
+      send(req, res, `${JSON.stringify(out, null, 2)}\n`, contentType, cache);
       return true;
     }
     if (mode.audience && REDACTED_JSON[base]) {

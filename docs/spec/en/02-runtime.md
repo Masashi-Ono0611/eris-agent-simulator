@@ -90,7 +90,7 @@ Source: `core/src/realtime/coordinator.ts` (`runRealtimeSimulation`, L390–2761
 
 - An entry that is `external: true`, or has no key, **is not started**. `agent_external_registered` is emitted instead. Without it, "the participants never connected" and "the coordinator failed to launch them" look identical — both are an agent that made no trades.
 - Launched processes get an `onExit` handler. **An agent that dies mid-run silently stops trading**, which in `summary.json` reads exactly like an agent that chose not to. It is recorded as `agent_process_exited` and `processExitedEarly`.
-- **The epoch clock waits for the field** (issue #94; `core/src/realtime/agentsReady.ts`). After automine is switched off and before interval mining starts, the coordinator waits until every agent it launched has written `runtime_start` to its own log (`run.agentsReadyTimeoutSec`, 60 s by default). Measured 2026-09-07 with 32 docker agents: `interval_mining_started` at +24 s, `runtime_start` at +86–99 s, so the first ~45 blocks of a 360-block epoch and a `windowFrac 0.10` window went by with nobody watching. Anvil produces no block while it waits (nothing an agent does before `runtime_start` needs one: the preflight reads, and the approvals were granted at funding); on an external chain the sequencer's blocks simply precede `runStartBlock`. External participants are not waited for — nothing here started them. The outcome is `agents_ready` (`ready[].afterMs` / `late` / `exited` / `timedOut`); when the bound cuts the wait short, the record says which agents did not see the first block.
+- **The epoch clock waits for the field** (issue #94; `core/src/realtime/agentsReady.ts`). After automine is switched off and before interval mining starts, the coordinator waits until every agent it launched has written `runtime_start` to its own log (`run.agentsReadyTimeoutSec`, 180 s by default; the live week refuses less than 120, issue #311). Measured 2026-09-07 with 32 docker agents: `interval_mining_started` at +24 s, `runtime_start` at +86–99 s, so the first ~45 blocks of a 360-block epoch and a `windowFrac 0.10` window went by with nobody watching. Anvil produces no block while it waits (nothing an agent does before `runtime_start` needs one: the preflight reads, and the approvals were granted at funding); on an external chain the sequencer's blocks simply precede `runStartBlock`. External participants are not waited for — nothing here started them. The outcome is `agents_ready` (`ready[].afterMs` / `late` / `exited` / `timedOut`); when the bound cuts the wait short, the record says which agents did not see the first block.
 
 ### [F] The block loop
 
@@ -102,7 +102,7 @@ The order matters.
 
 1. **Stop the agents** (before scoring — a direct agent keeps placing orders until it is stopped)
 2. Stop the flow process
-3. Stop interval mining (not on external)
+3. Stop interval mining (under economicGas, stop the gated miner and apply its pending price writes; not on external)
 4. **Capture `finalBlock`** — before the teardown. Everything after it is the environment putting the world back, and scoring across it would **score the teardown**: a depeg restore buys the stable back to par, so an agent that never unwound would be marked at par
 5. Restore the liquidity pull and the depegs
 6. `flushBlocks(finalBlock)` — finish blocks.csv before `resetFork` erases the history
@@ -150,10 +150,10 @@ The order matters.
 
 ### Fee profiles
 
-| Profile | oracle / PriceFeed | keeper | Cap enforced? |
-|---|---|---|---|
-| Default (ADR 0010) | `maxPriorityFee + 1 gwei` → txIndex 0 under `--order fees` | `maxPriorityFee + 0.5 gwei` | Yes (post-hoc) |
-| `economicGas: true` (ADR 0011) | `defaultPriorityFee` (price finalization is a storage write, so the front-run target is gone) | same | **No cap** (free bidding); maxFeePerGas ≤ tip still applies ([03 §3.1.6](03-market.md)) |
+| Profile | oracle / PriceFeed | keeper | Environment's event txs (launch waves, depegs, pulls) | Cap enforced? |
+|---|---|---|---|---|
+| `economicGas: true` (ADR 0011; **default for the 12 official regimes and the practice period**) | Storage writes (PriceFeed, Aave, GMX), staged by the block pass and applied by `GatedMiner` right before it mines (`core/src/realtime/gatedMiner.ts`) | Fixed 50 gwei (`ECONOMIC_KEEPER_FEE_WEI`; not for ordering, so it is not crowded out of the block) | An ordinary fee (median 1.4 gwei) and a slippage limit (`core/src/realtime/envBid.ts`, ADR 0011 §1c) | **No cap** (free bidding); maxFeePerGas ≤ tip still applies ([03 §3.1.6](03-market.md)) |
+| `economicGas: false` (ADR 0010, superseded) | `maxPriorityFee + 1 gwei` → txIndex 0 under `--order fees` | `maxPriorityFee + 0.5 gwei` | Same as the oracle | Yes (post-hoc) |
 
 ## 2.3 Time
 

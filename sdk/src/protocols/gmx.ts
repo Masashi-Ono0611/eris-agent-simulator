@@ -27,8 +27,13 @@ import {
   gmxFundingFeeAmountPerSizeKey,
   gmxFundingFields,
   gmxFundingIncreaseFactorKey,
+  gmxMaxOpenInterestKey,
   gmxOpenInterestKey,
+  gmxOpenInterestReserveFactorKey,
+  gmxPoolAmountKey,
+  gmxReserveFactorKey,
   gmxSavedFundingKey,
+  gmxSideCapUsd,
   type GmxFundingFields,
 } from "./gmxKeys.js";
 import {
@@ -39,6 +44,9 @@ import {
   sendAndMine,
   sendAsPrivileged,
   sendNoMine,
+  setStorageAt,
+  bigintToStorageWord,
+  type StorageWrite,
 } from "../chain.js";
 import type {
   AgentObservation,
@@ -182,6 +190,13 @@ const dataStoreAbi = [
       { name: "value", type: "uint256" },
     ],
     outputs: [{ type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "getAddress",
+    stateMutability: "view",
+    inputs: [{ name: "key", type: "bytes32" }],
+    outputs: [{ type: "address" }],
   },
 ] as const;
 
@@ -1570,6 +1585,111 @@ function positionExitValueUsd(
   return value;
 }
 
+/** One side of an account's WETH-collateral position in the ETH/USD market. */
+export type GmxSideExposure = { sizeUsd: bigint; collateralWei: bigint };
+
+/**
+ * The background flow's own ETH/USD book against what the market can carry (the flow's OI target).
+ *
+ * The flow opened perps and never closed them, so over a practice day its positions grew until
+ * both sides sat at the reserve cap and every agent's increase on either side was refused. The
+ * flow reads this to close instead of open once its side passes a share of the cap. USD at 30
+ * decimals; `undefined` when a read fails, which the flow treats as "no target" (the old flow)
+ * rather than as a full or an empty book.
+ */
+export type GmxFlowExposure = {
+  long: GmxSideExposure;
+  short: GmxSideExposure;
+  longCapUsd: bigint;
+  shortCapUsd: bigint;
+};
+
+export async function readGmxFlowExposure(
+  ctx: SimContext,
+  account: Address,
+  fairPrice: number,
+): Promise<GmxFlowExposure | undefined> {
+  const market = resolveGmxMarket(ctx, "WETH");
+  let props: MarketProps | undefined;
+  try {
+    props = (await resolveMarketProps(ctx.publicClient, [market])).get(
+      market.toLowerCase(),
+    );
+  } catch {
+    return undefined;
+  }
+  if (!props) return undefined;
+  const getUint = (key: Hex) => ({
+    address: GMX.DataStore,
+    abi: gmxDataStoreReadAbi,
+    functionName: "getUint",
+    args: [key],
+  });
+  const m = props.marketToken;
+  let results: Array<{ status: "success" | "failure"; result?: unknown }>;
+  try {
+    results = (await ctx.publicClient.multicall({
+      contracts: [
+        gmxAccountPositionsCall(account),
+        getUint(gmxPoolAmountKey(m, props.longToken)),
+        getUint(gmxPoolAmountKey(m, props.shortToken)),
+        ...[true, false].flatMap((isLong) => [
+          getUint(gmxReserveFactorKey(m, isLong)),
+          getUint(gmxOpenInterestReserveFactorKey(m, isLong)),
+          getUint(gmxMaxOpenInterestKey(m, isLong)),
+        ]),
+      ] as never,
+      allowFailure: true,
+    })) as Array<{ status: "success" | "failure"; result?: unknown }>;
+  } catch {
+    return undefined;
+  }
+  const uint = (i: number): bigint | undefined => {
+    const r = results[i];
+    return r?.status === "success" && typeof r.result === "bigint"
+      ? r.result
+      : undefined;
+  };
+  if (results[0]?.status !== "success") return undefined;
+  const positions = results[0].result as readonly Position[];
+  const side = (isLong: boolean): GmxSideExposure => {
+    const out: GmxSideExposure = { sizeUsd: 0n, collateralWei: 0n };
+    for (const p of positions) {
+      if (
+        p.addresses.market.toLowerCase() !== market.toLowerCase() ||
+        p.addresses.collateralToken.toLowerCase() !==
+          props.longToken.toLowerCase() ||
+        p.flags.isLong !== isLong
+      )
+        continue;
+      out.sizeUsd += p.numbers.sizeInUsd;
+      out.collateralWei += p.numbers.collateralAmount;
+    }
+    return out;
+  };
+  const longToken = tokenInfoByAddress(props.longToken);
+  const shortToken = tokenInfoByAddress(props.shortToken);
+  if (!longToken || !shortToken) return undefined;
+  const longCapUsd = gmxSideCapUsd({
+    poolAmount: uint(1),
+    tokenPriceUsd: fairPrice,
+    tokenDecimals: longToken.decimals,
+    reserveFactor: uint(3),
+    openInterestReserveFactor: uint(4),
+    maxOpenInterest: uint(5),
+  });
+  const shortCapUsd = gmxSideCapUsd({
+    poolAmount: uint(2),
+    tokenPriceUsd: 1,
+    tokenDecimals: shortToken.decimals,
+    reserveFactor: uint(6),
+    openInterestReserveFactor: uint(7),
+    maxOpenInterest: uint(8),
+  });
+  if (longCapUsd === undefined || shortCapUsd === undefined) return undefined;
+  return { long: side(true), short: side(false), longCapUsd, shortCapUsd };
+}
+
 // ---------------------------------------------------------------------------
 // Historical-block reconstruction (ADR 0006 §4): the read descriptor used by the blockNumber-pinned
 // multicall, plus a pure function that derives position value from its result using the same formula as valueUsdc.
@@ -1691,6 +1811,20 @@ function gmxTokenPrice(
 // position each block against the price the order keeper hands executeOrder (the run's fair price
 // through the mock provider), the same check LiquidationUtils makes on chain.
 // ---------------------------------------------------------------------------
+
+// Order fills per block (issue #225). The keeper's fee sits above the participants' cap, so under
+// `--order fees` its fills go first; without a bound, every order created in the scanned range was
+// sent into one block. What fills a block is gas *used*, not declared -- measured 2026-10-08 on
+// anvil 1.7.1: seven transactions each declaring 6,000,000 all landed in one 30,000,000 block -- and
+// an executeOrder uses up to 2.79M (PR #221, 49,498 fills). Five fills are under half the block,
+// leaving the oracle update and the participants their room. The rest wait, in arrival order, and
+// are re-read on the next pass, so an order cancelled meanwhile is dropped rather than filled late.
+export const MAX_ORDER_FILLS_PER_BLOCK = 5;
+const deferredOrderKeys: Hex[] = [];
+/** Test seam: the deferral queue is module state. */
+export function resetKeeperOrderQueue(): void {
+  deferredOrderKeys.length = 0;
+}
 
 // Liquidations per block. Each declares GMX_KEEPER_EXECUTE_GAS like an order fill; the cap keeps a
 // cascade from declaring the whole block ahead of the participants. The rest go next block.
@@ -1964,6 +2098,9 @@ export const gmxAdapter: ProtocolAdapter = {
       toBlock?: bigint;
       // Told about every order the keeper read and did not execute (gmxKeeperRefusal), or could not read.
       onOrderRefused?: (refusal: GmxKeeperRefusal) => void;
+      // Told when more orders were executable than MAX_ORDER_FILLS_PER_BLOCK: how many went now,
+      // how many wait for the next pass (issue #225).
+      onOrdersDeferred?: (report: { sent: number; deferred: number }) => void;
     },
   ): Promise<void> {
     if (!ctx.gmx.mockProvider) return;
@@ -1979,19 +2116,27 @@ export const gmxAdapter: ProtocolAdapter = {
       fromBlock,
       toBlock,
     });
-    const keys = logs
+    const created = logs
       .filter(
         (l) =>
           (l.topics[1]?.toLowerCase() ?? "") ===
             ORDER_CREATED_HASH.toLowerCase() && l.topics[2],
       )
       .map((l) => l.topics[2] as Hex);
+    // Orders deferred by an earlier pass go first (arrival order), then this range's.
+    const keys = [...new Set([...deferredOrderKeys.splice(0), ...created])];
     if (keys.length === 0) return;
-    const executable = await keeperExecutableKeys(
+    const readable = await keeperExecutableKeys(
       ctx,
       keys,
       opts?.onOrderRefused,
     );
+    const executable = readable.slice(0, MAX_ORDER_FILLS_PER_BLOCK);
+    const deferred = readable.slice(MAX_ORDER_FILLS_PER_BLOCK);
+    if (deferred.length > 0) {
+      deferredOrderKeys.push(...deferred);
+      opts?.onOrdersDeferred?.({ sent: executable.length, deferred: deferred.length });
+    }
     if (executable.length === 0) return;
 
     const keeper = privateKeyToAccount(ctx.keeperPk);
@@ -2446,6 +2591,20 @@ export const gmxAdapter: ProtocolAdapter = {
         }),
       },
     );
+    // The providers the tokens point at now: the deploy's own MockOracleProvider (its setPrice has no
+    // owner check), or a previous run's on a chain that is not reset. Read before reassigning so they
+    // can be disabled below.
+    const previousProviders = new Set<Address>();
+    for (const token of oracleTokens) {
+      const current = (await ctx.publicClient.readContract({
+        address: GMX.DataStore,
+        abi: dataStoreAbi,
+        functionName: "getAddress",
+        args: [oracleProviderForTokenKey(GMX.Oracle, token)],
+      })) as Address;
+      if (current !== zeroAddress && current.toLowerCase() !== mock.toLowerCase())
+        previousProviders.add(current);
+    }
     // Every token the keeper passes, WBTC included: GMX checks each price against the provider
     // registered for that token, and WBTC's was left on the deploy's own provider.
     for (const token of oracleTokens) {
@@ -2479,10 +2638,44 @@ export const gmxAdapter: ProtocolAdapter = {
       },
     );
 
+    // Retire the providers replaced above (SPECA audit, ascon-ops#48). No token points at them any
+    // more, so GMX would already refuse their prices; disabling them makes that hold even if a later
+    // assignment pointed back at one, and leaves exactly one enabled provider this run owns.
+    for (const provider of previousProviders) {
+      await sendAndMine(
+        ctx.publicClient,
+        ctx.walletClient,
+        ctx.chain,
+        ctx.adminPk,
+        {
+          to: GMX.DataStore,
+          data: encodeFunctionData({
+            abi: dataStoreAbi,
+            functionName: "setBool",
+            args: [isOracleProviderEnabledKey(provider), false],
+          }),
+        },
+      );
+    }
+
     ctx.gmx.mockProvider = mock;
     ctx.gmx.oracleTokens = oracleTokens;
     ctx.oracle.gmxProvider = mock;
     ctx.updateGmxOracle = async (c, fairPrice, opts) => {
+      // ADR 0011 §1: under economicGas the price is a storage write, like PriceFeed and Aave. The
+      // keeper's executeOrder reads the provider when it runs, so a price already in storage is the
+      // price every order of the next block fills at, wherever the keeper lands in that block.
+      if (opts?.storage) {
+        for (const token of c.gmx.oracleTokens ?? oracleTokens) {
+          const price = gmxOraclePrice(c, token, fairPrice);
+          if (price === null) continue;
+          const [minSlot, maxSlot, setSlot] = gmxOraclePriceSlots(token);
+          await setStorageAt(c.publicClient, mock, minSlot, bigintToStorageWord(price));
+          await setStorageAt(c.publicClient, mock, maxSlot, bigintToStorageWord(price));
+          await setStorageAt(c.publicClient, mock, setSlot, bigintToStorageWord(1n));
+        }
+        return;
+      }
       const send = (tx: { to: Address; data: Hex }): Promise<unknown> =>
         opts?.noMine
           ? sendNoMine(
@@ -2499,15 +2692,8 @@ export const gmxAdapter: ProtocolAdapter = {
       // token the keeper names always has a price: the mock reverts on one that was never set. The
       // layout check in setup guarantees each is USDC ($1, the numéraire) or a market's base.
       for (const token of c.gmx.oracleTokens ?? oracleTokens) {
-        const info = tokenInfoByAddress(token);
-        if (!info) continue; // unreachable after the layout check
-        const usd =
-          info.kind === "stable"
-            ? 1
-            : info.symbol === "WETH"
-              ? fairPrice
-              : baseFairPrice(c, info.symbol, fairPrice);
-        const price = toGmxPrice(usd, info.decimals);
+        const price = gmxOraclePrice(c, token, fairPrice);
+        if (price === null) continue;
         await send({
           to: mock,
           data: encodeFunctionData({
@@ -2520,3 +2706,61 @@ export const gmxAdapter: ProtocolAdapter = {
     };
   },
 };
+
+// The price the environment publishes for one oracle token: USDC is the numéraire, every other
+// token is its base's fair price. Exactly the tokens the keeper passes (WETH, USDC, then WBTC on the
+// local deploy), so a token the keeper names always has a price: the mock reverts on one that was
+// never set. The layout check in setup guarantees each is USDC ($1) or a market's base, so the null
+// (an address the registry does not know) is unreachable after it.
+function gmxOraclePrice(
+  ctx: SimContext,
+  token: Address,
+  fairPrice: number,
+): bigint | null {
+  const info = tokenInfoByAddress(token);
+  if (!info) return null;
+  const usd =
+    info.kind === "stable"
+      ? 1
+      : info.symbol === "WETH"
+        ? fairPrice
+        : baseFairPrice(ctx, info.symbol, fairPrice);
+  return toGmxPrice(usd, info.decimals);
+}
+
+// The GMX provider's prices as storage writes (ADR 0011), for the oracle tokens the keeper passes.
+// Empty when GMX is not set up in this run.
+export function gmxOracleStorageWrites(
+  ctx: SimContext,
+  fairPrice: number,
+): StorageWrite[] {
+  const mock = ctx.gmx?.mockProvider;
+  const tokens = ctx.gmx?.oracleTokens;
+  if (!mock || !tokens) return [];
+  const out: StorageWrite[] = [];
+  for (const token of tokens) {
+    const price = gmxOraclePrice(ctx, token, fairPrice);
+    if (price === null) continue;
+    const [minSlot, maxSlot, setSlot] = gmxOraclePriceSlots(token);
+    out.push(
+      { address: mock, slot: minSlot, value: bigintToStorageWord(price) },
+      { address: mock, slot: maxSlot, value: bigintToStorageWord(price) },
+      { address: mock, slot: setSlot, value: bigintToStorageWord(1n) },
+    );
+  }
+  return out;
+}
+
+// Storage of contracts/MockOracleProvider.sol: `owner` is immutable (no slot), so
+// `mapping(address => Price) prices` is slot 0, and `Price {uint256 min; uint256 max; bool set}`
+// takes three consecutive slots from keccak256(abi.encode(token, 0)). `forge inspect
+// MockOracleProvider storageLayout` pins slot 0; test/gmxOracleStorage.test.ts pins the rest
+// against a deployed mock.
+export function gmxOraclePriceSlots(token: Address): [Hex, Hex, Hex] {
+  const base = BigInt(
+    keccak256(encodeAbiParameters(parseAbiParameters("address, uint256"), [token, 0n])),
+  );
+  return [base, base + 1n, base + 2n].map(
+    (slot) => `0x${slot.toString(16).padStart(64, "0")}` as Hex,
+  ) as [Hex, Hex, Hex];
+}

@@ -9,12 +9,13 @@
 // Executed by the coordinator on one block (it is a trade, not a multiplier on the price path), and
 // placed by the same seed-driven schedule as every other stress event (ADR 0009).
 import { parseUnits } from "viem";
-import type { ResolvedStressEvent } from "./events.js";
+import type { ResolvedStressEvent, StressEventConfig } from "./events.js";
 import type { FlowOrderWire } from "../flowProcess.js";
 import { tokenInfo } from "@eris/sdk/markets.js";
 
-// The flow-wallet key the whale trades from. Registered in flowWalletMap only when the schedule
-// actually contains a whale, so ordinary runs are unaffected.
+// The flow-wallet key the whale trades from. Registered and funded in every run, whale or not: a
+// wallet that exists only when the schedule has a whale names the regime at block 0 to anyone who
+// counts the setup blocks' senders or reads the wallet's balance (rules §3.3). See WHALE_ENDOWMENT.
 export const WHALE_WALLET_KEY = "whale:uninformed";
 
 // Multiplier over the *cumulative* same-side notional. Swaps quote at the pool price rather than at
@@ -76,6 +77,66 @@ export function whaleFunding(
   };
 }
 
+// What the whale wallet is endowed with in every run, whatever the schedule drew.
+//
+// The amount used to be `whaleFunding` of the drawn schedule, funded only when there was a whale.
+// Both named the regime before the first block: the wallet's WETH deposit is a transaction in the
+// setup blocks, which an agent reads from the chain's history, and the balance itself is readable
+// by address in every later epoch of the same matrix process (the environment's keys are fixed per
+// process, walletKeys.ts). So every run funds the same amount, sized to cover the largest draw any
+// official regime can make: config/regimes/whale.yaml at its ceiling is five 60 WETH orders on one
+// side, 300 WETH, times the headroom -- 600 WETH, or 1.8M USDC at the $3,000 opening price. The USDC
+// floor leaves a third on top so the opening fair can sit up to $4,000 before a buy-side draw needs
+// more. test/regimeStartInvariance.test.ts holds every official regime's ceiling under this.
+export const WHALE_ENDOWMENT: { baseWei: Record<string, bigint>; usdcUnits: bigint } = {
+  baseWei: { WETH: parseUnits("600", 18) },
+  usdcUnits: parseUnits("2400000", 6),
+};
+
+// The endowment a run funds: WHALE_ENDOWMENT, raised per asset only where the schedule needs more.
+// An official regime never does (the test above), so its whale wallet is identical in every regime.
+// A schedule that does -- the practice period funds a month of whales at its start -- gets what it
+// needs rather than whales that fail on balance, and its regime is no secret anyway (the episode
+// list is published).
+export function whaleEndowment(
+  events: ResolvedStressEvent[],
+  prices: Record<string, number>,
+): { baseWei: Record<string, bigint>; usdcUnits: bigint } {
+  const needed = whaleFunding(events, prices);
+  const baseWei: Record<string, bigint> = { ...WHALE_ENDOWMENT.baseWei };
+  for (const [base, wei] of Object.entries(needed.baseWei))
+    if (wei > (baseWei[base] ?? 0n)) baseWei[base] = wei;
+  return {
+    baseWei,
+    usdcUnits:
+      needed.usdcUnits > WHALE_ENDOWMENT.usdcUnits
+        ? needed.usdcUnits
+        : WHALE_ENDOWMENT.usdcUnits,
+  };
+}
+
+// The most `whaleFunding` can ask for under these event configs, over every seed: each whale entry
+// at its largest count and magnitude, all on the side that costs the most. Pure, so the test can hold
+// a regime's ceiling under WHALE_ENDOWMENT without enumerating seeds.
+export function whaleFundingCeiling(
+  configs: StressEventConfig[],
+  prices: Record<string, number>,
+): { baseWei: Record<string, bigint>; usdcUnits: bigint } {
+  const worst: ResolvedStressEvent[] = [];
+  for (const c of configs) {
+    if (c.type !== "whale") continue;
+    const count = c.count ? c.count[1] : 1;
+    const magnitude = c.magnitudeRange[1];
+    const base = c.base ?? "WETH";
+    const sides: Array<"buy" | "sell"> =
+      c.side === "buy" ? ["buy"] : c.side === "sell" ? ["sell"] : ["buy", "sell"];
+    for (let i = 0; i < count; i++)
+      for (const side of sides)
+        worst.push({ type: "whale", base, side, magnitude } as ResolvedStressEvent);
+  }
+  return whaleFunding(worst, prices);
+}
+
 // The order a whale event places. Pure: the caller submits it through the ordinary flow relay, so
 // the print goes through the same signing, ordering and attribution path as any other flow order.
 //
@@ -86,6 +147,9 @@ export function buildWhaleOrder(
   event: ResolvedStressEvent,
   fairPriceUsdcPerBase: number,
   priorityFeeWei: bigint,
+  // The print's slippage limit (ADR 0011 §1b, economicGas): what a sandwich around it can take at
+  // most. Omitted, the venue adapter's default applies (50 bps).
+  slippageBps?: number,
 ): FlowOrderWire {
   if (event.type !== "whale")
     throw new Error(`buildWhaleOrder called with a ${event.type} event`);
@@ -112,12 +176,106 @@ export function buildWhaleOrder(
       type: SWAP_TYPE[venue],
       tokenIn: side === "buy" ? "USDC" : base,
       amountIn: amount.toString(),
-      // A whale takes whatever the book gives: the whole content of this event is the impact, so
-      // capping slippage would cap the event itself. minAmountOut 0 is deliberate.
-      minAmountOut: "0",
+      // The limit is on the quote at build time, not on the impact: a whale still moves the book by
+      // its whole size, and a sandwich can take at most this share of what it receives. (This used
+      // to say `minAmountOut: "0"`, a field no adapter reads, so the print ran at each adapter's
+      // default 50 bps all along.)
+      ...(slippageBps !== undefined ? { slippageBps } : {}),
       // Non-WETH bases need the market tag so the adapter can resolve the right pool; WETH omits it
       // to keep the action byte-identical to ordinary WETH flow.
       ...(base === "WETH" ? {} : { base }),
     } as unknown as FlowOrderWire["action"],
   };
+}
+
+// A whale print under economicGas carries a slippage limit (ADR 0011 §1c), so a block whose earlier
+// transactions moved the pool against it reverts it -- not only a sandwich: participants cannot see a
+// pending print (the gateway refuses every view of the pool) and the print's block, venue and side
+// are the seed's, so what reverts one is most often ordinary arbitrage that bid above it. A whale is a
+// single event: a reverted print with no second attempt turns that epoch into calm, with nothing but a
+// post-run warning to show for it. A large trader whose order reverts sends it again at a fresh quote;
+// so does this one, up to WHALE_MAX_ATTEMPTS in all.
+export const WHALE_MAX_ATTEMPTS = 3;
+// Blocks to wait for a print's receipt before giving up on knowing what became of it.
+export const WHALE_RECEIPT_WAIT_BLOCKS = 10;
+
+// A receipt's status, or null while the transaction has none (not mined yet, or replaced).
+export type WhaleReceiptStatus = "success" | "reverted" | null;
+
+type WhaleAttempt = {
+  event: ResolvedStressEvent;
+  hashes: readonly string[];
+  attempt: number;
+  sentBlock: number;
+};
+
+export type WhalePoll = {
+  // Prints to send again, with the attempt number the new one will carry.
+  resubmit: Array<{ event: ResolvedStressEvent; attempt: number; revertedHashes: string[] }>;
+  filled: Array<{ event: ResolvedStressEvent; attempt: number; hash: string }>;
+  // Out of attempts: the print never happened.
+  abandoned: Array<{ event: ResolvedStressEvent; attempts: number; revertedHashes: string[] }>;
+  // No receipt within WHALE_RECEIPT_WAIT_BLOCKS: what became of it is unknown, and it is not resent.
+  unconfirmed: Array<{ event: ResolvedStressEvent; attempt: number; hashes: string[] }>;
+};
+
+// The prints in flight and what became of them. Judged by the last hash of an attempt (the swap; an
+// approval, when there is one, goes first). An attempt whose submission failed has no hashes and
+// counts as a failed attempt. In memory only: a practice period that restarts between a print and
+// its receipt does not resend it.
+export class WhaleResubmits {
+  private pending: WhaleAttempt[] = [];
+  readonly counts = {
+    prints: 0,
+    filledFirstAttempt: 0,
+    filledAfterResubmit: 0,
+    abandoned: 0,
+    unconfirmed: 0,
+  };
+
+  sent(
+    event: ResolvedStressEvent,
+    hashes: readonly string[],
+    attempt: number,
+    blockNumber: number,
+  ): void {
+    if (attempt === 1) this.counts.prints++;
+    this.pending.push({ event, hashes, attempt, sentBlock: blockNumber });
+  }
+
+  get unresolved(): number {
+    return this.pending.length;
+  }
+
+  async poll(
+    blockNumber: number,
+    status: (hash: string) => Promise<WhaleReceiptStatus>,
+  ): Promise<WhalePoll> {
+    const out: WhalePoll = { resubmit: [], filled: [], abandoned: [], unconfirmed: [] };
+    const waiting: WhaleAttempt[] = [];
+    for (const a of this.pending) {
+      const last = a.hashes[a.hashes.length - 1];
+      const s = last === undefined ? "reverted" : await status(last);
+      if (s === "success") {
+        out.filled.push({ event: a.event, attempt: a.attempt, hash: last! });
+        if (a.attempt === 1) this.counts.filledFirstAttempt++;
+        else this.counts.filledAfterResubmit++;
+      } else if (s === "reverted") {
+        const revertedHashes = last === undefined ? [] : [last];
+        if (a.attempt < WHALE_MAX_ATTEMPTS) {
+          out.resubmit.push({ event: a.event, attempt: a.attempt + 1, revertedHashes });
+        } else {
+          out.abandoned.push({ event: a.event, attempts: a.attempt, revertedHashes });
+          this.counts.abandoned++;
+        }
+      } else if (blockNumber - a.sentBlock >= WHALE_RECEIPT_WAIT_BLOCKS) {
+        out.unconfirmed.push({ event: a.event, attempt: a.attempt, hashes: [...a.hashes] });
+        this.counts.unconfirmed++;
+      } else {
+        waiting.push(a);
+      }
+    }
+    this.pending = waiting;
+    return out;
+  }
 }

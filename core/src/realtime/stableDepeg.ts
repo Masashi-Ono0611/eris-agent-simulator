@@ -22,11 +22,21 @@
 // passive one would let it collapse. That makes the regime's character a function of the roster,
 // which breaks "the same market conditions in every scenario" (ADR 0009). The dislocation is
 // injected; the *resolution* is left to the real mechanism -- redemption for eUSD, arbitrage for DAI.
-import { encodeFunctionData, maxUint256, type Address, type Hex } from "viem";
+import { encodeFunctionData, type Address, type Hex } from "viem";
 import { curveStableSwapNgAbi, erc20Abi } from "@eris/sdk/abis.js";
 import { accountAddress, sendAndMine, sendNoMine } from "@eris/sdk/chain.js";
 import type { SimContext } from "@eris/sdk/protocols/types.js";
 import type { RunLogger } from "../logger.js";
+import { tokenInfoByAddress } from "@eris/sdk/markets.js";
+import {
+  DEPEG_SLIPPAGE_BPS as ENV_DEPEG_SLIPPAGE_BPS,
+  FLAT_FEE_MEDIAN_WEI,
+  impactValueUsd,
+  probeAmount,
+  type DeferredSend,
+  type EnvBidContext,
+} from "./envBid.js";
+import { requireStandingApprovals } from "./standingApprovals.js";
 
 // Swaps against a stableswap pool are a fixed shape; pinning the gas skips an eth_estimateGas (a
 // whole extra EVM execution) on a transaction the environment may send every block of a window.
@@ -72,6 +82,16 @@ export type StableDepegRuntime = StableDepegMarket & {
   cappedReported: boolean;
 };
 
+/// What a depeg measured when its period started, for a period that resumes after a restart
+/// (periodResume.ts). Measured again mid-window, the pool depth would be the depegged one and the
+/// actor's balance what is left after selling -- every later target would be a fraction of the wrong
+/// number, and the buy-back would stop short of par by exactly what had been sold.
+export type StableDepegResume = {
+  seededPoolStableWei: bigint;
+  startStableWei: bigint;
+  cappedReported: boolean;
+};
+
 /// Stage the account that will move the peg, and record what it has to work with.
 ///
 /// The actor is not a participant and is excluded from scoring, the same arrangement as the ADR 0009
@@ -85,11 +105,32 @@ export async function setupStableDepeg(
     // What to say when the actor holds none of the stable. Deployment-specific, and the difference
     // between "redeploy" and "a previous run spent it" is exactly what the operator needs.
     emptyInventoryHint: string;
+    resume?: StableDepegResume;
   },
   logger: RunLogger,
 ): Promise<StableDepegRuntime> {
   const { market, label } = opts;
   const actor = accountAddress(opts.actorPk);
+  if (opts.resume) {
+    // The approvals are standing (maxUint256) from the period's first start.
+    logger.event({
+      type: `${label}_resumed`,
+      stable: market.symbol,
+      actor,
+      seededPoolStableWei: opts.resume.seededPoolStableWei.toString(),
+      startStableWei: opts.resume.startStableWei.toString(),
+    });
+    return {
+      ...market,
+      label,
+      actor,
+      actorPk: opts.actorPk,
+      seededPoolStableWei: opts.resume.seededPoolStableWei,
+      startStableWei: opts.resume.startStableWei,
+      pending: null,
+      cappedReported: opts.resume.cappedReported,
+    };
+  }
 
   const [poolStable, actorStable, actorQuote] = (await Promise.all([
     ctx.publicClient.readContract({
@@ -120,23 +161,15 @@ export async function setupStableDepeg(
   }
 
   // The deploy approved the pool for exactly the amounts it seeded, so both legs need standing
-  // approval before the window opens. Sequential: one key, one nonce.
-  for (const token of [market.stable, market.quote]) {
-    await sendAndMine(
-      ctx.publicClient,
-      ctx.walletClient,
-      ctx.chain,
-      opts.actorPk,
-      {
-        to: token,
-        data: encodeFunctionData({
-          abi: erc20Abi,
-          functionName: "approve",
-          args: [market.pool, maxUint256],
-        }),
-      },
-    );
-  }
+  // approval before the window opens. The coordinator grants it in every run, depeg or not
+  // (standingApprovals.ts): granting it here put two approvals from the deployer in the setup blocks
+  // of exactly the depeg regimes, which an agent could read before its first block.
+  await requireStandingApprovals(
+    ctx,
+    actor,
+    [market.stable, market.quote].map((token) => ({ token, spender: market.pool })),
+    `stress event ${label}`,
+  );
 
   logger.event({
     type: `${label}_setup`,
@@ -173,7 +206,11 @@ export async function reconcileStableDepeg(
   fraction: number,
   blockIndex: number,
   blockNumber: number,
-  opts: { priorityFeeWei: bigint },
+  // `bid` (economicGas, ADR 0011): price each send at a random fraction of what getting ahead of it
+  // is worth (envBid.ts) instead of the fixed `priorityFeeWei`.
+  // `defer`: hand the send to the caller to order by bid with the other sends from the same key
+  // (sendByBid, liquidity.ts); the returned hashes are then empty.
+  opts: { priorityFeeWei: bigint; bid?: EnvBidContext; defer?: DeferredSend[] },
   logger: RunLogger,
 ): Promise<Hex[]> {
   if (runtime.pending) {
@@ -219,21 +256,46 @@ export async function reconcileStableDepeg(
     return [];
 
   try {
+    // Under economicGas the limit is drawn per trade and tight (ADR 0011 §1b): with the old 5% a
+    // sandwich around the sell could take most of its impact.
+    const slippageBps = opts.bid
+      ? BigInt(opts.bid.bidder.drawSlippageBps(...ENV_DEPEG_SLIPPAGE_BPS))
+      : DEPEG_SLIPPAGE_BPS;
     const call =
       target > sold
-        ? await buildSell(ctx, runtime, delta)
-        : await buildBuyBack(ctx, runtime, delta);
+        ? await buildSell(ctx, runtime, delta, slippageBps)
+        : await buildBuyBack(ctx, runtime, delta, slippageBps);
     if (!call) return [];
-    const hash = await sendNoMine(
-      ctx.publicClient,
-      ctx.walletClient,
-      ctx.chain,
-      runtime.actorPk,
-      { to: call.to, data: call.data, gas: DEPEG_GAS },
-      opts.priorityFeeWei,
-    );
-    runtime.pending = { hash, blockIndex };
-    logger.event({
+    // An ordinary seller's fee (ADR 0011 §1c): the trade is protected by its slippage limit, not
+    // by outbidding whoever might get ahead of it. Its impact (V) is recorded, not bid.
+    const bid = opts.bid
+      ? { ...opts.bid.bidder.flatBid(FLAT_FEE_MEDIAN_WEI), valueUsd: call.valueUsd }
+      : null;
+    const priorityFeeWei = bid?.priorityFeeWei ?? opts.priorityFeeWei;
+    const send = async (): Promise<Hex | null> => {
+      let hash: Hex;
+      try {
+        hash = await sendNoMine(
+          ctx.publicClient,
+          ctx.walletClient,
+          ctx.chain,
+          runtime.actorPk,
+          { to: call.to, data: call.data, gas: DEPEG_GAS },
+          priorityFeeWei,
+        );
+      } catch (error) {
+        logger.event({
+          type: `${runtime.label}_failed`,
+          stable: runtime.symbol,
+          blockIndex,
+          blockNumber,
+          targetSoldStableWei: target.toString(),
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+      }
+      runtime.pending = { hash, blockIndex };
+      logger.event({
       type: runtime.label,
       stable: runtime.symbol,
       blockIndex,
@@ -244,8 +306,21 @@ export async function reconcileStableDepeg(
       soldStableWei: sold.toString(),
       deltaStableWei: delta.toString(),
       hash,
-    });
-    return [hash];
+      ...(bid
+        ? {
+            priorityFeeWei: bid.priorityFeeWei.toString(),
+            frontRunValueUsd: Number(bid.valueUsd.toFixed(4)),
+          }
+        : {}),
+      });
+      return hash;
+    };
+    if (opts.defer) {
+      opts.defer.push({ priorityFeeWei, send });
+      return [];
+    }
+    const hash = await send();
+    return hash ? [hash] : [];
   } catch (error) {
     // `sold` is re-derived from the chain next block, so a failed send costs one block of lag
     // rather than desynchronizing the window.
@@ -261,23 +336,40 @@ export async function reconcileStableDepeg(
   }
 }
 
+// The quote token's decimals: the dollar side of every depeg trade.
+function quoteDecimals(runtime: StableDepegRuntime): number {
+  return tokenInfoByAddress(runtime.quote)?.decimals ?? 6;
+}
+
+type DepegCall = { to: Address; data: Hex; valueUsd: number };
+
 async function buildSell(
   ctx: SimContext,
   runtime: StableDepegRuntime,
   amountStable: bigint,
-): Promise<{ to: Address; data: Hex } | null> {
-  const quoted = (await ctx.publicClient.readContract({
-    address: runtime.pool,
-    abi: curveStableSwapNgAbi,
-    functionName: "get_dy",
-    args: [
-      BigInt(runtime.stableIndex),
-      BigInt(runtime.quoteIndex),
-      amountStable,
-    ],
-  })) as bigint;
+  slippageBps: bigint,
+): Promise<DepegCall | null> {
+  const small = probeAmount(amountStable);
+  const [quoted, smallQuoted] = (await Promise.all(
+    [amountStable, small].map((amount) =>
+      ctx.publicClient.readContract({
+        address: runtime.pool,
+        abi: curveStableSwapNgAbi,
+        functionName: "get_dy",
+        args: [BigInt(runtime.stableIndex), BigInt(runtime.quoteIndex), amount],
+      }),
+    ),
+  )) as [bigint, bigint];
   if (quoted <= 0n) return null;
   return {
+    valueUsd: impactValueUsd({
+      amountIn: amountStable,
+      quoted,
+      smallIn: small,
+      smallQuoted,
+      usdDecimals: quoteDecimals(runtime),
+      usdSide: "out",
+    }),
     to: runtime.pool,
     data: encodeFunctionData({
       abi: curveStableSwapNgAbi,
@@ -286,7 +378,7 @@ async function buildSell(
         BigInt(runtime.stableIndex),
         BigInt(runtime.quoteIndex),
         amountStable,
-        (quoted * (10_000n - DEPEG_SLIPPAGE_BPS)) / 10_000n,
+        (quoted * (10_000n - slippageBps)) / 10_000n,
       ],
     }),
   };
@@ -300,7 +392,8 @@ async function buildBuyBack(
   ctx: SimContext,
   runtime: StableDepegRuntime,
   amountStable: bigint,
-): Promise<{ to: Address; data: Hex } | null> {
+  slippageBps: bigint,
+): Promise<DepegCall | null> {
   const [needed, quoteBalance] = (await Promise.all([
     ctx.publicClient.readContract({
       address: runtime.pool,
@@ -321,14 +414,27 @@ async function buildBuyBack(
   ])) as [bigint, bigint];
   const spend = needed > quoteBalance ? quoteBalance : needed;
   if (spend <= 0n) return null;
-  const quoted = (await ctx.publicClient.readContract({
-    address: runtime.pool,
-    abi: curveStableSwapNgAbi,
-    functionName: "get_dy",
-    args: [BigInt(runtime.quoteIndex), BigInt(runtime.stableIndex), spend],
-  })) as bigint;
+  const small = probeAmount(spend);
+  const [quoted, smallQuoted] = (await Promise.all(
+    [spend, small].map((amount) =>
+      ctx.publicClient.readContract({
+        address: runtime.pool,
+        abi: curveStableSwapNgAbi,
+        functionName: "get_dy",
+        args: [BigInt(runtime.quoteIndex), BigInt(runtime.stableIndex), amount],
+      }),
+    ),
+  )) as [bigint, bigint];
   if (quoted <= 0n) return null;
   return {
+    valueUsd: impactValueUsd({
+      amountIn: spend,
+      quoted,
+      smallIn: small,
+      smallQuoted,
+      usdDecimals: quoteDecimals(runtime),
+      usdSide: "in",
+    }),
     to: runtime.pool,
     data: encodeFunctionData({
       abi: curveStableSwapNgAbi,
@@ -337,7 +443,7 @@ async function buildBuyBack(
         BigInt(runtime.quoteIndex),
         BigInt(runtime.stableIndex),
         spend,
-        (quoted * (10_000n - DEPEG_SLIPPAGE_BPS)) / 10_000n,
+        (quoted * (10_000n - slippageBps)) / 10_000n,
       ],
     }),
   };
@@ -418,7 +524,8 @@ export async function restoreStableDepeg(
       return;
     }
     try {
-      const call = await buildBuyBack(ctx, runtime, sold);
+      // After the bell, with the agents stopped: nothing to protect against, so the loose limit.
+      const call = await buildBuyBack(ctx, runtime, sold, DEPEG_SLIPPAGE_BPS);
       if (!call) break;
       await sendAndMine(
         ctx.publicClient,

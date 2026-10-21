@@ -32,6 +32,7 @@ import {
   type TradeAggregate,
 } from "./evidence.js";
 import { clampMemory } from "./state.js";
+import { extractJsonObject } from "./llm.js";
 import { ACTION_TYPES_BY_PROTOCOL } from "@eris/sdk/action.js";
 import type { AgentContext } from "@eris/sdk/agent.js";
 import type {
@@ -265,6 +266,84 @@ export function parseRevision(raw: unknown, language: "typescript" | "python" = 
   };
 }
 
+export type ReplyJson =
+  | { ok: true; value: unknown; form: "bare" | "fenced" }
+  | { ok: false; reason: string };
+
+// A fence line: three backticks at the start of a line. Inside a JSON string a newline is always
+// escaped, so a line that starts with a fence can only be markup around the JSON, never part of it.
+const FENCE_LINE = /^\s*```/;
+
+// Take the revision JSON out of the model's reply. Two shapes are accepted:
+//   bare    the whole reply is the JSON object (what the prompt asks for)
+//   fenced  exactly one fenced block, labelled `json` or not, possibly with prose around it; the
+//           prose is discarded
+// Anything else is rejected, and that is the point. The revision context carries text other
+// participants' contracts wrote (revert reasons), so a reply can quote a revision-shaped object
+// that is not the model's answer. Picking "the first JSON in the reply" would install the quote.
+// The fenced block is taken only when it is the one candidate. A second one, in another block or in
+// the prose, makes the reply ambiguous and it is refused, because the layout cannot say which is the
+// quote: a quote in the prose with the answer in the block looks the same as a quote in the block
+// with the answer in the prose. A reply holding nothing but the quoted object was always accepted
+// by the bare rule, so this widens no path.
+export function extractRevisionJson(raw: string): ReplyJson {
+  const text = raw.trim();
+  try {
+    return { ok: true, value: JSON.parse(text), form: "bare" };
+  } catch {
+    // fall through to the fenced shape
+  }
+  const lines = text.split(/\r?\n/);
+  const fences: number[] = [];
+  lines.forEach((line, i) => {
+    if (FENCE_LINE.test(line)) fences.push(i);
+  });
+  if (fences.length === 0) return { ok: false, reason: "response was not valid JSON" };
+  if (fences.length % 2 !== 0)
+    return { ok: false, reason: "response was not valid JSON: unclosed code fence" };
+  if (fences.length > 2)
+    return {
+      ok: false,
+      reason: `response was ambiguous: ${fences.length / 2} fenced blocks, expected one`,
+    };
+  const [open, close] = fences;
+  const label = lines[open].trim().slice(3).trim().toLowerCase();
+  if (label !== "" && label !== "json")
+    return { ok: false, reason: `response was not valid JSON: fenced block is \`${label}\`, not json` };
+  let value: unknown;
+  try {
+    value = JSON.parse(lines.slice(open + 1, close).join("\n"));
+  } catch {
+    return { ok: false, reason: "response was not valid JSON: fenced block does not parse" };
+  }
+  if (holdsRevisionObject([...lines.slice(0, open), ...lines.slice(close + 1)].join("\n")))
+    return {
+      ok: false,
+      reason: "response was ambiguous: a revision object outside the fenced block too",
+    };
+  return { ok: true, value, form: "fenced" };
+}
+
+// Keys a revision carries (parseRevision needs `notes`). An action, which is what the records are
+// full of, has none of them, so mentioning one in the prose does not cost the revision.
+const REVISION_KEYS = ["notes", "executorTs", "executorPy", "revertTo"];
+
+// Whether a revision-shaped object appears anywhere in the text. Every brace is tried as a start,
+// not only the first: prose such as "the {threshold}" before the object would otherwise hide it.
+function holdsRevisionObject(text: string): boolean {
+  for (let i = text.indexOf("{"); i >= 0; i = text.indexOf("{", i + 1)) {
+    const value = extractJsonObject(text.slice(i));
+    if (
+      value !== null &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      REVISION_KEYS.some((key) => key in value)
+    )
+      return true;
+  }
+  return false;
+}
+
 // A compiled executor: the same shape as a rule agent's decide, so the trading loop does not care
 // which one it is holding.
 export type Executor = (
@@ -347,7 +426,9 @@ const EXECUTOR_BRIDGE = `(() => {
     });
   // The read-only client: every method call goes to the host client and its result comes back
   // copied. A property that is not a function (chain, batch) is copied; one the client does not
-  // have is absent here too -- \`then\` in particular, or this would be a thenable.
+  // have is absent here too -- \`then\` in particular, or this would be a thenable. The arguments
+  // go out as they are and the host side copies them (hostReadClient below): copying them here
+  // would build the copy with this realm's functions, which is no protection against this realm.
   const wrapClient = (host) =>
     new Proxy({}, {
       get(_, key) {
@@ -366,7 +447,9 @@ const EXECUTOR_BRIDGE = `(() => {
     config: copyIn(host.config),
     publicClient: wrapClient(host.publicClient),
     latestObservation: () => call(() => host.latestObservation(), []),
-    onObservation: (cb) => call((f) => host.onObservation(f), [cb]),
+    // The host calls back into a function of this realm, never the strategy's own: the callback
+    // would otherwise be handed a host observation, and its constructor is the host's.
+    onObservation: (cb) => call((f) => host.onObservation(f), [(o) => { cb(copyIn(o)); }]),
     submit: (action) => call((a) => host.submit(a), [action]),
     log: (entry) => call((e) => host.log(e), [entry]),
   });
@@ -389,6 +472,24 @@ function toHostRealm<T>(what: string, value: T): T {
       `${what} is not plain data: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+// The client the bridge calls, with what the strategy passes it copied into this realm first. The
+// arguments are the strategy's objects, and viem calls methods on them: `abi.filter(cb)` in
+// getAbiItem runs whatever the strategy put at `abi.filter`, handing it viem's callback -- a function
+// of this realm, and `cb.constructor("return process")()` is this realm's process. A structural
+// clone keeps what a read legitimately carries (bigint args, byte arrays) and throws on a function,
+// so a strategy that passes one gets a rejected read rather than a read with the function dropped.
+function hostReadClient(client: AgentContext["publicClient"]): AgentContext["publicClient"] {
+  if (typeof client !== "object" || client === null) return client;
+  return new Proxy(client, {
+    get(target, key) {
+      const v = Reflect.get(target, key, target);
+      if (typeof v !== "function") return v;
+      return (...args: unknown[]) =>
+        Reflect.apply(v, target, toHostRealm(`the arguments to publicClient.${String(key)}`, args));
+    },
+  });
 }
 
 // Compile generated source into a callable inside a vm context.
@@ -448,6 +549,7 @@ export function compileExecutor(source: string): CompileResult {
     const normalized: Executor = async (obs, ctx) => {
       const hostFacing: AgentContext = {
         ...ctx,
+        publicClient: hostReadClient(ctx.publicClient),
         submit: (action) => ctx.submit(toHostRealm("a submitted action", action)),
         log: (entry) => ctx.log(toHostRealm("a log entry", entry)),
       };
@@ -646,8 +748,10 @@ export const RECENT_DECISIONS_SHOWN = 24;
 // same clause of the rules: "the trading records so far, and the PnL".
 export function buildRevisionContext(opts: {
   block: number;
-  valueUsdc: number;
-  initialValueUsdc: number;
+  // Wallet plus every venue position (issue #274). Null when the account could not be valued --
+  // shown as unknown, never as a PnL of zero.
+  valueUsdc: number | null;
+  initialValueUsdc: number | null;
   sinceLastRevisionUsdc: number | null;
   // What holding the inventory of the run's first observation would be worth now, less what it was
   // worth then, at fair prices: the do-nothing counterfactual for the PnL above. The PnL is the
@@ -655,6 +759,11 @@ export function buildRevisionContext(opts: {
   // rising market as its own doing (or a falling one as its fault). Same for the last revision.
   holdSinceStartUsdc?: number | null;
   holdSinceLastRevisionUsdc?: number | null;
+  // How much of the value sat in venue positions at the start of each interval. The holding
+  // counterfactual is the wallet's balances at fair prices; a position held then is counted as if
+  // it kept its value, so its market move lands on the trading side. Said when it is not zero.
+  venuesAtStartUsdc?: number | null;
+  venuesAtLastRevisionUsdc?: number | null;
   currentVersion: number;
   history: StrategyVersion[];
   recent: Array<{ round: number; reason?: string; action?: unknown }>;
@@ -677,26 +786,42 @@ export function buildRevisionContext(opts: {
   // number in the hundreds of thousands that means nothing.
   epochId?: string;
 }): string {
-  const pnl = opts.valueUsdc - opts.initialValueUsdc;
-  const withHold = (actual: number, hold: number | null | undefined): string => {
+  const pnl =
+    opts.valueUsdc !== null && opts.initialValueUsdc !== null
+      ? opts.valueUsdc - opts.initialValueUsdc
+      : null;
+  const withHold = (
+    actual: number,
+    hold: number | null | undefined,
+    venuesThen: number | null | undefined,
+  ): string => {
     if (hold === null || hold === undefined) return `${actual.toFixed(2)} USDC`;
     const trading = actual - hold;
+    // A dollar is noise here; anything above it is a position the counterfactual did not mark.
+    const positions =
+      venuesThen !== null && venuesThen !== undefined && Math.abs(venuesThen) >= 1
+        ? `; that counts the wallet only -- the ${venuesThen.toFixed(2)} USDC you held in venue ` +
+          `positions then is taken as unchanged, so their market move is in the difference`
+        : "";
     return (
       `${actual.toFixed(2)} USDC (holding the inventory you had then would be ` +
       `${hold >= 0 ? "+" : ""}${hold.toFixed(2)} USDC; ` +
-      `the difference, ${trading >= 0 ? "+" : ""}${trading.toFixed(2)} USDC, is what trading did)`
+      `the difference, ${trading >= 0 ? "+" : ""}${trading.toFixed(2)} USDC, is what trading did${positions})`
     );
   };
   const lines = [
     `block: ${opts.block}`,
     `strategy version: ${opts.currentVersion}`,
-    `PnL since the run started: ${withHold(pnl, opts.holdSinceStartUsdc)}`,
+    pnl === null
+      ? `PnL since the run started: unknown (the account could not be valued yet)`
+      : `PnL since the run started: ${withHold(pnl, opts.holdSinceStartUsdc, opts.venuesAtStartUsdc)}`,
   ];
   if (opts.sinceLastRevisionUsdc !== null)
     lines.push(
       `PnL since the last revision: ${withHold(
         opts.sinceLastRevisionUsdc,
         opts.holdSinceLastRevisionUsdc,
+        opts.venuesAtLastRevisionUsdc,
       )}`,
     );
   // Issue #77: the epoch count is the frame for everything below it. The PnL and the history are
@@ -736,8 +861,8 @@ export function buildRevisionContext(opts: {
       const value =
         v.valueAtInstall === null
           ? "unknown"
-          : carriedIn
-            ? `${v.valueAtInstall.toFixed(2)} USDC, in that epoch`
+          : carriedIn || opts.initialValueUsdc === null
+            ? `${v.valueAtInstall.toFixed(2)} USDC${carriedIn ? ", in that epoch" : ""}`
             : `${(v.valueAtInstall - opts.initialValueUsdc).toFixed(2)} USDC vs the run start`;
       lines.push(
         `  v${v.version} @ block ${v.installedAtBlock}${ordinalOf(v.epochId)}` +

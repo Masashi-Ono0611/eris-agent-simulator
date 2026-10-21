@@ -525,6 +525,21 @@ export async function resetFork(
           /* stale id: use the current state as the base */
         });
     }
+    // The pool is not part of the snapshot. A transaction the last run sent but never mined (the
+    // flow wallet's order for the block after the last one, an agent's final swap) is still pending
+    // after the revert, with a nonce the rewound chain has not reached. Anvil then reports that
+    // sender's `pending` nonce as one past the orphan, viem signs the next setup transaction with
+    // it, and nothing ever mines it: the orphan has a gap below it, the new one sits above the
+    // orphan. The coordinator's first write after the revert waits for a receipt that never comes
+    // (issue #137 -- the same hash in three scenarios, because the orphan and the payload were the
+    // same each time). Measured on anvil 1.7.1: after evm_revert, latest nonce 0, pending nonce 2,
+    // txpool still holding the orphan. The failed epoch's mining attempts are what finally drop the
+    // orphan, which is why the epoch after a failed one went through. Empty the pool here, before
+    // the clean snapshot is taken, so every epoch starts with the chain's nonces and nothing else.
+    await publicClient.request({
+      method: "anvil_dropAllTransactions",
+      params: [],
+    } as AnvilRequest);
     localSnapshotId = (await publicClient.request({
       method: "evm_snapshot",
       params: [],
@@ -564,6 +579,170 @@ export async function resetFork(
     // Capture latest and reuse it in subsequent resetFork calls (ensures determinism within the same process).
     capturedForkBlock = Number((await publicClient.getBlock()).number);
   }
+}
+
+// One storage slot to set: the unit the economicGas price writes are planned in (ADR 0011).
+export type StorageWrite = { address: Address; slot: Hex; value: Hex };
+
+// Every write in one JSON-RPC batch (one HTTP request), rather than one round trip each. Under
+// gated mining the new prices are readable in `latest` from the first write until the block is
+// mined, so the number of round trips is the width of that window (PR #287 review). anvil may serve
+// a batch's members concurrently; storage sets do not depend on each other, so their order does not
+// matter, and the mine is sent only after the whole batch has answered.
+export async function setStorageBatch(
+  rpcUrl: string,
+  writes: StorageWrite[],
+  opts: { timeoutMs?: number } = {},
+): Promise<void> {
+  requireDevNode(
+    "setStorageBatch",
+    "storage cannot be written from outside on a real chain; the economicGas profile (ADR 0011) " +
+      "is unusable there",
+  );
+  if (writes.length === 0) return;
+  const body = writes.map((w, i) => ({
+    jsonrpc: "2.0",
+    id: i,
+    method: "anvil_setStorageAt",
+    params: [w.address, w.slot, w.value],
+  }));
+  const response = await fetch(rpcUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+    ...(opts.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
+  });
+  if (!response.ok) throw new Error(`setStorageBatch: HTTP ${response.status}`);
+  const replies = (await response.json()) as Array<{ id: number; error?: { message: string } }>;
+  if (!Array.isArray(replies) || replies.length !== writes.length)
+    throw new Error("setStorageBatch: the node did not answer every write");
+  const failed = replies.filter((r) => r.error);
+  if (failed.length > 0)
+    throw new Error(
+      `setStorageBatch: ${failed.length} of ${writes.length} writes failed: ${failed[0].error?.message}`,
+    );
+}
+
+// The writes and one block, in one JSON-RPC batch, on a node measured to apply a batch's writes
+// before its mine (batchServedInOrder): the block is mined right after the writes inside the node, so
+// the new values are readable at `latest` from outside only while the node handles the request.
+// Resolves to the new head, read *after* the batch has answered: anvil answers a batch's members
+// concurrently, and an eth_blockNumber inside it returned the head from before the mine (20 of 20 on
+// anvil 1.7.1; PR #287 review), which left the miner on a stale head.
+export async function commitStorageBatch(
+  rpcUrl: string,
+  writes: StorageWrite[],
+  opts: { timeoutMs?: number } = {},
+): Promise<number> {
+  requireDevNode("commitStorageBatch", "only a dev node lets the environment write storage and mine");
+  const body = [
+    ...writes.map((w, i) => ({
+      jsonrpc: "2.0",
+      id: i,
+      method: "anvil_setStorageAt",
+      params: [w.address, w.slot, w.value],
+    })),
+    { jsonrpc: "2.0", id: writes.length, method: "anvil_mine", params: [] },
+  ];
+  const response = await fetch(rpcUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+    ...(opts.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
+  });
+  if (!response.ok) throw new Error(`commitStorageBatch: HTTP ${response.status}`);
+  const replies = (await response.json()) as Array<{
+    id: number;
+    result?: unknown;
+    error?: { message: string };
+  }>;
+  if (!Array.isArray(replies) || replies.length !== body.length)
+    throw new Error("commitStorageBatch: the node did not answer every call");
+  const failed = replies.find((r) => r.error);
+  if (failed) throw new Error(`commitStorageBatch: call ${failed.id} failed: ${failed.error?.message}`);
+  const after = await fetch(rpcUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 0, method: "eth_blockNumber", params: [] }),
+    ...(opts.timeoutMs ? { signal: AbortSignal.timeout(opts.timeoutMs) } : {}),
+  });
+  const head = ((await after.json()) as { result?: unknown }).result;
+  if (typeof head !== "string") throw new Error("commitStorageBatch: no block number");
+  return Number(BigInt(head));
+}
+
+// Whether this node applies a batch's storage writes before an anvil_mine later in the same batch.
+// Measured, not assumed: anvil answers a batch's members concurrently (an eth_blockNumber after the
+// mine in one batch answered first), so the order is a property of its internal locking that no
+// version documents, and a node that mined first would put a block on the previous prices.
+// A pending transaction to a probe contract copies slot 0 into slot 1 when mined, so slot 1 says which
+// came first. Each trial is shaped like a real commit -- `writesPerTrial` writes, the probe slot last
+// (the one most likely to lose a race with the mine), then the mine. Mines `trials` blocks; run it
+// before the run's first block.
+export async function batchServedInOrder(
+  rpcUrl: string,
+  trials = 10,
+  writesPerTrial = 30,
+): Promise<{ inOrder: boolean; trials: number; writeFirst: number; probesMined: number }> {
+  requireDevNode("batchServedInOrder", "only a dev node lets the environment write storage and mine");
+  const call = async (body: unknown): Promise<any> =>
+    (
+      await fetch(rpcUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      })
+    ).json();
+  const rpc = (method: string, params: unknown[]) =>
+    call({ jsonrpc: "2.0", id: 1, method, params });
+  // Addresses nothing else uses: a probe contract (SLOAD 0, SSTORE 1, STOP) and a sender.
+  const probe = "0x00000000000000000000000000000000e215b0a1";
+  const sender = "0x00000000000000000000000000000000e215b0a2";
+  await rpc("anvil_setCode", [probe, "0x60005460015500"]);
+  await rpc("anvil_setBalance", [sender, "0xde0b6b3a7640000"]);
+  await rpc("anvil_impersonateAccount", [sender]);
+  // The probe transaction has to be mined for its slot to say anything: priced at the chain's own
+  // base fee (0 on the competition's anvil, 1 gwei on a default one -- where a zero-fee probe was
+  // never mined and every trial read as "mined first").
+  const latest = (await rpc("eth_getBlockByNumber", ["latest", false])).result as
+    | { baseFeePerGas?: string }
+    | undefined;
+  const baseFee = BigInt(latest?.baseFeePerGas ?? "0x0");
+  const maxFee = `0x${(baseFee * 2n + 1n).toString(16)}`;
+  let writeFirst = 0;
+  let probesMined = 0;
+  try {
+    for (let i = 1; i <= trials; i++) {
+      const value = `0x${i.toString(16).padStart(64, "0")}`;
+      const sent = (await rpc("eth_sendTransaction", [
+        { from: sender, to: probe, gas: "0x30000", maxFeePerGas: maxFee, maxPriorityFeePerGas: "0x1" },
+      ])) as { result?: string };
+      await call([
+        // Filler writes to other slots of the probe, as many as a real commit carries.
+        ...Array.from({ length: Math.max(0, writesPerTrial - 1) }, (_, j) => ({
+          jsonrpc: "2.0",
+          id: 10 + j,
+          method: "anvil_setStorageAt",
+          params: [probe, `0x${(100 + j).toString(16)}`, value],
+        })),
+        { jsonrpc: "2.0", id: 1, method: "anvil_setStorageAt", params: [probe, "0x0", value] },
+        { jsonrpc: "2.0", id: 2, method: "anvil_mine", params: [] },
+      ]);
+      // A probe that was not mined says nothing about the order: it is not counted either way, and
+      // fewer than all mined is not "in order".
+      const receipt = sent.result
+        ? ((await rpc("eth_getTransactionReceipt", [sent.result])).result as { status?: string } | null)
+        : null;
+      if (!receipt || receipt.status !== "0x1") continue;
+      probesMined++;
+      const slot1 = (await rpc("eth_getStorageAt", [probe, "0x1", "latest"])).result;
+      if (typeof slot1 === "string" && BigInt(slot1) === BigInt(i)) writeFirst++;
+    }
+  } finally {
+    await rpc("anvil_stopImpersonatingAccount", [sender]);
+    await rpc("anvil_setCode", [probe, "0x"]);
+  }
+  return { inOrder: probesMined === trials && writeFirst === trials, trials, writeFirst, probesMined };
 }
 
 export async function setStorageAt(
@@ -615,6 +794,75 @@ function candidateSlots(): number[] {
   return [...priority, ...rest];
 }
 
+// The mapping slot found for each token, for the life of the process (issue #312). A token's layout
+// does not change, and every fund call used to probe it again: up to 9 write/read/restore rounds for
+// a MockERC20 (slot 4) per stable per wallet, each one a chance to lose the race below. A cached slot
+// is still checked with one balanceOf read-back, and a miss falls back to the full probe.
+const balanceSlotCache = new Map<string, number>();
+
+// For tests: the cache is process-wide, and a fake chain in one test must not leak into the next.
+export function clearErc20BalanceSlotCache(): void {
+  balanceSlotCache.clear();
+}
+
+// How many candidates the error reports what they read back (the priority list's head).
+const PROBE_REPORT_SLOTS = 9;
+
+// Whether holder's balanceOf reads `expected` right after a storage write. `latest` first, then
+// `pending` if it did not. anvil_setStorageAt writes the node's current state, but an eth_call at
+// `latest` that overlaps a block being mined is answered from a stored block state that predates the
+// write (measured on anvil 1.7.1: 8-14 of 3,000 write-then-read pairs read the previous value while
+// another client mined in a loop; `pending` read 0 of 6,000 stale; the write itself is never lost).
+// `pending` is not the only read because it also applies the mempool: a flow wallet topped up
+// mid-run has its own swaps pending, and its pending balance is the write plus their deltas.
+async function readsBack(
+  publicClient: PublicClient,
+  token: Address,
+  holder: Address,
+  expected: bigint,
+): Promise<{ ok: boolean; latest: bigint; pending?: bigint }> {
+  const read = async (blockTag: "latest" | "pending") =>
+    (await publicClient.readContract({
+      address: token,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [holder],
+      blockTag,
+    })) as bigint;
+  const latest = await read("latest");
+  if (latest === expected) return { ok: true, latest };
+  const pending = await read("pending");
+  return { ok: pending === expected, latest, pending };
+}
+
+// One pass over the candidates. Returns the slot that read the sentinel back, or what the first
+// PROBE_REPORT_SLOTS candidates read instead.
+async function probeBalanceSlot(
+  publicClient: PublicClient,
+  token: Address,
+  holder: Address,
+  amount: bigint,
+): Promise<{ slot: number } | { misses: string[] }> {
+  const misses: string[] = [];
+  for (const slot of candidateSlots()) {
+    const key = balanceSlotKey(holder, slot);
+    const original = ((await publicClient.getStorageAt({
+      address: token,
+      slot: key,
+    })) ?? `0x${"0".repeat(64)}`) as Hex;
+    await setStorageAt(publicClient, token, key, pad32(PROBE_SENTINEL));
+    const probed = await readsBack(publicClient, token, holder, PROBE_SENTINEL);
+    if (probed.ok) {
+      await setStorageAt(publicClient, token, key, pad32(amount));
+      return { slot };
+    }
+    await setStorageAt(publicClient, token, key, original);
+    if (misses.length < PROBE_REPORT_SLOTS)
+      misses.push(`slot ${slot} read latest=${probed.latest} pending=${probed.pending}`);
+  }
+  return { misses };
+}
+
 export async function dealErc20(
   publicClient: PublicClient,
   token: Address,
@@ -626,26 +874,40 @@ export async function dealErc20(
     "grant tokens from the treasury instead (grantErc20: mint if the token allows it, else transfer) " +
       "(issue #33 (1))",
   );
-  for (const slot of candidateSlots()) {
-    const key = balanceSlotKey(holder, slot);
-    const original = ((await publicClient.getStorageAt({
-      address: token,
-      slot: key,
-    })) ?? `0x${"0".repeat(64)}`) as Hex;
-    await setStorageAt(publicClient, token, key, pad32(PROBE_SENTINEL));
-    const probed = (await publicClient.readContract({
-      address: token,
-      abi: erc20Abi,
-      functionName: "balanceOf",
-      args: [holder],
-    })) as bigint;
-    if (probed === PROBE_SENTINEL) {
-      await setStorageAt(publicClient, token, key, pad32(amount));
+  const cacheKey = token.toLowerCase();
+  const known = balanceSlotCache.get(cacheKey);
+  if (known !== undefined) {
+    const key = balanceSlotKey(holder, known);
+    const original = ((await publicClient.getStorageAt({ address: token, slot: key })) ??
+      `0x${"0".repeat(64)}`) as Hex;
+    await setStorageAt(publicClient, token, key, pad32(amount));
+    if ((await readsBack(publicClient, token, holder, amount)).ok) return;
+    // Not this token's slot after all (another deployment at the same address): put the word back
+    // and probe as if the slot were unknown.
+    await setStorageAt(publicClient, token, key, original);
+    balanceSlotCache.delete(cacheKey);
+  }
+  // Two passes before giving up: a miss on every candidate means the right slot's read-back failed
+  // once, and the error used to say nothing else (issue #312, a voided epoch in the rehearsal).
+  const report: string[] = [];
+  for (let pass = 1; pass <= 2; pass++) {
+    const result = await probeBalanceSlot(publicClient, token, holder, amount);
+    if ("slot" in result) {
+      balanceSlotCache.set(cacheKey, result.slot);
       return;
     }
-    await setStorageAt(publicClient, token, key, original);
+    let head = "unknown";
+    try {
+      head = String(await publicClient.getBlockNumber({ cacheTime: 0 }));
+    } catch {
+      // The diagnostic must not replace the error it is diagnosing.
+    }
+    report.push(`pass ${pass} (head ${head}): ${result.misses.join(", ")}`);
   }
-  throw new Error(`could not locate ERC20 balance slot for token ${token}`);
+  throw new Error(
+    `could not locate ERC20 balance slot for token ${token} (holder ${holder}, ` +
+      `sentinel ${PROBE_SENTINEL}; ${report.join("; ")})`,
+  );
 }
 
 // ---------------------------------------------------------------------------

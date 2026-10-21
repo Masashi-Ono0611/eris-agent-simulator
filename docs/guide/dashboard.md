@@ -425,8 +425,11 @@ With `ERIS_DASHBOARD_AUDIENCE=1` the runs API (`dashboard/server/runsApi.ts`):
 - serves only `summary.json`, `matrix.json`, `standings.json`, `market.json(l)`, `blocks.csv`,
   `events.jsonl`, `intervals.jsonl` (and `epochs.jsonl`, its name before issue #140, which a
   coordinator started earlier still writes), `manifest.json`. Decision logs (`agents/*.jsonl` — a participant's
-  own reasoning and their not-yet-included bids, §2.6), raw LLM exchanges (`*.llm.jsonl`) and
-  `disclosures/` return 404
+  own reasoning and their not-yet-included bids, §2.6), raw LLM exchanges (`*.llm.jsonl`),
+  `disclosures/`, a period's `resume/` and the inference proxy's records under any `inference/`
+  directory (`--record runs/<competition>/inference`: one `<agentId>.jsonl` per agent, so an agent
+  called `market` would otherwise have passed the list as `market.jsonl`) return 404. The
+  [sponsor view](#sponsor-view-sponsor-bearer-token) serves the logs and the records behind a token
 - serves `events.jsonl` from an **allowlist of event types** (issue #210; `AUDIENCE_EVENTS` in
   `runsApi.ts`): a type that is not on it is not served, including any type a writer adds later,
   and so is a line that is not JSON. On it are the types a page reads that are history when written
@@ -547,6 +550,83 @@ exactly what the public will see. Responses carry `Cache-Control` (a finished ru
 immutable; competition indexes and live files are `max-age=5`; the tail is `no-store`) and gzip, and
 the index is held for three seconds between directory walks — enough for a CDN or nginx in front to
 do the rest.
+
+### Sponsor view (`/sponsor/*`, bearer token)
+
+The sponsorship gives the sponsor real-time access to processed run data for the whole provision
+period, and the privacy policy commits to two things about it: only processed data is provided, and
+every access is recorded. The hosted server provides it as a **non-public mount of the same runs
+API** (`dashboard/server/sponsor.ts`), on the same port and in the same container, so there is no
+second service to run:
+
+| path | what |
+|---|---|
+| `/sponsor/runs/index.json`, `/sponsor/runs/mode.json` | the index (same competition allowlist), and `{audience: true, standings, sponsor: true}` |
+| `/sponsor/runs/<id>/<artifact>` | every artifact the public view serves, **with the public view's redactions** |
+| `/sponsor/runs/<id>/agents/<agentId>.jsonl` (and `.llm.jsonl`) | a participant's decision log and LLM-exchange log — the public view's 404 |
+| `/sponsor/runs/<id>/tail/<file>?offset=N` | the incremental tail, as for the public view, decision logs included |
+| `/sponsor/inference/index.json` | the inference proxy's record files: `[{path, bytes, mtimeMs}]` |
+| `/sponsor/inference/<path>.jsonl` | one agent's recorded calls (`npm run inference-proxy -- --record <dir>`) |
+| `/sponsor/inference/tail/<path>.jsonl?offset=N` | the same, incrementally: `{offset, text}`, whole lines only |
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" https://<dashboard>/sponsor/runs/index.json
+```
+
+What the sponsor gets and does not get:
+
+- **the scenario secrets stay withheld.** The sponsor reading them during the live week is still
+  somebody outside the field learning the scenario, so every rule in "Public view" above applies
+  unchanged: no seeds, no future stress windows (and in a scenario epoch none at all), no
+  `regime`/`seed` in a scenario matrix's `matrix.json` / `standings.json`, no vuln ground truth
+  (`pool_created`, `disclosures/`), no calibration warnings, no `stderrTail`, no `rosterTransfers`,
+  nothing under a period's `resume/`, nothing off the file list
+- **added**: the decision logs (`agents/<id>.jsonl`, `agents/<id>.llm.jsonl`, files directly in a
+  run's `agents/` directory — nothing below it) and the inference proxy's records. These are the
+  participants' own free-form text and are served **as written**: there is no rule that could strip
+  them line by line. They reveal what an agent saw and did, which during the live week includes
+  hints of the epoch in progress (an agent reacting to a crash). That is what is being provided,
+  under the sponsor's written commitment
+- **identifiers**: everything is keyed by the competition handle (agent id, `participant`) and the
+  wallet address. No writer of a run directory has a field for a real name or a contact address;
+  what a participant typed into a prompt or a decision reason is theirs, and the pre-shipment check
+  (the operator's identifier procedure) is what looks for that
+- `ERIS_DASHBOARD_COMPETITIONS` applies to `/sponsor/runs/*` exactly as to `/runs/*`. The inference
+  mount serves the one directory it is given, whatever the allowlist says
+
+The door:
+
+- **a token file**, `ERIS_DASHBOARD_SPONSOR_TOKENS_FILE`: one `<sha256 hex of the token> <label>
+  issued=<time>` per line, `#` for comments. The server holds digests, never tokens, and compares the
+  presented token's digest against every line in constant time. The file is re-checked (a `stat`) on
+  every request: issuing or revoking takes effect on the next request, no restart. A missing or
+  unreadable file admits nobody
+- **no valid token → 401**, decided before the path is looked at, so the answer is the same for a
+  file that exists, one that does not and one that is withheld. Methods other than GET/HEAD are 405
+- **the access record**, `ERIS_DASHBOARD_SPONSOR_ACCESS_LOG`: every admitted request appends
+  `{"ts", "label", "method", "path"}` (path with its query) **before** anything is served. If the
+  line cannot be written — or the variable is unset — the request is 503 and nothing is served: an
+  unrecorded access is one the commitment does not allow. Unauthenticated requests are not recorded
+  (they read nothing, and anyone on the internet could otherwise fill the disk)
+- every answer is `Cache-Control: private, no-store` (`Vary: authorization`), so a CDN or proxy in
+  front never hands a token-bearing answer to the next reader
+- **off by default.** With the token file unset every `/sponsor/*` path is a plain 404, as on a
+  server that never had the feature. It exists only on the hosted server (`npm run dashboard:serve`);
+  the vite dev server does not mount it
+
+Issuing and revoking (`infra/dashboard/issue-sponsor-token.sh`):
+
+```bash
+export ERIS_DASHBOARD_SPONSOR_TOKENS_FILE=<host path of the token file>
+infra/dashboard/issue-sponsor-token.sh issue allied-2026   # prints the token ONCE, records its digest
+infra/dashboard/issue-sponsor-token.sh revoke allied-2026  # comments the line out, with the time
+infra/dashboard/issue-sponsor-token.sh list                # labels, issue and revocation times
+```
+
+The token is shown once and stored nowhere; a lost one is revoked and reissued. Revoking keeps the
+line (as `# revoked=<time> …`), so the token file and the access log together say who could read
+what, from when to when. How it is configured on the hosted box: `infra/dashboard/README.md`,
+"Sponsor view".
 
 ## Explorer (local Blockscout)
 

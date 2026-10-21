@@ -92,7 +92,7 @@
 
 - `external: true` または鍵なしのエントリは**起動しない**。代わりに `agent_external_registered` を emit する。これが無いと「参加者が接続しなかった run」と「coordinator が起動に失敗した run」が区別できない（どちらも無取引に見える）。
 - 起動したプロセスには `onExit` を付ける。**途中で死んだエージェントは黙って取引をやめる**ので、`summary.json` 上は「動かないことを選んだ」エージェントと見分けがつかない。`agent_process_exited` と `processExitedEarly` に残す。
-- **エポックの時計は場が揃うまで待つ**（issue #94。`core/src/realtime/agentsReady.ts`）。automine を切った後・interval mining を始める前に、起動した全 agent が自分のログに `runtime_start` を書くまで待つ（`run.agentsReadyTimeoutSec`、既定 60 秒）。実測（2026-09-07、docker 32 体）では `interval_mining_started` が +24 s、`runtime_start` が +86〜99 s で、360 ブロックのエポックの先頭 ~45 ブロックと `windowFrac 0.10` の窓が誰も見ていないうちに過ぎていた。待っている間 anvil はブロックを作らない（agent が `runtime_start` までに必要とするのは read だけ。approve は funding で済んでいる）。external チェーンではシーケンサのブロックが `runStartBlock` の前に流れるだけ。外部参加者は待たない（こちらが起動していない）。結果は `agents_ready`（`ready[].afterMs` / `late` / `exited` / `timedOut`）に残り、上限で打ち切ったときは late の agent が最初のブロックを見ていないことが記録になる
+- **エポックの時計は場が揃うまで待つ**（issue #94。`core/src/realtime/agentsReady.ts`）。automine を切った後・interval mining を始める前に、起動した全 agent が自分のログに `runtime_start` を書くまで待つ（`run.agentsReadyTimeoutSec`、既定 180 秒。ライブ週は 120 秒未満を拒否。issue #311）。実測（2026-09-07、docker 32 体）では `interval_mining_started` が +24 s、`runtime_start` が +86〜99 s で、360 ブロックのエポックの先頭 ~45 ブロックと `windowFrac 0.10` の窓が誰も見ていないうちに過ぎていた。待っている間 anvil はブロックを作らない（agent が `runtime_start` までに必要とするのは read だけ。approve は funding で済んでいる）。external チェーンではシーケンサのブロックが `runStartBlock` の前に流れるだけ。外部参加者は待たない（こちらが起動していない）。結果は `agents_ready`（`ready[].afterMs` / `late` / `exited` / `timedOut`）に残り、上限で打ち切ったときは late の agent が最初のブロックを見ていないことが記録になる
 
 ### [F] ブロックループ
 
@@ -104,7 +104,7 @@
 
 1. **エージェントを止める**（採点より前。direct モードのエージェントは止めない限り注文を出し続ける）
 2. flow プロセスを止める
-3. interval mining を止める（external では行わない）
+3. interval mining を止める（economicGas では gated miner を止め、保留中の価格の書き込みを適用する。external では行わない）
 4. **`finalBlock` を確定**（teardown より前）— これ以降は環境が世界を元に戻す作業であり、そこを採点すると **teardown を採点する**ことになる。デペグの買い戻しは stable を par に戻すので、手仕舞わなかったエージェントが par で評価されてしまう
 5. liquidityPull の restore / depeg の restore
 6. `flushBlocks(finalBlock)` — blocks.csv を書き切る（`resetFork` が歴史を消す前）
@@ -152,10 +152,10 @@
 
 ### 手数料プロファイル
 
-| プロファイル | oracle / PriceFeed | keeper | 上限強制 |
-|---|---|---|---|
-| 既定（ADR 0010） | `maxPriorityFee + 1 gwei` → `--order fees` で txIndex 0 | `maxPriorityFee + 0.5 gwei` | あり（事後検査） |
-| `economicGas: true`（ADR 0011） | `defaultPriorityFee`（価格確定は storage 書き込みなので front-run の的が消える） | 同左 | 上限は**なし**（自由入札）。maxFeePerGas ≤ tip は残る（[03 §3.1.6](03-market.md)） |
+| プロファイル | oracle / PriceFeed | keeper | 環境のイベント取引（launch の波・depeg・引き抜き） | 上限強制 |
+|---|---|---|---|---|
+| `economicGas: true`（ADR 0011。**公式 12 レジームと練習期間の既定**） | storage 直書き（PriceFeed・Aave・GMX）。block pass が段取りし、`GatedMiner` が書いてから掘る（`core/src/realtime/gatedMiner.ts`） | 50 gwei 固定（`ECONOMIC_KEEPER_FEE_WEI`。順序ではなくブロックから締め出されないため） | 普通の手数料（中央値 1.4 gwei）+ slippage の許容幅（`core/src/realtime/envBid.ts`、ADR 0011 §1c） | 上限は**なし**（自由入札）。maxFeePerGas ≤ tip は残る（[03 §3.1.6](03-market.md)） |
+| `economicGas: false`（ADR 0010、Superseded） | `maxPriorityFee + 1 gwei` → `--order fees` で txIndex 0 | `maxPriorityFee + 0.5 gwei` | oracle と同じ | あり（事後検査） |
 
 ## 2.3 時間の扱い
 

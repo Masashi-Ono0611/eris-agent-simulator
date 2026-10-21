@@ -67,7 +67,7 @@ Keys are **nested lowercase**, mapped to internal env names by `SCHEMA` (`sdk/sr
 | `markMedianBlocks` | 5 | The G7 median window |
 | `agentSandbox` | `process` | `process` / `docker`. docker launches through `infra/docker-agent/run-agent.sh`, the only path that applies the rules §2.3 caps (2 vCPU / 4 GiB). Official regimes say `docker`; locally pass `--agent-sandbox process` |
 | `blockGasLimit` | 30000000 | Block gas limit the coordinator sets after setup, before mining starts (rules §2.6; 0 = leave the node's) |
-| `agentsReadyTimeoutSec` | 60 | Longest the epoch clock is held for every launched agent to write `runtime_start` (issue #94; 0 = do not wait). A local check with 32 docker agents takes 86–99 s, so raise it there |
+| `agentsReadyTimeoutSec` | 180 | Longest the epoch clock is held for every launched agent to write `runtime_start` (issue #94 / #311; 0 = do not wait). A local check with 32 docker agents took 86–99 s, and the live-week rehearsal's 11 agents passed 60 s in 4 of 14 epoch starts. The live week refuses less than 120 |
 | `reportDir` | `./runs` | Output root |
 | `flashArb` | false | Deploy the FlashArb contract |
 | `localSnapshotFile` | `.local-snapshot` | Where the snapshot id lives |
@@ -223,8 +223,9 @@ agents:
 | env | Non-string keys or values |
 
 `AUTO` derives a key from the environment's secret as `HMAC-SHA256(secret, ["eris-wallet/v1", "agent", agentId])` (issue #189).
-The secret is random per process and never written anywhere, except in the practice period, which reads
-`ERIS_WALLET_SECRET_FILE` so a restart comes back to the same keys (never published). **It is never derived from
+The secret is random per process and never written anywhere, except in the practice period and the live week,
+which read `ERIS_WALLET_SECRET_FILE` so a restart comes back to the same keys (never published; a keyed plan refuses
+to start without it, issue #249). **It is never derived from
 the seed**: an agent holding its own key could search seeds until one reproduced it, and then compute every other
 agent's key and every environment wallet's.
 

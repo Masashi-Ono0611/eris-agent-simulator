@@ -1,0 +1,32 @@
+# Field type QUIET: the five candidates against slow or passive opponents (few arbitrage bots).
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+  - id: ascon-zeta
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: ascon-zeta-r2
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: ascon-zeta-r3
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: sonnet-1
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: opus-1
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: random
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: lp-provider
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: lst-carry
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: levered-long
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }

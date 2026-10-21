@@ -1,0 +1,4 @@
+# Fake sample keys from upstream test/inferenceKeys.test.ts ("Fake keys only"), not credentials.
+sk-proj-FAKEaaaaaaaaaaaaaaaaaaaa01
+sk-proj-FAKEbbbbbbbbbbbbbbbbbbbb02
+sk-ant-api03-FAKEcccccccccccccccc03

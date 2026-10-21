@@ -77,6 +77,7 @@ import {
   buildRevisionSystem,
   compileExecutor,
   DEFAULT_REVISE_EVERY_BLOCKS,
+  extractRevisionJson,
   improvePolicyState,
   loadImproveAgent,
   parseRevision,
@@ -90,10 +91,12 @@ import { checkRevisedRawTx, rawTxAllowlist } from "./rawTxGuard.js";
 import { AgentStateStore, capBytesFromEnv, STATE_DIR_ENV } from "./state.js";
 import { preflightChain } from "./preflight.js";
 import { Reader } from "./read.js";
+import { type AccountMark, AccountValue } from "./accountValue.js";
 import { manifestRunOverrides } from "./runClock.js";
 import { readOnlyClient } from "./readOnlyClient.js";
 import { StrategyRunner } from "./strategyRunner.js";
 import { PyBridge } from "./pyBridge.js";
+import { blockWatchTiming, watchBlocks } from "./blockWatch.js";
 import type { StrategySource } from "./strategyProtocol.js";
 
 // Backend for the revision call when neither prompt.md nor the roster names one.
@@ -119,6 +122,8 @@ type Manifest = {
   period?: unknown;
   // The venues the run turned on, compared against the loaded config's on start.
   protocols?: string[];
+  // The operator's fee profile (ADR 0011): wins over the config's, like `period`.
+  limits?: { economicGas?: unknown };
   contracts?: {
     priceFeed?: string;
     // Issue #40: the discovery registry, the permissionless lending singleton, and the block the
@@ -233,9 +238,13 @@ async function main(): Promise<void> {
         "from the config: blocksRemaining may not match the run. Ask the operator for a current " +
         "manifest.\n",
     );
-  const runOverrides = period
+  const runOverrides: Record<string, string> = period
     ? manifestRunOverrides(period, manifest?.chain?.blockTimeSec)
     : {};
+  // The fee profile is the operator's, not the participant's copy of the config: an old
+  // practice.yaml without `economicGas` would cap every bid at the retired 5 gwei (ADR 0011).
+  if (typeof manifest?.limits?.economicGas === "boolean")
+    runOverrides.ERIS_ECONOMIC_GAS = manifest.limits.economicGas ? "1" : "0";
 
   // ADR 0013: the coordinator passes a YAML config path via ERIS_CONFIG -- the agent's own file,
   // with the fields the runtime reads as the coordinator resolved them (core/src/realtime/
@@ -444,6 +453,24 @@ async function main(): Promise<void> {
     // Self-hosted: the manifest is that declaration. ERIS_RUN_BLOCKS, the coordinator's channel,
     // still wins when set -- env over the manifest, as for every other value it carries.
     ...(period && process.env.ERIS_RUN_BLOCKS === undefined ? { period } : {}),
+  });
+  // Wallet plus every venue, for the revision context and the per-trade marks (issue #274). The
+  // observation's inventory.valueUsdc is the wallet alone. A venue whose read fails is said once,
+  // not every block: the valuation retries on the next block anyway.
+  const venueReadFailures = new Set<string>();
+  const accountValue = new AccountValue({
+    ctx: simCtx,
+    adapters,
+    address,
+    headBlock: () => publicClient.getBlockNumber({ cacheTime: 0 }),
+    onError: (block, venue, error) => {
+      if (venueReadFailures.has(venue)) return;
+      venueReadFailures.add(venue);
+      process.stderr.write(
+        `[bot] block ${block}: valuing the ${venue} position failed, so that block has no account ` +
+          `value (said once per venue): ${error instanceof Error ? error.message : String(error)}\n`,
+      );
+    },
   });
 
   // ---- resolve the agent module (1 agent = 1 directory) ----
@@ -687,11 +714,31 @@ async function main(): Promise<void> {
       // the revision context reports, and the marked value each landed transaction is judged
       // against a few blocks later.
       marketHistory.push(snap.observation);
-      tradeLedger.mark(
-        bn,
-        snap.observation.inventory?.valueUsdc ?? null,
-        marketHistory.at(bn),
-      );
+      const sample = marketHistory.at(bn);
+      if (mode === "improve") {
+        // The value the model reads is wallet plus venues (issue #274), and the venue reads are kept
+        // off the trading path (accountValue.ts). Until they land, the block has no value rather than
+        // the wallet's: a series that mixes the two would show every posted collateral as a drop.
+        if (sample) sample.valueUsdc = null;
+        tradeLedger.mark(bn, null, sample);
+        void accountValue
+          .mark(bn, snap)
+          .then((mark) => {
+            if (!mark) return;
+            if (sample) sample.valueUsdc = mark.valueUsdc;
+            tradeLedger.mark(bn, mark.valueUsdc, sample);
+          })
+          .catch((error: unknown) =>
+            process.stderr.write(
+              `[bot] block ${bn} account valuation failed: ${error instanceof Error ? error.message : String(error)}\n`,
+            ),
+          );
+      } else
+        tradeLedger.mark(
+          bn,
+          snap.observation.inventory?.valueUsdc ?? null,
+          sample,
+        );
       // gas manager: after the observation is settled, check the ETH balance and if low enqueue a refill tx (every run).
       void sender.maybeRefillGas(
         bn,
@@ -735,13 +782,27 @@ async function main(): Promise<void> {
   // before the first observation, so a new epoch cannot trade the shipped version during resume.
   if (mode === "improve") await runImproveLoop();
 
-  publicClient.watchBlockNumber({
-    emitOnBegin: true,
-    pollingInterval: Math.max(
-      100,
-      Math.floor((config.blockTimeSec * 1000) / 4),
-    ),
-    onBlockNumber: (bn) => void onBlock(Number(bn)),
+  // Polled on a client of its own, unbatched and uncached: on the batched client a poll that shares
+  // a tick with the observation's reads waits for the whole batch, and viem caches getBlockNumber for
+  // seconds by default. When a block is noticed decides who goes first among equal bids, so it is
+  // kept apart from everything else this process reads (issue #275, blockWatch.ts).
+  const { publicClient: headClient } = makeClients(rpcUrl, config.chainId);
+  let headPollFailing = false;
+  watchBlocks({
+    getBlockNumber: () => headClient.getBlockNumber({ cacheTime: 0 }),
+    timing: blockWatchTiming(config.blockTimeSec * 1000),
+    onBlock: (bn) => {
+      headPollFailing = false;
+      void onBlock(bn);
+    },
+    // Once per failing stretch, not once per poll: inside the window that would be every 25 ms.
+    onError: (error) => {
+      if (headPollFailing) return;
+      headPollFailing = true;
+      process.stderr.write(
+        `[bot] block-number poll failed (said once until a block is seen again): ${error instanceof Error ? error.message : String(error)}\n`,
+      );
+    },
   });
 
   logMempool({ event: "runtime_start", mode, address, agentDir, rpcUrl });
@@ -936,26 +997,20 @@ async function main(): Promise<void> {
     // every cadence tick whether or not the call got through, so it is the wrong window to report
     // evidence over. Null means "everything so far", which is what the first revision gets.
     let lastRevisionAt: number | null = null;
-    // Value at the moment of the last revision, to judge whether that revision helped.
-    let valueAtRevision: number | null = null;
-    let initialValue: number | null = null;
-    // The sample the PnL baseline was taken from, so the do-nothing counterfactual on the same line
-    // starts from the same observation. The block loop's first sample can be dozens of blocks
-    // earlier (it runs before this loop subscribes), and a counterfactual from there against a PnL
-    // from here is a difference between two different starts.
-    let initialSample: MarketSample | null = null;
-    ctx.onObservation((obs) => {
-      const value = obs.inventory?.valueUsdc;
-      if (typeof value === "number" && initialValue === null) {
-        initialValue = value;
-        initialSample = marketHistory.at(obs.round) ?? null;
-      }
-    });
-
-    const valueNow = (): number | null => {
-      const v = latestObservation?.inventory?.valueUsdc;
-      return typeof v === "number" ? v : null;
+    // The account at the moment of the last install or revert, to judge whether that revision
+    // helped. Kept as the whole mark, not just its value: the do-nothing counterfactual on the same
+    // line has to start from the same block, and how much sat in venue positions then is part of
+    // what that counterfactual cannot see.
+    let markAtRevision: AccountMark | null = null;
+    // The PnL baseline is the first block the account was valued at, wallet plus venues (issue
+    // #274), and the do-nothing counterfactual on the same line starts from that block's sample, so
+    // both are differences from the same start.
+    const initialMark = () => accountValue.first();
+    const initialSample = (): MarketSample | null => {
+      const first = initialMark();
+      return first ? (marketHistory.at(first.block) ?? null) : null;
     };
+
 
     const record = (outcome: RevisionOutcome, block: number): void => {
       // `state`, not `signals`: signals is numeric-only, and a revision record is mostly text
@@ -990,7 +1045,15 @@ async function main(): Promise<void> {
         // Nothing is judged here. Whether a revision helped, and whether to undo it, is the model's
         // call -- an automatic revert needs a threshold and there is no defensible one (ADR 0018 §5).
         // What the harness owes the model is the evidence: the history, and the value at each point.
-        const value = valueNow();
+        const markNow = accountValue.latest();
+        const value = markNow?.valueUsdc ?? null;
+        // Running totals, so a post-run reader can tell whether the PnL and the per-trade marks the
+        // model was shown rest on most blocks or on a few (accountValue.ts).
+        agentLog({
+          round: block,
+          reason: "account valuation coverage",
+          signals: { ...accountValue.stats() },
+        });
         const system = buildRevisionSystem(
           improveAgent,
           current().source,
@@ -1008,15 +1071,22 @@ async function main(): Promise<void> {
             : null;
         const context = buildRevisionContext({
           block,
-          valueUsdc: value ?? 0,
-          initialValueUsdc: initialValue ?? 0,
+          valueUsdc: value,
+          initialValueUsdc: initialMark()?.valueUsdc ?? null,
           sinceLastRevisionUsdc:
-            valueAtRevision !== null && value !== null
-              ? value - valueAtRevision
+            markAtRevision !== null && value !== null
+              ? value - markAtRevision.valueUsdc
               : null,
-          holdSinceStartUsdc: holdFrom(initialSample),
+          holdSinceStartUsdc: holdFrom(initialSample()),
+          // From the block the last revision's value was taken at, which is what the PnL above is a
+          // difference from. It used to start at the last *call* -- a declined revision moves that
+          // and not the value -- so the two halves of "what trading did" had different starts.
           holdSinceLastRevisionUsdc:
-            since === null ? null : holdFrom(marketHistory.at(since)),
+            markAtRevision === null
+              ? null
+              : holdFrom(marketHistory.at(markAtRevision.block)),
+          venuesAtStartUsdc: initialMark()?.venuesUsdc ?? null,
+          venuesAtLastRevisionUsdc: markAtRevision?.venuesUsdc ?? null,
           // What is *running*, not what has been numbered.
           currentVersion: active.version,
           history: versions.map(({ executor: _executor, ...v }) => v),
@@ -1066,17 +1136,21 @@ async function main(): Promise<void> {
           });
           throw error;
         }
-        let parsedJson: unknown;
-        try {
-          parsedJson = JSON.parse(stripFences(raw));
-        } catch {
-          record(
-            { kind: "rejected", reason: "response was not valid JSON" },
-            block,
-          );
+        const extracted = extractRevisionJson(raw);
+        if (!extracted.ok) {
+          record({ kind: "rejected", reason: extracted.reason }, block);
           return;
         }
-        const parsed = parseRevision(parsedJson, language);
+        // Said, because the prose is dropped: the reply was not the bare object the prompt asked
+        // for. The full reply stays in the call log (ERIS_IMPROVE_LOG_CALLS). Not a
+        // `revision <kind>` reason: the outcome is the record below.
+        if (extracted.form === "fenced")
+          agentLog({
+            round: block,
+            reason: "llm reply: revision taken from its one fenced block, prose around it dropped",
+            state: { model },
+          });
+        const parsed = parseRevision(extracted.value, language);
         if (!parsed.ok) {
           record({ kind: "rejected", reason: parsed.reason }, block);
           return;
@@ -1120,7 +1194,7 @@ async function main(): Promise<void> {
           runningVersion = reinstalled.version;
           if (parsed.revision.memory !== null) memory = parsed.revision.memory;
           persist();
-          valueAtRevision = value;
+          markAtRevision = markNow;
           record(
             {
               kind: "reverted",
@@ -1165,7 +1239,7 @@ async function main(): Promise<void> {
         runningVersion = installed.version;
         if (parsed.revision.memory !== null) memory = parsed.revision.memory;
         persist();
-        valueAtRevision = value;
+        markAtRevision = markNow;
         record(
           {
             kind: "installed",
@@ -1197,12 +1271,6 @@ async function main(): Promise<void> {
       void maybeRevise(block);
     });
   }
-}
-
-function stripFences(text: string): string {
-  const t = text.trim();
-  const m = t.match(/^```(?:json)?\n([\s\S]*?)\n```$/);
-  return m ? m[1] : t;
 }
 
 main().catch((error) => {

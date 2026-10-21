@@ -158,8 +158,11 @@ instead, so one unattended process runs the live week (ADR 0026):
 ```bash
 npm run competition -- plan --hidden hidden.yaml --lottery lottery.yaml --k 60 \
   --starts-at 2026-11-01T00:00:00+09:00 --ends-at 2026-11-08T00:00:00+09:00 --out plan.yaml   # one every 168 min
+npm run competition -- wallet-keygen <secret-dir>/live-wallet-secret.yaml   # once per week; never published
+ERIS_WALLET_SECRET_FILE=<secret-dir>/live-wallet-secret.yaml \
 npm run backtest -- --scenarios plan.yaml --agents field.yaml --follow-schedule \
-  --scenario-key <secret-dir>/scenario-key.yaml   # ADR 0027: a plan refuses to start without a key
+  --scenario-key <secret-dir>/scenario-key.yaml \  # ADR 0027: a plan refuses to start without a key
+  --agent-state-root <state-dir>                   # rules §4.7.1: a keyed plan refuses to start without one
 ```
 
 - Before each epoch it runs, the runner prints what it is waiting for (`s=5 crash#…: waiting 2h 31m
@@ -176,10 +179,32 @@ npm run backtest -- --scenarios plan.yaml --agents field.yaml --follow-schedule 
 - **A plan under a key file is the live week, and its posture is refused rather than warned about**
   (`core/src/realtime/liveWeek.ts`): public environment keys (admin / keeper / setup / deployer, or a
   state dump whose Aave admin is an anvil test account), `agentSandbox: process`, `command`/`args`
-  roster entries, and docker agents without `ERIS_AGENT_ISOLATE=1` + `ERIS_AGENT_INTERNAL=1` or in
-  bind-mount mode. Checked once per regime before the first wait, and again by each epoch; a refusal
+  roster entries, docker agents without `ERIS_AGENT_ISOLATE=1` + `ERIS_AGENT_INTERNAL=1` or in
+  bind-mount mode, and `run.agentsReadyTimeoutSec` below 120 or 0 (issue #311: the epoch clock would
+  start while a docker field is still booting; the default is 180). Checked once per regime before the first wait, and again by each epoch; a refusal
   stops the week instead of becoming an excluded epoch. `ERIS_ALLOW_PUBLIC_ROLE_KEYS` does not apply.
   Rehearse the plan with `--scenario-key public`, which is not the live week.
+- **`--agent-state-root` is part of that posture.** The rules carry each unit's internal state —
+  revised strategies, version history, whatever the agent wrote — across the epochs (§4.7.1), and
+  this flag is what does it. A keyed plan without it is refused. Start a fresh week on an empty
+  directory; a `--resume` runs with the directory the matrix ran with. Back the root up with the
+  matrix directory: its `.snapshots/end-s<N>` checkpoints are what a re-run of a voided epoch
+  restores from.
+- **So is `ERIS_WALLET_SECRET_FILE`** (issue #249). Every AUTO agent, flow wallet and victim key is
+  derived from the wallet secret (issue #189), which is random per process unless it comes from a
+  file. The week runs across several processes (`--resume`), so without the file each restart moves
+  every one of those addresses: the scores survive (they are read by id), the dashboard's agent pages
+  and the explorer do not. Make one with `npm run competition -- wallet-keygen` for the week — not the
+  practice period's file, and not the scenario key (the same value is refused at start, because the
+  key is published after the results and the secret never is). Back it up with the scenario key, and
+  start every process of the week with the same file.
+- **Build the agent images after the overlay names the dump** (issue #310). `npm run agent:build`
+  bakes `sdk/src/constants.local.ts` into the images; `backtest` regenerates that file from the
+  dump's manifest only at its own startup, after the images exist. Built first, every agent exits at
+  preflight with `N of N contracts hold no code` and the epoch is recorded with all of them
+  `processExitedEarly`. The build now refuses an overlay whose fingerprint differs from
+  `backtest/state/manifest.json`; run `npm run gen:local-constants:from-dump` before
+  `npm run agent:build` (base and every team).
 - A slot shorter than an epoch's wall time (360 blocks = 12 min of block time plus setup and
   reconstruction) makes every epoch after it late. The runner reports it; the plan is where it is
   fixed.
@@ -257,6 +282,7 @@ agents:
 | `--agent-state-root <dir>` | Carry each agent's persistent state across the scenarios, in list order (issue #77). Off by default. Checkpoints the root after every completed scenario so a resume can restore the right starting point |
 | `--repeat <N>` | Repeat each scenario N times (default 1). A calibration diagnostic; standings take the median |
 | `--port <N>` | Port for the backtest-dedicated anvil (default 8547; use a different port for parallel runs) |
+| `--anvil-host <addr>` | Address the backtest anvil listens on (default `127.0.0.1`). In the live week the agents reach the chain only through the RPC gateway, a container on a docker bridge that cannot reach the host's loopback; give the bridge's gateway IP (e.g. `172.17.0.1`) and point the gateway's `UPSTREAM` there. anvil's `anvil_*` / `evm_*` methods are then open to anything that reaches that address, so keep the port firewalled |
 | `--state <dir>` | State dump directory (default `backtest/state`) |
 | `--keep-anvil` | Keep anvil alive after exit (for reading receipts in post-hoc analysis / debugging) |
 | `--score-every <N>` | Reconstruct the value cross-section every Nth block instead of every block. Score-neutral (only the first and last cross-sections reach `summary.json`); it just coarsens the equity curve in `events.jsonl` |

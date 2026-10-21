@@ -69,6 +69,15 @@ export type LiveIntervalBoundary = {
   v0EndowmentByAgent?: Record<string, number>;
 };
 
+/** The scorer's bookkeeping, for a practice period that resumes after a restart (periodResume.ts). */
+export type LiveScorerSnapshot = {
+  lastAttempted: number | null;
+  failures: number;
+  endBlock: number | null;
+  firstBoundaryBlock: number | null;
+  firstBoundaryByAgent: Record<string, FirstBoundaryV0>;
+};
+
 export class LiveScorer {
   private readonly boundaries: number[] = [];
   private readonly valuesByAgent = new Map<string, Array<number | null>>();
@@ -107,6 +116,14 @@ export class LiveScorer {
       markMedianBlocks: number;
       /** Sample the venue-state row at each boundary too. */
       sampleMarket: boolean;
+      /**
+       * Read a boundary this many blocks after it is mined instead of while it is the head. 1 under
+       * economicGas (ADR 0011): the environment's price writes land in the head block's state, and
+       * anvil keeps them there, so block B read as the head and block B read from history are two
+       * different states. Reading every boundary from history -- the same state the median window's
+       * earlier blocks and the post-run sweep read -- keeps them one. close() still reads the end.
+       */
+      readLagBlocks?: number;
       /** How V_0 treats a measured value above the endowment (endowmentV0.ts). Default floor. */
       v0Rule?: V0Rule;
     },
@@ -172,9 +189,13 @@ export class LiveScorer {
   // event (pointEventsAt). Never reads past the end block, whatever block it is told about.
   async onBlock(blockNumber: number): Promise<void> {
     if (!this.enabled) return;
+    await this.readThrough(blockNumber - (this.opts.readLagBlocks ?? 0));
+  }
+
+  private async readThrough(through: number): Promise<void> {
     for (
       let at = this.pendingBoundary();
-      at !== null && at <= blockNumber;
+      at !== null && at <= through;
       at = this.pendingBoundary()
     ) {
       this.lastAttempted = at;
@@ -192,7 +213,8 @@ export class LiveScorer {
     if (!this.enabled) return;
     if (this.endBlock === null || finalBlock < this.endBlock)
       this.endBlock = finalBlock;
-    await this.onBlock(finalBlock);
+    // Not onBlock: no lag here. The run is over, so the end block is already what history keeps.
+    await this.readThrough(finalBlock);
   }
 
   private async scoreBoundary(blockNumber: number): Promise<void> {
@@ -292,6 +314,59 @@ export class LiveScorer {
         error: error instanceof Error ? error.message : String(error),
       });
     }
+  }
+
+  snapshot(): LiveScorerSnapshot {
+    return {
+      lastAttempted: this.lastAttempted,
+      failures: this.failures,
+      endBlock: this.endBlock,
+      firstBoundaryBlock: this.firstBoundaryBlockNumber,
+      firstBoundaryByAgent: Object.fromEntries(this.firstBoundaryByAgent),
+    };
+  }
+
+  /**
+   * Continue a period's series after a restart (periodResume.ts). The values come back from the
+   * intervals.jsonl lines this scorer appended -- each line carries every agent's value at its
+   * boundary, so the file is the series -- and the bookkeeping that is not in those lines from the
+   * snapshot. An agent a line does not name (registered after it) gets null there, as addAgent gives
+   * it. Boundaries must be the ones read up to `snapshot.lastAttempted`, in order.
+   */
+  restore(
+    snapshot: LiveScorerSnapshot,
+    boundaries: ReadonlyArray<{
+      blockNumber: number;
+      values: Record<string, number | null>;
+    }>,
+  ): void {
+    for (let i = 1; i < boundaries.length; i++)
+      if (boundaries[i].blockNumber <= boundaries[i - 1].blockNumber)
+        throw new Error(
+          `interval boundaries out of order at ${boundaries[i].blockNumber} (after ${boundaries[i - 1].blockNumber})`,
+        );
+    const last = boundaries.at(-1)?.blockNumber;
+    if (
+      last !== undefined &&
+      (snapshot.lastAttempted === null || last > snapshot.lastAttempted)
+    )
+      throw new Error(
+        `interval boundary ${last} is past the last one the snapshot attempted (${snapshot.lastAttempted})`,
+      );
+    this.boundaries.length = 0;
+    for (const values of this.valuesByAgent.values()) values.length = 0;
+    for (const b of boundaries) {
+      this.boundaries.push(b.blockNumber);
+      for (const [id, values] of this.valuesByAgent)
+        values.push(b.values[id] ?? null);
+    }
+    this.lastAttempted = snapshot.lastAttempted;
+    this.failures = snapshot.failures;
+    this.endBlock = snapshot.endBlock;
+    this.firstBoundaryBlockNumber = snapshot.firstBoundaryBlock;
+    this.firstBoundaryByAgent.clear();
+    for (const [id, v0] of Object.entries(snapshot.firstBoundaryByAgent))
+      this.firstBoundaryByAgent.set(id, v0);
   }
 
   /** The block the first boundary was read at, or null before it was. */

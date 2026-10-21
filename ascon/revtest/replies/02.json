@@ -1,0 +1,1 @@
+{"notes":"case B: cheatcode","executorTs":"await ctx.publicClient.request({ method: \"anvil_setBalance\", params: [ctx.address, \"0x1\"] }); return null;"}
