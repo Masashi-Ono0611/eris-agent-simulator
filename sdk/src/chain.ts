@@ -794,6 +794,75 @@ function candidateSlots(): number[] {
   return [...priority, ...rest];
 }
 
+// The mapping slot found for each token, for the life of the process (issue #312). A token's layout
+// does not change, and every fund call used to probe it again: up to 9 write/read/restore rounds for
+// a MockERC20 (slot 4) per stable per wallet, each one a chance to lose the race below. A cached slot
+// is still checked with one balanceOf read-back, and a miss falls back to the full probe.
+const balanceSlotCache = new Map<string, number>();
+
+// For tests: the cache is process-wide, and a fake chain in one test must not leak into the next.
+export function clearErc20BalanceSlotCache(): void {
+  balanceSlotCache.clear();
+}
+
+// How many candidates the error reports what they read back (the priority list's head).
+const PROBE_REPORT_SLOTS = 9;
+
+// Whether holder's balanceOf reads `expected` right after a storage write. `latest` first, then
+// `pending` if it did not. anvil_setStorageAt writes the node's current state, but an eth_call at
+// `latest` that overlaps a block being mined is answered from a stored block state that predates the
+// write (measured on anvil 1.7.1: 8-14 of 3,000 write-then-read pairs read the previous value while
+// another client mined in a loop; `pending` read 0 of 6,000 stale; the write itself is never lost).
+// `pending` is not the only read because it also applies the mempool: a flow wallet topped up
+// mid-run has its own swaps pending, and its pending balance is the write plus their deltas.
+async function readsBack(
+  publicClient: PublicClient,
+  token: Address,
+  holder: Address,
+  expected: bigint,
+): Promise<{ ok: boolean; latest: bigint; pending?: bigint }> {
+  const read = async (blockTag: "latest" | "pending") =>
+    (await publicClient.readContract({
+      address: token,
+      abi: erc20Abi,
+      functionName: "balanceOf",
+      args: [holder],
+      blockTag,
+    })) as bigint;
+  const latest = await read("latest");
+  if (latest === expected) return { ok: true, latest };
+  const pending = await read("pending");
+  return { ok: pending === expected, latest, pending };
+}
+
+// One pass over the candidates. Returns the slot that read the sentinel back, or what the first
+// PROBE_REPORT_SLOTS candidates read instead.
+async function probeBalanceSlot(
+  publicClient: PublicClient,
+  token: Address,
+  holder: Address,
+  amount: bigint,
+): Promise<{ slot: number } | { misses: string[] }> {
+  const misses: string[] = [];
+  for (const slot of candidateSlots()) {
+    const key = balanceSlotKey(holder, slot);
+    const original = ((await publicClient.getStorageAt({
+      address: token,
+      slot: key,
+    })) ?? `0x${"0".repeat(64)}`) as Hex;
+    await setStorageAt(publicClient, token, key, pad32(PROBE_SENTINEL));
+    const probed = await readsBack(publicClient, token, holder, PROBE_SENTINEL);
+    if (probed.ok) {
+      await setStorageAt(publicClient, token, key, pad32(amount));
+      return { slot };
+    }
+    await setStorageAt(publicClient, token, key, original);
+    if (misses.length < PROBE_REPORT_SLOTS)
+      misses.push(`slot ${slot} read latest=${probed.latest} pending=${probed.pending}`);
+  }
+  return { misses };
+}
+
 export async function dealErc20(
   publicClient: PublicClient,
   token: Address,
@@ -805,26 +874,40 @@ export async function dealErc20(
     "grant tokens from the treasury instead (grantErc20: mint if the token allows it, else transfer) " +
       "(issue #33 (1))",
   );
-  for (const slot of candidateSlots()) {
-    const key = balanceSlotKey(holder, slot);
-    const original = ((await publicClient.getStorageAt({
-      address: token,
-      slot: key,
-    })) ?? `0x${"0".repeat(64)}`) as Hex;
-    await setStorageAt(publicClient, token, key, pad32(PROBE_SENTINEL));
-    const probed = (await publicClient.readContract({
-      address: token,
-      abi: erc20Abi,
-      functionName: "balanceOf",
-      args: [holder],
-    })) as bigint;
-    if (probed === PROBE_SENTINEL) {
-      await setStorageAt(publicClient, token, key, pad32(amount));
+  const cacheKey = token.toLowerCase();
+  const known = balanceSlotCache.get(cacheKey);
+  if (known !== undefined) {
+    const key = balanceSlotKey(holder, known);
+    const original = ((await publicClient.getStorageAt({ address: token, slot: key })) ??
+      `0x${"0".repeat(64)}`) as Hex;
+    await setStorageAt(publicClient, token, key, pad32(amount));
+    if ((await readsBack(publicClient, token, holder, amount)).ok) return;
+    // Not this token's slot after all (another deployment at the same address): put the word back
+    // and probe as if the slot were unknown.
+    await setStorageAt(publicClient, token, key, original);
+    balanceSlotCache.delete(cacheKey);
+  }
+  // Two passes before giving up: a miss on every candidate means the right slot's read-back failed
+  // once, and the error used to say nothing else (issue #312, a voided epoch in the rehearsal).
+  const report: string[] = [];
+  for (let pass = 1; pass <= 2; pass++) {
+    const result = await probeBalanceSlot(publicClient, token, holder, amount);
+    if ("slot" in result) {
+      balanceSlotCache.set(cacheKey, result.slot);
       return;
     }
-    await setStorageAt(publicClient, token, key, original);
+    let head = "unknown";
+    try {
+      head = String(await publicClient.getBlockNumber({ cacheTime: 0 }));
+    } catch {
+      // The diagnostic must not replace the error it is diagnosing.
+    }
+    report.push(`pass ${pass} (head ${head}): ${result.misses.join(", ")}`);
   }
-  throw new Error(`could not locate ERC20 balance slot for token ${token}`);
+  throw new Error(
+    `could not locate ERC20 balance slot for token ${token} (holder ${holder}, ` +
+      `sentinel ${PROBE_SENTINEL}; ${report.join("; ")})`,
+  );
 }
 
 // ---------------------------------------------------------------------------
