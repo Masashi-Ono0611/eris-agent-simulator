@@ -79,7 +79,7 @@ wallet**, registered with the operator. Nothing else is handed out, and nothing 
 ### 1. Create a wallet and register its address
 
 Your trading capital arrives when your address is registered: every registered address receives the
-same endowment, once. Registering is the `/faucet` command on Discord (below), which takes an address
+same endowment, once. Registering is a post to the operator on Discord (below), which takes an address
 -- so the first step is a key of your own. (The Aave deployment does contain the vendor's test `Faucet`, but it is owner-only and the
 Pool does not accept the test tokens it mints -- their reserves are deactivated.)
 
@@ -97,28 +97,28 @@ own machine, outside the repository (a file with `chmod 600`, or your shell's se
 fresh key for this devnet: never reuse one that holds anything real. Nobody — the operator included —
 will ever ask you for it.
 
-**Register the address with `/faucet` on Discord.** In the Discord server you joined at registration
-(rules §1), run:
+**Register the address with the operator on Discord.** In the ASCON channel of the Discord server you
+joined at registration (rules §1), post three things:
 
 ```
-/faucet agent_id:<the name your agent shows under — lowercase letters, digits and hyphens> address:0x…
+team: <your participant unit — the handle or team name you registered under>
+agent id: <the name your agent shows under — lowercase letters, digits and hyphens>
+address: 0x…
 ```
 
-- **You need the participant role.** It is given to the Discord usernames on the registration form,
-  on a periodic sync; if you registered after the last sync, `/faucet` looks you up on the form
-  again when you run it.
-- **One agent per Discord account.** A second agent, or tying two agents to one participant unit
-  (rules §2.2), goes through the operator: post `team` / `agent id` / `address` in the ASCON channel.
+- **One agent per participant unit** (rules §2.2). The operator checks the team against the
+  registration form before registering.
 - **Check the address before you send.** Nobody verifies that you hold its key, and registrations are
-  add-only: a mistyped address is funded, and nobody can ever move that agent. The reply repeats the
-  address for this reason.
+  add-only: a mistyped address is funded, and nobody can ever move that agent. The operator's reply
+  repeats the address for this reason.
+- Registrations are handled by hand, so allow up to a day for the reply.
 
 Only the address. An address is public by design — it is what the dashboard and the explorer show
 your transactions under — while a key posted anywhere has to be treated as everyone's key.
 
-**What happens next.** The bot adds the address to the period's registration list, and within about
-a minute the chain credits it with the endowment every agent gets: native ETH for gas, and the trading
-assets. The bot waits for that and replies with the address's balances (only you see the reply). The amounts are the manifest's `funding` (`ethWei`, `wethWei`, `usdcUnits`, and `wbtcUnits`
+**What happens next.** The operator adds the address to the period's registration list, and within
+about a minute the chain credits it with the endowment every agent gets: native ETH for gas, and the
+trading assets. The operator replies once the balances are on chain. The amounts are the manifest's `funding` (`ethWei`, `wethWei`, `usdcUnits`, and `wbtcUnits`
 for the rest of the basket). Your address then appears in the manifest's `participants`. The standings
 place you from the **next day**: the day you register has no starting value for you, so it is left out
 of your score rather than counted as zero.
@@ -135,12 +135,12 @@ curl -s -X POST "$RPC_URL" \
 
 A non-zero `result` is your ETH. The dashboard's "Find your agent" takes the address too.
 
-- **A second agent** needs a second key and a post to the operator (`/faucet` takes one per account).
-  A participant unit may enter two (rules §2.2); each is registered, funded and scored separately.
+- **One agent per participant unit**, as in the live week (rules §2.2). There is no second agent.
 - **Registrations are add-only.** To move to a new address, ask the operator for a **new** agent id; an
   existing id cannot be pointed somewhere else.
 - **Starting over** — capital spent, or a strategy you want to measure from a clean slate — is the same:
-  a new key, a new id. It is scored from the day after, and the old record stays as it was.
+  a new key, a new id, which replaces your unit's previous agent. It is scored from the day after, and
+  the old record stays as it was.
 
 ### 2. Fetch and read the manifest
 
@@ -150,10 +150,12 @@ A non-zero `result` is your ETH. The dashboard's "Find your agent" takes the add
 curl -fsS -o manifest.json https://<dashboard>/runs/manifest.json    # ascon-dash.nyx.foundation for the hosted period
 ```
 
-**Fetch it again whenever the period restarts.** The PriceFeed and the other per-run contracts are
-deployed when the operator's coordinator starts, so every restart (announced on Discord) changes their
-addresses; a manifest from before it points your agent at contracts that no longer exist. The same
-file is in every run directory the dashboard lists, under `runs/<period>/<day>/manifest.json`.
+**Fetch it again whenever a new period starts.** The PriceFeed and the other per-run contracts are
+deployed when a period starts, so a new period (announced on Discord) changes their addresses; a
+manifest from before it points your agent at contracts that no longer exist. A restart of the
+operator's coordinator *within* a period changes none of them: it resumes the period on the same chain
+([infra/devnet](../../infra/devnet/README.md#a-restart-resumes-the-period)). The same file is in every
+run directory the dashboard lists, under `runs/<period>/<day>/manifest.json`.
 
 It carries where the chain is, what is deployed on it, how long an evaluation interval is, how long the
 period is and where each day ends, what the limits are, and which addresses are registered.
@@ -256,8 +258,8 @@ same rule, and the RPC gateway refuses what does not:
 
 | transaction type | requirement |
 |---|---|
-| EIP-1559 / 4844 / 7702 (`maxFeePerGas`, `maxPriorityFeePerGas`) | `maxFeePerGas` **equal to** (never above) `maxPriorityFeePerGas`, and that ≤ the manifest's `limits.maxPriorityFeeWei` (5 gwei) |
-| legacy / EIP-2930 (`gasPrice`) | `gasPrice` ≤ `limits.maxPriorityFeeWei` |
+| EIP-1559 / 4844 / 7702 (`maxFeePerGas`, `maxPriorityFeePerGas`) | `maxFeePerGas` **equal to** (never above) `maxPriorityFeePerGas`. No cap on the value (ADR 0011, since 2026-10-08) |
+| legacy / EIP-2930 (`gasPrice`) | any `gasPrice` |
 | any | gas limit ≤ 10,000,000 |
 
 ```ts
@@ -273,10 +275,16 @@ cast send … --gas-price 1gwei --priority-gas-price 1gwei
 **Why maxFeePerGas and not just the tip.** The rules order a block by the priority fee, highest first
 (§2.6). The chain's node sorts its pool on **maxFeePerGas**, and with base fee 0 a transaction pays
 min(maxFeePerGas, tip) — so without the rule, a transaction signed with a high maxFeePerGas and a small
-tip is placed ahead of bids that pay more, including the environment's price update, which the cap
-exists to keep first. (Measured: tip 0.1 gwei + maxFeePerGas 7 gwei landed at the top of its block
-ahead of a 6 gwei transaction, paying 0.1 gwei.) With maxFeePerGas equal to the tip, the position you
-get is exactly the price you pay.
+tip is placed ahead of bids that pay more. (Measured: tip 0.1 gwei + maxFeePerGas 7 gwei landed at
+the top of its block ahead of a 6 gwei transaction, paying 0.1 gwei.) With maxFeePerGas equal to the
+tip, the position you get is exactly the price you pay.
+
+**There is no cap on the bid.** Until 2026-10-08 the tip was capped at 5 gwei so that the environment's
+price update, sent at 6 gwei, stayed first in every block; with everyone who wanted a contested
+opportunity at the cap, ties were settled by arrival. The prices are now written straight into the
+contracts' storage and the environment mines the block right after, so nothing you bid can get ahead
+of them, and the cap is gone (ADR 0011). A fee is real money: it comes off your ETH, which is part of
+your score.
 
 A refused transaction comes back as HTTP 403 with JSON-RPC error `-32003` and a message naming the
 field; it never reached the chain and used no nonce. A transaction that reaches the chain another way
@@ -356,8 +364,9 @@ config alone it has no PriceFeed address and no period start — both exist only
 has started — so an agent cannot start from it, and the command says so.
 
 A period runs for a week, so step 3 does not stay in a terminal. On the box that hosts it, run the
-coordinator under systemd instead — `infra/devnet/` has the unit, what it needs, why a restart
-begins a new competition, and the Slack alert that fires when the chain stops moving.
+coordinator under systemd instead — `infra/devnet/` has the unit, what it needs, how a restart
+resumes the period (and how a new one is started), and the Slack alert that fires when the chain
+stops moving.
 
 ```bash
 systemctl --user enable --now ascon-devnet.service
@@ -366,8 +375,10 @@ systemctl --user enable --now ascon-devnet.service
 On anvil, step 2's ordering probe reports `key probe: max-fee`: the node sorts on maxFeePerGas, not on
 the tip a transaction pays. That is safe only because participants may not sign maxFeePerGas above
 their tip ([the fee rule](#if-you-sign-transactions-yourself-the-fee-rule)), which the RPC gateway
-refuses at entry and `postRunCheck` flags afterwards. Keep the gateway's `RPC_MAX_PRIORITY_FEE_WEI`
-equal to the config's `fees.maxPriorityFeeWei` (both default to 5 gwei; `infra/rpc-gateway/README.md`).
+refuses at entry and `postRunCheck` flags afterwards. The period runs `economicGas: true` (ADR 0011),
+so the gateway's `RPC_MAX_PRIORITY_FEE_WEI` is 0 (`infra/monitoring/docker-compose.yml`): no cap, the
+maxFeePerGas half still enforced. A config with `economicGas: false` needs it back at
+`fees.maxPriorityFeeWei` (5 gwei; `infra/rpc-gateway/README.md`).
 
 ### The chain's own keys (issue #74)
 
@@ -458,23 +469,24 @@ agents:
 `command` / `args` / `dir` / `env` on an external entry are **refused**, not ignored: a roster that
 silently kept them would read as if the operator were running the agent.
 
-`participant` names the **participant unit** of rules §2.2 — a person or a team that may enter two
-agents and is scored on the higher. Two entries with the same value are that unit's two submissions.
+`participant` names the **participant unit** of rules §2.2 — a person or a team, which runs one agent.
+Two entries with the same value are the same unit's earlier and later agent (a restart under a new id),
+not two agents competing at once.
 It travels with the agent into `agents_registered`, the manifest, `summary.json` and `matrix.json`;
 the standings still rank agents, and collapsing a unit to its better one is the reader's step.
 
 ### Registering during the period
 
-The roster is read once, at startup. A period runs for weeks and participants register throughout,
-and restarting the coordinator to add one opens a **new competition directory** — the standings
-split in two. So the config can name a second list that is re-read while the chain runs.
+The roster is read once, at startup, and it is part of what a period is: a restart resumes the period
+with the roster it started with, and a different one is refused. A period runs for weeks and
+participants register throughout, so the config can name a second list that is re-read while the
+chain runs.
 
-Most participants register themselves with the Discord `/faucet` bot ([step 1 of the participant
-section](#1-create-a-wallet-and-register-its-address); setup and operation in
-[`infra/discord-faucet/`](../../infra/discord-faucet/README.md)), which appends to this file the way
-`register.sh` does. The rest — a second agent, a unit's two agents, a new address — post `team` /
-`agent id` / `address` in the ASCON Discord channel; each post becomes one entry, with `participant`
-set to the team. A post that carries anything that looks like a private key is a key
+Participants post `team` / `agent id` / `address` in the ASCON Discord channel ([step 1 of the
+participant section](#1-create-a-wallet-and-register-its-address)); each post becomes one entry, with
+`participant` set to the team, added with `register.sh`. The `/faucet` bot in
+[`infra/discord-faucet/`](../../infra/discord-faucet/README.md) is not deployed for this competition.
+Check the team against the registration form, and that it has no other live agent (rules §2.2). A post that carries anything that looks like a private key is a key
 that has to be discarded: tell them, and register nothing from it.
 
 ```yaml
@@ -584,21 +596,25 @@ progress, because an environment that is silent for ten minutes reads as one tha
 A period ends on a **date**: `run.endsAt` (ISO 8601, with a time zone). `config/practice.yaml`
 states `2026-10-31T23:59:59+09:00`, the end of the trial in rules §2.7; the live week starts the next
 day. The coordinator converts the date into the blocks that remain at `blockTimeSec` when it starts
-and records both in `run_started_realtime` (`runEndsAt`, `runBlocks`). A restart — which is a new
-competition — therefore ends on the same day with fewer blocks (issue #136). Stated as a block count
-instead, the period used to end 42 days after whenever the coordinator started: a start on 9/23 ran
-into the live week, and every restart got a fresh 42 days.
+and records both in `run_started_realtime` (`runEndsAt`, `runBlocks`). A new period started later
+therefore ends on the same day with fewer blocks (issue #136), and a restart within a period keeps the
+block count its first start came to. Stated as a block count instead, the period used to end 42 days
+after whenever the coordinator started: a start on 9/23 ran into the live week, and every restart got a
+fresh 42 days.
 
 **The episode list is written for a start.** Each day of the period holds one of every kind of
 episode, and each episode's window is a fraction of the run, measured from the moment the coordinator
-starts. So before every (re)start the list is regenerated for that start, merged like any other
+starts. So before every new period the list is regenerated for that start, merged like any other
 change, and then **promoted onto the box** — which is a third step, not a consequence of the second:
 
 ```bash
 npm run gen:practice-episodes -- --start 2026-10-01T10:00:00+09:00   # rewrites config/practice.yaml
-# merge it, then on the box, before the coordinator is restarted:
+# merge it, then on the box, before the new period is started:
 infra/dashboard/sync-main.sh promote <tag|sha>                       # moves the checkout to it
 ```
+
+Not before a restart within a period: the episodes are part of the period, and a resume with a
+regenerated list is refused (the config would describe a different world).
 
 The box's checkout is **pinned**, not following `main` (issue #211,
 [infra/dashboard](../../infra/dashboard/README.md)): a merge changes nothing there until a ref is

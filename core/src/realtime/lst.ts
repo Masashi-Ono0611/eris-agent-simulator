@@ -101,6 +101,10 @@ export class ApySchedule {
 export async function setupLst(
   ctx: SimContext,
   logger: RunLogger,
+  // A practice period resuming after a restart (periodResume.ts): the vault was configured when the
+  // period started and has been running since, so nothing is re-sent, and the market's distance from
+  // redemption is today's market rather than a deployment fault -- reported, not refused.
+  opts: { resume?: boolean } = {},
 ): Promise<LstRuntime | null> {
   if (!LST) {
     throw new Error(
@@ -120,7 +124,7 @@ export async function setupLst(
     ctx.config.lstApyBps,
     ctx.config.lstSimulatedSecondsPerBlock,
   );
-  if (canConfigure) {
+  if (canConfigure && !opts.resume) {
     await sendAndMine(
       ctx.publicClient,
       ctx.walletClient,
@@ -207,7 +211,11 @@ export async function setupLst(
     );
   }
   const absDiscount = Math.abs(state.discountBps);
-  if (absDiscount > LST_STARTUP_FAIL_BPS) {
+  if (absDiscount > LST_STARTUP_FAIL_BPS && opts.resume) {
+    console.warn(
+      `[lst] resuming with the LST/WETH market ${state.discountBps.toFixed(1)}bps off redemption`,
+    );
+  } else if (absDiscount > LST_STARTUP_FAIL_BPS) {
     throw new Error(
       `lst no-arbitrage check failed at startup: the LST/WETH market sits ${state.discountBps.toFixed(1)}bps ` +
         `off the vault's redemption rate (limit ${LST_STARTUP_FAIL_BPS}bps). The usual cause is the pool's ` +
@@ -303,6 +311,9 @@ export async function slashLst(
   magnitude: number,
   logger: RunLogger,
   priorityFeeWei: bigint,
+  // economicGas (ADR 0011): send at `priorityFeeWei` without mining. Under gated mining only the
+  // miner mines; a block mined here would be cut mid-pass, on the previous step's prices.
+  opts: { noMine?: boolean } = {},
 ): Promise<void> {
   const bps = BigInt(Math.round(magnitude * 10_000));
   if (bps <= 0n) return;
@@ -315,6 +326,26 @@ export async function slashLst(
     return;
   }
   const before = await getLstState(ctx);
+  if (opts.noMine) {
+    const hash = await sendNoMine(
+      ctx.publicClient,
+      ctx.walletClient,
+      ctx.chain,
+      ctx.adminPk,
+      { to: runtime.vault, data: encodeCall("slash", [bps]), gas: 300_000n },
+      priorityFeeWei,
+    );
+    // Lands in the next block; the rate after it is in lst_block from then on.
+    logger.event({
+      type: "lst_slash",
+      bps: Number(bps),
+      redemptionRateBefore: before.redemptionRateWeth,
+      pending: true,
+      priorityFeeWei: priorityFeeWei.toString(),
+      hash,
+    });
+    return;
+  }
   await sendAndMine(
     ctx.publicClient,
     ctx.walletClient,

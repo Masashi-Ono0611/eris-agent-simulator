@@ -2,6 +2,9 @@ import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
 import { once } from "node:events";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { freePort, rpc, startGateway } from "./helpers/localRpc.js";
 
 // Issue #216 (3). Two gateway behaviours that need no chain: the request body cap, and sealing an
@@ -34,6 +37,10 @@ function answer(c: Call): unknown {
   }
 }
 
+// An eth_call to this address is never answered: the upstream holds the request open, the way a
+// node busy executing a long call does.
+const HANG = "0x000000000000000000000000000000000000beef";
+
 async function startFakeUpstream(t: TestContext) {
   const seen: Call[] = [];
   let bytes = 0;
@@ -46,6 +53,7 @@ async function startFakeUpstream(t: TestContext) {
       const parsed = JSON.parse(body.toString("utf8")) as Call | Call[];
       const calls = Array.isArray(parsed) ? parsed : [parsed];
       seen.push(...calls);
+      if (calls.some((c) => c.method === "eth_call" && (c.params?.[0] as { to?: string } | undefined)?.to === HANG)) return;
       const replies = calls.map((c) => ({ jsonrpc: "2.0", id: c.id, result: answer(c) }));
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify(Array.isArray(parsed) ? replies : replies[0]));
@@ -54,7 +62,7 @@ async function startFakeUpstream(t: TestContext) {
   const port = await freePort();
   server.listen(port, "127.0.0.1");
   await once(server, "listening");
-  t.after(() => new Promise<void>((resolve) => server.close(() => resolve())));
+  t.after(() => new Promise<void>((resolve) => { server.close(() => resolve()); server.closeAllConnections(); }));
   return { url: `http://127.0.0.1:${port}`, seen, bytes: () => bytes };
 }
 
@@ -99,6 +107,64 @@ test("an unmined transaction read by hash is null; a mined one passes through", 
   assert.match(metrics, /rpc_pending_sealed_total\{[^}]+\} 4\n/);
 });
 
+test("a batch where a read by hash shares its id is refused before the upstream", { timeout: 20_000 }, async (t) => {
+  const upstream = await startFakeUpstream(t);
+  const gateway = await startGateway(t, upstream.url);
+  const post = (batch: unknown[]) =>
+    fetch(gateway, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(batch) });
+
+  // The seal matched replies to calls by id: under a shared id it judged one reply by the other call.
+  const shapes: unknown[][] = [
+    [
+      { jsonrpc: "2.0", id: 1, method: "eth_getRawTransactionByHash", params: [PENDING] },
+      { jsonrpc: "2.0", id: 1, method: "eth_getRawTransactionByHash", params: [MINED] },
+    ],
+    [
+      { jsonrpc: "2.0", id: 1, method: "eth_getRawTransactionByHash", params: [PENDING] },
+      { jsonrpc: "2.0", id: 1, method: "eth_getTransactionByHash", params: [PENDING] },
+    ],
+    [
+      { jsonrpc: "2.0", id: 1, method: "eth_getTransactionByHash", params: [PENDING] },
+      { jsonrpc: "2.0", id: "1", method: "eth_getRawTransactionByHash", params: [MINED] },
+    ],
+    [
+      { jsonrpc: "2.0", id: 5, method: "eth_blockNumber", params: [] },
+      { jsonrpc: "2.0", id: 5, method: "eth_getTransactionByHash", params: [PENDING] },
+    ],
+    [
+      { jsonrpc: "2.0", method: "eth_getTransactionByHash", params: [PENDING] },
+      { jsonrpc: "2.0", id: null, method: "eth_getRawTransactionByHash", params: [MINED] },
+    ],
+  ];
+  const before = upstream.seen.length;
+  for (const batch of shapes) {
+    const response = await post(batch);
+    assert.equal(response.status, 400, JSON.stringify(batch));
+    const body = (await response.json()) as { error?: { code: number } };
+    assert.equal(body.error?.code, -32600);
+  }
+  assert.equal(upstream.seen.length, before, "a refused batch never reaches the upstream");
+
+  // Other calls under one id are the client's own business: forwarded and answered as before.
+  const shared = await post([
+    { jsonrpc: "2.0", id: 1, method: "eth_chainId", params: [] },
+    { jsonrpc: "2.0", id: 1, method: "eth_blockNumber", params: [] },
+  ]);
+  assert.equal(shared.status, 200);
+  assert.deepEqual(((await shared.json()) as Array<{ result: unknown }>).map((r) => r.result), ["0x7a69", "0x1"]);
+
+  // Distinct ids still seal member by member.
+  const distinct = await post([
+    { jsonrpc: "2.0", id: 1, method: "eth_getRawTransactionByHash", params: [PENDING] },
+    { jsonrpc: "2.0", id: 2, method: "eth_getRawTransactionByHash", params: [MINED] },
+  ]);
+  assert.equal(distinct.status, 200);
+  assert.deepEqual(((await distinct.json()) as Array<{ result: unknown }>).map((r) => r.result), [null, RAW]);
+
+  const metrics = await (await fetch(`${gateway}/metrics`)).text();
+  assert.match(metrics, new RegExp(`rpc_dup_id_denied_total\\{[^}]+\\} ${shapes.length}\\n`));
+});
+
 test("a request body over the cap is refused with 413 and never reaches the upstream", { timeout: 20_000 }, async (t) => {
   const upstream = await startFakeUpstream(t);
   const gateway = await startGateway(t, upstream.url, { RPC_MAX_BODY_BYTES: "1024" });
@@ -137,4 +203,90 @@ test("a request body over the cap is refused with 413 and never reaches the upst
   assert.equal(upstream.bytes(), bytesAfterSmall, "oversized bodies were not forwarded");
   const metrics = await (await fetch(`${gateway}/metrics`)).text();
   assert.match(metrics, /rpc_body_denied_total\{[^}]+\} 2\n/);
+});
+
+// 2026-10-08: the disk filled and the first failed write to the request log killed the gateway, and
+// every participant's RPC with it. A log file that cannot be written (here: a path that is a
+// directory, which fails the same way on every platform) must cost log lines, not service.
+test("a request log that cannot be written drops lines and keeps serving", { timeout: 20_000 }, async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "eris-gw-log-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const upstream = await startFakeUpstream(t);
+  const gateway = await startGateway(t, upstream.url, { LOG_FILE: dir });
+
+  for (let i = 0; i < 5; i++) {
+    assert.equal((await rpc(gateway, "eth_blockNumber")).body.result, "0x1");
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  const metrics = await (await fetch(`${gateway}/metrics`)).text();
+  const dropped = Number(/rpc_log_lines_dropped_total\{[^}]+\} (\d+)\n/.exec(metrics)?.[1]);
+  assert.ok(dropped >= 1, `dropped lines are counted (got ${dropped})`);
+});
+
+test("eth_call / eth_estimateGas / eth_createAccessList reach the upstream with their gas capped", { timeout: 20_000 }, async (t) => {
+  const upstream = await startFakeUpstream(t);
+  const gateway = await startGateway(t, upstream.url, { RPC_MAX_CALL_GAS: "1000000" });
+  const to = "0x000000000000000000000000000000000000dead";
+
+  await rpc(gateway, "eth_call", [{ to, data: "0x" }, "latest"]);
+  await rpc(gateway, "eth_call", [{ to, gas: "0x5208" }, "latest"]);
+  await fetch(gateway, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify([
+      { jsonrpc: "2.0", id: 1, method: "eth_estimateGas", params: [{ to, gas: "0x1312d00" }, "latest"] },
+      { jsonrpc: "2.0", id: 2, method: "eth_blockNumber", params: [] },
+      { jsonrpc: "2.0", id: 3, method: "eth_createAccessList", params: [{ to }, "latest"] },
+    ]),
+  });
+  const gas = upstream.seen
+    .filter((c) => ["eth_call", "eth_estimateGas", "eth_createAccessList"].includes(c.method))
+    .map((c) => [c.method, (c.params?.[0] as { gas?: string }).gas]);
+  assert.deepEqual(gas, [
+    ["eth_call", "0xf4240"],
+    ["eth_call", "0x5208"],
+    ["eth_estimateGas", "0xf4240"],
+    ["eth_createAccessList", "0xf4240"],
+  ]);
+  const metrics = await (await fetch(`${gateway}/metrics`)).text();
+  assert.match(metrics, /rpc_call_gas_capped_total\{[^}]+\} 3\n/);
+});
+
+test("an upstream that does not answer is cut off with a JSON-RPC error", { timeout: 20_000 }, async (t) => {
+  const upstream = await startFakeUpstream(t);
+  const gateway = await startGateway(t, upstream.url, { RPC_UPSTREAM_TIMEOUT_MS: "300" });
+
+  const t0 = Date.now();
+  const hung = await rpc(gateway, "eth_call", [{ to: HANG }, "latest"]);
+  assert.ok(Date.now() - t0 < 5_000);
+  assert.equal(hung.status, 504);
+  assert.equal(hung.body.error?.code, -32000);
+  assert.match(String(hung.body.error?.message), /did not answer within 300 ms/);
+
+  // The gateway is still serving, and the node still counts as up.
+  assert.equal((await rpc(gateway, "eth_blockNumber")).body.result, "0x1");
+  const metrics = await (await fetch(`${gateway}/metrics`)).text();
+  assert.match(metrics, /rpc_upstream_timeout_total\{[^}]+\} 1\n/);
+  assert.match(metrics, /rpc_upstream_up\{[^}]+\} 1\n/);
+  assert.match(metrics, /rpc_in_flight\{[^}]+\} 0\n/);
+});
+
+test("one client's requests in flight are capped; the slot frees when one finishes", { timeout: 20_000 }, async (t) => {
+  const upstream = await startFakeUpstream(t);
+  const gateway = await startGateway(t, upstream.url, { RPC_MAX_IN_FLIGHT_PER_CLIENT: "2", RPC_UPSTREAM_TIMEOUT_MS: "1500" });
+
+  const held = [rpc(gateway, "eth_call", [{ to: HANG }, "latest"]), rpc(gateway, "eth_call", [{ to: HANG }, "latest"])];
+  // Wait until both are upstream.
+  for (let i = 0; i < 100 && upstream.seen.filter((c) => c.method === "eth_call").length < 2; i++)
+    await new Promise((r) => setTimeout(r, 20));
+  const refused = await rpc(gateway, "eth_blockNumber");
+  assert.equal(refused.status, 429);
+  assert.equal(refused.body.error?.code, -32005);
+  assert.equal(refused.body.id, 0, "preserve JSON-RPC id zero");
+
+  // Both held requests time out, which releases their slots.
+  for (const r of await Promise.all(held)) assert.equal(r.status, 504);
+  assert.equal((await rpc(gateway, "eth_blockNumber")).body.result, "0x1");
+  const metrics = await (await fetch(`${gateway}/metrics`)).text();
+  assert.match(metrics, /rpc_in_flight_denied_total\{[^}]+\} 1\n/);
 });

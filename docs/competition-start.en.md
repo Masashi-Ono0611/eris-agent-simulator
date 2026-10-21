@@ -93,7 +93,7 @@ trades on it at the same time. These are the only words the rest of this guide n
 | transaction (tx) | One instruction, such as "sell 1 WETH into this pool". You sign and send it, and **it only executes once it is included in a block** (usually the next one; when blocks are busy and your fee is low, a later one). Someone else's transaction can land ahead of yours in between |
 | contract | A program deployed on the chain. Exchanges and lenders are contracts, and anyone can call their functions. **The rules are the code itself, not a legal agreement**: a call that does not meet the code's conditions is undone partway through (a revert) |
 | revert | A transaction that fails a contract's condition (insufficient balance, a worse price than you allowed, …) and is undone. No assets move, but you still pay the fee (the gas used × your priority fee; tiny at the default 0.1 gwei). A transaction already known to fail is stopped by the runtime's simulation before sending and never reaches the chain (logged as `submit_failed`). A revert on chain is one whose conditions broke after it was sent, because of someone else's trade or a price change |
-| gas / priority fee | The fee for having a transaction executed, paid in ETH. Here the base fee is 0; you pay only the extra you add to be executed earlier (the priority fee). **Within a block, transactions execute highest priority fee first** (ties in arrival order; one wallet's transactions in nonce order). The environment's reference-price update is sent at a fee above the participants' cap, so it always comes first in the block |
+| gas / priority fee | The fee for having a transaction executed, paid in ETH. Here the base fee is 0; you pay only the extra you add to be executed earlier (the priority fee). **Within a block, transactions execute highest priority fee first** (ties in arrival order; one wallet's transactions in nonce order). **There is no cap on the priority fee** (what you pay comes off your assets). The environment's reference price is not a transaction: it is written into the contracts just before the block is made, so no bid gets ahead of it |
 | hash | A transaction's ID (a long string starting with `0x`). Whether your transaction made it into a block is checked by this value |
 | nonce | A per-wallet sequence number for transactions. Only one transaction with a given number executes, so sending from the same key in two places makes the numbers collide. The runtime manages it |
 | mempool | Where transactions wait after being sent and before landing in a block |
@@ -339,7 +339,7 @@ The schedule of rules §1 (Japan Standard Time), with what you do at each stage.
 | 9/1 – 10/24 | Registration period | Join the ASCON channel on the Discord and submit the registration form |
 | 9/23 | The submission period opens. Appendix A's values (epoch length, evaluation interval, k, gas ETH), the inference proxy's model list and the list of permitted exploit targets are published **by this day** (rules §7.1) | Work through §2–§6 of this guide |
 | 9/23 – 10/31 | **Submission period.** Evaluate yourself on the 60 public scenarios and replace your submission **up to 5 times a day**. In the same period the operator's **trial environment** (rules §2.7) is open: the same configuration as the competition, take any transaction you like, but **no standings are posted** and nothing counts | Build → run → fix (§6). Submit the `bundle:agent` zip (§10) |
-| 10/31 | **Submission deadline = the agent is frozen.** Nominate up to 2 submissions for final evaluation. The hash of the lottery seed is published | No more code changes |
+| 10/31 | **Submission deadline = the agent is frozen.** The last accepted submission is the one evaluated (rules §2.2). The hash of the lottery seed is published | No more code changes |
 | 11/1 – 11/7 | **Live competition.** One epoch is one unit; k of them, the world reinitialised each time, every unit starting at once. Score and cumulative standings update after every epoch | **You operate nothing.** Your agent runs in the operator's container and the only thing that moves is the in-epoch LLM revision. Watch the standings on the dashboard (§7) |
 | 11/8 | Reserve day, for the same-seed re-run of an epoch that failed on the operator's side (rules §4.4.2) | — |
 | 11/9 – 11/30 | Review period: audit of violations, review of the report track (entries due 11/21), the standings are finalised. No new epochs run | Enter the report track by 11/21 if you want to |
@@ -356,11 +356,12 @@ The more mainnet (production public chain) experience you have, the more you des
 that this environment does not have. None of the following exists here. **If blockchains are new to
 you, skip this section**: each item is "a problem on mainnet that does not arise here".
 
-- **Reorgs (a written block later replaced by different contents) and unconfirmed blocks.** The chain is a single Anvil node on interval mining. A block is
+- **Reorgs (a written block later replaced by different contents) and unconfirmed blocks.** The chain is a single Anvil node; the environment makes a block every 2 seconds. A block is
   final the moment it is mined; it does not roll back and a mined transaction does not disappear. The
   world is rebuilt only at the start of an epoch (rules §4.7.1) — that is an initialization, not a reorg
 - **Gas price spikes.** The base fee is pinned at 0. What you pay is the priority fee you choose to
-  stack (default 0.1 gwei, capped by `obs.limits.maxPriorityFeePerGasWei`); other people's congestion
+  stack (default 0.1 gwei, no cap; `obs.limits.maxPriorityFeePerGasWei` is a nominal guard against a
+  broken value); other people's congestion
   never raises your bill. Gas ETH is part of your asset value (rules §4.2), so fees do reach the PnL
 - **An edge from arriving first.** Order within a block is by priority fee, highest first (rules §2.6;
   Anvil runs with `--order fees`). A faster line or an earlier call wins nothing — if you want the
@@ -706,7 +707,7 @@ agents:
 | `codex` / `codex:<model>` | spawns `codex exec` | ChatGPT subscription (`codex login`) |
 | `claude-cli` / `claude-cli:<model>` | spawns `claude -p` | Claude subscription |
 | `claude…` (a model name starting with `claude`) | the Anthropic API | `ANTHROPIC_API_KEY` |
-| `openai:<model>`, or a name starting with `gpt-` / `o1` / `o3` / `o4` | OpenAI-compatible chat completions | `OPENAI_API_KEY` (`OPENAI_BASE_URL` for a compatible endpoint) |
+| `openai:<model>`, or a name starting with `gpt-<digit>` / `gpt-oss-<size>` / `o1` / `o3` / `o4` | OpenAI-compatible chat completions; the pro and codex models (`…-pro`, `…codex…`) are called on the Responses API, the only place OpenAI serves them | `OPENAI_API_KEY` (`OPENAI_BASE_URL` for a compatible endpoint) |
 | anything else (default) | the ollama family | `ERIS_OLLAMA_BASE_URL` (Ollama Cloud by default) + `OLLAMA_API_KEY` |
 
 > **In the competition no key reaches your agent.** Inference goes through the operator's proxy

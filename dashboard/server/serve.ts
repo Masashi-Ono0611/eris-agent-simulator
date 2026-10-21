@@ -11,7 +11,9 @@
 // holds no state, takes no writes, and knows nothing about a run. Running the dashboard locally
 // against local output (the existing way) is unchanged and stays the development path.
 //
-// It is read-only, but it is not an access-control boundary: everything under runs/ becomes public.
+// It is read-only, and apart from the sponsor's view (/sponsor/*, server/sponsor.ts: a bearer token,
+// off unless ERIS_DASHBOARD_SPONSOR_TOKENS_FILE is set) it is not an access-control boundary:
+// everything under runs/ that the runs API serves becomes public.
 // That is the intent — a practice period's artifacts are what participants come to look at — but it
 // is also why the environment manifest carries no keys (core/src/manifest.ts) and why nothing that
 // should stay private is written into a run directory.
@@ -32,6 +34,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { competitionsFromEnv, createRunsApi, modeFromEnv } from "./runsApi.js";
 import { explorerTarget } from "./explorerProxy.js";
+import { createSponsorApi, SPONSOR_PREFIX, sponsorFromEnv } from "./sponsor.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DIST =
@@ -111,6 +114,24 @@ const handleRuns = createRunsApi(RUNS, {
   ...(COMPETITIONS ? { competitions: COMPETITIONS } : {}),
 });
 
+// The sponsor's view (server/sponsor.ts): the same runs and the same competition allowlist, the
+// audience's redactions, plus decision logs and the inference proxy's records, behind a token. Off
+// unless the token file is configured -- and then every /sponsor path is a 404, as before.
+const SPONSOR = sponsorFromEnv();
+const handleSponsor = SPONSOR
+  ? createSponsorApi({
+      runsDir: RUNS,
+      ...SPONSOR,
+      standings: MODE.standings,
+      ...(COMPETITIONS ? { competitions: COMPETITIONS } : {}),
+    })
+  : null;
+if (SPONSOR && !SPONSOR.accessLog)
+  console.error(
+    "[dashboard] ERIS_DASHBOARD_SPONSOR_TOKENS_FILE is set but ERIS_DASHBOARD_SPONSOR_ACCESS_LOG is not: " +
+      "every sponsor request will be refused (503) until accesses can be recorded",
+  );
+
 // Resolve a request path inside dist/, or null. Same realpath discipline as the runs API: a symlink
 // under dist/ must not become a way to read the rest of the disk.
 function distFile(urlPath: string): string | null {
@@ -182,6 +203,14 @@ function handle(req: IncomingMessage, res: ServerResponse): void {
     return;
   }
 
+  if (urlPath === SPONSOR_PREFIX || urlPath.startsWith(`${SPONSOR_PREFIX}/`)) {
+    if (!handleSponsor || !handleSponsor(urlPath, query, req, res)) {
+      res.statusCode = 404;
+      res.end();
+    }
+    return;
+  }
+
   if (urlPath.startsWith("/runs")) {
     const rest = urlPath.slice("/runs".length) || "/";
     if (handleRuns(rest, query, req, res)) return;
@@ -246,6 +275,7 @@ server.listen(PORT, () => {
       `[dashboard]   bundle:     ${SERVER_COMMIT ?? "no dist/.build-info.json (built outside the sync)"}\n` +
       `[dashboard]   mode:       ${MODE.audience ? "audience (public view: scenarios, upcoming windows, decision logs and pending bids withheld)" : "operator (everything under runs/ is served)"}` +
       `${MODE.standings ? "" : ", standings not posted (rules §4.7)"}\n` +
-      `[dashboard]   competitions: ${COMPETITIONS ? COMPETITIONS.join(", ") : "all under runs/ (set ERIS_DASHBOARD_COMPETITIONS to restrict)"}`,
+      `[dashboard]   competitions: ${COMPETITIONS ? COMPETITIONS.join(", ") : "all under runs/ (set ERIS_DASHBOARD_COMPETITIONS to restrict)"}\n` +
+      `[dashboard]   sponsor:    ${SPONSOR ? `on at ${SPONSOR_PREFIX}/ (tokens ${SPONSOR.tokensFile}, access log ${SPONSOR.accessLog ?? "UNSET: refusing"}, inference ${SPONSOR.inferenceDir ?? "not served"})` : "off"}`,
   );
 });

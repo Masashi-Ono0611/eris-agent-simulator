@@ -19,12 +19,19 @@
 // expose the same thing: a proportional claim measured in its own unit (position liquidity, BPT, LP
 // balance), where a fraction of the claim is a fraction of the depth. GMX and Aave are a different
 // axis entirely and out of scope.
-import { encodeFunctionData, maxUint256, type Address, type Hex } from "viem";
+import { type Address, type Hex } from "viem";
 import { erc20Abi } from "@eris/sdk/abis.js";
 import { accountAddress, sendAndMine, sendNoMine } from "@eris/sdk/chain.js";
 import type { SimContext } from "@eris/sdk/protocols/types.js";
 import type { RunLogger } from "../logger.js";
 import type { EventSchedule } from "./events.js";
+import { requireStandingApprovals } from "./standingApprovals.js";
+import {
+  FLAT_FEE_MEDIAN_WEI,
+  pullFrontRunValueUsd,
+  type DeferredSend,
+  type EnvBidContext,
+} from "./envBid.js";
 import {
   approvalsFor,
   buildDeposit,
@@ -86,7 +93,15 @@ function keyOf(pos: PullPosition): string {
 export async function setupLiquidityPull(
   ctx: SimContext,
   schedule: EventSchedule,
-  opts: { localDeploy: boolean; ownerPk: Hex; enabledVenues: PullVenue[] },
+  opts: {
+    localDeploy: boolean;
+    ownerPk: Hex;
+    enabledVenues: PullVenue[];
+    // A practice period resuming after a restart (periodResume.ts): each position's claim at the
+    // period's start, keyed venue:market. Discovered again mid-window, the claim would be the pulled
+    // one, and the restore would put back only what is already there.
+    resume?: LiquidityPullResume;
+  },
   logger: RunLogger,
 ): Promise<LiquidityPullRuntime> {
   const bases = schedule.liquidityPullBases();
@@ -124,29 +139,22 @@ export async function setupLiquidityPull(
     );
   }
 
+  if (opts.resume) return resumeLiquidityPull(owner, opts.ownerPk, positions, opts.resume, logger);
+
   // The decay leg deposits tokens back, so each venue's spender needs standing approval: the
-  // deploy-time approvals covered only the exact seeding amounts. Sequential because they all come
-  // from one key and each mines a block -- concurrent sends would race on the nonce.
+  // deploy-time approvals covered only the exact seeding amounts. The coordinator grants it in every
+  // run, pull or not (standingApprovals.ts): granting it here put the deployer's approvals in the
+  // setup blocks of exactly the regimes with a pull -- crash, spike and the two incidents.
   const approvals = new Map<string, { token: Address; spender: Address }>();
   for (const pos of positions)
     for (const a of approvalsFor(pos))
       approvals.set(`${a.token.toLowerCase()}:${a.spender.toLowerCase()}`, a);
-  for (const { token, spender } of approvals.values()) {
-    await sendAndMine(
-      ctx.publicClient,
-      ctx.walletClient,
-      ctx.chain,
-      opts.ownerPk,
-      {
-        to: token,
-        data: encodeFunctionData({
-          abi: erc20Abi,
-          functionName: "approve",
-          args: [spender, maxUint256],
-        }),
-      },
-    );
-  }
+  await requireStandingApprovals(
+    ctx,
+    owner,
+    [...approvals.values()],
+    "stress event liquidityPull",
+  );
 
   // Balances matter for the restore: putting depth back after the price has moved needs a different
   // mix than the withdrawal returned, and the shortfall (if any) comes from the owner's own float.
@@ -189,6 +197,70 @@ export async function setupLiquidityPull(
   };
 }
 
+export type LiquidityPullResume = {
+  seededShares: Record<string, bigint>;
+  restoreReported: boolean;
+};
+
+/** What a checkpoint records of a pull: each position's claim at the period's start. */
+export function liquidityPullResumeState(runtime: LiquidityPullRuntime): LiquidityPullResume {
+  return {
+    seededShares: Object.fromEntries(runtime.positions.map((p) => [keyOf(p), p.seededShare])),
+    restoreReported: runtime.restoreReported,
+  };
+}
+
+// The positions as discovered now carry today's claim. The period's start is the checkpoint's; what
+// the position holds today is `applied`, which is what the reconcile computes the next delta from.
+// The approvals are standing (maxUint256) from the first start.
+function resumeLiquidityPull(
+  owner: Address,
+  ownerPk: Hex,
+  discovered: PullPosition[],
+  saved: LiquidityPullResume,
+  logger: RunLogger,
+): LiquidityPullRuntime {
+  const applied = new Map<string, bigint>();
+  const positions = discovered.map((pos) => {
+    const key = keyOf(pos);
+    const seeded = saved.seededShares[key];
+    if (seeded === undefined)
+      throw new Error(
+        `liquidityPull: the period started without a position at ${key}, and one is there now. ` +
+          "The pool set changed under the period; it cannot be resumed against it",
+      );
+    if (pos.seededShare !== seeded) applied.set(key, pos.seededShare);
+    return { ...pos, seededShare: seeded };
+  });
+  const missing = Object.keys(saved.seededShares).filter(
+    (key) => !positions.some((p) => keyOf(p) === key),
+  );
+  if (missing.length > 0)
+    throw new Error(
+      `liquidityPull: the period's positions ${missing.join(", ")} are gone from ${owner}; ` +
+        "it cannot be resumed against this chain",
+    );
+  logger.event({
+    type: "stress_liquidity_pull_resumed",
+    owner,
+    positions: positions.map((p) => ({
+      venue: p.venue,
+      market: p.marketKey,
+      seededShare: p.seededShare.toString(),
+      currentShare: (applied.get(keyOf(p)) ?? p.seededShare).toString(),
+    })),
+  });
+  return {
+    owner,
+    ownerPk,
+    positions,
+    applied,
+    pending: new Map(),
+    restoreAttempts: new Map(),
+    restoreReported: saved.restoreReported,
+  };
+}
+
 /// Move each tracked pool toward the depth the schedule asks for on this block. Returns the hashes
 /// it submitted so the coordinator can attribute them.
 ///
@@ -210,7 +282,12 @@ export async function reconcileLiquidityPull(
   schedule: EventSchedule,
   blockIndex: number,
   blockNumber: number,
-  opts: { priorityFeeWei: bigint },
+  // `bid` (economicGas, ADR 0011): price each send at a random fraction of what getting ahead of it
+  // is worth (envBid.ts) instead of the fixed `priorityFeeWei`.
+  // `defer`: collect the sends instead of making them, for the caller to order by bid with another
+  // event's sends from the same key (sendByBid). The returned hashes are then empty; each deferred
+  // send resolves to its own.
+  opts: { priorityFeeWei: bigint; bid?: EnvBidContext; defer?: DeferredSend[] },
   logger: RunLogger,
 ): Promise<Hex[]> {
   const mults = schedule.depthMultiplierAt(blockIndex);
@@ -288,18 +365,50 @@ export async function reconcileLiquidityPull(
               target - applied,
               deadline,
             );
-      const hash = await sendNoMine(
-        ctx.publicClient,
-        ctx.walletClient,
-        ctx.chain,
-        runtime.ownerPk,
-        { to: call.to, data: call.data, gas: RECONCILE_GAS },
-        opts.priorityFeeWei,
-      );
-      runtime.pending.set(key, { hash, blockIndex });
-      allSettled = false;
-      hashes.push(hash);
-      logger.event({
+      // An ordinary LP's fee, not one priced at what getting ahead of the pull is worth: being ahead
+      // of a pull is a trade on a deeper book, not a victim's loss, and a fee priced at that value
+      // was paid on the pull's own gas (up to 2.6× a swap's) and came out above it (PR #287
+      // follow-up). The value is still recorded, for reading what the ordering was worth.
+      const bid = opts.bid
+        ? {
+            ...opts.bid.bidder.flatBid(FLAT_FEE_MEDIAN_WEI),
+            valueUsd:
+              depthBefore !== undefined && target < applied
+                ? pullFrontRunValueUsd({
+                    depthBefore,
+                    depthAfter: depthBefore - (applied - target),
+                    // The environment seeded the pool, so its seeded share is the seeded depth.
+                    seededDepth: pos.seededShare,
+                  })
+                : 0,
+          }
+        : null;
+      const priorityFeeWei = bid?.priorityFeeWei ?? opts.priorityFeeWei;
+      const send = async (): Promise<Hex | null> => {
+        let hash: Hex;
+        try {
+          hash = await sendNoMine(
+            ctx.publicClient,
+            ctx.walletClient,
+            ctx.chain,
+            runtime.ownerPk,
+            { to: call.to, data: call.data, gas: RECONCILE_GAS },
+            priorityFeeWei,
+          );
+        } catch (error) {
+          logger.event({
+            type: "stress_liquidity_pull_failed",
+            blockIndex,
+            blockNumber,
+            venue: pos.venue,
+            market: pos.marketKey,
+            targetShare: target.toString(),
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        }
+        runtime.pending.set(key, { hash, blockIndex });
+        logger.event({
         type: "stress_liquidity_pull",
         blockIndex,
         blockNumber,
@@ -314,7 +423,23 @@ export async function reconcileLiquidityPull(
         previousShare: applied.toString(),
         targetShare: target.toString(),
         hash,
-      });
+        ...(bid
+          ? {
+              priorityFeeWei: bid.priorityFeeWei.toString(),
+              frontRunValueUsd: Number(bid.valueUsd.toFixed(4)),
+            }
+          : {}),
+        });
+        return hash;
+      };
+      // Something is going out either way, so the window is not settled this block.
+      allSettled = false;
+      if (opts.defer) {
+        opts.defer.push({ priorityFeeWei, send });
+        continue;
+      }
+      const hash = await send();
+      if (hash) hashes.push(hash);
     } catch (error) {
       // `applied` is untouched, so the next block recomputes the same delta and retries: a failed
       // send costs one block of depth rather than desynchronizing the pool for the whole run.

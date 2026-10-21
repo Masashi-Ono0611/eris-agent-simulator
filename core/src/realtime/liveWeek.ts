@@ -29,12 +29,24 @@
 import { formatEther, formatUnits, type Address } from "viem";
 import type { AgentSpec } from "@eris/sdk/types.js";
 import { agentSandboxWarning } from "./agentView.js";
+import { AGENT_STATE_ROOT_ENV } from "./agentState.js";
+import { WALLET_SECRET_FILE_ENV } from "../walletKeys.js";
 import {
   checkRoleKeys,
   publicTestAddresses,
   type RoleKeys,
   type RoleKeyUse,
 } from "./roleKeyGuard.js";
+
+/**
+ * The shortest agents-ready bound the live week accepts (`run.agentsReadyTimeoutSec`, issue #311).
+ * An agent still booting at the bound misses the epoch's first blocks, and how long a docker field
+ * takes to boot is a property of the host's load, not of the agents: 32 agents took 86-99 s (#94), and
+ * the 2026-10-20 rehearsal's 11 agents passed 60 s in 4 of 14 epoch starts. The default (180) is
+ * above this; the floor is there so a regime or roster that lowers it, or sets 0 (no wait), cannot
+ * start the week.
+ */
+export const LIVE_WEEK_MIN_AGENTS_READY_SEC = 120;
 
 /** The matrix runner's override that marks one epoch as the live week's (honoured from nowhere else). */
 export const LIVE_WEEK_OVERRIDE = "ERIS_LIVE_WEEK";
@@ -61,6 +73,7 @@ export function liveWeekRefusals(opts: {
   use: RoleKeyUse;
   venueAdmin?: Address;
   sandbox: "process" | "docker";
+  agentsReadyTimeoutSec: number;
   agents: ReadonlyArray<AgentSpec>;
   env: Record<string, string | undefined>;
   platform?: NodeJS.Platform;
@@ -88,6 +101,49 @@ export function liveWeekRefusals(opts: {
     reasons.push(
       `run.agentSandbox is ${opts.sandbox}: submitted agents would run as plain processes on this ` +
         "host, outside the rules §2.3 caps and the network isolation (infra/docker-agent/run-agent.sh)",
+    );
+
+  // Issue #311: an agent still booting when the epoch clock starts misses its first blocks, for a
+  // reason that is the host's load rather than the agent.
+  if (opts.agentsReadyTimeoutSec < LIVE_WEEK_MIN_AGENTS_READY_SEC)
+    reasons.push(
+      `run.agentsReadyTimeoutSec is ${opts.agentsReadyTimeoutSec}` +
+        (opts.agentsReadyTimeoutSec === 0 ? " (no wait)" : "") +
+        `: the epoch clock would start before a docker field has booted (32 agents took 86-99 s, ` +
+        `issue #94). Set it to at least ${LIVE_WEEK_MIN_AGENTS_READY_SEC}, or leave it at the default`,
+    );
+
+  // Rules §2.5: every agent revises through the operator's proxy, on the participant's own
+  // credential. Without the URL the agents have no model at all (an isolated container has no
+  // other way out), and the week would run sixty epochs of unrevised strategies and say nothing.
+  if (!opts.env.ERIS_INFERENCE_BASE_URL)
+    reasons.push(
+      "no inference proxy for the agents: set ERIS_INFERENCE_BASE_URL (and ERIS_INFERENCE_SECRET) " +
+        "to the operator's proxy started with --keys (infra/inference-proxy/README.md)",
+    );
+
+  // Rules §4.7.1: an agent's internal state, the strategies it revised under §2.5 included, is
+  // carried from epoch to epoch, in a persistent area the organizer provides. The runner does that
+  // with --agent-state-root (issue #77); without it every epoch starts every agent at version 0, and
+  // sixty epochs run against the rules with nothing in the record saying so (issue #264).
+  if (!opts.env[AGENT_STATE_ROOT_ENV])
+    reasons.push(
+      "no agent state root: the live week carries each unit's internal state across epochs " +
+        "(rules §4.7.1); pass --agent-state-root <dir> (an empty directory for a fresh week, or the " +
+        "one the matrix being resumed ran with)",
+    );
+
+  // Issue #249: every AUTO agent, flow wallet and victim key is derived from the wallet secret, which
+  // is random per process unless it comes from a file. The k epochs run across several processes
+  // (--resume), so without the file every restart moves every one of those addresses mid-week: the
+  // scores survive (they are read by id), but the dashboard's agent pages and the explorer break at
+  // each restart, and nothing says why.
+  if (!opts.env[WALLET_SECRET_FILE_ENV]?.trim())
+    reasons.push(
+      `no wallet secret file: set ${WALLET_SECRET_FILE_ENV} to a file from ` +
+        "`npm run competition -- wallet-keygen` (one made for the week, not the practice period's). " +
+        "Without it the environment's wallets are derived from a per-process random secret, and " +
+        "every --resume moves every AUTO agent and flow wallet to a new address",
     );
 
   const custom = opts.agents
@@ -189,4 +245,47 @@ export function stateDumpRefusal(manifest: {
     `: ${manifest.publicTestAccounts.map((a) => `${a.address} (${formatEther(BigInt(a.balanceWei))} ETH)`).join(", ")}. ` +
     regenerate
   );
+}
+
+/**
+ * What GET /healthz on the inference proxy has to say for the live week: the proxy forwards the
+ * participants' own credentials (`--keys`), not the operator's. A proxy on the operator's keys would
+ * revise every agent on one key the operator pays for, the opposite of rules §2.5, and nothing else
+ * in the run would show it. Pure: the caller fetches, this reads.
+ */
+export function inferenceProxyRefusal(health: unknown): string | undefined {
+  const h = health as { ok?: unknown; credentials?: unknown } | null;
+  if (!h || typeof h !== "object" || h.ok !== true)
+    return "the inference proxy at ERIS_INFERENCE_BASE_URL did not answer GET /healthz with {ok: true}";
+  if (h.credentials !== "participant")
+    return (
+      `the inference proxy forwards the ${String(h.credentials ?? "operator")}'s credentials: start it ` +
+      "with --keys <keys.yaml> so each agent revises on the credential its participant submitted (rules §2.5)"
+    );
+  return undefined;
+}
+
+/**
+ * Fetch the proxy's /healthz and read it with inferenceProxyRefusal. The URL the agents use may be a
+ * container-network name this host cannot resolve; ERIS_INFERENCE_PROBE_URL names the same proxy as
+ * this host reaches it.
+ */
+export async function probeInferenceProxy(
+  env: Record<string, string | undefined>,
+  fetchImpl: typeof fetch = fetch,
+): Promise<string | undefined> {
+  const base = env.ERIS_INFERENCE_PROBE_URL ?? env.ERIS_INFERENCE_BASE_URL;
+  if (!base) return undefined; // liveWeekRefusals already names the missing URL
+  let body: unknown;
+  try {
+    const res = await fetchImpl(`${base.replace(/\/$/, "")}/healthz`);
+    body = await res.json();
+  } catch (error) {
+    return (
+      `the inference proxy at ${base} is not reachable from this host (${
+        error instanceof Error ? error.message : String(error)
+      }); set ERIS_INFERENCE_PROBE_URL if the agents' URL is a container-network name`
+    );
+  }
+  return inferenceProxyRefusal(body);
 }

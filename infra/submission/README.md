@@ -12,13 +12,23 @@ python3 infra/submission/scan-submission.py <agent.zip|dir> [--json]
 
 Checks: zip-bomb (compression ratio, declared size, file count, path traversal), native/binary blobs,
 oversized files; source red flags in .ts/.js — child_process/exec, eval/Function/vm, raw sockets
-(net/dns/tls), fs writes, chain cheatcodes (anvil_/evm_setBalance/setStorageAt), outbound HTTP/WS
-(WARN — confirm it targets the allowed RPC/LLM), process.env reads (WARN); package.json install
+(net/dns/tls), chain cheatcodes (anvil_/evm_setBalance/setStorageAt), fs writes (WARN — confirm the
+target; reads are not a finding), outbound HTTP/WS (WARN — confirm it targets the allowed RPC/LLM),
+process.env reads (WARN); package.json install
 lifecycle hooks (supply-chain) and non-registry deps; hardcoded secrets and crypto-miner signatures.
 
 Calibration: all 24 `example/agents/*` accept (0 BLOCK); a sample agent using child_process + fetch +
-fs writes + a cheatcode + a postinstall hook is rejected (4 BLOCK). Not a sandbox and not exhaustive —
+a cheatcode + a postinstall hook is rejected (3 BLOCK; its fs writes are a WARN). Not a sandbox and not exhaustive —
 the runtime container is the real boundary; this rejects the obvious stuff early.
+
+### Files: reads pass, writes are a WARN
+
+Rules §4.7.1 gives each agent a persistent directory (`ERIS_AGENT_STATE_DIR`) and leaves what goes
+in it to the participant. Reading back what the reference runtime saved there (`versions.json`, the
+model's `memory`) needs `node:fs`, and the rule used to match the import itself — a read-only use was
+a BLOCK labelled "filesystem writes". Now reading is not a finding, and writing is a **WARN**: the
+same section allows it, and the container bounds it (read-only rootfs, a 512 MiB `/tmp`, the state
+quota the coordinator measures). The operator checks that the target is one of those two.
 
 ### What the cheatcode rule cannot see (issue #216)
 
@@ -52,13 +62,15 @@ file under `sdk/`, `agents/runtime/` and `agents/lib/` is compared byte-for-byte
 | | |
 |---|---|
 | identical | body not scanned (it is operator code doing its job) |
-| **modified** | **BLOCK** — "operator-shipped file MODIFIED" |
-| **not in the repo** | **BLOCK** — something was added to the vendored runtime |
+| **differs from this checkout** | **WARN** — bundled at another commit, or edited |
+| **not in this checkout** | **WARN** — another release, or something was added to the vendored runtime |
 
-This is stricter than before, not looser. Previously a tampered `sdk/src/config.ts` looked exactly
-like an untampered one: both BLOCK'd for `child_process`, and the finding said nothing about
-tampering. Verified: a stock bundle accepts (0 BLOCK); the same bundle with a shell-exec appended to
-`sdk/src/config.ts` rejects; adding `agents/runtime/backdoor.ts` rejects.
+These were BLOCKs until 2026-10-16. They are WARNs because the copies never reach an image:
+extraction (below) takes the participant's agent directory and nothing else, and the image carries
+the operator's frozen commit. The reference is whatever this checkout is, so as a BLOCK every
+operator update turned every bundle built from an earlier, genuine release into a rejection the
+participant could only clear by rebundling. The WARN still names each file, so a deliberate edit is
+visible; what matters for the participant is whether the agent runs on the frozen SDK.
 
 `ERIS_REPO` overrides the reference checkout (default: this script's repo root).
 
@@ -81,9 +93,10 @@ the image digest the replay audit compares against `runs/<id>/images.jsonl`.
 proved they are byte-identical to this repo's, and copying a participant's copy over the operator's
 is how a tampered runtime would walk in the back door after passing the front one.
 
-Verified: a stock bundle accepts and produces `eris-agent:team-demo`; a bundle with a modified
-`sdk/src/config.ts` is rejected at step 1 with **no directory and no image created**; a second
-submission for a team that already exists stops rather than overwriting.
+Verified: a stock bundle accepts and produces `eris-agent:team-demo`; a second submission for a
+team that already exists stops rather than overwriting. (A bundle with a modified `sdk/src/config.ts`
+used to be rejected at step 1; since 2026-10-16 it is a WARN, and the modified copy is still never
+extracted.)
 
 ## The whole path, exercised end to end (2026-09-17)
 
@@ -179,3 +192,44 @@ packages that were already in the base image.
 Regression tests: `test/submissionScan.test.ts` (zip and directory symlinks, shrinkwrap, v1 lock,
 missing `resolved` / `integrity`, git / URL `resolved`, non-registry specs, `requirements.txt`
 lines, and a clean accept case).
+
+**A resubmission whose build fails is not accepted** (issue #261): the build's exit code decides,
+not whether `eris-agent:<team-id>` exists afterwards — a tag left by the previous accepted ZIP would
+otherwise be reported as this one's digest. The extracted directory is removed, the previous image
+stays, and the previous digest stays the team's current one in the ledger.
+
+## Acceptance ledger (rules §2.2)
+
+A unit may replace its submission up to 5 times a day, and the **last accepted** one is evaluated.
+`scripts/submissionLedger.ts` (also `infra/submission/ledger.sh`, `npm run submission-ledger`) keeps
+that record as JSONL, one line per `accept-submission.sh` run. Set `ERIS_SUBMISSION_LEDGER` and the
+script records itself; unset, it behaves exactly as before:
+
+```sh
+ERIS_SUBMISSION_LEDGER=~/ascon/ledger.jsonl infra/submission/accept-submission.sh submissions/team-alice.zip team-alice
+```
+
+| field | |
+|---|---|
+| `unit`, `result` | `ACCEPT` / `REJECT` |
+| `at`, `jstDay` | UTC time; the JST calendar day the rules count in |
+| `zip`, `zipSha256` | the received file's name and sha256 |
+| `imageDigest` | ACCEPT only: the id `accept-submission.sh` printed (the replay audit's other end) |
+| `reason` | REJECT only: the message the script stopped with |
+| `acceptedToday`, `overLimit` | the unit's ACCEPTs on that JST day, this one included; `overLimit: true` past 5 |
+
+With the ledger set, a unit that already has 5 ACCEPTs today is **refused before the scan** and the
+refusal is recorded. `ERIS_SUBMISSION_OVER_LIMIT=1` turns that into a warning (a replacement the
+operator agreed to); the line still gets `overLimit: true`. REJECTs do not count towards the 5.
+If the ACCEPT line cannot be written the script exits 2 and says to record the digest by hand.
+
+```sh
+infra/submission/ledger.sh check --ledger ~/ascon/ledger.jsonl --unit team-alice   # exit 3 = no submissions left today
+infra/submission/ledger.sh final --ledger ~/ascon/ledger.jsonl --deadline 2026-10-31T15:00:00Z
+```
+
+`final` prints the last ACCEPT per unit as a table (time, digest, ZIP sha256, number of accepts, any
+REJECTs after it, days over the limit) and as the `agents:` block for the field config
+(`- id: <unit>` / `wallet: AUTO`). `--deadline` drops lines at or after it (10/31 24:00 JST is
+`2026-10-31T15:00:00Z`); `--format table|yaml` prints one of the two. `record` is what the script
+calls (`--unit --result [--zip --digest --reason --at]`), for a line that has to be added by hand.

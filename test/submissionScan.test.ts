@@ -245,3 +245,83 @@ test("a UTF-8 BOM does not make a hash-pinned requirements.txt look unpinned", (
   const dir = fixtureDir(t, { [`${AGENT}/requirements.txt`]: `\ufeff${pinned}` });
   assert.deepEqual(blocks(scan(dir)), []);
 });
+
+// Rules §4.7.1: the persistent directory is the participant's, and reading back what the reference
+// runtime saved there needs `fs`. The import alone used to be a BLOCK labelled "filesystem writes".
+const writeWarns = (report: Report) =>
+  report.findings.filter((f) => f.severity === "WARN" && /writes files/.test(f.message));
+
+test("reading the persistent state directory with node:fs is not a finding", (t) => {
+  const dir = fixtureDir(t, {
+    [`${AGENT}/agent.ts`]: [
+      `import { existsSync, readFileSync } from "node:fs";`,
+      `import { join } from "node:path";`,
+      `const path = join(process.env.ERIS_AGENT_STATE_DIR ?? "", "versions.json");`,
+      `const memory = existsSync(path) ? JSON.parse(readFileSync(path, "utf8")).memory : null;`,
+      AGENT_TS,
+    ].join("\n"),
+    [`${AGENT}/tune.ts`]: `const fs = require("fs");\nexport const raw = fs.readFileSync("x", "utf8");\n`,
+  });
+  const report = scan(dir);
+  assert.deepEqual(blocks(report), []);
+  assert.deepEqual(writeWarns(report), []);
+});
+
+test("writing files is a WARN for the operator, not a BLOCK", (t) => {
+  const cases: Record<string, string> = {
+    sync: `import { writeFileSync } from "node:fs";\nwriteFileSync("/tmp/x", "1");\n`,
+    promises: `import { writeFile } from "node:fs/promises";\nawait writeFile("/tmp/x", "1");\n`,
+    member: `import * as fs from "node:fs";\nfs.rm("/tmp/x", () => {});\n`,
+    imported: `import { rm } from "node:fs/promises";\nawait rm("/tmp/x");\n`,
+  };
+  for (const [name, body] of Object.entries(cases)) {
+    const dir = fixtureDir(t, { [`${AGENT}/agent.ts`]: body + AGENT_TS });
+    const report = scan(dir);
+    assert.deepEqual(blocks(report), [], name);
+    assert.equal(writeWarns(report).length, 1, name);
+  }
+});
+
+test("ordinary write()/link() calls that are not fs are not read as file writes", (t) => {
+  const dir = fixtureDir(t, {
+    [`${AGENT}/agent.ts`]: `process.stdout.write("x");\nconst link = (a: string) => a;\nlink("y");\n` + AGENT_TS,
+  });
+  assert.deepEqual(writeWarns(scan(dir)), []);
+});
+
+// The vendored sdk/runtime/lib are compared with this checkout, which moves with every operator
+// update; extraction never copies them. A copy from another release is a WARN, not a rejection.
+test("a vendored sdk file that differs from this checkout is a WARN, not a BLOCK", (t) => {
+  const dir = fixtureDir(t, {
+    [`${AGENT}/agent.ts`]: AGENT_TS,
+    "sdk/src/constants.ts": "// an earlier release of this file\nexport const X = 1;\n",
+    "agents/runtime/removed-in-a-later-release.ts": "export const Y = 2;\n",
+  });
+  const report = scan(dir);
+  assert.deepEqual(blocks(report), []);
+  const warns = report.findings.filter((f) => f.severity === "WARN").map((f) => f.path);
+  assert.ok(warns.includes("sdk/src/constants.ts"), warns.join("\n"));
+  assert.ok(warns.includes("agents/runtime/removed-in-a-later-release.ts"), warns.join("\n"));
+});
+
+test("a zip bomb is refused without being extracted", (t) => {
+  // 60 MB of zeros deflates to ~60 KB: over the declared-size cap and the ratio cap. The size check
+  // in walk_dir only runs on what was extracted, so its absence shows nothing was written.
+  const dir = mkdtempSync(join(tmpdir(), "eris-scanbomb-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const out = join(dir, "bomb.zip");
+  const py = `
+import sys, zipfile
+with zipfile.ZipFile(sys.argv[1], "w", zipfile.ZIP_DEFLATED) as zf:
+    zf.writestr("${AGENT}/agent.ts", "export function decide() { return []; }\\n")
+    zf.writestr("${AGENT}/zeros.ts", b"\\0" * (60 * 1024 * 1024))
+`;
+  const r = spawnSync(PY, ["-c", py, out], { encoding: "utf8" });
+  assert.equal(r.status, 0, r.stderr);
+  const report = scan(out);
+  assert.equal(report.accept, false);
+  const found = blocks(report).join("\n");
+  assert.match(found, /declared unpacked size/);
+  assert.match(found, /zip bomb/);
+  assert.doesNotMatch(found, /unpacked too large/, "walk_dir saw extracted files");
+});

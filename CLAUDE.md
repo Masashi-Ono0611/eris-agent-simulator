@@ -97,7 +97,7 @@ timeout は式の評価しか覆わないので、無限ループする本体は
 `decide timeout:` として記録し、その判断の送信予約と返り値を捨てる。次の判断は同じ選択中の戦略を
 新しい worker にロードする。worker 内の変数は初期化されるが、親の観測・改訂ループ、nonce、ログ、
 版履歴、状態ディレクトリは継続する。**モジュールのロードには別の上限**（`STRATEGY_STARTUP_TIMEOUT_MS`
-= 60 秒 = coordinator の agents-ready 上限と同じ）を掛ける。以前は判断の 5 秒をロードにも使っていて、
+= 180 秒 = coordinator の agents-ready 上限と同じ。#311 で両方 60 → 180 秒）を掛ける。以前は判断の 5 秒をロードにも使っていて、
 負荷の高いホストでは tsx のコンパイルがそれを超え、**31 体中 13 体が起動時に exit 1** した
 （issue #100）。また**失敗が 3 回続いたら worker を毎ブロック作り直さない**（1 → 2 → 4 … 最大 64 ブロック
 の back-off、1 回だけログ、返る判断が 1 つあれば解除）。throw するたびに discard → 次ブロック spawn は
@@ -187,6 +187,39 @@ Aave seed 9k USDC・SP 50k）。CLAUDE.md と `docs/scoring-metric-measurements.
   multi-arb は net +23。crash#101 は 15.6% の gap + 59% の liquidityPull が発火・復元し、`stress_calibration_warning` /
   `_capped` は 0。crash 後 ~100 ブロック、WBTC の curve が fair 比 +100〜250bps に居座り `no_arb_persistent_warning`
   （balancer 買い / curve 売り 120bps × 10 ブロック）が 11 回出た。旧較正の crash#101 とは未比較なので、#79 由来かは未確定
+
+### 手数料と採掘（ADR 0011。公式 12 レジームと練習期間は `economicGas: true`）
+
+**priority fee に上限は無い**（2026-10-08。旧 5 gwei は `economicGas: false` = ADR 0010 のプロファイルにだけ残る）。
+- **価格は storage 直書き**（PriceFeed・Aave の全 aggregator・GMX の `MockOracleProvider` = `gmxOraclePriceSlots`）。
+  **採掘は coordinator**（`core/src/realtime/gatedMiner.ts`）: block pass は終わったときに書き込みを段取りし、miner が
+  `blockTimeSec` の固定の格子で「head の価格が段取り済みか」を待って（上限 3 ブロック）、**書き込みと `anvil_mine` を 1 本の
+  JSON-RPC バッチ**で送る（起動時に `batchServedInOrder` でノードが順番どおりに処理するか実測。駄目なら 2 段）。新しい価格が
+  `latest` に先に見えるのはブロックの組み立て中だけ（実測 中央値 5.5 ms）。書き込みの内容は段取り時に計算し、段取りは head を読む
+  処理が終わった時点（採点・checkpoint・セグメントの切り替えを待たない）。適用が 2 回失敗したらそのブロックは掘らない（3 tick まで）。
+  tick ごとにチェーンの head を読み直す（見失うと待ちを飛ばす）。遅れは半ブロック間隔で取り戻し、30 ブロック超は張り直す
+- **anvil は head に書いた storage をそのブロックの履歴に残す**ので、ブロック B の履歴は B+1 用の価格を持つ。よって
+  ライブ採点は境界を 1 ブロック遅れて履歴から読み（`readLagBlocks: 1`）、`close()` は miner の `stop()` が保留中の
+  書き込みを適用した後に終了ブロックを読み、セグメントは `bn-1` で切る（ライブと事後 sweep のずれ 0 を維持）。
+  帰結: 「ブロック B の価値」は B+1 の取引が約定する価格で評価される。agent の観測は従来どおり 1 ブロック遅れ
+- **keeper（GMX の約定・清算）は 50 gwei 固定**（`ECONOMIC_KEEPER_FEE_WEI`）。順序のためではなく、上限なしの
+  ブロックで参加者に埋められて締め出されないため。keeper/admin は anvil で 200 万 ETH（`GAS_ONLY_WEI`）
+- **環境のイベント取引**（launch の波・depeg の売買・流動性の引き抜き・whale）は**普通の手数料**（`flatBid`: 対数正規、
+  中央値 1.4 gwei、平均約 1.5 gwei。`core/src/realtime/envBid.ts`、鍵付きストリーム `env-bid:<種類>`、練習期間のチェックポイントに
+  位置を保存）。先回りの価値に比例して入札する U×V 方式（PR #287）は、被害者が searcher の値段を払う形になり、自分の大きい gas で
+  V 以上を払っていたので廃止した（ADR 0011 §1c）。V は記録だけする（`frontRunValueUsd`）。先回りの競争は参加者どうしに任せる。
+  環境の取引の slippage の許容幅は whale 0.5% 固定、launch の波 3〜6%・depeg 1〜2% は取引ごとに乱数で、
+  サンドイッチで取れる額はこれで上が決まる。whale の旧 `minAmountOut: "0"` はどのアダプタも読まず、実際は既定 50 bps だった。
+  **whale は revert したら次の pass で出し直す**（`WhaleResubmits`。最大 3 回）。一発の事象なので出し直さないと
+  そのエポックが calm になる。参加者は未採掘の tx を見られないので whale を狙うサンドイッチは成り立たず、revert させるのは
+  同じブロックで高く積んだ普通の裁定。結果は `stress_whale_resubmitted` / `_filled` / `_abandoned` / `_unconfirmed`
+  deployer の鍵の tx は入札の高い順に送る（`sendByBid`。nonce 順の足引っ張りを防ぐ）。
+  **lstSlash は 100 gwei 固定**（`ECONOMIC_LST_SLASH_FEE_WEI`）。数字は参加者に公開しない（更新履歴は仕組みだけ）
+- **練習期間の再開**: SIGTERM で miner の保留中の書き込みを適用してから止める。再開時は setup が掘る前に PriceFeed を
+  チェックポイントの価格へ書き直す（`price_feed_restored`）
+- ゲートウェイは `RPC_MAX_PRIORITY_FEE_WEI=0`、マニフェストは `limits.maxPriorityFeeWei: "none"` と `limits.economicGas`
+  （自己ホストのランタイムは設定より優先して使う = 古い practice.yaml でも 5 gwei に縛られない）。起動時に coinbase が
+  agent のアドレスなら拒否（anvil は 0x0）
 
 ### GMX の funding は localhost でも動く
 
@@ -350,7 +383,8 @@ devnet）を指す。cheatcode 関数はそのまま残り、external では**�
   `HMAC-SHA256(secret, ["eris-wallet/v1", kind, id])`。以前は `keccak("auto-wallet:<seed>:<id>")` 等で、自分の AUTO 鍵から
   seed を総当たりで逆算でき、そこから他の agent・環境ウォレットの鍵が全部計算できた（ゲートウェイは送信者を検査しない）。
   secret は**既定でプロセスごとの乱数**（どこにも書かない。run・同一プロセスの行列内では同じアドレス、次のプロセスで変わる）、
-  練習期間だけ `ERIS_WALLET_SECRET_FILE`（再起動しても同じ財布に戻るため）。**scenario key とは別物**で、同じ値なら起動時に落とす
+  練習期間とライブ週は `ERIS_WALLET_SECRET_FILE`（再起動しても同じ財布に戻るため。ライブ週は `--resume` で
+  複数プロセスにまたがるので、鍵付きプランはこれが無いと起動を拒否する = issue #249。練習期間とは別のファイル）。**scenario key とは別物**で、同じ値なら起動時に落とす
   （scenario key は結果発表後に公開するので、それから導出すると全部の鍵が公開される）。財布の秘密は**結果発表後も公開しない**
   （再現に要らない: ADR 0027 (c) が再現するのはシナリオと、アドレスで読む採点だけ）。agent の env には渡さない
   （`ERIS_WALLET_SECRET*` は環境専用）。`npm run manifest -- --participant` は AUTO の鍵を出すのにこのファイルが要り、
@@ -361,8 +395,24 @@ devnet）を指す。cheatcode 関数はそのまま残り、external では**�
   `participant`（任意）は規約 §2.2 の**参加単位**で、同じ値の 2 体はその単位の 2 提出（高い方が最終スコア）。
   `agents_registered` / manifest / summary.json / matrix.json の agent レコードに**そのまま載る**だけで、
   採点の算術は agent 単位のまま（単位への畳み込みは読む側 = dashboard の仕事）
+- **再起動は期間を再開する**（`core/src/realtime/periodResume.ts`）。coordinator は毎パスの終わりに
+  `<期間>/resume/state.json`（+ 30 ブロックごとの履歴を 40 個）へ、チェーンにも成果物にも無い状態 = 価格 walk の
+  水準と乱数の位置・期間の時計（runStartBlock / runBlocks / 日次グリッドの起点）・ロスターと配布額（V_0 の床）・
+  採点の帳簿・depeg / 引き抜きが開始時に測った基準値・成果物のサイズを書く。境界の値は intervals.jsonl に
+  あるので入れない。起動時に開いている期間があれば**チェーンを戻さず**続きから再開する。どの checkpoint からかは
+  「ブロックハッシュがチェーンと一致する最新のもの」: coordinator が死んだだけなら state.json、anvil がダンプから
+  戻ったら履歴から選び、成果物をそこまで切り戻す（切った分は `resume/cut-*`）。どれも一致しなければ拒否。
+  **新しい期間は `--new-period` か `runs/NEW_PERIOD` のときだけ**（チェーンを戻すのはこれだけ。起動 = 新期間
+  だった頃、ENOSPC 後の自動再起動が 2.5 日分を戻した = 2026-10-08）。期間も要求も無ければ拒否。再開時に変えて
+  よい config は `MUTABLE_CONFIG_KEYS`（fees・economicGas・flow.topUpEveryBlocks・registrationsFile・agent の
+  待機 / quota / sandbox）だけで、それ以外（seed・endsAt・エピソード・ロスター・鍵）が違えば差分を名指しで拒否。
+  SIGTERM はチェーンの採掘を止めてから終了する（止まっている間に価格更新の無いブロックが進まない）。
+  **持ち越せないもの**: anvil 再起動後の state 履歴（間に来た境界は `interval_boundary_failed`）、
+  `agentMarkets` / `tokenLaunch` / vuln / victim / prewarm のある期間（`period_not_resumable`、再起動で拒否）。
+  実測（ローカル anvil、2026-10-08）: kill -9 → 再開、SIGTERM → `economicGas: true` に変えて再開、anvil を
+  ダンプから 26 ブロック戻して再開の 3 通りで、blocks.csv の重複 0・ブロックの欠落 0・depeg / 引き抜きは par まで戻った
 - **登録は再起動なしで追加する**（`run.registrationsFile`。ADR 0021 §2 / 規約 §2.7）。ロスターは起動時に 1 回しか
-  読まず、再起動は新しい competition ディレクトリを開いて順位表を割る。ファイル（YAML/JSON。`external: true` +
+  読まず、期間の一部なので再開時に変えられない。ファイル（YAML/JSON。`external: true` +
   `address` エントリと同形。`config/registrations.example.yaml`）を **~30 ブロックごとに stat** し、変わっていれば
   読み直して新規分を setup と同じ経路で登録する（鍵なし runtime・address 帰属・同額 funding = `fundAddress`・
   `LiveScorer.addAgent` で**次の境界から**評価・`agents_registered` と manifest を再発行 + `agent_external_registered`）。
@@ -433,7 +483,11 @@ devnet）を指す。cheatcode 関数はそのまま残り、external では**�
   上限は `setTimeout` の 32bit を超えて 1ms に化けていた（イベント無しの run が 0 ブロックで終了）→ `setLongTimeout`。
   ②**背景フローの財布は補充する**（`flow.topUpEveryBlocks`、練習は 300。公式は 0 = 1 回配り）。実測で
   1 財布の在庫が 1 日に元の数倍揺れ、合計価値は 1 日 1 割強減る。`flow_balances` / `flow_guard` /
-  `flow_wallet_topped_up` が記録。③**LST の利回りはチェーンの時計**（ADR 0028。旧既定 1 時間/ブロックだと 35 日が 170 年分で
+  `flow_wallet_topped_up` が記録。**GMX の flow は自分の建玉を cap の一定割合までに抑える**（`flow.gmxOiTargetFrac`、
+  既定 0.4、0 = 閉じない旧 flow。期間中も変更可）。以前は開くだけで、2026-10-08 開始の練習期間では WETH 市場の
+  両側が reserve 上限（プール価値 × 0.5）まで flow の建玉で埋まり、参加者はどちら向きにも開けなかった。目標を超えた側に
+  引いた注文は同じ乱数のまま close になる（担保は比例分）ので、**目標未満なら flow は乱数単位で以前と同一**。
+  360 ブロックのエポックは目標の 1/6 程度しか積まないので公式レジームでは発火しない。③**LST の利回りはチェーンの時計**（ADR 0028。旧既定 1 時間/ブロックだと 35 日が 170 年分で
   原資 50 WETH が 3.3 日で尽き、#129 で 30 秒/ブロックにしていた）。尽きたら観測の `apyBps` は 0、`lst_reward_reserve_exhausted`。
   ④**coordinator の送信記録は flush で消す**（`SubmittedLedger`。以前は 1 日 ~200MB 増えた。soak で 180MB 一定）。
   ⑤**練習チェーンの anvil は `--transaction-block-keeper 300 --prune-history 300`**。無いと全 tx（1 件 ~37KB、
@@ -672,7 +726,7 @@ devnet）を指す。cheatcode 関数はそのまま残り、external では**�
     検索が tx hash・block・address・**agent 名**（→ wallet address。Blockscout は名前を知らない）を
     解決して deep link する。Blockscout が無くてもローカル一覧のフィルタとしては効く
 - `npm run manifest` — **環境マニフェスト**を書く（ADR 0021 §2。自己ホスト参加者に配る唯一の資料 = RPC/chainId/全 venue アドレス/PriceFeed/評価区間の長さ（`round.intervalBlocks`。旧名 `epochBlocks` を結果発表まで併記）/run の長さと採点日の格子（`period`）/action 語彙/limits/登録アドレス）。**走っている期間の配布物は `--from-run runs/<period>`**（coordinator の manifest.json に `--public-rpc` を差す。config だけからだと PriceFeed も期間の開始も無い）。**鍵は入らない**（coordinator が run ディレクトリに書き、dashboard がそれを HTTP で配る＝入れたら公開）。個別の鍵は `--participant <id>` で **stdout にだけ**出す。**ストレスイベントは種類と件数だけ**で窓は入らない（§1。resolved schedule ではなく config のイベント列から作るので構造的に漏れない）
-- `npm run check:ordering -- --live` — **ビルダーが手数料順に並べるかを自分で入札して測る**（#35 の load-bearing assumption）。既定プロファイルは oracle を全員より高く積んで txIndex 0 に置くので、順序が守られないチェーンでは環境の価格が front-run 可能になる。**入札は昇順に送る**ので到着順と手数料順が逆になり、到着順を保つだけのビルダーは降順プローブなら通ってこれで落ちる。引数なしは従来どおり blocks.csv の事後検査。
+- `npm run check:ordering -- --live` — **ビルダーが手数料順に並べるかを自分で入札して測る**（#35 の load-bearing assumption）。`economicGas: false` のプロファイルは oracle を全員より高く積んで txIndex 0 に置くので、順序が守られないチェーンでは環境の価格が front-run 可能になる（公式・練習の既定の economicGas では価格は storage 直書きで、この前提を使わない）。**入札は昇順に送る**ので到着順と手数料順が逆になり、到着順を保つだけのビルダーは降順プローブなら通ってこれで落ちる。引数なしは従来どおり blocks.csv の事後検査。
   **anvil が並べるキーは tip ではなく maxFeePerGas**（1.7.1 で実測。base fee 0 で払うのは min(maxFee, tip)）なので、
   tip 0.1 / maxFee 7 gwei の tx が 6 gwei のオラクルより前に入って 0.1 しか払わなかった。**`maxFeePerGas ≤ tip ≤ 上限`**
   （legacy は `gasPrice ≤ 上限`）を 1 本のルール（`sdk/src/feeRule.ts`）でゲートウェイ（403）・ランタイム（maxFee = tip で署名）・
@@ -1085,9 +1139,12 @@ gas は全部 pin する = `eth_estimateGas` は今の state で失敗する）�
   `core/src/realtime/tokenLaunch.ts`。wave wallet は USDC → token を SwapRouter `exactInputSingle` で、
   QuoterV2 の見積もりに 15% の slippage 枠。**settled した tx から集計**（`grossBuyUsdc` / `tokensSold` /
   `sellUsdcReceived`）し、`stress_token_launch_summary` で帳簿を閉じる
-- **wallet は launch / wave をトークンごとに 1 つずつ** flow map に載せる（`launch:<e>:<i>` /
-  `launch-wave:<e>:<i>`。whale と同じく funding ループの後に正確な額を入れ直す = launch は USDC 片側ちょうど、
-  wave は倍率分、dud は 0）。blocks.csv では role `uninformed-flow`・ownerId `flow-launch…`
+- **wallet は launch / wave の固定 3 組のスロット**（`LAUNCH_WALLET_SLOTS`。`launch:<k>` / `launch-wave:<k>`、
+  k 番目の上場がスロット k）を**全 run で** flow map に載せ、各 100k USDC の固定額を入れる（`launchWalletFunding`。
+  引きがそれを超えたときだけ増やす）。以前はトークンごとに 1 組を作って引いた額ちょうど（dud は 0）を入れていたので、
+  setup ブロックの送信者数と残高から block 0 で launch・上場数・dud・波の大きさが読めた。上場は引いた
+  `liquidityUsdc` ちょうどを seed し、波は引いた総額へ向けて買うので、多めの残高は使われない。
+  blocks.csv では role `uninformed-flow`・ownerId `flow-launch…`
 - **評価は ADR 0022 公理 2 のまま**: 鐘の時点のトークン残高は全員 0（`erc20-unaccounted`）。通り抜けた USDC
   だけが数える。**環境側の teardown は無い**（プールは snapshot revert で消え、残りは採点外の flow wallet）
 - 参加者側は `example/agents/lib/launchSwap.ts`（USDC と未価格トークンの registry プール抽出 / slot0 価格 /
@@ -1178,7 +1235,7 @@ phantom value そのもの）。issue #27 でこれを 3 段階で外した:
 
 ```
 環境プロセス（core/src/realtime/coordinator.ts = 環境デーモン + 採点者）   agent プロセス × N（完全独立）
-  ・anvil ライフサイクル（fork/setup/interval mining）                ・spawn は一律 example/agents/runtime/bot.ts
+  ・anvil ライフサイクル（fork/setup/採掘）                           ・spawn は一律 example/agents/runtime/bot.ts
   ・fair price 生成(Rng(seed)) → PriceFeed/oracle 更新 tx を毎ブロック書込   （agent ディレクトリは env ERIS_AGENT_DIR）
   ・flow bot 注文の relay 送信（市場を動かす）                        ・env で受領: RPC URL / 自分の秘密鍵 /
   ・GMX keeper（注文執行）                                             PriceFeed アドレス / runId・ログ出力先
@@ -1194,8 +1251,11 @@ phantom value そのもの）。issue #27 でこれを 3 段階で外した:
   `initial_endowment` / Aave の WBTC aggregator 較正も全 base を見る。OU の walk はその値から始まる
 - **エポックの時計は場が揃うまで待つ**（issue #94 / #91 F5。`core/src/realtime/agentsReady.ts`）。automine を
   切った後・interval mining の前に、起動した全 agent の `runtime_start` を `run.agentsReadyTimeoutSec`
-  （既定 60 秒、0 = 待たない）まで待ち `agents_ready` に ready/late/exited を残す。実測 docker 32 体で
-  `runtime_start` は +86〜99 秒なので、その検証では上げる。外部参加者は待たない
+  （既定 180 秒、0 = 待たない）まで待ち `agents_ready` に ready/late/exited を残す。実測 docker 32 体で
+  `runtime_start` は +86〜99 秒、2026-10-20 のライブ週リハーサル（11 体・8 vCPU）では 60 秒の上限を
+  14 回中 4 回超えた（issue #311。以前の既定は 60）。**ライブ週は 120 秒未満（0 を含む）を拒否する**
+  （`LIVE_WEEK_MIN_AGENTS_READY_SEC`）。全員揃えばその時点で待ちは終わるので、上限を上げて伸びるのは
+  起動し切らない agent がいるときだけ。外部参加者は待たない
 - **エポックはチェーンのブロック番号で終わる**（`core/src/epochExtent.ts`）。終わりは
   `runStartBlock + runBlocks` で、そのブロックは処理され、**最後の境界（V_K）**になり、全 agent の
   `blocksRemaining` が 0 になる（鐘）。ループの各パスはこのブロックで clamp され（`loopStep`）、
@@ -1268,6 +1328,14 @@ agent 側の `ctx.rng` は address 由来（run の seed ではない）。`SimC
   チェーン上に見える（Aave の HF 1.10 の借り手、`SortedTroves.getLast()` の ICR 1.20）ので、塞ぐには全レジームに victim を
   置く（デコイ）必要があり、レジームの意味が変わるので別に決める。もう 1 つの既知の穴は vuln プールのソースが公開 repo に
   あること（bytecode の骨格で照合できる）
+- **setup ブロックの tx と環境財布の残高もレジームで変えない**（同じテスト）。agent はゲートウェイ越しに
+  `runStartBlock` より前のブロック・ログ・残高を読めるので、config と env を揃えても setup がレジームを名指していた:
+  whale 財布とその WETH deposit は whale だけ、launch 財布はトークン数ぶん・引いた額ちょうど、deployer の
+  `approve(pool, max)` は depeg / 引き抜きのあるレジームだけ。今は **whale 財布は全 run で `WHALE_ENDOWMENT`**
+  （600 WETH + 2.4M USDC。公式の最大の引きを賄う額で、超える引き = 練習期間だけ増やす）、**launch は固定 3 スロット**、
+  **deployer の standing approval は `core/src/realtime/standingApprovals.ts` が全 run で同じ集合を送り**、depeg と
+  引き抜きの setup は送らずに検査だけする（`requireStandingApprovals`）。公式レジームの最大の引きが固定額に収まることも
+  テストが持つ。flow 財布の配布額・本数も 12 本で同一であることを検査する。**victim の Trove / Aave 建玉は上の既知の例外のまま**
 - **bind-mount モードと `--agent-sandbox process` は隔離境界ではない**（repo / host のファイルが全部見える）
 自己改善型は `ERIS_IMPROVE_LOG_CALLS: "1"`（ロスターの env）で LLM との生の対話（system 全文・送信
 messages・生応答・エラー）を `agents/<agentId>.llm.jsonl` に残せる（opt-in。プロンプト調整の一次情報）。

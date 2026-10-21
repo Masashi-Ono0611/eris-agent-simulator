@@ -241,9 +241,12 @@ export type SimConfig = {
   // How long the coordinator holds the epoch clock for the field (ERIS_AGENTS_READY_TIMEOUT_SEC /
   // `run.agentsReadyTimeoutSec`; issue #94). Interval mining starts once every agent the
   // coordinator launched has written `runtime_start`, or after this many seconds, whichever is
-  // first; who was still booting at the bound is recorded in `agents_ready`. 60 is the decided
-  // bound (2026-09-07). Measured on an 8-core Mac with 32 docker agents the field takes 86-99 s,
-  // so a local check of that size raises it; the production box is faster. 0 disables the wait.
+  // first; who was still booting at the bound is recorded in `agents_ready`. 180 since issue #311:
+  // the 60 decided on 2026-09-07 was too short for docker fields -- 32 agents on an 8-core Mac took
+  // 86-99 s (#94), and in the 2026-10-20 live-week rehearsal 11 agents on an 8-vCPU host missed the
+  // 60 s bound in 4 of 14 epoch starts. The wait ends as soon as the field is up, so a larger bound
+  // only costs time when an agent never gets there. The live week refuses less than
+  // LIVE_WEEK_MIN_AGENTS_READY_SEC (core/src/realtime/liveWeek.ts). 0 disables the wait.
   agentsReadyTimeoutSec: number;
   // What an agent may write to the host, held by the coordinator (issue #214 item 1): the state
   // directory (`run.agentStateQuotaBytes`) and its log files (`run.agentLogQuotaBytes`), measured
@@ -354,6 +357,12 @@ export type SimConfig = {
   // aaveFlowActorSizeSigma: >0 makes each Aave actor's target collateral lognormal-heterogeneous (whale/minnow. default 1.0).
   gmxFlowArrivalRate: number;
   gmxFlowSizeSigma: number;
+  // The share of each side's open-interest cap the GMX flow wallet may hold in the WETH market
+  // (0..1, default 0.4). Past it, an order drawn for that side closes instead of opening. 0 = never
+  // close (the flow before this knob). The flow only opened, so over a practice day its positions
+  // reached the reserve cap on both sides and every agent's increase was refused. A 360-block
+  // epoch opens about a sixth of the target, so the official regimes never reach it.
+  gmxFlowOiTargetFrac: number;
   aaveFlowActorSizeSigma: number;
   // ADR 0013: per-leg AMM flow cap for non-WETH bases (base units). Empty/0 default = WBTC flow off.
   baseFlowMax: Record<string, bigint>;
@@ -525,7 +534,7 @@ export function loadConfig(env = process.env): SimConfig {
     blockGasLimit: Math.max(0, intEnv(env.ERIS_BLOCK_GAS_LIMIT, 30_000_000)),
     agentsReadyTimeoutSec: Math.max(
       0,
-      intEnv(env.ERIS_AGENTS_READY_TIMEOUT_SEC, 60),
+      intEnv(env.ERIS_AGENTS_READY_TIMEOUT_SEC, 180),
     ),
     agentStateQuotaBytes: Math.max(
       0,
@@ -640,6 +649,10 @@ export function loadConfig(env = process.env): SimConfig {
     // Extends amm-challenge retail to GMX/Aave (default on. 0 reverts to legacy behavior).
     gmxFlowArrivalRate: Math.max(0, floatEnv(env.ERIS_GMX_ARRIVAL_RATE, 0.75)),
     gmxFlowSizeSigma: Math.max(0, floatEnv(env.ERIS_GMX_SIZE_SIGMA, 1)),
+    gmxFlowOiTargetFrac: Math.min(
+      1,
+      Math.max(0, floatEnv(env.ERIS_GMX_FLOW_OI_TARGET_FRAC, 0.4)),
+    ),
     aaveFlowActorSizeSigma: Math.max(
       0,
       floatEnv(env.ERIS_AAVE_ACTOR_SIZE_SIGMA, 1),

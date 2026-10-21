@@ -165,3 +165,28 @@ test("nothing to wait for returns at once", async () => {
   assert.equal(report.waitedMs, 0);
   assert.equal(report.timedOut, false);
 });
+
+// A practice period that resumes after a restart starts its agents again into the segment they were
+// already logging to (periodResume.ts): the previous process's line must not count for the new one.
+test("a runtime_start stamped before the spawn does not count when notBeforeMs is given", () => {
+  const dir = runDir();
+  const file = agentLogPath(dir, "a");
+  const line = (ts: string): string =>
+    JSON.stringify({ ts, agentId: "a", event: "runtime_start", mode: "decide" }) + "\n";
+  writeFileSync(file, line("2026-10-08T10:00:00.000Z"));
+  const spawned = Date.parse("2026-10-08T11:00:00.000Z");
+  assert.equal(agentLogHasRuntimeStart(file), true, "without a bound, any line counts");
+  assert.equal(agentLogHasRuntimeStart(file, spawned), false, "the old process's line");
+  appendFileSync(file, line("2026-10-08T11:00:05.000Z"));
+  assert.equal(agentLogHasRuntimeStart(file, spawned), true, "the new process's line");
+});
+
+// Issue #311: 60 s was missed with 11 docker agents on an 8-vCPU host; 0 still means no wait.
+test("the bound defaults to 180 s and 0 still disables the wait", async () => {
+  const { loadConfig } = await import("../sdk/src/config.js");
+  assert.equal(loadConfig({}).agentsReadyTimeoutSec, 180);
+  assert.equal(
+    loadConfig({ ERIS_AGENTS_READY_TIMEOUT_SEC: "0" }).agentsReadyTimeoutSec,
+    0,
+  );
+});
