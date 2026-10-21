@@ -180,3 +180,13 @@ test("a runtime_start stamped before the spawn does not count when notBeforeMs i
   appendFileSync(file, line("2026-10-08T11:00:05.000Z"));
   assert.equal(agentLogHasRuntimeStart(file, spawned), true, "the new process's line");
 });
+
+// Issue #311: 60 s was missed with 11 docker agents on an 8-vCPU host; 0 still means no wait.
+test("the bound defaults to 180 s and 0 still disables the wait", async () => {
+  const { loadConfig } = await import("../sdk/src/config.js");
+  assert.equal(loadConfig({}).agentsReadyTimeoutSec, 180);
+  assert.equal(
+    loadConfig({ ERIS_AGENTS_READY_TIMEOUT_SEC: "0" }).agentsReadyTimeoutSec,
+    0,
+  );
+});

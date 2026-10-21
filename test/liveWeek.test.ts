@@ -5,6 +5,7 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { Address } from "viem";
 import type { AgentSpec } from "../sdk/src/types.js";
 import {
+  LIVE_WEEK_MIN_AGENTS_READY_SEC,
   LiveWeekRefusal,
   isLiveWeekRefusal,
   liveWeekRefusals,
@@ -52,6 +53,7 @@ const posture = (
     use: { marketRegistry: true },
     venueAdmin: privateAdmin(),
     sandbox: "docker",
+    agentsReadyTimeoutSec: 180,
     agents: field,
     env: isolated,
     platform: "linux",
@@ -87,6 +89,16 @@ test("agents as plain processes are refused", () => {
   const reasons = posture({ sandbox: "process" });
   assert.equal(reasons.length, 1);
   assert.match(reasons[0], /agentSandbox is process/);
+});
+
+test("an agents-ready bound below the floor is refused, and so is no wait", () => {
+  assert.deepEqual(posture({ agentsReadyTimeoutSec: LIVE_WEEK_MIN_AGENTS_READY_SEC }), []);
+  const short = posture({ agentsReadyTimeoutSec: 60 });
+  assert.equal(short.length, 1);
+  assert.match(short[0], /agentsReadyTimeoutSec is 60:/);
+  const none = posture({ agentsReadyTimeoutSec: 0 });
+  assert.equal(none.length, 1);
+  assert.match(none[0], /agentsReadyTimeoutSec is 0 \(no wait\)/);
 });
 
 test("a command/args entry is refused: it starts outside the container", () => {

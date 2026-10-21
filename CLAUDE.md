@@ -97,7 +97,7 @@ timeout は式の評価しか覆わないので、無限ループする本体は
 `decide timeout:` として記録し、その判断の送信予約と返り値を捨てる。次の判断は同じ選択中の戦略を
 新しい worker にロードする。worker 内の変数は初期化されるが、親の観測・改訂ループ、nonce、ログ、
 版履歴、状態ディレクトリは継続する。**モジュールのロードには別の上限**（`STRATEGY_STARTUP_TIMEOUT_MS`
-= 60 秒 = coordinator の agents-ready 上限と同じ）を掛ける。以前は判断の 5 秒をロードにも使っていて、
+= 180 秒 = coordinator の agents-ready 上限と同じ。#311 で両方 60 → 180 秒）を掛ける。以前は判断の 5 秒をロードにも使っていて、
 負荷の高いホストでは tsx のコンパイルがそれを超え、**31 体中 13 体が起動時に exit 1** した
 （issue #100）。また**失敗が 3 回続いたら worker を毎ブロック作り直さない**（1 → 2 → 4 … 最大 64 ブロック
 の back-off、1 回だけログ、返る判断が 1 つあれば解除）。throw するたびに discard → 次ブロック spawn は
@@ -1251,8 +1251,11 @@ phantom value そのもの）。issue #27 でこれを 3 段階で外した:
   `initial_endowment` / Aave の WBTC aggregator 較正も全 base を見る。OU の walk はその値から始まる
 - **エポックの時計は場が揃うまで待つ**（issue #94 / #91 F5。`core/src/realtime/agentsReady.ts`）。automine を
   切った後・interval mining の前に、起動した全 agent の `runtime_start` を `run.agentsReadyTimeoutSec`
-  （既定 60 秒、0 = 待たない）まで待ち `agents_ready` に ready/late/exited を残す。実測 docker 32 体で
-  `runtime_start` は +86〜99 秒なので、その検証では上げる。外部参加者は待たない
+  （既定 180 秒、0 = 待たない）まで待ち `agents_ready` に ready/late/exited を残す。実測 docker 32 体で
+  `runtime_start` は +86〜99 秒、2026-10-20 のライブ週リハーサル（11 体・8 vCPU）では 60 秒の上限を
+  14 回中 4 回超えた（issue #311。以前の既定は 60）。**ライブ週は 120 秒未満（0 を含む）を拒否する**
+  （`LIVE_WEEK_MIN_AGENTS_READY_SEC`）。全員揃えばその時点で待ちは終わるので、上限を上げて伸びるのは
+  起動し切らない agent がいるときだけ。外部参加者は待たない
 - **エポックはチェーンのブロック番号で終わる**（`core/src/epochExtent.ts`）。終わりは
   `runStartBlock + runBlocks` で、そのブロックは処理され、**最後の境界（V_K）**になり、全 agent の
   `blocksRemaining` が 0 になる（鐘）。ループの各パスはこのブロックで clamp され（`loopStep`）、
