@@ -3,12 +3,16 @@
 #   build.sh base            -> eris-agent-base:local   (shared runtime, no team code)
 #   build.sh team <agent-id> -> eris-agent:<agent-id>   (base + that one team's agent)
 # Overrides: ERIS_BASE_IMAGE (base tag).
+# The base image carries sdk/src/constants.local.ts (the address overlay) as it is now. When a state
+# dump is present (backtest/state/manifest.json), the build refuses an overlay that names another
+# deployment (issue #310); ERIS_AGENT_BUILD_ALLOW_OVERLAY_MISMATCH=1 builds anyway.
 set -euo pipefail
 REPO="${ERIS_REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 BASE="${ERIS_BASE_IMAGE:-eris-agent-base:local}"
 cd "$REPO"
 
 build_base() {
+  node --import tsx scripts/checkAgentOverlay.ts
   echo "refreshing runtime base $BASE (Docker reuses unchanged layers)"
   docker build -f infra/docker-agent/Dockerfile.base -t "$BASE" .
   docker image inspect "$BASE" --format 'runtime base: {{.Id}} (built {{.Created}})'

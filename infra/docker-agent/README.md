@@ -37,6 +37,17 @@ npm run agent:build              # base (once)
 npm run agent:build -- team foo  # per team (refreshes base, reusing unchanged layers) -> eris-agent:foo
 ```
 
+> **The base image carries the address overlay as it is at build time** (`sdk/src/constants.local.ts`).
+> An image built from an overlay that names another deployment than the chain it runs on loses every
+> agent at preflight (`N of N contracts hold no code`; issue #310, the 2026-10-20 rehearsal). So when
+> a state dump is present (`backtest/state/manifest.json`, or `ERIS_AGENT_BUILD_STATE_DIR`), the
+> build compares the overlay's `DEPLOYMENTS_FINGERPRINT` with the manifest's `deploymentsFingerprint`
+> — the check `backtest` does at startup — and refuses on a difference. The fix is
+> `npm run gen:local-constants:from-dump` (regenerates the overlay from the deployments bundled in the
+> manifest), then build again. Images meant for another chain than the dump (the practice devnet, a
+> fresh local deploy) build with `ERIS_AGENT_BUILD_ALLOW_OVERLAY_MISMATCH=1`, which warns instead.
+> Without a manifest nothing is checked.
+
 ## Self-test the memory budget
 
 The shared image includes Python 3.11.16 and the generated `eris` SDK. A Python team ships

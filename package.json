@@ -18,6 +18,7 @@
     "inference-proxy": "tsx core/src/cli/inferenceProxy.ts",
     "agent-state": "tsx core/src/cli/agentState.ts",
     "gen:local-constants": "tsx scripts/genLocalConstants.ts",
+    "gen:local-constants:from-dump": "tsx scripts/constantsFromDump.ts",
     "gen:method-selectors": "tsx scripts/genMethodSelectors.ts",
     "gen:state-dump": "tsx scripts/genStateDump.ts",
     "gen:practice-episodes": "tsx scripts/genPracticeEpisodes.ts",
