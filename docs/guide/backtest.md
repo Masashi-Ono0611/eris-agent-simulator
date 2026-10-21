@@ -197,6 +197,13 @@ npm run backtest -- --scenarios plan.yaml --agents field.yaml --follow-schedule 
   practice period's file, and not the scenario key (the same value is refused at start, because the
   key is published after the results and the secret never is). Back it up with the scenario key, and
   start every process of the week with the same file.
+- **Build the agent images after the overlay names the dump** (issue #310). `npm run agent:build`
+  bakes `sdk/src/constants.local.ts` into the images; `backtest` regenerates that file from the
+  dump's manifest only at its own startup, after the images exist. Built first, every agent exits at
+  preflight with `N of N contracts hold no code` and the epoch is recorded with all of them
+  `processExitedEarly`. The build now refuses an overlay whose fingerprint differs from
+  `backtest/state/manifest.json`; run `npm run gen:local-constants:from-dump` before
+  `npm run agent:build` (base and every team).
 - A slot shorter than an epoch's wall time (360 blocks = 12 min of block time plus setup and
   reconstruction) makes every epoch after it late. The runner reports it; the plan is where it is
   fixed.
