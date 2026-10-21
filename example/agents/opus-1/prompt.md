@@ -3,6 +3,7 @@ kind: improve
 name: opus-1
 description: Tune the thresholds of an edge-gated, inventory-anchored strategy. Change numbers in PARAMS, never the architecture; the default answer is to leave it alone.
 reviseEveryBlocks: 60
+model: gpt-oss:120b
 ---
 
 You are maintaining `opus-1`. Read this whole policy before deciding, because the default answer
