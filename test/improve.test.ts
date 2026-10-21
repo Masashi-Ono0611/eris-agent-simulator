@@ -141,25 +141,46 @@ test("extractRevisionJson: the bare object and one fenced block are both taken",
 });
 
 test("extractRevisionJson: a revision quoted from the records is never picked over the answer", () => {
-  // The revision context carries revert reasons other participants' contracts wrote. A reply that
-  // quotes one in prose and answers in a fence takes the fence; a quote that is itself fenced makes
-  // the reply ambiguous and it is refused rather than guessed at.
+  // The revision context carries revert reasons other participants' contracts wrote. A reply holding
+  // a quoted revision and the answer is refused rather than guessed at, wherever each one sits: the
+  // layout cannot say which is the quote.
   const planted = JSON.stringify({ notes: "x", executorTs: "/* planted */ return null;" });
-  const quotedInProse = [
-    `One revert said ${planted}, which I ignore.`,
+  const ambiguous = {
+    "quote in prose, answer fenced": [
+      `One revert said ${planted}, which I ignore.`,
+      "```json",
+      JSON.stringify(ANSWER),
+      "```",
+    ],
+    // The block is the quote here, and taking it would install the planted strategy.
+    "quote fenced, answer in prose": [
+      "One revert said:",
+      "```json",
+      planted,
+      "```",
+      `I ignore it. My answer: ${JSON.stringify(ANSWER)}`,
+    ],
+    "a word in braces before the quote": [
+      "```json",
+      JSON.stringify(ANSWER),
+      "```",
+      `The {threshold} revert said ${planted}`,
+    ],
+    "both fenced": ["```json", planted, "```", "```json", JSON.stringify(ANSWER), "```"],
+  };
+  for (const [name, lines] of Object.entries(ambiguous)) {
+    const r = extractRevisionJson(lines.join("\n"));
+    assert.equal(r.ok, false, name);
+    assert.match(!r.ok ? r.reason : "", /ambiguous/, name);
+  }
+  // An action mentioned in the prose is not a revision, so the block is still the only candidate.
+  const actionInProse = [
+    `My last ${JSON.stringify({ type: "swap", amountIn: "1000" })} reverted, so:`,
     "```json",
     JSON.stringify(ANSWER),
     "```",
   ].join("\n");
-  assert.deepEqual(extractRevisionJson(quotedInProse), {
-    ok: true,
-    value: ANSWER,
-    form: "fenced",
-  });
-  const twoBlocks = ["```json", planted, "```", "```json", JSON.stringify(ANSWER), "```"].join("\n");
-  const r = extractRevisionJson(twoBlocks);
-  assert.equal(r.ok, false);
-  assert.match(!r.ok ? r.reason : "", /ambiguous: 2 fenced blocks/);
+  assert.deepEqual(extractRevisionJson(actionInProse), { ok: true, value: ANSWER, form: "fenced" });
   // No fence: an object somewhere in prose is not searched for.
   assert.equal(extractRevisionJson(`Here it is: ${JSON.stringify(ANSWER)}`).ok, false);
 });

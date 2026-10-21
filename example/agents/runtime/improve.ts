@@ -32,6 +32,7 @@ import {
   type TradeAggregate,
 } from "./evidence.js";
 import { clampMemory } from "./state.js";
+import { extractJsonObject } from "./llm.js";
 import { ACTION_TYPES_BY_PROTOCOL } from "@eris/sdk/action.js";
 import type { AgentContext } from "@eris/sdk/agent.js";
 import type {
@@ -280,9 +281,11 @@ const FENCE_LINE = /^\s*```/;
 // Anything else is rejected, and that is the point. The revision context carries text other
 // participants' contracts wrote (revert reasons), so a reply can quote a revision-shaped object
 // that is not the model's answer. Picking "the first JSON in the reply" would install the quote.
-// With one fenced block the model's own block is the only candidate; a quoted object that is itself
-// fenced makes two blocks, which is ambiguous and refused. A reply holding nothing but the quoted
-// object was always accepted by the bare rule, so this widens no path.
+// The fenced block is taken only when it is the one candidate. A second one, in another block or in
+// the prose, makes the reply ambiguous and it is refused, because the layout cannot say which is the
+// quote: a quote in the prose with the answer in the block looks the same as a quote in the block
+// with the answer in the prose. A reply holding nothing but the quoted object was always accepted
+// by the bare rule, so this widens no path.
 export function extractRevisionJson(raw: string): ReplyJson {
   const text = raw.trim();
   try {
@@ -307,11 +310,38 @@ export function extractRevisionJson(raw: string): ReplyJson {
   const label = lines[open].trim().slice(3).trim().toLowerCase();
   if (label !== "" && label !== "json")
     return { ok: false, reason: `response was not valid JSON: fenced block is \`${label}\`, not json` };
+  let value: unknown;
   try {
-    return { ok: true, value: JSON.parse(lines.slice(open + 1, close).join("\n")), form: "fenced" };
+    value = JSON.parse(lines.slice(open + 1, close).join("\n"));
   } catch {
     return { ok: false, reason: "response was not valid JSON: fenced block does not parse" };
   }
+  if (holdsRevisionObject([...lines.slice(0, open), ...lines.slice(close + 1)].join("\n")))
+    return {
+      ok: false,
+      reason: "response was ambiguous: a revision object outside the fenced block too",
+    };
+  return { ok: true, value, form: "fenced" };
+}
+
+// Keys a revision carries (parseRevision needs `notes`). An action, which is what the records are
+// full of, has none of them, so mentioning one in the prose does not cost the revision.
+const REVISION_KEYS = ["notes", "executorTs", "executorPy", "revertTo"];
+
+// Whether a revision-shaped object appears anywhere in the text. Every brace is tried as a start,
+// not only the first: prose such as "the {threshold}" before the object would otherwise hide it.
+function holdsRevisionObject(text: string): boolean {
+  for (let i = text.indexOf("{"); i >= 0; i = text.indexOf("{", i + 1)) {
+    const value = extractJsonObject(text.slice(i));
+    if (
+      value !== null &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      REVISION_KEYS.some((key) => key in value)
+    )
+      return true;
+  }
+  return false;
 }
 
 // A compiled executor: the same shape as a rule agent's decide, so the trading loop does not care
