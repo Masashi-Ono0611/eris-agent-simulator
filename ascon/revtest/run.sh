@@ -4,10 +4,13 @@
 #   ascon/revtest/run.sh <agent> fake <blocks> [every]   canned broken revisions (ascon/revtest/replies)
 #   ascon/revtest/run.sh <agent> real <blocks> [every] [model]   real `claude -p` (subscription CLI)
 #   ascon/revtest/run.sh <agent> hybrid <blocks> [every] <model>  REVTEST_CASE=<dir>: canned first reply, then the real model
+#   ascon/revtest/run.sh <agent> ollama <blocks> [every] [model]  Ollama Cloud (default gpt-oss:120b), OLLAMA_API_KEY in .env.local
 #   ascon/revtest/run.sh <agent> openai <blocks> [every] <model>  OpenAI API with the ASCON key only
 #     (ASCON_OPENAI_ENV, default ~/.config/secrets/ascon-openai.env, holding ASCON_OPENAI_API_KEY=...)
 # REVTEST_PORT picks the backtest anvil port (default 8548, clear of a matrix run on 8547);
 # REVTEST_REGIME / REVTEST_SEED pick the scenario (default calm / 101).
+# REVTEST_ROSTER=<roster.yaml> runs a whole field instead of noop + multi-arb: the roster's own entry
+# for <agent> is replaced by the revising copy.
 # Prints the run directory. Exit: 0 run completed, 1 run failed, 2 cannot run.
 set -u
 agent="${1:?agent}"; mode="${2:?fake|real}"; blocks="${3:?blocks}"; every="${4:-10}"; model="${5:-}"
@@ -58,8 +61,33 @@ elif [ "$mode" = openai ]; then
   [ -n "$OPENAI_API_KEY" ] || { echo "BLOCKED: ASCON_OPENAI_API_KEY missing in $keyfile" >&2; exit 2; }
   export OPENAI_API_KEY; unset OPENAI_BASE_URL
   llm="openai:$model"; bin=""; extra=""
-else echo "BLOCKED: mode must be fake, real or openai" >&2; exit 2; fi
-cat > "$work/roster.yaml" <<YAML
+elif [ "$mode" = ollama ]; then
+  # The key stays in .env.local (loaded by the CLI); only its presence is checked here, never its value.
+  grep -q '^OLLAMA_API_KEY=.' "$root/.env.local" 2>/dev/null || { echo "BLOCKED: OLLAMA_API_KEY missing in .env.local" >&2; exit 2; }
+  # The backtest CLI does not read .env.local itself, so hand the key to the agents through the environment.
+  OLLAMA_API_KEY="$(sed -n 's/^OLLAMA_API_KEY=//p' "$root/.env.local" | tail -1)"
+  export OLLAMA_API_KEY
+  llm="${model:-gpt-oss:120b}"; bin=""; extra=""
+else echo "BLOCKED: mode must be fake, real, hybrid, openai or ollama" >&2; exit 2; fi
+revtest_entry="  - id: revtest-$agent
+    wallet: AUTO
+    env: { ${extra}ERIS_LLM_MODEL: \"$llm\", ERIS_CLAUDE_BIN: \"$bin\", ERIS_IMPROVE_LOG_CALLS: \"1\" }"
+if [ -n "${REVTEST_ROSTER:-}" ]; then
+  # A whole field instead of noop + multi-arb: the roster file with the frozen copy of this agent
+  # taken out and the revising copy put in its place, so the agent count stays the same.
+  [ -r "$REVTEST_ROSTER" ] || { echo "BLOCKED: $REVTEST_ROSTER not readable" >&2; exit 2; }
+  python3 - "$REVTEST_ROSTER" "$agent" "$work/roster.yaml" "$revtest_entry" <<'PY' || exit 2
+import re, sys
+src, agent, out, entry = sys.argv[1:5]
+blocks = re.split(r"(?m)^(?=  - id: )", open(src).read())
+head, entries = blocks[0], blocks[1:]
+kept = [b for b in entries if re.match(rf"  - id: {re.escape(agent)}\s*$", b.split("\n", 1)[0]) is None]
+if len(kept) != len(entries) - 1:
+    sys.exit(f"BLOCKED: roster must contain exactly one '- id: {agent}' entry")
+open(out, "w").write(head + "".join(kept) + entry + "\n")
+PY
+else
+  cat > "$work/roster.yaml" <<YAML
 agents:
   - id: noop
     wallet: AUTO
@@ -67,10 +95,9 @@ agents:
   - id: multi-arb
     wallet: AUTO
     env: { ERIS_AGENT_FROZEN: "1" }
-  - id: revtest-$agent
-    wallet: AUTO
-    env: { ${extra}ERIS_LLM_MODEL: "$llm", ERIS_CLAUDE_BIN: "$bin", ERIS_IMPROVE_LOG_CALLS: "1" }
+$revtest_entry
 YAML
+fi
 npm run backtest -- --regime "${REVTEST_REGIME:-calm}" --seed "${REVTEST_SEED:-101}" --agents "$work/roster.yaml" --agent-sandbox process --blocks "$blocks" --port "${REVTEST_PORT:-8548}" > "$work/backtest.log" 2>&1
 rc=$?
 run="$(grep -o 'runs/[0-9T:-]*Z' "$work/backtest.log" | tail -1)"
