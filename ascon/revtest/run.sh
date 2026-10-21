@@ -65,6 +65,8 @@ elif [ "$mode" = ollama ]; then
   # The key stays in .env.local (loaded by the CLI); only its presence is checked here, never its value.
   grep -q '^OLLAMA_API_KEY=.' "$root/.env.local" 2>/dev/null || { echo "BLOCKED: OLLAMA_API_KEY missing in .env.local" >&2; exit 2; }
   # The backtest CLI does not read .env.local itself, so hand the key to the agents through the environment.
+  # Tracing off first: under `bash -x` the assignment below would print the key.
+  { set +x; } 2>/dev/null
   OLLAMA_API_KEY="$(sed -n 's/^OLLAMA_API_KEY=//p' "$root/.env.local" | tail -1)"
   export OLLAMA_API_KEY
   llm="${model:-gpt-oss:120b}"; bin=""; extra=""
