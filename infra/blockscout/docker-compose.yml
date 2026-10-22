@@ -98,7 +98,7 @@ services:
 
   proxy:
     logging: *logging
-    image: nginx:1.27-alpine
+    image: nginx:1.30-alpine
     container_name: eris-explorer-proxy
     restart: unless-stopped
     depends_on:
