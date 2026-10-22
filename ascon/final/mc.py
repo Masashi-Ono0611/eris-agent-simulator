@@ -26,9 +26,11 @@ Reports false-ship of EITHER R or W under zero effect (target <=2%), R/W ship
 rates at +0.5/+1.0, kept rate after retest, C1 fallback and no-ship. It also
 reports EW12 and official-weighted delta means, neither used for superiority.
 Code/noise SHA256, assumptions, seed and simulation count accompany the table.
-Tuning is opt-in and searches only stricter t/f values; it never changes files.
+Pre-freeze calibration (--calibrate) switches off one gate at a time and scans
+t_crit with the approved +0.20 mean floor fixed. It never changes judge files.
 """
 import argparse
+import bisect
 import hashlib
 import importlib.util
 import json
@@ -325,35 +327,146 @@ def upper95(p, n):
     return (centre + half) / den
 
 
+ABLATIONS = {"none": None, "t_crit": None, "floor": None,
+             "clause2": "2_field_means", "clause3": "3_regime_veto",
+             "launch": "6_launch", "f": None}
+
+
+def ship_capacity(first, second, off="none"):
+    """Largest t_crit at which this R/W arm passes both stages.
+
+    Use judge2's actual clauses/stats; only the named diagnostic gate is removed.
+    Floor-off removes stage 1's +.20 floor, not stage 2's required positive mean.
+    f-off removes the entire SE floor, retaining the candidate's sample sd.
+    """
+    if off not in ABLATIONS:
+        raise ValueError("unknown ablation: " + off)
+    if (off != "floor" and first["stats"]["m"] < J.THRESHOLD) or second["stats"]["m"] <= 0:
+        return -math.inf
+    limits = []
+    for v in (first, second):
+        if any(c["status"] != J.PASS for k, c in v["clauses"].items()
+               if k not in ("1_mean_t", ABLATIONS[off])):
+            return -math.inf
+        st = v["stats"]
+        t = st["t"]
+        if off == "f":
+            se = st["sd"] / math.sqrt(st["n"])
+            t = st["m"] / se if se else math.inf if st["m"] > 0 else -math.inf
+        limits.append(t)
+    return math.inf if off == "t_crit" else min(limits)
+
+
+def calibration_samples(model, args, effect):
+    """Common random trials for every ablation/threshold, with shared B in stage 2.
+
+    Pre-draw both potential finalists. R and W always precede C1 in selection,
+    and there are at most two superiority arms: EITHER ships iff at least one
+    passes both stages. Thus max of their capacities exactly encodes R/W ship,
+    including F2 fallback; C1 cannot displace a passing R/W. Retest happens after
+    shipping and cannot change this event (run reports kept rates separately).
+    """
+    rng = random.Random(args.rng_seed)
+    capacities = {off: [] for off in ABLATIONS}
+    effects = {"C1": args.effect_c1, "R": effect,
+               "W": effect if args.effect_w is None else args.effect_w}
+    for _ in range(args.sims):
+        s1 = sim_stage(rng, model, {"B": None, "B'": None, **effects}, STAGE1_SEEDS, J.FIELDS)
+        cp = contrasts(model, s1, "B'")
+        s2 = sim_stage(rng, model, {"B": None, **effects}, STAGE2_SEEDS, J.FIELDS)
+        fs = sim_stage(rng, model, {"B": None, **effects}, FS_SEEDS, ("FS",))
+        pair = []
+        for arm in ("R", "W"):
+            first = J.evaluate("superiority", contrasts(model, s1, arm), cp, MECH_PASS)
+            f = first["stats"]["f"] if args.stage2_f == "stage1" else J.PLACEBO_FLOOR
+            second = J.evaluate_stage2("superiority", contrasts(model, s2, arm),
+                                       contrasts(model, fs, arm), f, MECH_PASS, noop_sub=MECH_PASS["mc"])
+            pair.append((first, second))
+        for off in capacities:
+            capacities[off].append(max(ship_capacity(a, b, off) for a, b in pair))
+    return {off: sorted(vals) for off, vals in capacities.items()}
+
+
+def capacity_rate(values, t):
+    n = len(values)
+    count = n - bisect.bisect_left(values, t)
+    p = count / n
+    return {"ships": count, "rate": p, "se": math.sqrt(p * (1 - p) / n), "upper95": upper95(p, n)}
+
+
+def calibrate(model, args):
+    """Minimum feasible hundredth-grid t maximises both powers by monotonicity.
+
+    The Wilson bound is pointwise; validate the selected default on an independent
+    seed with `run` before adoption. No relaxation of floor or other clauses.
+    """
+    if args.sims < 20000:
+        raise SystemExit("calibrate: requires >= 20000 trials/effect")
+    if args.effect_w is not None or args.effect_launch != 0:
+        raise SystemExit("calibrate: requires equal R/W effects and zero launch effect")
+    data = {}
+    for effect in (0.0, 0.5, 1.0):
+        data[effect] = calibration_samples(model, args, effect)
+        print("  calibration sampled %+.1f (%d trials)" % (effect, args.sims), flush=True)
+    grid = []
+    for i in range(301):
+        t = i / 100
+        rates = {str(e): capacity_rate(data[e]["none"], t) for e in data}
+        grid.append({"t_crit": t, "rates": rates})
+    chosen = next((row for row in grid if row["rates"]["0.0"]["upper95"] <= args.target), None)
+    tables = {}
+    for t in dict.fromkeys([1.64, chosen["t_crit"] if chosen else J.T_CRIT]):
+        tables[str(t)] = {off: {str(e): capacity_rate(data[e][off], t) for e in data} for off in ABLATIONS}
+        print("  t_crit %.2f: ablation | null / +0.5 / +1.0 R/W ship %% (MC SE in percentage points)" % t)
+        for off, rates in tables[str(t)].items():
+            print("    %-8s %s" % (off, " / ".join("%.3f (%.3f)" % (100*r["rate"], 100*r["se"]) for r in rates.values())))
+    if chosen and chosen["t_crit"] > 0:
+        previous = grid[round(chosen["t_crit"] * 100) - 1]
+        print("  preceding grid point: %s" % (previous,))
+    print("  calibration choice: %s; independently validate before adoption" % (chosen,))
+    return {"method": "paired potential-finalist draws; minimum feasible t on 0.00:0.01:3.00 grid",
+            "upper95_method": "Wilson, z=1.96 (upper endpoint of two-sided 95% interval)",
+            "floor": J.THRESHOLD, "chosen": chosen, "grid": grid, "ablations": tables}
+
+
 def cmd_run(args):
+    code_hashes = {"mc.py": _sha(os.path.abspath(__file__)), "judge2.py": _sha(os.path.join(_here, "judge2.py"))}
+    noise_hash = _sha(args.noise)
     with open(args.noise) as f:
         noise = json.load(f)
     model = Model(noise, args)
     effects = [float(x) for x in args.effects.split(",")]
     policies = {"approved": J.THRESHOLD}
     t0 = time.time()
-    res = run_grid(model, args, effects, policies, args.sims, args.rng_seed)
-    out = {"code_sha256": {"mc.py": _sha(os.path.abspath(__file__)), "judge2.py": _sha(os.path.join(_here, "judge2.py"))},
-           "noise": os.path.abspath(args.noise), "noise_sha256": _sha(args.noise), "sims": args.sims, "rng_seed": args.rng_seed,
+    calibration = calibrate(model, args) if args.calibrate else None
+    res = {} if calibration else run_grid(model, args, effects, policies, args.sims, args.rng_seed)
+    out = {"code_sha256": code_hashes,
+           "noise": os.path.abspath(args.noise), "noise_sha256": noise_hash, "sims": args.sims, "rng_seed": args.rng_seed,
            "draw": model.draw, "scale": args.scale, "launch_sd": args.launch_sd, "launch_label": model.launch_label,
            "placebo_model": model.placebo_label, "rho": model.rho, "tau": model.tau,
            "effect_c1": args.effect_c1, "effect_w": args.effect_w, "effect_launch": args.effect_launch,
            "mechanism_pnl_assumed": args.mechanism_pnl, "stage2_f": args.stage2_f,
            "assumed_pass": ["mechanism clause 5", "c1L (a)-(d)", "input guards", "noop guard"],
            "statistic": "EW11", "threshold": J.THRESHOLD, "ask_band": False,
+           "ship_RW_mc_se": {str(e): {p: math.sqrt(r["ship_RW"] * (1 - r["ship_RW"]) / args.sims)
+                                      for p, r in rows.items()} for e, rows in res.items()},
            "t_crit": J.T_CRIT, "placebo_floor": J.PLACEBO_FLOOR, "results": {str(k): v for k, v in res.items()},
            "seconds": round(time.time() - t0, 1)}
+    if calibration:
+        out["calibration"] = calibration
     print("mc: %s, %d sims/effect, draw %s, scale %.2f, launch sd %s, B' %s, rho %.2f, tau %s, C1 effect %+.2f, stage-2 f %s%s" % (
         os.path.basename(args.noise), args.sims, model.draw, args.scale, model.launch_label, model.placebo_label,
         model.rho, {k: round(v, 2) for k, v in model.tau.items()}, args.effect_c1, args.stage2_f,
         "" if args.stage2_f == "stage1" else " (sensitivity, not the pinned rule)"))
     print("  code sha256: mc.py %s judge2.py %s" % (out["code_sha256"]["mc.py"][:12], out["code_sha256"]["judge2.py"][:12]))
     print("  effect  policy    s1 R     s1 W   s1 C1  s1 pend s1 Bwarn  ship R  ship W ship R/W R/W kept ship C1    none   EW12 R official R")
-    for eff in effects:
+    for eff in res:
         for p in policies:
             r = res[eff][p]
             keys = ("s1_R", "s1_W", "s1_C1", "s1_pending", "s1_Bwarn", "ship_R", "ship_W", "ship_RW", "RW_kept", "ship_C1", "ship_none", "ew12_R", "official_R")
             print("  %+.2f %-8s %s" % (eff, p, " ".join("%7.4f" % r[k] for k in keys)))
+            print("    R/W ships %d/%d; MC SE %.6f" % (round(r["ship_RW"] * args.sims), args.sims,
+                  math.sqrt(r["ship_RW"] * (1 - r["ship_RW"]) / args.sims)))
     print("  assumptions: clause 5, c1L (a)-(d), noop and input guards PASS; own tagged mechanism PnL = %g per cell/regime" % args.mechanism_pnl)
     verdicts = {}
     if 0.0 in res:
@@ -466,6 +579,8 @@ def main(argv):
     r.add_argument("--effect-launch", type=float, default=0.0, help="R/W launch effect, judged separately")
     r.add_argument("--mechanism-pnl", type=float, default=0.0, help="assumed own tagged PnL per cell/regime; sensitivity only")
     r.add_argument("--target", type=float, default=0.02)
+    r.add_argument("--t-crit", type=float, default=J.T_CRIT, help="pre-freeze MC sensitivity; default follows judge2")
+    r.add_argument("--calibrate", action="store_true", help="pre-freeze t grid and one-gate ablations, >=20000 trials")
     r.add_argument("--tune", action="store_true")
     r.add_argument("--json")
     args = ap.parse_args(argv)
@@ -474,6 +589,9 @@ def main(argv):
     if args.cmd == "placebo-noise":
         return cmd_placebo_noise(args)
     if args.cmd == "run":
+        if not math.isfinite(args.t_crit) or args.t_crit < 0:
+            raise SystemExit("mc: --t-crit must be finite and >= 0")
+        J.T_CRIT = args.t_crit
         return cmd_run(args)
     ap.print_help()
     return 2

@@ -6,7 +6,7 @@
 # writes (schema 2, k 12, scenariosPlanned 12, slot replacement: our agent is `slot`, noop is the
 # baseline, the reference agents of roster-<field>.yaml); the slot's P in each arm is solved so that its
 # official T sits at the intended distance from B's T. A case that must be refused expects exit 2.
-# Pinned boundaries include t at n=4 (1.62 / 1.639 FAIL, 1.66 PASS), C1's launch-only noninferiority in both stages,
+# Pinned boundaries include t at n=4 (0.79 / 0.809 FAIL, 0.83 PASS), C1's launch-only noninferiority in both stages,
 # the re-test counting F's slot failures and rule flags (REVERT), the arms' simulation setup, rule flags on
 # a candidate's slot, B' and open infrastructure failures blocking C1, the exclusion rerun record and scope
 # check, the approved +0.20 floor without an ask band, and stage 2 inheriting stage 1's non-plan notes. (Stage 2's
@@ -361,12 +361,12 @@ cases = [
     ("+0.6 effect: approved floor, no ask (saved as v1ask)", C(eff={"R": 0.6, "C1": 0.3}, save_as="v1ask"), E("PASS", "PASS", "F=R, F2=C1", sel_ask=None)),
     ("+0.6 effect, C1 BLOCKED: PENDING names C1", C(eff={"R": 0.6, "C1": 0.3}, mech_patch={"C1": {"step2_mechanism": None}}),
      E("PASS", "BLOCKED", "PENDING", sel_ask=None, note_has=["C1"])),
-    ("TRIP n=4, m +1.2, t 1.62 < 1.64", {"by_seed": {"R": tseeds(1.2, 1.62)}, "eff": {"C1": 0.3}, "noise": {"B'": 0.05}},
-     E("FAIL", "PASS", "F=C1", R_n=4, R_t=1.62, clause=("R", "1_mean_t", "FAIL"))),
-    ("NOT-TRIP n=4, m +1.2, t 1.66 >= 1.64", {"by_seed": {"R": tseeds(1.2, 1.66)}, "eff": {"C1": 0.3}, "noise": {"B'": 0.05}},
-     E("PASS", "PASS", "F=R, F2=C1", R_n=4, R_t=1.66, clause=("R", "1_mean_t", "PASS"))),
-    ("TRIP n=4, t 1.639: between t(3) 1.638 and the pinned 1.64", {"by_seed": {"R": tseeds(1.2, 1.639)}, "eff": {"C1": 0.3}, "noise": {"B'": 0.05}},
-     E("FAIL", "PASS", "F=C1", R_n=4, R_t=1.639, clause=("R", "1_mean_t", "FAIL"))),
+    ("TRIP n=4, m +1.2, t 0.79 < 0.81", {"by_seed": {"R": tseeds(1.2, 0.79)}, "eff": {"C1": 0.3}, "noise": {"B'": 0.05}},
+     E("FAIL", "PASS", "F=C1", R_n=4, R_t=0.79, clause=("R", "1_mean_t", "FAIL"))),
+    ("NOT-TRIP n=4, m +1.2, t 0.83 >= 0.81", {"by_seed": {"R": tseeds(1.2, 0.83)}, "eff": {"C1": 0.3}, "noise": {"B'": 0.05}},
+     E("PASS", "PASS", "F=R, F2=C1", R_n=4, R_t=0.83, clause=("R", "1_mean_t", "PASS"))),
+    ("TRIP n=4, t 0.809 just below the pinned 0.81", {"by_seed": {"R": tseeds(1.2, 0.809)}, "eff": {"C1": 0.3}, "noise": {"B'": 0.05}},
+     E("FAIL", "PASS", "F=C1", R_n=4, R_t=0.809, clause=("R", "1_mean_t", "FAIL"))),
     ("whale -4 in 7/8 cells: regime veto", C(eff={"R": 1.5, "C1": 0.3}, cell_dt=whale7, own_pnl={"R": {"whale": -1}}), E("FAIL", "PASS", "F=C1", clause=("R", "3_regime_veto", "FAIL"))),
     ("launch -4 in 7/8 cells: launch FAIL", C(eff={"R": 1.5, "C1": 0.3}, cell_dt=launch7), E("FAIL", "PASS", "F=C1", clause=("R", "6_launch", "FAIL"))),
     ("whale mean -3.6 but 5/8 negative: share not met", C(eff={"R": 1.5, "C1": 0.3}, cell_dt=whale5), E("PASS", "PASS", "F=R, F2=C1", clause=("R", "3_regime_veto", "PASS"))),
@@ -496,8 +496,9 @@ cases = [
     ("NOT-TRIP stage 2: FS mean -0.4", dict(S2, by_field={"R": {"FS": -0.4}}), {"v": {"R": "PASS"}, "clause": ("R", "6_fs_field", "PASS")}),
     ("TRIP stage 2: one non-launch FS epoch dP -3500", dict(S2, cell_dp={X("R", 1101, "FS", "lending-incident"): -3500.0}), {"v": {"R": "FAIL"}, "clause": ("R", "6_fs_field", "FAIL")}),
     ("stage 1 with B' spread +-1 and R +3.0 (saved as v1wide)", C(eff={"R": 3.0, "C1": 0.3}, placebo_seed_offset={1003: 1.0, 1004: -1.0, 1005: 1.0, 1006: -1.0}, save_as="v1wide"), E("PASS", "PASS", "F=R, F2=C1", R_f_gt=1.0)),
-    ("NOT-TRIP stage 2 R +0.6 judged with v1's f 0.25", dict(S2, eff={"R": 0.6}), {"v": {"R": "PASS"}, "R_f": 0.25}),
-    ("TRIP same stage-2 data judged with v1wide's f", dict(S2, eff={"R": 0.6}, stage1_from="v1wide"), {"v": {"R": "FAIL"}, "R_f_gt": 1.0, "clause": ("R", "1_mean_t", "FAIL")}),
+    # +0.4 straddles t=0.81 with narrow/wide inherited f; +0.6 passes both now.
+    ("NOT-TRIP stage 2 R +0.4 judged with v1's f 0.25", dict(S2, eff={"R": 0.4}), {"v": {"R": "PASS"}, "R_f": 0.25}),
+    ("TRIP same stage-2 data judged with v1wide's f", dict(S2, eff={"R": 0.4}, stage1_from="v1wide"), {"v": {"R": "FAIL"}, "R_f_gt": 1.0, "clause": ("R", "1_mean_t", "FAIL")}),
     ("stage 1 with R FAIL (saved as v1c1: F=C1)", {"eff": {"C1": 0.3}, "noise": {"B'": 0.05}, "save_as": "v1c1"}, E("FAIL", "PASS", "F=C1")),
     ("TRIP stage 2 of R when stage 1 selected only C1", dict(S2, stage1_from="v1c1"), X2("does not select R")),
     ("TRIP stage 2 without --stage1-verdict", {k: v for k, v in S2.items() if k != "stage1_from"}, X2("needs --stage1-verdict")),
@@ -685,7 +686,11 @@ print("     stage-1 f: placeholder mean %.3f (placebo WARN %.3f) | scale 0 mean 
 report(m_ph > 0.5 and abs(m_s0 - 0.25) < 1e-12 and abs(m_f0 - 0.25) < 1e-12 and g_s0 == 0,
        "placebo section is read: placeholder gives f mean %.2f; scale 0 and fields sd 0 pin f to the 0.25 floor and never WARN" % m_ph)
 report(abs(m_f1 - m_ph) / m_ph < 0.15, "placebo fields equal to the candidate sd give about the placeholder's f (%.3f vs %.3f)" % (m_f1, m_ph))
-report(0.03 < g_ph < 0.2, "under the placeholder (null B') the placebo check WARNs at %.3f, near the one-sided 10%% level (report only)" % g_ph)
+report(0 < g_ph < 0.5, "under the placeholder (null B') the placebo check WARNs at %.3f (report only; t is calibrated for the whole tree)" % g_ph)
+pc0 = J.placebo_check([0.0] * 4)
+pc1 = J.placebo_check([1.0] * 4)
+report(pc0["status"] == "OK" and pc1["status"] == "WARN",
+       "placebo warning separates zero and positive offsets without a nominal per-stage alpha claim")
 
 # Exact arithmetic boundary controls, independent of fixture inversion/roundoff.
 def exact_cells(effect, launch=0.0, n=4):
@@ -693,16 +698,65 @@ def exact_cells(effect, launch=0.0, n=4):
                        "mechanism_pnl": {r: 0.0 for r in mc.REGIMES}}
             for seed in range(n) for f in ("FP", "FD")}
 zero = exact_cells(0)
+report(J.T_CRIT == 0.81 and J.THRESHOLD == 0.20 and J.ASK_FLOOR is None and
+       J.t_crit_for(4) == 0.81 and J.t_crit_for(8) == 0.81 and
+       J.t_crit_for(3) == 1.886 and J.t_crit_for(2) == 3.078,
+       "pin calibrated t_crit 0.81, +0.20 floor, no ask; small-n guards only below four seeds")
+for t, expected in ((0.809, J.FAIL), (0.81, J.PASS), (0.811, J.PASS)):
+    v = J.evaluate_stage2("superiority", exact_cells(t / 2), exact_cells(1), 1.0,
+                          mc.MECH_PASS, noop_sub=mc.MECH_PASS["mc"])
+    report(v["stats"]["t"] == t and v["verdict"] == expected,
+           "stage 2 uses pinned t_crit: t %.3f -> %s" % (t, expected))
 ex = J.evaluate("superiority", exact_cells(0, 12), zero, mc.MECH_PASS)
 report(ex["stats"]["m"] == 0 and ex["verdict"] == J.FAIL, "EW11 exclusion ignores launch and a stale cached ew")
-# n=8 makes the +0.20 floor independently binding (with n=4, t >=1.64 and f>=.25 imply m>=.205).
+# Eight-seed control retained: the +0.20 mean floor is independent of the calibrated t gate.
 lo = J.evaluate("superiority", exact_cells(0.199, n=8), exact_cells(0, n=8), mc.MECH_PASS)
 edge = J.evaluate("superiority", exact_cells(0.20, n=8), exact_cells(0, n=8), mc.MECH_PASS)
-report(lo["stats"]["t"] > 1.64 and lo["verdict"] == J.FAIL and edge["verdict"] == J.PASS,
+report(lo["stats"]["t"] > J.T_CRIT and lo["verdict"] == J.FAIL and edge["verdict"] == J.PASS,
        "floor +0.20 inclusive, +0.199 FAIL with significant t (eight paired seeds)")
 for effect in (0.21, 0.5, 0.999, 1.0):
     e = J.evaluate("superiority", exact_cells(effect), zero, mc.MECH_PASS)
     report(e["verdict"] == J.PASS, "no ask band at +%.3f" % effect)
+
+# A threshold scan must agree with the shared judge, including F2 and SE floor.
+# These draws cover real clause failures as well as passes, at both stages.
+saved_t = J.T_CRIT
+rng = random.Random(231024)
+model = mc.Model(noise_file({"placeholder": True}), margs())
+agreement = True
+for effect in (0.0, 0.5, 1.0):
+    for _ in range(30):
+        s1 = mc.sim_stage(rng, model, {"B": None, "B'": None, "R": effect, "W": effect}, 4, J.FIELDS)
+        s2 = mc.sim_stage(rng, model, {"B": None, "R": effect, "W": effect}, 4, J.FIELDS)
+        fs = mc.sim_stage(rng, model, {"B": None, "R": effect, "W": effect}, 2, ("FS",))
+        cp = mc.contrasts(model, s1, "B'")
+        for t in (0.0, 0.5, 1.0, 1.64, 2.0):
+            J.T_CRIT = t
+            for arm in ("R", "W"):
+                a = J.evaluate("superiority", mc.contrasts(model, s1, arm), cp, mc.MECH_PASS)
+                b = J.evaluate_stage2("superiority", mc.contrasts(model, s2, arm), mc.contrasts(model, fs, arm),
+                                      a["stats"]["f"], mc.MECH_PASS, noop_sub=mc.MECH_PASS["mc"])
+                agreement &= (mc.ship_capacity(a, b) >= t) == (a["verdict"] == b["verdict"] == J.PASS)
+J.T_CRIT = saved_t
+report(agreement, "calibration capacities agree with judge2 in both stages over 900 arm/threshold cases")
+
+# Each switch removes only its intended condition; stage-2 positivity survives.
+a = J.evaluate("superiority", exact_cells(0.199), zero, mc.MECH_PASS)
+b = J.evaluate_stage2("superiority", exact_cells(1), exact_cells(1), 0.25, mc.MECH_PASS, noop_sub=mc.MECH_PASS["mc"])
+report(mc.ship_capacity(a, b) == -math.inf and mc.ship_capacity(a, b, "floor") > 0,
+       "MC floor ablation removes only stage-1 +0.20")
+a = J.evaluate("superiority", exact_cells(0.5), zero, mc.MECH_PASS, f_override=2)
+report(mc.ship_capacity(a, b, "t_crit") == math.inf and mc.ship_capacity(a, b, "f") > mc.ship_capacity(a, b),
+       "MC t ablation removes t gate; f ablation removes SE floor")
+for off, clause in mc.ABLATIONS.items():
+    if clause is not None:
+        broken = copy.deepcopy(b)
+        broken["clauses"][clause]["status"] = J.FAIL
+        report(mc.ship_capacity(a, broken) == -math.inf and mc.ship_capacity(a, broken, off) >= 0,
+               "MC %s ablation removes its clause" % off)
+bzero = J.evaluate_stage2("superiority", zero, exact_cells(1), 0.25, mc.MECH_PASS, noop_sub=mc.MECH_PASS["mc"])
+report(all(mc.ship_capacity(a, bzero, off) == -math.inf for off in mc.ABLATIONS),
+       "every MC ablation retains stage-2 m > 0")
 report(J.launch_clause(exact_cells(2, -3))["status"] == J.PASS and
        J.launch_clause(exact_cells(2, -3.001))["status"] == J.FAIL, "launch -3 inclusive / below -3 FAIL")
 e = J.evaluate("noninferiority", exact_cells(-10, -2), zero, mc.MECH_PASS)
@@ -805,11 +859,13 @@ oj = os.path.join(T, "mc-run.json")
 p = subprocess.run([sys.executable, "-B", "-I", MC, "run", "--noise", nz, "--sims", "50", "--effects", "0", "--json", oj], capture_output=True, text=True)
 ok = p.returncode == 0
 if ok:
-    cs = json.load(open(oj)).get("code_sha256") or {}
+    run_report = json.load(open(oj))
+    cs = run_report.get("code_sha256") or {}
+    ok = ok and run_report["t_crit"] == 0.81 and run_report["threshold"] == 0.20
     jpath = os.path.join(os.path.dirname(MC), "judge2.py")
-    ok = cs.get("mc.py") == hashlib.sha256(open(MC, "rb").read()).hexdigest() and cs.get("judge2.py") == hashlib.sha256(open(jpath, "rb").read()).hexdigest()
+    ok = ok and cs.get("mc.py") == hashlib.sha256(open(MC, "rb").read()).hexdigest() and cs.get("judge2.py") == hashlib.sha256(open(jpath, "rb").read()).hexdigest()
     ok = ok and "s1 Bwarn" in p.stdout and "s1 pend" in p.stdout
-report(ok, "mc.py run writes code_sha256 of mc.py and judge2.py and prints the s1 pend / s1 Bwarn columns (exit %d)" % p.returncode)
+report(ok, "mc.py run writes code_sha256 of mc.py and judge2.py and pins default t_crit 0.81 / floor 0.20 and prints s1 pend / s1 Bwarn (exit %d)" % p.returncode)
 
 # placebo-noise from a stage-1 verdict
 src = os.path.join(T, "mc-noise-in.json")
