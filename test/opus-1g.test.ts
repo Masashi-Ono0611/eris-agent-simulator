@@ -4,7 +4,10 @@
 // the end-of-epoch stop, a run without GMX, and that inside the band opus-1g is exactly opus-1a.
 process.env.ERIS_LOCAL_DEPLOY = "1";
 
-import test from "node:test";
+import test, { beforeEach, afterEach } from "node:test";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import assert from "node:assert/strict";
 import type { AgentObservation } from "@eris/sdk/types.js";
 import type { AgentContext } from "@eris/sdk/agent.js";
@@ -12,6 +15,26 @@ import type { AgentContext } from "@eris/sdk/agent.js";
 const { parseAction, validateAction } = await import("@eris/sdk/action.js");
 const g = await import("../example/agents/opus-1g/agent.js");
 const a = await import("../example/agents/opus-1a/agent.js");
+
+let originalStateDir: string | undefined;
+let testStateDir: string | undefined;
+beforeEach(() => {
+  originalStateDir = process.env.ERIS_AGENT_STATE_DIR;
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  g.resetOuStateForTest();
+});
+afterEach(() => {
+  if (originalStateDir === undefined) delete process.env.ERIS_AGENT_STATE_DIR;
+  else process.env.ERIS_AGENT_STATE_DIR = originalStateDir;
+  if (testStateDir) rmSync(testStateDir, { recursive: true, force: true });
+  testStateDir = undefined;
+  g.resetOuStateForTest();
+});
+function persistentState(): string {
+  testStateDir = mkdtempSync(join(tmpdir(), "opus-1g-state-"));
+  process.env.ERIS_AGENT_STATE_DIR = testStateDir;
+  return join(testStateDir, "opus-1g-ou-state.json");
+}
 
 const GWEI = 1_000_000_000n;
 const E30 = 10n ** 30n;
@@ -53,6 +76,8 @@ function obsFor(opts: {
   wbtcMarket?: boolean;
   wethPos?: Pos;
   wbtcPos?: Pos;
+  epoch?: AgentObservation["epoch"];
+  runId?: string;
 } = {}): AgentObservation {
   const fairWeth = opts.fairWeth ?? 3000;
   const fairWbtc = opts.fairWbtc ?? 60_000;
@@ -93,7 +118,8 @@ function obsFor(opts: {
   }
   return {
     kind: "observation",
-    runId: "t",
+    runId: opts.runId ?? "t",
+    epoch: opts.epoch,
     round: block,
     blockNumber: String(block),
     agentAddress: "0x0000000000000000000000000000000000000001",
@@ -161,6 +187,11 @@ const gmxOnly = (xs: Act[]) =>
 // Fair 2% under the anchor for WETH (g = +2.04%); WBTC stays at its anchor (g = 0).
 const LOW = 3000 / 1.0204;
 
+async function warmup(opts: Parameters<typeof obsFor>[0] = {}): Promise<void> {
+  for (let block = 98; block <= 100; block++)
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ ...opts, block }))), []);
+}
+
 // ---------------------------------------------------------------------------
 // anchor
 // ---------------------------------------------------------------------------
@@ -201,6 +232,7 @@ const base = {
   usdcFreeUnits: 25_000_000_000n,
   ethWei: 10n ** 18n,
   priorityFeeWei: "100000000",
+  confirmedBlocks: 3,
 };
 
 test("hysteresis: a held position is kept anywhere inside the band, on either side of the anchor", () => {
@@ -244,10 +276,10 @@ test("sizing: $40k at 4x on USDC, scaled down to what leaves the $5k reserve, sk
 // pending orders, reversal, end of epoch (through decide, with the module's own memory)
 // ---------------------------------------------------------------------------
 
-test("pending: an increase is not re-sent while its fill is not yet reflected; expires after 6 blocks", async () => {
+test("pending: an unreflected increase never expires without cancellation evidence", async () => {
   g.resetOuStateForTest();
-  // Block 100 sets the anchors (3000 / 60000).
-  assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 100 }))), []);
+  // Three observations establish the anchors and the initial flat position.
+  await warmup();
   const first = gmxOnly(await emitted(obsFor({ block: 101, fairWeth: LOW })));
   assert.equal(first.length, 1);
   assert.equal(first[0].type, "gmxIncrease");
@@ -255,32 +287,33 @@ test("pending: an increase is not re-sent while its fill is not yet reflected; e
   // Blocks 102..106: the position has not shown up, the signal is unchanged -> nothing new.
   for (let b = 102; b <= 106; b++)
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block: b, fairWeth: LOW }))), [], `block ${b}`);
-  // Block 107 = sent + 6: the order is presumed lost and the module may act again.
-  const again = gmxOnly(await emitted(obsFor({ block: 107, fairWeth: LOW })));
-  assert.equal(again.length, 1);
-  assert.equal(again[0].type, "gmxIncrease");
+  for (let block = 107; block <= 120; block++)
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
 });
 
 test("pending: once the fill is reflected the module stops waiting and holds", async () => {
   g.resetOuStateForTest();
-  await emitted(obsFor({ block: 100 }));
+  await warmup();
   assert.equal(gmxOnly(await emitted(obsFor({ block: 101, fairWeth: LOW }))).length, 1);
+  await emitted(obsFor({ block: 102, fairWeth: LOW }));
   // Reflected at block 103: positioned, nothing more.
   assert.deepEqual(
     gmxOnly(await emitted(obsFor({ block: 103, fairWeth: LOW, wethPos: pos(40_000) }))),
     [],
   );
-  // And it is not pending any more: a later liquidation (position gone) is re-entered at once,
-  // well inside the 6-block window of the original order.
-  const reentry = gmxOnly(await emitted(obsFor({ block: 104, fairWeth: LOW })));
+  // An absent position must remain flat for three consecutive observed blocks before re-entry.
+  for (const block of [104, 105])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+  const reentry = gmxOnly(await emitted(obsFor({ block: 106, fairWeth: LOW })));
   assert.equal(reentry.length, 1);
   assert.equal(reentry[0].type, "gmxIncrease");
 });
 
 test("reversal: decrease all now, the opposite increase once the decrease is reflected", async () => {
   g.resetOuStateForTest();
-  await emitted(obsFor({ block: 100 }));
+  await warmup();
   const HIGH = 3000 * 1.0204; // g = -2%: short wanted
+  for (let block = 101; block < 110; block++) await emitted(obsFor({ block }));
   const close = gmxOnly(await emitted(obsFor({ block: 110, fairWeth: HIGH, wethPos: pos(40_000) })));
   assert.equal(close.length, 1);
   assert.equal(close[0].type, "gmxDecrease");
@@ -293,8 +326,10 @@ test("reversal: decrease all now, the opposite increase once the decrease is ref
     gmxOnly(await emitted(obsFor({ block: 111, fairWeth: HIGH, wethPos: pos(40_000) }))),
     [],
   );
-  // The long is gone: open the short.
-  const open = gmxOnly(await emitted(obsFor({ block: 112, fairWeth: HIGH })));
+  // The long is gone: require three flat blocks before opening the short.
+  for (const block of [112, 113])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: HIGH }))), []);
+  const open = gmxOnly(await emitted(obsFor({ block: 114, fairWeth: HIGH })));
   assert.equal(open.length, 1);
   assert.equal(open[0].type, "gmxIncrease");
   assert.equal(open[0].isLong, false);
@@ -302,7 +337,7 @@ test("reversal: decrease all now, the opposite increase once the decrease is ref
 
 test("end of epoch: no new orders at 5 blocks remaining or fewer", async () => {
   g.resetOuStateForTest();
-  await emitted(obsFor({ block: 100 }));
+  await warmup();
   for (const left of [5, 3, 1, 0])
     assert.deepEqual(
       gmxOnly(await emitted(obsFor({ block: 101, fairWeth: LOW, blocksRemaining: left }))),
@@ -316,8 +351,10 @@ test("end of epoch: no new orders at 5 blocks remaining or fewer", async () => {
     ),
     [],
   );
+  for (const block of [103, 104])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW, blocksRemaining: 6 }))), []);
   assert.equal(
-    gmxOnly(await emitted(obsFor({ block: 103, fairWeth: LOW, blocksRemaining: 6 }))).length,
+    gmxOnly(await emitted(obsFor({ block: 105, fairWeth: LOW, blocksRemaining: 6 }))).length,
     1,
   );
 });
@@ -330,7 +367,7 @@ test("absent GMX: no venue -> no orders; no WBTC market -> WETH only", async () 
     [],
   );
   g.resetOuStateForTest();
-  await emitted(obsFor({ block: 100, wbtcMarket: false }));
+  await warmup({ wbtcMarket: false });
   const out = gmxOnly(
     await emitted(obsFor({ block: 101, fairWeth: LOW, fairWbtc: 60_000 / 1.02, wbtcMarket: false })),
   );
@@ -340,7 +377,7 @@ test("absent GMX: no venue -> no orders; no WBTC market -> WETH only", async () 
 
 test("both bases open in one block and the orders parse and validate", async () => {
   g.resetOuStateForTest();
-  await emitted(obsFor({ block: 100 }));
+  await warmup();
   const obs = obsFor({ block: 101, fairWeth: LOW, fairWbtc: 60_000 * 1.02 });
   const out = gmxOnly(await emitted(obs));
   assert.equal(out.length, 2);
@@ -388,4 +425,262 @@ test("inside the band opus-1g emits exactly opus-1a's actions", async () => {
     if (theirs.length > 0) acted += 1;
   }
   assert.ok(acted >= 2, `the sequence must exercise opus-1a's own actions (acted in ${acted})`);
+});
+
+
+test("reload: no increase during the two-block fill window without persistence", async () => {
+  g.resetOuStateForTest();
+  for (let block = 98; block <= 100; block++) await emitted(obsFor({ block }));
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 101, fairWeth: LOW }))).length, 1);
+  g.resetOuStateForTest();
+  assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 102, fairWeth: LOW }))), []);
+  assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 103, fairWeth: LOW, wethPos: pos(40_000) }))), []);
+});
+
+test("risk: stop loss closes an aligned position and disables re-entry", async () => {
+  g.resetOuStateForTest();
+  const losing = { ...pos(40_000), pnlUsd: -5001 };
+  const close = gmxOnly(await emitted(obsFor({ block: 100, fairWeth: LOW, wethPos: losing })));
+  assert.equal(close.length, 1);
+  assert.equal(close[0].type, "gmxDecrease");
+  for (let block = 101; block <= 110; block++)
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+});
+
+
+test("confirmation: three distinct consecutive blocks, never repeated snapshots", async () => {
+  for (const block of [100, 100, 100, 101])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 102, fairWeth: LOW }))).length, 1);
+});
+
+test("persistence: anchor and pending survive reload at fair 2700, including after six blocks", async () => {
+  const path = persistentState();
+  await warmup();
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 101, fairWeth: LOW }))).length, 1);
+  g.resetOuStateForTest();
+  for (let block = 102; block <= 110; block++) {
+    const ctx = fakeCtx();
+    const action = await g.decide(obsFor({ block, fairWeth: 2700 }), ctx);
+    assert.deepEqual(gmxOnly([action, ...ctx.submitted].filter(Boolean) as Act[]), []);
+    const log = ctx.logs.at(-1) as { signals: Record<string, number> };
+    assert.equal(log.signals.ouAnchorWETH, 3000);
+  }
+  const raw = readFileSync(path, "utf8");
+  assert.ok(raw.length < 2048, `small bounded record: ${raw.length} bytes`);
+  const saved = JSON.parse(raw);
+  assert.equal(saved.epoch.key, "start:98");
+  assert.equal(saved.bases.find((b: Act) => b.base === "WETH").pending.sentBlock, 101);
+});
+
+test("persistence: an anchor survives reload even when there is no pending order", async () => {
+  persistentState();
+  await warmup();
+  g.resetOuStateForTest();
+  for (const block of [101, 102])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: 2700 }))), []);
+  const out = gmxOnly(await emitted(obsFor({ block: 103, fairWeth: 2700 })));
+  assert.equal(out.length, 1);
+  assert.equal(out[0].isLong, true);
+});
+
+test("pending: a missing GMX market does not cancel an increase", async () => {
+  persistentState();
+  await warmup();
+  await emitted(obsFor({ block: 101, fairWeth: LOW }));
+  await emitted(obsFor({ block: 102, gmx: false }));
+  g.resetOuStateForTest();
+  for (let block = 103; block <= 110; block++)
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+});
+
+test("emission: logging and submit exceptions do not record phantom pending intents", async () => {
+  const path = persistentState();
+  await warmup();
+  const ctx = fakeCtx();
+  ctx.log = () => { throw new Error("injected log failure"); };
+  await assert.rejects(g.decide(obsFor({ block: 101, fairWeth: LOW }), ctx), /injected/);
+  let saved = JSON.parse(readFileSync(path, "utf8"));
+  assert.equal(saved.bases.find((b: Act) => b.base === "WETH").pending, undefined);
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 102, fairWeth: LOW }))).length, 1);
+
+  // A fresh epoch builds two OU actions, placing at least one on the ctx.submit path.
+  g.resetOuStateForTest();
+  for (let block = 200; block < 203; block++) await emitted(obsFor({ block }));
+  const failingSubmit = fakeCtx();
+  failingSubmit.submit = () => { throw new Error("injected submit failure"); };
+  await assert.rejects(g.decide(obsFor({ block: 203, fairWeth: LOW,
+    fairWbtc: 60_000 * 1.02 }), failingSubmit), /injected/);
+  saved = JSON.parse(readFileSync(path, "utf8"));
+  assert.ok(saved.bases.every((b: Act) => b.pending === undefined));
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 204, fairWeth: LOW,
+    fairWbtc: 60_000 * 1.02 }))).length, 2);
+});
+
+test("persistence: corrupt or unwritable state falls back to the confirmation guard", async () => {
+  const path = persistentState();
+  writeFileSync(path, "{incomplete");
+  for (const block of [100, 101])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 102, fairWeth: LOW }))).length, 1);
+  // A regular file cannot serve as a directory. No permissions assumptions (e.g. root) needed.
+  process.env.ERIS_AGENT_STATE_DIR = path;
+  g.resetOuStateForTest();
+  for (const block of [103, 104])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 105, fairWeth: LOW }))).length, 1);
+});
+
+test("risk: loss threshold is strict and closes either side with only the execution fee", async () => {
+  for (const side of [1, -1]) {
+    g.resetOuStateForTest();
+    const fairWeth = side > 0 ? LOW : 3000 * 1.019;
+    const atThreshold = { ...pos(side * 40_000), pnlUsd: -5000 };
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 100, fairWeth,
+      wethPos: atThreshold }))), []);
+    const out = gmxOnly(await emitted(obsFor({ block: 101, fairWeth,
+      wethPos: { ...atThreshold, pnlUsd: -5000.01 },
+      blocksRemaining: 1, ethWei: "30000000000000000" })));
+    assert.equal(out.length, 1);
+    assert.equal(out[0].type, "gmxDecrease");
+    assert.equal(out[0].isLong, side > 0);
+    for (let block = 102; block <= 108; block++)
+      assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth }))), []);
+  }
+});
+
+test("risk: a stop remains latched without fee funds and across reload after the close", async () => {
+  persistentState();
+  assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 100, fairWeth: LOW,
+    wethPos: { ...pos(40_000), pnlUsd: -6000 }, ethWei: "29999999999999999" }))), []);
+  g.resetOuStateForTest();
+  // PnL recovery cannot unlatch an already-triggered risk exit.
+  const out = gmxOnly(await emitted(obsFor({ block: 101, fairWeth: LOW, wethPos: pos(40_000) })));
+  assert.equal(out[0]?.type, "gmxDecrease");
+  g.resetOuStateForTest();
+  for (let block = 102; block <= 110; block++)
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+});
+
+test("risk: 24 consecutive adverse drift steps close long and short, with no re-entry after reload", async () => {
+  persistentState();
+  for (const side of [1, -1]) {
+    // A new epoch clears the previous side's stop; all prices remain on its adverse anchor side.
+    const epoch = { index: side > 0 ? 1 : 2, count: 60 };
+    const fair = (step: number) => 3000 - side * (30 + step);
+    for (let step = 0; step < 24; step++) {
+      if (step === 12) g.resetOuStateForTest();
+      assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 100 + step, epoch,
+        fairWeth: fair(step), wethPos: pos(side * 40_000) }))), [], `step ${step}`);
+    }
+    const out = gmxOnly(await emitted(obsFor({ block: 124, epoch,
+      fairWeth: fair(24), wethPos: pos(side * 40_000) })));
+    assert.equal(out.length, 1);
+    assert.equal(out[0].type, "gmxDecrease");
+    assert.equal(out[0].isLong, side > 0);
+    g.resetOuStateForTest();
+    for (let block = 125; block <= 132; block++)
+      assert.deepEqual(gmxOnly(await emitted(obsFor({ block, epoch, fairWeth: fair(24) }))), []);
+  }
+});
+
+test("risk: a plateau or favorable tick breaks the adverse drift streak", async () => {
+  for (const breakFair of [2947, 2950]) {
+    g.resetOuStateForTest();
+    for (let step = 0; step < 24; step++)
+      assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 100 + step,
+        fairWeth: 2970 - step, wethPos: pos(40_000) }))), []);
+    for (let step = 0; step < 24; step++)
+      assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 124 + step,
+        fairWeth: breakFair - step, wethPos: pos(40_000) }))), []);
+    assert.equal(gmxOnly(await emitted(obsFor({ block: 148,
+      fairWeth: breakFair - 24, wethPos: pos(40_000) })))[0]?.type, "gmxDecrease");
+  }
+});
+
+test("ETH: reversal decrease accepts 0.03 to below 0.08 ETH, entry still needs the reserve", () => {
+  for (const ethWei of [30_000_000_000_000_000n, 50_000_000_000_000_000n,
+    79_999_999_999_999_999n]) {
+    const d = g.ouPlan({ ...base, fair: 3060, position: pos(40_000) as never, ethWei });
+    assert.equal(d.action?.type, "gmxDecrease");
+    assert.equal(g.ouPlan({ ...base, fair: LOW, position: undefined, ethWei }).action, undefined);
+  }
+  assert.equal(g.ouPlan({ ...base, fair: 3060, position: pos(40_000) as never,
+    ethWei: 29_999_999_999_999_999n }).action, undefined);
+});
+
+test("epoch: ordinal change clears anchors, pending, confirmation and risk stops on disk and in memory", async () => {
+  const path = persistentState();
+  const epoch1 = { index: 1, count: 60 };
+  const epoch2 = { index: 2, count: 60 };
+  await emitted(obsFor({ block: 100, epoch: epoch1, fairWeth: LOW,
+    wethPos: { ...pos(40_000), pnlUsd: -6000 } }));
+  // Consecutive block numbers: the ordinal alone must cause a reset.
+  await emitted(obsFor({ block: 101, epoch: epoch2, fairWeth: 2700 }));
+  const saved = JSON.parse(readFileSync(path, "utf8"));
+  assert.equal(saved.epoch.key, "epoch:2/60");
+  const weth = saved.bases.find((b: Act) => b.base === "WETH");
+  assert.equal(weth.anchor, 2700);
+  assert.equal(weth.pending, undefined);
+  assert.equal(weth.stopped, false);
+  g.resetOuStateForTest();
+  for (const block of [102, 103])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, epoch: epoch2, fairWeth: 2650 }))), []);
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 104, epoch: epoch2, fairWeth: 2650 }))).length, 1);
+});
+
+test("epoch: block discontinuities start fresh records and restart entry confirmation", async () => {
+  const path = persistentState();
+  for (const nextBlock of [10, 200]) {
+    g.resetOuStateForTest();
+    await warmup();
+    await emitted(obsFor({ block: 101, fairWeth: LOW }));
+    g.resetOuStateForTest();
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block: nextBlock, fairWeth: 2700 }))), []);
+    const saved = JSON.parse(readFileSync(path, "utf8"));
+    assert.equal(saved.epoch.key, `start:${nextBlock}`);
+    const weth = saved.bases.find((b: Act) => b.base === "WETH");
+    assert.equal(weth.anchor, 2700);
+    assert.equal(weth.pending, undefined);
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block: nextBlock + 1, fairWeth: 2650 }))), []);
+    assert.equal(gmxOnly(await emitted(obsFor({ block: nextBlock + 2, fairWeth: 2650 }))).length, 1);
+  }
+});
+
+test("epoch: declared run start is stable over reload and run identity isolates reused block numbers", async () => {
+  const path = persistentState();
+  const call = async (block: number, runId = "first") => {
+    const ctx = fakeCtx();
+    ctx.config.runBlocks = 360;
+    await g.decide(obsFor({ block, runId, blocksRemaining: 360 - (block - 90) }), ctx);
+  };
+  await call(100);
+  g.resetOuStateForTest();
+  await call(101);
+  assert.equal(JSON.parse(readFileSync(path, "utf8")).epoch.key, "start:90");
+  await call(110); // forward discontinuity resets the record, not the declared run origin
+  g.resetOuStateForTest();
+  await call(111);
+  assert.equal(JSON.parse(readFileSync(path, "utf8")).epoch.key, "start:90");
+  await call(112, "second");
+  const saved = JSON.parse(readFileSync(path, "utf8"));
+  assert.equal(saved.epoch.runId, "second");
+  assert.equal(saved.epoch.key, "start:90");
+});
+
+
+test("pending: persisted decrease survives reload and a transient missing position", async () => {
+  persistentState();
+  await warmup();
+  const high = 3057;
+  const first = gmxOnly(await emitted(obsFor({ block: 101, fairWeth: high, wethPos: pos(40_000) })));
+  assert.equal(first[0]?.type, "gmxDecrease");
+  g.resetOuStateForTest();
+  assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 102, fairWeth: high }))), []);
+  assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 103, fairWeth: high, wethPos: pos(40_000) }))), []);
+  for (const block of [104, 105])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: high }))), []);
+  const opposite = gmxOnly(await emitted(obsFor({ block: 106, fairWeth: high })));
+  assert.equal(opposite[0]?.type, "gmxIncrease");
+  assert.equal(opposite[0]?.isLong, false);
 });

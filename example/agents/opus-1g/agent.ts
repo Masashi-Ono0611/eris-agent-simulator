@@ -57,11 +57,13 @@
  * Every module runs inside its own try/catch and its own error budget: one broken module cannot
  * take the others down, and a module that throws three times stops being called. The only
  * RPC-touching module (M6) is skipped when the decision is already slow, and each of its calls
- * carries its own timeout. Nothing reads an environment variable: the tuning lives in PARAMS.
+ * carries its own timeout. Tuning lives in PARAMS; only M-OU persistence reads ERIS_AGENT_STATE_DIR.
  */
 import type { AgentObservation } from "@eris/sdk";
 import type { AgentContext } from "@eris/sdk/agent.js";
 import { encodeFunctionData } from "viem";
+import { readFileSync, statSync, writeFileSync, renameSync } from "node:fs";
+import { join } from "node:path";
 import { TOKENS, UNISWAP } from "@eris/sdk/constants.js";
 import {
   marketViews,
@@ -178,9 +180,8 @@ export const PARAMS = {
   ouEntryFrac: 0.008,
   /** Notional per base. */
   ouNotionalUsd: 40_000,
-  /** Size / collateral. 4x is the most this module takes: it locks the least USDC ($10k a base,
-   *  $20k of the 25k funded), and margin falls to GMX's 1% maintenance only after a ~24% move
-   *  against the entry, beyond the largest published crash/spike magnitude (22%). */
+  /** Size / collateral. This is sizing, not a liquidation guarantee: cumulative moves, fees
+   *  and keeper delay can outrun even the loss/drift exits below. */
   ouLeverage: 4,
   /** USDC left in the wallet for M1-M6 after collateral is posted. M1's size is bounded by
    *  depth x 0.0015 (~$4.5k at the assumed depth) and M2 steps by $2.5k, so $5k keeps both able
@@ -188,16 +189,18 @@ export const PARAMS = {
   ouUsdcReserveUsd: 5_000,
   /** When USDC caps the size, an order smaller than this is not worth its fees. */
   ouMinNotionalUsd: 10_000,
-  /** A sent order that has not shown up in the observation after this many blocks is forgotten. */
-  ouPendingExpiryBlocks: 6,
+  /** Distinct consecutive observations required before an increase (also after worker reload). */
+  ouConfirmBlocks: 3,
+  ouLossCollateralFrac: 0.5,
+  ouAdverseDriftBlocks: 24,
   /** An observed position this close to what the pending order should leave counts as reflected. */
   ouReflectTolUsd: 500,
   /** No new orders once this few blocks remain (the position is valued as it stands at the bell). */
   ouStopBlocks: 5,
-  /** Native ETH that must remain after paying the order's 0.03 ETH execution fee. */
+  /** Native ETH that must remain after an increase; decreases need only the execution fee. */
   ouEthReserveWei: 50_000_000_000_000_000n, // 0.05 ETH
   /** The published opening fair per base; used as the anchor when the first fair is within
-   *  ouAnchorMatchFrac of it, so a worker reload mid-run re-finds the same anchor. */
+   *  ouAnchorMatchFrac of it. A persisted anchor always takes precedence. */
   ouPublishedAnchor: { WETH: 3_000, WBTC: 60_000 } as Record<string, number>,
   ouAnchorMatchFrac: 0.02,
 
@@ -1231,16 +1234,156 @@ const USD_1E30 = 10n ** 30n;
 /** The execution fee the runtime attaches to every GMX order (sdk/src/protocols/gmx.ts). */
 const GMX_EXECUTION_FEE_WEI = 30_000_000_000_000_000n;
 
+const OU_BASES = ["WETH", "WBTC"] as const;
 const ouAnchors = new Map<string, number>();
 
-/** An order sent and not yet seen: the signed USD exposure it should leave, and when it went. */
+/** An emitted intent, not an acknowledgement of validation, submission or cancellation. */
 export type OuPending = { expectSignedUsd: number; sentBlock: number; kind: "increase" | "decrease" };
 const ouPending = new Map<string, OuPending>();
+type OuDrift = { block: number; fair: number; side: number; count: number };
+const ouDrift = new Map<string, OuDrift>();
+const ouStopped = new Set<string>();
+// Deliberately worker-local: disk state cannot waive the reload confirmation window.
+const ouObserved = new Map<string, { block: number; size: number; count: number }>();
+type OuEpoch = { key: string; runId: string; startBlock: number; lastBlock: number };
+let ouEpoch: OuEpoch | undefined;
+let ouStatePath: string | undefined;
+let ouLoaded = false;
+let ouStorageFailed = false;
 
-/** Tests only: module memory survives between test cases in one process. */
+/** Tests simulate a replacement worker. Disk is intentionally untouched. */
 export function resetOuStateForTest(): void {
   ouAnchors.clear();
   ouPending.clear();
+  ouDrift.clear();
+  ouStopped.clear();
+  ouObserved.clear();
+  ouEpoch = undefined;
+  ouStatePath = undefined;
+  ouLoaded = false;
+  ouStorageFailed = false;
+}
+
+function ouBlock(obs: AgentObservation): number {
+  const block = Number(obs.blockNumber);
+  return Number.isFinite(block) ? block : obs.round;
+}
+
+function loadOuState(): void {
+  ouLoaded = true;
+  const dir = process.env.ERIS_AGENT_STATE_DIR;
+  // Without disk this can only mitigate the measured fill delay. An obs-only module cannot
+  // guarantee one in-flight order across replacement workers or reconstruct a lost live anchor.
+  if (!dir) return;
+  ouStatePath = join(dir, "opus-1g-ou-state.json");
+  try {
+    // Only this small, strategy-owned file is read. Never read runtime versions or credentials.
+    if (statSync(ouStatePath).size > 16_384) throw new Error("oversized OU state");
+    const saved = JSON.parse(readFileSync(ouStatePath, "utf8"));
+    const e = saved.epoch;
+    if (saved.schema !== 1 || !e || typeof e.key !== "string" ||
+        typeof e.runId !== "string" || !Number.isSafeInteger(e.startBlock) ||
+        !Number.isSafeInteger(e.lastBlock) || !Array.isArray(saved.bases))
+      throw new Error("invalid OU state");
+    // Validate before installing any of it, so a malformed record cannot partially restore.
+    for (const b of saved.bases) {
+      if (!OU_BASES.includes(b.base) || !Number.isFinite(b.anchor) || b.anchor <= 0 ||
+          typeof b.stopped !== "boolean" ||
+          (b.pending && (!Number.isFinite(b.pending.expectSignedUsd) ||
+            !Number.isSafeInteger(b.pending.sentBlock) ||
+            !["increase", "decrease"].includes(b.pending.kind))) ||
+          (b.drift && (!Number.isSafeInteger(b.drift.block) ||
+            !Number.isFinite(b.drift.fair) || b.drift.fair <= 0 ||
+            ![-1, 0, 1].includes(b.drift.side) || !Number.isSafeInteger(b.drift.count) ||
+            b.drift.count < 0))) throw new Error("invalid OU base");
+    }
+    ouEpoch = e;
+    for (const b of saved.bases) {
+      ouAnchors.set(b.base, b.anchor);
+      if (b.pending) ouPending.set(b.base, b.pending);
+      if (b.drift) ouDrift.set(b.base, b.drift);
+      if (b.stopped) ouStopped.add(b.base);
+    }
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") ouStorageFailed = true;
+    // No usable state: retain the worker-local confirmation guard.
+  }
+}
+
+function beginOuObservation(obs: AgentObservation, ctx: AgentContext): void {
+  if (!ouLoaded) loadOuState();
+  const block = ouBlock(obs);
+  // The runtime's block budget gives the run origin, even on a late worker start. With no
+  // declared budget, retain the first observed block across reloads of a continuous run.
+  const runBlocks = ctx.config.runBlocks;
+  const hasRunBudget = Number.isFinite(runBlocks) && runBlocks > 0 &&
+    Number.isFinite(obs.blocksRemaining);
+  const startBlock = hasRunBudget ? block + obs.blocksRemaining! - runBlocks
+    : ouEpoch?.runId === obs.runId ? ouEpoch.startBlock : block;
+  const key = obs.epoch
+    ? `epoch:${obs.epoch.index}/${obs.epoch.count}` : `start:${startBlock}`;
+  // A repeated observation is not a new block. Any other non-unit step starts a fresh record.
+  const discontinuity = ouEpoch && block !== ouEpoch.lastBlock && block !== ouEpoch.lastBlock + 1;
+  if (!ouEpoch || ouEpoch.key !== key || ouEpoch.runId !== obs.runId || discontinuity) {
+    ouAnchors.clear();
+    ouPending.clear();
+    ouDrift.clear();
+    ouStopped.clear();
+    ouObserved.clear();
+    const origin = discontinuity && !hasRunBudget ? block : startBlock;
+    ouEpoch = { key: obs.epoch ? key : `start:${origin}`, runId: obs.runId,
+      startBlock: origin, lastBlock: block };
+  }
+  ouEpoch.lastBlock = block;
+}
+
+function saveOuState(): void {
+  if (!ouStatePath || !ouEpoch) return;
+  try {
+    const body = JSON.stringify({ schema: 1, epoch: ouEpoch,
+      bases: OU_BASES.filter(base => ouAnchors.has(base)).map(base => ({
+        base, anchor: ouAnchors.get(base), pending: ouPending.get(base),
+        drift: ouDrift.get(base), stopped: ouStopped.has(base),
+      })),
+    });
+    // One bounded record, atomically replaced; no observation history accumulates across epochs.
+    writeFileSync(`${ouStatePath}.tmp`, body);
+    renameSync(`${ouStatePath}.tmp`, ouStatePath);
+  } catch {
+    ouStorageFailed = true;
+    ouStatePath = undefined; // fail soft for this worker, retaining in-memory protection
+  }
+}
+
+function observeOuPosition(base: string, block: number, size: number): number {
+  if (block <= (ouPending.get(base)?.sentBlock ?? -Infinity)) return 0;
+  const prev = ouObserved.get(base);
+  if (prev?.block === block) {
+    // Repeated snapshots cannot supply confirmations; conflicting snapshots restart the count.
+    if (prev.size !== size) ouObserved.set(base, { block, size, count: 0 });
+    return ouObserved.get(base)!.count;
+  }
+  const count = prev && prev.block === block - 1 && prev.size === size ? prev.count + 1 : 1;
+  ouObserved.set(base, { block, size, count: Math.min(count, PARAMS.ouConfirmBlocks) });
+  return count;
+}
+
+function observeOuRisk(base: string, block: number, fair: number, anchor: number,
+  position: GmxPositionObs | undefined): boolean {
+  const side = Math.sign(signedSizeUsd(position));
+  const prev = ouDrift.get(base);
+  if (prev?.block !== block) {
+    const adverse = side !== 0 && prev?.side === side && prev.block === block - 1 &&
+      side * (fair - prev.fair) < 0 && side * (fair - anchor) < 0;
+    ouDrift.set(base, { block, fair, side,
+      count: adverse ? Math.min(prev.count + 1, PARAMS.ouAdverseDriftBlocks) : 0 });
+  }
+  const collateralUsd = Number(big(position?.collateralAmount)) / 1e6;
+  const loss = position && side !== 0 &&
+    position.pnlUsd < -PARAMS.ouLossCollateralFrac * collateralUsd;
+  if (loss || (ouDrift.get(base)?.count ?? 0) >= PARAMS.ouAdverseDriftBlocks)
+    ouStopped.add(base);
+  return ouStopped.has(base);
 }
 
 /** The anchor for one base: the published opening fair when the first fair seen is near it. */
@@ -1307,8 +1450,8 @@ export type OuDecision = {
 };
 
 /**
- * What M-OU does for one base this block. Pure apart from the anchor cache: the caller owns the
- * pending table and the wallet, so the arithmetic can be exercised without a chain.
+ * Pure plan for one base. The caller owns confirmation history, risk latches, pending intents
+ * and the wallet, so the arithmetic can be exercised without a chain.
  */
 export function ouPlan(args: {
   base: string;
@@ -1321,20 +1464,22 @@ export function ouPlan(args: {
   usdcFreeUnits: bigint;
   ethWei: bigint;
   priorityFeeWei: string;
+  confirmedBlocks: number;
+  riskStopped?: boolean;
 }): OuDecision {
   const { base, fair, anchor, position, block } = args;
   const g = (anchor - fair) / fair;
   const signedUsd = signedSizeUsd(position);
   const out: OuDecision = { base, g, signedUsd, usdcSpent: 0n, note: "" };
 
-  // 1. An order in flight: wait until the observation shows it, or until it is presumed lost.
+  // No order-status API is exposed by obs. Time passing never proves cancellation. Position
+  // absence is treated as flat only under the runtime's confirmed-snapshot contract, and a
+  // decrease must be reflected in three consecutive observations before an opposite increase.
   let pending = args.pending;
   if (pending) {
     const tol = Math.max(PARAMS.ouReflectTolUsd, Math.abs(pending.expectSignedUsd) * 0.02);
-    if (Math.abs(signedUsd - pending.expectSignedUsd) <= tol) {
-      pending = undefined;
-    } else if (block - pending.sentBlock >= PARAMS.ouPendingExpiryBlocks) {
-      out.note = `pending ${pending.kind} expired after ${block - pending.sentBlock}b`;
+    if (Math.abs(signedUsd - pending.expectSignedUsd) <= tol &&
+        (pending.kind === "increase" || args.confirmedBlocks >= PARAMS.ouConfirmBlocks)) {
       pending = undefined;
     } else {
       out.pending = pending;
@@ -1345,18 +1490,18 @@ export function ouPlan(args: {
   out.pending = undefined;
 
   // 2. The bell: what is held is valued as it stands; a new order might not even execute in time.
-  if (args.blocksRemaining <= PARAMS.ouStopBlocks) {
+  if (!args.riskStopped && args.blocksRemaining <= PARAMS.ouStopBlocks) {
     out.note ||= "end of epoch: no new orders";
     return out;
   }
 
   const want = ouSignal(g);
   const held = signedUsd > 0 ? 1 : signedUsd < 0 ? -1 : 0;
-  if (want === 0 || want === held) {
+  if (!args.riskStopped && (want === 0 || want === held)) {
     out.note ||= want === 0 ? "inside the band: hold" : "positioned";
     return out;
   }
-  if (args.ethWei < GMX_EXECUTION_FEE_WEI + PARAMS.ouEthReserveWei) {
+  if (args.ethWei < GMX_EXECUTION_FEE_WEI + (held === 0 ? PARAMS.ouEthReserveWei : 0n)) {
     out.note = "ETH short of the execution fee";
     return out;
   }
@@ -1373,11 +1518,17 @@ export function ouPlan(args: {
       maxPriorityFeePerGasWei: args.priorityFeeWei,
     };
     out.pending = { expectSignedUsd: 0, sentBlock: block, kind: "decrease" };
-    out.note = `g ${(g * 100).toFixed(2)}%: close ${held > 0 ? "long" : "short"} ${Math.round(Math.abs(signedUsd))}`;
+    out.note = `${args.riskStopped ? "risk exit: " : ""}g ${(g * 100).toFixed(2)}%: close ${held > 0 ? "long" : "short"} ${Math.round(Math.abs(signedUsd))}`;
     return out;
   }
 
-  // 4. Flat: open the signalled side at the notional the free USDC can carry.
+  // 4. A risk exit disables entries for the remainder of this epoch. Three observations
+  // mitigate the measured two-block fill window without claiming exactly-once submission.
+  if (args.riskStopped || args.confirmedBlocks < PARAMS.ouConfirmBlocks) {
+    out.note = args.riskStopped ? "risk exit: entries disabled" : "waiting for stable position";
+    return out;
+  }
+  // Flat: open the signalled side at the notional the free USDC can carry.
   const reserve = unitsFromUsd(PARAMS.ouUsdcReserveUsd, 1, 6);
   const spendable = args.usdcFreeUnits > reserve ? args.usdcFreeUnits - reserve : 0n;
   const affordableUsd = (Number(spendable) / 1e6) * PARAMS.ouLeverage;
@@ -1406,26 +1557,31 @@ export function ouPlan(args: {
   return out;
 }
 
-const OU_BASES = ["WETH", "WBTC"] as const;
-
 function ouModule(
   obs: AgentObservation,
   wallet: Wallet,
   out: Candidate[],
   signals: Record<string, number | undefined>,
 ): void {
-  const block = Number(obs.blockNumber);
-  const blockNo = Number.isFinite(block) ? block : obs.round;
+  const blockNo = ouBlock(obs);
   const fee = (big(obs.limits?.defaultPriorityFeePerGasWei) || 1n).toString();
   for (const base of OU_BASES) {
     const market = gmxMarketOf(obs, base);
     if (!market) {
-      ouPending.delete(base);
+      ouObserved.delete(base);
+      ouDrift.delete(base);
+      // A missing venue says nothing about settlement: retain pending orders and the anchor.
       continue;
     }
     const fair = ouFair(obs, base, market);
-    if (!(fair > 0)) continue;
+    if (!(fair > 0) || !Number.isFinite(fair)) {
+      ouObserved.delete(base);
+      ouDrift.delete(base);
+      continue;
+    }
     const anchor = resolveOuAnchor(base, fair);
+    const confirmedBlocks = observeOuPosition(base, blockNo, signedSizeUsd(market.position));
+    const riskStopped = observeOuRisk(base, blockNo, fair, anchor, market.position);
     const d = ouPlan({
       base,
       fair,
@@ -1437,9 +1593,11 @@ function ouModule(
       usdcFreeUnits: wallet.usdc,
       ethWei: wallet.ethWei,
       priorityFeeWei: fee,
+      confirmedBlocks,
+      riskStopped,
     });
-    if (d.pending) ouPending.set(base, d.pending);
-    else ouPending.delete(base);
+    // Only reconcile existing intents here. New pending state is committed at the return boundary.
+    if (!d.action && !d.pending) ouPending.delete(base);
     // Log only: the position path, its fill price and collateral against the fair, for measuring.
     signals[`ouG${base}Bps`] = Math.round(d.g * 100_000) / 10;
     signals[`ouPos${base}Usd`] = Math.round(d.signedUsd);
@@ -1488,6 +1646,7 @@ export async function decide(
   ctx: AgentContext,
 ): Promise<Record<string, unknown> | null> {
   const startedAt = Date.now();
+  beginOuObservation(obs, ctx);
   const candidates: Candidate[] = [];
   let views: MarketView[] = [];
   const wallet = readWallet(obs);
@@ -1545,6 +1704,8 @@ export async function decide(
   const ouSignals: Record<string, number | undefined> = {};
   guard("ou", () => ouModule(obs, wallet, ouOrders, ouSignals), ctx);
 
+  saveOuState(); // anchors/risk history survive even if logging below throws; no new intents yet
+  ouSignals.ouPersistenceDegraded = ouStorageFailed ? 1 : 0;
   const weth = views.find((v) => v.base === "WETH");
   const reasons = [...chosen, ...ouOrders].map((c) => c.reason);
   ctx.log({
@@ -1576,5 +1737,18 @@ export async function decide(
   const emitted = [...chosen, ...ouOrders];
   if (emitted.length === 0) return null;
   for (const c of emitted.slice(1)) ctx.submit(c.action);
+  // No awaits or user callbacks after this point. submit() only queues: the runtime can still
+  // reject/discard the entire call. There is no ack/atomic disk+send transaction in this API;
+  // a timeout at this boundary can leave an intent that conservatively blocks the epoch.
+  for (const c of ouOrders) {
+    const action = c.action;
+    const base = String(action.base);
+    const increase = action.type === "gmxIncrease";
+    const size = Number(big(String(action.sizeDeltaUsd)) / 10n ** 24n) / 1e6;
+    ouPending.set(base, { expectSignedUsd: increase ? (action.isLong ? size : -size) : 0,
+      sentBlock: ouBlock(obs), kind: increase ? "increase" : "decrease" });
+    ouObserved.delete(base);
+  }
+  saveOuState();
   return emitted[0].action;
 }
