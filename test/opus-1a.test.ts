@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { decodeFunctionData, erc20Abi, type Address, type Hex } from "viem";
 import { TOKENS, UNISWAP } from "@eris/sdk/constants.js";
 import { swapBundle } from "../example/agents/lib/launchSwap.js";
+import { checkRevisedRawTx, rawTxAllowlist } from "../example/agents/runtime/rawTxGuard.js";
 
 const a = await import("../example/agents/opus-1a/agent.js");
 const MAX = (1n << 256n) - 1n;
@@ -52,4 +53,24 @@ test("a launch-token exit keeps the lib's exact approval; the rest of the bundle
   assert.deepEqual((ours.txs as unknown[])[1], (lib.txs as unknown[])[1]);
   assert.equal(ours.type, lib.type);
   assert.equal(ours.maxPriorityFeePerGasWei, lib.maxPriorityFeePerGasWei);
+});
+
+test("the runtime's raw-tx guard accepts the full approval: the spender is the bundled router", () => {
+  // The shipped strategy (version 0) is not guarded at all; this is the stricter path a revised
+  // strategy would face, so the fix cannot be what a guard refuses.
+  const b = a.launchSwapBundle(args(TOKENS.USDC.address, TOKEN));
+  const action = { type: "rawBundle", txs: (b.txs as { to: Address; data: Hex }[]).slice(0, 1) };
+  const verdict = checkRevisedRawTx(action as never, rawTxAllowlist({ observation: null }));
+  assert.deepEqual(verdict, { ok: true });
+  // The same guard refuses an approval to a spender the run does not know.
+  const bad = {
+    type: "rawBundle",
+    txs: [{ to: TOKENS.USDC.address, data: (b.txs as { data: Hex }[])[0].data.replace(UNISWAP.swapRouter.slice(2).toLowerCase(), TOKEN.slice(2)) as Hex }],
+  };
+  assert.equal(checkRevisedRawTx(bad as never, rawTxAllowlist({ observation: null })).ok, false);
+});
+
+test("USDC is recognised whatever the address's letter case", () => {
+  const lower = TOKENS.USDC.address.toLowerCase() as Address;
+  assert.equal(approval(a.launchSwapBundle(args(lower, TOKEN))).amount, MAX);
 });

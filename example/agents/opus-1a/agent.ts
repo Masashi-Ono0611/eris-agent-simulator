@@ -78,7 +78,8 @@ const MAX_UINT256 = (1n << 256n) - 1n;
  * The lib's swapBundle approves the router for exactly the amount it swaps. For a USDC leg that
  * replaces the wallet's standing unlimited USDC approval, and once the swap has pulled the amount the
  * allowance is zero: every later USDC->Uniswap swap of the epoch then reverts with STF (opus-1 lost
- * 13-118 submits per launch epoch this way). So a USDC leg re-approves in full, as the wallet started.
+ * 15-103 submits per launch epoch this way in four held-out runs). So a USDC leg re-approves in
+ * full, as the wallet started.
  */
 export function launchSwapBundle(args: Parameters<typeof swapBundle>[0]): Record<string, unknown> {
   const bundle = swapBundle(args);
