@@ -4,7 +4,7 @@
 # Control p also makes a directory under /tmp, removed at the end.
 #   /bin/bash ascon/eval/test-lane-queue.sh "$PWD"   (prints ALL_CONTROLS_OK, exits 0; else exits 1)
 set -u
-src="${1:?repo}"
+src="${1:?usage: /bin/bash $0 <repo root>, e.g. \"\$PWD\"}"
 T="$(mktemp -d)"; cd "$T" || exit 2
 TL=""
 echo "bash $BASH_VERSION ($BASH)"
@@ -55,6 +55,14 @@ open(os.environ["T"] + "/cc.log", "a").write(sys.argv[1] + "\n")
 print("fake collision verdict")
 sys.exit(int(os.environ.get("FAKE_CC_RC", "0")))
 EOF
+cat > fake/check-arm.py <<'EOF'
+import os, sys
+open(os.environ["T"] + "/arm.log", "a").write(" ".join(sys.argv[1:]) + "\n")
+print("fake arm verdict")
+sys.exit(int(os.environ.get("FAKE_ARM_RC", "0")))
+EOF
+# Fake sysctl: a fixed load, so the NOTE line can be compared exactly.
+printf '#!/bin/sh\necho "{ 1.50 1.40 1.30 }"\n' > bin/sysctl; chmod +x bin/sysctl
 # Fake npm for control f (the real run-matrix): a complete matrix, except for the job f2bad.
 cat > bin/npm <<'EOF'
 #!/bin/sh
@@ -78,7 +86,8 @@ EOF
 chmod +x dfseq/df
 unset ASCON_QUEUE_RUN_ID
 export T PATH="$T/bin:$PATH" ASCON_EVAL_LOGS="$T/logs" ASCON_QUEUE_MIN_FREE_GIB=0 \
-  ASCON_RUN_MATRIX="$T/fake/run-matrix.sh" ASCON_CHECK_COLLISION="$T/fake/check-collision.py"
+  ASCON_RUN_MATRIX="$T/fake/run-matrix.sh" ASCON_CHECK_COLLISION="$T/fake/check-collision.py" \
+  ASCON_CHECK_ARM="$T/fake/check-arm.py"
 LQ=ascon/eval/lane-queue.sh
 fails=0
 q() { local f="$1"; shift; printf '%s\n' "$@" > "$f"; }
@@ -104,14 +113,14 @@ q a.q "# two jobs" "a1fail tmpl.yaml slotA sc.yaml" "" "a2pass tmpl.yaml slotA s
 ASCON_QUEUE_RUN_ID=ra "$BASH" "$LQ" la a.q 9101 st-a > res/a.out 2>&1; rc=$?
 c=0
 [ "$rc" = 0 ] || c=1
-[ "$(markers la ra)" = "$(lines 'EXIT_a1fail=1 VERDICT=FAIL COLLISION=SKIP' \
-  'EXIT_a2pass=0 VERDICT=PASS COLLISION=PASS' 'QUEUE_DONE_la')" ] || c=1
+[ "$(markers la ra)" = "$(lines 'EXIT_a1fail=1 VERDICT=FAIL COLLISION=SKIP ARM=SKIP' \
+  'EXIT_a2pass=0 VERDICT=PASS COLLISION=PASS ARM=PASS' 'QUEUE_DONE_la')" ] || c=1
 [ "$(cat ran.log)" = "$(lines "a1fail $T/logs/rosters/a1fail.yaml sc.yaml 9101 st-a" \
   "a2pass $T/logs/rosters/a2pass.yaml sc.yaml 9101 st-a")" ] || c=1
 [ "$(cat logs/rosters/a2pass.yaml)" = "$(sed 's/__SLOT_DIR__/slotA/' tmpl.yaml)" ] || c=1
 [ "$(cat cc.log)" = "$T/runs/matrix a2pass/matrix.json" ] || c=1
-[ "$(of_run la ra | grep '^NOTE_')" = "$(lines 'NOTE_a1fail slot=slotA template=tmpl.yaml scenarios=sc.yaml' \
-  'NOTE_a2pass slot=slotA template=tmpl.yaml scenarios=sc.yaml' "NOTE_a2pass matrix=$T/runs/matrix a2pass/matrix.json")" ] || c=1
+[ "$(of_run la ra | grep '^NOTE_')" = "$(lines 'NOTE_a1fail slot=slotA template=tmpl.yaml scenarios=sc.yaml head=nogit arm_tree=- lib_tree=- dirty=- load1=1.50' \
+  'NOTE_a2pass slot=slotA template=tmpl.yaml scenarios=sc.yaml head=nogit arm_tree=- lib_tree=- dirty=- load1=1.50' "NOTE_a2pass matrix=$T/runs/matrix a2pass/matrix.json")" ] || c=1
 [ -d logs/la.queue.lock ] && c=1
 ok "(a) fail then pass: two markers in order, QUEUE_DONE" "$c" "rc=$rc $(of_run la ra | flat)"
 
@@ -143,10 +152,10 @@ q c.q "c1noph tmpl-noph.yaml slotA sc.yaml" "c2nosuch tmpl.yaml nosuchslot sc.ya
 ASCON_QUEUE_RUN_ID=rc "$BASH" "$LQ" lc c.q 9103 st-c > res/c.out 2>&1; rc=$?
 c=0
 [ "$rc" = 0 ] || c=1
-[ "$(markers lc rc)" = "$(lines 'EXIT_c1noph=- VERDICT=FAIL COLLISION=SKIP' \
-  'EXIT_c2nosuch=- VERDICT=FAIL COLLISION=SKIP' 'EXIT_c3notmpl=- VERDICT=FAIL COLLISION=SKIP' \
-  'EXIT_c4pass=0 VERDICT=PASS COLLISION=PASS' 'EXIT_c5dir=- VERDICT=FAIL COLLISION=SKIP' \
-  'EXIT_c6slash=- VERDICT=FAIL COLLISION=SKIP' 'QUEUE_DONE_lc')" ] || c=1
+[ "$(markers lc rc)" = "$(lines 'EXIT_c1noph=- VERDICT=FAIL COLLISION=SKIP ARM=SKIP' \
+  'EXIT_c2nosuch=- VERDICT=FAIL COLLISION=SKIP ARM=SKIP' 'EXIT_c3notmpl=- VERDICT=FAIL COLLISION=SKIP ARM=SKIP' \
+  'EXIT_c4pass=0 VERDICT=PASS COLLISION=PASS ARM=PASS' 'EXIT_c5dir=- VERDICT=FAIL COLLISION=SKIP ARM=SKIP' \
+  'EXIT_c6slash=- VERDICT=FAIL COLLISION=SKIP ARM=SKIP' 'QUEUE_DONE_lc')" ] || c=1
 [ "$(cut -d' ' -f1 ran.log)" = c4pass ] || c=1
 for n in 'c1noph no __SLOT_DIR__ in tmpl-noph.yaml' 'c2nosuch no slot dir example/agents/nosuchslot' \
   'c3notmpl roster template not readable: missing.yaml' "c5dir could not write $T/logs/rosters/c5dir.yaml" \
@@ -162,15 +171,15 @@ q d.q "d1pass tmpl.yaml slotA sc.yaml"
 FAKE_CC_RC=1 ASCON_QUEUE_RUN_ID=rd "$BASH" "$LQ" ld d.q 9104 st-d > res/d.out 2>&1; rc=$?
 c=0
 [ "$rc" = 0 ] || c=1
-[ "$(markers ld rd)" = "$(lines 'EXIT_d1pass=0 VERDICT=PASS COLLISION=FAIL' 'QUEUE_DONE_ld')" ] || c=1
+[ "$(markers ld rd)" = "$(lines 'EXIT_d1pass=0 VERDICT=PASS COLLISION=FAIL ARM=PASS' 'QUEUE_DONE_ld')" ] || c=1
 [ "$(cat cc.log)" = "$T/runs/matrix d1pass/matrix.json" ] || c=1
 of_run ld rd | grep -qxF 'NOTE_d1pass check-collision rc 1: fake collision verdict' || c=1
 ok "(d) collision checker returns 1: COLLISION=FAIL" "$c" "rc=$rc $(markers ld rd | flat)"
 FAKE_CC_RC=2 ASCON_QUEUE_RUN_ID=rd2 "$BASH" "$LQ" ld2 d.q 9104 st-d > res/d2.out 2>&1; rc=$?
-[ "$rc" = 0 ] && [ "$(markers ld2 rd2)" = "$(lines 'EXIT_d1pass=0 VERDICT=PASS COLLISION=BLOCKED' 'QUEUE_DONE_ld2')" ]
+[ "$rc" = 0 ] && [ "$(markers ld2 rd2)" = "$(lines 'EXIT_d1pass=0 VERDICT=PASS COLLISION=BLOCKED ARM=PASS' 'QUEUE_DONE_ld2')" ]
 ok "(d2) collision checker returns 2: COLLISION=BLOCKED" "$?" "rc=$rc $(markers ld2 rd2 | flat)"
 ASCON_CHECK_COLLISION="$T/fake/no-such-checker.py" ASCON_QUEUE_RUN_ID=rd3 "$BASH" "$LQ" ld3 d.q 9104 st-d > res/d3.out 2>&1; rc=$?
-[ "$rc" = 0 ] && [ "$(markers ld3 rd3)" = "$(lines 'EXIT_d1pass=0 VERDICT=PASS COLLISION=BLOCKED' 'QUEUE_DONE_ld3')" ]
+[ "$rc" = 0 ] && [ "$(markers ld3 rd3)" = "$(lines 'EXIT_d1pass=0 VERDICT=PASS COLLISION=BLOCKED ARM=PASS' 'QUEUE_DONE_ld3')" ]
 ok "(d3) collision checker missing: COLLISION=BLOCKED" "$?" "rc=$rc $(markers ld3 rd3 | flat)"
 
 # (e) A second instance of a running lane is refused and leaves the lock alone; the locks name the pid.
@@ -194,7 +203,7 @@ q e3.q "e3pass tmpl.yaml slotA sc.yaml"
 "$BASH" "$LQ" le3 e3.q 9107 st-e3 > res/e3.out 2>&1 || c=1
 touch release-e1hang; wait "$first"; rc1=$?
 [ "$rc1" = 0 ] || c=1
-[ "$(markers le re1)" = "$(lines 'EXIT_e1hang=0 VERDICT=PASS COLLISION=PASS' 'QUEUE_DONE_le')" ] || c=1
+[ "$(markers le re1)" = "$(lines 'EXIT_e1hang=0 VERDICT=PASS COLLISION=PASS ARM=PASS' 'QUEUE_DONE_le')" ] || c=1
 [ -d logs/le.queue.lock ] && c=1
 [ -d logs/rosters/e1hang.lock ] && c=1
 "$BASH" "$LQ" le e3.q 9105 st-e > res/e4.out 2>&1 || c=1
@@ -206,8 +215,8 @@ q f.q "f1real tmpl.yaml slotA sc.yaml" "f2bad tmpl.yaml slotA sc.yaml"
 ASCON_RUN_MATRIX= ASCON_QUEUE_RUN_ID=rf "$BASH" "$LQ" lf f.q 9108 backtest/state > res/f.out 2>&1; rc=$?
 c=0
 [ "$rc" = 0 ] || c=1
-[ "$(markers lf rf)" = "$(lines 'EXIT_f1real=0 VERDICT=PASS COLLISION=PASS' \
-  'EXIT_f2bad=1 VERDICT=FAIL COLLISION=SKIP' 'QUEUE_DONE_lf')" ] || c=1
+[ "$(markers lf rf)" = "$(lines 'EXIT_f1real=0 VERDICT=PASS COLLISION=PASS ARM=PASS' \
+  'EXIT_f2bad=1 VERDICT=FAIL COLLISION=SKIP ARM=SKIP' 'QUEUE_DONE_lf')" ] || c=1
 [ "$(cat cc.log)" = "$T/runs/matrix x/matrix.json" ] || c=1
 of_run lf rf | grep -qxF "NOTE_f1real matrix=$T/runs/matrix x/matrix.json" || c=1
 [ -d backtest/state/.run-matrix.lock ] && c=1
@@ -224,7 +233,7 @@ kill -TERM "$lq"; wait "$lq"; rc=$?
 [ "$rc" = 1 ] || c=1
 grep -qx 'g1hang got TERM' ran.log || c=1
 grep -q '^g2pass ' ran.log && c=1
-[ "$(markers lg rg)" = "$(lines 'EXIT_g1hang=1 VERDICT=FAIL COLLISION=SKIP' 'STOPPED_lg')" ] || c=1
+[ "$(markers lg rg)" = "$(lines 'EXIT_g1hang=1 VERDICT=FAIL COLLISION=SKIP ARM=SKIP' 'STOPPED_lg')" ] || c=1
 [ -d logs/lg.queue.lock ] && c=1
 [ -d logs/rosters/g1hang.lock ] && c=1
 pgrep -f "$T/fake/run-matrix.sh" > /dev/null && { c=1; touch release-g1hang; }
@@ -264,8 +273,8 @@ q i.q "i1block tmpl.yaml slotA sc.yaml" "i2liar tmpl.yaml slotA sc.yaml" "i3nopa
 ASCON_QUEUE_RUN_ID=ri "$BASH" "$LQ" li i.q 9111 st-i > res/i.out 2>&1; rc=$?
 c=0
 [ "$rc" = 0 ] || c=1
-[ "$(markers li ri)" = "$(lines 'EXIT_i1block=2 VERDICT=BLOCKED COLLISION=SKIP' \
-  'EXIT_i2liar=0 VERDICT=FAIL COLLISION=SKIP' 'EXIT_i3nopath=0 VERDICT=PASS COLLISION=BLOCKED' 'QUEUE_DONE_li')" ] || c=1
+[ "$(markers li ri)" = "$(lines 'EXIT_i1block=2 VERDICT=BLOCKED COLLISION=SKIP ARM=SKIP' \
+  'EXIT_i2liar=0 VERDICT=FAIL COLLISION=SKIP ARM=SKIP' 'EXIT_i3nopath=0 VERDICT=PASS COLLISION=BLOCKED ARM=BLOCKED' 'QUEUE_DONE_li')" ] || c=1
 [ -s cc.log ] && c=1
 ok "(i) BLOCKED / exit 0 without PASS / PASS without path" "$c" "rc=$rc $(markers li ri | flat)"
 
@@ -275,7 +284,7 @@ q j.q "j1pass tmpl.yaml slotA sc.yaml"
 ( cd / && ASCON_QUEUE_RUN_ID=rj "$BASH" "$T/$LQ" lj j.q 9112 st-j > "$T/res/j.out" 2>&1 ); rc=$?
 c=0
 [ "$rc" = 0 ] || c=1
-[ "$(markers lj rj)" = "$(lines 'EXIT_j1pass=0 VERDICT=PASS COLLISION=PASS' 'QUEUE_DONE_lj')" ] || c=1
+[ "$(markers lj rj)" = "$(lines 'EXIT_j1pass=0 VERDICT=PASS COLLISION=PASS ARM=PASS' 'QUEUE_DONE_lj')" ] || c=1
 [ "$(cat ran.log)" = "j1pass $T/logs/rosters/j1pass.yaml sc.yaml 9112 st-j" ] || c=1
 [ "$(cat cc.log)" = "$T/runs/matrix j1pass/matrix.json" ] || c=1
 ok "(j) run from / : queue, template, slot found from repo root" "$c" "rc=$rc $(head -2 res/j.out | flat)"
@@ -295,7 +304,7 @@ else
   [ "$rk1" = 3 ] || c=1
   markers lk rk1 | grep -Eqx 'HOLD_lk k1pass free=[0-9]+GiB' || c=1
   [ "$rk2" = 0 ] || c=1
-  [ "$(markers lk rk2)" = "$(lines 'EXIT_k1pass=0 VERDICT=PASS COLLISION=PASS' 'QUEUE_DONE_lk')" ] || c=1
+  [ "$(markers lk rk2)" = "$(lines 'EXIT_k1pass=0 VERDICT=PASS COLLISION=PASS ARM=PASS' 'QUEUE_DONE_lk')" ] || c=1
   [ "$(grep -c '^k1pass ' ran.log)" = 1 ] || c=1
   ok "(k) threshold just above / below the free space (${fg} GiB)" "$c" "rk1=$rk1 rk2=$rk2 $(markers lk rk1 | flat)$(markers lk rk2 | flat)"
 fi
@@ -306,7 +315,7 @@ q l.q "l1pass tmpl.yaml slotA sc.yaml" "l2pass tmpl.yaml slotA sc.yaml"
 PATH="$T/dfseq:$PATH" ASCON_QUEUE_MIN_FREE_GIB=10 ASCON_QUEUE_RUN_ID=rl "$BASH" "$LQ" ll l.q 9114 st-l > res/l.out 2>&1; rc=$?
 c=0
 [ "$rc" = 3 ] || c=1
-[ "$(markers ll rl)" = "$(lines 'EXIT_l1pass=0 VERDICT=PASS COLLISION=PASS' 'HOLD_ll l2pass free=1GiB')" ] || c=1
+[ "$(markers ll rl)" = "$(lines 'EXIT_l1pass=0 VERDICT=PASS COLLISION=PASS ARM=PASS' 'HOLD_ll l2pass free=1GiB')" ] || c=1
 [ "$(cut -d' ' -f1 ran.log)" = l1pass ] || c=1
 [ "$(cat dfcount 2>/dev/null)" = 2 ] || c=1
 ok "(l) disk drops after job 1: HOLD before job 2" "$c" "rc=$rc $(markers ll rl | flat)"
@@ -317,7 +326,7 @@ q m.q "m1ghost tmpl.yaml slotA sc.yaml"
 ASCON_QUEUE_RUN_ID=rm "$BASH" "$LQ" lm m.q 9115 st-m > res/m.out 2>&1; rc=$?
 c=0
 [ "$rc" = 0 ] || c=1
-[ "$(markers lm rm)" = "$(lines 'EXIT_m1ghost=0 VERDICT=PASS COLLISION=BLOCKED' 'QUEUE_DONE_lm')" ] || c=1
+[ "$(markers lm rm)" = "$(lines 'EXIT_m1ghost=0 VERDICT=PASS COLLISION=BLOCKED ARM=BLOCKED' 'QUEUE_DONE_lm')" ] || c=1
 [ -s cc.log ] && c=1
 of_run lm rm | grep -qxF "NOTE_m1ghost the matrix.json named in the PASS line of $T/logs/m1ghost.log does not exist: $T/runs/no such/matrix.json" || c=1
 of_run lm rm | grep -q '^NOTE_m1ghost matrix=' && c=1
@@ -353,7 +362,7 @@ grep -q '^REFUSED_ln run=rn1 run id rn1 was used before' res/n4.out || c=1
 "$BASH" "$LQ" ln n.q 9116 st-n > res/n5.out 2>&1 || c=1   # no run id given: one is made and printed
 gid="$(head -1 res/n5.out | sed -n 's/^QUEUE_RUN_ln run=\([0-9]\{8\}T[0-9]\{6\}-\([0-9][0-9]*\)\) pid=\2$/\1/p')"
 [ -n "$gid" ] || c=1
-[ -n "$gid" ] && [ "$(markers ln "$gid")" = "$(lines 'EXIT_n1pass=0 VERDICT=PASS COLLISION=PASS' 'QUEUE_DONE_ln')" ] || c=1
+[ -n "$gid" ] && [ "$(markers ln "$gid")" = "$(lines 'EXIT_n1pass=0 VERDICT=PASS COLLISION=PASS ARM=PASS' 'QUEUE_DONE_ln')" ] || c=1
 ok "(n) refused restart: no line carries its run id" "$c" "r2=$r2 r3=$r3 r4=$r4 gid=$gid $(tail -1 logs/ln.queue.log)"
 
 # (o) A job name in use by another run: refused at the start, or BLOCKED when reached, and the roster
@@ -376,14 +385,14 @@ grep -q "^REFUSED_lob run=rob job o1hang is in use by another run ($T/logs/roste
 [ -d logs/lob.queue.lock ] && c=1
 touch release-o0hang; wait "$pc"; rcc=$?
 [ "$rcc" = 0 ] || c=1
-[ "$(markers loc roc)" = "$(lines 'EXIT_o0hang=0 VERDICT=PASS COLLISION=PASS' \
-  'EXIT_o1hang=- VERDICT=BLOCKED COLLISION=SKIP' 'EXIT_o2pass=0 VERDICT=PASS COLLISION=PASS' 'QUEUE_DONE_loc')" ] || c=1
+[ "$(markers loc roc)" = "$(lines 'EXIT_o0hang=0 VERDICT=PASS COLLISION=PASS ARM=PASS' \
+  'EXIT_o1hang=- VERDICT=BLOCKED COLLISION=SKIP ARM=SKIP' 'EXIT_o2pass=0 VERDICT=PASS COLLISION=PASS ARM=PASS' 'QUEUE_DONE_loc')" ] || c=1
 of_run loc roc | grep -qxF "NOTE_o1hang another run named o1hang is in progress ($T/logs/rosters/o1hang.lock); roster not touched" || c=1
 [ "$(grep 'dir:' logs/rosters/o1hang.yaml)" = "    dir: slotA" ] || c=1
 touch release-o1hang; wait "$pa"; rca=$?
 [ "$rca" = 0 ] || c=1
-[ "$(markers loa roa)" = "$(lines 'EXIT_o1hang=0 VERDICT=PASS COLLISION=PASS' 'QUEUE_DONE_loa')" ] || c=1
-of_run loa roa | grep -qxF 'NOTE_o1hang slot=slotA template=tmpl.yaml scenarios=sc.yaml' || c=1
+[ "$(markers loa roa)" = "$(lines 'EXIT_o1hang=0 VERDICT=PASS COLLISION=PASS ARM=PASS' 'QUEUE_DONE_loa')" ] || c=1
+of_run loa roa | grep -qxF 'NOTE_o1hang slot=slotA template=tmpl.yaml scenarios=sc.yaml head=nogit arm_tree=- lib_tree=- dirty=- load1=1.50' || c=1
 [ "$(grep 'dir:' logs/rosters/o1hang.yaml)" = "    dir: slotA" ] || c=1
 [ "$(cut -d' ' -f1 ran.log | flat)" = "o0hang|o1hang|o2pass|" ] || c=1
 ok "(o) job in use by another lane: refused / BLOCKED, roster kept" "$c" "rb=$rb rcc=$rcc rca=$rca $(markers loc roc | flat)"
@@ -404,8 +413,8 @@ wait_for '^o6hang ' ran.log || { c=1; echo "  lo6 never started o6hang"; }
 mkdir logs/o5pass.lock
 touch release-o6hang; wait "$p6"; r6=$?
 [ "$r6" = 0 ] || c=1
-[ "$(markers lo6 ro6)" = "$(lines 'EXIT_o6hang=0 VERDICT=PASS COLLISION=PASS' \
-  'EXIT_o5pass=- VERDICT=BLOCKED COLLISION=SKIP' 'QUEUE_DONE_lo6')" ] || c=1
+[ "$(markers lo6 ro6)" = "$(lines 'EXIT_o6hang=0 VERDICT=PASS COLLISION=PASS ARM=PASS' \
+  'EXIT_o5pass=- VERDICT=BLOCKED COLLISION=SKIP ARM=SKIP' 'QUEUE_DONE_lo6')" ] || c=1
 [ "$(cat logs/rosters/o5pass.yaml)" = sentinel ] || c=1
 grep -q '^o5pass ' ran.log && c=1
 rmdir logs/o5pass.lock
@@ -423,9 +432,51 @@ else
   ASCON_EVAL_LOGS="$TL" ASCON_QUEUE_RUN_ID=rp "$BASH" "$LQ" lp p.q 9122 st-p > res/p.out 2>&1; rc=$?
   [ "$rc" = 0 ] || c=1
   [ "$(of_run_f "$TL/lp.queue.log" rp | sed -n 2p)" = "WARN_lp logs in $tlreal: macOS deletes files under /tmp unused for 3 days; set ASCON_EVAL_LOGS outside /tmp for long runs" ] || c=1
-  [ "$(of_run_f "$TL/lp.queue.log" rp | grep -E '^(EXIT_|QUEUE_DONE_)' | flat)" = "EXIT_p1pass=0 VERDICT=PASS COLLISION=PASS|QUEUE_DONE_lp|" ] || c=1
+  [ "$(of_run_f "$TL/lp.queue.log" rp | grep -E '^(EXIT_|QUEUE_DONE_)' | flat)" = "EXIT_p1pass=0 VERDICT=PASS COLLISION=PASS ARM=PASS|QUEUE_DONE_lp|" ] || c=1
   grep -q '^WARN_' logs/*.queue.log && c=1
   ok "(p) logs under /tmp: WARN; elsewhere: none" "$c" "rc=$rc $(grep '^WARN_' "$TL/lp.queue.log" logs/*.queue.log | head -2 | flat)"
+fi
+
+# (r) The arm check: it gets <matrix> <slot-dir>; rc 1 is ARM=FAIL with a NOTE, rc 2 and a missing checker
+# ARM=BLOCKED; the collision verdict does not depend on it.
+c=0; : > arm.log
+q r.q "r1pass tmpl.yaml slotB sc.yaml"
+ASCON_QUEUE_RUN_ID=rr "$BASH" "$LQ" lr r.q 9123 st-r > res/r.out 2>&1; rc=$?
+[ "$rc" = 0 ] && [ "$(markers lr rr)" = "$(lines 'EXIT_r1pass=0 VERDICT=PASS COLLISION=PASS ARM=PASS' 'QUEUE_DONE_lr')" ] || c=1
+[ "$(cat arm.log)" = "$T/runs/matrix r1pass/matrix.json slotB" ] || c=1
+ok "(r) arm check PASS, called with <matrix> <slot-dir>" "$c" "rc=$rc $(markers lr rr | flat) $(flat < arm.log)"
+FAKE_ARM_RC=1 ASCON_QUEUE_RUN_ID=rr1 "$BASH" "$LQ" lr1 r.q 9124 st-r > res/r1.out 2>&1; rc=$?
+[ "$rc" = 0 ] && [ "$(markers lr1 rr1)" = "$(lines 'EXIT_r1pass=0 VERDICT=PASS COLLISION=PASS ARM=FAIL' 'QUEUE_DONE_lr1')" ] \
+  && of_run lr1 rr1 | grep -q '^NOTE_r1pass check-arm rc 1: fake arm verdict'
+ok "(r1) arm checker returns 1: ARM=FAIL with a NOTE" "$?" "rc=$rc $(of_run lr1 rr1 | flat)"
+FAKE_ARM_RC=2 ASCON_QUEUE_RUN_ID=rr2 "$BASH" "$LQ" lr2 r.q 9125 st-r > res/r2.out 2>&1; rc=$?
+[ "$rc" = 0 ] && [ "$(markers lr2 rr2)" = "$(lines 'EXIT_r1pass=0 VERDICT=PASS COLLISION=PASS ARM=BLOCKED' 'QUEUE_DONE_lr2')" ]
+ok "(r2) arm checker returns 2: ARM=BLOCKED" "$?" "rc=$rc $(markers lr2 rr2 | flat)"
+ASCON_CHECK_ARM="$T/fake/no-such-arm-checker.py" ASCON_QUEUE_RUN_ID=rr3 "$BASH" "$LQ" lr3 r.q 9126 st-r > res/r3.out 2>&1; rc=$?
+[ "$rc" = 0 ] && [ "$(markers lr3 rr3)" = "$(lines 'EXIT_r1pass=0 VERDICT=PASS COLLISION=PASS ARM=BLOCKED' 'QUEUE_DONE_lr3')" ]
+ok "(r3) arm checker missing: ARM=BLOCKED" "$?" "rc=$rc $(markers lr3 rr3 | flat)"
+
+# (s) In a git checkout the NOTE line names the commit and the trees of the arm and lib, and dirty=1 once
+# the arm has an uncommitted change.
+c=0
+G="$T/gitrepo"; mkdir -p "$G/ascon/eval" "$G/example/agents/slotA" "$G/example/agents/lib" "$G/logs"
+cp ascon/eval/lane-queue.sh "$G/ascon/eval/"; cp tmpl.yaml sc.yaml "$G/"
+echo 'export const a = 1;' > "$G/example/agents/slotA/agent.ts"; echo 'export const l = 1;' > "$G/example/agents/lib/x.ts"
+printf '%s\n' "s1pass tmpl.yaml slotA sc.yaml" > "$G/s.q"
+if git -C "$G" init -q && git -C "$G" add -A && git -C "$G" -c user.name=t -c user.email=t@t commit -qm init; then
+  want_head="$(git -C "$G" rev-parse --short=12 HEAD)"
+  want_arm="$(git -C "$G" rev-parse --short=12 HEAD:example/agents/slotA)"
+  want_lib="$(git -C "$G" rev-parse --short=12 HEAD:example/agents/lib)"
+  ASCON_EVAL_LOGS="$G/logs" ASCON_QUEUE_RUN_ID=rs "$BASH" "$G/ascon/eval/lane-queue.sh" ls s.q 9127 st-s > res/s.out 2>&1; rc=$?
+  [ "$rc" = 0 ] || c=1
+  of_run_f "$G/logs/ls.queue.log" rs | grep -qxF "NOTE_s1pass slot=slotA template=tmpl.yaml scenarios=sc.yaml head=$want_head arm_tree=$want_arm lib_tree=$want_lib dirty=0 load1=1.50" || c=1
+  echo '// local edit' >> "$G/example/agents/slotA/agent.ts"
+  ASCON_EVAL_LOGS="$G/logs" ASCON_QUEUE_RUN_ID=rs2 "$BASH" "$G/ascon/eval/lane-queue.sh" ls s.q 9128 st-s > res/s2.out 2>&1; rc2=$?
+  [ "$rc2" = 0 ] || c=1
+  of_run_f "$G/logs/ls.queue.log" rs2 | grep -q "^NOTE_s1pass slot=slotA .* head=$want_head arm_tree=$want_arm lib_tree=$want_lib dirty=1 load1=1.50$" || c=1
+  ok "(s) git checkout: head, arm and lib trees, dirty flag" "$c" "rc=$rc/$rc2 $(of_run_f "$G/logs/ls.queue.log" rs2 | grep '^NOTE_s1pass slot' | flat)"
+else
+  printf '%-58s BLOCKED %s\n' "(s) git checkout: head, arm and lib trees, dirty flag" "git init or commit failed"; fails=1
 fi
 
 echo "--- queue logs:"

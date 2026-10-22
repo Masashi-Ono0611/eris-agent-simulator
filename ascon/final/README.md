@@ -7,33 +7,56 @@ the wallets (`AUTO`) and the frozen flag (`ERIS_AGENT_FROZEN: "1"` on every agen
 model calls). A difference between two arms in the same field and scenario file is therefore a difference
 between the two strategies, not between fields. Our agents never meet each other.
 
+**Why slot replacement.** In the earlier field rosters our near-identical agents sat side by side and raced
+for the same trades, so the race set their differences: opus-fc's -10.5 / -9.2 T on active launch were
+reverts behind opus-1's identical-fee swap of the same pool; ascon-zeta, r2 and r3 sent the same Liquity
+liquidation in one block and only one could win; opus-fc - opus-1 read -0.15 T on seeds 404/505/606 and
++0.66 on 707/808/909 with near-clones present; r2 and r3, byte-identical strategy code, differed by -4.7 to
++2.9 T. In the live week each unit runs one agent, which a slot field reproduces. The placebo arm B'
+(opus-1-pb, sizes x0.999) measures the noise floor without touching fees or timing: a blocking RPC of 2-4 ms
+in decide() (opus-r3s's getBlock) lost equal-fee ties about 2:1.
+
 | File | What it is |
 |---|---|
 | `roster-FP.yaml` | Sparse field: random, lp-provider, lst-carry, levered-long, venue-arb, basis-arb, peg-arb + slot |
 | `roster-FD.yaml` | Contested field: venue-arb, venue-arb-2 (dir venue-arb), multi-arb, clean-arb, cross-venue-arb, max-profit-arb, stat-arb, adaptive-arb + slot |
 | `roster-FS.yaml` | Specialist field: launch-confirm, launch-sniper, liquidator, redemption-arb, trove-manager, discovery-arb-verify, max-profit-arb, venue-arb, lp-provider, random + slot |
-| `scen-<seed>.yaml` | All 12 regimes at one seed: 1001, 1003-1006, 1011-1014, 1021-1024, 1101-1102, 1201-1206 (21 files, 252 scenarios) |
+| `scen-<seed>.yaml` | All 12 regimes at one seed: 1001, 1003-1010, 1011-1018, 1021-1024, 1101-1102, 1201-1206 (29 files, 348 scenarios). 1007-1010 are stage 1's second seed block (R late), 1015-1018 stage 2's F2 seeds |
 | `scen-launch-1041-1046.yaml`, `scen-launch-1047-1050.yaml` | Launch regime only, 6 + 4 seeds |
 | `smoke-{calm,lending,launch}-1001.yaml` | One scenario each (`lending` is the lending-incident regime): checks that a roster starts and scores, not a result |
 | `check-arm.py` | Per matrix: the slot ran the intended arm, frozen, in every scenario |
 | `check-trap-scope.py` | Whether the trap control is still unnecessary for given scenario files and arms (see "No trap control") |
-| `test-checks.sh` | Positive and negative controls for the two checks: `bash ascon/final/test-checks.sh "$PWD"` |
+| `make-queues.py` | Writes a stage's lane-queue files by the cell rules (one cell = all arms of a (seed, field), on one lane, in a recorded random order), and checks a set of them (`--check`) |
+| `test-checks.sh` | Positive and negative controls for check-arm, check-trap-scope and make-queues: `/bin/bash ascon/final/test-checks.sh "$PWD"`; all harness tests: `/bin/bash ascon/eval/test-all.sh` |
 | `LINEAGE.md` | Which of our agents survived which round, and how they map onto the arms |
 
-**Using a roster.** The rosters are templates. The only placeholder is `__SLOT_DIR__` on the slot's `dir:`
-line. Make one instantiated copy per (field, arm), for example
-`sed 's/__SLOT_DIR__/opus-1/' ascon/final/roster-FP.yaml > <run-dir>/roster-FP.opus-1.yaml`, and pass that
-copy to `ascon/eval/run-matrix.sh <name> <roster> <scenarios> <port> [state-dir]`. Put both the field and
-the arm in `<name>`. Nothing checks the slot directory before anvil starts: a template passed as-is fails
-each scenario only when its agents are spawned (`agent directory not found for id "slot"`,
-core/src/realtime/agentProcess.ts; read from the code, not run).
+**Using a roster.** The rosters are templates; the only placeholder is `__SLOT_DIR__` on the slot's `dir:`
+line. Run them through `ascon/eval/lane-queue.sh`: a queue line `<job> ascon/final/roster-FP.yaml <arm-dir>
+<scenarios>` renders the copy into `<logs>/rosters/<job>.yaml`, fails the job before anything starts when
+`example/agents/<arm-dir>` is missing, records the arm as `NOTE_<job> run=<id> slot=<arm-dir> ... head=
+arm_tree= lib_tree= dirty= load1=`, and runs run-matrix.sh, check-collision.py and check-arm.py. Write the
+queue files of a stage with `make-queues.py`, not by hand. The whole procedure is `ascon/eval/README.md`.
+For a one-off matrix, make the copy by hand (`sed 's/__SLOT_DIR__/opus-1/' ascon/final/roster-FP.yaml >
+<run-dir>/roster-FP.opus-1.yaml`) and pass it to `ascon/eval/run-matrix.sh <name> <roster> <scenarios>
+<port> [state-dir]`, with both the field and the arm in `<name>`. run-matrix.sh alone does not check the
+slot directory: a template passed as-is fails each scenario only when its agents are spawned (`agent
+directory not found for id "slot"`, core/src/realtime/agentProcess.ts; read from the code, not run).
+
+**Lanes stay busy.** Each lane runs `ascon/eval/lane-chain.sh`, which takes the next queue file from its
+`pending/` directory as soon as one ends. Keep one queue in every lane's `pending/` that needs no decision
+to start. Default once the decision rule is frozen by commit hash (the plan requires that before stage 1
+starts): stage-1 cells {opus-1, opus-1-pb, opus-1a} on seeds 1003-1006 (the plan's order when R is late);
+R (opus-1r) gets its cells on 1007-1010 when it lands. Soak is not a lane-queue job: it runs the slot
+unfrozen (check-arm would report ARM=FAIL, and the rosters here freeze every agent) and needs the mini's
+revision key (plan U6). A decision gates only what goes into `pending/` next, never whether a lane runs.
 
 **Checking which arm ran.** Every arm's matrix.json calls our agent `slot`, and check-matrix.py and
 check-collision.py compare agent ids only, so neither can tell one arm from another: a roster copy made
 with the wrong directory makes two arms the same run, and their difference reads as zero. The run records
 the arm itself. The agent runtime writes one `runtime_start` line, with the directory it loaded and its
-mode, to `runs/<id>/agents/slot.jsonl` (example/agents/runtime/botMain.ts). After run-matrix.sh and
-check-collision.py, run `python3 ascon/final/check-arm.py <matrix.json> <arm>` on each matrix. It requires,
+mode, to `runs/<id>/agents/slot.jsonl` (example/agents/runtime/botMain.ts). lane-queue.sh runs
+`python3 ascon/final/check-arm.py <matrix.json> <arm>` on every PASS matrix, with `<arm>` the job's slot
+dir, and writes the result as `ARM=` in the job's EXIT line; outside lane-queue run it by hand. It requires,
 in every scenario with results, exactly one `runtime_start` whose directory is `<arm>` and whose mode is
 `decide` (frozen: an arm with a prompt.md runs as `improve` when not frozen, and every planned arm has
 one). It exits 1 (FAIL) on a mismatch and 2 (BLOCKED) when the record is missing or unreadable.
@@ -55,22 +78,40 @@ set it would not separate B from C1:
   environment contract, not to anything an agent deploys.
 
 So the trap risk does not exist in the competition for these arms. check-trap-scope.py re-checks both
-points; run it for every new arm (C1, R) before its matrices count:
-`python3 ascon/final/check-trap-scope.py --scenarios ascon/final/scen-*.yaml ascon/final/smoke-*.yaml --arms opus-1 opus-1-pb opus-2 ascon-zeta-r3 <new arm>`.
+points; run it for every new arm (C1 = opus-1a, R = opus-1r, the weapon arms opus-1g and ascon-zeta-r3k,
+any later one) on the commit that will be measured, before its matrices count:
+`python3 ascon/final/check-trap-scope.py --scenarios ascon/final/scen-*.yaml ascon/final/smoke-*.yaml --arms opus-1 opus-1-pb opus-1a opus-2 ascon-zeta-r3 <new arm>`.
 A FAIL means a trap control is needed again: in a world that has the venue, with a check that
 `agents/trap-launcher.jsonl` shows the trap reached market creation, bait and posted collateral.
 
-**Reading the results.** Compare arms only within one field and one scenario file. Do not pool the
-launch-only files with the 12-regime files without reweighting: launch would then carry 31 scenarios
-against 21 for every other regime. run-matrix.sh uses `--agent-sandbox process`, so the regimes' docker
+**Reading the results.** A matrix counts only with `VERDICT=PASS COLLISION=PASS ARM=PASS` in its EXIT
+line (ascon/eval/README.md). Compare arms only within one field and one scenario file. Do not pool the
+launch-only files with the 12-regime files without reweighting: launch would then carry 39 scenarios
+against 29 for every other regime. run-matrix.sh uses `--agent-sandbox process`, so the regimes' docker
 CPU/memory caps do not apply.
 
+**Shipping check.** A result is about the code that ran, which the job's NOTE line pins (`head=`,
+`arm_tree=`, `lib_tree=`, `dirty=0`). Before packaging the chosen arm, run
+`git diff --quiet <lane-head> <ship-sha> -- example/agents/<arm> example/agents/lib example/agents/runtime ':!example/agents/<arm>/prompt.md'`
+(prompt.md is excluded because frozen runs do not read it). Any difference means the measured result does
+not apply to what ships: measure the ship commit, or ship the measured one. A job with `dirty=1` ran
+uncommitted code and does not count for shipping.
+
 **Checked (2026-10-22).** Every scenario file was parsed with the backtest CLI's own `loadScenarioSet`
-(core/src/cli/backtest.ts) and gives exactly the planned (regime, seed) list. The 23 evaluation files hold
-262 distinct scenarios over 31 seeds. Every roster, instantiated with opus-1, opus-1-pb, opus-2 and
+(core/src/cli/backtest.ts) and gives exactly the planned (regime, seed) list. The 23 evaluation files then
+held 262 distinct scenarios over 31 seeds. Every roster, instantiated with opus-1, opus-1-pb, opus-2 and
 ascon-zeta-r3, passes `validateAgentsFile` (core/src/config.ts); every agent directory exists with an
 `agent.ts`. `ascon/eval/check-matrix.py` accepts a complete synthetic matrix for every (file, roster) pair.
-`test-checks.sh` passes all its controls. check-arm.py, run read-only on a real 12-scenario matrix on the
+`test-checks.sh` passed all its controls. check-arm.py, run read-only on a real 12-scenario matrix on the
 mini (runs/matrix-2026-10-21T20-30-40-853Z), passes for `opus-1` and for `venue-arb-2` as `venue-arb`, and
-fails all 12 rows when asked for `opus-2`, or for `venue-arb-2` as its own directory. C1 (opus-1a) and R
-are not on disk yet, so check-trap-scope.py has not been run on them. No backtest was run.
+fails all 12 rows when asked for `opus-2`, or for `venue-arb-2` as its own directory. No backtest was run.
+
+**Checked (2026-10-23).** opus-1a (C1) is on this branch since 1ce98d01. check-trap-scope.py: PASS on the
+26 scenario files then present for opus-1, opus-1-pb, opus-1a and ascon-zeta-r3, and PASS on all 34 after
+the seeds 1007-1010 and 1015-1018 were added (opus-1, opus-1-pb, opus-1a, opus-2, ascon-zeta-r3; the
+positive control of test-checks.sh). The new files are scen-1003.yaml with only the seed changed (diffed);
+they were not run through `loadScenarioSet`. The 31 evaluation files now hold 358 distinct scenarios over
+39 seeds (counted from the files). The arms still in progress (opus-1r, opus-1g, ascon-zeta-r3k) passed
+check-trap-scope in their own worktrees on uncommitted code; rerun it on the committed version.
+test-checks.sh failed two controls once opus-1a existed (they used opus-1a as the arm that does not
+exist) and passes again after the fix.

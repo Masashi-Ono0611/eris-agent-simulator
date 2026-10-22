@@ -1,12 +1,12 @@
 #!/bin/bash
-# Controls for ascon/final/check-arm.py and ascon/final/check-trap-scope.py.
-#   bash ascon/final/test-checks.sh "$PWD"   (prints ALL_CONTROLS_OK, exits 0; else exits 1)
+# Controls for ascon/final/check-arm.py, ascon/final/check-trap-scope.py and ascon/final/make-queues.py.
+#   /bin/bash ascon/final/test-checks.sh "$PWD"   (prints ALL_CONTROLS_OK, exits 0; else exits 1)
 # check-arm.py runs on synthetic run directories whose runtime_start lines have the shape the agent
 # runtime writes (example/agents/runtime/botMain.ts). check-trap-scope.py runs on the repository's
 # own regimes and agent directories, plus a few synthetic ones for the malformed cases. Each negative
 # control changes one thing and must be caught by the check meant for it (exact line count).
 set -u
-src="${1:?repo}"
+src="${1:?usage: /bin/bash $0 <repo root>, e.g. \"\$PWD\"}"
 arm_checker="$src/ascon/final/check-arm.py"
 trap_checker="$src/ascon/final/check-trap-scope.py"
 for f in "$arm_checker" "$trap_checker"; do
@@ -160,9 +160,9 @@ echo "== check-trap-scope.py"
 S=""
 for f in "$src"/ascon/final/scen-*.yaml "$src"/ascon/final/smoke-*.yaml; do S="$S $f"; done
 nscen="$(printf '%s\n' $S | grep -c .)"
-[ "$nscen" = 26 ] || { echo "BLOCKED: expected 26 scenario files under ascon/final, found $nscen"; exit 2; }
+[ "$nscen" = 34 ] || { echo "BLOCKED: expected 34 scenario files under ascon/final, found $nscen"; exit 2; }
 # Positive control: the final plan's scenario files and the planned or measured arms.
-trap_scope "final files, planned arms" 0 1 "PASS 26 scenario files: no regime lists lending; 4 arms" -- --scenarios $S --arms opus-1 opus-1-pb opus-2 ascon-zeta-r3
+trap_scope "final files, planned arms" 0 1 "PASS 34 scenario files: no regime lists lending; 5 arms" -- --scenarios $S --arms opus-1 opus-1-pb opus-1a opus-2 ascon-zeta-r3
 # Negative controls on the repository's own files.
 printf '%s\n' 'regimes: [calm, agent-markets]' 'seeds: [1]' > "$T/scen-agent-markets.yaml"
 trap_scope "regime with lending" 1 1 "agent-markets: run.protocols includes lending" -- --scenarios "$T/scen-agent-markets.yaml" --arms opus-1
@@ -194,10 +194,50 @@ trap_scope "regime file missing" 2 1 "no-such-regime: cannot read" -- --scenario
 trap_scope "scenario file without regimes" 2 1 "no \`regimes: [...]\` line" -- --scenarios "$T/scen-no-regimes.yaml" --arms opus-1
 trap_scope "arm import not found" 2 1 "relative import not found" -- --scenarios "$T/scen-block-ok.yaml" --arms "$T/arm-broken"
 trap_scope "arm without agent.ts" 2 1 "no agent.ts or strategy.py" -- --scenarios "$T/scen-block-ok.yaml" --arms "$T/arm-empty"
-trap_scope "arm that does not exist" 2 1 "no agent.ts or strategy.py" -- --scenarios "$T/scen-block-ok.yaml" --arms opus-1a
+# A name that can never become an agent directory (opus-1a was used here and became real in 1ce98d01).
+trap_scope "arm that does not exist" 2 1 "no agent.ts or strategy.py" -- --scenarios "$T/scen-block-ok.yaml" --arms zz-no-such-arm
 trap_scope "no arms given" 2 1 "BLOCKED usage" -- --scenarios "$T/scen-block-ok.yaml"
 # A FAIL is not hidden behind a BLOCKED.
-trap_scope "fail and blocked" 1 2 "includes lending" -- --scenarios "$T/scen-agent-markets.yaml" --arms opus-1a
+trap_scope "fail and blocked" 1 2 "includes lending" -- --scenarios "$T/scen-agent-markets.yaml" --arms zz-no-such-arm
+
+# make-queues.py: generate stage-1-shaped queues from the real arms and scenario files, then break one thing
+# per copy; --check must catch each (exact line count).
+mq_checker="$src/ascon/final/make-queues.py"
+if [ -f "$mq_checker" ]; then
+  mq_gen="$(python3 -I "$mq_checker" --stage s1 --seeds 1003-1006 --fields FP,FD --arms opus-1,opus-1-pb,opus-1a \
+    --lanes A,B --order-seed 7 --out "$T/mq/good" 2>&1)"; got=$?
+  report "queues generated and checked" 0 3 "PASS 24 jobs in 2 files, 8 cells" "$mq_gen" "$got"
+  mq() {  # <label> <want exit> <want lines> <needle> <edit: python on the copy's s1-A.txt text as s>
+    local label="$1" want="$2" lines="$3" needle="$4" edit="$5" d out got
+    seq=$((seq + 1)); d="$T/mq/c$seq"; mkdir -p "$d"
+    cp "$T/mq/good/"*.txt "$d/"
+    python3 -I -c 'import sys
+p = sys.argv[1] + "/s1-A.txt"; s = open(p).read(); exec(sys.argv[2]); open(p, "w").write(s)' "$d" "$edit" \
+      || { echo "fixture $label could not be built"; fails=1; return; }
+    out="$(python3 -I "$mq_checker" --check "$d" 2>&1)"; got=$?
+    report "queues $label" "$want" "$lines" "$needle" "$out" "$got"
+  }
+  mq "unchanged copy" 0 1 "PASS 24 jobs" 'pass'
+  mq "duplicate arm" 1 3 "appears twice" 'l = [x for x in s.splitlines() if x and not x.startswith("#")][0]; s = s + l + "\n"'
+  mq "missing arm" 1 1 "FAIL missing:" 'l = [x for x in s.splitlines() if x and not x.startswith("#")][0]; s = s.replace(l + "\n", "")'
+  mq "slot dir that does not exist" 1 4 "no slot dir example/agents/zz-no-such-arm" 'l = [x for x in s.splitlines() if x and not x.startswith("#")][0]; f = l.split(); s = s.replace(l, " ".join([f[0], f[1], "zz-no-such-arm", f[3]]))'
+  mq "wrong scenario file" 1 1 "want ascon/final/scen-" 'l = [x for x in s.splitlines() if x and not x.startswith("#")][0]; f = l.split(); s = s.replace(l, " ".join(f[:3] + ["ascon/final/scen-1011.yaml"]))'
+  mq "different arguments" 1 1 "different arguments" 's = s.replace("--order-seed 7", "--order-seed 8")'
+  mq "no args header" 2 1 "args:' header line" 's = "\n".join(x for x in s.splitlines() if not x.startswith("# args:")) + "\n"'
+  # A cell split across lanes: move the last job of A's first cell to lane B's file.
+  seq=$((seq + 1)); d="$T/mq/c$seq"; mkdir -p "$d"; cp "$T/mq/good/"*.txt "$d/"
+  python3 -I -c 'import sys
+d = sys.argv[1]; a = open(d + "/s1-A.txt").read().splitlines(); jobs = [i for i, x in enumerate(a) if x and not x.startswith("#")]
+moved = a.pop(jobs[2]); open(d + "/s1-A.txt", "w").write("\n".join(a) + "\n"); open(d + "/s1-B.txt", "a").write(moved + "\n")' "$d"
+  out="$(python3 -I "$mq_checker" --check "$d" 2>&1)"; got=$?
+  report "queues cell split across lanes" 1 1 "is split across" "$out" "$got"
+  out="$(python3 -I "$mq_checker" --stage s1 --seeds 1003 --fields FP --arms opus-1,zz-no-such-arm --lanes A \
+    --order-seed 1 --out "$T/mq/refused" 2>&1)"; got=$?
+  report "queues refused for a missing arm" 2 1 "BLOCKED missing: example/agents/zz-no-such-arm" "$out" "$got"
+  [ -e "$T/mq/refused/s1-A.txt" ] && { echo "queues refused for a missing arm: a file was written anyway"; fails=1; }
+else
+  echo "BLOCKED: no $mq_checker"; fails=1
+fi
 
 if [ "$fails" = 0 ]; then echo ALL_CONTROLS_OK; exit 0; fi
 echo CONTROL_FAILED; exit 1

@@ -9,6 +9,8 @@ Compiled 2026-10-22. Two kinds of source, kept apart:
   decisions are in the dashboard's `data-decisions`.
 - **After 2026-10-14** (not in the dashboard): PR #78 / #81 bodies and commit messages on origin/main and on
   the unmerged branches `feat/opus-flatten-variants`, `feat/opus-fc-validation`, `feat/opus-r3s`.
+- **Session decisions not in a PR or commit yet** (marked (session)): copy them into a PR body or commit
+  message when the branch lands.
 
 T is a position within one field. Numbers from different fields, seed sets or upstream versions are not
 comparable (PLAN-UPDATE-2026-10-17 §3-4: pre-rebuild results are not comparable with post-rebuild ones).
@@ -29,19 +31,28 @@ comparable (PLAN-UPDATE-2026-10-17 §3-4: pre-rebuild results are not comparable
 | Decision 2026-10-06 (`dec-c-exception-r3`), 2026-10-09 (`dec-oct09-r3`) | ascon-zeta-r3 | r3 inherits r2's result by exception (strategy code identical to r2, prompt changed) and is kept as the insurance submission candidate. r3a / r3c stay research versions |
 | E1-E10, mixed_r3 (mixed, 36 worlds, diagnostic) | r3, r3a, r3c, inc-zeta + field | mixed_r3: inc-zeta 57.42, venue-arb 53.98, sonnet-1 53.24, opus-1 52.90, grok-1 52.67, ... ascon-zeta-r3 50.65 (7th of 12) |
 | Selection screen 2026-10-21 (PR #78; frozen, §4.4 score, 12 scenarios each: mixed s101/s202/s303, quiet, active; current upstream) | opus-1, sonnet-1, ascon-zeta-r2/r3, ascon-zeta | opus-1 mean 56.22 / min 54.03; sonnet-1 54.40 / 52.69; r2/r3 avg 53.61 / 47.05; ascon-zeta 42.61 / 36.52. opus-1 made the provisional submission |
-| 2026-10-22 (PR #81, merged) | opus-2 = opus-1 + revert-driven bid controller | Head-to-head on the mini was running when the PR merged; it replaces opus-1 only if it beats it. No result in these sources |
-| 2026-10-22 (unmerged branches) | opus-nf, opus-fc (end-of-epoch variants); opus-r3s, opus-r3b (r3's sizing while calm and lightly contested, on opus-fc / opus-1); opus-1-aa (A/A control) | No result in these sources |
+| 2026-10-22 (PR #81, merged) | opus-2 = opus-1 + revert-driven bid controller | Held-out seeds 202/303 x quiet/active (co-present with opus-1, sonnet-1, r3): opus-2 - opus-1 = +0.21 / +1.02 / +0.28 / -0.88, mean +0.16, below the +1 T replacement gate: not adopted, submission stays opus-1 (PR #81 comment). Same runs (session): sonnet-1 -0.12 (mean 55.40 vs 55.52), with repeated losses of more than 2 T in active depeg and cdp-incident |
+| 2026-10-22 (feat/opus-flatten-variants) | opus-nf, opus-fc (end-of-epoch variants) | Seed 101, 4 regimes x quiet/active, co-present with opus-1: opus-nf -0.09 / +0.76, opus-fc +0.12 / +1.14 (session). opus-nf dropped; opus-fc went to validation |
+| 2026-10-22 (feat/opus-fc-validation) | opus-fc | Untouched seeds 404/505/606 x 12 regimes x quiet/active: -0.15 T vs opus-1: FAIL (session). Its -10.5 / -9.2 on active launch were reverts behind opus-1's identical-fee swap. On 707/808/909, with r3s/r3b also present, it read +0.66; near-clones were present in every run, so neither number is clean |
+| 2026-10-22/23 (feat/opus-r3s) | opus-r3s (opus-fc + r3 sizing behind a calm / lightly-contested gate), opus-r3b (the same boost on opus-1); opus-1-aa (A/A copy of opus-1) | Pre-registered gate on fresh seeds 707/808/909 x quiet/active: r3s -0.36, r3b -0.79: FAIL, retired (session; the judge output file was not located when this row was written). r3s's gate never opened on seed 101, and its blocking getBlock in decide() lost equal-fee ties about 2:1, so it was no A/A of opus-fc. opus-1-aa: no result in these sources |
+| 2026-10-23 (feat/final-plan; slot replacement, one of ours per field) | record arms opus-1 and ascon-zeta-r3 clone-free on FP/FD seed 1001; C1 mechanism check opus-1 vs opus-1a on launch 1041-1046 | Running on the mini (lanes night1-A / night1-B) at 02:30 JST; no result in these sources |
+| 2026-10-23 (in progress) | opus-1r (R: C1 + r3 mechanisms), opus-1g (C1 + GMX OU mean-reversion overlay), ascon-zeta-r3k (r3 + single-leg floor 125 bps, own-outcome brake, rival x1.2 bids for E >= $168) | Being built and screened; no result |
 
 ## Current champions
 
 - **Submission line: opus-1.** Provisional submission since PR #78 (merged 2026-10-21), best mean and best
-  minimum in the 10-21 screen. PR #79 named its revision model.
+  minimum in the 10-21 screen. PR #79 named its revision model. S-00048 (ZIP sha 2e5a0451 = commit
+  8ff2e696); docker selftest PASS 2026-10-23 (4g, 26 included, 0 reverted). Neither opus-2 nor opus-fc
+  replaced it.
 - **Furthest qualification survivor: ascon-zeta-r2, carried to ascon-zeta-r3 by exception.** r3 was the
-  insurance candidate as of 2026-10-09; no later record in these sources retires or re-confirms it.
+  insurance candidate as of 2026-10-09; not retired: r3's sizing grafted onto the opus base (r3s/r3b) was
+  retired, but r3 itself is being measured clone-free (night1-A), and its lineage is the source of the
+  weapon arms (ascon-zeta-r3k, R's mechanisms).
 - **Strongest in the old mixed fields: inc-zeta (ascon-zeta).** That ranking predates the upstream merge; in
   the 10-21 screen on the current upstream it was last of the four.
-- **Not in the planned arms:** sonnet-1 (2nd in the 10-21 screen) and opus-2 (result pending). Including or
-  excluding them is the plan owner's call; this file only records that they survived.
+- **Not in the planned arms:** sonnet-1 (-0.12 vs opus-1 on 202/303, repeated > 2 T losses in active depeg
+  and cdp-incident, although +0.89 ahead of opus-1 once launch is excluded, near-clones present; final
+  plan 10-22) and opus-2 (+0.16, below the gate).
 
 ## How the survivors map onto the planned arms
 
@@ -53,11 +64,15 @@ comparable (PLAN-UPDATE-2026-10-17 §3-4: pre-rebuild results are not comparable
   A/A copy like `opus-1-aa` on `feat/opus-r3s`: B vs B' measures how far two near-identical strategies
   drift apart, and the noise floor f = max(0.25, sd(c′)) is built from that contrast. It runs frozen like
   every agent, so its prompt.md is not read.
-- **C1 = opus-1a (allowance fix)**: direct descendant of B with one fix. Its directory is not on origin/main
-  or on either mini checkout yet.
+- **C1 = opus-1a (allowance fix)**: direct descendant of B with one fix. On this branch since 1ce98d01 (PR #85
+  for main is open); the mini's evaluation worktree runs it; check-trap-scope PASS 2026-10-23.
 - **R = C1 + r3 mechanisms**: merges the two surviving lines, the opus submission line and the zeta
-  qualification line (r2 → r3). Its nearest prior art is opus-r3s / opus-r3b (unmerged, no recorded result).
+  qualification line (r2 → r3). Built as opus-1r (branch feat/opus-1r). Its nearest prior art, opus-r3s /
+  opus-r3b, failed its pre-registered gate and was retired; R differs by firing per trade on edge size
+  (two-leg, large-edge bundles, no field-wide gate) and by keeping decide() free of blocking RPC.
 - **r3 measured clone-free (record arm)**: ascon-zeta-r3 alone in the slot. The earlier field rosters had
   ascon-zeta, r2 and r3 side by side, and r2 and r3 run byte-identical strategy code (agent.ts, delta.ts,
   launch.ts, launchSwap.ts), so they competed for the same trades. Here only one zeta-family agent is in the
   field. It is a record of the qualification survivor, not a new candidate.
+- **Weapon arms** (user direction 2026-10-23: commodity opus base + a weapon other teams lack): opus-1g and
+  ascon-zeta-r3k are arms in the slot like any other; each passes check-trap-scope before its matrices count.

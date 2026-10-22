@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run a lane of backtest matrices one after another (for the Mac mini, started with nohup).
+# Run a lane of backtest matrices one after another (Mac mini or laptop, started with nohup; procedure: ascon/eval/README.md).
 #   ascon/eval/lane-queue.sh <lane> <queue-file> <port> <state-dir>
 # The script cds to the repo root (its ../..) first, so every relative path, in the arguments and in
 # the queue file, is relative to the repo root.
@@ -23,13 +23,22 @@
 #      the job is BLOCKED and its roster is not touched;
 #   3. render the roster into <logs>/rosters/<job>.yaml (no placeholder, or no example/agents/<slot-dir>:
 #      the job fails without running) and write "NOTE_<job> run=<id> slot=<slot-dir> template=<template>
-#      scenarios=<scenarios.yaml>", the record of which arm ran;
+#      scenarios=<scenarios.yaml> head=<commit> arm_tree=<tree> lib_tree=<tree> dirty=<0|1> load1=<x>",
+#      the record of which arm ran: head is the checkout's commit, arm_tree and lib_tree the git tree ids
+#      of example/agents/<slot-dir> and example/agents/lib at that commit (nogit and - outside a git
+#      checkout), dirty=1 when example/agents/<slot-dir>, lib or runtime has uncommitted changes (the
+#      trees then do not describe what ran), load1 the host's 1-minute load when the job started;
 #   4. run ascon/eval/run-matrix.sh (or $ASCON_RUN_MATRIX) <job> <roster> <scenarios> <port> <state-dir>;
 #   5. on PASS, write "NOTE_<job> run=<id> matrix=<path>", the path taken from the PASS line in
 #      <logs>/<job>.log, and run python3 ascon/eval/check-collision.py (or $ASCON_CHECK_COLLISION) <path>
-#      (rc 0 PASS, 1 FAIL, anything else BLOCKED);
+#      (rc 0 PASS, 1 FAIL, anything else BLOCKED), then python3 ascon/final/check-arm.py (or
+#      $ASCON_CHECK_ARM) <path> <slot-dir>: the slot really ran <slot-dir>, frozen (same rc mapping).
+#      A FAIL or BLOCKED of either check writes its first 300 characters as a NOTE;
 #   6. append "EXIT_<job>=<run-matrix rc, - if it did not run> VERDICT=<PASS|FAIL|BLOCKED>
-#      COLLISION=<PASS|FAIL|BLOCKED|SKIP> run=<id>" and go on: a failed job does not stop the queue.
+#      COLLISION=<PASS|FAIL|BLOCKED|SKIP> ARM=<PASS|FAIL|BLOCKED|SKIP> run=<id>" and go on: a failed job
+#      does not stop the queue. A matrix counts only with VERDICT=PASS COLLISION=PASS ARM=PASS.
+#      check-arm expects the slot's agent id to be `slot` (the ascon/final rosters); with another
+#      template ARM=FAIL or BLOCKED only means the arm could not be checked.
 # After the last job: "QUEUE_DONE_<lane> run=<id>", exit 0.
 # Everything goes to stdout and to <logs>/<lane>.queue.log (<logs> = $ASCON_EVAL_LOGS, default
 # /tmp/ascon-exp); a run's lines are the ones with its run=<id>. Other NOTE_<job> lines say why a job
@@ -65,6 +74,10 @@
 #   regime+seed in one state dir can swap rosters silently.
 # - Use job names that are unique across lanes: <logs>/<job>.log and the rendered roster are per name, so
 #   a job whose name is in use is BLOCKED (step 2).
+# - On the laptop run one lane at most and start it only when load1 is below 10 (10 cores): agents have no
+#   CPU cap in the process sandbox, and load shifts their timing.
+# - To start a lane on its own pinned checkout, or to keep a lane busy across queue files, use
+#   ascon/eval/mini-lane-start.sh and ascon/eval/lane-chain.sh (ascon/eval/README.md).
 set -u
 lane="${1:?lane}"; queue="${2:?queue-file}"; port="${3:?port}"; state="${4:?state-dir}"
 cd "$(dirname "$0")/../.." || exit 2
@@ -72,6 +85,7 @@ logs="${ASCON_EVAL_LOGS:-/tmp/ascon-exp}"
 export ASCON_EVAL_LOGS="$logs"
 run_matrix="${ASCON_RUN_MATRIX:-ascon/eval/run-matrix.sh}"
 check_collision="${ASCON_CHECK_COLLISION:-ascon/eval/check-collision.py}"
+check_arm="${ASCON_CHECK_ARM:-ascon/final/check-arm.py}"
 min_gib="${ASCON_QUEUE_MIN_FREE_GIB:-10}"
 run_id="${ASCON_QUEUE_RUN_ID:-$(date '+%Y%m%dT%H%M%S')-$$}"
 
@@ -123,8 +137,8 @@ for k in "${names[@]}"; do
 done
 
 say() { echo "$1" >> "$qlog"; echo "$1"; }
-mark() { say "EXIT_$1=$2 VERDICT=$3 COLLISION=$4 run=$run_id"; }
-child=""; pending=""; job=""; rc=-; verdict=FAIL; collision=SKIP
+mark() { say "EXIT_$1=$2 VERDICT=$3 COLLISION=$4 ARM=$5 run=$run_id"; }
+child=""; pending=""; job=""; rc=-; verdict=FAIL; collision=SKIP; arm=SKIP
 on_signal() {
   # The running run-matrix gets TERM and stops its own backtest process group before it exits.
   if [ -n "$child" ]; then
@@ -133,7 +147,7 @@ on_signal() {
     child=""
   fi
   if [ -n "$pending" ]; then
-    mark "$job" "$rc" "$verdict" "$collision"
+    mark "$job" "$rc" "$verdict" "$collision" "$arm"
     say "NOTE_$job run=$run_id stopped by a signal"
   fi
   say "STOPPED_$lane run=$run_id"
@@ -150,7 +164,7 @@ i=0
 while [ "$i" -lt "${#names[@]}" ]; do
   job="${names[$i]}"; tmpl="${tmpls[$i]}"; slot="${slots[$i]}"; sc="${scens[$i]}"
   i=$((i + 1))
-  rc=-; verdict=FAIL; collision=SKIP
+  rc=-; verdict=FAIL; collision=SKIP; arm=SKIP
 
   # 1. Disk. An unreadable df counts as too little space.
   free_kib="$(df -Pk . 2>/dev/null | awk 'NR == 2 && NF == 6 { print $4 }')"
@@ -170,7 +184,7 @@ while [ "$i" -lt "${#names[@]}" ]; do
   fi
   if [ -n "$why" ]; then
     say "NOTE_$job run=$run_id $why; roster not touched"
-    mark "$job" - BLOCKED SKIP; pending=""
+    mark "$job" - BLOCKED SKIP SKIP; pending=""
     continue
   fi
 
@@ -184,11 +198,20 @@ while [ "$i" -lt "${#names[@]}" ]; do
   fi
   if [ -n "$why" ]; then
     say "NOTE_$job run=$run_id $why"
-    mark "$job" - FAIL SKIP; pending=""
+    mark "$job" - FAIL SKIP SKIP; pending=""
     unlock "$jlock"; jlock=""
     continue
   fi
-  say "NOTE_$job run=$run_id slot=$slot template=$tmpl scenarios=$sc"
+  # What ran, beyond the directory name: the commit and the trees of the arm and the shared lib.
+  head="$(git rev-parse --short=12 HEAD 2>/dev/null || echo nogit)"
+  arm_tree="$(git rev-parse --short=12 "HEAD:example/agents/$slot" 2>/dev/null || echo -)"
+  lib_tree="$(git rev-parse --short=12 HEAD:example/agents/lib 2>/dev/null || echo -)"
+  if [ "$head" = nogit ]; then dirty=-
+  elif [ -n "$(git status --porcelain -- "example/agents/$slot" example/agents/lib example/agents/runtime 2>/dev/null)" ]; then dirty=1
+  else dirty=0
+  fi
+  load1="$(sysctl -n vm.loadavg 2>/dev/null | awk '{ print $2 }')"
+  say "NOTE_$job run=$run_id slot=$slot template=$tmpl scenarios=$sc head=$head arm_tree=$arm_tree lib_tree=$lib_tree dirty=$dirty load1=${load1:--}"
 
   # 4. Matrix. In the background so a signal reaches on_signal at once rather than after the job.
   "$BASH" "$run_matrix" "$job" "$roster" "$sc" "$port" "$state" &
@@ -207,10 +230,10 @@ while [ "$i" -lt "${#names[@]}" ]; do
     verdict=BLOCKED
   fi
 
-  # 5. On PASS: where the matrix is, and the collision check. The PASS text of check-matrix ends with
+  # 5. On PASS: where the matrix is, the collision check and the arm check. The PASS text of check-matrix ends with
   # ", <n> agents each, <path>".
   if [ "$verdict" = PASS ]; then
-    collision=BLOCKED
+    collision=BLOCKED; arm=BLOCKED
     matrix="${line#* agents each, }"
     if [ "$matrix" = "$line" ]; then
       say "NOTE_$job run=$run_id no matrix.json path in the PASS line of $logs/$job.log"
@@ -222,11 +245,15 @@ while [ "$i" -lt "${#names[@]}" ]; do
       crc=$?
       case "$crc" in 0) collision=PASS ;; 1) collision=FAIL ;; esac
       [ "$crc" = 0 ] || say "NOTE_$job run=$run_id check-collision rc $crc: $(printf '%s' "$out" | tr '\n' ' ' | cut -c1-300)"
+      out="$(python3 "$check_arm" "$matrix" "$slot" 2>&1)"
+      arc=$?
+      case "$arc" in 0) arm=PASS ;; 1) arm=FAIL ;; esac
+      [ "$arc" = 0 ] || say "NOTE_$job run=$run_id check-arm rc $arc: $(printf '%s' "$out" | tr '\n' ' ' | cut -c1-300)"
     fi
   fi
 
   # 6. Marker.
-  mark "$job" "$rc" "$verdict" "$collision"; pending=""
+  mark "$job" "$rc" "$verdict" "$collision" "$arm"; pending=""
   unlock "$jlock"; jlock=""
 done
 say "QUEUE_DONE_$lane run=$run_id"

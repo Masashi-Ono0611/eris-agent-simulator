@@ -1,10 +1,10 @@
 #!/bin/bash
 # Controls for ascon/eval/check-collision.py on synthetic run directories in a throwaway tree.
-#   bash ascon/eval/test-check-collision.sh "$PWD"   (prints ALL_CONTROLS_OK, exits 0; else exits 1)
+#   /bin/bash ascon/eval/test-check-collision.sh "$PWD"   (prints ALL_CONTROLS_OK, exits 0; else exits 1)
 # Each negative control changes one thing in an otherwise good tree and must be caught by the check
 # meant for it, alone (exact line count), so a control cannot pass on some other problem.
 set -u
-src="${1:?repo}"
+src="${1:?usage: /bin/bash $0 <repo root>, e.g. \"\$PWD\"}"
 checker="$src/ascon/eval/check-collision.py"
 [ -f "$checker" ] || { echo "BLOCKED: no $checker"; exit 2; }
 command -v python3 > /dev/null || { echo "BLOCKED: python3 not found"; exit 2; }
