@@ -1440,8 +1440,17 @@ function ouModule(
     });
     if (d.pending) ouPending.set(base, d.pending);
     else ouPending.delete(base);
+    // Log only: the position path, its fill price and collateral against the fair, for measuring.
     signals[`ouG${base}Bps`] = Math.round(d.g * 100_000) / 10;
     signals[`ouPos${base}Usd`] = Math.round(d.signedUsd);
+    signals[`ouFair${base}`] = fair;
+    signals[`ouAnchor${base}`] = anchor;
+    if (market.position) {
+      signals[`ouEntry${base}`] = market.position.entryPriceUsd;
+      signals[`ouColl${base}`] = Number(big(market.position.collateralAmount)) / 1e6;
+      signals[`ouPnl${base}`] = market.position.pnlUsd;
+    }
+    if (d.pending) signals[`ouPending${base}`] = d.pending.sentBlock;
     if (!d.action) continue;
     wallet.usdc -= d.usdcSpent;
     wallet.ethWei -= GMX_EXECUTION_FEE_WEI;
@@ -1544,6 +1553,8 @@ export async function decide(
     reason: reasons.length === 0 ? "no edge over the round trip" : reasons.join(" | "),
     signals: {
       ...ouSignals,
+      ethWei: Number(big(obs.balances?.ethWei)) / 1e18,
+      usdc: Number(big(obs.balances?.usdcUnits)) / 1e6,
       blocksRemaining: obs.blocksRemaining,
       valueUsdc: obs.inventory?.valueUsdc,
       fairWeth: obs.fairPriceUsdcPerWeth,
