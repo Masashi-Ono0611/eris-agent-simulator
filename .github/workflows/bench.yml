@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: prep (ack, resolve PR head, whitelist args)
         id: prep
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             let ref, args = [];
@@ -74,10 +74,10 @@ jobs:
             core.setOutput('ref', ref);
             core.setOutput('args', args.join(' '));
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ steps.prep.outputs.ref }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: npm }
       - uses: foundry-rs/foundry-toolchain@v1
         with: { version: stable }
@@ -93,7 +93,7 @@ jobs:
 
       - name: comment summary on the PR
         if: github.event_name == 'issue_comment' && always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -107,7 +107,7 @@ jobs:
 
       - name: upload artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: bench-${{ github.run_id }}
           path: bench-out/
