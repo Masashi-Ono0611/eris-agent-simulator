@@ -1,0 +1,3 @@
+# Final evaluation, launch regime only: seeds 1041-1046 (6 scenarios).
+regimes: [launch]
+seeds: [1041, 1042, 1043, 1044, 1045, 1046]

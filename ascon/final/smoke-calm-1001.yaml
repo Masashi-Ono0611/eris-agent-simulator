@@ -1,0 +1,3 @@
+# Smoke run: calm at seed 1001 (1 scenario). Checks a roster starts and scores, not results.
+regimes: [calm]
+seeds: [1001]
