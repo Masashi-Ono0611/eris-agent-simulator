@@ -17,7 +17,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { claimRunDir, RunLogger } from "../core/src/logger.js";
 import { isRunIdSnapshot } from "../core/src/realtime/agentState.js";
@@ -148,7 +148,7 @@ test("a claimed id opens as a segmented period's competition directory", () => {
     scenarioSet: id,
   });
   assert.equal(period.competitionDir, join(root, `${ID}-2`));
-  assert.ok(period.runDir.startsWith(`${period.competitionDir}/`));
+  assert.ok(period.runDir.startsWith(period.competitionDir + sep));
   assert.deepEqual(readdirSync(join(root, ID)), [], "the other period's directory is untouched");
 });
 
