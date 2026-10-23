@@ -4,6 +4,11 @@
 #   ascon/eval/new-worktree.sh <path> <git-ref>      run from the main checkout
 # Links node_modules and out/ (forge artifacts) from the main checkout, copies its state dump and the
 # generated sdk/src/constants.local.ts. Without these every scenario fails in seconds.
+# On the laptop the main repo is bare: run this from the worktree that holds the real node_modules and
+# out/ (see ascon/eval/README.md). On the Air the toolchain source is .claude/worktrees/opus-1-model
+# (node_modules, out): keep that worktree until 10/31, even though its branch is merged.
+# The out symlink this makes is untracked, not ignored (.gitignore has `out/`, which matches directories
+# only): do not `git add -A` in the new checkout; commit with explicit paths.
 set -euo pipefail
 dest="${1:?path}"; ref="${2:?git ref}"
 main="$(pwd)"

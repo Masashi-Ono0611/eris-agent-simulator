@@ -1,0 +1,36 @@
+# Field FD (contested): one of our agents (slot) against many cross-venue arbitrage bots, venue-arb twice.
+# Template: set the slot entry's dir (the only placeholder) to the arm's directory; every agent is frozen.
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+  - id: venue-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: venue-arb-2
+    dir: venue-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: multi-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: clean-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: cross-venue-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: max-profit-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: stat-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: adaptive-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  # The arm under test: dir is a directory name under example/agents/, filled in per arm.
+  - id: slot
+    dir: __SLOT_DIR__
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }

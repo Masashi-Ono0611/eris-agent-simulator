@@ -1,8 +1,8 @@
 #!/bin/bash
 # Controls for ascon/eval/run-matrix.sh in a throwaway tree with a fake npm.
-#   bash ascon/eval/test-run-matrix.sh "$PWD"   (prints ALL_CONTROLS_OK, exits 0; else exits 1)
+#   /bin/bash ascon/eval/test-run-matrix.sh "$PWD"   (prints ALL_CONTROLS_OK, exits 0; else exits 1)
 set -u
-src="${1:?repo}"
+src="${1:?usage: /bin/bash $0 <repo root>, e.g. \"\$PWD\"}"
 T="$(mktemp -d)"; cd "$T" || exit 2
 mkdir -p ascon/eval node_modules/.bin out/MockOracleProvider.sol backtest/state bin logs
 cp "$src/ascon/eval/run-matrix.sh" "$src/ascon/eval/check-matrix.py" ascon/eval/

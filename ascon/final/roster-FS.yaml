@@ -1,0 +1,42 @@
+# Field FS (specialist): one of our agents (slot) against the venue specialists (launch, liquidation,
+# Liquity redemption/trove, new-pool discovery) plus a few generalists.
+# Template: set the slot entry's dir (the only placeholder) to the arm's directory; every agent is frozen.
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+  - id: launch-confirm
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: launch-sniper
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: liquidator
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: redemption-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: trove-manager
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: discovery-arb-verify
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: max-profit-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: venue-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: lp-provider
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: random
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  # The arm under test: dir is a directory name under example/agents/, filled in per arm.
+  - id: slot
+    dir: __SLOT_DIR__
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
