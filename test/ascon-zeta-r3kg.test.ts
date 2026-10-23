@@ -194,6 +194,8 @@ type Act = Record<string, unknown>;
 async function emitted(obs: AgentObservation, decide = g.decide): Promise<Act[]> {
   const ctx = fakeCtx();
   const action = await decide(obs, ctx);
+  // Simulate inter-block idle time for background evidence I/O.
+  if (process.env.ERIS_RUN_DIR) await new Promise(resolve => setTimeout(resolve, 25));
   return [action, ...ctx.submitted].filter(Boolean) as Act[];
 }
 
@@ -1178,6 +1180,9 @@ test("pending evidence: rejected decrease retries, mined partial increase exits 
   appendFileSync(log, JSON.stringify({ kind: "mempool", event: "rejected",
     action: parseAction(ctx.submitted[0]) }) + "\n");
   await g.submitOu(obsFor({ block: 101, wethPos: losing }), ctx, null);
+  assert.equal(ctx.submitted.length, 1, "refresh does not reconcile inline");
+  await new Promise(resolve => setTimeout(resolve, 25));
+  await g.submitOu(obsFor({ block: 102, wethPos: losing }), ctx, null);
   assert.equal(ctx.submitted.length, 2, "explicit rejection permits risk-exit retry");
 
   // New run: successful order creation, partial position, live order still present.
@@ -1192,8 +1197,12 @@ test("pending evidence: rejected decrease retries, mined partial increase exits 
   const partial = { ...pos(20000), pnlUsd: -6000 };
   await g.submitOu(obsFor({ block: 204, runId: "partial", fairWeth: LOW, wethPos: partial }), ctx, null);
   assert.equal(ctx.submitted.length, 3, "live order cannot be assumed cancelled");
+  await new Promise(resolve => setTimeout(resolve, 25));
   live = 0n;
   await g.submitOu(obsFor({ block: 205, runId: "partial", fairWeth: LOW, wethPos: partial }), ctx, null);
+  assert.equal(ctx.submitted.length, 3, "terminal result must wait for the next block");
+  await new Promise(resolve => setTimeout(resolve, 25));
+  await g.submitOu(obsFor({ block: 206, runId: "partial", fairWeth: LOW, wethPos: partial }), ctx, null);
   assert.equal(ctx.submitted.length, 4);
   assert.equal((ctx.submitted[3] as Act).type, "gmxDecrease");
   assert.equal((ctx.submitted[3] as Act).sizeDeltaUsd, (20000n * E30).toString());
@@ -1344,4 +1353,90 @@ test("audit reserve: base wraps, sells and bundles preserve every open position'
       assert.deepEqual(o, before, "planning must not mutate the caller's observation");
     }
   });
+});
+
+test("OU refresh: hung RPC never delays decide or duplicates in-flight work", async () => {
+  const log = runtimeLog();
+  await warmup();
+  await emitted(obsFor({ block: 101, fairWeth: LOW }));
+  settleOrder(log, 101, "gmxIncrease", 102);
+  let calls = 0;
+  const ctx = fakeCtx();
+  ctx.publicClient = { getTransactionReceipt: () => { calls++; return new Promise(() => {}); } } as any;
+  const started = performance.now();
+  await g.decide(obsFor({ block: 102, fairWeth: LOW }), ctx);
+  assert.ok(performance.now() - started < 100, "decide must return within 100ms with hung RPC");
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(calls, 1);
+  for (const block of [102, 103, 104]) await g.decide(obsFor({ block, fairWeth: LOW }), ctx);
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(calls, 1, "one refresh in flight");
+  assert.equal(ctx.submitted.length, 0, "unreconciled intent blocks entry");
+});
+
+test("OU refresh: cached terminal evidence applies only on a later block", async () => {
+  const log = runtimeLog();
+  const ctx = fakeCtx();
+  const losing = { ...pos(40000), pnlUsd: -6000 };
+  await g.submitOu(obsFor({ block: 100, wethPos: losing }), ctx, null);
+  appendFileSync(log, JSON.stringify({ kind: "mempool", event: "rejected", action: parseAction(ctx.submitted[0]) }) + "\n");
+  await g.submitOu(obsFor({ block: 101, wethPos: losing }), ctx, null);
+  assert.equal(ctx.submitted.length, 1, "no same-decision reconciliation");
+  await new Promise(resolve => setTimeout(resolve, 25));
+  await g.submitOu(obsFor({ block: 101, wethPos: losing }), ctx, null);
+  assert.equal(ctx.submitted.length, 1, "same block cannot consume cached evidence");
+  await g.submitOu(obsFor({ block: 102, wethPos: losing }), ctx, null);
+  assert.equal(ctx.submitted.length, 2, "next block permits risk-exit retry");
+});
+
+test("OU refresh: hung order count expires without releasing entry, other-market exit stays available", async () => {
+  const log = runtimeLog();
+  await warmup();
+  await emitted(obsFor({ block: 101, fairWeth: LOW }));
+  settleOrder(log, 101, "gmxIncrease", 102);
+  const ctx = fakeCtx();
+  let reads = 0;
+  ctx.publicClient = {
+    getTransactionReceipt: async () => ({ status: "success", blockNumber: 102n }),
+    readContract: () => { reads++; return new Promise(() => {}); },
+  } as any;
+  await g.decide(obsFor({ block: 102, fairWeth: LOW }), ctx);
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(reads, 1);
+  const started = performance.now();
+  await g.decide(obsFor({ block: 103, fairWeth: LOW, wbtcPos: { ...pos(40000), pnlUsd: -6000 } }), ctx);
+  assert.ok(performance.now() - started < 100, "order-count RPC must not delay decide");
+  assert.equal(reads, 1, "no concurrent refresh");
+  assert.equal(ctx.submitted.length, 1);
+  assert.equal((ctx.submitted[0] as Act).type, "gmxDecrease");
+  assert.equal((ctx.submitted[0] as Act).base, "WBTC");
+  await new Promise(resolve => setTimeout(resolve, 550));
+  await g.decide(obsFor({ block: 104, fairWeth: LOW }), ctx);
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(reads, 2, "timeout permits a later refresh");
+  assert.equal(ctx.submitted.length, 1, "timeout never releases unreconciled entries");
+});
+
+test("OU refresh: old epoch receipt cannot clear a new epoch intent", async () => {
+  const log = runtimeLog();
+  await warmup();
+  await emitted(obsFor({ block: 101, fairWeth: LOW }));
+  settleOrder(log, 101, "gmxIncrease", 102);
+  let release!: (receipt: any) => void;
+  let reads = 0;
+  const ctx = fakeCtx();
+  ctx.publicClient = {
+    getTransactionReceipt: () => new Promise(resolve => { release = resolve; }),
+    readContract: async () => { reads++; return 0n; },
+  } as any;
+  await g.decide(obsFor({ block: 102, fairWeth: LOW }), ctx);
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(typeof release, "function");
+  for (const block of [200, 201, 202]) await g.decide(obsFor({ block, runId: "new", fairWeth: LOW }), ctx);
+  assert.equal(ctx.submitted.length, 1);
+  release({ status: "success", blockNumber: 102n });
+  await new Promise(resolve => setTimeout(resolve, 25));
+  assert.equal(reads, 0, "stale refresh stops before another RPC");
+  for (const block of [203, 204, 205]) await g.decide(obsFor({ block, runId: "new", fairWeth: LOW }), ctx);
+  assert.equal(ctx.submitted.length, 1, "new intent stays pending");
 });

@@ -3,6 +3,7 @@
 import type { AgentAction, AgentObservation, AgentContext } from "@eris/sdk";
 import { readFileSync, statSync, writeFileSync, renameSync, openSync, fsyncSync, closeSync } from "node:fs";
 import { join } from "node:path";
+import { readFile, stat } from "node:fs/promises";
 import { isDeepStrictEqual } from "node:util";
 import { PARAMS as DELTA_PARAMS } from "./delta.js";
 import { GMX, TOKENS } from "@eris/sdk/constants.js";
@@ -89,9 +90,16 @@ let ouEpoch: OuEpoch | undefined;
 let ouStatePath: string | undefined;
 let ouLoaded = false;
 let ouStorageFailed = false;
+type OuRefresh = {
+  epoch: OuEpoch;
+  block: number;
+  results?: { base: string; pending: OuPending; terminal: boolean }[];
+};
+let ouRefresh: OuRefresh | undefined;
 
 /** Tests simulate a replacement worker. Disk is intentionally untouched. */
 export function resetOuStateForTest(): void {
+  ouRefresh = undefined;
   ouAnchors.clear();
   ouPending.clear();
   ouDrift.clear();
@@ -165,6 +173,7 @@ function beginOuObservation(obs: AgentObservation, ctx: AgentContext): void {
   // Only an explicit run/epoch change clears durable intent and risk state.
   // Gaps reset consecutive confirmation naturally, never pending orders.
   if (!ouEpoch || ouEpoch.key !== key || ouEpoch.runId !== obs.runId) {
+    ouRefresh = undefined;
     ouAnchors.clear();
     ouPending.clear();
     ouDrift.clear();
@@ -536,24 +545,26 @@ export function intentLogOffset(ctx: AgentContext): number | undefined {
     if ((e as NodeJS.ErrnoException).code === "ENOENT") return 0;
   }
 }
-async function boundedRead<T>(read: Promise<T>): Promise<T> {
+async function boundedRead<T>(read: Promise<T>, timeoutMs = 500): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([read, new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error("OU evidence timeout")), 500);
+      timer = setTimeout(() => reject(new Error("OU evidence timeout")), timeoutMs);
     })]);
   } finally { if (timer) clearTimeout(timer); }
 }
 export type IntentEvidence = { sentBlock: number; logOffset?: number; action: Record<string, unknown> };
 /** Returns a rejection or a mined receipt. submit_failed is deliberately unknown:
  * a transport failure can hide an accepted transaction. */
-export async function intentOutcome(ctx: AgentContext, obs: AgentObservation, p: IntentEvidence): Promise<"rejected" | "success" | "reverted" | undefined> {
+export async function intentOutcome(ctx: AgentContext, obs: AgentObservation, p: IntentEvidence, background = false, isCurrent = () => true): Promise<"rejected" | "success" | "reverted" | undefined> {
   const path = ownLogPath(ctx);
   if (!path || p.logOffset === undefined || ouBlock(obs) <= p.sentBlock) return;
   try {
-    const size = statSync(path).size;
-    if (size > 4_000_000 || size < p.logOffset) return;
-    const lines = readFileSync(path).subarray(p.logOffset).toString("utf8").split("\n");
+    const size = background ? (await stat(path)).size : statSync(path).size;
+    if (!isCurrent() || size > 4_000_000 || size < p.logOffset) return;
+    const data = background ? await readFile(path) : readFileSync(path);
+    if (!isCurrent()) return;
+    const lines = data.subarray(p.logOffset).toString("utf8").split("\n");
     const matches = lines.filter(Boolean).map(line => JSON.parse(line)).filter(e => {
       if (e.kind !== "mempool") return false;
       if (e.blockSeen === p.sentBlock && e.actionType === p.action.type &&
@@ -575,9 +586,10 @@ export async function intentOutcome(ctx: AgentContext, obs: AgentObservation, p:
     return receipt.status;
   } catch { return; }
 }
-async function terminalIntent(ctx: AgentContext, obs: AgentObservation, base: string, p: OuPending): Promise<boolean> {
+async function terminalIntent(ctx: AgentContext, obs: AgentObservation, base: string, p: OuPending, isCurrent: () => boolean): Promise<boolean> {
   const outcome = await intentOutcome(ctx, obs, { ...p,
-    action: p.action ?? { type: p.kind === "increase" ? "gmxIncrease" : "gmxDecrease", base } });
+    action: p.action ?? { type: p.kind === "increase" ? "gmxIncrease" : "gmxDecrease", base } }, true, isCurrent);
+  if (!isCurrent()) return false;
   if (outcome === "rejected" || outcome === "reverted") return true;
   if (outcome !== "success") return false;
   try {
@@ -593,12 +605,51 @@ async function terminalIntent(ctx: AgentContext, obs: AgentObservation, base: st
   } catch { return false; }
 }
 
+/** Refresh owns snapshots only: callbacks never mutate trading state or submit orders.
+ * Keep completed results until a later block consumes them. Identity checks prevent
+ * stale epoch/intent evidence from releasing a replacement intent.
+ */
+function refreshOuEvidence(obs: AgentObservation, ctx: AgentContext): void {
+  const block = ouBlock(obs);
+  if (ouRefresh?.results && block > ouRefresh.block) {
+    if (ouRefresh.epoch === ouEpoch) for (const result of ouRefresh.results) {
+      if (result.terminal && ouPending.get(result.base) === result.pending)
+        ouPending.delete(result.base);
+    }
+    ouRefresh = undefined;
+  }
+  if (ouRefresh || !ouEpoch) return;
+  const pending = [...ouPending].filter(([, p]) => p.sentBlock < block);
+  if (!pending.length) return;
+  const refresh: OuRefresh = { epoch: ouEpoch, block };
+  ouRefresh = refresh;
+  let finished = false;
+  const isCurrent = () => !finished && ouRefresh === refresh;
+  // Defer log I/O and RPC until after the current decision. The whole refresh,
+  // including filesystem I/O, is bounded; timeout is unknown, never terminal.
+  void boundedRead(new Promise<NonNullable<OuRefresh["results"]>>(resolve => {
+    setImmediate(() => {
+      if (!isCurrent()) { resolve([]); return; }
+      resolve(Promise.all(pending.map(async ([base, intent]) => ({
+        base, pending: intent, terminal: await terminalIntent(ctx, obs, base, intent, isCurrent),
+      }))));
+    });
+  }), 1100).then(results => {
+    finished = true;
+    if (ouRefresh === refresh) refresh.results = results;
+  }, () => {
+    finished = true;
+    if (ouRefresh === refresh) refresh.results = [];
+  });
+}
+
 /** Observe even when there is no order budget, so anchors, risk and confirmation keep up.
  * Intents are retained before submission, durably when a store is offered.
  * A queued intent is not a runtime/chain acknowledgement; an unreflected intent blocks retries.
  */
 export async function submitOu(obs: AgentObservation, ctx: AgentContext, action: ReturnedAction): Promise<void> {
   beginOuObservation(obs, ctx);
+  refreshOuEvidence(obs, ctx);
   const wallet = ouBudget(obs, ctx, action);
   const block = ouBlock(obs);
   // Repeated snapshots in one block do not create fresh gas capacity.
@@ -625,8 +676,6 @@ export async function submitOu(obs: AgentObservation, ctx: AgentContext, action:
     const anchor = resolveOuAnchor(base, fair);
     const confirmedBlocks = observeOuPosition(base, block, signedSizeUsd(market.position));
     const riskStopped = observeOuRisk(base, block, fair, anchor, market.position);
-    const pending = ouPending.get(base);
-    if (pending && await terminalIntent(ctx, obs, base, pending)) ouPending.delete(base);
     observations.push({ base, fair, anchor, position: market.position, confirmedBlocks, riskStopped });
     signals[`ouAnchor${base}`] = anchor;
     signals[`ouFair${base}`] = fair;
