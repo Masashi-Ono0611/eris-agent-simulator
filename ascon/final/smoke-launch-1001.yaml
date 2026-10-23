@@ -1,0 +1,3 @@
+# Smoke run: launch at seed 1001 (1 scenario). Checks a roster starts and scores, not results.
+regimes: [launch]
+seeds: [1001]

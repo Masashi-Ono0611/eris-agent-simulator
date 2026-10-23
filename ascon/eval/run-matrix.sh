@@ -13,6 +13,12 @@
 #   fails within seconds. They are checked before anything starts.
 # - Two runs with the same (state dir, regime, seed) at once can swap rosters. Give each parallel
 #   lane its own state dir (the 5th argument); a state dir or a name already in use is refused.
+# - A state dir of its own is not enough: two runs started in the same millisecond share
+#   runs/<start time> (upstream PR #324, not in this branch), and the PASS below still appears.
+#   Start lanes at least 20 s apart and run check-collision.py on the matrix (lane-queue.sh does).
+# - Under slot replacement (ascon/final) every arm's agent is `slot`, so this PASS cannot tell arms
+#   apart either: run ascon/final/check-arm.py <matrix.json> <arm> (lane-queue.sh does).
+# Logs default to /tmp/ascon-exp, which macOS cleans after 3 idle days: set ASCON_EVAL_LOGS for long runs.
 set -u
 name="${1:?name}"; roster="${2:?roster}"; scenarios="${3:?scenarios}"; port="${4:?port}"; state="${5:-}"
 logs="${ASCON_EVAL_LOGS:-/tmp/ascon-exp}"

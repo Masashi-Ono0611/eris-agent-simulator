@@ -1,0 +1,32 @@
+# Field FP (sparse): one of our agents (slot) against slow, passive and single-venue reference agents.
+# Template: set the slot entry's dir (the only placeholder) to the arm's directory; every agent is frozen.
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+  - id: random
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: lp-provider
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: lst-carry
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: levered-long
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: venue-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: basis-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: peg-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  # The arm under test: dir is a directory name under example/agents/, filled in per arm.
+  - id: slot
+    dir: __SLOT_DIR__
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }

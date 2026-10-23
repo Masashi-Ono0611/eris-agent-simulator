@@ -1,0 +1,28 @@
+# GMX probe field: opus-1a (C1) and opus-1g (C1 + M-OU) side by side against a few public reference
+# agents. Unlike the slot rosters, both arms are in one field, so they share it: compare their M-OU
+# difference, not their absolute standing. Every agent is frozen.
+agents:
+  - id: noop
+    wallet: AUTO
+    baseline: true
+  - id: random
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: lp-provider
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: levered-long
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: venue-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: basis-arb
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: opus-1a
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }
+  - id: opus-1g
+    wallet: AUTO
+    env: { ERIS_AGENT_FROZEN: "1" }

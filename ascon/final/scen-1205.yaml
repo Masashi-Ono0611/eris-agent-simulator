@@ -1,0 +1,3 @@
+# Final evaluation: all 12 regimes at seed 1205 (12 scenarios). One file per seed.
+regimes: [calm, cex-drift, informed-flow, whale, lending-incident, crash, depeg, vuln, spike, depeg-persist, cdp-incident, launch]
+seeds: [1205]

@@ -1,0 +1,4 @@
+# GMX probe for opus-1g (M-OU): the four regimes where the fair price's anchor pull and the stress
+# overlays differ most, at one seed. Read with roster-gmx-probe.yaml (opus-1a and opus-1g side by side).
+regimes: [calm, crash, spike, cex-drift]
+seeds: [2001]
