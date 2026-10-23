@@ -21,7 +21,7 @@ in decide() (opus-r3s's getBlock) lost equal-fee ties about 2:1.
 | `roster-FP.yaml` | Sparse field: random, lp-provider, lst-carry, levered-long, venue-arb, basis-arb, peg-arb + slot |
 | `roster-FD.yaml` | Contested field: venue-arb, venue-arb-2 (dir venue-arb), multi-arb, clean-arb, cross-venue-arb, max-profit-arb, stat-arb, adaptive-arb + slot |
 | `roster-FS.yaml` | Specialist field: launch-confirm, launch-sniper, liquidator, redemption-arb, trove-manager, discovery-arb-verify, max-profit-arb, venue-arb, lp-provider, random + slot |
-| `scen-<seed>.yaml` | All 12 regimes at one seed: 1001, 1003-1010, 1011-1018, 1021-1024, 1101-1102, 1201-1206 (29 files, 348 scenarios). 1007-1010 are stage 1's second seed block (R late), 1015-1018 stage 2's F2 seeds |
+| `scen-<seed>.yaml` | All 12 regimes at one seed: 1001, 1003-1010, 1011-1018, 1021-1024, 1101-1102, 1201-1206 (29 files, 348 scenarios). 1007-1010 and 1015-1018 are unused legacy files; make-manifest accepts only 1003-1006 for stage 1, and F2 shares 1011-1014 with F |
 | `scen-launch-1041-1046.yaml`, `scen-launch-1047-1050.yaml` | Launch regime only, 6 + 4 seeds |
 | `smoke-{calm,lending,launch}-1001.yaml` | One scenario each (`lending` is the lending-incident regime): checks that a roster starts and scores, not a result |
 | `check-arm.py` | Per matrix: the slot ran the intended arm, frozen, in every scenario |
@@ -46,8 +46,11 @@ directory not found for id "slot"`, core/src/realtime/agentProcess.ts; read from
 **Lanes stay busy.** Each lane runs `ascon/eval/lane-chain.sh`, which takes the next queue file from its
 `pending/` directory as soon as one ends. Keep one queue in every lane's `pending/` that needs no decision
 to start. Default once the decision rule is frozen by commit hash (the plan requires that before stage 1
-starts): stage-1 cells {opus-1, opus-1-pb, opus-1a} on seeds 1003-1006 (the plan's order when R is late);
-R (opus-1r) gets its cells on 1007-1010 when it lands. Soak is not a lane-queue job: it runs the slot
+starts): stage-1 cells {B=opus-1, B'=opus-1-pb, R=opus-1r, W1=opus-1g2, W2=ascon-zeta-r3k}
+on seeds 1003-1006 x FP/FD. The explicit arm map adopted on 2026-10-23 also identifies
+informational X1-X3, whose additional runs follow stage 2. C1 is a stage-0 diagnostic only;
+R includes its launch fix. The current manifest path does not use late-arm seeds 1007-1010.
+Only R/W1/W2 can advance; if none passes, d1-run.sh reports D1_NO_STAGE2 and S-00048 stays. Soak is not a lane-queue job: it runs the slot
 unfrozen (check-arm would report ARM=FAIL, and the rosters here freeze every agent) and needs the mini's
 revision key (plan U6). A decision gates only what goes into `pending/` next, never whether a lane runs.
 
@@ -79,7 +82,7 @@ set it would not separate B from C1:
   environment contract, not to anything an agent deploys.
 
 So the trap risk does not exist in the competition for these arms. check-trap-scope.py re-checks both
-points; run it for every new arm (C1 = opus-1a, R = opus-1r, the weapon arms opus-1g and ascon-zeta-r3k,
+points; run it for every new arm (C1 = opus-1a, R = opus-1r, the weapon arms W1 = opus-1g2 and W2 = ascon-zeta-r3k,
 any later one) on the commit that will be measured, before its matrices count:
 `python3 ascon/final/check-trap-scope.py --scenarios ascon/final/scen-*.yaml ascon/final/smoke-*.yaml --arms opus-1 opus-1-pb opus-1a opus-2 ascon-zeta-r3 <new arm>`.
 A FAIL means a trap control is needed again: in a world that has the venue, with a check that
@@ -288,5 +291,5 @@ whole-cell lane assignment and resource checks. With two candidates this writes
 `--commit` records the intended execution SHA; it does not checkout or certify
 that tree. mini-lane-start still validates resources in the actual pinned tree.
 FS seeds 1101–1102 and docker checks are separate gates, not covered by these
-FP/FD queues. Legacy C1 uses the existing full scenario file; only launch is
-judged for its noninferiority rule (no shortened C1 scenario files are generated).
+FP/FD queues. Legacy C1 support remains in the planner, but C1 is absent from the
+current explicit arm map and cannot be selected as F/F2 in this plan.
