@@ -32,64 +32,100 @@ def manifest_controls():
     logs = temp / 'logs'
     logs.mkdir()
     local = temp / 'copy'
-    lines = []
-    paths = {}
-    for seed in range(1003, 1007):
-        for field in ('FP', 'FD'):
-            for arm in ('opus-1', 'opus-1-pb', 'opus-1r'):
-                job = f's1-{field}{seed}-{arm}'
-                path = local / 'runs' / job / 'matrix.json'
-                dump(path, {'fixture': job})
-                paths[job] = path
-                for run in ('z-old', 'a-new'):
-                    lines += [f'NOTE_{job} run={run} slot={arm} head=abc arm_tree=def lib_tree=ghi dirty=0 load1=1',
-                              f'NOTE_{job} run={run} matrix=/mini/runs/{job}/matrix.json',
-                              f'EXIT_{job}=0 VERDICT=PASS COLLISION=PASS ARM=PASS run={run}']
-                lines += [f'NOTE_{job} run=killed slot={arm}',
-                          f'EXIT_{job}=1 VERDICT=FAIL COLLISION=SKIP ARM=SKIP run=failed']
-    log = logs / 'A.queue.log'
-    # Disjoint jobs span two lane logs; ordering is within each lane, not filename/run id.
-    log.write_text('\n'.join(x for x in lines if 's1-FP' in x) + '\n')
-    log2 = logs / 'B.queue.log'
-    log2.write_text('\n'.join(x for x in lines if 's1-FD' in x) + '\n')
     out = temp / 'manifest.json'
-    args = ['--logs', logs, '--stage', '1', '--out', out, '--arms', 'opus-1r', '--path-map', f'/mini={local}']
-    invoke('make-manifest', *args, rc=0)
-    man = json.loads(out.read_text())
-    audit = json.loads(Path(str(out) + '.audit.json').read_text())
+    args = ['--logs', logs, '--stage', '1', '--out', out]
+
+    def read():
+        return json.loads(out.read_text()), json.loads(Path(str(out) + '.audit.json').read_text())
+
+    def passing(job, arm, run):
+        path = local / job / 'matrix.json'
+        dump(path, {'fixture': job})
+        return (f'NOTE_{job} run={run} slot={arm} matrix={path}\n'
+                f'EXIT_{job}=0 VERDICT=PASS COLLISION=PASS ARM=PASS run={run}\n')
+
+    baseline = ''.join(passing(f's1-FD1003-{arm}', arm, f'B-{arm}')
+                       for arm in ('opus-1', 'opus-1-pb'))
+    (logs / 'B.queue.log').write_text(baseline)
+    # Synthetic killed queues: repeated FAIL, interruption, stale lock, new run ids.
+    for lane, arm in zip('CDEF', ('opus-1g', 'opus-1r', 'ascon-zeta-r3k', 'ascon-zeta-r3kg')):
+        job = f's1-FP1003-{arm}'
+        fail = f'EXIT_{job}=1 VERDICT=FAIL COLLISION=SKIP ARM=SKIP run={lane}-killed\n'
+        text = (f'NOTE_{job} run={lane}-killed slot={arm}\n' + fail * 2 +
+                f'EXIT_{job}=- VERDICT=FAIL interrupted run={lane}-killed\n' +
+                f'NOTE_{job} run={lane}-rerun slot={arm}\n')
+        if lane in 'CD':
+            text += f'EXIT_{job}=1 VERDICT=BLOCKED run={lane}-stale-lock\n'
+        (logs / f'{lane}.queue.log').write_text(text)
+    invoke('make-manifest', *args, rc=2)
+    man, audit = read()
     assert set(man) <= load('judge2').MANIFEST_KEYS
-    assert len(man['cells']) == 8 and len(audit['selected']) == 24
-    assert all(r['run'] == 'a-new' for r in audit['selected'])
-    assert len(audit['ignored']) == 72 and not audit['missing']
-    assert man['cells'][0]['arms']['R'] == str(paths['s1-FD1003-opus-1r'].resolve())
-    # The last PASS cannot be rescued by an older PASS if its validity checks failed.
-    job = 's1-FP1003-opus-1r'
-    with log.open('a') as f:
-        f.write(f'NOTE_{job} run=bad slot=opus-1r\nEXIT_{job}=0 VERDICT=PASS COLLISION=FAIL ARM=PASS run=bad\n')
+    assert len(man['cells']) == 1 and man['cells'][0]['field'] == 'FD'
+    assert man['cells'][0]['seed'] == 1003 and set(man['cells'][0]['arms']) == {'B', "B'"}
+    assert len(audit['selected']) == 2 and len(audit['missing']) == 38
+    assert len(audit['ignored']) == 10
+    killed = [r for r in audit['ignored'] if r['run'].endswith('-killed')]
+    assert len(killed) == 4 and all(len(r['exits']) == 3 for r in killed)
+    assert all(r['reason'].startswith('ignored attempt:') for r in audit['ignored'])
+    assert len([r for r in audit['ignored'] if 'outside selected' in r['reason']]) == 4
+    print('KILLED_QUEUE_CONTROLS_OK selected=2 missing=38 ignored=10')
+
+    job, arm = 's1-FD1003-opus-1', 'opus-1'
+    lane_b = logs / 'B.queue.log'
+    # Identical PASS repeats preserve one result; conflicting PASS lines do not.
+    duplicate = baseline.splitlines()[1] + '\n'
+    lane_b.write_text(baseline + duplicate)
     invoke('make-manifest', *args, rc=2)
-    assert 'R' not in json.loads(out.read_text())['cells'][1]['arms']
-    assert len(json.loads(Path(str(out) + '.audit.json').read_text())['missing']) == 1
-    # A job which only failed must stay missing; its path is not enough.
-    job_failed = 's1-FD1004-opus-1r'
-    log2.write_text('\n'.join(x for x in log2.read_text().splitlines()
-                              if job_failed not in x or 'run=failed' in x) + '\n')
+    assert len(read()[1]['selected']) == 2
+    lane_b.write_text(baseline + duplicate.replace('ARM=PASS', 'ARM=FAIL'))
     invoke('make-manifest', *args, rc=2)
-    missing = json.loads(Path(str(out) + '.audit.json').read_text())['missing']
-    assert any(x['job'] == job_failed and x['reason'] == 'missing or never PASS' for x in missing)
-    # Totally absent jobs are missing; no made-up cells or matrices.
-    # Across-lane PASS ordering is unavailable for arbitrary run ids: fail closed.
-    with log2.open('a') as f:
-        f.write(f'NOTE_{job} run=ambiguous slot=opus-1r\n'
-                f'NOTE_{job} run=ambiguous matrix={paths[job]}\n'
-                f'EXIT_{job}=0 VERDICT=PASS COLLISION=PASS ARM=PASS run=ambiguous\n')
+    assert any(m['job'] == job and 'conflicting EXIT' in m['reason'] for m in read()[1]['missing'])
+    # A lone PASS still needs successful exit, collision/arm checks and provenance.
+    for old, new in [('=0 VERDICT=PASS', '=1 VERDICT=PASS'),
+                     ('COLLISION=PASS', 'COLLISION=FAIL'), ('ARM=PASS', 'ARM=FAIL'),
+                     ('slot=opus-1 ', 'slot=wrong ')]:
+        lane_b.write_text(baseline.replace(old, new, 1))
+        invoke('make-manifest', *args, rc=2)
+        assert len(read()[1]['selected']) == 1
+    # Two PASS runs are ambiguous both within a lane and across lanes.
+    for cross_lane in (False, True):
+        lane_b.write_text(baseline + ('' if cross_lane else passing(job, arm, 'second')))
+        other = logs / 'A.queue.log'
+        other.write_text(passing(job, arm, 'second') if cross_lane else '')
+        invoke('make-manifest', *args, rc=2)
+        assert any(m['job'] == job and 'multiple PASS' in m['reason'] for m in read()[1]['missing'])
+        assert len(read()[1]['selected']) == 1
+    other.write_text('')
+    # A later successful retry of a failed run is eligible under its new id.
+    lane_b.write_text(baseline)
+    c = logs / 'C.queue.log'
+    c.write_text(c.read_text() + passing('s1-FP1003-opus-1g', 'opus-1g', 'C-success'))
     invoke('make-manifest', *args, rc=2)
-    assert any('provable order' in x['reason'] for x in
-               json.loads(Path(str(out) + '.audit.json').read_text())['missing'])
-    log.write_text('')
-    log2.write_text('')
+    assert len(read()[1]['selected']) == 3
+    # Conflicting NOTE and malformed run evidence still write both partial files.
+    lane_b.write_text(baseline + f'NOTE_{job} run=B-opus-1 slot=wrong\n')
     invoke('make-manifest', *args, rc=2)
-    assert json.loads(out.read_text())['cells'] == []
-    assert len(json.loads(Path(str(out) + '.audit.json').read_text())['missing']) == 24
+    assert any('conflicting slot' in m['reason'] for m in read()[1]['missing'])
+    lane_b.write_text(baseline + f'EXIT_{job}=1 VERDICT=FAIL\n')
+    invoke('make-manifest', *args, rc=2)
+    assert read()[1]['errors'] and not read()[0]['cells']
+    # Queue extraction preserves remote paths even without local matrix copies.
+    lane_b.write_text(baseline.replace(str(local), '/missing-mini-matrices'))
+    invoke('make-manifest', *args, rc=2)
+    assert len(read()[1]['selected']) == 3
+    fd = next(c for c in read()[0]['cells'] if c['field'] == 'FD')
+    assert fd['arms']['B'] == '/missing-mini-matrices/s1-FD1003-opus-1/matrix.json'
+    # Complete design and path mapping remain supported.
+    for log in logs.glob('*.queue.log'):
+        log.write_text('')
+    lines = ''.join(passing(f's1-{field}{seed}-{arm}', arm, 'only')
+                    for seed in range(1003, 1007) for field in ('FP', 'FD')
+                    for arm in ('opus-1', 'opus-1-pb', 'opus-1a', 'opus-1r', 'opus-1g'))
+    lane_b.write_text(lines.replace(str(local), '/mini'))
+    invoke('make-manifest', *args, '--path-map', f'/mini={local}', rc=0)
+    man, audit = read()
+    assert len(man['cells']) == 8 and len(audit['selected']) == 40 and not audit['missing']
+    assert all(Path(path).is_file() for cell in man['cells'] for path in cell['arms'].values())
     print('MANIFEST_CONTROLS_OK')
 
 
