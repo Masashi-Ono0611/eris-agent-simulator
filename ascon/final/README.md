@@ -137,6 +137,9 @@ unresolved candidates. X labels and the three known exploratory directories are
 marked exploratory. A stage-1 PASS means “go to stage 2”, never shipment.
 Legacy manifests explicitly requesting C1 retain their launch-only rule.
 
+The frozen stage-1 and stage-2 t critical value is **0.94**, tightened from
+0.81 to meet the whole-tree false-ship Wilson upper-95 bound of 2% for
+R/W1/W2. The stage-1 +0.20 mean floor and all other rules are unchanged.
 Family-wise calibration for the three shippable candidates is report-only:
 
 ```sh

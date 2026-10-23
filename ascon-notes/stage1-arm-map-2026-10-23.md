@@ -46,7 +46,8 @@ of the two-sided 95% interval, z=1.96. Tightening grid 0.81:0.01:3.00.
 0.94 is the smallest qualifying grid point. At 0.81, +0.5/+1.0 ship rates
 are 20.3675% / 40.1225%; at 0.94 they are 17.4825% / 38.5275%.
 This is the calibration sample, not independent-seed validation or live/backtest
-acceptance. `judge2.T_CRIT` stays **0.81**; no threshold was changed.
+acceptance. At that report-only run, `judge2.T_CRIT` remained **0.81**;
+the subsequent authorized tightening is recorded below.
 
 Run code hashes (captured by mc.py):
 - `mc.py`: `dd109ee660346a267daf3d8b5ae03ac894a46fa09780eb7af776fabd947d6187`
@@ -75,3 +76,63 @@ Full result: `/private/tmp/ascon-mc-three-231023.json` (temporary artifact).
 Logs: `/private/tmp/ascon-evidence.log`, `/private/tmp/ascon-judge2.log`,
 `/private/tmp/ascon-all.log`, `/private/tmp/ascon-typecheck.log`,
 `/private/tmp/ascon-mc-three-231023.log`.
+
+## Authorized post-freeze tightening to 0.94
+
+Starting HEAD ba955daf on feat/mechanism. No commit or network access.
+Set `judge2.T_CRIT` to **0.94** for stage 1 and stage 2. This is tightening
+under the pre-registered whole-decision-tree false-ship upper-95 <= 2% rule.
+The +0.20 stage-1 mean floor and every other judge rule remain unchanged.
+`mc.py` inherits its default from `judge2.T_CRIT`; it has no separate frozen
+constant to change. Boundary/default tests now pin 0.94, including stage-2
+0.939 FAIL / 0.940 PASS / 0.941 PASS. No existing test pinned the old MC
+false-ship bound, so no such control was replaced; the earlier 0.93 result
+(upper-95 2.020383%) remains recorded above as the failing grid neighbor.
+
+Re-run using the same noise file and assumptions documented above:
+
+```sh
+python3 -B ascon/final/mc.py run --noise <noise-path-above> \
+  --calibrate --candidates R W1 W2 --sims 40000 --rng-seed 231023 \
+  --t-crit 0.94 --json /private/tmp/ascon-mc-three-094-231023.json
+```
+
+Exit 0; 40,000 trials per effect, seed 231023, R/W1/W2, t=0.94.
+Noise SHA256 is unchanged. Wilson uses z=1.96, the upper endpoint of the
+two-sided 95% interval.
+
+| True effect | Ships / 40,000 | Whole-tree ship rate | Null upper-95 |
+|---|---:|---:|---:|
+| 0 | 740 | 1.8500% | **1.986754%** |
+| +0.5 | 6,993 | **17.4825%** | — |
+| +1.0 | 15,411 | **38.5275%** | — |
+
+The null upper bound meets 2%. These effect ship rates correspond to the
+explicit three-candidate family; the plan's old 16% / 34% are historical
+figures, not a matched three-candidate comparison. The earlier same-family
+0.81 run above gave 20.3675% / 40.1225%. Reusing the calibration seed is a
+reproduction, not independent-seed validation or live/backtest acceptance.
+
+Run code SHA256:
+- `mc.py`: `dd109ee660346a267daf3d8b5ae03ac894a46fa09780eb7af776fabd947d6187`
+- `judge2.py`: `18b37ca50c0f2af9f9b14877ea2ec66dcc8e7c745a6d53955d9eb49268128313`
+
+Verification:
+- `bash ascon/final/test-judge2.sh "$PWD"`: final exit 0,
+  `SYNTHETIC OK: 165/165 controls as expected`, `MC OK`, `ALL_CONTROLS_OK`.
+  Initial run was 164/165 because one updated fixture retained its old
+  expected t=0.83; corrected to 0.95 and reran the full suite.
+  Optional real-matrix/calibration checks skipped: no REAL_DIR supplied.
+- `bash ascon/final/test-evidence.sh`: exit 0, `ALL_CONTROLS_OK`.
+- `/bin/bash ascon/eval/test-all.sh`: initial exit 1, 7/8 suites passed,
+  `HARNESS_FAILED`; test-lane-status watch output included
+  `child setpgid: Operation not permitted`. Same command rerun with a PTY:
+  exit 0, all 8 suites OK, `ALL_HARNESS_OK`. No harness code changed.
+- `npm run typecheck`: exit 0.
+- `git diff --check`: exit 0.
+
+Logs: `/private/tmp/ascon-094-judge2.log`,
+`/private/tmp/ascon-094-evidence.log`, `/private/tmp/ascon-094-all.log`,
+`/private/tmp/ascon-094-all-retry.log`, `/private/tmp/ascon-094-typecheck.log`,
+`/private/tmp/ascon-mc-three-094-231023.log`.
+Full MC JSON: `/private/tmp/ascon-mc-three-094-231023.json` (temporary artifact).

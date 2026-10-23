@@ -13,8 +13,8 @@ stage 2 with 1021-1024. FS covers launch, cdp-incident and lending-incident.
 
 R/W: d = EW11(candidate)-EW11(B), excluding launch. Pair FP/FD within seed;
 m = mean(c), f = max(0.25, sample_sd(placebo c)), SE = max(sample_sd(c), f)/sqrt(n).
-Stage 1 requires t >= 0.81 and m >= +0.20, with NO ask band (U4 approved).
-Stage 2 uses stage-1 f, t >= 0.81 and m > 0. With fewer than four paired seeds,
+Stage 1 requires t >= 0.94 and m >= +0.20, with NO ask band (U4 approved).
+Stage 2 uses stage-1 f, t >= 0.94 and m > 0. With fewer than four paired seeds,
 t uses the stricter t(n-1) critical value. Other clauses:
 2: mean(d_f) + 1.64*sd(d_f)/2 >= -0.5 FD / -0.25 FP (non-launch).
 3: non-launch regime mean <= -3 and >=75% negative (6/8 planned), AND the
@@ -64,7 +64,7 @@ FS_FIELD = "FS"
 LAUNCH = "launch"
 REGIMES12 = ("calm", "cex-drift", "informed-flow", "whale", "lending-incident", "crash", "depeg", "vuln",
              "spike", "depeg-persist", "cdp-incident", "launch")
-T_CRIT = 0.81  # pre-freeze whole-tree MC calibration; mean floor remains +0.20
+T_CRIT = 0.94  # post-freeze three-candidate whole-tree MC tightening; mean floor remains +0.20
 T90 = {1: 3.078, 2: 1.886, 3: 1.638}  # one-sided 10% t quantiles; n >= 4 uses calibrated T_CRIT
 PLACEBO_FLOOR = 0.25
 THRESHOLD = 0.20
