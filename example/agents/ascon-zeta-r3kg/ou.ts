@@ -96,9 +96,15 @@ let ouStorageFailed = false;
 type OuRefresh = {
   epoch: OuEpoch;
   block: number;
+  settled?: Promise<void>;
   results?: { base: string; pending: OuPending; terminal: boolean }[];
 };
 let ouRefresh: OuRefresh | undefined;
+
+/** Wait for the current refresh snapshot, including timeout handling, without consuming it. */
+export async function ouRefreshSettledForTest(): Promise<void> {
+  await ouRefresh?.settled;
+}
 
 /** Tests simulate a replacement worker. Disk is intentionally untouched. */
 export function resetOuStateForTest(): void {
@@ -639,7 +645,7 @@ function refreshOuEvidence(obs: AgentObservation, ctx: AgentContext): void {
   const isCurrent = () => !finished && ouRefresh === refresh;
   // Defer log I/O and RPC until after the current decision. The whole refresh,
   // including filesystem I/O, is bounded; timeout is unknown, never terminal.
-  void boundedRead(new Promise<NonNullable<OuRefresh["results"]>>(resolve => {
+  refresh.settled = boundedRead(new Promise<NonNullable<OuRefresh["results"]>>(resolve => {
     setImmediate(() => {
       if (!isCurrent()) { resolve([]); return; }
       resolve(Promise.all(pending.map(async ([base, intent]) => ({
