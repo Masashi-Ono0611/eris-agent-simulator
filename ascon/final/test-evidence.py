@@ -9,6 +9,7 @@ import subprocess
 import sys
 
 src, temp = map(Path, sys.argv[1:3])
+sys.path.insert(0, str(src))
 which = sys.argv[3] if len(sys.argv) > 3 else 'all'
 
 def load(name):
@@ -62,13 +63,13 @@ def manifest_controls():
     assert set(man) <= load('judge2').MANIFEST_KEYS
     assert len(man['cells']) == 1 and man['cells'][0]['field'] == 'FD'
     assert man['cells'][0]['seed'] == 1003 and set(man['cells'][0]['arms']) == {'B', "B'"}
-    assert len(audit['selected']) == 2 and len(audit['missing']) == 38
+    assert len(audit['selected']) == 2 and len(audit['missing']) == 62
     assert len(audit['ignored']) == 10
     killed = [r for r in audit['ignored'] if r['run'].endswith('-killed')]
     assert len(killed) == 4 and all(len(r['exits']) == 3 for r in killed)
     assert all(r['reason'].startswith('ignored attempt:') for r in audit['ignored'])
-    assert len([r for r in audit['ignored'] if 'outside selected' in r['reason']]) == 4
-    print('KILLED_QUEUE_CONTROLS_OK selected=2 missing=38 ignored=10')
+    assert len([r for r in audit['ignored'] if 'outside selected' in r['reason']]) == 0
+    print('KILLED_QUEUE_CONTROLS_OK selected=2 missing=62 ignored=10')
 
     job, arm = 's1-FD1003-opus-1', 'opus-1'
     lane_b = logs / 'B.queue.log'
@@ -120,12 +121,25 @@ def manifest_controls():
         log.write_text('')
     lines = ''.join(passing(f's1-{field}{seed}-{arm}', arm, 'only')
                     for seed in range(1003, 1007) for field in ('FP', 'FD')
-                    for arm in ('opus-1', 'opus-1-pb', 'opus-1a', 'opus-1r', 'opus-1g'))
+                    for arm in tuple(load('judge2').DEFAULT_ARM_MAP.values()))
     lane_b.write_text(lines.replace(str(local), '/mini'))
     invoke('make-manifest', *args, '--path-map', f'/mini={local}', rc=0)
     man, audit = read()
-    assert len(man['cells']) == 8 and len(audit['selected']) == 40 and not audit['missing']
+    assert len(man['cells']) == 8 and len(audit['selected']) == 64 and not audit['missing']
     assert all(Path(path).is_file() for cell in man['cells'] for path in cell['arms'].values())
+    assert 'C1' not in man['candidates']
+    amap = load('judge2').DEFAULT_ARM_MAP
+    explicit = [f'{k}={v}' for k, v in amap.items() if k not in ('B', "B'")]
+    invoke('make-manifest', *args, '--arms', *explicit, rc=0)
+    assert read()[0]['arm_map'] == amap
+    lane_b.write_text('\n'.join(line for line in lines.splitlines() if '-ascon-zeta-r3k ' not in line and '-ascon-zeta-r3k=' not in line))
+    invoke('make-manifest', *args, '--arms', *explicit, rc=2)
+    man, audit = read()
+    assert len(audit['missing']) == 8 and all(x['job'].endswith('-ascon-zeta-r3k') for x in audit['missing'])
+    assert all('W2' not in cell['arms'] and 'R' in cell['arms'] for cell in man['cells'])
+    for entries in [('R=one', 'R=two'), ('R=opus-1',), ('B=wrong', 'R=right'), ('R',)]:
+        invoke('make-manifest', *args, '--arms', *entries, rc=2)
+    print('ARM_MAP_CONTROLS_OK no C1, explicit 8 arms, missing W2 only, invalid maps refused')
     print('MANIFEST_CONTROLS_OK')
 
 
@@ -171,6 +185,23 @@ def mechanism_controls():
     out = temp / 'MECH.json'
     invoke('mechanism', man, '--out', out, rc=2)
     r = json.loads(out.read_text())['arms']['R']
+    # The same explicit mapping flows through extraction, including absent W2/X.
+    mapped = json.loads(man.read_text())
+    mapped['arm_map'] = {'B': 'opus-1', "B'": 'opus-1-pb', 'R': 'opus-1r',
+                         'W2': 'ascon-zeta-r3k', 'X1': 'opus-1g2'}
+    mapped['candidates'] = {a: 'superiority' for a in ('R', 'W2', 'X1')}
+    dump(man, mapped)
+    invoke('mechanism', man, '--out', out, '--arms', 'R=opus-1r', 'W2=ascon-zeta-r3k', 'X1=opus-1g2', rc=2)
+    extracted = json.loads(out.read_text())
+    assert extracted['arm_map'] == mapped['arm_map'] and 'C1' not in extracted['arms']
+    assert extracted['arms']['R']['slot_timeouts'] == 1
+    assert extracted['arms']['W2']['errors'] == ['no matrices']
+    assert extracted['arms']['X1']['errors'] == ['no matrices']
+    # A conflicting CLI map is rejected without overwriting evidence.
+    before = out.read_bytes()
+    invoke('mechanism', man, '--out', out, '--arms', 'R=wrong', rc=2)
+    assert out.read_bytes() == before
+    print('MECHANISM_ARM_MAP_OK missing W2/X explicit, no C1, mismatch refused')
     assert r['stf'] == 1 and r['slot_timeouts'] == 1 and r['tie_win_rate'] == 2/3
     assert r['matrices_sha256'] == [hashlib.sha256(matrix.read_bytes()).hexdigest()]
     assert r['p99_decide_ms'] is None and r['p99_decide_ms_reason']

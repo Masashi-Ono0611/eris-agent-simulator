@@ -120,17 +120,36 @@ exist) and passes again after the fix.
 
 ```sh
 python3 ascon/final/make-manifest.py --logs /local/logs --stage 1 --out M.json \
-  --arms opus-1a opus-1r opus-1g --path-map /mini/repo=/local/repo
+  --arms R=opus-1r W1=opus-1g W2=ascon-zeta-r3k \
+    X1=opus-1g2 X2=opus-1w X3=ascon-zeta-r3kg --path-map /mini/repo=/local/repo
 python3 ascon/final/mechanism.py M.json --out MECH.json
 python3 ascon/final/judge2.py judge --manifest M.json --mechanism MECH.json --out verdict.json
 bash ascon/final/test-evidence.sh
 ```
 
-`make-manifest.py` defaults to B, B', C1, R and W (opus-1g); `--arms` selects arm
-**directory names**, comma or space separated, and always includes B and B'. Other directories
-keep their directory name as their judge label. The frozen judge permits at most two superiority
-candidates and one noninferiority candidate. Extra weapon/exploration arms therefore need an explicit
-comparison selection; separate comparisons do not establish a corrected overall selection rule.
+`--arms` accepts `LABEL=agent-dir` entries, comma or space separated. The default
+is the explicit map above plus required B=opus-1 and B'=opus-1-pb. There is no
+implicit C1. The manifest records `arm_map`; mechanism and judge inherit it, or
+accept the identical `--arms` map (conflicting maps are refused). Each candidate
+gets the unchanged frozen superiority rule independently. A missing W2 blocks
+W2 while other candidates still receive verdicts; final selection waits for
+unresolved candidates. X labels and the three known exploratory directories are
+marked exploratory. A stage-1 PASS means “go to stage 2”, never shipment.
+Legacy manifests explicitly requesting C1 retain their launch-only rule.
+
+The frozen stage-1 and stage-2 t critical value is **0.94**, tightened from
+0.81 to meet the whole-tree false-ship Wilson upper-95 bound of 2% for
+R/W1/W2. The stage-1 +0.20 mean floor and all other rules are unchanged.
+Family-wise calibration for the three shippable candidates is report-only:
+
+```sh
+python3 -B ascon/final/mc.py run --noise /path/to/stepR/noise-r2r3.json \
+  --calibrate --candidates R W1 W2 --sims 40000 --rng-seed 231023 --json mc-three.json
+```
+
+This scans 0.01 grid points from the frozen threshold upward, keeps shared B
+and the frozen ranking/F/F2 limit, and reports Wilson upper-95. It does not
+change `judge2.T_CRIT`. Exploratory arms and C1 are absent from this calibration.
 
 The stage-1 design is FP/FD at seeds 1003–1006. Each job uses its last EXIT with VERDICT=PASS,
 ordered by line position within its lane log; newer killed/failed attempts do not replace it.

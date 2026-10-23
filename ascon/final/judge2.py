@@ -5,15 +5,16 @@ CLI: judge --manifest M.json --mechanism MECH.json [--stage 1|2|retest]
      [--stage1-verdict V1.json | --stage2-verdict V2.json] [--out V.json] [--json]
      validate <matrix.json or matrix directory> ...
 
-Arms: B (opus-1), B' (opus-1-pb), C1 (opus-1a, launch only), R (opus-1r),
-W (one weapon arm). Stage 1 uses seeds 1003-1006, or the late-R set 1007-1010;
+Arms: explicit --arms LABEL=agent-dir (or manifest arm_map), with B/B' required.
+Stage 1 has R, W1, W2 and exploratory X1/X2/X3; no implicit C1.
+Legacy explicitly requested C1 noninferiority remains supported. Stage 1 uses seeds 1003-1006, or the late-R set 1007-1010;
 stage 2 uses 1011-1014 for both F and F2, plus FS seeds 1101-1102. Retest combines
 stage 2 with 1021-1024. FS covers launch, cdp-incident and lending-incident.
 
 R/W: d = EW11(candidate)-EW11(B), excluding launch. Pair FP/FD within seed;
 m = mean(c), f = max(0.25, sample_sd(placebo c)), SE = max(sample_sd(c), f)/sqrt(n).
-Stage 1 requires t >= 0.81 and m >= +0.20, with NO ask band (U4 approved).
-Stage 2 uses stage-1 f, t >= 0.81 and m > 0. With fewer than four paired seeds,
+Stage 1 requires t >= 0.94 and m >= +0.20, with NO ask band (U4 approved).
+Stage 2 uses stage-1 f, t >= 0.94 and m > 0. With fewer than four paired seeds,
 t uses the stricter t(n-1) critical value. Other clauses:
 2: mean(d_f) + 1.64*sd(d_f)/2 >= -0.5 FD / -0.25 FP (non-launch).
 3: non-launch regime mean <= -3 and >=75% negative (6/8 planned), AND the
@@ -63,7 +64,7 @@ FS_FIELD = "FS"
 LAUNCH = "launch"
 REGIMES12 = ("calm", "cex-drift", "informed-flow", "whale", "lending-incident", "crash", "depeg", "vuln",
              "spike", "depeg-persist", "cdp-incident", "launch")
-T_CRIT = 0.81  # pre-freeze whole-tree MC calibration; mean floor remains +0.20
+T_CRIT = 0.94  # post-freeze three-candidate whole-tree MC tightening; mean floor remains +0.20
 T90 = {1: 3.078, 2: 1.886, 3: 1.638}  # one-sided 10% t quantiles; n >= 4 uses calibrated T_CRIT
 PLACEBO_FLOOR = 0.25
 THRESHOLD = 0.20
@@ -97,6 +98,50 @@ try:
     HERE = os.path.dirname(os.path.abspath(__file__))
 except NameError:  # run from stdin (validate only)
     HERE = None
+
+
+# Explicit stage-1 identity map. Legacy manifests remain readable without adding C1.
+DEFAULT_ARM_MAP = {"B": "opus-1", "B'": "opus-1-pb", "R": "opus-1r",
+                   "W1": "opus-1g", "W2": "ascon-zeta-r3k", "X1": "opus-1g2",
+                   "X2": "opus-1w", "X3": "ascon-zeta-r3kg"}
+EXPLORATORY_DIRS = {"opus-1g2", "opus-1w", "ascon-zeta-r3kg"}
+
+
+def parse_arm_map(items):
+    import re
+    result = {"B": "opus-1", "B'": "opus-1-pb"}
+    seen = set()
+    for item in items:
+        for entry in item.split(","):
+            label, sep, directory = entry.partition("=")
+            if not sep or not (label in ("B", "B'") or re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", label)):
+                raise ValueError("--arms requires LABEL=agent-dir")
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", directory):
+                raise ValueError("invalid arm directory")
+            if label in seen or (label in result and result[label] != directory):
+                raise ValueError("duplicate or reserved arm label: " + label)
+            seen.add(label)
+            result[label] = directory
+    if len(set(result.values())) != len(result):
+        raise ValueError("arm directories must be unique")
+    if len(result) <= 2:
+        raise ValueError("need at least one candidate")
+    return result
+
+
+def resolve_arm_map(man, items=None):
+    stored = man.get("arm_map")
+    parsed = parse_arm_map([f"{k}={v}" for k, v in stored.items()]) if isinstance(stored, dict) else None
+    if stored is not None and parsed is None:
+        raise ValueError("arm_map must be an object")
+    supplied = parse_arm_map(items) if items else None
+    if supplied and parsed and supplied != parsed:
+        raise ValueError("--arms differs from manifest arm_map")
+    return supplied or parsed
+
+
+def exploratory_arm(label, arm_map):
+    return label.startswith("X") or (arm_map or {}).get(label) in EXPLORATORY_DIRS
 
 
 # ---------------------------------------------------------------- official standings replica
@@ -980,7 +1025,7 @@ def _inherit_nonplan(cfg, v, stage, args):
         cfg["inherited_nonplan"].append("stage %s: %s" % (stage, x))
 
 
-MANIFEST_KEYS = {"stage", "slot_id", "baseline", "placebo", "candidates", "cells", "exclude", "threshold", "ask_floor", "design"}
+MANIFEST_KEYS = {"stage", "slot_id", "baseline", "placebo", "candidates", "cells", "exclude", "threshold", "ask_floor", "design", "arm_map"}
 DESIGN_KEYS = {"seeds", "fs_seeds", "regimes", "rosters"}
 
 
@@ -1005,6 +1050,14 @@ def build_config(args):
     for c in args.candidate or []:
         arm, _, rule = c.partition("=")
         cfg["candidates"][arm] = rule
+    cfg["arm_map"] = resolve_arm_map(man, getattr(args, "arms", None))
+    if cfg["arm_map"]:
+        mapped = {a: "superiority" for a in cfg["arm_map"] if a not in ("B", "B'")}
+        if cfg["candidates"] and cfg["candidates"] != mapped:
+            _die("candidates differ from explicit arm_map superiority candidates")
+        if cfg["baseline"] != "B" or cfg["placebo"] != "B'":
+            _die("explicit arm_map requires B and B'")
+        cfg["candidates"] = mapped
     roles = cfg["candidates"]
     for arm, rule in roles.items():
         if rule not in ("superiority", "noninferiority"):
@@ -1012,8 +1065,8 @@ def build_config(args):
     if not roles:
         _die("need at least one candidate")
     if stage == "1":
-        if sum(r == "superiority" for r in roles.values()) > 2 or sum(r == "noninferiority" for r in roles.values()) > 1:
-            _die("at most two superiority and one noninferiority candidate (R, W and C1)")
+        if sum(r == "noninferiority" for r in roles.values()) > 1:
+            _die("at most one noninferiority candidate (legacy C1)")
         arms = [cfg["baseline"], cfg["placebo"]] + list(roles)
     else:
         if len(roles) != 1:
@@ -1474,6 +1527,12 @@ def _assess(cfg, st, excl, mech, mech_path, mech_problem):
         placebo_summary = {k: ps[k] for k in ("n", "m", "sd", "f", "se", "t", "t_crit")}
         placebo_summary.update(c=pcs, dbar_FP=pdb["FP"], dbar_FD=pdb["FD"], check=placebo_check(pcs),
                                regime_dT={"%s#%d" % (f, s): {r: v[0] for r, v in x["regimes"].items()} for (s, f), x in sorted(pl.items())})
+    for arm, result in cands.items():
+        result["exploratory"] = exploratory_arm(arm, cfg["arm_map"])
+        result["agent_dir"] = (cfg["arm_map"] or {}).get(arm)
+        if stage == "1":
+            result["decision"] = "go to stage 2" if result["verdict"] == PASS else result["verdict"]
+            result["stage1_ship_eligible"] = False
     if stage == "1":
         sel = select({a: v["verdict"] for a, v in cands.items()}, roles,
                      {a: v.get("stats", {}).get("m") for a, v in cands.items()})
@@ -1548,7 +1607,7 @@ def cmd_judge(args):
                    "big_loss_max_exclusive": BIG_LOSS_MAX, "p99_ms": P99_MS, "tie_pt": TIE_PT, "launch_regime": LAUNCH,
                    "fs_mean_floor": FS_MEAN_FLOOR, "launch_floor": LAUNCH_FLOOR, "statistic": "EW11",
                    "slot_id": slot, "baseline": B, "placebo": Bp if stage == "1" else None},
-        "design": cfg["design"], "nonplan": cfg["nonplan"],
+        "arm_map": cfg["arm_map"], "design": cfg["design"], "nonplan": cfg["nonplan"],
         "prior": {k: v for k, v in (cfg["prior"] or {}).items() if k != "matrices"} or None,
         "inputs": {"manifest": args.manifest and os.path.abspath(args.manifest),
                    "manifest_sha256": args.manifest and _sha256(args.manifest),
@@ -1621,6 +1680,8 @@ def print_table(out):
         else:
             print("  placebo %s: not available" % p["placebo"])
     for arm, r in out["candidates"].items():
+        if r.get("exploratory"):
+            print("  %s exploratory: %s (stage 1 alone cannot ship)" % (arm, r.get("decision", r["verdict"])))
         if r["verdict"] == BLOCKED and "input_problems" in r:
             print("  %-4s %-14s %s" % (arm, r["rule"], r["verdict"]))
             for x in r["input_problems"][:8]:
@@ -1664,6 +1725,7 @@ def main(argv):
     j.add_argument("--stage1-verdict", dest="stage1_verdict")
     j.add_argument("--stage2-verdict", dest="stage2_verdict")
     j.add_argument("--cell", action="append", help="FIELD:SEED:ARM=PATH (matrix.json)")
+    j.add_argument("--arms", nargs="+", help="LABEL=agent-dir; B and B' always required")
     j.add_argument("--candidate", action="append", help="ARM=superiority|noninferiority")
     j.add_argument("--exclude", action="append", help="SEED:FIELD[:REGIME]=EVIDENCE (reason infra)")
     j.add_argument("--baseline")
