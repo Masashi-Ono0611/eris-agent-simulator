@@ -12,6 +12,7 @@ returns 0 even when the remote command failed).
 | `lane-queue.sh` | One queue file: roster per job, run-matrix, check-collision, check-arm, one EXIT line per job | `test-lane-queue.sh` |
 | `lane-chain.sh` | One lane: the queue files of `pending/` one after another, then idle until more arrive | `test-lane-chain.sh` |
 | `mini-lane-start.sh` | Start a lane-chain on a checkout pinned to a commit | `test-mini-lane-start.sh` |
+| `lane-eta.py` | Read-only per-lane progress, timing proxies and conditional ETA | `test-lane-eta.sh` |
 | `lane-status.sh` | Read-only status of every lane on a host, one call | `test-lane-status.sh` |
 | `watch-lanes.sh` | Laptop side: poll lane-status over ssh, print new lines, exit on done or hold | `test-lane-status.sh` |
 | `new-worktree.sh` | A second checkout on the laptop that can run backtests | none |
@@ -138,3 +139,61 @@ No decision to waive that requirement has been made by these tools.
   not comparable.
 - A control test that names a "nonexistent" arm breaks the day that arm is created (test-checks.sh used
   opus-1a): use names that can never be agent directories.
+
+## Read-only ETA from copied logs
+
+```sh
+python3 ascon/eval/lane-eta.py --logs /copies/logs --chains /copies/chains \
+  --job-hours-default 2.5 --next B=/copies/chain-B2 --next C=/copies/chain-C2
+```
+
+`--chains` is a parent containing `chain-A/` (or `A/`), etc., each with
+`pending/` and `running/`. `--next LANE=QUEUE_DIR` is repeatable and adds that
+queue's `pending/*.txt` jobs after current work. `chain-<lane>2` directories under
+`--chains` are automatically reported and attached to that lane, not separate
+lanes. Repeated explicit/auto-detected paths count once; the current directory
+is never counted twice. Waiter processes/PIDs are not inspected, so detection
+is an inventory assumption, not proof that a swap will execute.
+Only these explicit paths and logs are read; remote
+paths mentioned in log lines are never opened. Nothing is written into them.
+Running files subtract EXITs from their matching run (chain file/run mapping,
+then queue basename); pending files count every job, including deliberate reruns.
+Without inventory, remaining work comes from the latest QUEUE_START jobs count
+minus unique EXITs, and pending remains unknown. ETA covers known work only.
+
+Each lane is parsed independently in its own append order, with run IDs delimiting attempts.
+For timing, the latest run defines the run family: lane-chain IDs have the form
+`<lane>-[<tag>-]<queue stem>`, so the exact logged queue stem suffix is removed.
+Unrecognized IDs match only themselves (conservative fallback). Duplicate EXITs for a job/run collapse. Latest attempts, including
+in-flight retries, replace older attempts of that job. A failed-only run with any
+job retried in a later run is treated as superseded in its entirety; this explicit
+heuristic handles the renamed 20/22/23 killed/stale-lock queues. It assumes those
+failed-only overlapping runs are replacements, not unrelated partial queues.
+Mixed successful runs retain unrelated jobs. PASS requires rc=0 and VERDICT,
+COLLISION and ARM all PASS; legacy records without ARM count as not PASS.
+BLOCKED is a finished not-PASS attempt, never a timing sample from an old job log.
+This progress selection differs from make-manifest's last-valid-PASS selection.
+
+NOTE/EXIT normally have no timestamps. For each sequential job, a timestamp on
+its NOTE/EXIT is preferred; otherwise QUEUE_START (or CHAIN_START for its first
+queue only) anchors the first start, the previous job's endpoint anchors the next
+start, and the latest attempt's `<job>.log` mtime approximates its end. Missing
+endpoints break adjacency. Only launched, latest PASS attempts with `s1-` job names in the latest run's
+family and same lane contribute. Failed, killed, BLOCKED, other-stage and older
+family jobs never enter the mean. At least two usable intervals are required,
+otherwise the default is used. Output lists the family and timed `run/job`
+samples, and separately which jobs actually contributed to the mean (none when
+using the default).
+Queue/chain log mtimes and timestamp-looking matrix paths are not job endpoints.
+Naive ISO timestamps are interpreted in the reader's local timezone: use the
+source host's TZ when reading copies (e.g. `TZ=Asia/Tokyo`).
+
+These are wall-time proxies, not exact durations: between-job overhead/checking
+is included or shifted between intervals, chain startup delay inflates the first
+interval, and overwritten or copy-reset mtimes can invalidate timing entirely.
+Preserve mtimes when copying; their error cannot be bounded from logs alone.
+No liveness is inferred: stopped/held ETA is conditional on resume, other ETA is
+a projection from now, charging the in-flight job a full mean. Idle gaps, load,
+retries, unequal smoke/full-matrix lengths and unknown pending work add unbounded
+forecast error. A directory with only queue logs reports the missing measurements
+and uses the default, rather than interpreting copy time as completion time.

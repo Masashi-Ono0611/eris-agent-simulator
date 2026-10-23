@@ -26,6 +26,7 @@ in decide() (opus-r3s's getBlock) lost equal-fee ties about 2:1.
 | `smoke-{calm,lending,launch}-1001.yaml` | One scenario each (`lending` is the lending-incident regime): checks that a roster starts and scores, not a result |
 | `check-arm.py` | Per matrix: the slot ran the intended arm, frozen, in every scenario |
 | `check-trap-scope.py` | Whether the trap control is still unnecessary for given scenario files and arms (see "No trap control") |
+| `stage2-plan.py` | Validates a complete judge2 stage-1 verdict and writes Step-7 FP/FD queues; controls: `test-stage2-plan.sh` |
 | `make-queues.py` | Writes a stage's lane-queue files by the cell rules (one cell = all arms of a (seed, field), on one lane, in a recorded random order), and checks a set of them (`--check`) |
 | `test-checks.sh` | Positive and negative controls for check-arm, check-trap-scope and make-queues: `/bin/bash ascon/final/test-checks.sh "$PWD"`; all harness tests: `/bin/bash ascon/eval/test-all.sh` |
 | `LINEAGE.md` | Which of our agents survived which round, and how they map onto the arms |
@@ -197,3 +198,29 @@ malformed value, or null without a valid reason stays BLOCKED. Other failures st
 precedence. All other judge rules remain frozen. Tests cover these cases and revert the
 advisory branch in memory to verify null+reason returns to BLOCKED.
 Judge CLI exit 0 means it produced a verdict, not that a candidate passed.
+
+## Stage-2 FP/FD queue planning
+
+```sh
+python3 ascon/final/stage2-plan.py --verdict verdict.json --lanes A,B,C,D \
+  --order-seed 231023 --out /tmp/stage2-queues --commit <sha> --job-hours 2.5
+```
+
+Step 7 of `docs/plan-final.md` is authoritative: seeds 1011–1014, fields FP/FD,
+B and F; **no B′ rerun** (judge2 inherits stage-1 placebo f). A selected F2 is
+queued in the same cells, using the plan's capacity-available parallel option:
+invoking this planner assumes the supplied lanes have capacity for F2. No new
+selection or ranking is performed. Informational arms may appear in the source
+verdict but can never be F/F2. Missing/incomplete/pending verdicts exit 2 with
+BLOCKED before writing queues. The prior JSON is validated without opening its
+recorded matrix paths; this is not an independent re-audit of those matrices.
+
+The make-queues generator/checker supplies the recorded deterministic shuffle,
+whole-cell lane assignment and resource checks. With two candidates this writes
+24 jobs (6/lane on four lanes, 15 hours/lane at 2.5h/job); with only F, 16 jobs.
+`stage2-plan.json` records the source verdict hash, mappings and scheduling policy.
+`--commit` records the intended execution SHA; it does not checkout or certify
+that tree. mini-lane-start still validates resources in the actual pinned tree.
+FS seeds 1101–1102 and docker checks are separate gates, not covered by these
+FP/FD queues. Legacy C1 uses the existing full scenario file; only launch is
+judged for its noninferiority rule (no shortened C1 scenario files are generated).
