@@ -1489,7 +1489,7 @@ export function ouPlan(args: {
       // Expiration is not cancellation. Keep entries disabled for the epoch.
       args = { ...args, riskStopped: true };
       pending = undefined;
-    } else if (!args.riskStopped || signedUsd === 0) {
+    } else if (pending.kind === "decrease" || !args.riskStopped || signedUsd === 0) {
       out.pending = pending;
       out.note = `waiting for ${pending.kind} sent at ${pending.sentBlock}`;
       return out;
@@ -1604,7 +1604,11 @@ function ouModule(
   let closingReserve = OU_BASES.reduce((sum, base) => sum +
     (signedSizeUsd(gmxMarketOf(obs, base)?.position) !== 0 ||
       ouPending.get(base)?.kind === "increase" || ouStopped.has(base) ? closeCost : 0n), 0n);
-  for (const base of OU_BASES) {
+  // Process existing exposure first so an entry cannot consume another market's exit slot.
+  const bases = [...OU_BASES].sort((a, b) =>
+    Number(signedSizeUsd(gmxMarketOf(obs, b)?.position) !== 0) -
+    Number(signedSizeUsd(gmxMarketOf(obs, a)?.position) !== 0));
+  for (const base of bases) {
     const intent = ouPending.get(base);
     if (intent && blockNo - intent.sentBlock >= PARAMS.ouPendingMaxBlocks) {
       ouPending.delete(base);
@@ -1657,7 +1661,7 @@ function ouModule(
     }
     if (d.pending) signals[`ouPending${base}`] = d.pending.sentBlock;
     if (!d.action) continue;
-    if (cap > 0n && gasUsed + gas > cap) continue;
+    if (d.action.type === "gmxIncrease" && cap > 0n && gasUsed + gas > cap) continue;
     gasUsed += gas;
     wallet.usdc -= d.usdcSpent;
     wallet.ethWei -= closeCost;
@@ -1701,6 +1705,17 @@ export async function decide(
   const candidates: Candidate[] = [];
   let views: MarketView[] = [];
   const wallet = readWallet(obs);
+  const gasPrice = gasPriceReserve(obs);
+  const closeGas = reservedTxGas();
+  const openPositions = OU_BASES.filter(base =>
+    signedSizeUsd(gmxMarketOf(obs, base)?.position) !== 0).length;
+  // Hide closing funds from every base planner, including wrapping. Pending increases
+  // may still fill, and a stopped market may have an unresolved expired intent.
+  const closingReserve = OU_BASES.reduce((sum, base) => sum +
+    (signedSizeUsd(gmxMarketOf(obs, base)?.position) !== 0 ||
+      ouPending.get(base)?.kind === "increase" || ouStopped.has(base)
+      ? GMX_EXECUTION_FEE_WEI + closeGas * gasPrice : 0n), 0n);
+  wallet.ethWei -= closingReserve;
 
   guard("markets", () => {
     views = marketViews(obs);
@@ -1709,7 +1724,11 @@ export async function decide(
   guard("inventory", () => inventoryModule(obs, views, wallet, candidates), ctx);
   guard("liquity", () => liquityModule(obs, wallet, candidates), ctx);
   guard("stable", () => stableModule(obs, wallet, candidates), ctx);
+  // A wrap must fund its own transaction as well as leave the closing reserve intact.
+  const wrapGasWei = closingReserve > 0n ? closeGas * gasPrice : 0n;
+  wallet.ethWei -= wrapGasWei;
   guard("wrap", () => wrapEthModule(obs, wallet, candidates), ctx);
+  wallet.ethWei += wrapGasWei;
 
   // The launch module is the only one that touches the chain, and the only one whose job includes
   // an exit that *must* happen -- a token still held at the bell is marked at zero. So it gets its
@@ -1746,15 +1765,26 @@ export async function decide(
   candidates.sort((a, b) =>
     b.priority !== a.priority ? b.priority - a.priority : b.profitUsd - a.profitUsd,
   );
-  const chosen = candidates.slice(0, PARAMS.maxActionsPerBlock);
+  const cap = big(process.env.ERIS_MAX_AGENT_BLOCK_GAS ?? "10000000");
+  const exitGas = BigInt(openPositions) * closeGas;
+  const chosen: Candidate[] = [];
+  let baseGas = 0n;
+  for (const candidate of candidates) {
+    if (chosen.length >= PARAMS.maxActionsPerBlock) break;
+    const gas = actionGas(candidate.action);
+    // An open position gets close capacity before any base action. Keep bundles atomic.
+    if (openPositions > 0 && cap > 0n && baseGas + gas + exitGas > cap) continue;
+    if (closingReserve > 0n && (baseGas + gas) * gasPrice > wallet.ethWei) continue;
+    chosen.push(candidate);
+    baseGas += gas;
+  }
 
-  // M-OU runs last, on what the modules above left of the wallet, and its orders ride beside
-  // opus-1a's choice rather than competing with it for the two slots: inside the band it emits
-  // nothing, and the block's actions are exactly opus-1a's.
+  // OU orders ride beside the base action slots. Restore the protected closing funds
+  // for OU only; base actions have already been checked against the unreserved balance.
   const ouOrders: Candidate[] = [];
   const ouSignals: Record<string, number | undefined> = {};
-  const baseGas = chosen.reduce((sum, c) => sum + actionGas(c.action), 0n);
-  wallet.ethWei -= baseGas * gasPriceReserve(obs);
+  wallet.ethWei += closingReserve;
+  wallet.ethWei -= baseGas * gasPrice;
   guard("ou", () => ouModule(obs, wallet, ouOrders, ouSignals, baseGas), ctx);
 
   if (!saveOuState()) {
