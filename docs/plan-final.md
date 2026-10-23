@@ -354,6 +354,8 @@
 | 測った木と出す木の不一致 | 行列ごとに tree hash を記録し、出荷 commit との diff が空であることを梱包の条件にする |
 | `constants.local.ts` の書き換え | commit と bundle の前に `git diff --quiet` を通す |
 | p99 を測れずに全候補が BLOCKED | 10/23 に決定: p99 は NOT_MEASURED（参考）、遅延の害は tie 勝率と timeout 0 で見る（Step 4） |
+| 判定の道具が本物のデータを厳しすぎて BLOCKED にする（10/23 の再確認レビューの Warning） | 2 段と追試では 1 段とまったく同じ arm 対応表を使う（使わない対応の変更でも止まる）。rerun は元の run と同じ commit 表記・同じ設定で取る。BLOCKED が出たら判定の前に audit を読み、道具の誤判定か本物の欠落かを分ける |
+| 判定の道具の検査が実データに合わない | 検査や parser を足したら、commit 前に mini の実ログで `~/ascon-final/judge-dryrun.sh <rev>` を流す（10/23 に 2 回、作り物のデータでは通るが実データでは止まる不具合を見つけた） |
 | 計算の遅れ | 1 段の arm の締切は 10/23 22:00。W は 1 本だけ。lane を空けないよう連鎖起動を使う |
 | laptop の負荷が対比を歪める | laptop は 1 lane まで、L はセル単位、load1 < 10 で開始、L が動く間は laptop で他の重い作業をしない。host と load1 を共変量に残す |
 | セッションの使用上限で作業が止まる | workflow の同時実行は約 8 agent まで、reviewer は Sonnet。lane は連鎖起動で回り続ける。引き継ぎは静かな時点（night1 の判定後など）で新しいセッションに行い、作業途中で自動圧縮に任せない |
