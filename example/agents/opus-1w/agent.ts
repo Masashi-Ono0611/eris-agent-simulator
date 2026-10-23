@@ -1187,12 +1187,15 @@ async function launchModule(
 // M0 uses observations only. Disk holds intent before emission, so a replacement worker
 // cannot double-fire. A crash between persistence and emission may conservatively miss a trade.
 let m0State: M0State | undefined;
+let m0PendingUntil: number | undefined;
+const M0_PENDING_BLOCKS = 3;
 let m0Loaded = false;
 let m0Path: string | undefined;
 let m0StorageFailed = false;
 
 export function resetM0StateForTest(): void {
   m0State = undefined;
+  m0PendingUntil = undefined;
   m0Loaded = false;
   m0Path = undefined;
   m0StorageFailed = false;
@@ -1202,7 +1205,10 @@ function loadM0(): void {
   if (m0Loaded) return;
   m0Loaded = true;
   const dir = process.env.ERIS_AGENT_STATE_DIR;
-  if (!dir) return;
+  if (!dir) {
+    m0StorageFailed = true;
+    return;
+  }
   m0Path = join(dir, "opus-1w-m0-state.json");
   try {
     if (statSync(m0Path).size > 262144) throw new Error("oversized M0 state");
@@ -1211,7 +1217,11 @@ function loadM0(): void {
     if (saved.schema !== 1 || !s || typeof s.runId !== "string" ||
         !Number.isSafeInteger(s.lastBlock) || !s.anchors || !s.fairTrail ||
         !s.whales || !s.incidents) throw new Error("invalid M0 state");
+    if (saved.pendingUntil !== undefined && !Number.isSafeInteger(saved.pendingUntil))
+      throw new Error("invalid M0 deadline");
     m0State = s;
+    // Older snapshots get a bounded migration window; never renew on observation.
+    m0PendingUntil = s.order ? saved.pendingUntil ?? s.lastBlock + M0_PENDING_BLOCKS : undefined;
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code !== "ENOENT") m0StorageFailed = true;
   }
@@ -1219,23 +1229,29 @@ function loadM0(): void {
 
 function planM0(obs: AgentObservation, views: MarketView[]): M0Action[] {
   loadM0();
-  if (m0StorageFailed) return []; // Never waive lost intent on a corrupt/unwritable store.
+  if (m0StorageFailed || !m0Path) return []; // Never waive lost intent on a corrupt/unwritable store.
   const sameEpoch = m0State?.runId === obs.runId && m0State?.epochIndex === obs.epoch?.index;
   const order = sameEpoch ? m0State?.order : undefined;
   const position = sameEpoch ? m0State?.position : undefined;
+  const expired = !!order && Number(obs.blockNumber) >= m0PendingUntil!;
   let pendingOwnTxs = 0;
   if (order && position) {
     const held = BigInt(position.base === "WETH" ? obs.balances.wethWei : obs.baseBalances?.[position.base] ?? "0");
     const delta = held - BigInt(order.beforeBaseUnits);
     const expected = BigInt(order.expectedBaseUnits);
-    // No receipt/pending field exists in obs. Only a full directional inventory delta
-    // clears an intent; unchanged/partial fills remain pending until epoch reset.
-    pendingOwnTxs = (expected > 0n ? delta >= expected : delta <= expected) ? 0 : 1;
+    // Full fills settle early; partial/unobserved fills settle at the fixed deadline.
+    pendingOwnTxs = expired || (expected > 0n ? delta >= expected : delta <= expected) ? 0 : 1;
   }
-  const plan = m0Plan(obs, views, m0State, { pendingOwnTxs });
+  // Preserve the reservation across missed observations instead of the planner's freshness reset.
+  const previous = order && m0State && Number(obs.blockNumber) > m0State.lastBlock + 1
+    ? { ...m0State, lastBlock: Number(obs.blockNumber) - 1 } : m0State;
+  // Expiry reconciles the observed partial fill, but cannot renew the lock this block.
+  const plan = m0Plan(obs, expired ? [] : views, previous, { pendingOwnTxs });
+  const pendingUntil = plan.actions.length ? Number(obs.blockNumber) + M0_PENDING_BLOCKS
+    : plan.state.order ? m0PendingUntil : undefined;
   if (m0Path) {
     try {
-      writeFileSync(`${m0Path}.tmp`, JSON.stringify({ schema: 1, state: plan.state }));
+      writeFileSync(`${m0Path}.tmp`, JSON.stringify({ schema: 1, state: plan.state, pendingUntil }));
       renameSync(`${m0Path}.tmp`, m0Path);
     } catch {
       m0StorageFailed = true;
@@ -1243,9 +1259,32 @@ function planM0(obs: AgentObservation, views: MarketView[]): M0Action[] {
     }
   }
   m0State = plan.state;
+  m0PendingUntil = pendingUntil;
   return plan.actions.map(action => ({ ...action, maxPriorityFeePerGasWei:
     (BigInt(action.maxPriorityFeePerGasWei) < BigInt(obs.limits.maxPriorityFeePerGasWei)
       ? action.maxPriorityFeePerGasWei : obs.limits.maxPriorityFeePerGasWei) }));
+}
+
+/** Pair reservation applies in either direction and to every leg of a bundle. */
+function tradesM0Pair(action: Record<string, unknown>, base: string): boolean {
+  if (action.type === "bundle")
+    return (action.actions as Record<string, unknown>[]).some(a => tradesM0Pair(a, base));
+  if (["swap", "curveSwap", "balancerSwap"].includes(String(action.type)))
+    return (action.base ?? "WETH") === base;
+  if (action.type === "rawTx" || action.type === "rawBundle") {
+    const txs = (action.type === "rawTx" ? [action.tx] : action.txs) as { data: Hex }[];
+    const baseAddress = Object.entries(TOKENS).find(([symbol]) => symbol === base)?.[1].address.toLowerCase();
+    return txs.some(tx => {
+      try {
+        const d = decodeFunctionData({ abi: swapRouterAbi, data: tx.data });
+        if (d.functionName !== "exactInputSingle") return false;
+        const { tokenIn, tokenOut } = d.args[0];
+        const pair = [tokenIn.toLowerCase(), tokenOut.toLowerCase()];
+        return !!baseAddress && pair.includes(baseAddress) && pair.includes(TOKENS.USDC.address.toLowerCase());
+      } catch { return false; } // Approvals, wrapping and other pairs are independent.
+    });
+  }
+  return false;
 }
 
 /** Typed actions receive distinct nonces from the runtime's serialized sender.
@@ -1345,8 +1384,11 @@ export async function decide(
   candidates.sort((a, b) =>
     b.priority !== a.priority ? b.priority - a.priority : b.profitUsd - a.profitUsd,
   );
+  const pendingBase = m0State?.runId === obs.runId && m0State?.epochIndex === obs.epoch?.index &&
+    m0State.order && Number(obs.blockNumber) < (m0PendingUntil ?? 0) ? m0State.position?.base : undefined;
   const chosen = candidates.slice(0, PARAMS.maxActionsPerBlock)
-    .filter(c => !m0Actions.some(m => conflictsM0(c.action, m)));
+    .filter(c => !(pendingBase && tradesM0Pair(c.action, pendingBase)) &&
+      !m0Actions.some(m => conflictsM0(c.action, m)));
 
   const weth = views.find((v) => v.base === "WETH");
   ctx.log({

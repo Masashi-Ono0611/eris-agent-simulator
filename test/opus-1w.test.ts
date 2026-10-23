@@ -1,7 +1,7 @@
 process.env.ERIS_LOCAL_DEPLOY = "1";
 
 import test, { beforeEach, afterEach } from "node:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
@@ -186,6 +186,7 @@ function planned(before: AgentObservation, now: AgentObservation) {
 }
 
 test("whale sends the exact single-leg M0 plan once, with no RPC", async () => {
+  persistentState();
   const before = obsFor();
   const now = obsFor({ block: 101, uniMid: 2700 });
   await emitted(before);
@@ -199,7 +200,7 @@ test("whale sends the exact single-leg M0 plan once, with no RPC", async () => {
     ethWei: BigInt(now.balances.ethWei), wethWei: BigInt(now.balances.wethWei),
     usdcUnits: BigInt(now.balances.usdcUnits),
   }).ok, true);
-  const path = persistentState(); // persist next observation and simulate worker replacement
+  const path = join(testStateDir!, "opus-1w-m0-state.json"); // simulate worker replacement
   g.resetM0StateForTest();
   await emitted(before);
   await emitted(now);
@@ -249,6 +250,7 @@ test("epoch change resets whale and incident state and permits a fresh whale", a
 });
 
 test("M0 bid obeys the observation fee cap", async () => {
+  persistentState();
   const before = obsFor();
   await emitted(before);
   const now = obsFor({ block: 101, uniMid: 2700 });
@@ -258,6 +260,7 @@ test("M0 bid obeys the observation fee cap", async () => {
 });
 
 test("conflicting cross-venue bundle is dropped in full; independent ETH wrap is unchanged", async () => {
+  persistentState();
   await emitted(obsFor());
   const now = obsFor({ block: 101, uniMid: 2700 });
   assert.ok((await emitted(now, a.decide)).some(x => x.type === "bundle"));
@@ -302,4 +305,75 @@ test("observed fill reconciles after restart and emits M0's single-leg restore",
   assert.equal(expected.actions[0].tokenIn, "WETH");
   g.resetM0StateForTest();
   assert.deepEqual((await emitted(restore))[0], expected.actions[0]);
+});
+
+test("M0 requires durable storage while base actions remain available", async () => {
+  const before = obsFor();
+  const now = obsFor({ block: 101, uniMid: 2700 });
+  assert.equal(planned(before, now).actions.length, 1);
+  await emitted(before);
+  assert.deepEqual(await emitted(now), await emitted(now, a.decide));
+});
+
+test("failure saving a pending intent suppresses M0 and preserves the base", async () => {
+  const path = persistentState();
+  await emitted(obsFor());
+  mkdirSync(`${path}.tmp`); // deterministic write failure, even with elevated permissions
+  const now = obsFor({ block: 101, uniMid: 2700 });
+  assert.deepEqual(await emitted(now), await emitted(now, a.decide));
+  assert.equal(JSON.parse(readFileSync(path, "utf8")).state.order, undefined);
+});
+
+test("pending M0 isolates its pair across restart and releases it after three blocks", async () => {
+  const path = persistentState();
+  await emitted(obsFor());
+  await emitted(obsFor({ block: 101, uniMid: 2700 }));
+  for (const block of [102, 103]) {
+    g.resetM0StateForTest();
+    const now = obsFor({ block, uniMid: 2700, ethWei: "10000000000000000000" });
+    const base = await emitted(now, a.decide);
+    assert.ok(base.some(x => x.type === "bundle"));
+    const actions = await emitted(now);
+    assert.ok(!actions.some(x => x.type === "bundle"), "pending pair must be held back");
+    assert.deepEqual(actions, base.filter(x => x.type === "rawTx"), "independent wrap survives");
+    assert.ok(JSON.parse(readFileSync(path, "utf8")).state.order);
+  }
+  g.resetM0StateForTest();
+  const expired = obsFor({ block: 104, uniMid: 2700 });
+  assert.deepEqual(await emitted(expired), await emitted(expired, a.decide));
+  assert.equal(JSON.parse(readFileSync(path, "utf8")).state.order, undefined);
+});
+
+
+test("pending WETH intent permits WBTC trades sharing USDC and blocks WETH sells", async () => {
+  persistentState();
+  await emitted(obsFor());
+  await emitted(obsFor({ block: 101, uniMid: 2700 }));
+  const now = obsFor({ block: 102, uniMid: 3300, curveMid: 3300 });
+  now.protocols!.uniswap!.markets = {
+    "WBTC/USDC": { ...now.protocols!.uniswap!.pool!, priceUsdcPerWeth: 58000 },
+  };
+  const base = await emitted(now, a.decide);
+  const btc = base.filter(x => x.base === "WBTC");
+  assert.ok(btc.length > 0);
+  assert.ok(base.some(x => x.tokenIn === "WETH"));
+  assert.deepEqual(await emitted(now), btc);
+});
+
+test("partial fill expires across an observation gap without renewing the reservation", async () => {
+  const path = persistentState();
+  await emitted(obsFor());
+  await emitted(obsFor({ block: 101, uniMid: 2700 }));
+  const saved = JSON.parse(readFileSync(path, "utf8"));
+  assert.equal(saved.pendingUntil, 104);
+  const partial = BigInt(saved.state.order.expectedBaseUnits) / 2n;
+  const now = obsFor({ block: 104, uniMid: 3300, curveMid: 3300 });
+  now.balances.wethWei = (BigInt(saved.state.order.beforeBaseUnits) + partial).toString();
+  now.baseBalances!.WETH = now.balances.wethWei;
+  g.resetM0StateForTest();
+  assert.deepEqual(await emitted(now), await emitted(now, a.decide));
+  const expired = JSON.parse(readFileSync(path, "utf8"));
+  assert.equal(expired.state.order, undefined);
+  assert.equal(expired.pendingUntil, undefined);
+  assert.equal(expired.state.position.baseUnits, partial.toString());
 });
