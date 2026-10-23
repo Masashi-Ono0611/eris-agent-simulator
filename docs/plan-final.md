@@ -120,7 +120,7 @@
   - 参照 agent の timeout は記録だけにする。
   - 解析ツールが読むファイルは `agents/slot.jsonl` にする。
   - 共変量として、scenario ごとに host、開始時の load1、arm の順を記録する。
-- **測った木と出す木の一致**: 結果は arm の dir 名で引かれるが、戦略は `example/agents/lib` と runtime にも依存する。各行列の記録に、arm dir・lib・runtime・sdk の git tree hash を残す。出荷する commit と測った commit の間で `git diff <測った commit> <出荷 commit> -- example/agents/<arm> example/agents/lib example/agents/runtime sdk core` が空であることを Step 8 の条件にする。
+- **測った木と出す木の一致**: 結果は arm の dir 名で引かれるが、戦略は `example/agents/lib` と runtime にも依存する。各行列の記録に、arm dir・lib・runtime・sdk の git tree hash を残す。出荷する commit と測った commit の間で `git diff <測った commit> <出荷 commit> -- example/agents/<arm> example/agents/lib example/agents/runtime sdk core` の差分が、その arm の `example/agents/<arm>/prompt.md` だけであることを Step 8 の条件にする（10/23 ユーザー決定: 出荷物は P1 プロンプトにするため、prompt.md だけは差を認める。frozen の評価はプロンプトを読まないので評価結果は変わらない。P1 は opus-1a の soak で keep 120/120）。確認は `git diff --name-only <測った commit> <出荷 commit> -- example/agents/<arm> example/agents/lib example/agents/runtime sdk core > /tmp/ascon-release-diff.out || echo BLOCKED` を先に実行し、BLOCKED が出たら停止する。成功した場合だけ、次に `grep -vxF example/agents/<arm>/prompt.md /tmp/ascon-release-diff.out` が何も出さないことを確認する。
 - **`constants.local.ts`**: 候補の commit と bundle の前に、毎回 `git diff --quiet -- sdk/src/constants.local.ts` が通ること。通らなければ `git checkout -- sdk/src/constants.local.ts` で戻す。候補の worktree で backtest を走らせるのは、fingerprint が一致する state dir（評価 branch の state をコピーするか、`ascon/eval/new-worktree.sh` で作る）を使うときだけ。
 - **commit の注意**: laptop の worktree では `out` が symlink のため `.gitignore` の `out/` にかからず、未追跡に見える。`git add -A` や `git add .` を使わず、パスを明示して add する。laptop の worktree が共有する `node_modules` と `out` は worktree `opus-1-model` が持っているので、その branch（#82）が merge 済みでも 10/31 まで消さない。
 
@@ -281,7 +281,7 @@
 - **梱包**: release worktree で `node --import tsx scripts/bundleAgent.ts <arm>` を実行し、次をすべて通す（`--submission` は bundler が受け付けず黙って無視する。10/23 の dry run で opus-1w・opus-1g2・r3kg の 3 本とも build・scan ACCEPT・オフライン読み込みが通り、追加ファイルも入っていた。Docker selftest は未実施）。
   - scan-submission で BLOCK 0、check:strategy
   - `constants.local.ts` が upstream とバイト一致
-  - 測った commit と出荷 commit の diff が空（共通ルール）
+  - 測った commit と出荷 commit の差分がその arm の prompt.md だけ（共通ルール）
   - 環境変数を設定しない状態で test が通る
   - `ci-local.sh --full`
   - docker selftest（`ascon/final/` に置いたスクリプトで）

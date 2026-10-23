@@ -16,6 +16,8 @@ returns 0 even when the remote command failed).
 | `lane-status.sh` | Read-only status of every lane on a host, one call | `test-lane-status.sh` |
 | `watch-lanes.sh` | Laptop side: poll lane-status over ssh, print new lines, exit on done or hold | `test-lane-status.sh` |
 | `new-worktree.sh` | A second checkout on the laptop that can run backtests | none |
+| `docker-selftest.sh <arm> <commit>` | Fresh detached tree, deploy on port 8855, regenerate constants, Docker selftest; `SELFTEST_PASS` / `SELFTEST_FAIL` / `BLOCKED` with logs | `test-docker-selftest.sh` |
+| `release-bundle.sh <arm> <commit>` | Fresh detached tree, bundle + submission scan + byte comparison; unique ZIP and JSON receipt | `test-release-bundle.sh` |
 | `test-all.sh` | Every control test above with /bin/bash: `ALL_HARNESS_OK` | itself (red-checked with broken fakes) |
 
 Run `/bin/bash ascon/eval/test-all.sh` after changing anything here or in ascon/final. CI does not run
@@ -197,3 +199,36 @@ a projection from now, charging the in-flight job a full mean. Idle gaps, load,
 retries, unequal smoke/full-matrix lengths and unknown pending work add unbounded
 forecast error. A directory with only queue logs reports the missing measurements
 and uses the default, rather than interpreting copy time as completion time.
+
+## Release helpers (Mac mini)
+
+Run `bash ascon/eval/docker-selftest.sh <arm> <commit>` and
+`bash ascon/eval/release-bundle.sh <arm> <commit>` from a non-lane checkout.
+Commits must already be available locally (7–40 lowercase hex); neither helper fetches or installs.
+`ASCON_HOME` selects the dependency/source checkout (default: the checkout containing the helper).
+It must have `node_modules/` and `out/`; both are linked into the new detached checkout.
+The Docker wrapper prepends `~/.local/ascon-docker-shim`, `~/.homebrew/bin`, and `~/.foundry/bin` to PATH
+so child agents also receive the Colima shim.
+
+Selftest creates `$ASCON_WT_BASE/ascon-selftest-<sha8>` (`ASCON_WT_BASE` defaults to `~/Developer`).
+Existing paths are refused, including a previous selftest tree; use a fresh base for a repeat.
+Port **8855** is the default (`ASCON_SELFTEST_PORT` overrides); ports 8700–8810, occupied ports,
+lane paths and `~/ascon-final` paths are refused. A per-port lock prevents simultaneous helper starts
+in the same base. Deploy receives `RPC_URL`, selftest receives matching `ERIS_RPC_URL`.
+Readiness requires both `anvil is still running` and the new tree's `deployer/deployments/deployments.json`.
+`ASCON_DEPLOY_TIMEOUT` defaults to 600 seconds; selftest has a 3600-second timeout.
+Constants are regenerated only there. The fresh-chain image build explicitly allows the state-dump
+overlay mismatch, and inherited ERIS runtime overrides are cleared except the memory cap.
+Logs are retained in a fresh temporary directory printed as `LOG_PATH`; the final marker repeats it.
+Cleanup signals owned process groups and removes only containers with mounts inside the new tree.
+Existing matching container names block startup; no broad reaper is used.
+
+Bundle uses another fresh temporary directory, invokes `bundleAgent.ts <arm> --out <unique-path>`
+(without `--submission`), scans using `infra/submission/scan-submission.py --json`, lists ZIP members,
+and compares every agent file to `agents/<arm>/` byte-for-byte, including extra files. Missing/different
+files produce `RELEASE_FAIL`. The ZIP path, size and SHA-256 are printed; an adjacent JSON records arm,
+full commit, ZIP SHA-256, scan result and member list. Scan rejection also produces `RELEASE_FAIL`;
+setup errors produce `BLOCKED`. No existing ZIP is overwritten. Exit codes: 0 pass, 1 fail, 2 blocked.
+Both helpers retain their detached trees for inspection and never recursively delete them; the owner
+can remove them manually after review. They do not update lane checkouts or final-state directories.
+These helpers cover packaging and selftest only, not the other Step 8 gates or submission acceptance.
