@@ -1250,7 +1250,7 @@ def build_config(args):
     return cfg
 
 
-def arm_problems(evidence, directory, setup):
+def arm_problems(evidence, directory, setup, matrix=None):
     """Lane check-arm/check-collision attestation, bound to the recorded simulator commit."""
     if not isinstance(evidence, dict):
         return ["missing arm evidence"]
@@ -1262,6 +1262,10 @@ def arm_problems(evidence, directory, setup):
     if not all(isinstance(evidence.get(k), str) and re.fullmatch(r"[0-9a-f]{12,64}", evidence[k])
                for k in ("head", "arm_tree")):
         return ["arm evidence missing head/arm_tree"]
+    if matrix is not None and (not isinstance(evidence.get("matrix"), str) or
+            not os.path.isabs(evidence["matrix"]) or
+            os.path.realpath(evidence["matrix"]) != os.path.realpath(matrix)):
+        return ["arm evidence matrix differs or is missing"]
     commit = (setup or {}).get("sourceCommit")
     if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{12,64}", commit) or not commit.startswith(evidence["head"]):
         return ["arm evidence head differs from simulation setup"]
@@ -1274,9 +1278,10 @@ def prior_problems(v, cfg, candidate):
     if not isinstance(cv, dict) or cv.get("verdict") != PASS or cv.get("rule") != cfg["candidates"][candidate]:
         problems.append("prior verdict must PASS the same candidate and rule")
     old_map, new_map = v.get("arm_map"), cfg["arm_map"]
-    # Stage 2 retains only its finalist; every retained mapping must be identical.
+    # Only the baseline and finalist are used from the prior verdict.
     if (old_map is None) != (new_map is None) or (new_map is not None and
-            (not isinstance(old_map, dict) or any(old_map.get(a) != d for a, d in new_map.items()))):
+            (not isinstance(old_map, dict) or any(not new_map.get(a) or old_map.get(a) != new_map[a]
+                                                 for a in (cfg["baseline"], candidate)))):
         problems.append("prior verdict arm map differs")
     if any(v["params"].get(k) != cfg[k] for k in ("slot_id", "baseline")):
         problems.append("prior verdict slot/baseline differs")
@@ -1285,6 +1290,14 @@ def prior_problems(v, cfg, candidate):
     seeds, fs_seeds = design.get("seeds"), design.get("fs_seeds", [])
     if not isinstance(seeds, list) or not seeds or not all(_is_int(s) for s in seeds) or not isinstance(fs_seeds, list) or not all(_is_int(s) for s in fs_seeds):
         return problems + ["prior verdict missing/malformed design"]
+    if len(set(seeds)) != len(seeds) or len(set(fs_seeds)) != len(fs_seeds):
+        return problems + ["prior verdict duplicate seed schedules"]
+    if cfg["stage"] == "retest" and not fs_seeds:
+        return problems + ["prior stage-2 verdict missing FS seed schedule"]
+    if cfg["stage"] == "retest" and tuple(sorted(fs_seeds)) != FS_SEEDS:
+        note = "FS seeds %s (plan: %s)" % (sorted(fs_seeds), list(FS_SEEDS))
+        if note not in (v.get("nonplan") or []):
+            return problems + ["prior stage-2 verdict missing required FS coverage"]
     labels = {"%s#%s" % (f, seed) for seed in seeds for f in FIELDS} | {"FS#%s" % seed for seed in fs_seeds}
     import re
     for arm in (cfg["baseline"], candidate):
@@ -1300,7 +1313,7 @@ def prior_problems(v, cfg, candidate):
                 problems.append("prior verdict malformed matrix evidence for " + arm)
             elif isinstance(old_map, dict):
                 problems += ["prior " + arm + ": " + p for p in
-                             arm_problems(rec.get("arm_evidence"), old_map.get(arm), rec["setup"])]
+                             arm_problems(rec.get("arm_evidence"), old_map.get(arm), rec["setup"], rec.get("path", ""))]
     return problems
 
 
@@ -1309,7 +1322,7 @@ def _inspect(cfg):
     reuse, configuration problems, the arms' simulation setup against B's, and the rerun records."""
     arms, B, slot = cfg["arms"], cfg["baseline"], cfg["slot_id"]
     st = {"insp": {}, "files": {}, "problems": {a: [] for a in arms}, "slot_flags": {}, "rerun": {}}
-    path_owner, rd_owner, hash_owner = {}, {}, {}
+    path_owner, rd_owner = {}, {}
     for c in cfg["cells"]:
         key = (c["seed"], c["field"])
         lab = "%s#%d" % (key[1], key[0])
@@ -1332,14 +1345,9 @@ def _inspect(cfg):
             evidence = c.get("arm_evidence", {}).get(arm) if isinstance(c.get("arm_evidence", {}), dict) else None
             r["arm_evidence"] = evidence
             if cfg.get("arm_map") or evidence is not None:
-                r["config"] += arm_problems(evidence, (cfg.get("arm_map") or {}).get(arm), r["setup"])
+                r["config"] += arm_problems(evidence, (cfg.get("arm_map") or {}).get(arm), r["setup"], p)
             insp[arm] = r
             if r["sha256"]:
-                if r["sha256"] in hash_owner:
-                    old_lab, old_arm = hash_owner[r["sha256"]]
-                    for a in {arm, old_arm}:
-                        st["problems"][a].append("duplicate matrix sha256: %s %s and %s %s" % (old_lab, old_arm, lab, arm))
-                hash_owner.setdefault(r["sha256"], (lab, arm))
                 st["files"].setdefault(arm, {})[lab] = {"path": p, "sha256": r["sha256"], "setup": r["setup"], "arm_evidence": evidence}
             for rd in r["run_dirs"]:
                 if rd in rd_owner:
@@ -1380,15 +1388,19 @@ def _inspect(cfg):
                                  list(FS_REGIMES) if x["field"] == FS_FIELD else cfg["design"]["regimes"],
                                  cfg["design"]["rosters"].get(x["field"]), cfg["candidates"].get(rr["arm"]) == "noninferiority" and x["field"] != FS_FIELD)
             proof = rr.get("arm_evidence")
-            identity_errors = arm_problems(proof, (cfg.get("arm_map") or {}).get(rr["arm"]), r["setup"])
+            identity_errors = arm_problems(proof, (cfg.get("arm_map") or {}).get(rr["arm"]), r["setup"], rr["path"])
             original_proof = listed.get("arm_evidence") if listed else None
+            original_errors = arm_problems(original_proof, (cfg.get("arm_map") or {}).get(rr["arm"]),
+                                           listed["setup"] if listed else None,
+                                           st["files"].get(rr["arm"], {}).get("%s#%s" % (x["field"], x["seed"]), {}).get("path", ""))
             if r["config"]:
                 rec["problem"] = "rerun matrix: %s" % "; ".join(r["config"][:3])
             elif set(r["run_dirs"]) & set(rd_owner):
                 rec["problem"] = "the rerun shares runDirs with the listed %s matrix (not a new run)" % rr["arm"]
             elif listed is None or r["setup"] != listed["setup"]:
                 rec["problem"] = "rerun simulation setup differs from original"
-            elif identity_errors or not original_proof or proof != original_proof:
+            elif (identity_errors or original_errors or proof["slot"] != original_proof["slot"]
+                  or proof["arm_tree"] != original_proof["arm_tree"]):
                 rec["problem"] = "rerun arm identity/tree differs or is unverified"
             else:
                 rec["infra"] = r["infra"]

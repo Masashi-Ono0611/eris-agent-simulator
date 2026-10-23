@@ -285,6 +285,14 @@ def run(case, d):
         with open(p, "w") as fh:
             json.dump(m, fh)
         cells[(s, f)] = dict(cells[(s, f)], **{arm: p})
+    if case.get("independent_identical"):
+        # Equal bytes, different roots: the relative runDirs name independent runs.
+        import pathlib
+        for arm in ("B", "B'"):
+            dest = pathlib.Path(d) / arm / 'runs' / 'matrix' / 'matrix.json'
+            dest.parent.mkdir(parents=True)
+            dest.write_bytes(pathlib.Path(cells[(1003, "FD")]["B"]).read_bytes())
+            cells[(1003, "FD")][arm] = str(dest)
     listed = [{"seed": s, "field": f, "arms": a} for (s, f), a in sorted(cells.items()) if (s, f) not in case.get("omit_cells", [])]
     man = {"stage": stage, "baseline": "B", "placebo": "B'", "candidates": cands, "cells": listed, "exclude": excl}
     for seed, field, arm in case.get("omit_arms", []):
@@ -295,7 +303,7 @@ def run(case, d):
     if case.get("arm_map"):
         for cell in listed:
             cell["arm_evidence"] = {a: dict(ARM="PASS", COLLISION="PASS", slot=case["arm_map"][a],
-                head="e" * 12, arm_tree="a" * 12) for a in cell["arms"]}
+                head="e" * 12, arm_tree="a" * 12, matrix=cell["arms"][a]) for a in cell["arms"]}
             if case.get("wrong_arm"):
                 cell["arm_evidence"]["R"]["slot"] = "opus-1"
     # Lane attestation for legacy exclusion fixtures too.
@@ -303,10 +311,17 @@ def run(case, d):
         if "rerun" in entry:
             arm = entry["rerun"]["arm"]
             proof = dict(ARM="PASS", COLLISION="PASS", slot=arm, head="e" * 12, arm_tree="a" * 12)
-            entry["rerun"]["arm_evidence"] = proof
+            entry["rerun"]["arm_evidence"] = dict(proof, matrix=entry["rerun"]["path"])
             for cell in listed:
                 if (cell["seed"], cell["field"]) == (entry["seed"], entry["field"]):
-                    cell.setdefault("arm_evidence", {})[arm] = proof
+                    cell.setdefault("arm_evidence", {})[arm] = dict(proof, matrix=cell["arms"][arm])
+    if case.get("equivalent_proof"):
+        excl[0]["rerun"]["arm_evidence"] = dict(excl[0]["rerun"]["arm_evidence"], head="e" * 40, metadata="independent check")
+    if case.get("bad_proof"):
+        key, value = case["bad_proof"]
+        listed[0]["arm_evidence"]["R"][key] = value
+    if case.get("bad_rerun_tree"):
+        excl[0]["rerun"]["arm_evidence"]["arm_tree"] = "b" * 12
     mp = os.path.join(d, "manifest.json")
     with open(mp, "w") as fh:
         json.dump(man, fh)
@@ -333,6 +348,15 @@ def run(case, d):
             prior["inputs"].pop("matrices")
         elif case["tamper_prior"] == "map":
             prior["arm_map"] = {"B": "opus-1", "B'": "opus-1-pb", "R": "wrong"}
+        elif case["tamper_prior"] == "unused_map":
+            prior["arm_map"]["B'"] = "unused-old-placebo"
+        elif case["tamper_prior"] in ("empty_seeds", "empty_fs", "partial_fs"):
+            key = "seeds" if case["tamper_prior"] == "empty_seeds" else "fs_seeds"
+            prior["design"][key] = [1101] if case["tamper_prior"] == "partial_fs" else []
+            for records in prior["inputs"]["matrices"].values():
+                for label in list(records):
+                    if label.startswith("FS#") == (key == "fs_seeds") and not (case["tamper_prior"] == "partial_fs" and label == "FS#1101"):
+                        del records[label]
         elif case["tamper_prior"] == "candidate":
             prior["candidates"]["R"] = []
         else:
@@ -619,7 +643,18 @@ cases = [
     ("field mean below floor but bound passes", C(by_cell={("R", seed, f): ([-1.2, -0.8, 0, 0.4][i] if f == "FP" else 3) for i, seed in enumerate(S1) for f in ("FP", "FD")}, noise={}), E("PASS", "PASS", "F=R, F2=C1", clause=("R", "2_field_means", "PASS"))),
 ]
 bad = 0
+mapped = {"B": "opus-1", "B'": "opus-1-pb", "R": "opus-1r"}
 cases += [
+    ("RECHECK independent identical matrices", C(independent_identical=True), E("PASS", "PASS", "F=R, F2=C1")),
+    ("RECHECK equivalent rerun attestation", C(equivalent_proof=True, mutate=[("R", 1005, "FP", "invalid_epoch", "calm")], exclude=[INF(1005, "FP", "calm", rerun=("R", "same"))]), E("PASS", "PASS", "F=R, F2=C1", excl="accepted")),
+    ("RECHECK mapped stage1", C(cands={"R": "superiority"}, arm_map=mapped, save_as="mapped1"), {"v": {"R": "PASS"}}),
+    ("RECHECK unused prior mapping", dict(S2, arm_map=mapped, stage1_from="mapped1", tamper_prior="unused_map"), {"v": {"R": "PASS"}}),
+    ("RECHECK transplanted attestation", C(cands={"R": "superiority"}, arm_map=mapped, bad_proof=("matrix", "/wrong/matrix.json")), {"v": {"R": "BLOCKED"}}),
+    ("RECHECK unbound attestation", C(cands={"R": "superiority"}, arm_map=mapped, bad_proof=("matrix", None)), {"v": {"R": "BLOCKED"}}),
+    ("RECHECK wrong rerun tree", C(bad_rerun_tree=True, mutate=[("R", 1005, "FP", "invalid_epoch", "calm")], exclude=[INF(1005, "FP", "calm", rerun=("R", "same"))]), {"v": {"R": "BLOCKED"}}),
+    ("RECHECK prior empty seeds", dict(S2, tamper_prior="empty_seeds"), {"v": {"R": "BLOCKED"}}),
+    ("RECHECK prior partial FS", dict(RT, tamper_prior="partial_fs"), {"v": {"R": "BLOCKED"}}),
+    ("RECHECK prior empty FS", dict(RT, tamper_prior="empty_fs"), {"v": {"R": "BLOCKED"}}),
     ("C1 FS needs all three regimes", dict(S2C1, launch_only=True), {"v": {"C1": "BLOCKED"}}),
     ("prior retest missing matrices", dict(RT, tamper_prior="matrices"), {"v": {"R": "BLOCKED"}}),
     ("prior stage2 changed map", dict(S2, tamper_prior="map"), {"v": {"R": "BLOCKED"}}),
@@ -757,7 +792,7 @@ else:
 original_j = J
 source = open(J).read()
 mutations = [
-    ("C1", 'r["config"] += arm_problems(evidence, (cfg.get("arm_map") or {}).get(arm), r["setup"])', 'pass'),
+    ("C1", 'r["config"] += arm_problems(evidence, (cfg.get("arm_map") or {}).get(arm), r["setup"], p)', 'pass'),
     ("C2", 'out["run_dirs"].append(os.path.realpath(sc["runDir"] if os.path.isabs(sc["runDir"]) else\n                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(path)))), sc["runDir"])))', 'out["run_dirs"].append(sc["runDir"])'),
     ("C3", 'cfg["prior_problems"] += prior_problems(v1, cfg, F)', 'pass'),
     ("W2", 'if roles.get(arm) == "noninferiority" and key[1] != FS_FIELD:', 'if roles.get(arm) == "noninferiority":'),
@@ -767,7 +802,7 @@ for label, old, new in mutations:
     assert old in source, label
     mutant = source.replace(old, new)
     if label == "W3":
-        mutant = mutant.replace('elif identity_errors or not original_proof or proof != original_proof:', 'elif False:')
+        mutant = mutant.replace('elif (identity_errors or original_errors or proof["slot"] != original_proof["slot"]\n                  or proof["arm_tree"] != original_proof["arm_tree"]):', 'elif False:')
     mutant = mutant.replace('HERE = os.path.dirname(os.path.abspath(__file__))', 'HERE = ' + repr(os.path.dirname(original_j)))
     J = os.path.join(T, "red-" + label + ".py")
     with open(J, "w") as fh:
@@ -777,6 +812,28 @@ for label, old, new in mutations:
     arm = "C1" if label == "W2" else "R"
     assert rc == 0 and v["candidates"][arm]["verdict"] == "PASS", (label, rc, text)
     print("RED_CHECK_OK %s: reverting guard restores unsafe PASS" % label)
+J = original_j
+warning_mutations = [
+    ("independent identical matrices", 'path_owner, rd_owner = {}, {}', 'path_owner, rd_owner = {}, {}\n    hash_owner = set()',
+     'if r["sha256"]:', 'if r["sha256"]:\n                if r["sha256"] in hash_owner:\n                    st["problems"][arm].append("duplicate matrix hash")\n                hash_owner.add(r["sha256"])'),
+    ("unused prior mapping", 'for a in (cfg["baseline"], candidate)))):', 'for a in new_map))):', None, None),
+    ("equivalent rerun attestation", 'identity_errors or original_errors or proof["slot"] != original_proof["slot"]',
+     'identity_errors or original_errors or proof != original_proof', None, None),
+]
+for label, old, new, old2, new2 in warning_mutations:
+    assert old in source, label
+    mutant = source.replace(old, new)
+    if old2:
+        assert old2 in mutant
+        mutant = mutant.replace(old2, new2)
+    mutant = mutant.replace('HERE = os.path.dirname(os.path.abspath(__file__))', 'HERE = ' + repr(os.path.dirname(original_j)))
+    J = os.path.join(T, "warning-red.py")
+    with open(J, "w") as fh:
+        fh.write(mutant)
+    case = next(case for name, case, ex in cases if name == "RECHECK " + label)
+    rc, v, text = run(case, os.path.join(T, "warning-" + label.replace(" ", "-")))
+    assert rc == 0 and v["candidates"]["R"]["verdict"] == "BLOCKED", (label, rc, text)
+    print("RED_CHECK_OK recheck %s: old comparison wrongly BLOCKED valid evidence" % label)
 J = original_j
 with open(os.path.join(T, "saved.json"), "w") as fh:
     json.dump({k: v["verdict"] for k, v in SAVED.items()}, fh)

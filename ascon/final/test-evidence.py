@@ -130,7 +130,7 @@ def manifest_controls():
     assert 'C1' not in man['candidates']
     for cell in man['cells']:
         for arm, proof in cell['arm_evidence'].items():
-            assert proof == dict(ARM='PASS', COLLISION='PASS', slot=man['arm_map'][arm], head='e'*12, arm_tree='a'*12)
+            assert proof == dict(ARM='PASS', COLLISION='PASS', slot=man['arm_map'][arm], head='e'*12, arm_tree='a'*12, matrix=str(Path(cell['arms'][arm]).resolve()))
     amap = load('judge2').DEFAULT_ARM_MAP
     assert amap == {'B': 'opus-1', "B'": 'opus-1-pb', 'R': 'opus-1r',
                     'W1': 'opus-1g2', 'W2': 'ascon-zeta-r3k', 'X1': 'opus-1g',
@@ -156,7 +156,7 @@ def mechanism_controls():
     agent = run / 'agents' / 'slot.jsonl'
     agent.parent.mkdir(parents=True)
     summary = run / 'summary.json'
-    dump(summary, {'finalBlock': 1999, 'blocksProcessed': 2000})
+    dump(summary, {'runStartBlock': 1639, 'finalBlock': 1999, 'blocksProcessed': 360, 'loopIterations': 362})
     decision = {'agentId': 'slot', 'round': 1998, 'action': {'type': 'noop'}}
     events = [{'event': 'runtime_start'}, {'event': 'submit_failed', 'error': 'STF'},
               {'reason': 'launch entry token: net +20'},
@@ -176,9 +176,17 @@ def mechanism_controls():
         w = csv.writer(f); w.writerow(cols); w.writerows(txs)
     mech = load('mechanism')
     saved_log = agent.read_text()
+    def decisions(last=1998, start=1638):
+        rows = []
+        for i in range(start, last + 1):
+            rows.append(dict(decision, round=i, reason='strategy decision'))
+            if i < 1922:
+                rows.append(dict(decision, round=i, reason='decide returned nothing'))
+        return ''.join(json.dumps(row) + '\n' for row in rows)
+    saved_log += decisions(1628, 1628)
+    assert len((decisions(1628, 1628) + decisions()).splitlines()) == 647
     for last_round in (None, 140, 1996, 2002):
-        agent.write_text(saved_log + (json.dumps(dict(decision, round=last_round)) + '\n'
-                                     if last_round is not None else ''))
+        agent.write_text(saved_log + (decisions(last_round) if last_round is not None else ''))
         try:
             mech.measure(matrix, 'slot', [])
         except ValueError:
@@ -186,9 +194,24 @@ def mechanism_controls():
         else:
             raise AssertionError(f'incomplete slot log accepted: {last_round}')
     for last_round in (1997, 1998, 1999, 2001):
-        agent.write_text(saved_log + json.dumps(dict(decision, round=last_round)) + '\n')
+        agent.write_text(saved_log + decisions(last_round))
         assert mech.measure(matrix, 'slot', [])['slot_timeouts'] == 0
-    agent.write_text(saved_log + json.dumps(decision) + '\n')
+    agent.write_text(saved_log + decisions(1700) + decisions(start=1703))
+    assert mech.measure(matrix, 'slot', [])['slot_timeouts'] == 0
+    agent.write_text(saved_log + decisions())
+    complete = agent.read_text()
+    for truncated in (decisions(start=1900), decisions(1700) + decisions(start=1704),
+                      decisions(1700) + decisions(start=1706),
+                      decisions() + decisions(1997, 1997)):
+        agent.write_text(saved_log + truncated)
+        try:
+            mech.measure(matrix, 'slot', [])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('discontinuous slot log accepted')
+    agent.write_text(complete)
+    print('CONTINUOUS_SLOT_LOG_OK missing prefix, middle gap, reversed round rejected')
     saved_summary = summary.read_text()
     for invalid in (None, '{broken', '{}', '{"finalBlock": 1999}',
                     '{"finalBlock": "1999", "blocksProcessed": 2000}'):
@@ -213,9 +236,9 @@ def mechanism_controls():
     # Reset entry tracking between scenarios.
     run2 = root / 'runs' / 'two'
     (run2 / 'agents').mkdir(parents=True)
-    dump(run2 / 'summary.json', {'finalBlock': 1999, 'blocksProcessed': 2000})
+    dump(run2 / 'summary.json', {'runStartBlock': 1639, 'finalBlock': 1999, 'blocksProcessed': 360, 'loopIterations': 362})
     (run2 / 'agents' / 'slot.jsonl').write_text('\n'.join(map(json.dumps, [
-        {'event': 'runtime_start'}, {'event': 'submit_failed', 'error': 'STF'}, decision])) + '\n')
+        {'event': 'runtime_start'}, {'event': 'submit_failed', 'error': 'STF'}])) + '\n' + decisions())
     (run2 / 'blocks.csv').write_text(','.join(cols) + '\n')
     dump(matrix, {'scenarios': [{'runDir': '/mini/runs/one'}, {'runDir': '/mini/runs/two'}]})
     man = temp / 'M.json'
@@ -226,9 +249,11 @@ def mechanism_controls():
     r = json.loads(out.read_text())['arms']['R']
     # Collector and judge must preserve BLOCKED for incomplete execution evidence.
     complete_log = agent.read_text()
-    for control in ('early-slot', 'missing-summary'):
+    for control in ('early-slot', 'five-block-gap', 'missing-summary'):
         if control == 'early-slot':
-            agent.write_text(saved_log + json.dumps(dict(decision, round=140)) + '\n')
+            agent.write_text(saved_log + decisions(1800))
+        elif control == 'five-block-gap':
+            agent.write_text(saved_log + decisions(1700) + decisions(start=1706))
         else:
             summary.unlink()
         invoke('mechanism', man, '--out', out, rc=2)
@@ -308,6 +333,29 @@ def mechanism_controls():
             assert any('duplicate' in error for error in failed['errors']), failed
     man.write_text(original_man)
     print('GLOBAL_DEDUPE_OK copied hashes and aliased runs across cells/arms')
+    # Byte-identical relative matrices under distinct roots are independent.
+    import shutil
+    independent = []
+    for name in ('independent-a', 'independent-b'):
+        base = temp / name
+        shutil.copytree(run, base / 'runs' / 'one')
+        path = base / 'runs' / 'matrix' / 'matrix.json'
+        dump(path, {'scenarios': [{'runDir': 'runs/one'}]})
+        independent.append(path)
+    mm = json.loads(original_man)
+    mm['cells'] = [dict(seed=1003+i, field='FP', arms={'R': str(path)})
+                   for i, path in enumerate(independent)]
+    dump(man, mm)
+    invoke('mechanism', man, '--out', out, rc=2)
+    rr = json.loads(out.read_text())['arms']['R']
+    assert not rr['errors'] and rr['slot_timeouts'] == 2, rr
+    assert len(rr['matrices']) == 2
+    provenance = j.mechanism_clause({'R': rr, 'B': rr}, 'R', 'B', 'superiority',
+                                  {'R': set(rr['matrices_sha256']), 'B': set(rr['matrices_sha256'])})
+    assert provenance['provenance']['status'] == 'PASS', provenance
+    man.write_text(original_man)
+    print('INDEPENDENT_IDENTICAL_MATRICES_OK collector')
+
     # A header-only CSV is a valid no-tie sample, never a fabricated 0 or 0.5.
     (run / 'blocks.csv').write_text(','.join(cols) + '\n')
     invoke('mechanism', man, '--out', out, rc=2)

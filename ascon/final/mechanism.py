@@ -47,8 +47,8 @@ def measure(matrix, slot, mappings, seen=None):
         summary = json.loads((run / 'summary.json').read_text())
         if not isinstance(summary, dict) or any(
                 type(summary.get(key)) is not int or summary[key] < 0
-                for key in ('finalBlock', 'blocksProcessed')):
-            raise ValueError('incomplete run: invalid finalBlock or blocksProcessed in summary.json')
+                for key in ('runStartBlock', 'finalBlock', 'blocksProcessed')):
+            raise ValueError('incomplete run: invalid runStartBlock, finalBlock or blocksProcessed in summary.json')
         last_round = None
         for line in (run / 'agents' / (slot + '.jsonl')).read_text().splitlines():
             if not line.strip():
@@ -59,7 +59,16 @@ def measure(matrix, slot, mappings, seen=None):
             if e.get('agentId') == slot and 'action' in e:
                 if type(e.get('round')) is not int or e['round'] < 0:
                     raise ValueError('invalid slot decision round')
-                last_round = e['round']
+                # Warm-up decisions can precede the run by many blocks. They
+                # provide no coverage; duplicate strategy/noop lines are normal.
+                first_expected = summary['runStartBlock']
+                if e['round'] >= first_expected - 1:
+                    if last_round is None:
+                        if e['round'] > first_expected + 2:
+                            raise ValueError('incomplete agent log: missing initial slot decisions')
+                    elif not 0 <= e['round'] - last_round <= 3:
+                        raise ValueError('incomplete agent log: discontinuous slot decision rounds')
+                    last_round = e['round']
             reason = str(e.get('reason', ''))
             timeouts += int('decide timeout:' in reason)
             # Count only submit failures after an earlier launch-entry log, per scenario.
@@ -123,15 +132,12 @@ def main():
         for arm, path in cell['arms'].items():
             arms.setdefault(arm, []).append(Path(path) if Path(path).is_absolute() else a.manifest.resolve().parent / path)
     output = {}
-    seen_runs, seen_hashes = set(), set()
+    seen_runs = set()
     for arm, paths in arms.items():
         records, hashes, errors = [], [], []
         for path in paths:
             try:
                 h = sha(path)
-                if h in seen_hashes:
-                    raise ValueError('duplicate matrix hash')
-                seen_hashes.add(h)
                 hashes.append(h)
                 measured = measure(path, man.get('slot_id', 'slot'), mappings, seen_runs)
                 measured['tie_win_rate'] = (measured['tie_wins'] / measured['tie_pairs']
@@ -146,7 +152,7 @@ def main():
         output[arm] = dict(slot_timeouts=None if errors else sum(r['slot_timeouts'] for r in records),
                            stf=None if errors else sum(r['stf'] for r in records),
                            tie_win_rate=wins / ties if ties and not errors else None,
-                           tie_pairs=ties, tie_wins=wins, matrices_sha256=hashes,
+                           tie_pairs=ties, tie_wins=wins, matrices_sha256=sorted(set(hashes)),
                            p99_decide_ms=None, p99_decide_ms_reason='Runtime does not record decide duration; stage 1 already started. Not measurable retrospectively.',
                            matrices=records, errors=errors)
         if not ties:

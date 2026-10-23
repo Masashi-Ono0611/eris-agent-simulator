@@ -110,7 +110,8 @@ def main():
                     cells.setdefault((seed, field), {})[labels[arm]] = mapped
                     evidence.setdefault((seed, field), {})[labels[arm]] = {
                         **{k: chosen['notes'][k] for k in ('slot', 'head', 'arm_tree')},
-                        **{k: chosen['exit'][k] for k in ('ARM', 'COLLISION')}}
+                        **{k: chosen['exit'][k] for k in ('ARM', 'COLLISION')},
+                        "matrix": str(Path(mapped).resolve())}
                     selected.append(chosen)
                 else:
                     missing.append(dict(job=job, reason=reason))
