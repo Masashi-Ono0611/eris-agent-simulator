@@ -155,27 +155,73 @@ for label in ('X1', 'X2', 'X3'):
 (logs / 'A.queue.log').write_text('\n'.join(rows) + '\n')
 print('OPTIONAL_X_REQUIRED_W2_OK')
 chains = temp / "chains with ' quote"
-r, out = invoke(final, 'pass', '--install', chains, '--order-seed', '17')
+install_args = []
+for lane in 'ABCD':
+    queue = chains / f'chain-{lane}2'
+    for state in ('pending', 'running', 'done', 'held'):
+        (queue / state).mkdir(parents=True)
+        (queue / state / '.keep').write_text(f'{lane}-{state}')
+    names = {'A': [], 'B': ['30-s1-r3k.txt', '70-s1-r3kg-A.txt', '71-s1-r3kg-B.txt'],
+             'C': ['50-s1-1g2-C.txt', '60-s1-1w-C.txt'],
+             'D': ['50-s1-1g2-D.txt', '60-s1-1w-D.txt']}[lane]
+    for name in names:
+        (queue / 'pending' / name).write_text(name + '\n')
+    install_args.extend(['--install-into', f'{lane}={queue}'])
+
+
+def snapshot():
+    return {str(p.relative_to(chains)): (p.read_bytes(), p.stat().st_mtime_ns)
+            for p in chains.rglob('*') if p.is_file()}
+
+
+before_install = snapshot()
+r, out = invoke(final, 'pass', *install_args, '--order-seed', '17')
 assert r.returncode == 0 and r.stdout.endswith('D1_PASS\n'), r.stdout + r.stderr
 summary = (out / 'summary.txt').read_text()
 assert 'm=1.234567 t=9.876543' in summary and 'p99_latency=NOT_MEASURED' in summary
 assert 'informational=True' in summary and 'F=R F2=W1' in summary
 assert 'jobs=6 ETA_hours=15.00 job_hours=2.5' in summary
-assert summary.count('mini-lane-start.sh') == 8 and summary.count('swap-waiter') == 4
 for lane in 'ABCD':
-    assert (chains / f'chain-{lane}S2/pending/s2-{lane}.txt').read_bytes() == (out / f's2/s2-{lane}.txt').read_bytes()
-# Repeated installs cannot overwrite; preflight a hidden file in the LAST lane.
-r, _ = invoke(final, 'occupied', '--install', chains)
-assert r.returncode == 2 and 'destination not empty' in r.stdout
+    pending_dir = chains / f'chain-{lane}2/pending'
+    assert (pending_dir / f'55-s2-{lane}.txt').read_bytes() == (out / f's2/s2-{lane}.txt').read_bytes()
+    order = sorted(p.name for p in pending_dir.glob('*.txt'))
+    assert f"lane {lane}: pending order: " + ' -> '.join(order) in summary
+    if lane in 'CD':
+        assert order == [f'50-s1-1g2-{lane}.txt', f'55-s2-{lane}.txt', f'60-s1-1w-{lane}.txt']
+after_install = snapshot()
+assert {k: after_install[k] for k in before_install} == before_install
+assert set(after_install) - set(before_install) == {f'chain-{lane}2/pending/55-s2-{lane}.txt' for lane in 'ABCD'}
+print('INSTALL_ORDER_AND_UNTOUCHED_OK')
+# Preflight every lane before writing any file; collisions in all lifecycle states.
 for lane in 'ABCD':
-    assert (chains / f'chain-{lane}S2/pending/s2-{lane}.txt').read_bytes() == (temp / f'pass/s2/s2-{lane}.txt').read_bytes()
-occupied = temp / 'hidden'
-(occupied / 'chain-DS2/pending').mkdir(parents=True)
-(occupied / 'chain-DS2/pending/.keep').write_text('keep')
-r, _ = invoke(final, 'hidden-out', '--install', occupied)
-assert r.returncode == 2 and not (occupied / 'chain-AS2').exists()
-r, _ = invoke(final, 'dry-install', '--allow-partial', '--install', temp / 'never')
-assert r.returncode == 2 and not (temp / 'never').exists()
+    (chains / f'chain-{lane}2/pending/55-s2-{lane}.txt').unlink()
+for state in ('pending', 'running', 'done', 'held'):
+    collision = chains / f'chain-D2/{state}/55-s2-D.txt'
+    collision.write_text('already used')
+    before = snapshot()
+    r, _ = invoke(final, 'occupied-' + state, *install_args)
+    assert r.returncode == 2 and 'D1_BLOCKED' in r.stdout and 'already exists' in r.stdout, r.stdout
+    assert snapshot() == before
+    collision.unlink()
+# Missing pending is not created, even in the last lane.
+pending_dir = chains / 'chain-D2/pending'
+pending_dir.rename(chains / 'chain-D2/saved-pending')
+before = snapshot()
+r, _ = invoke(final, 'missing-pending', *install_args)
+assert r.returncode == 2 and 'pending directory missing' in r.stdout, r.stdout
+assert snapshot() == before and not pending_dir.exists()
+(chains / 'chain-D2/saved-pending').rename(pending_dir)
+for name, args in [('duplicate', install_args + install_args[:2]),
+                   ('unknown', install_args + ['--install-into', 'Z=/tmp/unused']),
+                   ('incomplete', install_args[:2]),
+                   ('malformed', ['--install-into', 'A']),
+                   ('legacy', ['--install', chains])]:
+    before = snapshot()
+    r, _ = invoke(final, 'invalid-install-' + name, *args)
+    assert r.returncode == 2 and snapshot() == before, r.stdout
+r, _ = invoke(final, 'dry-install', '--allow-partial', *install_args)
+assert r.returncode == 2 and snapshot() == before
+print('INSTALL_REFUSAL_CONTROLS_OK')
 r, out = invoke(final, 'dry-pass', '--allow-partial', '--lanes', 'A,B')
 assert r.returncode == 0 and all(x.startswith('DRY_RUN ') for x in r.stdout.splitlines())
 for path in out.rglob('*'):

@@ -5,7 +5,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shlex
 import subprocess
 import sys
 
@@ -73,15 +72,24 @@ def main():
         p.add_argument('--logs', type=Path, default=Path(os.environ.get('ASCON_EVAL_LOGS', str(Path.home() / 'ascon-final/logs'))))
         p.add_argument('--lanes', default='A,B,C,D')
         p.add_argument('--order-seed', type=int, default=231023)
-        p.add_argument('--install', type=Path)
+        p.add_argument('--install-into', action='append', default=[], metavar='LANE=QUEUE_DIR',
+                       help='repeat once per selected lane; pending directory must exist')
         p.add_argument('--allow-partial', action='store_true', help='dry run only; never install')
         a = p.parse_args()
-        if dry and a.install:
-            raise Blocked('--allow-partial cannot --install')
+        if dry and a.install_into:
+            raise Blocked('--allow-partial cannot --install-into')
         lanes = a.lanes.split(',')
         if (not lanes or any(not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*', x) for x in lanes)
                 or len({x.lower() for x in lanes}) != len(lanes)):
             raise Blocked('invalid or duplicate lanes')
+        installs = {}
+        for entry in a.install_into:
+            lane, sep, directory = entry.partition('=')
+            if not sep or not directory or lane not in lanes or lane in installs:
+                raise Blocked('invalid or duplicate --install-into; expected selected LANE=QUEUE_DIR')
+            installs[lane] = Path(directory).expanduser().resolve()
+        if installs and set(installs) != set(lanes):
+            raise Blocked('--install-into requires one directory for every selected lane')
         target = a.out_dir.resolve()
         if target.exists() and (not target.is_dir() or any(target.iterdir())):
             raise Blocked('out-dir must be new or empty')
@@ -162,29 +170,30 @@ def main():
             path = queues / f's2-{lane}.txt'
             jobs = len(eta.queue_jobs(path))
             say(f'lane {lane}: jobs={jobs} ETA_hours={jobs * hours:.2f} job_hours={hours} (default; conditional on uninterrupted execution)')
-        if a.install:
-            chainroot = a.install.resolve()
-            destinations = [chainroot / f'chain-{lane}S2' / 'pending' for lane in lanes]
-            # Preflight ALL lanes before copying ANY queue, including hidden files.
-            for dest in destinations:
-                if dest.is_symlink() or (dest.exists() and (not dest.is_dir() or any(dest.iterdir()))):
-                    raise Blocked(f'install destination not empty: {dest}')
-            for lane, dest in zip(lanes, destinations):
-                dest.mkdir(parents=True, exist_ok=True)
-                if any(dest.iterdir()):
-                    raise Blocked(f'install destination changed: {dest}')
-                # Exclusive creation refuses even a concurrent same-name file.
-                with (dest / f's2-{lane}.txt').open('xb') as f:
+        if installs:
+            def check_destination(lane, queue):
+                dest = queue / 'pending'
+                if not dest.is_dir() or dest.is_symlink():
+                    raise Blocked(f'pending directory missing or unsafe: {dest}')
+                name = f'55-s2-{lane}.txt'
+                # A stem is a run identity, including after completion or HOLD.
+                # rglob also finds directories and dangling symlinks of this name.
+                if any(queue.rglob(name)):
+                    raise Blocked(f'install name already exists in queue directory: {queue / name}')
+                return dest / name
+
+            # Preflight ALL lanes before writing ANY queue. Existing work is untouched.
+            for lane, queue in installs.items():
+                check_destination(lane, queue)
+            for lane, queue in installs.items():
+                dest = check_destination(lane, queue)
+                # Exclusive creation also refuses a concurrent same-name pending file.
+                with dest.open('xb') as f:
                     f.write((queues / f's2-{lane}.txt').read_bytes())
-            say('Installed queues; commands below are alternatives for a human/Claude, not executed. Assign lanes to hosts with available capacity (mini at most two).')
-            q = shlex.quote
-            for i, lane in enumerate(lanes):
-                start = (f'ASCON_FINAL={q(str(chainroot))} bash ascon/eval/mini-lane-start.sh '
-                         f'{q(lane)} {sha} {q(str(chainroot / ("chain-" + lane + "S2")))} {8700 + 10*i}')
-                say(f'lane {lane} idle: {start}')
-                stop = chainroot / f'chain-{lane}' / 'STOP'
-                lock = chainroot / 'logs' / f'{lane}.chain.lock'
-                say(f'lane {lane} swap-waiter (current chain-{lane}): touch {q(str(stop))} && (while [ -d {q(str(lock))} ]; do sleep 20; done; {start})')
+            say('Installed stage-2 queues into existing chains; no lane starts or switches executed.')
+            for lane, queue in installs.items():
+                order = sorted(p.name for p in (queue / 'pending').glob('*.txt') if p.is_file())
+                say(f'lane {lane}: pending order: ' + ' -> '.join(order))
         say('Stage 2 FP/FD ready; FS, docker, shipping parity and release gates remain separate.')
         return finish('D1_PASS', 0)
     except (Blocked, OSError, ValueError, KeyError, TypeError) as exc:

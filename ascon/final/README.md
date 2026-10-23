@@ -204,9 +204,12 @@ Judge CLI exit 0 means it produced a verdict, not that a candidate passed.
 ```sh
 bash ascon/final/d1-run.sh /tmp/d1-result --logs /copies/logs \
   --lanes A,B,C,D --order-seed 231023
-# Optional: install into empty pending directories and print (never execute) starts:
+# Optional: insert stage 2 into the existing NEXT queues:
 bash ascon/final/d1-run.sh /tmp/d1-installed --logs /copies/logs \
-  --install /path/to/ascon-final
+  --install-into A="$HOME/ascon-final/chain-A2" \
+  --install-into B="$HOME/ascon-final/chain-B2" \
+  --install-into C="$HOME/ascon-final/chain-C2" \
+  --install-into D="$HOME/ascon-final/chain-D2"
 bash ascon/final/test-d1-run.sh
 ```
 
@@ -232,22 +235,34 @@ artifacts carry DRY_RUN, JSON gets a `DRY_RUN` field, and installation is refuse
 Dry artifacts are diagnostic, not reusable authoritative inputs (their hashes
 and schemas are intentionally changed by labelling).
 
-`--install CHAINROOT` preflights every `chain-<lane>S2/pending/`, including hidden
-entries, and exclusively creates queue files without overwriting. It prints
-shell-quoted direct `mini-lane-start.sh` commands and inline swap-waiter
-alternatives (STOP `chain-<lane>`, wait for its lock to disappear, then start).
-These assume the current chain is `CHAINROOT/chain-<lane>` and logs are in
-`CHAINROOT/logs`; verify that topology before using a waiter. Ports are 8700,
-8710, etc. in supplied lane order. The current HEAD is recorded as the intended
-execution commit; this does not certify shipping parity. Assign commands to
-hosts with capacity (mini at most two lanes), and run them only as the separate
-human/Claude step. Installation is not a multi-directory transaction: a concurrent
-writer or I/O failure can leave a partial installation, reported BLOCKED. No
-lanes, network calls or recursive deletes are run by D1.
+`--install-into LANE=QUEUE_DIR` is repeatable; supply exactly one mapping for
+each selected lane (use `--lanes` to select a subset). It replaces `--install`.
+Every `QUEUE_DIR/pending/` must already exist. All destinations are checked before
+any queue is written. A `55-s2-<lane>.txt` name anywhere under that queue directory
+(including pending, running, done and held) causes `D1_BLOCKED`: a lane's run ID is
+`<lane>-<sha8>-<file stem>`, so a used stem must not be reused. The runner exclusively
+creates `pending/55-s2-<lane>.txt`; it never moves or edits existing files, and prints
+each lane's resulting name-sorted pending `*.txt` order.
+
+On the Mini, B's `30-s1-r3k.txt` and C/D's `50-s1-1g2-<lane>.txt` remain ahead of
+stage 2. Informational `60-s1-1w-<lane>.txt`, `70-s1-r3kg-A.txt` and
+`71-s1-r3kg-B.txt` follow stage 2. A's empty `chain-A2` receives its stage-2 file;
+the existing waiter starts A there after its current chain ends. `lane-chain.sh`
+picks up later additions automatically. Install while these NEXT queues are still
+waiting: adding a file cannot reorder or interrupt a queue already running.
+No replacement chain, STOP file, start command or swap waiter is created.
+
+The current HEAD is recorded as the intended execution commit; this does not
+certify shipping parity. Installation is not a multi-directory transaction: a
+concurrent consumer/writer or I/O failure can leave a partial installation,
+reported BLOCKED on detected failures. Pending order is a snapshot, not a lock
+against a running consumer. No lanes, network calls or recursive deletes are run by D1.
 
 The test uses mktemp fixtures, real manifest/planner CLIs, controlled
 judge/mechanism CLI outcomes and a red mutation of the incomplete-stage gate.
-It also exercises real empty-evidence dry judging. Statistical validation remains
+It also checks 50 < 55 < 60 ordering, collisions in all four queue states,
+missing pending directories, unchanged existing file bytes/mtimes, and real
+empty-evidence dry judging. Statistical validation remains
 in `test-judge2.sh`; fixture tests do not establish live stage-1 completion.
 
 ## Stage-2 planner CLI
