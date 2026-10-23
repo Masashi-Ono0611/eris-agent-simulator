@@ -122,6 +122,10 @@ A FAIL or BLOCKED of either check has a NOTE line with its first 300 characters.
 
 `ascon/final/judge2.py` reads the counted matrices of a stage and applies the plan's pre-registered rule
 (see its docstring). Feed it only matrices that passed section 6.
+Use `ascon/final/make-manifest.py` and `mechanism.py` on copied logs/runs; usage, retry
+selection and path mappings are documented in `ascon/final/README.md`. Stage-1 p99 remains
+unmeasured: the extractor writes null and the frozen judge blocks its latency subclause.
+No decision to waive that requirement has been made by these tools.
 
 ## Pitfalls seen in this project
 

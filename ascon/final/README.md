@@ -115,3 +115,60 @@ they were not run through `loadScenarioSet`. The 31 evaluation files now hold 35
 check-trap-scope in their own worktrees on uncommitted code; rerun it on the committed version.
 test-checks.sh failed two controls once opus-1a existed (they used opus-1a as the arm that does not
 exist) and passes again after the fix.
+
+## Building stage-1 evidence from copied logs
+
+```sh
+python3 ascon/final/make-manifest.py --logs /local/logs --stage 1 --out M.json \
+  --arms opus-1a opus-1r opus-1g --path-map /mini/repo=/local/repo
+python3 ascon/final/mechanism.py M.json --out MECH.json
+python3 ascon/final/judge2.py judge --manifest M.json --mechanism MECH.json --out verdict.json
+bash ascon/final/test-evidence.sh
+```
+
+`make-manifest.py` defaults to B, B', C1, R and W (opus-1g); `--arms` selects arm
+**directory names**, comma or space separated, and always includes B and B'. Other directories
+keep their directory name as their judge label. The frozen judge permits at most two superiority
+candidates and one noninferiority candidate. Extra weapon/exploration arms therefore need an explicit
+comparison selection; separate comparisons do not establish a corrected overall selection rule.
+
+The stage-1 design is FP/FD at seeds 1003–1006. Each job uses its last EXIT with VERDICT=PASS,
+ordered by line position within its lane log; newer killed/failed attempts do not replace it.
+That selected attempt must also have rc=0, COLLISION=PASS, ARM=PASS and matching slot/matrix
+NOTEs. An invalid latest PASS is missing, never rescued by an earlier PASS. PASS attempts in
+multiple lanes have no reliable cross-file order (run ids can be arbitrary), so are missing.
+Missing jobs are omitted; partial cells contain only observed arms. No empty cells are invented.
+Exit 0 means complete; exit 2 means incomplete/refused. `M.json.audit.json` lists selected,
+ignored and missing attempts and the path mappings, without adding unsupported manifest keys.
+
+Repeat `--path-map` for multiple roots (longest component prefix wins). Keep copied matrices
+unchanged under `runs/matrix-*/matrix.json`, alongside copied `runs/<id>/` directories.
+The audit sidecar carries the mappings into mechanism extraction for absolute runDir values;
+relative runDir values resolve against the directory containing `runs/`. If moving M.json,
+move its audit sidecar too, or pass the same mappings to `mechanism.py --path-map`.
+Hashes always cover the original matrix bytes, not rewritten paths.
+
+`MECH.json` has the judge's `arms` object, with aggregate counts, pooled pairwise tie win rate,
+exact matrix SHA256 list, and per-matrix counts/rates. Only `agents/slot.jsonl` is counted:
+decide-timeout reason lines, and `submit_failed` events containing the STF token after the
+first launch-entry reason in each scenario. Entry state resets for each scenario.
+Tie pairs have the same block, destination (`to`, the venue key available in blocks.csv),
+and integer priority fee, but different sender addresses. Each slot/other transaction pair
+counts once, including reverted transactions; a lower slot txIndex wins. This measures
+same-destination races and cannot distinguish pools behind one router. No ties yields null.
+Missing/malformed evidence yields null counts and an error, never zero failures. C1's
+separate Step-2 report/verdict and tagged mechanism PnL are not inferred by this extractor.
+
+**Unmeasured p99 (user decision 2026-10-23):** Stage 1 started without decide-duration
+logging, so p99 cannot be measured retrospectively. Mechanism extraction still writes
+`p99_decide_ms: null` with `p99_decide_ms_reason` and exits 2. The judge explicitly reports
+`p99_latency: NOT_MEASURED` (advisory) only for an explicit null with a non-empty reason
+string (whitespace alone is insufficient). This subclause does not block or fail condition 5.
+Latency's harm in equal-fee races is measured directly by tie-win difference within 10 pt
+of B and zero slot timeouts; STF and provenance checks remain enforced.
+
+Numeric p99 keeps the strict <500 ms rule: 499 ms PASS, 500 ms FAIL. A missing key,
+malformed value, or null without a valid reason stays BLOCKED. Other failures still take
+precedence. All other judge rules remain frozen. Tests cover these cases and revert the
+advisory branch in memory to verify null+reason returns to BLOCKED.
+Judge CLI exit 0 means it produced a verdict, not that a candidate passed.

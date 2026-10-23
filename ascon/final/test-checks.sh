@@ -159,10 +159,11 @@ arm fail_and_blocked     1 2 "the slot ran 'opus-1-pb'"               -- "$M" op
 echo "== check-trap-scope.py"
 S=""
 for f in "$src"/ascon/final/scen-*.yaml "$src"/ascon/final/smoke-*.yaml; do S="$S $f"; done
+# Includes the tracked scen-gmx-probe-2001.yaml in addition to the original 34 files.
 nscen="$(printf '%s\n' $S | grep -c .)"
-[ "$nscen" = 34 ] || { echo "BLOCKED: expected 34 scenario files under ascon/final, found $nscen"; exit 2; }
+[ "$nscen" = 35 ] || { echo "BLOCKED: expected 35 scenario files under ascon/final, found $nscen"; exit 2; }
 # Positive control: the final plan's scenario files and the planned or measured arms.
-trap_scope "final files, planned arms" 0 1 "PASS 34 scenario files: no regime lists lending; 5 arms" -- --scenarios $S --arms opus-1 opus-1-pb opus-1a opus-2 ascon-zeta-r3
+trap_scope "final files, planned arms" 0 1 "PASS 35 scenario files: no regime lists lending; 5 arms" -- --scenarios $S --arms opus-1 opus-1-pb opus-1a opus-2 ascon-zeta-r3
 # Negative controls on the repository's own files.
 printf '%s\n' 'regimes: [calm, agent-markets]' 'seeds: [1]' > "$T/scen-agent-markets.yaml"
 trap_scope "regime with lending" 1 1 "agent-markets: run.protocols includes lending" -- --scenarios "$T/scen-agent-markets.yaml" --arms opus-1
