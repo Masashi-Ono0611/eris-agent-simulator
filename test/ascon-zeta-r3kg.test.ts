@@ -203,6 +203,79 @@ const gmxOnly = (xs: Act[]) =>
 // Fair 2% under the anchor for WETH (g = +2.04%); WBTC stays at its anchor (g = 0).
 const LOW = 3000 / 1.0204;
 
+test("realistic entry: 0.998 ETH funds OU at its 0.1 gwei bid under economicGas or a high fee ceiling", async () => {
+  for (const economicGas of [true, false]) {
+    persistentState();
+    g.resetOuStateForTest();
+    const ctx = fakeCtx();
+    Object.assign(ctx.config, { economicGas, maxPriorityFeeWei: 10n ** 18n,
+      maxTxGas: 1_600_000n });
+    for (const block of [100, 101, 102]) {
+      await g.decide(obsFor({ block, fairWeth: 2941.77,
+        ethWei: "998000000000000000", usdc: "25000000000" }), ctx);
+    }
+    assert.equal(ctx.submitted.length, 1, `economicGas=${economicGas}: confirmed OU must enter`);
+    const order = ctx.submitted[0] as Act;
+    assert.equal(order.type, "gmxIncrease");
+    assert.equal(order.isLong, true);
+    assert.equal(order.maxPriorityFeePerGasWei, "100000000");
+    const signals = (ctx.logs.at(-1) as { signals: Record<string, number> }).signals;
+    assert.equal(signals.ouSkipReasonWETH, 0);
+    assert.equal(signals.ouAvailableEthWETH, 0.998);
+    assert.equal(signals.ouRequiredEthWETH, 0.09048);
+    assert.equal((ctx.logs[0] as { signals: Record<string, number> }).signals.ouSkipReasonWETH, 6);
+    await g.decide(obsFor({ block: 103, fairWeth: 2941.77 }), ctx);
+    assert.equal((ctx.logs.at(-1) as { signals: Record<string, number> }).signals.ouSkipReasonWETH, 1);
+  }
+});
+
+test("actual bids: separate base leg costs, bundle override and OU closing costs", () => {
+  const ctx = fakeCtx();
+  ctx.config.economicGas = true;
+  const observation = obsFor({ ethWei: "998000000000000000", wethPos: pos(40000) });
+  const actions = [
+    { type: "swap", tokenIn: "USDC", amountIn: "1000000000", maxPriorityFeePerGasWei: "2000000000" },
+    { type: "curveSwap", tokenIn: "WETH", amountIn: "1", maxPriorityFeePerGasWei: "3000000000" },
+  ];
+  const bundle = { type: "bundle", actions };
+  const budget = g.ouBudget(observation, ctx, bundle);
+  assert.equal(budget.ethWei, 988_000_000_000_000_000n); // 0.998 - 2M * (2 + 3) gwei
+  assert.equal(budget.orderGasWei, 200_000_000_000_000n);
+  assert.equal(budget.closeReserveWei, 60_400_000_000_000_000n);
+  assert.equal(budget.slots, 2);
+  assert.equal(budget.usdcFreeUnits, 24_000_000_000n);
+  const overridden = { ...bundle, maxPriorityFeePerGasWei: "4000000000" };
+  assert.equal(g.ouBudget(observation, ctx, overridden).ethWei, 982_000_000_000_000_000n);
+  observation.balances.ethWei = "46200000000000000"; // 0.0302 close + 0.016 base gas
+  assert.equal(g.baseFitsOuReserve(observation, ctx, overridden), true);
+  observation.balances.ethWei = "46199999999999999";
+  assert.equal(g.baseFitsOuReserve(observation, ctx, overridden), false);
+});
+
+test("signals: ETH, USDC, epoch, persistence, risk and capacity skips are emitted per block", async () => {
+  for (const reason of [2, 3, 4, 5, 7, 8]) {
+    persistentState();
+    g.resetOuStateForTest();
+    const ctx = fakeCtx();
+    for (const block of [100, 101]) await g.submitOu(obsFor({ block,
+      ...(reason === 5 && block === 100 ? { fairWeth: 2941.77,
+        wethPos: { ...pos(40000), pnlUsd: -6000 }, ethWei: "20000000000000000" } : {}) }), ctx, null);
+    const observation = obsFor({ block: 102, fairWeth: 2941.77,
+      ...(reason === 2 ? { blocksRemaining: 5 } : {}),
+      ...(reason === 3 ? { ethWei: "90000000000000000" } : {}),
+      ...(reason === 7 ? { usdc: "6000000000" } : {}) });
+    if (reason === 4) mkdirSync(join(testStateDir!, "ascon-zeta-r3kg-ou-state.json.tmp"));
+    if (reason === 8) ctx.config.maxAgentBlockGas = 1_999_999n;
+    await g.submitOu(observation, ctx, null);
+    const signals = (ctx.logs.at(-1) as { signals: Record<string, number> }).signals;
+    assert.equal(signals.ouSkipReasonWETH, reason);
+    assert.equal(ctx.submitted.length, 0);
+    assert.equal(signals.ouRequiredEthWETH, 0.0906);
+    assert.equal(signals.ouAvailableEthWETH, reason === 3 ? 0.09 : 1);
+    assert.equal(ctx.logs.length, 3);
+  }
+});
+
 async function warmup(opts: Parameters<typeof obsFor>[0] = {}): Promise<void> {
   for (let block = 98; block <= 100; block++)
     assert.deepEqual(gmxOnly(await emitted(obsFor({ ...opts, block }))), []);
@@ -1130,11 +1203,11 @@ test("ETH integration: two signals cannot spend the ETH reserved for both closes
   for (const block of [100, 101]) await g.submitOu(obsFor({ block }), fakeCtx(), null);
   const ctx = fakeCtx();
   await g.submitOu(obsFor({ block: 102, fairWeth: LOW, fairWbtc: 61200,
-    ethWei: "110000000000000000" }), ctx, null);
-  assert.equal(ctx.submitted.length, 0, "0.11 cannot fund a 0.04 entry plus 0.08 closing reserve");
+    ethWei: "90500000000000000" }), ctx, null);
+  assert.equal(ctx.submitted.length, 0, "0.0905 cannot fund a 0.0302 entry plus 0.0604 closing reserve");
   await g.submitOu(obsFor({ block: 103, fairWeth: LOW, fairWbtc: 61200,
-    ethWei: "160000000000000000" }), ctx, null);
-  assert.equal(ctx.submitted.length, 2, "0.16 covers two entries and both closes including gas");
+    ethWei: "120800000000000000" }), ctx, null);
+  assert.equal(ctx.submitted.length, 2, "0.1208 exactly covers two entries and both closes at 0.1 gwei");
 });
 
 test("persistence: a write failure after successful load prevents submit and reload duplication", async () => {
@@ -1244,7 +1317,7 @@ test("audit reserve: base wraps, sells and bundles preserve every open position'
       const candidate = await load("ascon-zeta-r3kg");
       const ctx = fakeCtx();
       ctx.publicClient = { getTransactionCount: async () => 0 } as any;
-      const reserve = BigInt(count) * 40_000_000_000_000_000n; // 0.03 fee + 2M * 5gwei
+      const reserve = BigInt(count) * 30_200_000_000_000_000n; // 0.03 fee + 2M * 0.1gwei
       const make = (block: number, eth: bigint) => {
         const o = obsFor({ block, ethWei: String(eth), wethPos: pos(40000),
           ...(count === 2 ? { wbtcPos: pos(40000) } : {}),
@@ -1266,7 +1339,7 @@ test("audit reserve: base wraps, sells and bundles preserve every open position'
       const action = await candidate.agent.decide(o, ctx);
       if (kind === "wrap") assert.equal(action.type, "rawTx", "a funded wrap remains available");
       const legs = action.type === "bundle" ? action.actions : action.type === "noop" ? [] : [action];
-      const spend = legs.reduce((sum: bigint, leg: any) => sum + BigInt(leg.tx?.value ?? 0) + 10_000_000_000_000_000n, 0n);
+      const spend = legs.reduce((sum: bigint, leg: any) => sum + BigInt(leg.tx?.value ?? 0) + 2_000_000n * BigInt(action.maxPriorityFeePerGasWei ?? leg.maxPriorityFeePerGasWei ?? o.limits.defaultPriorityFeePerGasWei), 0n);
       assert.ok(eth - spend >= reserve, `${kind}/${count}: base must retain ${reserve}, left ${eth - spend}`);
       assert.deepEqual(o, before, "planning must not mutate the caller's observation");
     }

@@ -1453,7 +1453,12 @@ export type OuDecision = {
   pending?: OuPending;
   usdcSpent: bigint;
   note: string;
+  skipReason?: number;
 };
+
+// Numeric because AgentLog.signals only accepts numbers. Zero means no skipped entry.
+export const OU_SKIP = { none: 0, pending: 1, epochEnd: 2, eth: 3,
+  persistence: 4, risk: 5, confirmation: 6, usdc: 7, gasCapacity: 8 } as const;
 
 /**
  * Pure plan for one base. The caller owns confirmation history, risk latches, pending intents
@@ -1496,6 +1501,7 @@ export function ouPlan(args: {
       pending = undefined;
     } else if (pending.kind === "decrease" || !args.riskStopped || signedUsd === 0) {
       out.pending = pending;
+      out.skipReason = OU_SKIP.pending;
       out.note = `waiting for ${pending.kind} sent at ${pending.sentBlock}`;
       return out;
     }
@@ -1504,6 +1510,7 @@ export function ouPlan(args: {
 
   // 2. The bell: what is held is valued as it stands; a new order might not even execute in time.
   if (!args.riskStopped && args.blocksRemaining <= PARAMS.ouStopBlocks) {
+    out.skipReason = OU_SKIP.epochEnd;
     out.note ||= "end of epoch: no new orders";
     return out;
   }
@@ -1518,6 +1525,7 @@ export function ouPlan(args: {
   const closeReserve = args.closingReserveWei ?? 0n;
   if (args.ethWei < orderCost + (held === 0
       ? PARAMS.ouEthReserveWei + closeReserve + orderCost : 0n)) {
+    out.skipReason = OU_SKIP.eth;
     out.note = "ETH short of the execution fee";
     return out;
   }
@@ -1541,7 +1549,9 @@ export function ouPlan(args: {
   // 4. A risk exit disables entries for the remainder of this epoch. Three observations
   // mitigate the measured two-block fill window without claiming exactly-once submission.
   if (args.entriesAllowed === false || args.riskStopped || args.confirmedBlocks < PARAMS.ouConfirmBlocks) {
-    out.note = args.riskStopped ? "risk exit: entries disabled" : "waiting for stable position";
+    out.skipReason = args.entriesAllowed === false ? OU_SKIP.persistence
+      : args.riskStopped ? OU_SKIP.risk : OU_SKIP.confirmation;
+    out.note = args.entriesAllowed === false ? "persistence failed: entries disabled" : args.riskStopped ? "risk exit: entries disabled" : "waiting for stable position";
     return out;
   }
   // Flat: open the signalled side at the notional the free USDC can carry.
@@ -1550,6 +1560,7 @@ export function ouPlan(args: {
   const affordableUsd = (Number(spendable) / 1e6) * PARAMS.ouLeverage;
   const notionalUsd = Math.floor(Math.min(PARAMS.ouNotionalUsd, affordableUsd));
   if (notionalUsd < PARAMS.ouMinNotionalUsd) {
+    out.skipReason = OU_SKIP.usdc;
     out.note = `USDC short: ${Math.round(Number(args.usdcFreeUnits) / 1e6)} free`;
     return out;
   }
@@ -1586,9 +1597,22 @@ function actionGas(action: Record<string, unknown>): bigint {
   return explicit > reservedTxGas() ? explicit : reservedTxGas();
 }
 function gasPriceReserve(obs: AgentObservation): bigint {
-  const def = big(obs.limits?.defaultPriorityFeePerGasWei) || 1n;
-  const cap = big(obs.limits?.maxPriorityFeePerGasWei);
-  return cap > def ? cap : def;
+  // The venue cap is not a bid (economicGas advertises 1 ETH/gas).
+  // OU opens and closes explicitly bid the default; competition base fee is zero.
+  return big(obs.limits?.defaultPriorityFeePerGasWei) || 1n;
+}
+
+/** Mirror bundle-level fee override precedence in sdk/action.ts. */
+function actionGasWei(action: Record<string, unknown>, obs: AgentObservation,
+  inheritedFee?: bigint): bigint {
+  const fee = inheritedFee ?? (action.maxPriorityFeePerGasWei === undefined
+    ? gasPriceReserve(obs) : big(String(action.maxPriorityFeePerGasWei)));
+  if (action.type === "bundle" && Array.isArray(action.actions)) {
+    const override = action.maxPriorityFeePerGasWei === undefined ? inheritedFee : fee;
+    return action.actions.reduce((sum: bigint, a: Record<string, unknown>) =>
+      sum + actionGasWei(a, obs, override), 0n);
+  }
+  return actionGas(action) * fee;
 }
 
 function ouModule(
@@ -1665,8 +1689,15 @@ function ouModule(
       signals[`ouPnl${base}`] = market.position.pnlUsd;
     }
     if (d.pending) signals[`ouPending${base}`] = d.pending.sentBlock;
+    const wantsEntry = d.signedUsd === 0 && ouSignal(d.g) !== 0;
+    signals[`ouSkipReason${base}`] = wantsEntry ? d.skipReason ?? OU_SKIP.none : OU_SKIP.none;
+    signals[`ouEthAvailable${base}`] = Number(wallet.ethWei) / 1e18;
+    signals[`ouEthRequired${base}`] = Number(PARAMS.ouEthReserveWei + closingReserve + 2n * closeCost) / 1e18;
     if (!d.action) continue;
-    if (d.action.type === "gmxIncrease" && cap > 0n && gasUsed + gas > cap) continue;
+    if (d.action.type === "gmxIncrease" && cap > 0n && gasUsed + gas > cap) {
+      signals[`ouSkipReason${base}`] = OU_SKIP.gasCapacity;
+      continue;
+    }
     gasUsed += gas;
     wallet.usdc -= d.usdcSpent;
     wallet.ethWei -= closeCost;
@@ -1774,27 +1805,34 @@ export async function decide(
   const exitGas = BigInt(openPositions) * closeGas;
   const chosen: Candidate[] = [];
   let baseGas = 0n;
+  let baseGasWei = 0n;
   for (const candidate of candidates) {
     if (chosen.length >= PARAMS.maxActionsPerBlock) break;
     const gas = actionGas(candidate.action);
     // An open position gets close capacity before any base action. Keep bundles atomic.
     if (openPositions > 0 && cap > 0n && baseGas + gas + exitGas > cap) continue;
-    if (closingReserve > 0n && (baseGas + gas) * gasPrice > wallet.ethWei) continue;
+    const gasWei = actionGasWei(candidate.action, obs);
+    if (baseGasWei + gasWei > wallet.ethWei) continue;
     chosen.push(candidate);
     baseGas += gas;
+    baseGasWei += gasWei;
   }
 
   // OU orders ride beside the base action slots. Restore the protected closing funds
   // for OU only; base actions have already been checked against the unreserved balance.
   const ouOrders: Candidate[] = [];
-  const ouSignals: Record<string, number | undefined> = {};
+  const ouSignals: Record<string, number | undefined> = { ouBaseGas: Number(baseGas),
+    ouBaseGasEth: Number(baseGasWei) / 1e18 };
   wallet.ethWei += closingReserve;
-  wallet.ethWei -= baseGas * gasPrice;
+  wallet.ethWei -= baseGasWei;
   guard("ou", () => ouModule(obs, wallet, ouOrders, ouSignals, baseGas), ctx);
 
   if (!saveOuState()) {
     for (let i = ouOrders.length - 1; i >= 0; i--)
-      if (ouOrders[i].action.type === "gmxIncrease") ouOrders.splice(i, 1);
+      if (ouOrders[i].action.type === "gmxIncrease") {
+        ouSignals[`ouSkipReason${String(ouOrders[i].action.base)}`] = OU_SKIP.persistence;
+        ouOrders.splice(i, 1);
+      }
   } // anchors/risk history survive even if logging below throws; no new intents yet
   ouSignals.ouPersistenceDegraded = ouStorageFailed ? 1 : 0;
   ouSignals.ouPersistenceMemory = ouMemoryOnly ? 1 : 0;
@@ -1842,8 +1880,13 @@ export async function decide(
   // Persist intents before any queued/returned increase can leave a successful call.
   if (!saveOuState()) {
     for (let i = ouOrders.length - 1; i >= 0; i--)
-      if (ouOrders[i].action.type === "gmxIncrease") ouOrders.splice(i, 1);
+      if (ouOrders[i].action.type === "gmxIncrease") {
+        ouSignals[`ouSkipReason${String(ouOrders[i].action.base)}`] = OU_SKIP.persistence;
+        ouOrders.splice(i, 1);
+      }
   }
+  if (ouStorageFailed) ctx.log({ round: obs.round, reason: "OU persistence failed: entries disabled",
+    signals: { ...ouSignals, ouPersistenceDegraded: 1 } });
   const emitted = [...chosen, ...ouOrders];
   if (emitted.length === 0) return null;
   try {

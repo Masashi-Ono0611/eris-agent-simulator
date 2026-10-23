@@ -733,12 +733,15 @@ test("fix ETH: two increases cannot spend their closing fees and base gas", asyn
   await warmup();
   const obs = obsFor({ block: 101, fairWeth: LOW, fairWbtc: 61200,
     ethWei: "110000000000000000", uniMid: 2900, curveMid: 3100 });
+  obs.limits!.defaultPriorityFeePerGasWei = (5n * GWEI).toString();
   const actions = await emitted(obs);
   assert.ok(actions.some(a => a.type === "bundle"), "exercise base bundle");
   assert.equal(gmxOnly(actions).length, 0);
   // A pre-existing position also needs a funded close before opening the other market.
-  const existing = await emitted(obsFor({ block: 102, fairWeth: LOW, fairWbtc: 61200,
-    wethPos: pos(40000), ethWei: "150000000000000000" }));
+  const existingObs = obsFor({ block: 102, fairWeth: LOW, fairWbtc: 61200,
+    wethPos: pos(40000), ethWei: "150000000000000000" });
+  existingObs.limits!.defaultPriorityFeePerGasWei = (5n * GWEI).toString();
+  const existing = await emitted(existingObs);
   assert.deepEqual(gmxOnly(existing), []);
 });
 
@@ -809,7 +812,7 @@ test("fix persistence: corrupt loads and failed saves prohibit entries but permi
     const ctx = fakeCtx();
     if (mode === "final-save") {
       const { mkdirSync } = await import("node:fs");
-      ctx.log = () => { mkdirSync(`${path}.tmp`); };
+      ctx.log = () => { mkdirSync(`${path}.tmp`, { recursive: true }); };
     }
     const returned = await g.decide(obsFor({ block: 101, fairWeth: LOW }), ctx);
     assert.deepEqual(gmxOnly([returned, ...ctx.submitted].filter(Boolean) as Act[]), [], mode);
@@ -895,6 +898,7 @@ test("review closing funds: base wrapping preserves every open position reserve"
     const obs = obsFor({ block, ethWei: "10000000000000000000",
       wethPos: pos(40000), wbtcPos: pos(-40000) });
     obs.limits!.maxPriorityFeePerGasWei = (500n * GWEI).toString();
+    obs.limits!.defaultPriorityFeePerGasWei = (500n * GWEI).toString();
     const actions = await emitted(obs);
     const wraps = actions.filter(a => a.type === "rawTx");
     assert.equal(wraps.length, 1, "exercise base ETH spending on later observations");
@@ -904,4 +908,85 @@ test("review closing funds: base wrapping preserves every open position reserve"
     assert.ok(10n ** 19n - spent - gasWei >= closeReserve,
       "base value plus gas must leave both closing fees and gas untouched");
   }
+});
+
+// Real calm/1003 FD log, round 1482. Fee limits are not logged: use the SDK's
+// economicGas observation contract (1 ETH/gas cap), default 0.1 gwei bid.
+test("calm 1003: economicGas cap is not the order price; logged balances can enter", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  const snapshot = (block: number) => {
+    const obs = obsFor({ block, fairWeth: 2941.76934754, fairWbtc: 60488.02178585,
+      ethWei: "997775518644049000", usdc: "25012059364", blocksRemaining: 204 });
+    obs.limits!.maxPriorityFeePerGasWei = (10n ** 18n).toString();
+    return obs;
+  };
+  const oldOrderGas = 2_400_000n * 10n ** 18n;
+  assert.equal(2n * (30_000_000_000_000_000n + oldOrderGas) + g.PARAMS.ouEthReserveWei,
+    4_800_000_110_000_000_000_000_000n);
+  assert.equal(g.ouPlan({ ...base, fair: 2941.76934754, position: undefined,
+    ethWei: 997775518644049000n, orderGasWei: oldOrderGas }).note,
+    "ETH short of the execution fee");
+  for (const block of [1480, 1481]) await emitted(snapshot(block));
+  const actions = await emitted(snapshot(1482));
+  assert.equal(gmxOnly(actions)[0]?.type, "gmxIncrease");
+  assert.ok(gmxOnly(actions).some(a => a.base === "WETH"));
+});
+
+test("skip telemetry: confirmation, ETH, pending, risk, persistence and gas capacity", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  const call = async (block: number, ethWei = "1000000000000000000") => {
+    const ctx = fakeCtx();
+    const returned = await g.decide(obsFor({ block, fairWeth: LOW, ethWei }), ctx);
+    const signals = (ctx.logs.at(-1) as { signals: Record<string, number> }).signals;
+    return { signals, actions: gmxOnly([...ctx.submitted, returned].filter(Boolean) as Act[]) };
+  };
+  assert.equal((await call(100)).signals.ouSkipReasonWETH, g.OU_SKIP.confirmation);
+  await call(101);
+  const poor = await call(102, "110000000000000000");
+  assert.equal(poor.signals.ouSkipReasonWETH, g.OU_SKIP.eth);
+  assert.equal(poor.signals.ouEthRequiredWETH, 0.11048);
+  assert.equal(poor.signals.ouEthAvailableWETH, 0.11);
+  assert.equal((await call(103)).actions[0]?.type, "gmxIncrease");
+  assert.equal((await call(104)).signals.ouSkipReasonWETH, g.OU_SKIP.pending);
+  assert.equal((await call(115)).signals.ouSkipReasonWETH, g.OU_SKIP.risk);
+  const path = persistentState();
+  writeFileSync(path, "{");
+  g.resetOuStateForTest();
+  assert.equal((await call(100)).signals.ouSkipReasonWETH, g.OU_SKIP.persistence);
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  g.resetOuStateForTest();
+  const prior = process.env.ERIS_MAX_AGENT_BLOCK_GAS;
+  process.env.ERIS_MAX_AGENT_BLOCK_GAS = "1";
+  try {
+    await call(100); await call(101);
+    assert.equal((await call(102)).signals.ouSkipReasonWETH, g.OU_SKIP.gasCapacity);
+  } finally {
+    if (prior === undefined) delete process.env.ERIS_MAX_AGENT_BLOCK_GAS;
+    else process.env.ERIS_MAX_AGENT_BLOCK_GAS = prior;
+  }
+});
+
+test("economicGas: base bundle's bid is funded before OU, not the venue cap", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  await warmup();
+  const obs = obsFor({ block: 101, fairWeth: LOW, uniMid: 2900, curveMid: 3100 });
+  obs.limits!.maxPriorityFeePerGasWei = (10n ** 18n).toString();
+  obs.competition = { maxCompetitorPriorityFeeWei: (2n * GWEI).toString() } as AgentObservation["competition"];
+  const ctx = fakeCtx();
+  const result = await g.decide(obs, ctx);
+  const actions = [...ctx.submitted, result].filter(Boolean) as Act[];
+  assert.equal(actions[0]?.type, "bundle");
+  assert.ok(gmxOnly(actions).length > 0);
+  const cost = (a: Act, inherited?: bigint): bigint => {
+    const fee = inherited ?? BigInt(String(a.maxPriorityFeePerGasWei ?? GWEI / 10n));
+    return a.type === "bundle" ? (a.actions as Act[]).reduce((n, child) =>
+      n + cost(child, a.maxPriorityFeePerGasWei === undefined ? undefined : fee), 0n)
+      : 2_400_000n * fee;
+  };
+  const baseCost = actions.filter(a => !a.type?.toString().startsWith("gmx"))
+    .reduce((n, a) => n + cost(a), 0n);
+  const signals = (ctx.logs[0] as { signals: Record<string, number> }).signals;
+  assert.equal(signals.ouBaseGasEth, Number(baseCost) / 1e18);
+  assert.ok(baseCost > 4_800_000n * GWEI / 10n, "exercise bids above the default");
+  assert.ok(10n ** 18n - baseCost - 2n * 30_240_000_000_000_000n >= g.PARAMS.ouEthReserveWei);
 });
