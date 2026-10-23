@@ -189,8 +189,8 @@
 - **R**: R 設計メモ §2〜§5 と opus-1r の PARAMS（入札 rBidRivalMult 1.2 + 1 wei、上限 0.30E。最小エッジ rMinEdgeBps 100、最小利益 rMinProfitUsd 25、whale の目印 rWhaleEdgeBps 200 はタグだけ。ブレーキ 20 件の窓 / 8 件以上 / 40% で 36 block 停止、片側だけのバンドルを数える）。
   - 脚の guard は凍結前に決める: `rLegAllowanceBps 0`（fair に基づく厳格な guard）を既定とする。whale 窓の再生で緩めた guard がエッジを増やすと示された場合だけ緩める。R の arm は 1 本だけ。reviewer の指摘: 厳格な guard だと whale 窓で R がほとんど点火しない（STATE 02:15）。
 - **mechanism JSON**（判定の条件 5 と C1 の機構判定の入力）: judge2 は slot_timeouts、p99_decide_ms、tie_win_rate、stf、matrices_sha256、C1 の step2_mechanism / step2_report を必要とするが、これを書き出す道具がまだ無い。1 段の開始前、かつ judge2.py を hash で凍結する前に作る。
-  - `ascon/final/mechanism.py <stage manifest> --out MECH.json` を追加する（**未実装**）。arm の行列ごとに: slot_timeouts（`agents/slot.jsonl` の decide timeout 行の数）、stf（最初の launch entry 以降の STF の submit 失敗）、tie_win_rate（blocks.csv で slot と他の送信者が同じブロック・同じ venue に同じ優先手数料を払った件のうち、slot の txIndex が小さかった割合）、matrices_sha256。C1 の Step 2 の report は別ファイルにし、その sha256 も付ける。陽性対照・陰性対照付きのテストを付ける。
-  - **p99_decide_ms の取り方は決定待ち（論点）**: runtime は decide() の所要時間を記録していないので、走り終えた run からは出せない。選択肢 1: `strategyRunner.ts` の既存の決定ログ行に duration_ms を足す（全 arm に同じ影響。runtime のバイトが変わるので bundle に入るかの確認が要る。入るなら、評価で走る B は S-00048 と runtime が違うバイトになり、出荷する F も新しい runtime を含む。runtime は late-arm 規則の diff の対象なので、1 段の最初のセルより前に入れる）。選択肢 2: p99 を BLOCKED-by-design とし、条件 5 の p99 を参考値にすることをユーザーに承認してもらう（凍結前なので緩和にはあたらない）。決めないまま D1 に入ると R と C1 が BLOCKED になる。決定は `ascon/eval/README.md` に反映する。
+  - `ascon/final/mechanism.py <stage manifest> --out MECH.json`（manifest は `ascon/final/make-manifest.py` が lane の queue log から、job ごとに最後の PASS の run を選んで作る）。arm の行列ごとに: slot_timeouts（`agents/slot.jsonl` の decide timeout 行の数）、stf（最初の launch entry 以降の STF の submit 失敗）、tie_win_rate（blocks.csv で slot と他の送信者が同じブロック・同じ venue に同じ優先手数料を払った件のうち、slot の txIndex が小さかった割合）、matrices_sha256。C1 の Step 2 の report は別ファイルにし、その sha256 も付ける。陽性対照・陰性対照付きのテストを付ける。
+  - **p99_decide_ms は測定不能・参考扱い（10/23 ユーザー決定、凍結後の逸脱）**: runtime は decide() の所要時間を記録しておらず、決定前に 1 段が始まったので、走り終えた run からは出せない（runtime に計測を足すと全 arm の測り直しになり、期限に間に合わない）。mechanism.py は p99_decide_ms を null と理由付きで書き、judge2 はこの小条件を NOT_MEASURED（参考）として条件 5 を BLOCKED にしない。遅延の害（同じ手数料での順位負け）は tie 勝率の差 ±10pt と slot の timeout 0 で直接見ているので、それで代える。数値の p99 が来たときの規則（< 500ms）、キーの欠落・不正値・理由なしの null を BLOCKED にする扱いは変えない。凍結後に条件を緩める変更なので、ここに逸脱として記録する。
 - **MC**［Codex C2/S2、批評 2］:
   - 過去の差の実測（r2/r3 の同一コードのノイズ）から seed ごとの対比の分布を作り、1 段 → 2 段 → 追試まで、判断木全体を模擬する。
   - 求める性質: 効果ゼロのとき R または W を出荷してしまう率（木全体）が 2% 以下。その中で検出力を最大にする。+0.5 と +1.0 での出荷率を報告する。
@@ -228,7 +228,7 @@
 - C1 は各セルの launch scenario だけを走らせ、launch 以外は B のセルを使い回す（Step 2 のガードが崩れたら全レジームに戻す）。launch だけの scenario ファイル（1003〜1006、1011〜1014）はまだ無いので、凍結前に作る。
 - **arm の締切**: 1 段に入れる arm は 10/23 22:00 までに review を通り、`feat/final-plan` に入っていること。間に合わない arm は落とす。
 - 割り当て: mini A に 3 セル、mini B に 3 セル、laptop L に 2 セル。
-- 共変量として、arm ごとの decide の p50 / p99（取り方は Step 4 の決定による）、同じ fee 同士の tie 勝率、R と W の点火とタグ付きの機構 PnL、host と load1 を記録する。
+- 共変量として、arm ごとの decide の p50 / p99（runtime が記録しないので今回は取れない。Step 4）、同じ fee 同士の tie 勝率、R と W の点火とタグ付きの機構 PnL、host と load1 を記録する。
 
 ### 計算資源
 
@@ -260,7 +260,7 @@
   2. field ごとの下限: d̄_f + 1.64·sd_f/2 ≥ −0.5（F_D）/ −0.25（F_P）（launch を除いた統計量で）。点推定で判定すると、効果ゼロの候補が F_D で約 25%、F_P で約 23% 落ちる（launch を含めると約 33% / 39%）。
   3. launch 以外のレジームで「8 セル平均が −3.0 以下、かつ 6/8 以上が負」であり、**かつ** そのレジームでの slot のタグ付き機構 PnL（R のタグ、W の ouPnl 等の信号）の合計が負のもの、がない。機構の PnL が負でなければ、報告ではノイズとして記載する。帰属を問わない旧条件は効果ゼロの候補を 12.0% 落とした。W の cex-drift のセルは別に報告し、W の cex-drift には条件 3 をそのまま適用する。
   4. launch 以外の epoch で ΔP < −3,000 USDC のセルが 2 未満。
-  5. slot の timeout 0、p99 < 500ms、tie 勝率の差（B 比）±10pt 以内、STF 0。
+  5. slot の timeout 0、tie 勝率の差（B 比）±10pt 以内、STF 0。p99 < 500ms は測定不能のため参考扱い（NOT_MEASURED、Step 4 参照）。
   6. launch の非劣性: 8 セルの launch の平均 ΔT ≥ −3.0、かつ STF 0。
 - **C1 の PASS**: c1L の機構判定 (a)〜(d)（entry 後の STF 0、M1/M2 の約定数 ≥ B、launch ΔT 平均 ≥ −3.0）、かつ 1 段のセルでの launch 非劣性（8 セルの launch 平均 ≥ −3.0）、かつ条件 5。C1 の判定に 12 レジームの EW（m ≥ 0）は使わない。launch のノイズで結果がほぼ硬貨投げになるため（真の効果 +1.0 でも出荷率 44%、効果ゼロで 6.5%）。
 - **選び方**: R と W のうち PASS したものの中で、launch 以外の m が大きい方を F、もう一方を F2。片方だけ PASS ならそれが F、C1 が PASS なら F2 = C1。R も W も FAIL で C1 が PASS なら F = C1。どれも FAIL なら S-00048 のまま。
@@ -353,7 +353,7 @@
 | 計測の汚染 | check-collision と check-arm が必須（run-matrix の PASS だけでは不十分だと 808 で実証済み）。lane は 20 秒ずらす |
 | 測った木と出す木の不一致 | 行列ごとに tree hash を記録し、出荷 commit との diff が空であることを梱包の条件にする |
 | `constants.local.ts` の書き換え | commit と bundle の前に `git diff --quiet` を通す |
-| p99 を測れずに R / C1 が BLOCKED | 凍結前に Step 4 の選択肢 1 か 2 を決める |
+| p99 を測れずに全候補が BLOCKED | 10/23 に決定: p99 は NOT_MEASURED（参考）、遅延の害は tie 勝率と timeout 0 で見る（Step 4） |
 | 計算の遅れ | 1 段の arm の締切は 10/23 22:00。W は 1 本だけ。lane を空けないよう連鎖起動を使う |
 | laptop の負荷が対比を歪める | laptop は 1 lane まで、L はセル単位、load1 < 10 で開始、L が動く間は laptop で他の重い作業をしない。host と load1 を共変量に残す |
 | セッションの使用上限で作業が止まる | workflow の同時実行は約 8 agent まで、reviewer は Sonnet。lane は連鎖起動で回り続ける。引き継ぎは静かな時点（night1 の判定後など）で新しいセッションに行い、作業途中で自動圧縮に任せない |
