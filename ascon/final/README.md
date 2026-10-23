@@ -115,3 +115,59 @@ they were not run through `loadScenarioSet`. The 31 evaluation files now hold 35
 check-trap-scope in their own worktrees on uncommitted code; rerun it on the committed version.
 test-checks.sh failed two controls once opus-1a existed (they used opus-1a as the arm that does not
 exist) and passes again after the fix.
+
+## Building stage-1 evidence from copied logs
+
+```sh
+python3 ascon/final/make-manifest.py --logs /local/logs --stage 1 --out M.json \
+  --arms opus-1a opus-1r opus-1g --path-map /mini/repo=/local/repo
+python3 ascon/final/mechanism.py M.json --out MECH.json
+python3 ascon/final/judge2.py judge --manifest M.json --mechanism MECH.json --out verdict.json
+bash ascon/final/test-evidence.sh
+```
+
+`make-manifest.py` defaults to B, B', C1, R and W (opus-1g); `--arms` selects arm
+**directory names**, comma or space separated, and always includes B and B'. Other directories
+keep their directory name as their judge label. The frozen judge permits at most two superiority
+candidates and one noninferiority candidate. Extra weapon/exploration arms therefore need an explicit
+comparison selection; separate comparisons do not establish a corrected overall selection rule.
+
+The stage-1 design is FP/FD at seeds 1003–1006. Each job uses its last EXIT with VERDICT=PASS,
+ordered by line position within its lane log; newer killed/failed attempts do not replace it.
+That selected attempt must also have rc=0, COLLISION=PASS, ARM=PASS and matching slot/matrix
+NOTEs. An invalid latest PASS is missing, never rescued by an earlier PASS. PASS attempts in
+multiple lanes have no reliable cross-file order (run ids can be arbitrary), so are missing.
+Missing jobs are omitted; partial cells contain only observed arms. No empty cells are invented.
+Exit 0 means complete; exit 2 means incomplete/refused. `M.json.audit.json` lists selected,
+ignored and missing attempts and the path mappings, without adding unsupported manifest keys.
+
+Repeat `--path-map` for multiple roots (longest component prefix wins). Keep copied matrices
+unchanged under `runs/matrix-*/matrix.json`, alongside copied `runs/<id>/` directories.
+The audit sidecar carries the mappings into mechanism extraction for absolute runDir values;
+relative runDir values resolve against the directory containing `runs/`. If moving M.json,
+move its audit sidecar too, or pass the same mappings to `mechanism.py --path-map`.
+Hashes always cover the original matrix bytes, not rewritten paths.
+
+`MECH.json` has the judge's `arms` object, with aggregate counts, pooled pairwise tie win rate,
+exact matrix SHA256 list, and per-matrix counts/rates. Only `agents/slot.jsonl` is counted:
+decide-timeout reason lines, and `submit_failed` events containing the STF token after the
+first launch-entry reason in each scenario. Entry state resets for each scenario.
+Tie pairs have the same block, destination (`to`, the venue key available in blocks.csv),
+and integer priority fee, but different sender addresses. Each slot/other transaction pair
+counts once, including reverted transactions; a lower slot txIndex wins. This measures
+same-destination races and cannot distinguish pools behind one router. No ties yields null.
+Missing/malformed evidence yields null counts and an error, never zero failures. C1's
+separate Step-2 report/verdict and tagged mechanism PnL are not inferred by this extractor.
+
+**Unmeasured p99:** mechanism extraction writes `p99_decide_ms: null` with a reason and exits 2.
+The frozen judge's `p99_latency` subclause is BLOCKED for null. With other clauses passing,
+condition 5 and the candidate are BLOCKED; an actual FAIL elsewhere takes precedence.
+The tests pin null → BLOCKED, 499 ms → PASS, 500 ms → FAIL, and null plus timeout → FAIL.
+Judge CLI exit 0 means it produced a verdict, not that a candidate passed.
+
+Stage 1 has already started without duration logging. Its p99 cannot be recovered from timeout
+counts or wall-clock run duration. The options are to retain BLOCKED under the frozen rules,
+or instrument all arms identically and run a newly planned evaluation with measured durations
+(runtime/tree and bundle equivalence must be reconsidered). The plan's earlier option to make
+p99 advisory required a pre-freeze decision; doing that now would change the frozen protocol
+and cannot be presented as a PASS under these rules. No judge/runtime rule is changed here.

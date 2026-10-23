@@ -9,7 +9,7 @@
 set -u
 root="$(cd "$(dirname "$0")/../.." && pwd -P)" || exit 2
 out="$(mktemp -d)" || exit 2
-tests="${ASCON_TEST_ALL_LIST:-ascon/eval/test-run-matrix.sh ascon/eval/test-check-collision.sh ascon/eval/test-lane-queue.sh ascon/eval/test-lane-chain.sh ascon/eval/test-mini-lane-start.sh ascon/eval/test-lane-status.sh ascon/final/test-checks.sh}"
+tests="${ASCON_TEST_ALL_LIST:-ascon/eval/test-run-matrix.sh ascon/eval/test-check-collision.sh ascon/eval/test-lane-queue.sh ascon/eval/test-lane-chain.sh ascon/eval/test-mini-lane-start.sh ascon/eval/test-lane-status.sh ascon/final/test-checks.sh ascon/final/test-evidence.sh}"
 bad=0
 for t in $tests; do
   name="$(basename "$t" .sh)"
