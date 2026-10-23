@@ -353,6 +353,7 @@ export function decide(obs: AgentObservation): AgentAction | Record<string, unkn
   const block = Number(obs.blockNumber);
   const k: KFlags = { k1: K1_SINGLE_LEG_FLOOR, k2Braked: K2_BUNDLE_BRAKE && k2Braked(block), k3: K3_LARGE_EDGE_BID };
   const action = decideWithParams(obs, PARAMS, persistence, k);
+  // Snapshot each leg's SDK venue/router, selector, token and amount now for K2 attribution.
   if (K2_BUNDLE_BRAKE) k2RecordBundle(block, action);
   return action;
 }

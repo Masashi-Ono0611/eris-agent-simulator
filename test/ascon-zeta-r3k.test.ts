@@ -9,6 +9,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolve } from "node:path";
 import ts from "typescript";
 import type { AgentContext, AgentObservation } from "@eris/sdk";
+import { BALANCER, UNISWAP } from "@eris/sdk/constants.js";
+import { marketFor, tokenInfo } from "@eris/sdk/markets.js";
+import { balancerVaultAbi, curveTricryptoAbi, swapRouterAbi } from "@eris/sdk/abis.js";
+import { encodeFunctionData } from "viem";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const fixture = JSON.parse(readFileSync(new URL("./fixtures/ascon-zeta-r-logs.json", import.meta.url), "utf8"));
@@ -150,7 +154,40 @@ test("K1 does not touch two-leg bundles", async () => {
 
 // ---------------- K2 ----------------
 
-const word = (amount: string | bigint) => BigInt(amount).toString(16).padStart(64, "0");
+type TxOptions = { type?: "swap" | "curveSwap" | "balancerSwap"; tokenIn?: string; base?: string;
+  from?: string; to?: string; selector?: string; wrongPosition?: boolean };
+// Use the SDK ABIs to make real adapter-shaped calldata (including Balancer's dynamic tuple).
+function swapTx(amount: string | bigint, o: TxOptions = {}) {
+  const type = o.type ?? "swap", base = o.base ?? "WETH", buying = (o.tokenIn ?? "USDC") === "USDC";
+  const baseToken = tokenInfo(base).address;
+  const amountIn = BigInt(amount), limit = o.wrongPosition ? amountIn : 0n;
+  const actualAmount = o.wrongPosition ? amountIn + 1n : amountIn;
+  let to: string, input: string;
+  if (type === "swap") {
+    to = UNISWAP.swapRouter;
+    input = encodeFunctionData({ abi: swapRouterAbi, functionName: "exactInputSingle", args: [{
+      tokenIn: buying ? tokenInfo("USDC").address : baseToken,
+      tokenOut: buying ? baseToken : tokenInfo("USDC").address,
+      fee: marketFor("uniswap", base)!.uniswap!.fee, recipient: ME, deadline: 9999999999n,
+      amountIn: actualAmount, amountOutMinimum: limit, sqrtPriceLimitX96: 0n,
+    }] });
+  } else if (type === "balancerSwap") {
+    const market = marketFor("balancer", base)!.balancer!;
+    to = BALANCER.vault;
+    input = encodeFunctionData({ abi: balancerVaultAbi, functionName: "swap", args: [{
+      poolId: market.poolId, kind: 0, assetIn: buying ? market.stable : baseToken,
+      assetOut: buying ? baseToken : market.stable, amount: actualAmount, userData: "0x",
+    }, { sender: ME, fromInternalBalance: false, recipient: ME, toInternalBalance: false }, limit, 9999999999n] });
+  } else {
+    const market = marketFor("curve", base)!.curve!;
+    to = market.pool;
+    input = encodeFunctionData({ abi: curveTricryptoAbi, functionName: "exchange", args: [
+      BigInt(buying ? market.quoteIndex : market.baseIndex), BigInt(buying ? market.baseIndex : market.quoteIndex), actualAmount, limit,
+    ] });
+  }
+  if (o.selector) input = o.selector + input.slice(10);
+  return { from: o.from ?? ME.toUpperCase().replace("0X", "0x"), to: o.to ?? to, input };
+}
 // A mock chain: blocks of transactions and receipts. getBlock can be held back with `hold()`.
 function chain() {
   const blocks = new Map<number, any[]>(), receipts = new Map<string, "success" | "reverted">();
@@ -166,14 +203,15 @@ function chain() {
   return {
     ctx: { publicClient, log() {} } as unknown as AgentContext,
     get reads() { return reads; },
-    // Our own transactions, one per [amountIn, filled]; plus someone else's tx carrying the same word.
-    mine(block: number, legs: [string | bigint, boolean][]) {
+    // Default pair is Uniswap USDC in + Curve WETH in; overrides can represent other venues/late legs.
+    mine(block: number, legs: [string | bigint, boolean, TxOptions?][]) {
       const txs = blocks.get(block) ?? [];
-      for (const [amount, filled] of legs) {
+      for (const [i, [amount, filled, options]] of legs.entries()) {
         const hash = `0x${(++n).toString(16).padStart(64, "0")}`;
-        txs.push({ hash, from: ME.toUpperCase().replace("0X", "0x"), input: `0x414bf389${"00".repeat(32)}${word(amount)}` });
+        const tx = swapTx(amount, options ?? (i % 2 === 0 ? {} : { type: "curveSwap", tokenIn: "WETH" }));
+        txs.push({ hash, ...tx });
         receipts.set(hash, filled ? "success" : "reverted");
-        txs.push({ hash: `${hash}ff`, from: "0x2222222222222222222222222222222222222222", input: `0x${word(amount)}` });
+        txs.push({ hash: `${hash}ff`, ...tx, from: "0x2222222222222222222222222222222222222222" });
       }
       blocks.set(block, txs);
     },
@@ -227,7 +265,7 @@ test("K2 trigger: >= 8 settled and >= 40% one-sided; 7 settled or 3/8 one-sided 
   }
 });
 
-test("K2 window keeps the last 20 settlements; an unseen leg counts as not filled after 5 scanned blocks", async () => {
+test("K2 window keeps the last 20 settlements; an unseen leg counts as not filled after 10 scanned blocks", async () => {
   const { brake } = await load("ascon-zeta-r3k"), c = chain();
   await settleSeries(brake, c, 100, Array.from({ length: 25 }, () => BOTH));
   assert.equal(brake.k2Snapshot().window.length, 20);
@@ -238,10 +276,170 @@ test("K2 window keeps the last 20 settlements; an unseen leg counts as not fille
   assert.equal(b2.k2Snapshot().pending, 0, "only two-leg bundles with nonzero amounts are tracked");
   b2.k2RecordBundle(200, bundleAction(7n, 9n));
   c2.mine(201, [[7n, true]]); // the sell leg is never mined
-  for (let block = 201; block <= 204; block++) { b2.k2Observe(at(block), c2.ctx); await b2.k2Idle(); }
-  assert.equal(b2.k2Snapshot().pending, 1, "4 blocks after the decision the missing leg may still land");
-  b2.k2Observe(at(205), c2.ctx); await b2.k2Idle();
-  assert.deepEqual(b2.k2Snapshot(), { pending: 0, window: [true], brakeAt: undefined, scannedThrough: 205, scanning: false });
+  for (let block = 201; block <= 209; block++) { b2.k2Observe(at(block), c2.ctx); await b2.k2Idle(); }
+  assert.equal(b2.k2Snapshot().pending, 1, "9 blocks after the decision the missing leg may still land");
+  b2.k2Observe(at(210), c2.ctx); await b2.k2Idle();
+  assert.deepEqual(b2.k2Snapshot(), { pending: 0, window: [true], brakeAt: undefined, scannedThrough: 210, scanning: false });
+});
+
+for (const type of ["swap", "balancerSwap", "curveSwap"] as const) {
+  for (const [name, invalid] of Object.entries({
+    destination: { to: "0x3333333333333333333333333333333333333333" },
+    selector: { selector: "0xdeadbeef" },
+    position: { wrongPosition: true },
+    token: { tokenIn: "WETH" },
+    sender: { from: "0x2222222222222222222222222222222222222222" },
+  })) {
+    test(`K2 attribution: ${type} wrong ${name} must not match`, async () => {
+      const { brake } = await load("ascon-zeta-r3k"), c = chain();
+      brake.k2Observe(at(100), c.ctx);
+      const action = bundleAction(77n, 99n);
+      action.actions[0].type = type;
+      brake.k2RecordBundle(100, action);
+      c.mine(101, [[77n, true, { type, ...invalid }], [99n, false]]);
+      brake.k2Observe(at(101), c.ctx); await brake.k2Idle();
+      assert.equal(brake.k2Snapshot().pending, 1, "unrelated tx must leave the buy leg unmatched");
+      assert.deepEqual(brake.k2Snapshot().window, []);
+      // The correctly encoded buy can still claim the leg on the next block.
+      c.mine(102, [[77n, true, { type }]]);
+      brake.k2Observe(at(102), c.ctx); await brake.k2Idle();
+      assert.equal(brake.k2Snapshot().pending, 0);
+      assert.deepEqual(brake.k2Snapshot().window, [true]);
+    });
+  }
+}
+
+test("K2 attribution: same-amount legs claim each tx once, oldest first, including within one block", async () => {
+  const { brake } = await load("ascon-zeta-r3k"), c = chain();
+  brake.k2Observe(at(100), c.ctx);
+  brake.k2RecordBundle(100, bundleAction(77n, 91n));
+  brake.k2Observe(at(101), c.ctx); await brake.k2Idle();
+  brake.k2RecordBundle(101, bundleAction(77n, 92n));
+  c.mine(102, [[77n, true], [91n, false], [92n, true, { type: "curveSwap", tokenIn: "WETH" }]]);
+  brake.k2Observe(at(102), c.ctx); await brake.k2Idle();
+  assert.deepEqual(brake.k2Snapshot().window, [true], "the one buy belongs only to the older bundle");
+  assert.equal(brake.k2Snapshot().pending, 1);
+  c.mine(103, [[77n, true]]);
+  brake.k2Observe(at(103), c.ctx); await brake.k2Idle();
+  assert.deepEqual(brake.k2Snapshot().window, [true, false]);
+  assert.equal(brake.k2Snapshot().pending, 0);
+
+  brake.k2RecordBundle(103, bundleAction(88n, 93n));
+  brake.k2RecordBundle(103, bundleAction(88n, 94n));
+  c.mine(104, [[88n, true], [93n, false], [88n, false], [94n, true]]);
+  brake.k2Observe(at(104), c.ctx); await brake.k2Idle();
+  assert.deepEqual(brake.k2Snapshot().window, [true, false, true, true]);
+  assert.equal(brake.k2Snapshot().pending, 0, "two same-amount txs each claim a distinct leg");
+});
+
+test("K2 late legs: second success through block 10 makes the bundle two-sided", async () => {
+  for (const delay of [6, 10]) {
+    const { brake } = await load("ascon-zeta-r3k"), c = chain();
+    brake.k2Observe(at(100), c.ctx); brake.k2RecordBundle(100, bundleAction(77n, 99n));
+    c.mine(101, [[77n, true]]);
+    for (let block = 101; block < 100 + delay; block++) {
+      brake.k2Observe(at(block), c.ctx); await brake.k2Idle();
+      assert.equal(brake.k2Snapshot().pending, 1);
+      assert.deepEqual(brake.k2Snapshot().window, []);
+    }
+    c.mine(100 + delay, [[99n, true, { type: "curveSwap", tokenIn: "WETH" }]]);
+    brake.k2Observe(at(100 + delay), c.ctx); await brake.k2Idle();
+    assert.equal(brake.k2Snapshot().pending, 0);
+    assert.deepEqual(brake.k2Snapshot().window, [false]);
+  }
+});
+
+test("K2 expiry: no observed legs is no evidence; failure plus missing is not one-sided", async () => {
+  const { brake } = await load("ascon-zeta-r3k"), c = chain();
+  brake.k2Observe(at(100), c.ctx);
+  brake.k2RecordBundle(100, bundleAction(77n, 99n));
+  brake.k2RecordBundle(100, bundleAction(78n, 98n));
+  c.mine(101, [[78n, false]]);
+  for (let b = 101; b <= 110; b++) { brake.k2Observe(at(b), c.ctx); await brake.k2Idle(); }
+  assert.equal(brake.k2Snapshot().pending, 0);
+  assert.deepEqual(brake.k2Snapshot().window, [false]);
+});
+
+test("K2 timeout: a hung getBlock releases scan at 2 s without advancing cursor or recording evidence", async () => {
+  const { brake } = await load("ascon-zeta-r3k"), c = chain();
+  brake.k2Observe(at(100), c.ctx); brake.k2RecordBundle(100, bundleAction(77n, 99n));
+  c.mine(101, [[77n, true], [99n, false]]);
+  c.hold();
+  const start = performance.now();
+  brake.k2Observe(at(101), c.ctx);
+  try {
+    assert.equal(brake.k2Snapshot().scanning, true);
+    await new Promise(r => setTimeout(r, 2100));
+    assert.equal(brake.k2Snapshot().scanning, false, "local 2 s deadline must release the scan");
+    assert.ok(performance.now() - start < 2800);
+    assert.equal(brake.k2Snapshot().scannedThrough, 100);
+    assert.deepEqual(brake.k2Snapshot().window, []);
+  } finally { c.release(); await brake.k2Idle(); }
+  await new Promise(r => setImmediate(r));
+  assert.deepEqual(brake.k2Snapshot().window, [], "late RPC completion cannot commit evidence");
+  brake.k2Observe(at(102), c.ctx); await brake.k2Idle();
+  assert.deepEqual(brake.k2Snapshot().window, [true], "next observation retries the same block");
+});
+
+test("K2 RPC errors: failed blocks/receipts keep the cursor and discard all partial claims before retry", async () => {
+  for (const method of ["getBlock", "getTransactionReceipt"] as const) {
+    const { brake } = await load("ascon-zeta-r3k"), c = chain();
+    brake.k2Observe(at(100), c.ctx);
+    brake.k2RecordBundle(100, bundleAction(77n, 99n));
+    brake.k2RecordBundle(100, bundleAction(77n, 98n));
+    c.mine(101, [[77n, true], [99n, false], [77n, false], [98n, true]]);
+    const client = c.ctx.publicClient as any, original = client[method];
+    let calls = 0;
+    client[method] = async (args: any) => {
+      if (++calls === (method === "getBlock" ? 1 : 2)) throw new Error("RPC unavailable");
+      return original(args);
+    };
+    brake.k2Observe(at(101), c.ctx); await brake.k2Idle();
+    assert.equal(brake.k2Snapshot().scanning, false);
+    assert.equal(brake.k2Snapshot().scannedThrough, 100);
+    assert.deepEqual(brake.k2Snapshot().window, []);
+    assert.equal(brake.k2Snapshot().pending, 2);
+    client[method] = original;
+    brake.k2Observe(at(102), c.ctx); await brake.k2Idle();
+    assert.deepEqual(brake.k2Snapshot().window, [true, true], "retry preserves original tx-to-leg attribution");
+    assert.equal(brake.k2Snapshot().pending, 0);
+  }
+});
+
+test("K2 receipts: at most 4 concurrent requests; hung receipts release scan with no outcome", async () => {
+  const { brake } = await load("ascon-zeta-r3k"), c = chain();
+  brake.k2Observe(at(100), c.ctx);
+  for (let i = 0; i < 4; i++) {
+    brake.k2RecordBundle(100, bundleAction(BigInt(77 + i), BigInt(99 + i)));
+    c.mine(101, [[BigInt(77 + i), true], [BigInt(99 + i), true]]);
+  }
+  const client = c.ctx.publicClient as any, original = client.getTransactionReceipt;
+  let active = 0, max = 0, calls = 0, release!: () => void;
+  const gate = new Promise<void>(r => { release = r; });
+  client.getTransactionReceipt = async (args: any) => {
+    calls++; active++; max = Math.max(max, active);
+    try { await gate; return await original(args); } finally { active--; }
+  };
+  brake.k2Observe(at(101), c.ctx);
+  try {
+    await new Promise(r => setTimeout(r, 2100));
+    assert.equal(calls, 4);
+    assert.equal(max, 4);
+    assert.equal(brake.k2Snapshot().scanning, false);
+    assert.equal(brake.k2Snapshot().scannedThrough, 100);
+    assert.deepEqual(brake.k2Snapshot().window, []);
+    brake.k2Observe(at(102), c.ctx);
+    // Avoid hanging the red check if the timeout implementation is intentionally disabled.
+    await new Promise(r => setTimeout(r, 20));
+    assert.equal(brake.k2Snapshot().scanning, false);
+    assert.equal(calls, 4, "unresolved transport requests retain their slots across retries");
+  } finally { release(); await brake.k2Idle(); }
+  await new Promise(r => setImmediate(r));
+  assert.deepEqual(brake.k2Snapshot().window, [], "late receipts cannot settle timed-out work");
+  brake.k2Observe(at(103), c.ctx); await brake.k2Idle();
+  assert.equal(max, 4);
+  assert.equal(brake.k2Snapshot().pending, 0);
+  assert.deepEqual(brake.k2Snapshot().window, [false, false, false, false]);
 });
 
 test("K2 pause: exactly the 36 blocks after the trigger, then resume; reset at an epoch start", async () => {
@@ -335,6 +533,7 @@ test("K2 through decide(): a pending settlement read does not block the decision
 });
 
 // ---------------- K3 ----------------
+// K3 returning r3's own bid is intentional: r3k never bids below r3, even above either cap.
 
 test("K3 bid formula: max(own, rival x 1.2), capped at 0.30 x profit / (fair x 140k x legs) and the max fee", async () => {
   const { delta } = await load("ascon-zeta-r3k");
