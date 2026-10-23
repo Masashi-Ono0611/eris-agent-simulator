@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Stage-1 queue-log manifest. Audit/missing attempts go to OUT.audit.json.
 --arms accepts comma/space separated directory names (B and B' are always included).
-No log mtime or lexical run-id ordering is trusted across lanes: ambiguous jobs are missing.
+Multiple PASS runs are ambiguous; log order never resolves them.
+Matrix paths are preserved/remapped without requiring local copies (validated by the judge).
 Exit 0 complete, 2 incomplete/refused (partial manifest and audit still written).
 """
 import argparse
@@ -45,32 +46,35 @@ def main():
         p.error('frozen judge accepts at most two superiority candidates; select a comparison with --arms')
     if len(set(labels.values())) != len(labels):
         p.error("arm labels collide with reserved B, placebo, C1, R, W labels")
-    jobs = {}
+    jobs, errors = {}, []
     for log in sorted(a.logs.glob('*.queue.log')):
-        for no, line in enumerate(log.read_text().splitlines(), 1):
+        try:
+            lines = log.read_text().splitlines()
+        except (OSError, UnicodeError) as e:
+            errors.append(f'{log}: {e}')
+            continue
+        for no, line in enumerate(lines, 1):
             m = re.match(r'^(NOTE|EXIT)_(s1-(FP|FD)(\d+)-([A-Za-z0-9_.-]+))(?:=([^ ]+))? (.*)$', line)
             if not m:
                 continue
             kind, job, field, seed, arm, rc, tail = m.groups()
-            if arm not in arms:
-                continue
             kv = dict(re.findall(r'(\w+)=([^\s]+)', tail))
             if 'run' not in kv:
-                raise ValueError(f'{log}:{no}: missing run id')
+                errors.append(f'{log}:{no}: {job}: missing run id')
+                kv['run'] = f'<missing:{no}>'
             attempts = jobs.setdefault(job, {})
             key = (str(log), kv['run'])
             rec = attempts.setdefault(key, dict(job=job, log=str(log), run=kv['run'], field=field,
-                                                seed=int(seed), arm=arm, notes={}, exit=None))
+                                                seed=int(seed), arm=arm, notes={}, exit=None, exits=[], errors=[]))
             if kind == 'NOTE':
                 for k in ('slot', 'matrix', 'head', 'arm_tree', 'lib_tree', 'dirty', 'load1'):
                     if k in kv:
                         if k in rec['notes'] and rec['notes'][k] != kv[k]:
-                            raise ValueError(f'{job}: conflicting {k} in same run')
+                            rec['errors'].append(f'conflicting {k} in same run')
                         rec['notes'][k] = kv[k]
             else:
-                if rec['exit'] is not None:
-                    raise ValueError(f'{job}: duplicate EXIT for run {kv["run"]}')
-                rec['exit'] = dict(kv, rc=rc, line=no)
+                rec['exits'].append(dict(kv, rc=rc, line=no))
+                rec['exit'] = rec['exits'][-1]
     selected, ignored, missing = [], [], []
     cells = {}
     for seed in range(1003, 1007):
@@ -78,38 +82,50 @@ def main():
             for arm in arms:
                 job = f's1-{field}{seed}-{arm}'
                 attempts = list(jobs.get(job, {}).values())
-                passes = [r for r in attempts if r['exit'] and r['exit'].get('VERDICT') == 'PASS']
+                passes = [r for r in attempts if any(e.get('VERDICT') == 'PASS' for e in r['exits'])]
                 chosen = None
                 reason = 'missing or never PASS'
-                if passes:
-                    if len({r['log'] for r in passes}) > 1:
-                        reason = 'PASS attempts across lanes have no provable order'
+                if len(passes) > 1:
+                    reason = 'ambiguous: multiple PASS runs for the same job'
+                elif passes:
+                    candidate = passes[0]
+                    # Line numbers are provenance, not part of the EXIT result.
+                    results = {json.dumps({k: v for k, v in e.items() if k != 'line'}, sort_keys=True)
+                               for e in candidate['exits']}
+                    e, n = candidate['exit'], candidate['notes']
+                    if len(results) > 1:
+                        reason = 'ambiguous: conflicting EXIT lines in a PASS run'
+                    elif candidate['errors']:
+                        reason = '; '.join(candidate['errors'])
+                    elif e.get('rc') != '0' or any(e.get(k) != 'PASS' for k in ('COLLISION', 'ARM')):
+                        reason = 'VERDICT=PASS failed collision/arm validity'
+                    elif n.get('slot') != arm or not n.get('matrix'):
+                        reason = 'PASS lacks matching slot/matrix NOTE'
                     else:
-                        chosen = max(passes, key=lambda r: r['exit']['line'])
-                        e, n = chosen['exit'], chosen['notes']
-                        if e.get('rc') != '0' or any(e.get(k) != 'PASS' for k in ('COLLISION', 'ARM')):
-                            reason = 'last VERDICT=PASS failed collision/arm validity'
-                            chosen = None
-                        elif n.get('slot') != arm or not n.get('matrix'):
-                            reason = 'last PASS lacks matching slot/matrix NOTE'
-                            chosen = None
+                        chosen = candidate
+                if errors:
+                    reason = 'queue log parse/read errors; see audit errors'
+                    chosen = None
                 if chosen:
                     mapped = path_map(chosen['notes']['matrix'], mappings)
-                    if not Path(mapped).is_file():
-                        reason = 'selected matrix not available locally'
-                        chosen = None
-                if chosen:
-                    cells.setdefault((seed, field), {})[labels[arm]] = str(Path(mapped).resolve())
+                    cells.setdefault((seed, field), {})[labels[arm]] = mapped
                     selected.append(chosen)
                 else:
                     missing.append(dict(job=job, reason=reason))
-                ignored.extend(r for r in attempts if r is not chosen)
+                for r in attempts:
+                    if r is not chosen:
+                        r['reason'] = reason if r in passes else 'ignored attempt: never PASS'
+                        ignored.append(r)
     # Out-of-design jobs remain visible, never silently become stage-1 cells.
-    ignored.extend(r for group in jobs.values() for r in group.values() if r['seed'] not in range(1003, 1007))
+    for group in jobs.values():
+        for r in group.values():
+            if r['seed'] not in range(1003, 1007) or r['arm'] not in arms:
+                r['reason'] = 'ignored attempt: outside selected stage-1 design'
+                ignored.append(r)
     manifest = dict(stage='1', slot_id='slot', baseline='B', placebo="B'", candidates=candidates,
                     cells=[dict(seed=s, field=f, arms=v) for (s, f), v in sorted(cells.items())])
     a.out.write_text(json.dumps(manifest, indent=2) + '\n')
-    audit = dict(selected=selected, ignored=ignored, missing=missing, path_maps=mappings)
+    audit = dict(selected=selected, ignored=ignored, missing=missing, path_maps=mappings, errors=errors)
     Path(str(a.out) + '.audit.json').write_text(json.dumps(audit, indent=2) + '\n')
     print(f'MANIFEST {"BLOCKED" if missing else "PASS"}: {len(selected)} selected, {len(missing)} missing, {len(ignored)} ignored; {a.out}.audit.json')
     return 2 if missing else 0

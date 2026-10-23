@@ -16,7 +16,7 @@ import sys
 root, kind = Path(sys.argv[1]), sys.argv[2]
 p = root / ('make-manifest.py' if kind == 'manifest' else 'mechanism.py')
 s = p.read_text()
-old, new = ('chosen = max(passes,', 'chosen = min(passes,') if kind == 'manifest' else ('timeouts += int(', 'timeouts += 0 * int(')
+old, new = ('if len(passes) > 1:', 'if len(passes) > 100:') if kind == 'manifest' else ('timeouts += int(', 'timeouts += 0 * int(')
 assert old in s
 p.write_text(s.replace(old, new))
 PY
