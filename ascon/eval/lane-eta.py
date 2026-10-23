@@ -219,13 +219,23 @@ def main():
                         lane = p.name[len('chain-'):-1]
                         next_dirs.setdefault(lane, set()).add(p.resolve())
                         lanes.add(lane)
-                        print(f'{lane}: auto-detected next queue {p}')
                         continue
                     if not (p / 'running').is_dir():
                         continue
                     lane = p.name.removeprefix('chain-')
                     dirs[lane] = p
                     lanes.add(lane)
+            # A swap queue becomes current when the lane starts it. The latest
+            # CHAIN_START is authoritative over the directory naming convention.
+            for lane in lanes:
+                cpath = a.logs / (lane + '.chain.log')
+                if cpath.exists():
+                    for line in reversed(cpath.read_text().splitlines()):
+                        if line.startswith('CHAIN_START_'):
+                            directory = fields(line).get('dir')
+                            if directory:
+                                dirs[lane] = Path(directory)
+                            break
         if not lanes:
             raise ValueError('no lane logs or chain directories')
         now = datetime.now().timestamp()
@@ -234,6 +244,10 @@ def main():
             current_dir = dirs.get(lane)
             following = sorted(p for p in next_dirs.get(lane, ())
                                if current_dir is None or p != current_dir.resolve())
+            if a.chains:
+                for p in following:
+                    if p.parent == a.chains.resolve() and p.name == f'chain-{lane}2':
+                        print(f'{lane}: auto-detected next queue {p}')
             report(lane, a.logs, current_dir, a.job_hours_default, now, following)
         return 0
     except (OSError, ValueError, KeyError) as e:
