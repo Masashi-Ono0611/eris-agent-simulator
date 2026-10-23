@@ -20,16 +20,16 @@
 
 ## 準備済み ZIP
 
-以下は `feat/ship-prompts` の `09f6869d` から作った ZIP の記録。評価・提出の PASS を意味しない。
+以下は `feat/ship-prompts` の `63257148` から作った ZIP の記録。評価・提出の PASS を意味しない。
 arm dir は `example/agents/` 配下。
 
 | 候補 | arm dir | release commit | ZIP sha256 |
 |---|---|---|---|
-| R | `opus-1r` | `09f6869d` | `f8d1a920ae25ac23af6a59fe52a5e6109e1a4cb660e158b68039d815de481ab7` |
-| W1 | `opus-1g2` | `09f6869d` | `615c8d900a71005bae75b0a21ad2efa4b081a59761d49eb7b3d871faefed0994` |
-| W2 | `ascon-zeta-r3k` | `09f6869d` | `6fe24f049a0541a038b2aae01fe49797437f50b81531192bff7aacd47ff16d21` |
+| R | `opus-1r` | `63257148` | `53665ecb0df2a7a677ba06db0db3e36219d618d2ad9114c8cab06c3af328cfc1` |
+| W1 | `opus-1g2` | `63257148` | `900b4ec100ef08ff9708064c53da201cbee1e72d7ad8fc97969315bcc971795a` |
+| W2 | `ascon-zeta-r3k` | `63257148` | `32cb272a696318797c48f1ddc38f9fb1b1f0c83c2e783ba7f2f6623d43809afd` |
 
-merge 後など出荷 commit が変わったら ZIP を作り直し、新しい commit と sha256 を記録する。
+ZIP の sha256 は作るたびに変わる（ZIP に作成時刻が入るため。中身は同じでも変わる）。提出するのは実際に作った1つの ZIP で、その sha256 を記録する。merge 後など出荷 commit が変わったら作り直す。
 
 ## 手順（共同で「出す」と決めた後）
 
