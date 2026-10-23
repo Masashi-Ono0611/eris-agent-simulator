@@ -22,13 +22,13 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def measure(matrix, slot, mappings):
+def measure(matrix, slot, mappings, seen=None):
     m = json.loads(matrix.read_text())
     rows = m['scenarios']
     if not rows:
         raise ValueError('empty scenarios')
     timeouts = stf = wins = ties = 0
-    seen = set()
+    seen = set() if seen is None else seen
     for row in rows:
         rd = row['runDir']
         for old, new in sorted(mappings, key=lambda x: -len(x[0])):
@@ -41,14 +41,22 @@ def measure(matrix, slot, mappings):
             raise ValueError('duplicate runDir')
         seen.add(run)
         entered = False
-        entries = 0
+        summary = json.loads((run / 'summary.json').read_text())
+        if not isinstance(summary, dict) or any(
+                type(summary.get(key)) is not int or summary[key] < 0
+                for key in ('finalBlock', 'blocksProcessed')):
+            raise ValueError('incomplete run: invalid finalBlock or blocksProcessed in summary.json')
+        last_round = None
         for line in (run / 'agents' / (slot + '.jsonl')).read_text().splitlines():
             if not line.strip():
                 continue
             e = json.loads(line)
             if not isinstance(e, dict):
                 raise ValueError('agent JSONL entry is not an object')
-            entries += 1
+            if e.get('agentId') == slot and 'action' in e:
+                if type(e.get('round')) is not int or e['round'] < 0:
+                    raise ValueError('invalid slot decision round')
+                last_round = e['round']
             reason = str(e.get('reason', ''))
             timeouts += int('decide timeout:' in reason)
             # Count only submit failures after an earlier launch-entry log, per scenario.
@@ -56,8 +64,8 @@ def measure(matrix, slot, mappings):
                        bool(re.search(r'\bSTF\b', str(e.get('error', '')))))
             if re.match(r'^launch entry(?:\b)', reason):
                 entered = True
-        if not entries:
-            raise ValueError('empty agent log')
+        if last_round is None or abs(summary['finalBlock'] - last_round) > 2:
+            raise ValueError('incomplete agent log: last slot decision not within 2 blocks of finalBlock')
         groups = defaultdict(list)
         with (run / 'blocks.csv').open(newline='') as f:
             reader = csv.DictReader(f)
@@ -112,15 +120,17 @@ def main():
         for arm, path in cell['arms'].items():
             arms.setdefault(arm, []).append(Path(path) if Path(path).is_absolute() else a.manifest.resolve().parent / path)
     output = {}
+    seen_runs, seen_hashes = set(), set()
     for arm, paths in arms.items():
         records, hashes, errors = [], [], []
         for path in paths:
             try:
                 h = sha(path)
-                if h in hashes:
+                if h in seen_hashes:
                     raise ValueError('duplicate matrix hash')
+                seen_hashes.add(h)
                 hashes.append(h)
-                measured = measure(path, man.get('slot_id', 'slot'), mappings)
+                measured = measure(path, man.get('slot_id', 'slot'), mappings, seen_runs)
                 measured['tie_win_rate'] = (measured['tie_wins'] / measured['tie_pairs']
                                             if measured['tie_pairs'] else None)
                 records.append(dict(matrix=str(path), sha256=h, **measured))

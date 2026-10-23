@@ -58,6 +58,11 @@ for code, expected in [(source, "NOT_MEASURED"), (reverted, "BLOCKED")]:
 print("RED_CHECK_OK p99 advisory reverted: null+reason returns BLOCKED")
 PYRED
 
+# Exercise the collector-to-clause boundary with real-shaped execution fixtures:
+# summary.json + terminal slot decision, with no runtime_end event.
+mkdir "$T/execution-evidence" || exit 2
+python3 "$src/ascon/final/test-evidence.py" "$src/ascon/final" "$T/execution-evidence" mechanism || exit 1
+
 cat > "$T/synthetic.py" <<'EOF'
 import copy, hashlib, json, math, os, random, subprocess, sys
 J, T = sys.argv[1], sys.argv[2]
@@ -229,13 +234,17 @@ def gen_cells(case, d, stage, arms, skip=()):
             rp = os.path.join(d, "rerun-%s-%d-%s.json" % (field, seed, arm.replace("'", "p")))
             with open(rp, "w") as fh:
                 json.dump(rm, fh)
+            if kind == "wrong_setup":
+                rm["sourceCommit"] = "f" * 40
+                with open(rp, "w") as fh:
+                    json.dump(rm, fh)
             if kind == "listed":
                 rp = os.path.join(d, "%s-%d-%s.json" % (field, seed, arm.replace("'", "p")))
             RERUN[(seed, field, x.get("regime"))] = {"arm": arm, "path": rp, "sha256": "0" * 64 if kind == "badsha" else None}
         for (arm, s, f, kind, other) in case.get("cross", []):  # needs two arms of one cell
             if (s, f) == (seed, field) and kind == "rundirs_of":
                 for row, o in zip(mats[arm]["scenarios"], mats[other]["scenarios"]):
-                    row["runDir"] = o["runDir"]
+                    row["runDir"] = o["runDir"] if not case.get("alias_runs") else o["runDir"].replace("runs/", "runs/./")
         paths = {}
         for arm, m in mats.items():
             p = os.path.join(d, "%s-%d-%s.json" % (field, seed, arm.replace("'", "p")))
@@ -283,6 +292,21 @@ def run(case, d):
     for k in ("threshold", "ask_floor", "design", "arm_map"):
         if k in case:
             man[k] = case[k]
+    if case.get("arm_map"):
+        for cell in listed:
+            cell["arm_evidence"] = {a: dict(ARM="PASS", COLLISION="PASS", slot=case["arm_map"][a],
+                head="e" * 12, arm_tree="a" * 12) for a in cell["arms"]}
+            if case.get("wrong_arm"):
+                cell["arm_evidence"]["R"]["slot"] = "opus-1"
+    # Lane attestation for legacy exclusion fixtures too.
+    for entry in excl:
+        if "rerun" in entry:
+            arm = entry["rerun"]["arm"]
+            proof = dict(ARM="PASS", COLLISION="PASS", slot=arm, head="e" * 12, arm_tree="a" * 12)
+            entry["rerun"]["arm_evidence"] = proof
+            for cell in listed:
+                if (cell["seed"], cell["field"]) == (entry["seed"], entry["field"]):
+                    cell.setdefault("arm_evidence", {})[arm] = proof
     mp = os.path.join(d, "manifest.json")
     with open(mp, "w") as fh:
         json.dump(man, fh)
@@ -302,6 +326,20 @@ def run(case, d):
         cmd += ["--stage1-verdict", SAVED[case["stage1_from"]]["verdict"]]
     if "stage2_from" in case:
         cmd += ["--stage2-verdict", SAVED[case["stage2_from"]]["verdict"]]
+    if case.get("tamper_prior"):
+        idx = cmd.index("--stage2-verdict" if stage == "retest" else "--stage1-verdict") + 1
+        prior = json.load(open(cmd[idx]))
+        if case["tamper_prior"] == "matrices":
+            prior["inputs"].pop("matrices")
+        elif case["tamper_prior"] == "map":
+            prior["arm_map"] = {"B": "opus-1", "B'": "opus-1-pb", "R": "wrong"}
+        elif case["tamper_prior"] == "candidate":
+            prior["candidates"]["R"] = []
+        else:
+            prior["candidates"]["R"]["verdict"] = "FAIL"
+        cmd[idx] = os.path.join(d, "tampered-prior.json")
+        with open(cmd[idx], "w") as fh:
+            json.dump(prior, fh)
     mech = case.get("mech", "good")
     if mech == "missing_file":
         cmd += ["--mechanism", os.path.join(d, "no-such-mechanism.json")]
@@ -581,6 +619,18 @@ cases = [
     ("field mean below floor but bound passes", C(by_cell={("R", seed, f): ([-1.2, -0.8, 0, 0.4][i] if f == "FP" else 3) for i, seed in enumerate(S1) for f in ("FP", "FD")}, noise={}), E("PASS", "PASS", "F=R, F2=C1", clause=("R", "2_field_means", "PASS"))),
 ]
 bad = 0
+cases += [
+    ("C1 FS needs all three regimes", dict(S2C1, launch_only=True), {"v": {"C1": "BLOCKED"}}),
+    ("prior retest missing matrices", dict(RT, tamper_prior="matrices"), {"v": {"R": "BLOCKED"}}),
+    ("prior stage2 changed map", dict(S2, tamper_prior="map"), {"v": {"R": "BLOCKED"}}),
+    ("prior retest changed map", dict(RT, tamper_prior="map"), {"v": {"R": "BLOCKED"}}),
+    ("prior malformed candidate", dict(S2, tamper_prior="candidate"), X2("malformed candidates")),
+    ("REGRESSION C1 arm identity", C(cands={"R": "superiority"}, arm_map={"B": "opus-1", "B'": "opus-1-pb", "R": "opus-1r"}, wrong_arm=True), {"v": {"R": "BLOCKED"}}),
+    ("REGRESSION C2 canonical run reuse", C(alias_runs=True, cross=[("R", 1003, "FD", "rundirs_of", "B")]), {"v": {"R": "BLOCKED"}}),
+    ("REGRESSION C3 prior selected but FAIL", dict(S2, tamper_prior=True), {"v": {"R": "BLOCKED"}}),
+    ("REGRESSION W2 C1 FS lending loss", dict(S2C1, cell_dp={X("C1", 1101, "FS", "lending-incident"): -3500.0}), {"v": {"C1": "FAIL"}, "clause": ("C1", "6_fs_field", "FAIL")}),
+    ("REGRESSION W3 rerun setup mismatch", C(mutate=[("R", 1005, "FP", "invalid_epoch", "calm")], exclude=[INF(1005, "FP", "calm", rerun=("R", "wrong_setup"))]), {"v": {"R": "BLOCKED"}}),
+]
 for i, (name, case, ex) in enumerate(cases):
     d = os.path.join(T, "case%03d" % i)
     rc, v, text = run(case, d)
@@ -686,6 +736,32 @@ except AssertionError:
     print('RED_CHECK_OK X classification removed: exploratory control catches mutation')
 else:
     raise AssertionError('X red check survived')
+# Each review repair has an executable red control: revert only that guard,
+# rerun its adversarial fixture, and require the unsafe PASS to reappear.
+original_j = J
+source = open(J).read()
+mutations = [
+    ("C1", 'r["config"] += arm_problems(evidence, (cfg.get("arm_map") or {}).get(arm), r["setup"])', 'pass'),
+    ("C2", 'out["run_dirs"].append(os.path.realpath(sc["runDir"] if os.path.isabs(sc["runDir"]) else\n                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(path)))), sc["runDir"])))', 'out["run_dirs"].append(sc["runDir"])'),
+    ("C3", 'cfg["prior_problems"] += prior_problems(v1, cfg, F)', 'pass'),
+    ("W2", 'if roles.get(arm) == "noninferiority" and key[1] != FS_FIELD:', 'if roles.get(arm) == "noninferiority":'),
+    ("W3", 'elif listed is None or r["setup"] != listed["setup"]:', 'elif False:'),
+]
+for label, old, new in mutations:
+    assert old in source, label
+    mutant = source.replace(old, new)
+    if label == "W3":
+        mutant = mutant.replace('elif identity_errors or not original_proof or proof != original_proof:', 'elif False:')
+    mutant = mutant.replace('HERE = os.path.dirname(os.path.abspath(__file__))', 'HERE = ' + repr(os.path.dirname(original_j)))
+    J = os.path.join(T, "red-" + label + ".py")
+    with open(J, "w") as fh:
+        fh.write(mutant)
+    case = next(case for name, case, ex in cases if name.startswith("REGRESSION " + label + " "))
+    rc, v, text = run(case, os.path.join(T, "red-case-" + label))
+    arm = "C1" if label == "W2" else "R"
+    assert rc == 0 and v["candidates"][arm]["verdict"] == "PASS", (label, rc, text)
+    print("RED_CHECK_OK %s: reverting guard restores unsafe PASS" % label)
+J = original_j
 with open(os.path.join(T, "saved.json"), "w") as fh:
     json.dump({k: v["verdict"] for k, v in SAVED.items()}, fh)
 print("SYNTHETIC %s: %d/%d controls as expected" % ("OK" if not bad else "FAILED", len(cases) - bad, len(cases)))

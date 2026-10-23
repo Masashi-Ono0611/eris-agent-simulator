@@ -72,7 +72,7 @@ def main():
                 rec['exits'].append(dict(kv, rc=rc, line=no))
                 rec['exit'] = rec['exits'][-1]
     selected, ignored, missing = [], [], []
-    cells = {}
+    cells, evidence = {}, {}
     for seed in range(1003, 1007):
         for field in ('FP', 'FD'):
             for arm in arms:
@@ -95,7 +95,7 @@ def main():
                         reason = '; '.join(candidate['errors'])
                     elif e.get('rc') != '0' or any(e.get(k) != 'PASS' for k in ('COLLISION', 'ARM')):
                         reason = 'VERDICT=PASS failed collision/arm validity'
-                    elif n.get('slot') != arm or not n.get('matrix'):
+                    elif n.get('slot') != arm or not all(n.get(k) for k in ('matrix', 'head', 'arm_tree')):
                         reason = 'PASS lacks matching slot/matrix NOTE'
                     else:
                         chosen = candidate
@@ -105,6 +105,9 @@ def main():
                 if chosen:
                     mapped = path_map(chosen['notes']['matrix'], mappings)
                     cells.setdefault((seed, field), {})[labels[arm]] = mapped
+                    evidence.setdefault((seed, field), {})[labels[arm]] = {
+                        **{k: chosen['notes'][k] for k in ('slot', 'head', 'arm_tree')},
+                        **{k: chosen['exit'][k] for k in ('ARM', 'COLLISION')}}
                     selected.append(chosen)
                 else:
                     missing.append(dict(job=job, reason=reason))
@@ -119,7 +122,7 @@ def main():
                 r['reason'] = 'ignored attempt: outside selected stage-1 design'
                 ignored.append(r)
     manifest = dict(stage='1', slot_id='slot', baseline='B', placebo="B'", candidates=candidates, arm_map=arm_map,
-                    cells=[dict(seed=s, field=f, arms=v) for (s, f), v in sorted(cells.items())])
+                    cells=[dict(seed=s, field=f, arms=v, arm_evidence=evidence[(s, f)]) for (s, f), v in sorted(cells.items())])
     a.out.write_text(json.dumps(manifest, indent=2) + '\n')
     audit = dict(selected=selected, ignored=ignored, missing=missing, path_maps=mappings, errors=errors)
     Path(str(a.out) + '.audit.json').write_text(json.dumps(audit, indent=2) + '\n')

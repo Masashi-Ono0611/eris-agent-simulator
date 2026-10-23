@@ -892,7 +892,8 @@ def inspect_arm_cell(path, seed, slot, regimes, roster, launch_only=False):
         if sc.get("seed") != seed:
             cfg.append("scenario %s has seed %r, the cell is seed %r" % (r, sc.get("seed"), seed))
         if sc.get("runDir"):
-            out["run_dirs"].append(sc["runDir"])
+            out["run_dirs"].append(os.path.realpath(sc["runDir"] if os.path.isabs(sc["runDir"]) else
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(path)))), sc["runDir"])))
         else:
             cfg.append("scenario %s has no runDir" % r)
         agents = sc.get("agents") or []
@@ -998,8 +999,13 @@ def _load_verdict(path, stage):
         _die("stage-%s verdict unreadable: %s" % (stage, e))
     if not isinstance(v, dict) or v.get("tool") != "ascon/final/judge2.py" or v.get("stage") != stage:
         _die("%s is not a judge2 stage-%s verdict" % (path, stage))
-    if (v.get("params") or {}).get("statistic") != "EW11" or (v.get("params") or {}).get("ask_floor") is not None:
+    if not isinstance(v.get("params"), dict) or (v.get("params") or {}).get("statistic") != "EW11" or (v.get("params") or {}).get("ask_floor") is not None:
         _die("prior verdict does not use the approved EW11/no-ask rules; rejudge its saved matrices")
+    for key in ("params", "candidates", "selection", "inputs", "design"):
+        if not isinstance(v.get(key), dict):
+            _die("BLOCKED: prior verdict missing/malformed " + key)
+    if not all(isinstance(cv, dict) for cv in v["candidates"].values()):
+        _die("BLOCKED: prior verdict malformed candidates")
     return v, _sha256(path)
 
 
@@ -1080,11 +1086,13 @@ def build_config(args):
     cfg["fields"] = fields
     # earlier verdicts
     cfg["prior"] = None
+    cfg["prior_problems"] = []
     plan_key = stage
     if stage == "2":
         if not args.stage1_verdict:
             _die("stage 2 needs --stage1-verdict (f and the selected candidate come from it)")
         v1, sha = _load_verdict(args.stage1_verdict, "1")
+        cfg["prior_problems"] += prior_problems(v1, cfg, F)
         sel = v1.get("selection") or {}
         if sel.get("status") != "DECIDED" or F not in (sel.get("F"), sel.get("F2")):
             _die("the stage-1 verdict does not select %s (selection %r)" % (F, sel.get("decision")))
@@ -1099,12 +1107,13 @@ def build_config(args):
         if not args.stage2_verdict:
             _die("the re-test needs --stage2-verdict")
         v2, sha = _load_verdict(args.stage2_verdict, "2")
+        cfg["prior_problems"] += prior_problems(v2, cfg, F)
         _inherit_nonplan(cfg, v2, "2", args)
         cv = (v2.get("candidates") or {}).get(F) or {}
         if cv.get("verdict") != PASS:
             _die("the stage-2 verdict does not pass %s (%r)" % (F, cv.get("verdict")))
         cfg["prior"] = {"path": os.path.abspath(args.stage2_verdict), "sha256": sha,
-                        "matrices": (v2.get("inputs") or {}).get("matrices") or {}}
+                        "matrices": (v2.get("inputs") or {}).get("matrices")}
     elif args.stage1_verdict or args.stage2_verdict:
         _die("--stage1-verdict / --stage2-verdict belong to stage 2 / retest")
     # design
@@ -1172,6 +1181,7 @@ def build_config(args):
         if not all(isinstance(p, str) and p for p in c["arms"].values()):
             _die("cell %s#%s: arm paths must be strings" % (key[1], key[0]))
         listed[key] = {"seed": key[0], "field": key[1],
+                       "arm_evidence": c.get("arm_evidence", {}),
                        "arms": {a: p if os.path.isabs(p) else os.path.join(base_dir, p) for a, p in c["arms"].items()}}
     expected = {(s, f) for s in seeds for f in FIELDS} | {(s, FS_FIELD) for s in fs_seeds}
     outside = sorted(set(listed) - expected)
@@ -1200,7 +1210,7 @@ def build_config(args):
             _die("exclude entry %r: evidence (the failure as the run reported it) is required" % (x,))
         if "rerun" in x:
             rr = x["rerun"]
-            if not (isinstance(rr, dict) and set(rr) == {"arm", "path", "sha256"} and rr["arm"] in arms
+            if not (isinstance(rr, dict) and {"arm", "path", "sha256"} <= set(rr) <= {"arm", "path", "sha256", "arm_evidence"} and rr["arm"] in arms
                     and isinstance(rr["path"], str) and rr["path"] and isinstance(rr["sha256"], str) and len(rr["sha256"]) == 64):
                 _die("exclude entry %r: rerun must be {arm (one of %s), path, sha256 (64 hex)}" % (x, arms))
             x["rerun"] = dict(rr, path=rr["path"] if os.path.isabs(rr["path"]) else os.path.join(base_dir, rr["path"]))
@@ -1236,12 +1246,66 @@ def build_config(args):
     return cfg
 
 
+def arm_problems(evidence, directory, setup):
+    """Lane check-arm/check-collision attestation, bound to the recorded simulator commit."""
+    if not isinstance(evidence, dict):
+        return ["missing arm evidence"]
+    if (evidence.get("ARM") != PASS or evidence.get("COLLISION") != PASS
+            or not isinstance(evidence.get("slot"), str) or not evidence["slot"]
+            or (directory is not None and evidence["slot"] != directory)):
+        return ["arm evidence must have ARM=PASS/COLLISION=PASS and matching slot directory"]
+    import re
+    if not all(isinstance(evidence.get(k), str) and re.fullmatch(r"[0-9a-f]{12,64}", evidence[k])
+               for k in ("head", "arm_tree")):
+        return ["arm evidence missing head/arm_tree"]
+    commit = (setup or {}).get("sourceCommit")
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{12,64}", commit) or not commit.startswith(evidence["head"]):
+        return ["arm evidence head differs from simulation setup"]
+    return []
+
+
+def prior_problems(v, cfg, candidate):
+    problems = []
+    cv = v["candidates"].get(candidate)
+    if not isinstance(cv, dict) or cv.get("verdict") != PASS or cv.get("rule") != cfg["candidates"][candidate]:
+        problems.append("prior verdict must PASS the same candidate and rule")
+    old_map, new_map = v.get("arm_map"), cfg["arm_map"]
+    # Stage 2 retains only its finalist; every retained mapping must be identical.
+    if (old_map is None) != (new_map is None) or (new_map is not None and
+            (not isinstance(old_map, dict) or any(old_map.get(a) != d for a, d in new_map.items()))):
+        problems.append("prior verdict arm map differs")
+    if any(v["params"].get(k) != cfg[k] for k in ("slot_id", "baseline")):
+        problems.append("prior verdict slot/baseline differs")
+    matrices = v["inputs"].get("matrices")
+    design = v["design"]
+    seeds, fs_seeds = design.get("seeds"), design.get("fs_seeds", [])
+    if not isinstance(seeds, list) or not seeds or not all(_is_int(s) for s in seeds) or not isinstance(fs_seeds, list) or not all(_is_int(s) for s in fs_seeds):
+        return problems + ["prior verdict missing/malformed design"]
+    labels = {"%s#%s" % (f, seed) for seed in seeds for f in FIELDS} | {"FS#%s" % seed for seed in fs_seeds}
+    import re
+    for arm in (cfg["baseline"], candidate):
+        records = matrices.get(arm) if isinstance(matrices, dict) else None
+        if not isinstance(records, dict) or set(records) != labels:
+            problems.append("prior verdict missing/malformed matrices for " + arm)
+            continue
+        for rec in records.values():
+            if (not isinstance(rec, dict) or not isinstance(rec.get("sha256"), str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", rec["sha256"])
+                    or not isinstance(rec.get("setup"), dict)
+                    or any(rec["setup"].get(k) is None for k in SETUP_KEYS)):
+                problems.append("prior verdict malformed matrix evidence for " + arm)
+            elif isinstance(old_map, dict):
+                problems += ["prior " + arm + ": " + p for p in
+                             arm_problems(rec.get("arm_evidence"), old_map.get(arm), rec["setup"])]
+    return problems
+
+
 def _inspect(cfg):
     """Everything that does not depend on the exclusions: each arm's matrix in each cell, file and runDir
     reuse, configuration problems, the arms' simulation setup against B's, and the rerun records."""
     arms, B, slot = cfg["arms"], cfg["baseline"], cfg["slot_id"]
     st = {"insp": {}, "files": {}, "problems": {a: [] for a in arms}, "slot_flags": {}, "rerun": {}}
-    path_owner, rd_owner = {}, {}
+    path_owner, rd_owner, hash_owner = {}, {}, {}
     for c in cfg["cells"]:
         key = (c["seed"], c["field"])
         lab = "%s#%d" % (key[1], key[0])
@@ -1260,12 +1324,21 @@ def _inspect(cfg):
                 path_owner[rp] = (lab, arm)
             r = inspect_arm_cell(p, key[0], slot,
                                  list(FS_REGIMES) if key[1] == FS_FIELD else cfg["design"]["regimes"],
-                                 cfg["design"]["rosters"].get(key[1]), cfg["candidates"].get(arm) == "noninferiority")
+                                 cfg["design"]["rosters"].get(key[1]), cfg["candidates"].get(arm) == "noninferiority" and key[1] != FS_FIELD)
+            evidence = c.get("arm_evidence", {}).get(arm) if isinstance(c.get("arm_evidence", {}), dict) else None
+            r["arm_evidence"] = evidence
+            if cfg.get("arm_map") or evidence is not None:
+                r["config"] += arm_problems(evidence, (cfg.get("arm_map") or {}).get(arm), r["setup"])
             insp[arm] = r
             if r["sha256"]:
-                st["files"].setdefault(arm, {})[lab] = {"path": p, "sha256": r["sha256"], "setup": r["setup"]}
+                if r["sha256"] in hash_owner:
+                    old_lab, old_arm = hash_owner[r["sha256"]]
+                    for a in {arm, old_arm}:
+                        st["problems"][a].append("duplicate matrix sha256: %s %s and %s %s" % (old_lab, old_arm, lab, arm))
+                hash_owner.setdefault(r["sha256"], (lab, arm))
+                st["files"].setdefault(arm, {})[lab] = {"path": p, "sha256": r["sha256"], "setup": r["setup"], "arm_evidence": evidence}
             for rd in r["run_dirs"]:
-                if rd in rd_owner and rd_owner[rd] != (lab, arm):
+                if rd in rd_owner:
                     o_lab, o_arm = rd_owner[rd]
                     for a in {arm, o_arm}:
                         st["problems"][a].append("runDir %s is in both %s %s and %s %s" % (rd, o_lab, o_arm, lab, arm))
@@ -1301,13 +1374,22 @@ def _inspect(cfg):
         else:
             r = inspect_arm_cell(rr["path"], x["seed"], slot,
                                  list(FS_REGIMES) if x["field"] == FS_FIELD else cfg["design"]["regimes"],
-                                 cfg["design"]["rosters"].get(x["field"]), cfg["candidates"].get(rr["arm"]) == "noninferiority")
+                                 cfg["design"]["rosters"].get(x["field"]), cfg["candidates"].get(rr["arm"]) == "noninferiority" and x["field"] != FS_FIELD)
+            proof = rr.get("arm_evidence")
+            identity_errors = arm_problems(proof, (cfg.get("arm_map") or {}).get(rr["arm"]), r["setup"])
+            original_proof = listed.get("arm_evidence") if listed else None
             if r["config"]:
                 rec["problem"] = "rerun matrix: %s" % "; ".join(r["config"][:3])
-            elif listed is not None and set(r["run_dirs"]) & set(listed["run_dirs"]):
+            elif set(r["run_dirs"]) & set(rd_owner):
                 rec["problem"] = "the rerun shares runDirs with the listed %s matrix (not a new run)" % rr["arm"]
+            elif listed is None or r["setup"] != listed["setup"]:
+                rec["problem"] = "rerun simulation setup differs from original"
+            elif identity_errors or not original_proof or proof != original_proof:
+                rec["problem"] = "rerun arm identity/tree differs or is unverified"
             else:
                 rec["infra"] = r["infra"]
+    for a in arms:
+        st["problems"][a] += cfg.get("prior_problems", [])
     return st
 
 
@@ -1432,7 +1514,7 @@ def _assess(cfg, st, excl, mech, mech_path, mech_problem):
             if (arm, key) not in data or (B, key) not in data:
                 continue
             da, db = data[(arm, key)], data[(B, key)]
-            if roles.get(arm) == "noninferiority":
+            if roles.get(arm) == "noninferiority" and key[1] != FS_FIELD:
                 da = {r: v for r, v in da.items() if r == LAUNCH}
                 db = {r: v for r, v in db.items() if r == LAUNCH}
             names = sorted(db)
@@ -1583,7 +1665,7 @@ def cmd_judge(args):
             for a in roles:
                 cands[a] = {"rule": roles[a], "verdict": BLOCKED, "input_problems": [msg]}
             sel = {"F": None, "F2": None, "status": "PENDING", "decision": "PENDING", "note": "exclusion scope decides the result"}
-    if stage == "retest":
+    if stage == "retest" and not cfg["prior_problems"]:
         # the stage-2 cells must be the very matrices the stage-2 verdict judged
         for arm, labs in (cfg["prior"]["matrices"] or {}).items():
             for lab, rec in labs.items():
