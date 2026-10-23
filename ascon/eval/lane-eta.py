@@ -8,6 +8,7 @@ import re
 import sys
 
 NAME = r'[A-Za-z0-9][A-Za-z0-9_.-]*'
+DEFAULT_JOB_HOURS = 2.5
 STAMP = re.compile(r'(?<![\w/])\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)?')
 
 
@@ -192,7 +193,7 @@ def main():
     ap.add_argument('--chains', type=Path)
     ap.add_argument('--next', action='append', default=[], metavar='LANE=QUEUE_DIR',
                     help='count pending jobs after this lane; repeatable; duplicate paths count once')
-    ap.add_argument('--job-hours-default', type=float, default=2.5)
+    ap.add_argument('--job-hours-default', type=float, default=DEFAULT_JOB_HOURS)
     a = ap.parse_args()
     try:
         if not a.logs.is_dir() or (a.chains and not a.chains.is_dir()):

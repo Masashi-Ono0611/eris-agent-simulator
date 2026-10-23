@@ -761,6 +761,34 @@ for missing in (False, True):
     assert v['selection']['F'] in (None, 'R', 'W1', 'W2')
     assert v['selection']['F2'] in (None, 'R', 'W1', 'W2')
     print('ARM_MAP_JUDGE_OK missing_W2=%s; other five PASS; X informational only; no C1' % missing)
+# Same shipping selection AND complete candidate verdicts with X present/absent.
+case = C(cands=candidates, arm_map=amap,
+         eff={a: 2.0 if a.startswith('X') else {'R': 1.2, 'W1': .8, 'W2': .1}[a] for a in candidates}, noise={})
+d = os.path.join(T, 'informational-invariance')
+rc, with_x, text = run(case, d)
+assert rc == 0, text
+# Reuse exactly the same shipping matrices/mechanism, removing only X entries.
+mp = os.path.join(d, 'manifest.json')
+with open(mp) as f:
+    manifest = json.load(f)
+for key in ('arm_map', 'candidates'):
+    manifest[key] = {a: value for a, value in manifest[key].items() if not a.startswith('X')}
+for cell in manifest['cells']:
+    for key in ('arms', 'arm_evidence'):
+        cell[key] = {a: value for a, value in cell[key].items() if not a.startswith('X')}
+with open(mp, 'w') as f:
+    json.dump(manifest, f)
+vp = os.path.join(d, 'without-x.json')
+p = subprocess.run([sys.executable, '-B', '-I', J, 'judge', '--manifest', mp,
+                    '--mechanism', os.path.join(d, 'mech.json'), '--out', vp], capture_output=True, text=True)
+assert p.returncode == 0, p.stderr
+with open(vp) as f:
+    without_x = json.load(f)
+assert with_x['selection'] == without_x['selection']
+for arm in ('R', 'W1', 'W2'):
+    assert with_x['candidates'][arm] == without_x['candidates'][arm], arm
+assert [without_x['candidates'][arm]['verdict'] for arm in ('R', 'W1', 'W2')] == ['PASS', 'PASS', 'FAIL']
+print('INFORMATIONAL_INVARIANCE_OK selection and R/W1/W2 candidate verdicts identical')
 # Informational failures/missing data cannot hold up shipping selection.
 case = C(cands=candidates, arm_map=amap, eff={a: 1.0 for a in candidates}, noise={},
          omit_arms=[(1003, "FP", "X1")])

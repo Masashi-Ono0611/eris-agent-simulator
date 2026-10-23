@@ -199,7 +199,58 @@ precedence. All other judge rules remain frozen. Tests cover these cases and rev
 advisory branch in memory to verify null+reason returns to BLOCKED.
 Judge CLI exit 0 means it produced a verdict, not that a candidate passed.
 
-## Stage-2 FP/FD queue planning
+## D1 offline runner
+
+```sh
+bash ascon/final/d1-run.sh /tmp/d1-result --logs /copies/logs \
+  --lanes A,B,C,D --order-seed 231023
+# Optional: install into empty pending directories and print (never execute) starts:
+bash ascon/final/d1-run.sh /tmp/d1-installed --logs /copies/logs \
+  --install /path/to/ascon-final
+bash ascon/final/test-d1-run.sh
+```
+
+The output directory must be new or empty. Defaults: logs from `ASCON_EVAL_LOGS`
+or `~/ascon-final/logs`, lanes A,B,C,D, order seed 231023. Choose the seed before
+reading results. `M.json` and its audit, `MECH.json`, `VERDICT.json` and
+`summary.txt` preserve the evidence and judge-reported candidate statistics,
+condition-5 sub-statuses (including advisory NOT_MEASURED p99), informational
+flags and F/F2. No raw PnL series are printed. D1 requires all eight cells of
+B, B', R (opus-1r), W1 (opus-1g2), and W2 (ascon-zeta-r3k). Each informational
+arm X1/X2/X3 is included only when all eight attested cells are present; otherwise
+it is omitted from M.json and reported as `informational: pending (n/8 cells)`.
+The full extractor audit retains missing informational jobs for diagnosis.
+Missing shipping-family cells stop immediately with their job names; extractor exit 2 with written
+evidence proceeds to the judge because p99 is unmeasured.
+
+Final markers: `D1_PASS` (exit 0, FP/FD stage-2 queues ready in `s2/`),
+`D1_NO_STAGE2` (exit 0, keep/ship S-00048), or `D1_BLOCKED <reason>` (exit 2,
+including pending selections). Stage 1 never authorizes shipping a new arm.
+ETA uses lane-eta's default job hours (2.5), without assuming lane liveness.
+`--allow-partial` is a dry run even with complete logs: all console lines and
+artifacts carry DRY_RUN, JSON gets a `DRY_RUN` field, and installation is refused.
+Dry artifacts are diagnostic, not reusable authoritative inputs (their hashes
+and schemas are intentionally changed by labelling).
+
+`--install CHAINROOT` preflights every `chain-<lane>S2/pending/`, including hidden
+entries, and exclusively creates queue files without overwriting. It prints
+shell-quoted direct `mini-lane-start.sh` commands and inline swap-waiter
+alternatives (STOP `chain-<lane>`, wait for its lock to disappear, then start).
+These assume the current chain is `CHAINROOT/chain-<lane>` and logs are in
+`CHAINROOT/logs`; verify that topology before using a waiter. Ports are 8700,
+8710, etc. in supplied lane order. The current HEAD is recorded as the intended
+execution commit; this does not certify shipping parity. Assign commands to
+hosts with capacity (mini at most two lanes), and run them only as the separate
+human/Claude step. Installation is not a multi-directory transaction: a concurrent
+writer or I/O failure can leave a partial installation, reported BLOCKED. No
+lanes, network calls or recursive deletes are run by D1.
+
+The test uses mktemp fixtures, real manifest/planner CLIs, controlled
+judge/mechanism CLI outcomes and a red mutation of the incomplete-stage gate.
+It also exercises real empty-evidence dry judging. Statistical validation remains
+in `test-judge2.sh`; fixture tests do not establish live stage-1 completion.
+
+## Stage-2 planner CLI
 
 ```sh
 python3 ascon/final/stage2-plan.py --verdict verdict.json --lanes A,B,C,D \
