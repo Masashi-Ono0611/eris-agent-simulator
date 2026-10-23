@@ -1169,3 +1169,56 @@ test("recovery evidence: rejected wrap and reverted sell release retries without
     assert.equal(retry.type, kind === "wrap" ? "rawTx" : "swap");
   }
 });
+
+test("audit gas: open-position risk exit has capacity before base candidates", async t => {
+  for (const market of ["WETH", "WBTC"] as const) await t.test(market, async () => {
+    persistentState();
+    const candidate = await load("ascon-zeta-r3kg");
+    const ctx = fakeCtx();
+    ctx.config.maxAgentBlockGas = 2_000_000n;
+    const observation = obsFor({ uniMid: 2800, curveMid: 3200,
+      ...(market === "WETH" ? { wethPos: { ...pos(40000), pnlUsd: -6000 } }
+        : { wbtcPos: { ...pos(40000), pnlUsd: -6000 } }) });
+    const returned = await candidate.agent.decide(observation, ctx);
+    assert.equal(ctx.submitted.length, 1, `${market} risk exit must have the sole gas slot`);
+    assert.equal((ctx.submitted[0] as Act).type, "gmxDecrease");
+    assert.equal((ctx.submitted[0] as Act).base, market);
+    assert.equal(returned.type, "noop", "base cannot spend the reserved exit capacity");
+  });
+});
+
+test("audit reserve: base wraps, sells and bundles preserve every open position's closing ETH", async t => {
+  for (const kind of ["wrap", "sell", "bundle"] as const) await t.test(kind, async () => {
+    for (const count of [1, 2]) {
+      persistentState();
+      const candidate = await load("ascon-zeta-r3kg");
+      const ctx = fakeCtx();
+      ctx.publicClient = { getTransactionCount: async () => 0 } as any;
+      const reserve = BigInt(count) * 40_000_000_000_000_000n; // 0.03 fee + 2M * 5gwei
+      const make = (block: number, eth: bigint) => {
+        const o = obsFor({ block, ethWei: String(eth), wethPos: pos(40000),
+          ...(count === 2 ? { wbtcPos: pos(40000) } : {}),
+          uniMid: kind === "bundle" ? 2800 : kind === "sell" ? 3200 : 3000,
+          curveMid: kind === "bundle" || kind === "sell" ? 3200 : 3000 });
+        if (kind === "wrap") o.protocols.liquity = { suggestedGasReserveWei: "10000000000000000",
+          eusdBalanceWei: "0", spDepositEusdWei: "0", mcr: 1.1 } as any;
+        return o;
+      };
+      if (kind === "wrap") await candidate.agent.decide(make(100, 10_000_000_000_000_000n), ctx);
+      const eth = kind === "wrap" ? 200_000_000_000_000_000n : reserve;
+      const o = make(101, eth), before = structuredClone(o);
+      if (kind !== "wrap") {
+        const reference = await load("ascon-zeta-r3k");
+        const original = await reference.agent.decide(structuredClone(o), fakeCtx());
+        assert.equal(original.type, kind === "bundle" ? "bundle" : "curveSwap");
+        if (kind === "sell") assert.equal(original.tokenIn, "WETH");
+      }
+      const action = await candidate.agent.decide(o, ctx);
+      if (kind === "wrap") assert.equal(action.type, "rawTx", "a funded wrap remains available");
+      const legs = action.type === "bundle" ? action.actions : action.type === "noop" ? [] : [action];
+      const spend = legs.reduce((sum: bigint, leg: any) => sum + BigInt(leg.tx?.value ?? 0) + 10_000_000_000_000_000n, 0n);
+      assert.ok(eth - spend >= reserve, `${kind}/${count}: base must retain ${reserve}, left ${eth - spend}`);
+      assert.deepEqual(o, before, "planning must not mutate the caller's observation");
+    }
+  });
+});

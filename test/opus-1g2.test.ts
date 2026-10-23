@@ -777,3 +777,54 @@ test("fix gas capacity: preserve both base bundle legs before admitting queued O
     else process.env.ERIS_MAX_AGENT_BLOCK_GAS = prior;
   }
 });
+
+test("review pending decrease: risk exit waits until reflection or deadline", async () => {
+  const path = persistentState();
+  const losing = { ...pos(40000), pnlUsd: -6000 };
+  const snapshot = (block: number) => obsFor({ block, fairWeth: LOW, wethPos: losing });
+  assert.equal(gmxOnly(await emitted(snapshot(100)))[0]?.type, "gmxDecrease");
+  for (let block = 101; block < 112; block++) {
+    if (block === 105) g.resetOuStateForTest();
+    assert.deepEqual(gmxOnly(await emitted(snapshot(block))), [], `pending at ${block}`);
+    const saved = JSON.parse(readFileSync(path, "utf8"));
+    assert.equal(saved.bases.find((b: Act) => b.base === "WETH").pending.sentBlock, 100);
+  }
+  assert.equal(gmxOnly(await emitted(snapshot(112)))[0]?.type, "gmxDecrease");
+  for (const block of [113, 114, 115])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+  const saved = JSON.parse(readFileSync(path, "utf8"));
+  assert.equal(saved.bases.find((b: Act) => b.base === "WETH").pending, undefined);
+});
+
+test("review exit capacity: reserve gas ahead of base bundles", async () => {
+  const prior = process.env.ERIS_MAX_AGENT_BLOCK_GAS;
+  process.env.ERIS_MAX_AGENT_BLOCK_GAS = "4800000";
+  try {
+    const actions = await emitted(obsFor({ block: 100, fairWeth: LOW,
+      uniMid: 2900, curveMid: 3100, wethPos: { ...pos(40000), pnlUsd: -6000 } }));
+    assert.equal(gmxOnly(actions)[0]?.type, "gmxDecrease");
+    const gas = (a: Act): bigint => a.type === "bundle"
+      ? (a.actions as Act[]).reduce((n, a) => n + gas(a), 0n) : 2_400_000n;
+    assert.ok(actions.reduce((n, a) => n + gas(a), 0n) <= 4_800_000n);
+  } finally {
+    if (prior === undefined) delete process.env.ERIS_MAX_AGENT_BLOCK_GAS;
+    else process.env.ERIS_MAX_AGENT_BLOCK_GAS = prior;
+  }
+});
+
+test("review closing funds: base wrapping preserves every open position reserve", async () => {
+  await warmup();
+  for (const block of [101, 102]) {
+    const obs = obsFor({ block, ethWei: "10000000000000000000",
+      wethPos: pos(40000), wbtcPos: pos(-40000) });
+    obs.limits!.maxPriorityFeePerGasWei = (500n * GWEI).toString();
+    const actions = await emitted(obs);
+    const wraps = actions.filter(a => a.type === "rawTx");
+    assert.equal(wraps.length, 1, "exercise base ETH spending on later observations");
+    const spent = wraps.reduce((n, a) => n + BigInt((a.tx as { value: string }).value), 0n);
+    const gasWei = 2_400_000n * 500n * GWEI;
+    const closeReserve = 2n * (30_000_000_000_000_000n + gasWei);
+    assert.ok(10n ** 19n - spent - gasWei >= closeReserve,
+      "base value plus gas must leave both closing fees and gas untouched");
+  }
+});

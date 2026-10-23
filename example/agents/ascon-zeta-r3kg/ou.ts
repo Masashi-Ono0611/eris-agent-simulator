@@ -5,7 +5,7 @@ import { readFileSync, statSync, writeFileSync, renameSync, openSync, fsyncSync,
 import { join } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { PARAMS as DELTA_PARAMS } from "./delta.js";
-import { GMX } from "@eris/sdk/constants.js";
+import { GMX, TOKENS } from "@eris/sdk/constants.js";
 import { encodeAbiParameters, keccak256 } from "viem";
 
 export const M_OU_ENABLED = true;
@@ -401,6 +401,45 @@ export function ouPlan(args: {
 
 type ReturnedAction = AgentAction | Record<string, unknown> | null;
 
+/** Open positions own closing ETH and block capacity before any base candidate. */
+export function ouClosingReserve(obs: AgentObservation, ctx: AgentContext): {
+  positions: number; gas: bigint; eth: bigint;
+} {
+  const positions = OU_BASES.filter(base => big(gmxMarketOf(obs, base)?.position?.sizeUsd) > 0n).length;
+  const perTx = ctx.config?.maxTxGas ?? 10_000_000n;
+  const feeCap = ctx.config?.economicGas ? 0n : (ctx.config?.maxPriorityFeeWei ?? 5_000_000_000n);
+  return { positions, gas: BigInt(positions) * perTx,
+    eth: BigInt(positions) * (GMX_EXECUTION_FEE_WEI + perTx * feeCap) };
+}
+
+/** Unknown multi-transaction actions fail closed only while a close is owed. */
+export function baseFitsOuReserve(obs: AgentObservation, ctx: AgentContext, action: ReturnedAction): boolean {
+  const reserve = ouClosingReserve(obs, ctx);
+  if (!reserve.positions || !action || action.type === "noop") return true;
+  const perTx = ctx.config?.maxTxGas ?? 10_000_000n;
+  const perBlock = ctx.config?.maxAgentBlockGas ?? 10_000_000n;
+  const feeCap = ctx.config?.economicGas ? 0n : (ctx.config?.maxPriorityFeeWei ?? 5_000_000_000n);
+  if (perTx <= 0n || feeCap <= 0n) return false;
+  let gas = 0n, value = 0n;
+  function count(a: ReturnedAction): boolean {
+    if (!a || a.type === "noop") return true;
+    if (a.type === "bundle") return (a as { actions: ReturnedAction[] }).actions.every(count);
+    gas += perTx;
+    if (["swap", "curveSwap", "balancerSwap"].includes(String(a.type))) return true;
+    if (a.type === "rawTx") {
+      const tx = (a as { tx: { to?: string; data?: string; value?: string } }).tx;
+      // The recovery wrap is one transaction with an explicit native value.
+      if (tx.to?.toLowerCase() === TOKENS.WETH.address.toLowerCase() && tx.data === "0xd0e30db0") {
+        value += big(tx.value);
+        return true;
+      }
+    }
+    return false;
+  }
+  return count(action) && (perBlock <= 0n || reserve.gas + gas <= perBlock) &&
+    big(obs.balances.ethWei) >= reserve.eth + value + gas * feeCap;
+}
+
 /** Use the sender's enforced ceiling, not an estimate. The supported swap adapters and
  * GMX buildTxs return one transaction each; approvals belong to setupWallet. Any other
  * action (including Liquity's potentially multi-tx operations) disables OU sharing.
@@ -414,7 +453,7 @@ export function ouBudget(obs: AgentObservation, ctx: AgentContext, action: Retur
   const perBlock = ctx.config?.maxAgentBlockGas ?? 10_000_000n;
   // economicGas disables the sender fee cap. Do not guess a future base fee.
   const feeCap = ctx.config?.economicGas ? 0n : (ctx.config?.maxPriorityFeeWei ?? 5_000_000_000n);
-  let spend = 0n, reservedGas = 0n, opaque = perTx <= 0n || feeCap <= 0n;
+  let spend = 0n, nativeSpend = 0n, reservedGas = 0n, opaque = perTx <= 0n || feeCap <= 0n;
   function count(a: ReturnedAction): void {
     if (!a || a.type === "noop") return;
     if (a.type === "bundle") {
@@ -425,9 +464,11 @@ export function ouBudget(obs: AgentObservation, ctx: AgentContext, action: Retur
     if (["swap", "curveSwap", "balancerSwap"].includes(String(a.type))) {
       const trade = a as { tokenIn?: string; amountIn?: string };
       if (trade.tokenIn === "USDC") spend += big(trade.amountIn);
+    } else if (a.type === "rawTx" && ouClosingReserve(obs, ctx).positions && baseFitsOuReserve(obs, ctx, a)) {
+      nativeSpend += big((a as { tx: { value?: string } }).tx.value);
     } else opaque = true;
   }
-  count(action);
+  count(baseFitsOuReserve(obs, ctx, action) ? action : null);
   const orderGasWei = perTx > 0n && feeCap > 0n ? perTx * feeCap : 0n;
   let slots = 0;
   if (!opaque) for (let orders = 1; orders <= OU_BASES.length; orders++) {
@@ -436,7 +477,7 @@ export function ouBudget(obs: AgentObservation, ctx: AgentContext, action: Retur
   }
   return { slots, usdcFreeUnits: balance > spend ? balance - spend : 0n,
     usdcBalanceUnits: balance,
-    ethWei: big(obs.balances?.ethWei) - reservedGas * feeCap,
+    ethWei: big(obs.balances?.ethWei) - nativeSpend - reservedGas * feeCap,
     orderGasWei,
     // Reserve every supported position, including an unreflected increase. No assumed
     // keeper refund or collateral proceeds fund a future exit.
@@ -559,6 +600,8 @@ export async function submitOu(obs: AgentObservation, ctx: AgentContext, action:
   // Isolate diagnostics as well as OU itself; logging failure must not suppress r3k or orders.
   try { ctx.log({ round: obs.round, signals }); } catch { /* optional diagnostics */ }
 
+  // Closing orders precede entries even when only WBTC has an open position.
+  observations.sort((a, b) => Number(big(b.position?.sizeUsd) > 0n) - Number(big(a.position?.sizeUsd) > 0n));
   for (const o of observations) {
     const d = ouPlan({ ...o, pending: ouPending.get(o.base), block,
       blocksRemaining: obs.blocksRemaining ?? Infinity, ...wallet, priorityFeeWei: fee });
