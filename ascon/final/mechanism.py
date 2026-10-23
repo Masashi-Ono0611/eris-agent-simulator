@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """Extract clause-5 evidence without guessing missing measurements.
+Default map shared with judge2: B=opus-1, B'=opus-1-pb; shipping R=opus-1r,
+W1=opus-1g2 (defect-fixed), W2=ascon-zeta-r3k; informational X1=opus-1g
+(frozen original), X2=opus-1w, X3=ascon-zeta-r3kg. X never advances or ships.
 Tie unit is a slot/other-sender transaction pair, including reverted transactions.
 blocks.csv has no venue column: its on-chain `to` destination is the venue key.
 This does not distinguish pools behind one router. Empty destinations are excluded.

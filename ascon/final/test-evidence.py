@@ -132,6 +132,9 @@ def manifest_controls():
         for arm, proof in cell['arm_evidence'].items():
             assert proof == dict(ARM='PASS', COLLISION='PASS', slot=man['arm_map'][arm], head='e'*12, arm_tree='a'*12)
     amap = load('judge2').DEFAULT_ARM_MAP
+    assert amap == {'B': 'opus-1', "B'": 'opus-1-pb', 'R': 'opus-1r',
+                    'W1': 'opus-1g2', 'W2': 'ascon-zeta-r3k', 'X1': 'opus-1g',
+                    'X2': 'opus-1w', 'X3': 'ascon-zeta-r3kg'}
     explicit = [f'{k}={v}' for k, v in amap.items() if k not in ('B', "B'")]
     invoke('make-manifest', *args, '--arms', *explicit, rc=0)
     assert read()[0]['arm_map'] == amap
@@ -243,10 +246,10 @@ def mechanism_controls():
     # The same explicit mapping flows through extraction, including absent W2/X.
     mapped = json.loads(man.read_text())
     mapped['arm_map'] = {'B': 'opus-1', "B'": 'opus-1-pb', 'R': 'opus-1r',
-                         'W2': 'ascon-zeta-r3k', 'X1': 'opus-1g2'}
+                         'W2': 'ascon-zeta-r3k', 'X1': 'opus-1g'}
     mapped['candidates'] = {a: 'superiority' for a in ('R', 'W2', 'X1')}
     dump(man, mapped)
-    invoke('mechanism', man, '--out', out, '--arms', 'R=opus-1r', 'W2=ascon-zeta-r3k', 'X1=opus-1g2', rc=2)
+    invoke('mechanism', man, '--out', out, '--arms', 'R=opus-1r', 'W2=ascon-zeta-r3k', 'X1=opus-1g', rc=2)
     extracted = json.loads(out.read_text())
     assert extracted['arm_map'] == mapped['arm_map'] and 'C1' not in extracted['arms']
     assert extracted['arms']['R']['slot_timeouts'] == 1

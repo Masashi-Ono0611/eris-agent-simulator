@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 """Stage-1 queue-log manifest. Audit/missing attempts go to OUT.audit.json.
+Default map shared with judge2: B=opus-1, B'=opus-1-pb; shipping R=opus-1r,
+W1=opus-1g2 (defect-fixed), W2=ascon-zeta-r3k; informational X1=opus-1g
+(frozen original), X2=opus-1w, X3=ascon-zeta-r3kg. X never advances or ships.
 --arms accepts comma/space separated LABEL=agent-dir entries (B and B' are always included).
 Multiple PASS runs are ambiguous; log order never resolves them.
 Matrix paths are preserved/remapped without requiring local copies (validated by the judge).

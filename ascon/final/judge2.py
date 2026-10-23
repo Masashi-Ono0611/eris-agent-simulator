@@ -6,7 +6,9 @@ CLI: judge --manifest M.json --mechanism MECH.json [--stage 1|2|retest]
      validate <matrix.json or matrix directory> ...
 
 Arms: explicit --arms LABEL=agent-dir (or manifest arm_map), with B/B' required.
-Stage 1 has R, W1, W2 and exploratory X1/X2/X3; no implicit C1.
+Stage 1 shipping family: R=opus-1r, W1=opus-1g2 (defect-fixed), W2=ascon-zeta-r3k.
+Informational only: X1=opus-1g (frozen original), X2=opus-1w, X3=ascon-zeta-r3kg.
+X arms use identical statistics but never advance or ship; no implicit C1.
 Legacy explicitly requested C1 noninferiority remains supported. Stage 1 uses seeds 1003-1006, or the late-R set 1007-1010;
 stage 2 uses 1011-1014 for both F and F2, plus FS seeds 1101-1102. Retest combines
 stage 2 with 1021-1024. FS covers launch, cdp-incident and lending-incident.
@@ -102,9 +104,9 @@ except NameError:  # run from stdin (validate only)
 
 # Explicit stage-1 identity map. Legacy manifests remain readable without adding C1.
 DEFAULT_ARM_MAP = {"B": "opus-1", "B'": "opus-1-pb", "R": "opus-1r",
-                   "W1": "opus-1g", "W2": "ascon-zeta-r3k", "X1": "opus-1g2",
+                   "W1": "opus-1g2", "W2": "ascon-zeta-r3k", "X1": "opus-1g",
                    "X2": "opus-1w", "X3": "ascon-zeta-r3kg"}
-EXPLORATORY_DIRS = {"opus-1g2", "opus-1w", "ascon-zeta-r3kg"}
+EXPLORATORY_DIRS = {"opus-1g", "opus-1w", "ascon-zeta-r3kg"}
 
 
 def parse_arm_map(items):
@@ -1077,6 +1079,8 @@ def build_config(args):
     else:
         if len(roles) != 1:
             _die("stage %s judges exactly one candidate (F)" % stage)
+        if any(exploratory_arm(a, cfg["arm_map"]) for a in roles):
+            _die("informational arms cannot enter stage 2 or retest")
         arms = [cfg["baseline"]] + list(roles)
     if len(set(arms)) != len(arms):
         _die("arm names collide: %s" % arms)
@@ -1611,12 +1615,15 @@ def _assess(cfg, st, excl, mech, mech_path, mech_problem):
                                regime_dT={"%s#%d" % (f, s): {r: v[0] for r, v in x["regimes"].items()} for (s, f), x in sorted(pl.items())})
     for arm, result in cands.items():
         result["exploratory"] = exploratory_arm(arm, cfg["arm_map"])
+        result["informational"] = result["exploratory"]
         result["agent_dir"] = (cfg["arm_map"] or {}).get(arm)
         if stage == "1":
-            result["decision"] = "go to stage 2" if result["verdict"] == PASS else result["verdict"]
+            result["decision"] = (("informational " + result["verdict"]) if result["informational"] else
+                                  "go to stage 2" if result["verdict"] == PASS else result["verdict"])
             result["stage1_ship_eligible"] = False
     if stage == "1":
-        sel = select({a: v["verdict"] for a, v in cands.items()}, roles,
+        sel = select({a: v["verdict"] for a, v in cands.items()},
+                     {a: r for a, r in roles.items() if not cands[a]["informational"]},
                      {a: v.get("stats", {}).get("m") for a, v in cands.items()})
     else:
         F = list(roles)[0]
@@ -1763,7 +1770,7 @@ def print_table(out):
             print("  placebo %s: not available" % p["placebo"])
     for arm, r in out["candidates"].items():
         if r.get("exploratory"):
-            print("  %s exploratory: %s (stage 1 alone cannot ship)" % (arm, r.get("decision", r["verdict"])))
+            print("  %s informational: %s (cannot advance or ship)" % (arm, r.get("decision", r["verdict"])))
         if r["verdict"] == BLOCKED and "input_problems" in r:
             print("  %-4s %-14s %s" % (arm, r["rule"], r["verdict"]))
             for x in r["input_problems"][:8]:

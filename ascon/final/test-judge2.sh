@@ -709,11 +709,11 @@ for i, (name, case, ex) in enumerate(cases):
         print("       " + e)
     bad += bool(errs)
 # Real stage-1 arm map through the CLI, without a C1 launch report.
-amap = {"B": "opus-1", "B'": "opus-1-pb", "R": "opus-1r", "W1": "opus-1g",
-        "W2": "ascon-zeta-r3k", "X1": "opus-1g2", "X2": "opus-1w", "X3": "ascon-zeta-r3kg"}
+amap = {"B": "opus-1", "B'": "opus-1-pb", "R": "opus-1r", "W1": "opus-1g2",
+        "W2": "ascon-zeta-r3k", "X1": "opus-1g", "X2": "opus-1w", "X3": "ascon-zeta-r3kg"}
 candidates = {a: "superiority" for a in amap if a not in ("B", "B'")}
 for missing in (False, True):
-    case = C(cands=candidates, arm_map=amap, cli_arms=missing, eff={a: 1.0 for a in candidates}, noise={},
+    case = C(cands=candidates, arm_map=amap, cli_arms=missing, eff={a: 2.0 if a.startswith("X") else 1.0 for a in candidates}, noise={},
              omit_arms=[(1003, "FP", "W2")] if missing else [])
     rc, v, text = run(case, os.path.join(T, "real-arm-map-" + str(missing)))
     assert rc == 0, text
@@ -721,9 +721,25 @@ for missing in (False, True):
     for a, result in v['candidates'].items():
         assert result['verdict'] == ('BLOCKED' if missing and a == 'W2' else 'PASS'), (a, result)
         if a.startswith('X'):
-            assert result['exploratory'] and result['decision'] == 'go to stage 2', result
+            assert result['exploratory'] and result['informational'] and result['decision'] == 'informational PASS', result
             assert result['stage1_ship_eligible'] is False
-    print('ARM_MAP_JUDGE_OK missing_W2=%s; other five PASS; X -> stage 2; no C1' % missing)
+    assert v['selection']['F'] in (None, 'R', 'W1', 'W2')
+    assert v['selection']['F2'] in (None, 'R', 'W1', 'W2')
+    print('ARM_MAP_JUDGE_OK missing_W2=%s; other five PASS; X informational only; no C1' % missing)
+# Informational failures/missing data cannot hold up shipping selection.
+case = C(cands=candidates, arm_map=amap, eff={a: 1.0 for a in candidates}, noise={},
+         omit_arms=[(1003, "FP", "X1")])
+rc, v, text = run(case, os.path.join(T, "informational-missing"))
+assert rc == 0 and v['candidates']['X1']['verdict'] == 'BLOCKED', text
+assert v['selection']['status'] == 'DECIDED' and v['selection']['F'] == 'R', v
+# Even a forged earlier selection cannot admit an informational arm later.
+for stage in ('2', 'retest'):
+    for label, directory in (('X1', 'opus-1g'), ('R', 'opus-1g')):
+        case = C(stage=stage, cands={label: 'superiority'},
+                 arm_map={'B': 'opus-1', "B'": 'opus-1-pb', label: directory})
+        rc, v, text = run(case, os.path.join(T, 'informational-' + stage + label))
+        assert rc == 2 and 'informational arms cannot enter' in text, text
+print('INFORMATIONAL_GUARDS_OK missing X does not block; stage 2/retest refused by label and directory')
 # Mutation control: removing the X classification must make the control fail.
 source = open(J).read()
 mutated = source.replace('return label.startswith("X") or (arm_map or {}).get(label) in EXPLORATORY_DIRS', 'return False')
