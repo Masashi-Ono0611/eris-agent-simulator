@@ -1186,6 +1186,7 @@ async function launchModule(
 
 // M0 uses observations only. Disk holds intent before emission, so a replacement worker
 // cannot double-fire. A crash between persistence and emission may conservatively miss a trade.
+// Without a state directory, retain intent in this worker's memory with the same run/epoch scope.
 let m0State: M0State | undefined;
 let m0PendingUntil: number | undefined;
 const M0_PENDING_BLOCKS = 3;
@@ -1205,10 +1206,7 @@ function loadM0(): void {
   if (m0Loaded) return;
   m0Loaded = true;
   const dir = process.env.ERIS_AGENT_STATE_DIR;
-  if (!dir) {
-    m0StorageFailed = true;
-    return;
-  }
+  if (!dir) return;
   m0Path = join(dir, "opus-1w-m0-state.json");
   try {
     if (statSync(m0Path).size > 262144) throw new Error("oversized M0 state");
@@ -1229,7 +1227,7 @@ function loadM0(): void {
 
 function planM0(obs: AgentObservation, views: MarketView[]): M0Action[] {
   loadM0();
-  if (m0StorageFailed || !m0Path) return []; // Never waive lost intent on a corrupt/unwritable store.
+  if (m0StorageFailed) return []; // Never waive lost intent on a corrupt/unwritable store.
   const sameEpoch = m0State?.runId === obs.runId && m0State?.epochIndex === obs.epoch?.index;
   const order = sameEpoch ? m0State?.order : undefined;
   const position = sameEpoch ? m0State?.position : undefined;
@@ -1412,6 +1410,8 @@ export async function decide(
           )
         : undefined,
       candidates: candidates.length,
+      m0PersistenceMemory: !m0StorageFailed && !m0Path ? 1 : 0,
+      m0PersistenceDegraded: m0StorageFailed ? 1 : 0,
     },
     state: { tags: [...m0Actions.map(() => m0State?.position?.tag ?? "m0"), ...chosen.map((c) => c.tag)],
       elapsedMs: Date.now() - startedAt },

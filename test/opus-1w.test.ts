@@ -307,12 +307,53 @@ test("observed fill reconciles after restart and emits M0's single-leg restore",
   assert.deepEqual((await emitted(restore))[0], expected.actions[0]);
 });
 
-test("M0 requires durable storage while base actions remain available", async () => {
+test("M0 without a state directory trades and retains pending intent in memory", async () => {
   const before = obsFor();
   const now = obsFor({ block: 101, uniMid: 2700 });
-  assert.equal(planned(before, now).actions.length, 1);
-  await emitted(before);
-  assert.deepEqual(await emitted(now), await emitted(now, a.decide));
+  const plan = planned(before, now);
+  assert.equal(plan.actions.length, 1);
+  const blockSignals: Record<string, unknown>[][] = [];
+  for (const o of [before, now]) {
+    const ctx = fakeCtx();
+    const action = await g.decide(o, ctx);
+    if (o === now) assert.deepEqual(action, plan.actions[0]);
+    const signals = ctx.logs.flatMap(log => {
+      const s = (log as { signals?: Record<string, unknown> }).signals;
+      return s ? [s] : [];
+    });
+    blockSignals.push(signals);
+  }
+  for (const signals of blockSignals) {
+    assert.equal(signals.length, 1);
+    assert.equal(signals[0].m0PersistenceMemory, 1);
+    assert.equal(signals[0].m0PersistenceDegraded, 0);
+  }
+  assert.deepEqual(await emitted(now), [], "same-block intent is not duplicated");
+  assert.deepEqual(await emitted(obsFor({ block: 102, uniMid: 2700 })), [],
+    "pending intent and pair reservation survive the next block");
+  const restore = obsFor({ block: 103, uniMid: 3300, curveMid: 3300 });
+  restore.balances.wethWei = (BigInt(plan.state.order!.beforeBaseUnits) +
+    BigInt(plan.state.order!.expectedBaseUnits)).toString();
+  restore.baseBalances!.WETH = restore.balances.wethWei;
+  const expected = m0Plan(restore, marketViews(restore),
+    { ...plan.state, lastBlock: 102 }, { pendingOwnTxs: 0 });
+  assert.equal(expected.actions.length, 1);
+  assert.equal(expected.actions[0].tokenIn, "WETH");
+  assert.deepEqual((await emitted(restore))[0], expected.actions[0]);
+});
+
+test("memory state resets on run and epoch changes", async () => {
+  const epoch = (index: number) => ({ index, count: 2 }) as AgentObservation["epoch"];
+  for (const scope of [{ runId: "first", epoch: epoch(0) },
+    { runId: "second", epoch: epoch(0) }, { runId: "second", epoch: epoch(1) }]) {
+    const before = obsFor(scope);
+    const now = obsFor({ ...scope, block: 101, uniMid: 2700 });
+    await emitted(before);
+    const expected = planned(before, now);
+    assert.equal(expected.actions.length, 1);
+    assert.deepEqual((await emitted(now))[0], expected.actions[0],
+      "the previous scope's pending intent must not suppress a fresh entry");
+  }
 });
 
 test("failure saving a pending intent suppresses M0 and preserves the base", async () => {

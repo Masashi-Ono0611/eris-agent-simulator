@@ -1251,6 +1251,7 @@ let ouEpoch: OuEpoch | undefined;
 let ouStatePath: string | undefined;
 let ouLoaded = false;
 let ouStorageFailed = false;
+let ouMemoryOnly = false;
 
 /** Tests simulate a replacement worker. Disk is intentionally untouched. */
 export function resetOuStateForTest(): void {
@@ -1263,6 +1264,7 @@ export function resetOuStateForTest(): void {
   ouStatePath = undefined;
   ouLoaded = false;
   ouStorageFailed = false;
+  ouMemoryOnly = false;
 }
 
 function ouBlock(obs: AgentObservation): number {
@@ -1273,7 +1275,9 @@ function ouBlock(obs: AgentObservation): number {
 function loadOuState(): void {
   ouLoaded = true;
   const dir = process.env.ERIS_AGENT_STATE_DIR;
-  // Without durable state, replacement workers cannot safely reconstruct live intents.
+  // Storage is optional. Keep the same run/epoch-scoped maps for this worker's lifetime
+  // when none is offered; a configured storage failure must never fall back to memory.
+  if (dir === undefined) { ouMemoryOnly = true; return; }
   if (!dir) { ouStorageFailed = true; return; }
   ouStatePath = join(dir, "opus-1g2-ou-state.json");
   try {
@@ -1337,6 +1341,7 @@ function beginOuObservation(obs: AgentObservation, ctx: AgentContext): void {
 }
 
 function saveOuState(): boolean {
+  if (ouMemoryOnly && ouEpoch && !ouStorageFailed) return true;
   if (!ouStatePath || !ouEpoch || ouStorageFailed) return false;
   try {
     const body = JSON.stringify({ schema: 1, epoch: ouEpoch,
@@ -1792,6 +1797,7 @@ export async function decide(
       if (ouOrders[i].action.type === "gmxIncrease") ouOrders.splice(i, 1);
   } // anchors/risk history survive even if logging below throws; no new intents yet
   ouSignals.ouPersistenceDegraded = ouStorageFailed ? 1 : 0;
+  ouSignals.ouPersistenceMemory = ouMemoryOnly ? 1 : 0;
   const weth = views.find((v) => v.base === "WETH");
   const reasons = [...chosen, ...ouOrders].map((c) => c.reason);
   ctx.log({
