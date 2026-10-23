@@ -115,6 +115,95 @@ def cleanup_containers(arm, tree):
             raise Blocked('owned container survived cleanup')
 
 
+DEPLOY_BUILD_INPUTS = (
+    'deployer/node_modules', 'deployer/out', 'deployer/cache',
+    'deployer/vendor/aave/node_modules',
+    'deployer/vendor/gmx-src', 'deployer/vendor/liquity-src',
+)
+# Both hardhat deploy invocations compile by default. Aave uses external
+# prebuilt artifacts but still owns its local Hardhat cache/artifact outputs.
+# Liquity only reads packages/contracts/out; no build is invoked by deploy.
+DEPLOY_LOCAL_DIRS = (
+    'deployer/deployments', 'deployer/vendor/aave/deployments',
+)
+GMX_LOCAL_DIRS = ('deployments/localhost', 'cache', 'artifacts',
+                  'typechain', 'typechain-types')
+
+
+def seed_build_output(source, target):
+    """Seed private outputs, preferring APFS copy-on-write on macOS."""
+    if not source.exists():
+        return
+    target.mkdir(parents=True)
+    # Copy contents into the destination, so an unsupported clone can be retried
+    # even if cp already copied some files. Never retry unrelated I/O failures.
+    paths = [str(source.resolve()) + '/.', str(target)]
+    if sys.platform == 'darwin':
+        result = sp.run(['cp', '-cR', *paths], capture_output=True, text=True,
+                        env=dict(os.environ, LC_ALL='C'))
+        if result.returncode == 0:
+            print(f'SEED cp -cR: {source} -> {target}', flush=True)
+            return
+        errors = [line for line in result.stderr.splitlines() if line.strip()]
+        if not errors or not all('not supported' in line.lower() for line in errors):
+            raise sp.CalledProcessError(result.returncode, result.args,
+                                        result.stdout, result.stderr)
+        reason = 'clone unsupported'
+    else:
+        reason = 'clone unsupported on this platform'
+    run(['cp', '-R', *paths])
+    print(f'SEED cp -R ({reason}): {source} -> {target}', flush=True)
+
+
+def link_readonly_children(source, target, local_dirs):
+    """Materialize mutable branches and seed existing build outputs.
+
+    TypeChain output names are isolated defensively in both common layouts.
+    Non-local deployment networks and large dependencies remain shared links.
+    """
+    target.mkdir(parents=True, exist_ok=True)
+    branches = {name.split('/')[0] for name in local_dirs}
+    if source.is_dir():
+        for child in source.iterdir():
+            if child.name not in branches:
+                (target / child.name).symlink_to(child.absolute(), target_is_directory=child.is_dir())
+    for branch in sorted(branches):
+        nested = tuple(name.split('/', 1)[1] for name in local_dirs
+                       if name.startswith(branch + '/'))
+        if nested:
+            link_readonly_children(source / branch, target / branch, nested)
+        elif branch == 'localhost':
+            (target / branch).mkdir()
+        else:
+            seed_build_output(source / branch, target / branch)
+
+
+
+def prepare_deployer(tree, main_checkout):
+    # Check the entire input set before linking anything. Never inspect .env contents.
+    for name in DEPLOY_BUILD_INPUTS:
+        if not (main_checkout / name).is_dir():
+            raise Blocked('missing build input: ' + name)
+    for name in DEPLOY_BUILD_INPUTS:
+        target = tree / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if name == 'deployer/vendor/gmx-src':
+            link_readonly_children(main_checkout / name, target, GMX_LOCAL_DIRS)
+        else:
+            target.symlink_to((main_checkout / name).resolve(), target_is_directory=True)
+    # --keep-fresh and Aave deploy reset these outputs. Never share them.
+    for name in DEPLOY_LOCAL_DIRS:
+        (tree / name).mkdir(parents=True)
+    for name in ('cache', 'artifacts'):
+        relative = Path('deployer/vendor/aave') / name
+        seed_build_output(main_checkout / relative, tree / relative)
+    # config.ts imports dotenv/config. Defaults permit absence, but preserve a configured
+    # checkout's MNEMONIC/ADMIN_ADDRESS/etc. Only stat/link: no reading or logging.
+    env_file = main_checkout / 'deployer/.env'
+    if env_file.is_file():
+        (tree / 'deployer/.env').symlink_to(env_file)
+
+
 def selftest(tree, arm, output, port, timeout):
     procs = []
     deploy_log = output / 'deploy.log'
@@ -216,6 +305,10 @@ def main(mode, args):
         run(['git', 'worktree', 'add', '--detach', str(tree), full], cwd=repo, stdout=sp.DEVNULL, stderr=sp.DEVNULL)
         for name in ('node_modules', 'out'):
             (tree / name).symlink_to((repo / name).resolve(), target_is_directory=True)
+        if mode == 'selftest':
+            common = run(['git', 'rev-parse', '--path-format=absolute', '--git-common-dir'],
+                         cwd=repo, capture_output=True, text=True).stdout.strip()
+            prepare_deployer(tree, Path(common).parent)
         if not (tree / 'example/agents' / arm).is_dir():
             raise Blocked('arm absent at release commit')
         marker, detail = selftest(tree, arm, output, port, timeout) if mode == 'selftest' else bundle(tree, arm, full, output)
