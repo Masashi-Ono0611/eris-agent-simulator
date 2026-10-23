@@ -9,7 +9,8 @@
 - **B′**: 偽薬（placebo）。dir `opus-1-pb`。B の全取引サイズを ×0.999 にしただけの版で、効果がほぼゼロのときの差のばらつきを測るのに使う。fee や遅延は変えない（理由は「反映しなかった指摘」）。
 - **C1**: dir `opus-1a`（PR #85）。B に launch の allowance 修正（launch module の 2 か所の swapBundle 呼び出しを、承認を無制限に保つ launchSwapBundle に替える）と、改訂用 prompt P1 だけを入れた版。launch 以外の挙動は B と同一。
 - **R**: dir `opus-1r`（commit を固定して評価する）。C1 に r3 由来の機構を足した版。機構は R 設計メモ §2〜§5 のとおり: 2 脚のバンドルのみ、サイズ N* = R·e/4（R は深さ、e は正味エッジ）を上限 min($6k, NAV の 8%) で切る、入札は競合の最大 fee ×1.2 + 1 wei を上限 0.30E（E は期待利益）で切る、最小エッジ 100bps かつ最小期待利益 $25、片側だけ約定したバンドルを数えるブレーキで 36 block 停止、深さは背景で取得してキャッシュし decide() でブロッキング RPC を待たない。数値の正本は `example/agents/opus-1r/agent.ts` の PARAMS。
-- **W**: 独自の武器（weapon）を足した arm を 1 本だけ。候補は opus-1g（C1 + GMX の OU 平均回帰 M-OU、commit `4d5fac2e` 以降）と ascon-zeta-r3k（r3 系譜 + 単脚の下限 K1、自分の結果によるブレーキ K2、大きなエッジでの入札 K3）。10/23 22:00 までに Step 2 の W スクリーンで 1 本を選ぶ。
+- **W**: 独自の武器（weapon）を足した arm。ユーザー判断（10/23）で 2 本とも 1 段に入れる: W1 = opus-1g（C1 + GMX の OU 平均回帰 M-OU、commit `c4b054b0`）、W2 = ascon-zeta-r3k（r3 系譜 + 単脚の下限 K1、自分の結果によるブレーキ K2、大きなエッジでの入札 K3、commit `df0c44a0`）。
+- **探索 arm（X）**: 10/23 に Codex レビューで見つかった欠陥を直した版と、2 位の武器を足した版。opus-1g2（opus-1g の OU に base の gas と決済手数料の予約、ブロック飛びで pending を消さない、state が無ければ新規を止める）、opus-1w（opus-1a + m0 の whale / 急変の取り戻し）、ascon-zeta-r3kg（r3k + 同じ修正を入れた OU）。tree `c6cf715a`。凍結済みの arm（B、B′、R、W1、W2）とは差分 0 を確認済み。X は同じ判定規則で数えるが、比べる arm が増えて偽の出荷の確率が凍結時の MC（1.8%）より上がるので、X は 1 段の PASS だけでは出荷候補にせず、2 段の確認を必須にする。
 - **F / F2**: 1 段で選ばれた第 1 候補と第 2 候補。
 - **EW**: レジームごとの T の単純平均。判定には launch を除いた 11 レジームの EW（**EW11**）を使い、12 レジームの EW と公式の重み付き値は報告用の数字として併記する。
 - **slot 入替**: 1 ロスターに入れる我々の agent を `id: slot` の 1 体だけにし、dir だけを替えて比べる方式。理由: 近縁クローンを同居させると、同じ launch プールや同じ Liquity 清算を奪い合って偽の差が出る（fc の launch での −10 T は opus-1 と同じ fee の swap の後ろで revert した結果だった）。
@@ -124,7 +125,7 @@
 - **commit の注意**: laptop の worktree では `out` が symlink のため `.gitignore` の `out/` にかからず、未追跡に見える。`git add -A` や `git add .` を使わず、パスを明示して add する。laptop の worktree が共有する `node_modules` と `out` は worktree `opus-1-model` が持っているので、その branch（#82）が merge 済みでも 10/31 まで消さない。
 
 ### lane の運用［批評 14/15］
-- **lane**: mini A、mini B、laptop L（U5 でユーザー承認済み。期間は上の用語を参照）。mini は 2 lane が上限（2 lane で load1 約 16、12 コア）。手順の正本は `ascon/eval/README.md`。
+- **lane**: mini A〜D、laptop L（U5 でユーザー承認済み。期間は上の用語を参照）。mini は 4 lane が上限（10/23 の実測: 2 lane で load1 約 6〜16、4 lane で約 10〜20、decide timeout 0。6 lane を一度に起こすと約 39 で、比較に使えない）。lane は 1 本ずつ足し、15 分 load と timeout を見てから次を足す。手順の正本は `ascon/eval/README.md`。
 - **各 lane は自分の評価 worktree から走らせる**。mini では `mini-lane-start.sh` が commit ごとに `~/Developer/ascon-wt-<sha8>` を作り、既存の tree の中では checkout しない（稼働中のスクリプトや agent コードが入れ替わるため）。新しい arm を足すときは、新しい commit の tree を別に作り、late-arm 規則の diff が空であることを確かめる。
 - **laptop L の規則**（ユーザーの上限: 10/23 03:19「Air の負荷はこれが最大とし、基本は mini」）:
   - laptop で走らせる lane は最大 1 本。丸ごとのセルだけを走らせる。worktree は `ascon/eval/new-worktree.sh` で mini の評価 tree と同じ commit から作る。port 8800 番台、専用の state dir、ログは /tmp の外、`caffeinate` の下で動かす。
@@ -180,6 +181,7 @@
   - attempt の数が期待値（blocks/60 の合計）の 90% 未満、または HTTP 200 で解析できた応答が attempt の 90% 未満なら、**BLOCKED**。
   - 陽性対照で install が 0 件なら、検出器が BLOCKED。
   - P1 で install が 0 件なら PASS とし、install 率の 95% 上限と、本番約 300 call での期待 install 数の上限を記録する。soak は安全を証明するものではなく、率の上限を与えるだけ。
+  - **結果（10/23、laptop、gpt-oss:120b、reviseEveryBlocks 12）**: P1 を calm / whale / crash / launch の 4 scenario で各 30 call、計 120 call。keep 120、install 0、revert 0、読めない応答 0。install 率の 95% 上限は 2.5%（0/120、3/n）、本番約 300 call での期待 install 数の上限は約 7.5。**逸脱**: seed は陽性対照用の 1205 を使った（P1 の 1202 は未実施）。陽性対照（許容的な prompt）と P0 の run は未実施。
   - P1 で 1 件以上 install が出たら、締め直して新しい seed（1204）で測り直す［Codex C6］。締め直しは最大 2 回。
 - **本番の proxy 経路**［批評 5］: `infra/inference-proxy` をローカルで起動し、鍵 1 本で 1 call 通す。できなければ BLOCKED と記録する（**未検証**）。
 
