@@ -278,7 +278,9 @@ def run(case, d):
         cells[(s, f)] = dict(cells[(s, f)], **{arm: p})
     listed = [{"seed": s, "field": f, "arms": a} for (s, f), a in sorted(cells.items()) if (s, f) not in case.get("omit_cells", [])]
     man = {"stage": stage, "baseline": "B", "placebo": "B'", "candidates": cands, "cells": listed, "exclude": excl}
-    for k in ("threshold", "ask_floor", "design"):
+    for seed, field, arm in case.get("omit_arms", []):
+        cells[(seed, field)].pop(arm)
+    for k in ("threshold", "ask_floor", "design", "arm_map"):
         if k in case:
             man[k] = case[k]
     mp = os.path.join(d, "manifest.json")
@@ -291,6 +293,8 @@ def run(case, d):
         for c in listed:
             for arm, p in c["arms"].items():
                 cmd += ["--cell", "%s:%d:%s=%s" % (c["field"], c["seed"], arm, p)]
+    if case.get("cli_arms"):
+        cmd += ["--arms"] + [f"{k}={v}" for k, v in case["arm_map"].items()]
     for flag in ("allow_nonplan_design", "allow_nonplan_threshold"):
         if case.get(flag):
             cmd.append("--" + flag.replace("_", "-"))
@@ -303,7 +307,7 @@ def run(case, d):
         cmd += ["--mechanism", os.path.join(d, "no-such-mechanism.json")]
     elif mech is not None:
         whole = {(x["seed"], x["field"]) for x in case.get("exclude", []) if "regime" not in x}
-        mj = {a: copy.deepcopy(v) for a, v in GOOD_MECH.items() if a in arms}
+        mj = {a: copy.deepcopy(GOOD_MECH.get(a, GOOD_MECH["R"])) for a in arms if a != "B'"}
         for arm in mj:
             mj[arm]["matrices_sha256"] = sorted({sha(c["arms"][arm]) for c in listed if arm in c["arms"] and (c["seed"], c["field"]) not in whole})
         for arm in ("R", "W"):
@@ -654,6 +658,34 @@ for i, (name, case, ex) in enumerate(cases):
     for e in errs:
         print("       " + e)
     bad += bool(errs)
+# Real stage-1 arm map through the CLI, without a C1 launch report.
+amap = {"B": "opus-1", "B'": "opus-1-pb", "R": "opus-1r", "W1": "opus-1g",
+        "W2": "ascon-zeta-r3k", "X1": "opus-1g2", "X2": "opus-1w", "X3": "ascon-zeta-r3kg"}
+candidates = {a: "superiority" for a in amap if a not in ("B", "B'")}
+for missing in (False, True):
+    case = C(cands=candidates, arm_map=amap, cli_arms=missing, eff={a: 1.0 for a in candidates}, noise={},
+             omit_arms=[(1003, "FP", "W2")] if missing else [])
+    rc, v, text = run(case, os.path.join(T, "real-arm-map-" + str(missing)))
+    assert rc == 0, text
+    assert 'C1' not in v['candidates'] and len(v['cells']) == 8
+    for a, result in v['candidates'].items():
+        assert result['verdict'] == ('BLOCKED' if missing and a == 'W2' else 'PASS'), (a, result)
+        if a.startswith('X'):
+            assert result['exploratory'] and result['decision'] == 'go to stage 2', result
+            assert result['stage1_ship_eligible'] is False
+    print('ARM_MAP_JUDGE_OK missing_W2=%s; other five PASS; X -> stage 2; no C1' % missing)
+# Mutation control: removing the X classification must make the control fail.
+source = open(J).read()
+mutated = source.replace('return label.startswith("X") or (arm_map or {}).get(label) in EXPLORATORY_DIRS', 'return False')
+assert mutated != source
+ns = {"__name__": "arm_map_red", "__file__": J}
+exec(compile(mutated, J, 'exec'), ns)
+try:
+    assert ns['exploratory_arm']('X1', amap)
+except AssertionError:
+    print('RED_CHECK_OK X classification removed: exploratory control catches mutation')
+else:
+    raise AssertionError('X red check survived')
 with open(os.path.join(T, "saved.json"), "w") as fh:
     json.dump({k: v["verdict"] for k, v in SAVED.items()}, fh)
 print("SYNTHETIC %s: %d/%d controls as expected" % ("OK" if not bad else "FAILED", len(cases) - bad, len(cases)))
@@ -921,6 +953,27 @@ with open(bad_v, "w") as fh:
     json.dump({"tool": "ascon/final/judge2.py", "stage": "2"}, fh)
 p = subprocess.run([sys.executable, "-B", "-I", MC, "placebo-noise", "--verdict", bad_v, "--noise", src, "--out", out + ".x"], capture_output=True, text=True)
 report(p.returncode != 0 and not os.path.exists(out + ".x"), "placebo-noise refuses a non-stage-1 verdict (exit %d)" % p.returncode)
+# Compare the fast three-arm grid with the frozen selector at every grid point.
+grid = [0.81, 0.82, 0.9, 1.0, 1.1, 1.2, 2.0]
+def trial_verdict(m, t):
+    return {"stats": {"m": m, "t": t}, "clauses": {"1_mean_t": {"status": "PASS"}, "other": {"status": "PASS"}}}
+rng = random.Random(765)
+for _ in range(200):
+    pairs = [(a, trial_verdict(rng.uniform(.1, 2), rng.choice(grid)), trial_verdict(.5, rng.choice(grid)))
+             for a in ('R', 'W1', 'W2')]
+    ranges = mc.finalist_grid_ranges(pairs, grid)
+    for i, t in enumerate(grid):
+        verdicts = {a: 'PASS' if first['stats']['m'] >= J.THRESHOLD and first['stats']['t'] >= t else 'FAIL'
+                    for a, first, second in pairs}
+        sel = J.select(verdicts, {a: 'superiority' for a, _, _ in pairs}, {a: first['stats']['m'] for a, first, _ in pairs})
+        actual = any(a in (sel['F'], sel['F2']) and second['stats']['t'] >= t for a, _, second in pairs)
+        assert actual == any(lo <= i < hi for lo, hi in ranges), (pairs, t, ranges, sel)
+# Third ranked arm passes stage 2, but the selected F/F2 fail: cannot ship it.
+pairs = [('R', trial_verdict(3, 2), trial_verdict(.5, .7)),
+         ('W1', trial_verdict(2, 2), trial_verdict(.5, .7)),
+         ('W2', trial_verdict(1, 2), trial_verdict(.5, 2))]
+assert mc.finalist_grid_ranges(pairs, [.81]) == []
+report(True, 'three-arm calibration grid matches judge selector, including third-arm exclusion and exact boundaries')
 print("MC %s" % ("OK" if not bad else "FAILED"))
 sys.exit(1 if bad else 0)
 EOF

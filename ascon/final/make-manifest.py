@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Stage-1 queue-log manifest. Audit/missing attempts go to OUT.audit.json.
---arms accepts comma/space separated directory names (B and B' are always included).
+--arms accepts comma/space separated LABEL=agent-dir entries (B and B' are always included).
 Multiple PASS runs are ambiguous; log order never resolves them.
 Matrix paths are preserved/remapped without requiring local copies (validated by the judge).
 Exit 0 complete, 2 incomplete/refused (partial manifest and audit still written).
@@ -11,8 +11,10 @@ from pathlib import Path
 import re
 import sys
 
-DEFAULT = ['opus-1', 'opus-1-pb', 'opus-1a', 'opus-1r', 'opus-1g']
-LABEL = {'opus-1': 'B', 'opus-1-pb': "B'", 'opus-1a': 'C1', 'opus-1r': 'R', 'opus-1g': 'W'}
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from judge2 import DEFAULT_ARM_MAP, parse_arm_map
+
+DEFAULT = [f"{k}={v}" for k, v in DEFAULT_ARM_MAP.items()]
 
 
 def path_map(value, mappings):
@@ -36,16 +38,10 @@ def main():
         if not sep or not Path(old).is_absolute() or not Path(new).is_absolute():
             p.error('--path-map requires absolute mini-prefix=local-prefix')
         mappings.append((old.rstrip('/'), new.rstrip('/')))
-    arms = list(dict.fromkeys(['opus-1', 'opus-1-pb'] + [x for s in a.arms for x in s.split(',')]))
-    if any(not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]*', x) for x in arms):
-        p.error('invalid arm directory')
-    labels = {x: LABEL.get(x, x) for x in arms}
-    candidates = {labels[x]: 'noninferiority' if x == 'opus-1a' else 'superiority'
-                  for x in arms if x not in ('opus-1', 'opus-1-pb')}
-    if not candidates or sum(v == 'superiority' for v in candidates.values()) > 2:
-        p.error('frozen judge accepts at most two superiority candidates; select a comparison with --arms')
-    if len(set(labels.values())) != len(labels):
-        p.error("arm labels collide with reserved B, placebo, C1, R, W labels")
+    arm_map = parse_arm_map(a.arms)
+    arms = list(arm_map.values())
+    labels = {directory: label for label, directory in arm_map.items()}
+    candidates = {label: 'superiority' for label in arm_map if label not in ('B', "B'")}
     jobs, errors = {}, []
     for log in sorted(a.logs.glob('*.queue.log')):
         try:
@@ -122,7 +118,7 @@ def main():
             if r['seed'] not in range(1003, 1007) or r['arm'] not in arms:
                 r['reason'] = 'ignored attempt: outside selected stage-1 design'
                 ignored.append(r)
-    manifest = dict(stage='1', slot_id='slot', baseline='B', placebo="B'", candidates=candidates,
+    manifest = dict(stage='1', slot_id='slot', baseline='B', placebo="B'", candidates=candidates, arm_map=arm_map,
                     cells=[dict(seed=s, field=f, arms=v) for (s, f), v in sorted(cells.items())])
     a.out.write_text(json.dumps(manifest, indent=2) + '\n')
     audit = dict(selected=selected, ignored=ignored, missing=missing, path_maps=mappings, errors=errors)

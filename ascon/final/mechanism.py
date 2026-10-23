@@ -14,6 +14,8 @@ from pathlib import Path
 import re
 import sys
 from collections import defaultdict
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from judge2 import resolve_arm_map
 
 
 def sha(path):
@@ -85,10 +87,17 @@ def measure(matrix, slot, mappings):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('manifest', type=Path)
+    p.add_argument('--arms', nargs='+', help='LABEL=agent-dir; must match manifest')
     p.add_argument('--out', required=True, type=Path)
     p.add_argument('--path-map', action='append', default=[])
     a = p.parse_args()
     man = json.loads(a.manifest.read_text())
+    arm_map = resolve_arm_map(man, a.arms)
+    if arm_map:
+        candidates = {label: 'superiority' for label in arm_map if label not in ('B', "B'")}
+        if man.get('candidates') and man['candidates'] != candidates:
+            raise ValueError('candidates differ from arm_map')
+        man['candidates'] = candidates
     audit = Path(str(a.manifest) + '.audit.json')
     mappings = json.loads(audit.read_text()).get('path_maps', []) if audit.exists() else []
     for item in a.path_map:
@@ -129,7 +138,7 @@ def main():
                            matrices=records, errors=errors)
         if not ties:
             output[arm]['tie_win_rate_reason'] = 'No observed equal-fee same-destination pairs; rate is undefined.'
-    a.out.write_text(json.dumps(dict(arms=output), indent=2) + '\n')
+    a.out.write_text(json.dumps(dict(arms=output, arm_map=arm_map), indent=2) + '\n')
     print('MECHANISM BLOCKED: p99_decide_ms is unmeasured (null); evidence written to ' + str(a.out))
     return 2
 
