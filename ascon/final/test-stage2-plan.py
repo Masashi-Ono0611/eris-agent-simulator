@@ -40,6 +40,87 @@ for change in ('partial', 'none', 'x', 'xdir', 'stage', 'floor', 'matrices', 'pe
         pass
     else:
         raise AssertionError('accepted ' + change)
+# Each review regression can run alone against the original planner for red proof.
+def rejected(value, message):
+    try:
+        m.selected(value, j)
+    except ValueError as exc:
+        assert message in str(exc), str(exc)
+    else:
+        raise AssertionError('accepted ' + message)
+
+
+def regression_partial_map():
+    value = copy.deepcopy(v)
+    del value['arm_map']['B']
+    del value['arm_map']["B'"]
+    labels, resolved = m.selected(value, j)
+    assert [resolved[x] for x in labels] == ['opus-1', 'opus-1r', 'opus-1g2']
+    assert 'B' not in value['arm_map']  # no mutation of input evidence
+
+
+def regression_nonselected():
+    value = copy.deepcopy(v)
+    value['selection']['F2'] = None
+    value['candidates']['W1'] = {'verdict': 'FAIL', 'rule': 'noninferiority'}
+    del value['inputs']['matrices']['W1']
+    assert m.selected(value, j)[0] == ['B', 'R']
+
+
+def regression_legacy_identity():
+    value = copy.deepcopy(v)
+    del value['arm_map']
+    value['inputs']['matrices']['R']['FP#1003']['arm_evidence']['slot'] = 'wrong-arm'
+    rejected(value, 'matching slot directory')
+
+
+def regression_duplicate_arms():
+    value = copy.deepcopy(v)
+    value['arm_map']['W1'] = value['arm_map']['R']
+    for rec in value['inputs']['matrices']['W1'].values():
+        rec['arm_evidence']['slot'] = value['arm_map']['R']
+    rejected(value, 'arm directories must be unique')
+
+
+regressions = {f.__name__: f for f in (
+    regression_partial_map, regression_nonselected,
+    regression_legacy_identity, regression_duplicate_arms)}
+if len(sys.argv) > 3:
+    regressions[sys.argv[3]]()
+    print('REGRESSION_OK ' + sys.argv[3])
+    sys.exit(0)
+for name, check in regressions.items():
+    check()
+    print('REGRESSION_OK ' + name)
+
+# Controls for disproved findings: B is validated through prior_problems.
+for change in ('missing', 'label', 'record'):
+    value = copy.deepcopy(v)
+    if change == 'missing': del value['inputs']['matrices']['B']
+    if change == 'label': del value['inputs']['matrices']['B']['FP#1003']
+    if change == 'record': value['inputs']['matrices']['B']['FP#1003'] = {}
+    rejected(value, 'prior verdict')
+value = copy.deepcopy(v)
+del value['arm_map']
+value['candidates']['W1']['rule'] = 'noninferiority'
+assert m.selected(value, j)[0] == ['B', 'R', 'W1']
+value = copy.deepcopy(v)
+del value['selection']['F2']
+assert m.selected(value, j)[0] == ['B', 'R']
+# Lane count is capacity, not cell count; all arms remain contiguous on one lane.
+mq = m.load('make-queues')
+for count in (1, 2, 3, 4, 8):
+    queues = mq.plan('s2', range(1011, 1015), ['FP', 'FD'],
+                     ['opus-1', 'opus-1r', 'opus-1g2'], list(range(count)), 17)
+    cells = {}
+    for lane, jobs in queues.items():
+        for index, row in enumerate(jobs):
+            cells.setdefault(row[-1], []).append((lane, index))
+    assert len(cells) == 8
+    for rows in cells.values():
+        assert len(rows) == 3 and len({lane for lane, _ in rows}) == 1
+        assert [i for _, i in rows] == list(range(rows[0][1], rows[0][1] + 3))
+
 # Exercise actual CLI + existing generator/checker with a complete verdict.
 (tmp / 'verdict.json').write_text(json.dumps(v))
 cmd = [sys.executable, str(src / 'stage2-plan.py'), '--verdict', str(tmp / 'verdict.json'),

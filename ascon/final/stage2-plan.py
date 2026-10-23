@@ -38,9 +38,15 @@ def selected(v, judge):
     sel = v['selection']
     if sel.get('status') != 'DECIDED' or not sel.get('F'):
         raise ValueError('no decided stage-2 candidate')
-    mapping = v.get('arm_map') or dict(judge.DEFAULT_ARM_MAP, C1='opus-1a')
-    if not isinstance(mapping, dict):
+    # Match judge2's map parser: candidate-only maps inherit B/B-prime,
+    # explicit maps retain their scope, and duplicate directories are rejected.
+    stored_map = v.get('arm_map')
+    if stored_map is not None and not isinstance(stored_map, dict):
         raise ValueError('malformed arm_map')
+    mapping = judge.resolve_arm_map(v) if stored_map is not None else dict(judge.DEFAULT_ARM_MAP, C1='opus-1a')
+    # Bind prior attestations to the actual directories we will enqueue, even
+    # for legacy verdicts without a map. This copy never changes the source.
+    prior_evidence = dict(v, arm_map=mapping)
     names = [sel['F']] + ([sel['F2']] if sel.get('F2') else [])
     if len(set(names)) != len(names):
         raise ValueError('F and F2 are identical')
@@ -52,9 +58,9 @@ def selected(v, judge):
             raise ValueError('selected candidate is not a shippable PASS: ' + name)
         if cv.get('rule') not in ('superiority', 'noninferiority'):
             raise ValueError('missing/unknown candidate rule: ' + name)
-        cfg = {'candidates': {name: cv.get('rule')}, 'arm_map': v.get('arm_map'),
+        cfg = {'candidates': {name: cv.get('rule')}, 'arm_map': mapping,
                'slot_id': 'slot', 'baseline': 'B'}
-        problems = judge.prior_problems(v, cfg, name)
+        problems = judge.prior_problems(prior_evidence, cfg, name)
         if problems:
             raise ValueError('; '.join(problems))
     for name, cv in v['candidates'].items():
@@ -70,15 +76,16 @@ def selected(v, judge):
     labels = {f'{field}#{seed}' for field in ('FP', 'FD') for seed in seeds}
     if set(matrices.get("B'", {})) != labels:
         raise ValueError('incomplete stage-1 placebo matrices')
-    # Use the same prior-evidence validator for the placebo and non-selected
-    # shipping candidates as well, without changing their actual verdicts.
-    for name in ["B'"] + [n for n in v['candidates'] if not judge.exploratory_arm(n, mapping)]:
-        prior = dict(v, candidates={**v['candidates'], name: {'verdict': 'PASS', 'rule': 'superiority'}})
-        cfg = {'candidates': {name: 'superiority'}, 'arm_map': v.get('arm_map'),
-               'slot_id': 'slot', 'baseline': 'B'}
-        problems = judge.prior_problems(prior, cfg, name)
-        if problems:
-            raise ValueError('; '.join(problems))
+    # Only B, the selected candidates and the inherited placebo floor are
+    # dependencies of this queue. Selected candidates keep their actual rules.
+    # B-prime has no candidate verdict; adapt it solely for evidence validation
+    # (prior_problems checks records, not statistical superiority).
+    prior = dict(prior_evidence, candidates={**v['candidates'], "B'": {'verdict': 'PASS', 'rule': 'superiority'}})
+    cfg = {'candidates': {"B'": 'superiority'}, 'arm_map': mapping,
+           'slot_id': 'slot', 'baseline': 'B'}
+    problems = judge.prior_problems(prior, cfg, "B'")
+    if problems:
+        raise ValueError('; '.join(problems))
     return ['B'] + names, mapping
 
 
