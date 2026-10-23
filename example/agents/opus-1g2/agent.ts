@@ -1841,7 +1841,10 @@ export async function decide(
   const emitted = [...chosen, ...ouOrders];
   if (emitted.length === 0) return null;
   try {
-    for (const c of emitted.slice(1)) ctx.submit(c.action);
+    // botMain sends buffered submissions before the returned action. Queue every
+    // base-led action in priority order so base0 gets the first nonce; preserve
+    // the existing submission/return behavior when only OU orders are present.
+    for (const c of chosen.length > 0 ? emitted : emitted.slice(1)) ctx.submit(c.action);
   } catch (error) {
     // The runtime discards buffered submits when decide throws.
     ouObserved.clear();
@@ -1851,5 +1854,5 @@ export async function decide(
     saveOuState();
     throw error;
   }
-  return emitted[0].action;
+  return chosen.length > 0 ? null : emitted[0].action;
 }

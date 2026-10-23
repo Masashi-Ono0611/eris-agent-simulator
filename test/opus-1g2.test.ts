@@ -175,11 +175,11 @@ function fakeCtx(): AgentContext & { submitted: unknown[]; logs: unknown[] } {
 
 type Act = Record<string, unknown>;
 
-/** Everything one decide() call sends: the return value first, then the submits. */
+/** Everything one decide() call sends: submissions first, then the returned action, exactly like botMain. */
 async function emitted(obs: AgentObservation, decide = g.decide): Promise<Act[]> {
   const ctx = fakeCtx();
   const action = await decide(obs, ctx);
-  return [action, ...ctx.submitted].filter(Boolean) as Act[];
+  return [...ctx.submitted, action].filter(Boolean) as Act[];
 }
 
 const gmxOnly = (xs: Act[]) =>
@@ -192,6 +192,42 @@ async function warmup(opts: Parameters<typeof obsFor>[0] = {}): Promise<void> {
   for (let block = 98; block <= 100; block++)
     assert.deepEqual(gmxOnly(await emitted(obsFor({ ...opts, block }))), []);
 }
+
+test("send order: base0 and base1 precede OU orders", async () => {
+  const prior = process.env.ERIS_MAX_AGENT_BLOCK_GAS;
+  process.env.ERIS_MAX_AGENT_BLOCK_GAS = "20000000";
+  try {
+    await warmup();
+    const obs = obsFor({ block: 101, fairWeth: LOW, fairWbtc: 61200,
+      uniMid: 2900, curveMid: 3100, usdc: "100000000000" });
+    // opus-1a returns its highest-ranked candidate and submits the optional second.
+    // Use that selection as the independent base0/base1 oracle, not its send order.
+    const baseCtx = fakeCtx();
+    const base0 = await a.decide(obs, baseCtx);
+    const bases = [base0, ...baseCtx.submitted].filter(Boolean) as Act[];
+    assert.equal(bases.length, 2);
+    assert.equal(bases[0].type, "bundle", "exercise the main arbitrage");
+    const sent = await emitted(obs);
+    assert.equal(gmxOnly(sent).length, 2, "exercise both OU markets in the same block");
+    assert.deepEqual(sent.slice(0, bases.length), bases, "base0 must be first, base1 second");
+    assert.deepEqual(sent.slice(bases.length).map(x => [x.type, x.base]),
+      [["gmxIncrease", "WETH"], ["gmxIncrease", "WBTC"]]);
+  } finally {
+    if (prior === undefined) delete process.env.ERIS_MAX_AGENT_BLOCK_GAS;
+    else process.env.ERIS_MAX_AGENT_BLOCK_GAS = prior;
+  }
+});
+
+test("send order: without a base trade OU submissions and return stay unchanged", async () => {
+  await warmup();
+  const ctx = fakeCtx();
+  const returned = await g.decide(obsFor({ block: 101, fairWeth: LOW, fairWbtc: 61200 }), ctx);
+  const sent = [...ctx.submitted, returned].filter(Boolean) as Act[];
+  assert.deepEqual(sent.map(x => [x.type, x.base]),
+    [["gmxIncrease", "WBTC"], ["gmxIncrease", "WETH"]]);
+  assert.equal(ctx.submitted.length, 1);
+  assert.equal((returned as Act).base, "WETH");
+});
 
 // ---------------------------------------------------------------------------
 // anchor
@@ -382,7 +418,7 @@ test("both bases open in one block and the orders parse and validate", async () 
   const obs = obsFor({ block: 101, fairWeth: LOW, fairWbtc: 60_000 * 1.02 });
   const out = gmxOnly(await emitted(obs));
   assert.equal(out.length, 2);
-  const [weth, wbtc] = out;
+  const [wbtc, weth] = out;
   assert.equal(weth.base, "WETH");
   assert.equal(weth.isLong, true);
   assert.equal(wbtc.base, "WBTC");
@@ -420,7 +456,11 @@ test("inside the band opus-1g2 emits exactly opus-1a's actions", async () => {
   let acted = 0;
   for (const obs of seq) {
     const mine = await emitted(obs, g.decide);
-    const theirs = await emitted(obs, a.decide);
+    // Preserve opus-1a's selected actions, in candidate order. Its runtime send
+    // order still puts the returned first candidate last, which we now fix here.
+    const baseCtx = fakeCtx();
+    const first = await a.decide(obs, baseCtx);
+    const theirs = [first, ...baseCtx.submitted].filter(Boolean) as Act[];
     assert.deepEqual(mine, theirs, `block ${obs.blockNumber}`);
     assert.deepEqual(gmxOnly(mine), []);
     if (theirs.length > 0) acted += 1;
