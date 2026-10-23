@@ -111,8 +111,9 @@ function ouBlock(obs: AgentObservation): number {
 function loadOuState(): void {
   ouLoaded = true;
   const dir = process.env.ERIS_AGENT_STATE_DIR;
-  // Durable intent is required before any order can cross the submit boundary.
-  if (!dir) { ouStorageFailed = true; return; }
+  // Without an offered store, the module maps retain intent and risk state for this
+  // run/epoch. A configured store's failures must never fall back to memory mode.
+  if (dir === undefined) return;
   ouStatePath = join(dir, "ascon-zeta-r3kg-ou-state.json");
   try {
     // Only this small, strategy-owned file is read. Never read runtime versions or credentials.
@@ -177,7 +178,8 @@ function beginOuObservation(obs: AgentObservation, ctx: AgentContext): void {
 }
 
 function saveOuState(): boolean {
-  if (ouStorageFailed || !ouStatePath || !ouEpoch) return false;
+  if (ouStorageFailed || !ouEpoch) return false;
+  if (!ouStatePath) return true; // no store offered: state already lives in module maps
   try {
     const body = JSON.stringify({ schema: 1, epoch: ouEpoch,
       bases: OU_BASES.filter(base => ouAnchors.has(base)).map(base => ({
@@ -195,7 +197,7 @@ function saveOuState(): boolean {
     return true;
   } catch {
     ouStorageFailed = true;
-    return false; // retain the intent in memory; never submit after a failed write
+    return false; // retain the intent in memory; block entries after a failed write
   }
 }
 
@@ -557,7 +559,7 @@ async function terminalIntent(ctx: AgentContext, obs: AgentObservation, base: st
 }
 
 /** Observe even when there is no order budget, so anchors, risk and confirmation keep up.
- * Intents are persisted before submission, including an uncertain/throwing queue call.
+ * Intents are retained before submission, durably when a store is offered.
  * A queued intent is not a runtime/chain acknowledgement; an unreflected intent blocks retries.
  */
 export async function submitOu(obs: AgentObservation, ctx: AgentContext, action: ReturnedAction): Promise<void> {
@@ -597,6 +599,7 @@ export async function submitOu(obs: AgentObservation, ctx: AgentContext, action:
   }
   saveOuState();
   signals.ouPersistenceDegraded = ouStorageFailed ? 1 : 0;
+  signals.ouPersistenceMemory = ouStatePath === undefined ? 1 : 0;
   // Isolate diagnostics as well as OU itself; logging failure must not suppress r3k or orders.
   try { ctx.log({ round: obs.round, signals }); } catch { /* optional diagnostics */ }
 
@@ -609,7 +612,7 @@ export async function submitOu(obs: AgentObservation, ctx: AgentContext, action:
     // Write ahead of the queue boundary. Even a throwing submit may have queued the
     // action; retain that intent until terminal evidence arrives.
     ouPending.set(o.base, { ...d.pending!, logOffset: intentLogOffset(ctx), action: d.action });
-    if (!saveOuState()) continue;
+    if (!saveOuState() && d.action.type !== "gmxDecrease") continue;
     ouObserved.delete(o.base);
     wallet.slots--;
     wallet.usdcFreeUnits -= d.usdcSpent;

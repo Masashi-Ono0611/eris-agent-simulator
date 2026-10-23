@@ -1008,10 +1008,40 @@ test("review gap: pending intent and risk latch survive skipped blocks and reloa
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block, runId: "risk", fairWeth: LOW }))), [], "stop survives gap");
 });
 
-test("review persistence: absent storage blocks increases and intent is durable before submit", async () => {
+test("persistence: absent storage trades with memory across blocks and deduplicates pending", async () => {
   delete process.env.ERIS_AGENT_STATE_DIR;
-  for (const block of [100, 101, 102, 103])
-    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+  await warmup();
+  const ctx = fakeCtx();
+  await g.submitOu(obsFor({ block: 101, fairWeth: LOW }), ctx, null);
+  assert.equal(ctx.submitted.length, 1, "normal entry after in-memory confirmation");
+  assert.equal((ctx.submitted[0] as Act).type, "gmxIncrease");
+  for (const block of [101, 102, 108]) {
+    const next = fakeCtx();
+    await g.submitOu(obsFor({ block, fairWeth: 2700 }), next, null);
+    assert.deepEqual(next.submitted, [], "in-memory pending blocks duplicate entries across gaps");
+    assert.equal(next.logs.length, 1, "one signal record per observation");
+    const signals = (next.logs[0] as { signals: Record<string, number> }).signals;
+    assert.equal(signals.ouAnchorWETH, 3000, "anchor retained across blocks");
+    assert.equal(signals.ouPersistenceMemory, 1);
+    assert.equal(signals.ouPersistenceDegraded, 0);
+  }
+});
+
+test("persistence: memory state resets on run and epoch changes", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  for (const opts of [
+    { runId: "first", epoch: { index: 1, count: 60 } },
+    { runId: "second", epoch: { index: 1, count: 60 } },
+    { runId: "second", epoch: { index: 2, count: 60 } },
+  ]) {
+    for (const block of [100, 101])
+      assert.deepEqual(gmxOnly(await emitted(obsFor({ ...opts, block, fairWeth: LOW }))), []);
+    assert.equal(gmxOnly(await emitted(obsFor({ ...opts, block: 102, fairWeth: LOW })))[0]?.type,
+      "gmxIncrease", "new run/epoch clears pending and reconfirms");
+  }
+});
+
+test("review persistence: intent is durable before submit", async () => {
   const path = persistentState(); g.resetOuStateForTest();
   await warmup();
   const ctx = fakeCtx();
@@ -1117,6 +1147,26 @@ test("persistence: a write failure after successful load prevents submit and rel
   g.resetOuStateForTest();
   for (const block of [110, 111, 112]) await g.submitOu(obsFor({ block, fairWeth: LOW }), ctx, null);
   assert.deepEqual(ctx.submitted, []);
+});
+
+test("persistence: failed load or save still permits risk exits and deduplicates them", async () => {
+  for (const failure of ["load", "save"]) {
+    const path = persistentState();
+    g.resetOuStateForTest();
+    if (failure === "load") writeFileSync(path, "{incomplete");
+    else {
+      await warmup();
+      mkdirSync(path + ".tmp");
+    }
+    const ctx = fakeCtx();
+    const opts = { fairWeth: LOW, wethPos: { ...pos(40_000), pnlUsd: -6000 } };
+    await g.submitOu(obsFor({ ...opts, block: 101 }), ctx, null);
+    assert.equal((ctx.submitted[0] as Act)?.type, "gmxDecrease");
+    assert.equal(ctx.submitted.length, 1);
+    assert.equal((ctx.logs[0] as { signals: Record<string, number> }).signals.ouPersistenceDegraded, 1);
+    await g.submitOu(obsFor({ ...opts, block: 102 }), ctx, null);
+    assert.equal(ctx.submitted.length, 1, "failed persistence retains pending exit in memory");
+  }
 });
 
 function settleOrder(log: string, sentBlock: number, actionType: string, included: number): void {
