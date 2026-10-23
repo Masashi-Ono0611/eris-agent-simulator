@@ -376,6 +376,140 @@ def mechanism_controls():
     assert json.loads(out.read_text())['arms']['R']['tie_win_rate'] is None
     print('MECHANISM_CONTROLS_OK')
 
+
+def review_controls(kind):
+    """Regression controls for the full-code review; independently runnable red probes."""
+    j = load('judge2')
+    if kind == 'fs-label':
+        j.FS_FIELD = 'FS-test'
+        cfg = dict(stage='retest', baseline='B', slot_id='slot', arm_map=None,
+                   candidates={'R': 'superiority'})
+        rec = dict(sha256='a'*64, setup={k: 1 for k in j.SETUP_KEYS})
+        labels = [f'{f}#1003' for f in j.FIELDS] + [f'{j.FS_FIELD}#{s}' for s in j.FS_SEEDS]
+        v = dict(candidates={'R': dict(verdict='PASS', rule='superiority')},
+                 params=dict(slot_id='slot', baseline='B'),
+                 design=dict(seeds=[1003], fs_seeds=list(j.FS_SEEDS)),
+                 inputs=dict(matrices={a: {lab: rec for lab in labels} for a in ('B', 'R')}))
+        assert j.prior_problems(v, cfg, 'R') == []
+        v['inputs']['matrices']['R'].pop(labels[-1])
+        assert j.prior_problems(v, cfg, 'R')
+    elif kind == 'relative-path':
+        logs = temp / 'relative-logs'
+        logs.mkdir()
+        out = temp / 'nested' / 'manifest.json'
+        out.parent.mkdir()
+        # Deliberately no local copy; paths follow the manifest-relative contract.
+        (logs / 'one.queue.log').write_text(
+            'NOTE_s1-FP1003-opus-1 run=x slot=opus-1 matrix=runs/matrix.json '
+            + 'head=' + 'a'*12 + ' arm_tree=' + 'b'*12 + '\n'
+            + 'EXIT_s1-FP1003-opus-1=0 VERDICT=PASS COLLISION=PASS ARM=PASS run=x\n')
+        invoke('make-manifest', '--logs', logs, '--stage', '1', '--out', out, rc=2)
+        cell = json.loads(out.read_text())['cells'][0]
+        path = Path(cell['arms']['B'])
+        resolved = path if path.is_absolute() else out.parent / path
+        proof = cell['arm_evidence']['B']
+        assert not j.arm_problems(proof, 'opus-1', {'sourceCommit': 'a'*40}, str(resolved))
+        assert j.arm_problems(proof, 'opus-1', {'sourceCommit': 'a'*40}, str(temp / 'wrong.json'))
+    else:
+        run = temp / ('review-' + kind)
+        (run / 'agents').mkdir(parents=True)
+        matrix = run / 'matrix.json'
+        dump(matrix, {'scenarios': [{'runDir': str(run)}]})
+        summary = run / 'summary.json'
+        agent = run / 'agents' / 'slot.jsonl'
+        (run / 'blocks.csv').write_text(
+            'blockNumber,txIndex,from,priorityFeeWei,ownerId,to\n'
+            '101,0,a,10,slot,router\n101,1,b,10,other,router\n')
+        def write_log(timeout_rounds=()):
+            rows = []
+            for r in range(99, 111):
+                e = dict(agentId='slot', round=r)
+                if r in timeout_rounds:
+                    if kind == 'stf-rounds':
+                        e = dict(agentId='slot', blockSeen=r, event='submit_failed', error='execution reverted: STF')
+                    else:
+                        e['reason'] = 'decide timeout: no answer within 5000ms'
+                    rows.append(e)
+                else:
+                    e['action'] = {'type': 'noop'}
+                    rows.extend([e, e])
+            if kind == 'stf-rounds':
+                rows.insert(0, dict(agentId='slot', reason='launch entry token'))
+            agent.write_text(''.join(json.dumps(e) + '\n' for e in rows))
+        mech = load('mechanism')
+        dump(summary, dict(runStartBlock=100, finalBlock=110, blocksProcessed=10))
+        write_log()
+        assert mech.measure(matrix, 'slot', [])['slot_timeouts'] == 0
+        if kind in ('timeout-rounds', 'stf-rounds'):
+            failure_key = 'stf' if kind == 'stf-rounds' else 'slot_timeouts'
+            for rounds in (range(102, 108), range(107, 111)):
+                write_log(rounds)
+                if kind == 'stf-rounds':
+                    lines = agent.read_text().splitlines()
+                    agent.write_text('\n'.join([x for x in lines if 'submit_failed' not in x]
+                                               + [x for x in lines if 'submit_failed' in x]))
+                measured = mech.measure(matrix, 'slot', [])
+                assert measured[failure_key] == len(rounds)
+                h = hashlib.sha256(matrix.read_bytes()).hexdigest()
+                evidence = dict(measured, matrices_sha256=[h], tie_win_rate=1,
+                                p99_decide_ms=None, p99_decide_ms_reason='not recorded')
+                # B uses the same collector and must retain its timeout count too.
+                for arm in ('R', 'B'):
+                    subs = j.mechanism_clause({arm: evidence}, arm, arm, 'superiority', {arm: {h}})
+                    assert subs[failure_key]['status'] == 'FAIL'
+                    assert j._combine(subs) == 'FAIL', subs
+                    cells = {(seed, field): {'regimes': {reg: (1.0, 1.0) for reg in j.REGIMES12}}
+                             for seed in range(1003, 1007) for field in j.FIELDS}
+                    verdict = j.evaluate('superiority', cells, mechanism_subs=subs, f_override=.25)
+                    assert verdict['clauses']['5_mechanism']['status'] == 'FAIL'
+                    assert verdict['verdict'] == 'FAIL'
+                    manifest, output = run / 'manifest.json', run / 'measured.json'
+                    dump(manifest, dict(candidates={'R': 'superiority'},
+                         cells=[dict(seed=1003, field='FP', arms={arm: str(matrix)})]))
+                    invoke('mechanism', manifest, '--out', output, rc=2)
+                    collected = json.loads(output.read_text())['arms'][arm]
+                    assert not collected['errors'] and collected[failure_key] == len(rounds)
+                # Unattributed failures cannot supply coverage for the slot.
+                complete_log = agent.read_text()
+                rows = [json.loads(line) for line in complete_log.splitlines()]
+                for row in rows:
+                    if 'decide timeout:' in row.get('reason', '') or row.get('event') == 'submit_failed':
+                        row['agentId'] = 'other'
+                agent.write_text('\n'.join(map(json.dumps, rows)))
+                try:
+                    mech.measure(matrix, 'slot', [])
+                except ValueError:
+                    pass
+                else:
+                    raise AssertionError('other agent failure supplied slot coverage')
+                agent.write_text(complete_log)
+                # Removing the failure records must still expose missing coverage.
+                agent.write_text('\n'.join(line for line in agent.read_text().splitlines()
+                                           if 'decide timeout:' not in line and 'submit_failed' not in line))
+                try:
+                    mech.measure(matrix, 'slot', [])
+                except ValueError:
+                    pass
+                else:
+                    raise AssertionError('missing timeout rounds accepted as complete')
+        elif kind == 'summary-bounds':
+            for start, end, count in ((100, 100, 0), (101, 100, 1), (100, 110, 0), (100, 110, 9)):
+                dump(summary, dict(runStartBlock=start, finalBlock=end, blocksProcessed=count))
+                agent.write_text(json.dumps(dict(agentId='slot', round=start-1, action={})))
+                if end == 110:
+                    write_log()
+                try:
+                    mech.measure(matrix, 'slot', [])
+                except ValueError:
+                    pass
+                else:
+                    raise AssertionError(f'invalid summary accepted: {start}, {end}, {count}')
+    print('REVIEW_CONTROL_OK ' + kind)
+
+for control in ('fs-label', 'relative-path', 'timeout-rounds', 'stf-rounds', 'summary-bounds'):
+    if which in ('all', control):
+        review_controls(control)
+
 if which in ('all', 'manifest'):
     manifest_controls()
 if which in ('all', 'mechanism'):

@@ -1298,7 +1298,7 @@ def prior_problems(v, cfg, candidate):
         note = "FS seeds %s (plan: %s)" % (sorted(fs_seeds), list(FS_SEEDS))
         if note not in (v.get("nonplan") or []):
             return problems + ["prior stage-2 verdict missing required FS coverage"]
-    labels = {"%s#%s" % (f, seed) for seed in seeds for f in FIELDS} | {"FS#%s" % seed for seed in fs_seeds}
+    labels = {"%s#%s" % (f, seed) for seed in seeds for f in FIELDS} | {"%s#%s" % (FS_FIELD, seed) for seed in fs_seeds}
     import re
     for arm in (cfg["baseline"], candidate):
         records = matrices.get(arm) if isinstance(matrices, dict) else None

@@ -111,7 +111,8 @@ def main():
                     evidence.setdefault((seed, field), {})[labels[arm]] = {
                         **{k: chosen['notes'][k] for k in ('slot', 'head', 'arm_tree')},
                         **{k: chosen['exit'][k] for k in ('ARM', 'COLLISION')},
-                        "matrix": str(Path(mapped).resolve())}
+                        "matrix": str((Path(mapped) if Path(mapped).is_absolute() else
+                                       a.out.resolve().parent / mapped).resolve())}
                     selected.append(chosen)
                 else:
                     missing.append(dict(job=job, reason=reason))
