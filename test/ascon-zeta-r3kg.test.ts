@@ -5,7 +5,7 @@
 process.env.ERIS_LOCAL_DEPLOY = "1";
 
 import test, { beforeEach, afterEach } from "node:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, appendFileSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import assert from "node:assert/strict";
@@ -17,14 +17,21 @@ const g = { ...await import("../example/agents/ascon-zeta-r3kg/ou.js"),
   ...await import("../example/agents/ascon-zeta-r3kg/agent.js") };
 const a = await import("../example/agents/ascon-zeta-r3k/agent.js");
 
+let receiptBlock: bigint | undefined;
+let originalRunDir: string | undefined;
 let originalStateDir: string | undefined;
 let testStateDir: string | undefined;
 beforeEach(() => {
+  receiptBlock = undefined;
+  originalRunDir = process.env.ERIS_RUN_DIR;
+  delete process.env.ERIS_RUN_DIR;
   originalStateDir = process.env.ERIS_AGENT_STATE_DIR;
-  delete process.env.ERIS_AGENT_STATE_DIR;
+  persistentState();
   g.resetOuStateForTest();
 });
 afterEach(() => {
+  if (originalRunDir === undefined) delete process.env.ERIS_RUN_DIR;
+  else process.env.ERIS_RUN_DIR = originalRunDir;
   if (originalStateDir === undefined) delete process.env.ERIS_AGENT_STATE_DIR;
   else process.env.ERIS_AGENT_STATE_DIR = originalStateDir;
   if (testStateDir) rmSync(testStateDir, { recursive: true, force: true });
@@ -32,6 +39,7 @@ afterEach(() => {
   g.resetOuStateForTest();
 });
 function persistentState(): string {
+  if (testStateDir) rmSync(testStateDir, { recursive: true, force: true });
   testStateDir = mkdtempSync(join(tmpdir(), "ascon-zeta-r3kg-state-"));
   process.env.ERIS_AGENT_STATE_DIR = testStateDir;
   return join(testStateDir, "ascon-zeta-r3kg-ou-state.json");
@@ -162,9 +170,15 @@ function fakeCtx(): AgentContext & { submitted: unknown[]; logs: unknown[] } {
   return {
     agentId: "ascon-zeta-r3kg",
     address: "0x0000000000000000000000000000000000000001",
-    publicClient: {} as AgentContext["publicClient"],
-    // Real runtime defaults also permit simultaneous OU orders and r3k swaps.
-    config: { maxTxGas: 10_000_000n, maxAgentBlockGas: 10_000_000n } as AgentContext["config"],
+    publicClient: {
+      getTransactionReceipt: async () => {
+        if (receiptBlock === undefined) throw new Error("no receipt");
+        return { status: "success", blockNumber: receiptBlock };
+      },
+      readContract: async () => 0n,
+    } as unknown as AgentContext["publicClient"],
+    // Explicit bounded test profile permits simultaneous orders; default 10M per-tx is tested separately.
+    config: { maxTxGas: 2_000_000n, maxAgentBlockGas: 10_000_000n } as AgentContext["config"],
     latestObservation: () => null,
     onObservation: () => () => undefined,
     submit: (x: unknown) => submitted.push(x),
@@ -233,6 +247,8 @@ const base = {
   blocksRemaining: 300,
   usdcFreeUnits: 25_000_000_000n,
   ethWei: 10n ** 18n,
+  orderGasWei: 10_000_000_000_000_000n,
+  closeReserveWei: 80_000_000_000_000_000n,
   priorityFeeWei: "100000000",
   confirmedBlocks: 3,
 };
@@ -269,7 +285,7 @@ test("sizing: $40k at 4x on USDC, scaled down to what leaves the $5k reserve, sk
   // $7k free: $2k above the reserve is $8k, under the $10k floor.
   const none = g.ouPlan({ ...base, fair: LOW, position: undefined, usdcFreeUnits: 7_000_000_000n });
   assert.equal(none.action, undefined);
-  // ETH below the 0.03 execution fee plus the 0.05 reserve: nothing.
+  // ETH cannot cover the entry transaction plus both future closes.
   const dry = g.ouPlan({ ...base, fair: LOW, position: undefined, ethWei: 70_000_000_000_000_000n });
   assert.equal(dry.action, undefined);
 });
@@ -293,12 +309,14 @@ test("pending: an unreflected increase never expires without cancellation eviden
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
 });
 
-test("pending: once the fill is reflected the module stops waiting and holds", async () => {
+test("pending: execution evidence releases the intent, with confirmation before re-entry", async () => {
+  const log = runtimeLog();
   g.resetOuStateForTest();
   await warmup();
   assert.equal(gmxOnly(await emitted(obsFor({ block: 101, fairWeth: LOW }))).length, 1);
   await emitted(obsFor({ block: 102, fairWeth: LOW }));
-  // Reflected at block 103: positioned, nothing more.
+  settleOrder(log, 101, "gmxIncrease", 103);
+  // Mined and removed from the order set at block 103: positioned, nothing more.
   assert.deepEqual(
     gmxOnly(await emitted(obsFor({ block: 103, fairWeth: LOW, wethPos: pos(40_000) }))),
     [],
@@ -311,7 +329,8 @@ test("pending: once the fill is reflected the module stops waiting and holds", a
   assert.equal(reentry[0].type, "gmxIncrease");
 });
 
-test("reversal: decrease all now, the opposite increase once the decrease is reflected", async () => {
+test("reversal: decrease all now, opposite increase after terminal evidence and flat confirmation", async () => {
+  const log = runtimeLog();
   g.resetOuStateForTest();
   await warmup();
   const HIGH = 3000 * 1.0204; // g = -2%: short wanted
@@ -328,6 +347,7 @@ test("reversal: decrease all now, the opposite increase once the decrease is ref
     gmxOnly(await emitted(obsFor({ block: 111, fairWeth: HIGH, wethPos: pos(40_000) }))),
     [],
   );
+  settleOrder(log, 110, "gmxDecrease", 112);
   // The long is gone: require three flat blocks before opening the short.
   for (const block of [112, 113])
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: HIGH }))), []);
@@ -430,7 +450,7 @@ test("inside the band r3kg emits exactly r3k's actions", async () => {
 });
 
 
-test("reload: no increase during the two-block fill window without persistence", async () => {
+test("reload: durable intent prevents another increase during the fill window", async () => {
   g.resetOuStateForTest();
   for (let block = 98; block <= 100; block++) await emitted(obsFor({ block }));
   assert.equal(gmxOnly(await emitted(obsFor({ block: 101, fairWeth: LOW }))).length, 1);
@@ -496,7 +516,7 @@ test("pending: a missing GMX market does not cancel an increase", async () => {
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
 });
 
-test("emission: logging/submit failures preserve r3k's return; only queued intents persist", async () => {
+test("emission: logging/submit failures preserve r3k's return and uncertain intents persist", async () => {
   const path = persistentState();
   await warmup();
   const ctx = fakeCtx();
@@ -514,27 +534,28 @@ test("emission: logging/submit failures preserve r3k's return; only queued inten
   const next = obsFor({ block: 203, fairWeth: LOW, fairWbtc: 60_000 * 1.02 });
   assert.deepEqual(await g.decide(next, failing), await a.decide(next, fakeCtx()));
   saved = JSON.parse(readFileSync(path, "utf8"));
-  assert.ok(saved.bases.every((b: Act) => b.pending === undefined));
+  assert.ok(saved.bases.every((b: Act) => b.pending !== undefined));
   assert.equal(gmxOnly(await emitted(obsFor({ block: 204, fairWeth: LOW,
-    fairWbtc: 60_000 * 1.02 }))).length, 2);
+    fairWbtc: 60_000 * 1.02 }))).length, 0);
 });
 
-test("persistence: corrupt or unwritable state falls back to the confirmation guard", async () => {
+test("persistence: corrupt or unwritable state fails closed", async () => {
   const path = persistentState();
   writeFileSync(path, "{incomplete");
   for (const block of [100, 101])
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
-  assert.equal(gmxOnly(await emitted(obsFor({ block: 102, fairWeth: LOW }))).length, 1);
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 102, fairWeth: LOW }))).length, 0);
   // A regular file cannot serve as a directory. No permissions assumptions (e.g. root) needed.
   process.env.ERIS_AGENT_STATE_DIR = path;
   g.resetOuStateForTest();
   for (const block of [103, 104])
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
-  assert.equal(gmxOnly(await emitted(obsFor({ block: 105, fairWeth: LOW }))).length, 1);
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 105, fairWeth: LOW }))).length, 0);
 });
 
-test("risk: loss threshold is strict and closes either side with only the execution fee", async () => {
+test("risk: loss threshold is strict and closes either side with execution fee and gas", async () => {
   for (const side of [1, -1]) {
+    persistentState();
     g.resetOuStateForTest();
     const fairWeth = side > 0 ? LOW : 3000 * 1.019;
     const atThreshold = { ...pos(side * 40_000), pnlUsd: -5000 };
@@ -542,7 +563,7 @@ test("risk: loss threshold is strict and closes either side with only the execut
       wethPos: atThreshold }))), []);
     const out = gmxOnly(await emitted(obsFor({ block: 101, fairWeth,
       wethPos: { ...atThreshold, pnlUsd: -5000.01 },
-      blocksRemaining: 6, ethWei: "30000000000000000" })));
+      blocksRemaining: 6, ethWei: "40000000000000000" })));
     assert.equal(out.length, 1);
     assert.equal(out[0].type, "gmxDecrease");
     assert.equal(out[0].isLong, side > 0);
@@ -588,6 +609,7 @@ test("risk: 24 consecutive adverse drift steps close long and short, with no re-
 
 test("risk: a plateau or favorable tick breaks the adverse drift streak", async () => {
   for (const breakFair of [2947, 2950]) {
+    persistentState();
     g.resetOuStateForTest();
     for (let step = 0; step < 24; step++)
       assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 100 + step,
@@ -600,15 +622,15 @@ test("risk: a plateau or favorable tick breaks the adverse drift streak", async 
   }
 });
 
-test("ETH: reversal decrease accepts 0.03 to below 0.08 ETH, entry still needs the reserve", () => {
-  for (const ethWei of [30_000_000_000_000_000n, 50_000_000_000_000_000n,
-    79_999_999_999_999_999n]) {
+test("ETH: close requires 0.04 including gas; entry also retains 0.08 for both closes", () => {
+  for (const ethWei of [40_000_000_000_000_000n, 60_000_000_000_000_000n,
+    119_999_999_999_999_999n]) {
     const d = g.ouPlan({ ...base, fair: 3060, position: pos(40_000) as never, ethWei });
     assert.equal(d.action?.type, "gmxDecrease");
     assert.equal(g.ouPlan({ ...base, fair: LOW, position: undefined, ethWei }).action, undefined);
   }
   assert.equal(g.ouPlan({ ...base, fair: 3060, position: pos(40_000) as never,
-    ethWei: 29_999_999_999_999_999n }).action, undefined);
+    ethWei: 39_999_999_999_999_999n }).action, undefined);
 });
 
 test("epoch: ordinal change clears anchors, pending, confirmation and risk stops on disk and in memory", async () => {
@@ -631,21 +653,21 @@ test("epoch: ordinal change clears anchors, pending, confirmation and risk stops
   assert.equal(gmxOnly(await emitted(obsFor({ block: 104, epoch: epoch2, fairWeth: 2650 }))).length, 1);
 });
 
-test("epoch: block discontinuities start fresh records and restart entry confirmation", async () => {
+test("epoch: discontinuities retain pending and anchor until an explicit epoch change", async () => {
   const path = persistentState();
   for (const nextBlock of [10, 200]) {
     g.resetOuStateForTest();
-    await warmup();
+    for (const block of [98, 99, 100]) await emitted(obsFor({ block }));
     await emitted(obsFor({ block: 101, fairWeth: LOW }));
     g.resetOuStateForTest();
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block: nextBlock, fairWeth: 2700 }))), []);
     const saved = JSON.parse(readFileSync(path, "utf8"));
-    assert.equal(saved.epoch.key, `start:${nextBlock}`);
+    assert.equal(saved.epoch.key, "start:98");
     const weth = saved.bases.find((b: Act) => b.base === "WETH");
-    assert.equal(weth.anchor, 2700);
-    assert.equal(weth.pending, undefined);
+    assert.equal(weth.anchor, 3000);
+    assert.equal(weth.pending.sentBlock, 101);
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block: nextBlock + 1, fairWeth: 2650 }))), []);
-    assert.equal(gmxOnly(await emitted(obsFor({ block: nextBlock + 2, fairWeth: 2650 }))).length, 1);
+    assert.equal(gmxOnly(await emitted(obsFor({ block: nextBlock + 2, fairWeth: 2650 }))).length, 0);
   }
 });
 
@@ -672,7 +694,7 @@ test("epoch: declared run start is stable over reload and run identity isolates 
 
 
 test("pending: persisted decrease survives reload and a transient missing position", async () => {
-  persistentState();
+  const log = runtimeLog();
   await warmup();
   const high = 3057;
   const first = gmxOnly(await emitted(obsFor({ block: 101, fairWeth: high, wethPos: pos(40_000) })));
@@ -680,6 +702,7 @@ test("pending: persisted decrease survives reload and a transient missing positi
   g.resetOuStateForTest();
   assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 102, fairWeth: high }))), []);
   assert.deepEqual(gmxOnly(await emitted(obsFor({ block: 103, fairWeth: high, wethPos: pos(40_000) }))), []);
+  settleOrder(log, 101, "gmxDecrease", 104);
   for (const block of [104, 105])
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: high }))), []);
   const opposite = gmxOnly(await emitted(obsFor({ block: 106, fairWeth: high })));
@@ -812,6 +835,7 @@ test("OU enabled: r3k action unchanged, all OU orders appear only via submit", a
   assert.equal(ctx.submitted.length, 1);
   assert.equal((ctx.submitted[0] as Act).type, "gmxIncrease");
   // Inactivity is also returned unchanged; OU never replaces even a noop.
+  persistentState();
   candidate.ou.resetOuStateForTest();
   for (let block = 200; block <= 202; block++) await candidate.agent.decide(obsFor({ block }), fakeCtx());
   const idle = obsFor({ block: 203, fairWeth: LOW });
@@ -842,7 +866,7 @@ test("USDC reserve: original balance protects the largest next r3k trade, both b
   assert.equal(25_000_000_000n - spent - collateral, 6_250_000_000n, "USDC reserve, not just the $5k floor");
 });
 
-test("runtime gas capacity: a typical r3k bundle permits OU under default 10M limits", async () => {
+test("runtime gas capacity: a typical r3k bundle permits OU under explicit 2M per-tx / 10M block limits", async () => {
   const candidate = await load("ascon-zeta-r3kg"), reference = await load("ascon-zeta-r3k");
   for (let block = 100; block <= 102; block++) {
     const ctx = fakeCtx();
@@ -859,11 +883,10 @@ test("runtime gas capacity: a typical r3k bundle permits OU under default 10M li
 
 test("runtime gas capacity: realistic total over budget waits without changing r3k or marking pending", async () => {
   const candidate = await load("ascon-zeta-r3kg"), reference = await load("ascon-zeta-r3k");
-  // Sender estimates: two (140k + 50k) swaps + 865k * 1.3 GMX = 1,504,500.
-  // With the additional 20% margin the combined reservation is exactly 1,805,400.
+  // Two swap ceilings and one OU ceiling reserve exactly 6M gas.
   for (let block = 100; block <= 104; block++) {
     const ctx = fakeCtx();
-    ctx.config.maxAgentBlockGas = block <= 102 ? 1_000_000n : block === 103 ? 1_805_399n : 1_805_400n;
+    ctx.config.maxAgentBlockGas = block <= 102 ? 1_000_000n : block === 103 ? 5_999_999n : 6_000_000n;
     const observation = obsFor({ block, fairWeth: LOW, uniMid: LOW / 1.04, curveMid: LOW * 1.04 });
     const original = await reference.agent.decide(structuredClone(observation), fakeCtx());
     assert.equal(original.type, "bundle");
@@ -882,17 +905,17 @@ test("runtime gas capacity: cumulative legs, two OU orders, per-tx cap and opaqu
   const bundle = { type: "bundle", actions: [swap, { type: "curveSwap", tokenIn: "WETH", amountIn: "1" }] };
   const before = structuredClone(bundle);
   assert.equal(g.ouBudget(observation, ctx, bundle).slots, 2);
-  ctx.config.maxAgentBlockGas = 1_700_000n;
+  ctx.config.maxAgentBlockGas = 4_000_000n;
   assert.equal(g.ouBudget(observation, ctx, swap).slots, 1);
   assert.equal(g.ouBudget(observation, ctx, bundle).slots, 0, "reserve every bundle leg");
-  ctx.config.maxAgentBlockGas = 3_154_800n;
+  ctx.config.maxAgentBlockGas = 8_000_000n;
   assert.equal(g.ouBudget(observation, ctx, bundle).slots, 2, "two orders including margin fit exactly");
   ctx.config.maxAgentBlockGas--;
   assert.equal(g.ouBudget(observation, ctx, bundle).slots, 1);
   ctx.config.maxAgentBlockGas = 0n;
   assert.equal(g.ouBudget(observation, ctx, bundle).slots, 2, "zero disables the per-block cap in send.ts");
   ctx.config.maxTxGas = 1_124_499n;
-  assert.equal(g.ouBudget(observation, ctx, null).slots, 0, "GMX sender limit exceeds per-tx cap");
+  assert.equal(g.ouBudget(observation, ctx, null).slots, 2, "finite enforced cap bounds accepted transactions");
   ctx.config.maxTxGas++;
   assert.equal(g.ouBudget(observation, ctx, null).slots, 2);
   assert.equal(g.ouBudget(observation, fakeCtx(), { type: "rawTx", tx: { data: "0x" } }).slots, 0);
@@ -937,7 +960,7 @@ test("partial submit: first intent survives second-submit failure and real modul
   assert.deepEqual(await first.agent.decide(observation, ctx), await reference.agent.decide(observation, fakeCtx()));
   const saved = JSON.parse(readFileSync(path, "utf8"));
   assert.equal(saved.bases.find((b: Act) => b.base === "WETH").pending.sentBlock, 101);
-  assert.equal(saved.bases.find((b: Act) => b.base === "WBTC").pending, undefined);
+  assert.equal(saved.bases.find((b: Act) => b.base === "WBTC").pending.sentBlock, 101);
   const reloaded = await load("ascon-zeta-r3kg");
   for (const block of [102, 103]) {
     const next = fakeCtx();
@@ -946,18 +969,203 @@ test("partial submit: first intent survives second-submit failure and real modul
   }
   const next = fakeCtx();
   await reloaded.agent.decide(obsFor({ block: 104, fairWeth: 2700, fairWbtc: 61_200 }), next);
-  assert.equal(next.submitted.length, 1);
-  assert.equal((next.submitted[0] as Act).base, "WBTC");
-  assert.equal((next.submitted[0] as Act).collateralAmount, "8750000000");
+  assert.equal(next.submitted.length, 0, "throwing submit retains uncertain intent");
 });
 
 test("repeated block does not give OU another gas slot", async () => {
   await warmup();
   const observation = obsFor({ block: 101, fairWeth: LOW, fairWbtc: 61_200 });
-  const first = fakeCtx(); first.config.maxAgentBlockGas = 1_500_000n;
+  const first = fakeCtx(); first.config.maxAgentBlockGas = 2_000_000n;
   await g.decide(observation, first);
   assert.equal(first.submitted.length, 1);
-  const repeat = fakeCtx(); repeat.config.maxAgentBlockGas = 1_500_000n;
+  const repeat = fakeCtx(); repeat.config.maxAgentBlockGas = 2_000_000n;
   await g.decide(observation, repeat);
   assert.deepEqual(repeat.submitted, []);
+});
+
+// Review regressions: each test was run against the pre-fix implementation.
+test("review ETH: reserve base gas and both future closes before opening", () => {
+  const ctx = fakeCtx();
+  const observation = obsFor({ ethWei: "110000000000000000" });
+  const budget = g.ouBudget(observation, ctx, { type: "swap", tokenIn: "WETH", amountIn: "1", maxPriorityFeePerGasWei: "5000000000" });
+  assert.ok(budget.ethWei < 110000000000000000n, "base gas must be deducted");
+  const d = g.ouPlan({ ...base, fair: LOW, position: undefined, ethWei: 80000000000000000n,
+    orderGasWei: 1000000000000000n, closeReserveWei: 62000000000000000n });
+  assert.equal(d.action, undefined, "opening must retain two execution fees plus close gas");
+});
+
+test("review gap: pending intent and risk latch survive skipped blocks and reload", async () => {
+  persistentState();
+  await warmup();
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 101, fairWeth: LOW }))).length, 1);
+  g.resetOuStateForTest();
+  for (const block of [110, 111, 112, 113])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), [], "live intent survives gap");
+  // Separate epoch: latch without submitting a close, then skip and reload.
+  await emitted(obsFor({ block: 200, runId: "risk", fairWeth: LOW, ethWei: "0", wethPos: { ...pos(40000), pnlUsd: -6000 } }));
+  g.resetOuStateForTest();
+  for (const block of [210, 211, 212])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, runId: "risk", fairWeth: LOW }))), [], "stop survives gap");
+});
+
+test("review persistence: absent storage blocks increases and intent is durable before submit", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  for (const block of [100, 101, 102, 103])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+  const path = persistentState(); g.resetOuStateForTest();
+  await warmup();
+  const ctx = fakeCtx();
+  ctx.submit = action => {
+    const state = JSON.parse(readFileSync(path, "utf8"));
+    assert.equal(state.bases.find((b: Act) => b.base === "WETH").pending?.sentBlock, 101);
+    ctx.submitted.push(action);
+  };
+  await g.decide(obsFor({ block: 101, fairWeth: LOW }), ctx);
+  assert.equal(ctx.submitted.length, 1, "write-ahead intent visible inside submit");
+});
+
+test("review pending: terminal execution evidence releases a partial fill for risk exit", () => {
+  const pending = { kind: "increase" as const, sentBlock: 99, expectSignedUsd: 40000 };
+  const args = { ...base, fair: LOW, position: { ...pos(20000), pnlUsd: -6000 }, pending, riskStopped: true };
+  assert.equal(g.ouPlan(args).action, undefined, "unknown/live order still blocks duplicate");
+  const d = g.ouPlan({ ...args, pendingTerminal: true });
+  assert.equal(d.action?.type, "gmxDecrease");
+  assert.equal(d.action?.sizeDeltaUsd, (20000n * E30).toString());
+});
+
+test("review gas: reserve enforceable transaction caps, not measured estimates", () => {
+  const ctx = fakeCtx(); ctx.config.maxTxGas = 10000000n; ctx.config.maxAgentBlockGas = 10000000n;
+  const bundle = { type: "bundle", actions: [{ type: "swap", tokenIn: "USDC", amountIn: "1" }, { type: "curveSwap", tokenIn: "WETH", amountIn: "1" }] };
+  assert.equal(g.ouBudget(obsFor(), ctx, bundle).slots, 0, "OU cannot consume the base bundle fallback capacity");
+  ctx.config.maxTxGas = 0n;
+  assert.equal(g.ouBudget(obsFor(), ctx, null).slots, 0, "unbounded gas fails closed");
+});
+
+test("review recovery: unacknowledged wrap and sell do not starve liquidation", async () => {
+  const candidate = await load("ascon-zeta-r3kg");
+  const ctx = fakeCtx();
+  ctx.publicClient = { getTransactionCount: async () => 0 } as any;
+  const make = (block: number, eth: string) => {
+    const o = obsFor({ block, ethWei: eth });
+    o.protocols.liquity = { suggestedGasReserveWei: "1000000000000000000", eusdBalanceWei: "0", spDepositEusdWei: "0", mcr: 1.1 } as any;
+    return o;
+  };
+  const params = { launch: false, redemption: true, stabilityPool: true };
+  await candidate.agent.decideWithParams(make(100, "1000000000000000000"), params, ctx);
+  assert.equal((await candidate.agent.decideWithParams(make(101, "2000000000000000000"), params, ctx)).type, "rawTx");
+  const next = make(102, "2000000000000000000");
+  Object.assign(next.protocols.liquity!, { spDepositEusdWei: String(300n * 10n ** 18n), riskiestTrove: { owner: ME, icr: 1 } });
+  assert.equal((await candidate.agent.decideWithParams(next, params, ctx)).type, "liquityLiquidate");
+});
+
+function runtimeLog(): string {
+  process.env.ERIS_RUN_DIR = testStateDir!;
+  mkdirSync(join(testStateDir!, "agents"));
+  const path = join(testStateDir!, "agents", "ascon-zeta-r3kg.jsonl");
+  writeFileSync(path, "");
+  return path;
+}
+
+test("pending evidence: rejected decrease retries, mined partial increase exits only after orders clear", async () => {
+  const log = runtimeLog();
+  const ctx = fakeCtx();
+  const losing = { ...pos(40000), pnlUsd: -6000 };
+  await g.submitOu(obsFor({ block: 100, wethPos: losing }), ctx, null);
+  assert.equal(ctx.submitted.length, 1);
+  appendFileSync(log, JSON.stringify({ kind: "mempool", event: "rejected",
+    action: parseAction(ctx.submitted[0]) }) + "\n");
+  await g.submitOu(obsFor({ block: 101, wethPos: losing }), ctx, null);
+  assert.equal(ctx.submitted.length, 2, "explicit rejection permits risk-exit retry");
+
+  // New run: successful order creation, partial position, live order still present.
+  for (const block of [200, 201, 202]) await g.submitOu(obsFor({ block, runId: "partial" }), ctx, null);
+  await g.submitOu(obsFor({ block: 203, runId: "partial", fairWeth: LOW }), ctx, null);
+  assert.equal(ctx.submitted.length, 3);
+  appendFileSync(log, JSON.stringify({ kind: "mempool", event: "submitted", blockSeen: 203,
+    actionType: "gmxIncrease", hash: "0x" + "ab".repeat(32) }) + "\n");
+  let live = 1n;
+  ctx.publicClient = { getTransactionReceipt: async () => ({ status: "success", blockNumber: 204n }),
+    readContract: async (args: any) => { assert.equal(args.functionName, "getBytes32Count"); assert.ok(args.blockNumber >= 204n); return live; } } as any;
+  const partial = { ...pos(20000), pnlUsd: -6000 };
+  await g.submitOu(obsFor({ block: 204, runId: "partial", fairWeth: LOW, wethPos: partial }), ctx, null);
+  assert.equal(ctx.submitted.length, 3, "live order cannot be assumed cancelled");
+  live = 0n;
+  await g.submitOu(obsFor({ block: 205, runId: "partial", fairWeth: LOW, wethPos: partial }), ctx, null);
+  assert.equal(ctx.submitted.length, 4);
+  assert.equal((ctx.submitted[3] as Act).type, "gmxDecrease");
+  assert.equal((ctx.submitted[3] as Act).sizeDeltaUsd, (20000n * E30).toString());
+});
+
+test("ETH integration: two signals cannot spend the ETH reserved for both closes", async () => {
+  for (const block of [100, 101]) await g.submitOu(obsFor({ block }), fakeCtx(), null);
+  const ctx = fakeCtx();
+  await g.submitOu(obsFor({ block: 102, fairWeth: LOW, fairWbtc: 61200,
+    ethWei: "110000000000000000" }), ctx, null);
+  assert.equal(ctx.submitted.length, 0, "0.11 cannot fund a 0.04 entry plus 0.08 closing reserve");
+  await g.submitOu(obsFor({ block: 103, fairWeth: LOW, fairWbtc: 61200,
+    ethWei: "160000000000000000" }), ctx, null);
+  assert.equal(ctx.submitted.length, 2, "0.16 covers two entries and both closes including gas");
+});
+
+test("persistence: a write failure after successful load prevents submit and reload duplication", async () => {
+  const path = join(testStateDir!, "ascon-zeta-r3kg-ou-state.json");
+  await warmup();
+  mkdirSync(path + ".tmp"); // force the next atomic write to fail
+  const ctx = fakeCtx();
+  await g.submitOu(obsFor({ block: 101, fairWeth: LOW }), ctx, null);
+  assert.deepEqual(ctx.submitted, []);
+  g.resetOuStateForTest();
+  for (const block of [110, 111, 112]) await g.submitOu(obsFor({ block, fairWeth: LOW }), ctx, null);
+  assert.deepEqual(ctx.submitted, []);
+});
+
+function settleOrder(log: string, sentBlock: number, actionType: string, included: number): void {
+  appendFileSync(log, JSON.stringify({ kind: "mempool", event: "submitted", blockSeen: sentBlock,
+    actionType, hash: "0x" + "ab".repeat(32) }) + "\n");
+  receiptBlock = BigInt(included);
+}
+
+test("recovery evidence: rejected wrap and reverted sell release retries without starving other work", async () => {
+  const log = runtimeLog();
+  for (const kind of ["wrap", "sell"] as const) {
+    const candidate = await load("ascon-zeta-r3kg");
+    const ctx = fakeCtx();
+    ctx.publicClient = {
+      getTransactionCount: async () => 0,
+      simulateContract: async () => ({ result: [3000_000000n] }),
+      getTransactionReceipt: async () => ({ status: "reverted", blockNumber: 103n }),
+    } as any;
+    const params = { launch: false, redemption: true, stabilityPool: true };
+    const make = (block: number, eth: bigint, weth = 8n) => {
+      const o = obsFor({ block, ethWei: String(eth * 10n ** 18n) });
+      o.balances.wethWei = String(weth * 10n ** 18n);
+      o.competition = { maxCompetitorPriorityFeeWei: "0", maxBlockPriorityFeeWei: "0", lastTxIndex: null, recentRevertRate: 0, recentSampleSize: 0 };
+      o.protocols.liquity = { suggestedGasReserveWei: String(10n ** 18n), eusdBalanceWei: "0", spDepositEusdWei: "0", mcr: 1.1 } as any;
+      return o;
+    };
+    await candidate.agent.decideWithParams(make(100, 1n), params, ctx);
+    const wrap = await candidate.agent.decideWithParams(make(101, 2n), params, ctx);
+    assert.equal(wrap.type, "rawTx");
+    let action = wrap;
+    if (kind === "wrap") {
+      await candidate.agent.decideWithParams(make(102, 2n), params, ctx);
+      await candidate.agent.decideWithParams(make(103, 2n), params, ctx);
+    }
+    if (kind === "sell") {
+      action = await candidate.agent.decideWithParams(make(102, 1n, 9n), params, ctx);
+      assert.equal(action.type, "swap");
+      // Unchanged balances and no terminal evidence must still allow liquidation.
+      const unknown = make(103, 1n, 9n);
+      Object.assign(unknown.protocols.liquity!, { spDepositEusdWei: String(300n * 10n ** 18n), riskiestTrove: { owner: ME, icr: 1 } });
+      assert.equal((await candidate.agent.decideWithParams(unknown, params, ctx)).type, "liquityLiquidate");
+    }
+    appendFileSync(log, JSON.stringify({ kind: "mempool", event: kind === "wrap" ? "rejected" : "submitted",
+      blockSeen: kind === "wrap" ? 101 : 102, actionType: action.type,
+      ...(kind === "sell" ? { hash: "0x" + "cd".repeat(32) } : {}) }) + "\n");
+    const next = make(104, kind === "wrap" ? 2n : 1n, kind === "wrap" ? 8n : 9n);
+    Object.assign(next.protocols.liquity!, { spDepositEusdWei: String(300n * 10n ** 18n), riskiestTrove: { owner: ME, icr: 1 } });
+    assert.equal((await candidate.agent.decideWithParams(next, params, ctx)).type, "liquityLiquidate");
+    const retry = await candidate.agent.decideWithParams(make(105, kind === "wrap" ? 2n : 1n, kind === "wrap" ? 8n : 9n), params, ctx);
+    assert.equal(retry.type, kind === "wrap" ? "rawTx" : "swap");
+  }
 });

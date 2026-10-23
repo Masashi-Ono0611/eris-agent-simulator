@@ -1,9 +1,12 @@
 // M-OU ported from opus-1g. Pure sizing/signals plus bounded per-epoch state.
 // The r3k dispatcher is never changed by OU: all orders use submitOu's ctx.submit boundary.
 import type { AgentAction, AgentObservation, AgentContext } from "@eris/sdk";
-import { readFileSync, statSync, writeFileSync, renameSync } from "node:fs";
+import { readFileSync, statSync, writeFileSync, renameSync, openSync, fsyncSync, closeSync } from "node:fs";
 import { join } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { PARAMS as DELTA_PARAMS } from "./delta.js";
+import { GMX } from "@eris/sdk/constants.js";
+import { encodeAbiParameters, keccak256 } from "viem";
 
 export const M_OU_ENABLED = true;
 export const PARAMS = {
@@ -23,12 +26,8 @@ export const PARAMS = {
   ouConfirmBlocks: 3,
   ouLossCollateralFrac: 0.5,
   ouAdverseDriftBlocks: 24,
-  /** An observed position this close to what the pending order should leave counts as reflected. */
-  ouReflectTolUsd: 500,
   /** No new orders once this few blocks remain (the position is valued as it stands at the bell). */
   ouStopBlocks: 5,
-  /** Native ETH that must remain after an increase; decreases need only the execution fee. */
-  ouEthReserveWei: 50_000_000_000_000_000n, // 0.05 ETH
   /** The published opening fair per base; used as the anchor when the first fair is within
    *  ouAnchorMatchFrac of it. A persisted anchor always takes precedence. */
   ouPublishedAnchor: { WETH: 3_000, WBTC: 60_000 } as Record<string, number>,
@@ -78,7 +77,7 @@ const OU_BASES = ["WETH", "WBTC"] as const;
 const ouAnchors = new Map<string, number>();
 
 /** An emitted intent, not an acknowledgement of validation, submission or cancellation. */
-export type OuPending = { expectSignedUsd: number; sentBlock: number; kind: "increase" | "decrease" };
+export type OuPending = { expectSignedUsd: number; sentBlock: number; kind: "increase" | "decrease"; logOffset?: number; action?: Record<string, unknown> };
 const ouPending = new Map<string, OuPending>();
 type OuDrift = { block: number; fair: number; side: number; count: number };
 const ouDrift = new Map<string, OuDrift>();
@@ -112,9 +111,8 @@ function ouBlock(obs: AgentObservation): number {
 function loadOuState(): void {
   ouLoaded = true;
   const dir = process.env.ERIS_AGENT_STATE_DIR;
-  // Without disk this can only mitigate the measured fill delay. An obs-only module cannot
-  // guarantee one in-flight order across replacement workers or reconstruct a lost live anchor.
-  if (!dir) return;
+  // Durable intent is required before any order can cross the submit boundary.
+  if (!dir) { ouStorageFailed = true; return; }
   ouStatePath = join(dir, "ascon-zeta-r3kg-ou-state.json");
   try {
     // Only this small, strategy-owned file is read. Never read runtime versions or credentials.
@@ -131,7 +129,8 @@ function loadOuState(): void {
           typeof b.stopped !== "boolean" ||
           (b.pending && (!Number.isFinite(b.pending.expectSignedUsd) ||
             !Number.isSafeInteger(b.pending.sentBlock) ||
-            !["increase", "decrease"].includes(b.pending.kind))) ||
+            !["increase", "decrease"].includes(b.pending.kind) ||
+            (b.pending.logOffset !== undefined && (!Number.isSafeInteger(b.pending.logOffset) || b.pending.logOffset < 0)))) ||
           (b.drift && (!Number.isSafeInteger(b.drift.block) ||
             !Number.isFinite(b.drift.fair) || b.drift.fair <= 0 ||
             ![-1, 0, 1].includes(b.drift.side) || !Number.isSafeInteger(b.drift.count) ||
@@ -146,7 +145,7 @@ function loadOuState(): void {
     }
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") ouStorageFailed = true;
-    // No usable state: retain the worker-local confirmation guard.
+    // ENOENT is a fresh store; all other load errors latch fail-closed.
   }
 }
 
@@ -162,23 +161,23 @@ function beginOuObservation(obs: AgentObservation, ctx: AgentContext): void {
     : ouEpoch?.runId === obs.runId ? ouEpoch.startBlock : block;
   const key = obs.epoch
     ? `epoch:${obs.epoch.index}/${obs.epoch.count}` : `start:${startBlock}`;
-  // A repeated observation is not a new block. Any other non-unit step starts a fresh record.
-  const discontinuity = ouEpoch && block !== ouEpoch.lastBlock && block !== ouEpoch.lastBlock + 1;
-  if (!ouEpoch || ouEpoch.key !== key || ouEpoch.runId !== obs.runId || discontinuity) {
+  // Only an explicit run/epoch change clears durable intent and risk state.
+  // Gaps reset consecutive confirmation naturally, never pending orders.
+  if (!ouEpoch || ouEpoch.key !== key || ouEpoch.runId !== obs.runId) {
     ouAnchors.clear();
     ouPending.clear();
     ouDrift.clear();
     ouStopped.clear();
     ouObserved.clear();
-    const origin = discontinuity && !hasRunBudget ? block : startBlock;
+    const origin = startBlock;
     ouEpoch = { key: obs.epoch ? key : `start:${origin}`, runId: obs.runId,
       startBlock: origin, lastBlock: block };
   }
   ouEpoch.lastBlock = block;
 }
 
-function saveOuState(): void {
-  if (!ouStatePath || !ouEpoch) return;
+function saveOuState(): boolean {
+  if (ouStorageFailed || !ouStatePath || !ouEpoch) return false;
   try {
     const body = JSON.stringify({ schema: 1, epoch: ouEpoch,
       bases: OU_BASES.filter(base => ouAnchors.has(base)).map(base => ({
@@ -188,10 +187,15 @@ function saveOuState(): void {
     });
     // One bounded record, atomically replaced; no observation history accumulates across epochs.
     writeFileSync(`${ouStatePath}.tmp`, body);
+    const fd = openSync(`${ouStatePath}.tmp`, "r");
+    try { fsyncSync(fd); } finally { closeSync(fd); }
     renameSync(`${ouStatePath}.tmp`, ouStatePath);
+    const dirFd = openSync(join(ouStatePath, ".."), "r");
+    try { fsyncSync(dirFd); } finally { closeSync(dirFd); }
+    return true;
   } catch {
     ouStorageFailed = true;
-    ouStatePath = undefined; // fail soft for this worker, retaining in-memory protection
+    return false; // retain the intent in memory; never submit after a failed write
   }
 }
 
@@ -308,26 +312,21 @@ export function ouPlan(args: {
   priorityFeeWei: string;
   confirmedBlocks: number;
   riskStopped?: boolean;
+  pendingTerminal?: boolean;
+  orderGasWei: bigint;
+  closeReserveWei: bigint;
 }): OuDecision {
   const { base, fair, anchor, position, block } = args;
   const g = (anchor - fair) / fair;
   const signedUsd = signedSizeUsd(position);
   const out: OuDecision = { base, g, signedUsd, usdcSpent: 0n, note: "" };
 
-  // No order-status API is exposed by obs. Time passing never proves cancellation. Position
-  // absence is treated as flat only under the runtime's confirmed-snapshot contract, and a
-  // decrease must be reflected in three consecutive observations before an opposite increase.
-  let pending = args.pending;
-  if (pending) {
-    const tol = Math.max(PARAMS.ouReflectTolUsd, Math.abs(pending.expectSignedUsd) * 0.02);
-    if (Math.abs(signedUsd - pending.expectSignedUsd) <= tol &&
-        (pending.kind === "increase" || args.confirmedBlocks >= PARAMS.ouConfirmBlocks)) {
-      pending = undefined;
-    } else {
-      out.pending = pending;
-      out.note = `waiting for ${pending.kind} sent at ${pending.sentBlock}`;
-      return out;
-    }
+  // Only terminal execution/cancellation evidence releases an intent. Neither exact
+  // balances nor three flat snapshots establish that a live order has disappeared.
+  if (args.pending && !args.pendingTerminal) {
+    out.pending = args.pending;
+    out.note = `waiting for ${args.pending.kind} sent at ${args.pending.sentBlock}`;
+    return out;
   }
   out.pending = undefined;
 
@@ -343,7 +342,8 @@ export function ouPlan(args: {
     out.note ||= want === 0 ? "inside the band: hold" : "positioned";
     return out;
   }
-  if (args.ethWei < GMX_EXECUTION_FEE_WEI + (held === 0 ? PARAMS.ouEthReserveWei : 0n)) {
+  if (args.ethWei < GMX_EXECUTION_FEE_WEI + args.orderGasWei +
+      (held === 0 ? args.closeReserveWei : 0n)) {
     out.note = "ETH short of the execution fee";
     return out;
   }
@@ -401,73 +401,125 @@ export function ouPlan(args: {
 
 type ReturnedAction = AgentAction | Record<string, unknown> | null;
 
-// Measured order creation, not the keeper's later execution transaction.
-const OU_ORDER_GAS = 865_000n;
-const withGasMargin = (gas: bigint) => (gas * 120n + 99n) / 100n;
-// send.ts reserves estimated limits, not receipts: default 30% or 50k headroom.
-// Apply the strategy's 20% margin on top of these projected limits.
-const senderGas = (gas: bigint) => {
-  const buffered = (gas * 130n + 99n) / 100n;
-  return buffered > gas + 50_000n ? buffered : gas + 50_000n;
-};
-
-/** r3k currently has no submits. Bundles consume a transaction per leg. Unknown/raw
- * actions get no shared budget: their USDC use cannot be inferred safely from the shape.
- * botMain.ts sends submissions BEFORE the returned action. Reserve realistic swap/order
- * costs with the sender's buffer, then add 20% to the combined reservation. obs.limits has
- * no gas estimates in this SDK; delta's gasPerSwap supplies the swap estimate. Liquity
- * operations without a cost estimate retain the conservative per-tx reservation.
- * No RPC estimates or edits to r3k's action. Sender rejection remains authoritative
- * (e.g. a dependent estimate can fall back to 2M, or an adapter can add an approval).
- */
+/** Use the sender's enforced ceiling, not an estimate. The supported swap adapters and
+ * GMX buildTxs return one transaction each; approvals belong to setupWallet. Any other
+ * action (including Liquity's potentially multi-tx operations) disables OU sharing.
+ * Without a finite transaction/fee cap there is no defensible upper bound. */
 export function ouBudget(obs: AgentObservation, ctx: AgentContext, action: ReturnedAction): {
   slots: number; usdcFreeUnits: bigint; usdcBalanceUnits: bigint; ethWei: bigint;
+  orderGasWei: bigint; closeReserveWei: bigint;
 } {
   const balance = big(obs.balances?.usdcUnits);
   const perTx = ctx.config?.maxTxGas ?? 10_000_000n;
   const perBlock = ctx.config?.maxAgentBlockGas ?? 10_000_000n;
-  let spend = 0n, reservedGas = 0n, opaque = false;
+  // economicGas disables the sender fee cap. Do not guess a future base fee.
+  const feeCap = ctx.config?.economicGas ? 0n : (ctx.config?.maxPriorityFeeWei ?? 5_000_000_000n);
+  let spend = 0n, reservedGas = 0n, opaque = perTx <= 0n || feeCap <= 0n;
   function count(a: ReturnedAction): void {
     if (!a || a.type === "noop") return;
     if (a.type === "bundle") {
       for (const leg of (a as { actions: ReturnedAction[] }).actions) count(leg);
       return;
     }
-    const isSwap = ["swap", "curveSwap", "balancerSwap"].includes(String(a.type));
-    const estimate = isSwap ? BigInt(DELTA_PARAMS.gasPerSwap) : perTx;
-    const reservation = isSwap ? senderGas(estimate) : perTx;
-    reservedGas += reservation;
-    if (reservation > perTx) opaque = true;
-    // These are the only non-raw shapes produced by the copied r3k dispatcher.
-    if (["swap", "curveSwap", "balancerSwap", "liquitySwapEusd"].includes(String(a.type))) {
+    reservedGas += perTx;
+    if (["swap", "curveSwap", "balancerSwap"].includes(String(a.type))) {
       const trade = a as { tokenIn?: string; amountIn?: string };
       if (trade.tokenIn === "USDC") spend += big(trade.amountIn);
-    } else if (!["liquityLiquidate", "liquityWithdrawFromSP", "liquityProvideToSP", "liquityRedeem"].includes(String(a.type))) {
-      opaque = true;
-    }
+    } else opaque = true;
   }
   count(action);
+  const orderGasWei = perTx > 0n && feeCap > 0n ? perTx * feeCap : 0n;
   let slots = 0;
-  if (!opaque && senderGas(OU_ORDER_GAS) <= perTx) {
-    for (let orders = 1; orders <= OU_BASES.length; orders++) {
-      const count = BigInt(orders);
-      if (perBlock > 0n && withGasMargin(reservedGas + count * senderGas(OU_ORDER_GAS)) > perBlock) break;
-      slots = orders;
-    }
+  if (!opaque) for (let orders = 1; orders <= OU_BASES.length; orders++) {
+    if (perBlock > 0n && reservedGas + BigInt(orders) * perTx > perBlock) break;
+    slots = orders;
   }
-  return {
-    slots,
-    usdcFreeUnits: balance > spend ? balance - spend : 0n,
+  return { slots, usdcFreeUnits: balance > spend ? balance - spend : 0n,
     usdcBalanceUnits: balance,
-    ethWei: big(obs.balances?.ethWei),
+    ethWei: big(obs.balances?.ethWei) - reservedGas * feeCap,
+    orderGasWei,
+    // Reserve every supported position, including an unreflected increase. No assumed
+    // keeper refund or collateral proceeds fund a future exit.
+    closeReserveWei: BigInt(OU_BASES.length) * (GMX_EXECUTION_FEE_WEI + orderGasWei),
   };
 }
 
+/** Runtime self-report evidence, never a timeout or a stable-balance guess. Only this
+ * agent's known JSONL log is read. Missing/truncated evidence leaves the intent pending. */
+function ownLogPath(ctx: AgentContext): string | undefined {
+  const dir = process.env.ERIS_RUN_DIR;
+  if (!dir || process.env.ERIS_RUN_DIR_POINTER || !/^[a-zA-Z0-9_-]+$/.test(ctx.agentId)) return;
+  return join(dir, "agents", `${ctx.agentId}.jsonl`);
+}
+export function intentLogOffset(ctx: AgentContext): number | undefined {
+  const path = ownLogPath(ctx);
+  if (!path) return;
+  try { return statSync(path).size; } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === "ENOENT") return 0;
+  }
+}
+async function boundedRead<T>(read: Promise<T>): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([read, new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error("OU evidence timeout")), 500);
+    })]);
+  } finally { if (timer) clearTimeout(timer); }
+}
+export type IntentEvidence = { sentBlock: number; logOffset?: number; action: Record<string, unknown> };
+/** Returns a rejection or a mined receipt. submit_failed is deliberately unknown:
+ * a transport failure can hide an accepted transaction. */
+export async function intentOutcome(ctx: AgentContext, obs: AgentObservation, p: IntentEvidence): Promise<"rejected" | "success" | "reverted" | undefined> {
+  const path = ownLogPath(ctx);
+  if (!path || p.logOffset === undefined || ouBlock(obs) <= p.sentBlock) return;
+  try {
+    const size = statSync(path).size;
+    if (size > 4_000_000 || size < p.logOffset) return;
+    const lines = readFileSync(path).subarray(p.logOffset).toString("utf8").split("\n");
+    const matches = lines.filter(Boolean).map(line => JSON.parse(line)).filter(e => {
+      if (e.kind !== "mempool") return false;
+      if (e.blockSeen === p.sentBlock && e.actionType === p.action.type &&
+          (e.base ?? "WETH") === (p.action.base ?? "WETH")) return true;
+      // Validation rejections predate blockSeen metadata. The write-ahead log cursor
+      // and exact action shape identify those without interpreting a balance snapshot.
+      if (e.event !== "rejected" || !e.action) return false;
+      const expected = { ...p.action };
+      // parseAction canonicalizes the default WETH market by omitting base.
+      if (expected.base === "WETH" && e.action.base === undefined) delete expected.base;
+      return isDeepStrictEqual(e.action, expected);
+    });
+    if (matches.length !== 1) return;
+    const e = matches[0];
+    if (e.event === "rejected") return "rejected";
+    if (e.event !== "submitted" || !/^0x[0-9a-fA-F]{64}$/.test(e.hash)) return;
+    const receipt = await boundedRead(ctx.publicClient.getTransactionReceipt({ hash: e.hash }));
+    if (receipt.blockNumber > BigInt(obs.blockNumber)) return;
+    return receipt.status;
+  } catch { return; }
+}
+async function terminalIntent(ctx: AgentContext, obs: AgentObservation, base: string, p: OuPending): Promise<boolean> {
+  const outcome = await intentOutcome(ctx, obs, { ...p,
+    action: p.action ?? { type: p.kind === "increase" ? "gmxIncrease" : "gmxDecrease", base } });
+  if (outcome === "rejected" || outcome === "reverted") return true;
+  if (outcome !== "success") return false;
+  try {
+    // A mined createOrder is terminal only once no account orders remain at the
+    // observation's block. This handles cancellations and partial execution too.
+    const key = keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "address" }],
+      [keccak256(encodeAbiParameters([{ type: "string" }], ["ACCOUNT_ORDER_LIST"])), ctx.address]));
+    const count = await boundedRead(ctx.publicClient.readContract({ address: GMX.DataStore,
+      abi: [{ type: "function", name: "getBytes32Count", stateMutability: "view",
+        inputs: [{ type: "bytes32" }], outputs: [{ type: "uint256" }] }],
+      functionName: "getBytes32Count", args: [key], blockNumber: BigInt(obs.blockNumber) }));
+    return count === 0n;
+  } catch { return false; }
+}
+
 /** Observe even when there is no order budget, so anchors, risk and confirmation keep up.
- * An intent becomes pending only after submit returns. No callback after that can erase it.
+ * Intents are persisted before submission, including an uncertain/throwing queue call.
  * A queued intent is not a runtime/chain acknowledgement; an unreflected intent blocks retries.
  */
-export function submitOu(obs: AgentObservation, ctx: AgentContext, action: ReturnedAction): void {
+export async function submitOu(obs: AgentObservation, ctx: AgentContext, action: ReturnedAction): Promise<void> {
   beginOuObservation(obs, ctx);
   const wallet = ouBudget(obs, ctx, action);
   const block = ouBlock(obs);
@@ -491,12 +543,7 @@ export function submitOu(obs: AgentObservation, ctx: AgentContext, action: Retur
     const confirmedBlocks = observeOuPosition(base, block, signedSizeUsd(market.position));
     const riskStopped = observeOuRisk(base, block, fair, anchor, market.position);
     const pending = ouPending.get(base);
-    if (pending) {
-      const tol = Math.max(PARAMS.ouReflectTolUsd, Math.abs(pending.expectSignedUsd) * 0.02);
-      if (Math.abs(signedSizeUsd(market.position) - pending.expectSignedUsd) <= tol &&
-          (pending.kind === "increase" || confirmedBlocks >= PARAMS.ouConfirmBlocks))
-        ouPending.delete(base);
-    }
+    if (pending && await terminalIntent(ctx, obs, base, pending)) ouPending.delete(base);
     observations.push({ base, fair, anchor, position: market.position, confirmedBlocks, riskStopped });
     signals[`ouAnchor${base}`] = anchor;
     signals[`ouFair${base}`] = fair;
@@ -505,7 +552,7 @@ export function submitOu(obs: AgentObservation, ctx: AgentContext, action: Retur
   for (const pending of ouPending.values()) {
     if (pending.kind === "increase")
       wallet.usdcFreeUnits -= unitsFromUsd(Math.abs(pending.expectSignedUsd) / PARAMS.ouLeverage, 1, 6);
-    wallet.ethWei -= GMX_EXECUTION_FEE_WEI;
+    wallet.ethWei -= GMX_EXECUTION_FEE_WEI + wallet.orderGasWei;
   }
   saveOuState();
   signals.ouPersistenceDegraded = ouStorageFailed ? 1 : 0;
@@ -516,14 +563,15 @@ export function submitOu(obs: AgentObservation, ctx: AgentContext, action: Retur
     const d = ouPlan({ ...o, pending: ouPending.get(o.base), block,
       blocksRemaining: obs.blocksRemaining ?? Infinity, ...wallet, priorityFeeWei: fee });
     if (!d.action || wallet.slots <= 0) continue;
-    try { ctx.submit(d.action); } catch { continue; }
-    // Immediately preserve each successful queue operation, including a partial two-base send.
-    ouPending.set(o.base, d.pending!);
+    // Write ahead of the queue boundary. Even a throwing submit may have queued the
+    // action; retain that intent until terminal evidence arrives.
+    ouPending.set(o.base, { ...d.pending!, logOffset: intentLogOffset(ctx), action: d.action });
+    if (!saveOuState()) continue;
     ouObserved.delete(o.base);
     wallet.slots--;
     wallet.usdcFreeUnits -= d.usdcSpent;
-    wallet.ethWei -= GMX_EXECUTION_FEE_WEI;
-    saveOuState();
+    wallet.ethWei -= GMX_EXECUTION_FEE_WEI + wallet.orderGasWei;
+    try { ctx.submit(d.action); } catch { /* uncertain queue: retain all reservations */ }
   }
 }
 

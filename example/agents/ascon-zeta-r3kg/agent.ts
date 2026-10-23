@@ -2,7 +2,7 @@
 // ascon-zeta-r3k: r3 plus the K1-K3 delta changes (delta.ts, brake.ts); dispatch order unchanged.
 import type { AgentAction, AgentContext, AgentObservation } from "@eris/sdk";
 import { TOKENS } from "@eris/sdk/constants.js";
-import { M_OU_ENABLED, submitOu } from "./ou.js";
+import { M_OU_ENABLED, submitOu, intentLogOffset, intentOutcome, type IntentEvidence } from "./ou.js";
 import { k2Observe } from "./brake.js";
 import { decide as deltaDecide, K2_BUNDLE_BRAKE, recoveryBidFee } from "./delta.js";
 import { quoteLaunch } from "./launchSwap.js";
@@ -25,9 +25,9 @@ const MIN_USDC = 200n * 10n ** 6n, MIN_EUSD = 200n * 10n ** 18n;
 const EXIT_COST_BPS = 35, ENDGAME_BLOCKS = 20;
 let initialEth: bigint | undefined, initialWeth: bigint | undefined;
 let lastBlock: number | undefined;
-let wrapPending: { weth: bigint; eth: bigint; amount: bigint } | undefined;
+let wrapPending: { weth: bigint; eth: bigint; amount: bigint; evidence: IntentEvidence } | undefined;
 let recoveryWeth = 0n;
-let recoverySellPending: { weth: bigint; amount: bigint } | undefined;
+let recoverySellPending: { weth: bigint; amount: bigint; evidence: IntentEvidence } | undefined;
 const noop = (reason: string) => ({ type: "noop", reason });
 
 export async function decideWithParams(obs: AgentObservation, params: Params, ctx: AgentContext): Promise<AgentAction | Record<string, unknown> | null> {
@@ -43,26 +43,36 @@ export async function decideWithParams(obs: AgentObservation, params: Params, ct
     const weth = BigInt(obs.balances.wethWei || "0"), eth = BigInt(obs.balances.ethWei || "0");
     initialEth ??= eth; initialWeth ??= weth;
     const canSwap = obs.enabledProtocols.includes("uniswap");
-    if (liq && params.redemption && canSwap) {
+    recovery: if (liq && params.redemption && canSwap) {
       // Recovery owns only WETH observed after our exact wrap. Ordinary delta buys
       // never become recovery inventory merely by exceeding the initial anchor.
       if (wrapPending || recoverySellPending || recoveryWeth > 0n || eth > initialEth! + 10n ** 16n) {
         const address = obs.agentAddress as `0x${string}`;
-        const [latest, pending] = await Promise.all([
+        const nonces = await Promise.all([
           ctx.publicClient.getTransactionCount({ address, blockTag: "latest" }),
           ctx.publicClient.getTransactionCount({ address, blockTag: "pending" }),
-        ]);
-        if (pending !== latest) return noop("recovery transaction pending");
+        ]).catch(() => undefined);
+        if (!nonces || nonces[0] !== nonces[1]) break recovery;
         if (wrapPending) {
+          const outcome = await intentOutcome(ctx, obs, wrapPending.evidence);
+          if (outcome === "rejected" || outcome === "reverted") {
+            wrapPending = undefined;
+            break recovery; // Give liquidation/SP/delta this turn before any retry.
+          }
           if (weth === wrapPending.weth + wrapPending.amount && eth <= wrapPending.eth - wrapPending.amount)
             recoveryWeth += wrapPending.amount;
           else if (weth === wrapPending.weth && eth >= wrapPending.eth - wrapPending.amount)
-            return noop("awaiting confirmed wrap balance");
+            break recovery;
           // Ambiguous balance changes are not attributed to recovery.
           wrapPending = undefined;
         }
         if (recoverySellPending) {
-          if (weth === recoverySellPending.weth) return noop("awaiting recovery sell balance");
+          const outcome = await intentOutcome(ctx, obs, recoverySellPending.evidence);
+          if (outcome === "rejected" || outcome === "reverted") {
+            recoverySellPending = undefined;
+            break recovery; // Keep attributed inventory for a later retry.
+          }
+          if (weth === recoverySellPending.weth) break recovery;
           recoveryWeth = 0n; recoverySellPending = undefined;
         }
         const excessWeth = recoveryWeth < weth ? recoveryWeth : weth;
@@ -76,14 +86,18 @@ export async function decideWithParams(obs: AgentObservation, params: Params, ct
           const remainingEdge = Number(quoted) / 1e6 / fairValue - 1 + EXIT_COST_BPS / 10000;
           const priority = recoveryBidFee(obs, remainingEdge, fairValue, false);
           if (quoted <= 0n || priority === null) return noop("recovery quote/cost not competitive");
-          recoverySellPending = { weth, amount: excessWeth };
-          return { type: "swap", tokenIn: "WETH", amountIn: excessWeth.toString(), slippageBps: 100, maxPriorityFeePerGasWei: priority };
+          const action = { type: "swap", tokenIn: "WETH", amountIn: excessWeth.toString(), slippageBps: 100, maxPriorityFeePerGasWei: priority };
+          recoverySellPending = { weth, amount: excessWeth,
+            evidence: { sentBlock: block, logOffset: intentLogOffset(ctx), action } };
+          return action;
         }
       }
       const reserve = initialEth! > BigInt(liq.suggestedGasReserveWei) ? initialEth! : BigInt(liq.suggestedGasReserveWei);
       if (eth > reserve + 10n ** 16n) {
-        wrapPending = { weth, eth, amount: eth - reserve };
-        return { type: "rawTx", tx: { to: TOKENS.WETH.address, data: "0xd0e30db0", value: (eth - reserve).toString() }, maxPriorityFeePerGasWei: fee };
+        const action = { type: "rawTx", tx: { to: TOKENS.WETH.address, data: "0xd0e30db0", value: (eth - reserve).toString() }, maxPriorityFeePerGasWei: fee };
+        wrapPending = { weth, eth, amount: eth - reserve,
+          evidence: { sentBlock: block, logOffset: intentLogOffset(ctx), action } };
+        return action;
       }
     }
     // This uses the observed Liquity riskiest trove and an existing SP deposit; it does not
@@ -137,7 +151,7 @@ async function r3kDecide(obs: AgentObservation, ctx: AgentContext): Promise<Agen
 export async function decide(obs: AgentObservation, ctx: AgentContext): Promise<AgentAction | Record<string, unknown> | null> {
   const action = await r3kDecide(obs, ctx);
   if (M_OU_ENABLED) {
-    try { submitOu(obs, ctx, action); } catch { /* OU cannot suppress the r3k result */ }
+    try { await submitOu(obs, ctx, action); } catch { /* OU cannot suppress the r3k result */ }
   }
   return action;
 }
