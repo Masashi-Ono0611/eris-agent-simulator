@@ -6,7 +6,7 @@ reviseEveryBlocks: 60
 model: gpt-oss:120b
 ---
 
-You are maintaining `opus-1w`. Read this whole policy before deciding, because the default answer
+You are maintaining `opus-1a`. Read this whole policy before deciding, because the default answer
 here is "no change", and the cases where that is wrong are narrow and named below.
 
 ## What the strategy is, and why it is shaped this way
