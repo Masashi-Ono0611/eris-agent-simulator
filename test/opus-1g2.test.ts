@@ -757,11 +757,48 @@ test("fix skipped block: pending and risk stop survive a same-epoch gap", async 
     assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
 });
 
-test("fix persistence: missing, corrupt and failed saves prohibit entries but permit risk exits", async () => {
-  for (const mode of ["missing", "corrupt", "save", "final-save"]) {
+test("memory persistence: unset state directory trades and retains intents across blocks", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  await warmup();
+  const call = async (block: number) => {
+    const ctx = fakeCtx();
+    const returned = await g.decide(obsFor({ block, fairWeth: LOW }), ctx);
+    const actions = gmxOnly([...ctx.submitted, returned].filter(Boolean) as Act[]);
+    return { ctx, actions };
+  };
+  const first = await call(101);
+  assert.equal(first.actions[0]?.type, "gmxIncrease");
+  assert.equal(first.actions[0]?.isLong, true);
+  assert.equal(first.actions[0]?.sizeDeltaUsd, (40_000n * E30).toString());
+  for (const block of [101, 102, 103, 108]) {
+    const next = await call(block);
+    assert.deepEqual(next.actions, [], `pending intent retained at ${block}`);
+    assert.equal(next.ctx.logs.length, 1);
+    const signals = (next.ctx.logs[0] as { signals: Record<string, number> }).signals;
+    assert.equal(signals.ouPersistenceMemory, 1);
+    assert.equal(signals.ouPersistenceDegraded, 0);
+    assert.equal(signals.ouPendingWETH, 101);
+    assert.equal(signals.ouAnchorWETH, 3000);
+  }
+});
+
+test("memory persistence: run and epoch changes clear old pending intents", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  for (const opts of [
+    { runId: "first", epoch: { index: 1, count: 60 } },
+    { runId: "first", epoch: { index: 2, count: 60 } },
+    { runId: "second", epoch: { index: 2, count: 60 } },
+  ]) {
+    await warmup(opts);
+    assert.equal(gmxOnly(await emitted(obsFor({ ...opts, block: 101, fairWeth: LOW })))[0]?.type,
+      "gmxIncrease");
+  }
+});
+
+test("fix persistence: corrupt loads and failed saves prohibit entries but permit risk exits", async () => {
+  for (const mode of ["corrupt", "save", "final-save"]) {
     const path = persistentState();
     g.resetOuStateForTest();
-    if (mode === "missing") delete process.env.ERIS_AGENT_STATE_DIR;
     if (mode === "corrupt") writeFileSync(path, "{");
     await warmup();
     if (mode === "save") {
