@@ -2,7 +2,7 @@
 // ascon-zeta-r3k: r3 plus the K1-K3 delta changes (delta.ts, brake.ts); dispatch order unchanged.
 import type { AgentAction, AgentContext, AgentObservation } from "@eris/sdk";
 import { TOKENS } from "@eris/sdk/constants.js";
-import { M_OU_ENABLED, submitOu, intentLogOffset, intentOutcome, type IntentEvidence } from "./ou.js";
+import { M_OU_ENABLED, submitOu, ouClosingReserve, baseFitsOuReserve, ouBudget, intentLogOffset, intentOutcome, type IntentEvidence } from "./ou.js";
 import { k2Observe } from "./brake.js";
 import { decide as deltaDecide, K2_BUNDLE_BRAKE, recoveryBidFee } from "./delta.js";
 import { quoteLaunch } from "./launchSwap.js";
@@ -30,7 +30,7 @@ let recoveryWeth = 0n;
 let recoverySellPending: { weth: bigint; amount: bigint; evidence: IntentEvidence } | undefined;
 const noop = (reason: string) => ({ type: "noop", reason });
 
-export async function decideWithParams(obs: AgentObservation, params: Params, ctx: AgentContext): Promise<AgentAction | Record<string, unknown> | null> {
+export async function decideWithParams(obs: AgentObservation, params: Params, ctx: AgentContext, closingReserveWei = 0n): Promise<AgentAction | Record<string, unknown> | null> {
   try {
     const liq = obs.protocols.liquity, remaining = obs.blocksRemaining ?? Number.POSITIVE_INFINITY;
     const block = Number(obs.blockNumber);
@@ -92,7 +92,8 @@ export async function decideWithParams(obs: AgentObservation, params: Params, ct
           return action;
         }
       }
-      const reserve = initialEth! > BigInt(liq.suggestedGasReserveWei) ? initialEth! : BigInt(liq.suggestedGasReserveWei);
+      let reserve = initialEth! > BigInt(liq.suggestedGasReserveWei) ? initialEth! : BigInt(liq.suggestedGasReserveWei);
+      if (closingReserveWei > reserve) reserve = closingReserveWei;
       if (eth > reserve + 10n ** 16n) {
         const action = { type: "rawTx", tx: { to: TOKENS.WETH.address, data: "0xd0e30db0", value: (eth - reserve).toString() }, maxPriorityFeePerGasWei: fee };
         wrapPending = { weth, eth, amount: eth - reserve,
@@ -130,7 +131,7 @@ export async function decideWithParams(obs: AgentObservation, params: Params, ct
   } catch { return noop("invalid observation"); }
 }
 
-async function r3kDecide(obs: AgentObservation, ctx: AgentContext): Promise<AgentAction | Record<string, unknown> | null> {
+async function r3kDecide(obs: AgentObservation, ctx: AgentContext, closingReserveWei = 0n): Promise<AgentAction | Record<string, unknown> | null> {
   try {
     const block = Number(obs.blockNumber);
     if (Number.isSafeInteger(block) && lastBlock !== undefined && (block < lastBlock || block > lastBlock + 1)) {
@@ -143,13 +144,23 @@ async function r3kDecide(obs: AgentObservation, ctx: AgentContext): Promise<Agen
       const action = await launchDecide(obs, ctx);
       if (action && action.type !== "noop") return action;
     }
-    return await decideWithParams(obs, { ...PARAMS, launch: false }, ctx);
+    return await decideWithParams(obs, { ...PARAMS, launch: false }, ctx, closingReserveWei);
   } catch { return noop("invalid observation"); }
 }
 
-/** Preserve the original r3k return value even if OU storage/logging/submission fails. */
+/** Flat OU preserves r3k exactly; open positions reserve their closing resources first. */
 export async function decide(obs: AgentObservation, ctx: AgentContext): Promise<AgentAction | Record<string, unknown> | null> {
-  const action = await r3kDecide(obs, ctx);
+  const reserve = M_OU_ENABLED ? ouClosingReserve(obs, ctx) : { positions: 0, eth: 0n };
+  // Wrap sizing retains both closing ETH and its own gas. Other candidates are
+  // checked as a whole below, including every independently funded bundle leg.
+  const closingReserveWei = reserve.positions ? reserve.eth + ouBudget(obs, ctx, null).orderGasWei : 0n;
+  let action = await r3kDecide(obs, ctx, closingReserveWei);
+  if (reserve.positions && !baseFitsOuReserve(obs, ctx, action)) {
+    // A discarded recovery candidate was never emitted: do not leave a phantom intent.
+    if (wrapPending?.evidence.action === action) wrapPending = undefined;
+    if (recoverySellPending?.evidence.action === action) recoverySellPending = undefined;
+    action = noop("OU closing reserve takes priority");
+  }
   if (M_OU_ENABLED) {
     try { await submitOu(obs, ctx, action); } catch { /* OU cannot suppress the r3k result */ }
   }
