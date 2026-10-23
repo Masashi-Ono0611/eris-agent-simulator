@@ -68,18 +68,51 @@ def verdict(log, arm, rc):
     return 'BLOCKED', 'no unique PASS line with included/reverted counts'
 
 
-def check_zip(source, archive, arm):
+def check_zip(source, archive, arm, full='HEAD'):
+    tree = source.parents[2]
+    prefixes = ('agents/' + arm + '/', 'agents/lib/', 'agents/runtime/', 'sdk/')
+    paths = ['example/' + prefix.rstrip('/') if prefix.startswith('agents/') else 'sdk'
+             for prefix in prefixes]
+    entries = run(['git', 'ls-tree', '-r', '-z', full, '--', *paths], cwd=tree,
+                  capture_output=True).stdout
+    expected = {}
+    for entry in entries.split(b'\0'):
+        if not entry:
+            continue
+        meta, path = entry.split(b'\t', 1)
+        mode, kind, oid = meta.split()
+        path = path.decode('utf-8')
+        expected[path.removeprefix('example/')] = (mode, kind, path)
+    agent_names = {name for name in expected if name.startswith(prefixes[0])}
+    if not agent_names:
+        raise ValueError('empty agent directory at release commit')
     with zipfile.ZipFile(archive) as z:
         names = z.namelist()
         if len(names) != len(set(names)):
             raise ValueError('duplicate ZIP members')
-        files = sorted(p for p in source.rglob('*') if p.is_file() or p.is_symlink())
-        if not files:
-            raise ValueError('empty agent directory')
-        for p in files:
-            name = 'agents/' + arm + '/' + p.relative_to(source).as_posix()
-            if p.is_symlink() or name not in names or z.read(name) != p.read_bytes():
-                raise ValueError('missing, symlink or different agent file: ' + name)
+        for name in names:
+            if name.startswith('/') or any(part in ('.', '..') for part in name.split('/')):
+                raise ValueError('invalid ZIP path: ' + name)
+            if not name.startswith(prefixes):
+                continue  # Bundler also generates root metadata and out/ artifacts.
+            if name.endswith('/'):
+                if not any(path.startswith(name) for path in expected):
+                    raise ValueError('unexpected ZIP directory: ' + name)
+                continue
+            if name.startswith(prefixes[0]):
+                relative = name[len(prefixes[0]):]
+                if Path(relative).suffix not in ('.ts', '.md') or any(part.startswith('.') for part in relative.split('/')):
+                    raise ValueError('disallowed agent file: ' + name)
+            if name not in expected:
+                raise ValueError('unexpected ZIP member: ' + name)
+            mode, kind, path = expected[name]
+            if mode not in (b'100644', b'100755') or kind != b'blob':
+                raise ValueError('non-regular release file: ' + name)
+            blob = run(['git', 'show', full + ':' + path], cwd=tree, capture_output=True).stdout
+            if z.read(name) != blob:
+                raise ValueError('different release file: ' + name)
+        if not agent_names.issubset(names):
+            raise ValueError('missing agent file in ZIP')
         return sorted(names)
 
 
@@ -88,8 +121,10 @@ def run(cmd, cwd=None, **kwargs):
 
 
 def stop_group(proc):
-    # The group can outlive its leader. Always signal the owned PGID, not just the PID.
+    # A reaped leader no longer proves PGID ownership; it may have been reused.
     for sig in (signal.SIGTERM, signal.SIGKILL):
+        if proc.poll() is not None:
+            break
         try:
             os.killpg(proc.pid, sig)
         except ProcessLookupError:
@@ -256,9 +291,14 @@ def bundle(tree, arm, full, output):
     (output / 'scan.json').write_text(scan.stdout)
     result = json.loads(scan.stdout)
     try:
-        names = check_zip(tree / 'example/agents' / arm, archive, arm)
+        names = check_zip(tree / 'example/agents' / arm, archive, arm, full)
     except ValueError as e:
         return 'RELEASE_FAIL', str(e)
+    # scan-submission emits secret matches as WARN messages, not BLOCKs or codes.
+    secrets = [f for f in result.get('findings', [])
+               if f.get('message') == 'looks like a hardcoded secret/key/token']
+    if scan.returncode or result.get('accept') is not True or result.get('blocks') != 0 or secrets:
+        return 'RELEASE_FAIL', 'submission scan rejected ZIP or found secret-like content'
     for name in names:
         print(name)
     digest = hashlib.sha256(archive.read_bytes()).hexdigest()
@@ -266,9 +306,7 @@ def bundle(tree, arm, full, output):
     with archive.with_suffix('.json').open('x') as f:
         json.dump(record, f, indent=2)
     print(f'ZIP={archive} size={archive.stat().st_size} sha256={digest}', flush=True)
-    if scan.returncode or result.get('accept') is not True or result.get('blocks') != 0:
-        return 'RELEASE_FAIL', 'submission scan rejected ZIP'
-    return 'RELEASE_PASS', 'scan ACCEPT; all agent files byte-identical'
+    return 'RELEASE_PASS', 'scan ACCEPT without secret findings; ZIP sources byte-identical to release commit'
 
 
 def main(mode, args):

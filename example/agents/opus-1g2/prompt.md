@@ -27,8 +27,7 @@ An install drops all of these modules, their guards and their state management.
 Version 0 contains opus-1a plus M-OU: a GMX perp position toward the fair price's fixed
 anchor for WETH and WBTC, with persisted anchors, pending-order reconciliation,
 confirmation, collateral-loss and adverse-drift stops, and no new orders in the last five blocks (open positions remain valued at the bell). An install drops M-OU, including its position
-management; any open GMX position stays unmanaged. The bar for an install is exactly the same
-as in P1 (rule 2 below); this exposure is not an additional reason to install. A rewrite may
+management; any open GMX position stays unmanaged. For an install, the bar is exactly rule 2 below; this exposure is not an additional reason to install. A rewrite may
 not open GMX positions.
 
 The running version is the one on the "strategy version" line. It counts as version 0 when that

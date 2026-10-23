@@ -46,3 +46,9 @@ for (const { id, context, modules } of arms) {
     assert.ok(required <= window, `${id}: ~${required} tokens exceeds ${window}`);
   });
 }
+
+test("opus-1g2: install bar references the defined rule directly", () => {
+  const policy = loadImproveAgent("example/agents/opus-1g2");
+  assert.ok(policy.body.includes("the bar is exactly rule 2 below"));
+  assert.ok(!policy.body.includes("as in P1"));
+});

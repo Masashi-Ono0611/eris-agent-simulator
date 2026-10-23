@@ -8,13 +8,13 @@ python3 - "$dir/release-tools.py" "$tmp/broken.py" <<'PY'
 from pathlib import Path
 import sys
 source = Path(sys.argv[1]).read_text()
-old = "            if p.is_symlink() or name not in names"
+old = "        if not agent_names.issubset(names):"
 assert old in source
-Path(sys.argv[2]).write_text(source.replace(old, "            if name not in names:\n                continue\n" + old))
+Path(sys.argv[2]).write_text(source.replace(old, "        if False:"))
 PY
 if python3 "$dir/test-release-tools.py" bundle "$tmp/broken.py" > "$tmp/red.log" 2>&1; then
   echo "FAIL red check accepted missing ZIP member log=$tmp/red.log"; exit 1
 fi
-grep -q 'AssertionError: ValueError not raised' "$tmp/red.log"
+grep -q 'AssertionError:.*RELEASE_PASS.*RELEASE_FAIL' "$tmp/red.log"
 echo 'RED_OK missing-member mutation rejected'
 echo ALL_CONTROLS_OK
