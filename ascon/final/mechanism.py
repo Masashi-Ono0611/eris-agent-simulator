@@ -49,35 +49,48 @@ def measure(matrix, slot, mappings, seen=None):
                 type(summary.get(key)) is not int or summary[key] < 0
                 for key in ('runStartBlock', 'finalBlock', 'blocksProcessed')):
             raise ValueError('incomplete run: invalid runStartBlock, finalBlock or blocksProcessed in summary.json')
-        last_round = None
+        if (summary['blocksProcessed'] <= 0 or
+                summary['finalBlock'] <= summary['runStartBlock'] or
+                summary['blocksProcessed'] != summary['finalBlock'] - summary['runStartBlock']):
+            raise ValueError('incomplete run: empty or inconsistent block extent in summary.json')
+        last_decision = None
+        covered_rounds = set()
         for line in (run / 'agents' / (slot + '.jsonl')).read_text().splitlines():
             if not line.strip():
                 continue
             e = json.loads(line)
             if not isinstance(e, dict):
                 raise ValueError('agent JSONL entry is not an object')
-            if e.get('agentId') == slot and 'action' in e:
-                if type(e.get('round')) is not int or e['round'] < 0:
-                    raise ValueError('invalid slot decision round')
-                # Warm-up decisions can precede the run by many blocks. They
-                # provide no coverage; duplicate strategy/noop lines are normal.
-                first_expected = summary['runStartBlock']
-                if e['round'] >= first_expected - 1:
-                    if last_round is None:
-                        if e['round'] > first_expected + 2:
-                            raise ValueError('incomplete agent log: missing initial slot decisions')
-                    elif not 0 <= e['round'] - last_round <= 3:
-                        raise ValueError('incomplete agent log: discontinuous slot decision rounds')
-                    last_round = e['round']
             reason = str(e.get('reason', ''))
+            failed_stf = (entered and e.get('event') == 'submit_failed' and
+                          bool(re.search(r'\bSTF\b', str(e.get('error', '')))))
+            decision = 'action' in e or 'decide timeout:' in reason
+            # Timeouts record a no-action round. STF submission reports use
+            # blockSeen and may arrive asynchronously after later decisions.
+            if e.get('agentId') == slot and (decision or failed_stf):
+                round_ = e.get('round') if decision else e.get('blockSeen', e.get('round'))
+                if type(round_) is not int or round_ < 0:
+                    raise ValueError('invalid slot decision round')
+                # Warm-up decisions provide no run coverage. Duplicate lines
+                # are normal, but actual decision order must not go backwards.
+                if round_ >= summary['runStartBlock'] - 1:
+                    if decision:
+                        if last_decision is not None and round_ < last_decision:
+                            raise ValueError('incomplete agent log: reversed slot decision rounds')
+                        last_decision = round_
+                    covered_rounds.add(round_)
             timeouts += int('decide timeout:' in reason)
             # Count only submit failures after an earlier launch-entry log, per scenario.
-            stf += int(entered and e.get('event') == 'submit_failed' and
-                       bool(re.search(r'\bSTF\b', str(e.get('error', '')))))
+            stf += int(failed_stf)
             if re.match(r'^launch entry(?:\b)', reason):
                 entered = True
-        if last_round is None or abs(summary['finalBlock'] - last_round) > 2:
+        rounds = sorted(covered_rounds)
+        if not rounds or abs(summary['finalBlock'] - rounds[-1]) > 2:
             raise ValueError('incomplete agent log: last slot decision not within 2 blocks of finalBlock')
+        if rounds[0] > summary['runStartBlock'] + 2:
+            raise ValueError('incomplete agent log: missing initial slot decisions')
+        if any(b - a > 3 for a, b in zip(rounds, rounds[1:])):
+            raise ValueError('incomplete agent log: discontinuous slot decision rounds')
         groups = defaultdict(list)
         with (run / 'blocks.csv').open(newline='') as f:
             reader = csv.DictReader(f)
