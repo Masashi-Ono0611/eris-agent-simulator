@@ -1085,10 +1085,11 @@ test("review gap: pending intent and risk latch survive skipped blocks and reloa
 
 test("persistence: absent storage trades with memory across blocks and deduplicates pending", async () => {
   delete process.env.ERIS_AGENT_STATE_DIR;
-  await warmup();
+  for (let block = 95; block <= 100; block++)
+    await g.submitOu(obsFor({ block }), fakeCtx(), null);
   const ctx = fakeCtx();
   await g.submitOu(obsFor({ block: 101, fairWeth: LOW }), ctx, null);
-  assert.equal(ctx.submitted.length, 1, "normal entry after in-memory confirmation");
+  assert.equal(ctx.submitted.length, 1, "normal entry after in-memory grace and confirmation");
   assert.equal((ctx.submitted[0] as Act).type, "gmxIncrease");
   for (const block of [101, 102, 108]) {
     const next = fakeCtx();
@@ -1109,9 +1110,9 @@ test("persistence: memory state resets on run and epoch changes", async () => {
     { runId: "second", epoch: { index: 1, count: 60 } },
     { runId: "second", epoch: { index: 2, count: 60 } },
   ]) {
-    for (const block of [100, 101])
+    for (let block = 100; block < 106; block++)
       assert.deepEqual(gmxOnly(await emitted(obsFor({ ...opts, block, fairWeth: LOW }))), []);
-    assert.equal(gmxOnly(await emitted(obsFor({ ...opts, block: 102, fairWeth: LOW })))[0]?.type,
+    assert.equal(gmxOnly(await emitted(obsFor({ ...opts, block: 106, fairWeth: LOW })))[0]?.type,
       "gmxIncrease", "new run/epoch clears pending and reconfirms");
   }
 });
@@ -1439,4 +1440,45 @@ test("OU refresh: old epoch receipt cannot clear a new epoch intent", async () =
   assert.equal(reads, 0, "stale refresh stops before another RPC");
   for (const block of [203, 204, 205]) await g.decide(obsFor({ block, runId: "new", fairWeth: LOW }), ctx);
   assert.equal(ctx.submitted.length, 1, "new intent stays pending");
+});
+
+
+test("cold-start grace: memory blocks six blocks on initial start and worker restart", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  for (const first of [100, 110]) {
+    g.resetOuStateForTest(); // restart loses the preceding unexecuted increase
+    const ctx = fakeCtx();
+    ctx.config.runBlocks = 500;
+    const observe = (block: number) => g.submitOu(obsFor({ block,
+      blocksRemaining: 500 - block, fairWeth: LOW, fairWbtc: 60000 / 1.0204 }), ctx, null);
+    for (let block = first; block < first + 6; block++) {
+      await observe(block);
+      await observe(block); // repeated snapshots cannot shorten the window
+      assert.equal(ctx.submitted.length, 0);
+      const signals = (ctx.logs.at(-1) as { signals: Record<string, number> }).signals;
+      assert.equal(signals.ouSkipReasonWETH, 9);
+      assert.equal(signals.ouSkipReasonWBTC, 9);
+    }
+    await observe(first + 6);
+    assert.equal(ctx.submitted.length, 2);
+    assert.ok(ctx.submitted.every(x => (x as Act).type === "gmxIncrease"));
+  }
+});
+
+test("cold-start grace: memory permits reversal and risk decreases immediately", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  const ctx = fakeCtx();
+  await g.submitOu(obsFor({ fairWeth: LOW, wethPos: pos(-40000),
+    wbtcPos: { ...pos(40000), pnlUsd: -6000 } }), ctx, null);
+  assert.equal(ctx.submitted.length, 2);
+  assert.ok(ctx.submitted.every(x => (x as Act).type === "gmxDecrease"));
+});
+
+test("cold-start grace: persistent mode still enters after three observations", async () => {
+  const ctx = fakeCtx();
+  for (const block of [100, 101, 102])
+    await g.submitOu(obsFor({ block, fairWeth: LOW }), ctx, null);
+  assert.equal(ctx.submitted.length, 1);
+  assert.equal((ctx.submitted[0] as Act).type, "gmxIncrease");
+  assert.equal((ctx.logs[0] as { signals: Record<string, number> }).signals.ouSkipReasonWETH, 6);
 });

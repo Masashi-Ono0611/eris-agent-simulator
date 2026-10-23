@@ -85,6 +85,9 @@ const ouDrift = new Map<string, OuDrift>();
 const ouStopped = new Set<string>();
 // Deliberately worker-local: disk state cannot waive the reload confirmation window.
 const ouObserved = new Map<string, { block: number; size: number; count: number }>();
+// A replacement worker cannot see memory-only pending keeper orders in observations.
+const OU_COLD_START_GRACE_BLOCKS = 6;
+let ouMemoryStartBlock: number | undefined;
 type OuEpoch = { key: string; runId: string; startBlock: number; lastBlock: number };
 let ouEpoch: OuEpoch | undefined;
 let ouStatePath: string | undefined;
@@ -105,6 +108,7 @@ export function resetOuStateForTest(): void {
   ouDrift.clear();
   ouStopped.clear();
   ouObserved.clear();
+  ouMemoryStartBlock = undefined;
   ouEpoch = undefined;
   ouStatePath = undefined;
   ouLoaded = false;
@@ -179,6 +183,7 @@ function beginOuObservation(obs: AgentObservation, ctx: AgentContext): void {
     ouDrift.clear();
     ouStopped.clear();
     ouObserved.clear();
+    ouMemoryStartBlock = ouStatePath === undefined ? block : undefined;
     const origin = startBlock;
     ouEpoch = { key: obs.epoch ? key : `start:${origin}`, runId: obs.runId,
       startBlock: origin, lastBlock: block };
@@ -302,7 +307,7 @@ export type OuDecision = {
   pending?: OuPending;
   usdcSpent: bigint;
   note: string;
-  /** 0 none, 1 pending, 2 epoch end, 3 ETH, 4 persistence, 5 risk, 6 confirmation, 7 USDC, 8 capacity. */
+  /** 0 none, 1 pending, 2 epoch end, 3 ETH, 4 persistence, 5 risk, 6 confirmation, 7 USDC, 8 capacity, 9 cold-start grace. */
   skipReason: number;
   requiredEthWei: bigint;
 };
@@ -327,6 +332,7 @@ export function ouPlan(args: {
   confirmedBlocks: number;
   riskStopped?: boolean;
   persistenceFailed?: boolean;
+  coldStartGrace?: boolean;
   pendingTerminal?: boolean;
   orderGasWei: bigint;
   closeReserveWei: bigint;
@@ -387,6 +393,12 @@ export function ouPlan(args: {
   if (args.persistenceFailed) {
     out.skipReason = 4;
     out.note = "persistence unavailable: entries disabled";
+    return out;
+  }
+
+  if (args.coldStartGrace) {
+    out.skipReason = 9;
+    out.note = "cold-start grace: waiting for memory-only keeper orders";
     return out;
   }
 
@@ -696,7 +708,9 @@ export async function submitOu(obs: AgentObservation, ctx: AgentContext, action:
   for (const o of observations) {
     const d = ouPlan({ ...o, pending: ouPending.get(o.base), block,
       blocksRemaining: obs.blocksRemaining ?? Infinity, ...wallet, priorityFeeWei: fee,
-      persistenceFailed: ouStorageFailed });
+      persistenceFailed: ouStorageFailed,
+      coldStartGrace: ouMemoryStartBlock !== undefined &&
+        block - ouMemoryStartBlock < OU_COLD_START_GRACE_BLOCKS });
     signals[`ouSkipReason${o.base}`] = d.skipReason;
     signals[`ouAvailableEth${o.base}`] = Number(wallet.ethWei) / 1e18;
     signals[`ouRequiredEth${o.base}`] = Number(d.requiredEthWei) / 1e18;
