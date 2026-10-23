@@ -42,7 +42,7 @@ def manifest_controls():
     def passing(job, arm, run):
         path = local / job / 'matrix.json'
         dump(path, {'fixture': job})
-        return (f'NOTE_{job} run={run} slot={arm} matrix={path}\n'
+        return (f'NOTE_{job} run={run} slot={arm} matrix={path} head={"e" * 12} arm_tree={"a" * 12}\n'
                 f'EXIT_{job}=0 VERDICT=PASS COLLISION=PASS ARM=PASS run={run}\n')
 
     baseline = ''.join(passing(f's1-FD1003-{arm}', arm, f'B-{arm}')
@@ -128,7 +128,13 @@ def manifest_controls():
     assert len(man['cells']) == 8 and len(audit['selected']) == 64 and not audit['missing']
     assert all(Path(path).is_file() for cell in man['cells'] for path in cell['arms'].values())
     assert 'C1' not in man['candidates']
+    for cell in man['cells']:
+        for arm, proof in cell['arm_evidence'].items():
+            assert proof == dict(ARM='PASS', COLLISION='PASS', slot=man['arm_map'][arm], head='e'*12, arm_tree='a'*12)
     amap = load('judge2').DEFAULT_ARM_MAP
+    assert amap == {'B': 'opus-1', "B'": 'opus-1-pb', 'R': 'opus-1r',
+                    'W1': 'opus-1g2', 'W2': 'ascon-zeta-r3k', 'X1': 'opus-1g',
+                    'X2': 'opus-1w', 'X3': 'ascon-zeta-r3kg'}
     explicit = [f'{k}={v}' for k, v in amap.items() if k not in ('B', "B'")]
     invoke('make-manifest', *args, '--arms', *explicit, rc=0)
     assert read()[0]['arm_map'] == amap
@@ -149,6 +155,9 @@ def mechanism_controls():
     run = root / 'runs' / 'one'
     agent = run / 'agents' / 'slot.jsonl'
     agent.parent.mkdir(parents=True)
+    summary = run / 'summary.json'
+    dump(summary, {'finalBlock': 1999, 'blocksProcessed': 2000})
+    decision = {'agentId': 'slot', 'round': 1998, 'action': {'type': 'noop'}}
     events = [{'event': 'runtime_start'}, {'event': 'submit_failed', 'error': 'STF'},
               {'reason': 'launch entry token: net +20'},
               {'event': 'submitted', 'error': 'STF'},
@@ -166,6 +175,34 @@ def mechanism_controls():
     with (run / 'blocks.csv').open('w', newline='') as f:
         w = csv.writer(f); w.writerow(cols); w.writerows(txs)
     mech = load('mechanism')
+    saved_log = agent.read_text()
+    for last_round in (None, 140, 1996, 2002):
+        agent.write_text(saved_log + (json.dumps(dict(decision, round=last_round)) + '\n'
+                                     if last_round is not None else ''))
+        try:
+            mech.measure(matrix, 'slot', [])
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f'incomplete slot log accepted: {last_round}')
+    for last_round in (1997, 1998, 1999, 2001):
+        agent.write_text(saved_log + json.dumps(dict(decision, round=last_round)) + '\n')
+        assert mech.measure(matrix, 'slot', [])['slot_timeouts'] == 0
+    agent.write_text(saved_log + json.dumps(decision) + '\n')
+    saved_summary = summary.read_text()
+    for invalid in (None, '{broken', '{}', '{"finalBlock": 1999}',
+                    '{"finalBlock": "1999", "blocksProcessed": 2000}'):
+        if invalid is None:
+            summary.unlink()
+        else:
+            summary.write_text(invalid)
+        try:
+            mech.measure(matrix, 'slot', [])
+        except (OSError, ValueError):
+            pass
+        else:
+            raise AssertionError(f'invalid summary accepted: {invalid}')
+    summary.write_text(saved_summary)
     result = mech.measure(matrix, 'slot', [])
     assert result == dict(slot_timeouts=0, stf=0, tie_wins=2, tie_pairs=3), result
     with agent.open('a') as f:
@@ -176,7 +213,9 @@ def mechanism_controls():
     # Reset entry tracking between scenarios.
     run2 = root / 'runs' / 'two'
     (run2 / 'agents').mkdir(parents=True)
-    (run2 / 'agents' / 'slot.jsonl').write_text(json.dumps({'event': 'submit_failed', 'error': 'STF'}) + '\n')
+    dump(run2 / 'summary.json', {'finalBlock': 1999, 'blocksProcessed': 2000})
+    (run2 / 'agents' / 'slot.jsonl').write_text('\n'.join(map(json.dumps, [
+        {'event': 'runtime_start'}, {'event': 'submit_failed', 'error': 'STF'}, decision])) + '\n')
     (run2 / 'blocks.csv').write_text(','.join(cols) + '\n')
     dump(matrix, {'scenarios': [{'runDir': '/mini/runs/one'}, {'runDir': '/mini/runs/two'}]})
     man = temp / 'M.json'
@@ -185,13 +224,32 @@ def mechanism_controls():
     out = temp / 'MECH.json'
     invoke('mechanism', man, '--out', out, rc=2)
     r = json.loads(out.read_text())['arms']['R']
+    # Collector and judge must preserve BLOCKED for incomplete execution evidence.
+    complete_log = agent.read_text()
+    for control in ('early-slot', 'missing-summary'):
+        if control == 'early-slot':
+            agent.write_text(saved_log + json.dumps(dict(decision, round=140)) + '\n')
+        else:
+            summary.unlink()
+        invoke('mechanism', man, '--out', out, rc=2)
+        blocked = json.loads(out.read_text())['arms']['R']
+        assert blocked['errors'] and blocked['slot_timeouts'] is None and blocked['stf'] is None
+        j = load('judge2')
+        hashes = set(blocked['matrices_sha256'])
+        subs = j.mechanism_clause({'R': blocked, 'B': r}, 'R', 'B', 'superiority',
+                                 {'R': hashes, 'B': hashes})
+        assert j._combine(subs) == 'BLOCKED', subs
+        print(f'COMPLETION_CONTROL_OK {control} -> BLOCKED')
+        agent.write_text(complete_log)
+        summary.write_text(saved_summary)
+    print('COMPLETION_CONTROL_OK summary + last decision round 1998 / finalBlock 1999; no runtime_end')
     # The same explicit mapping flows through extraction, including absent W2/X.
     mapped = json.loads(man.read_text())
     mapped['arm_map'] = {'B': 'opus-1', "B'": 'opus-1-pb', 'R': 'opus-1r',
-                         'W2': 'ascon-zeta-r3k', 'X1': 'opus-1g2'}
+                         'W2': 'ascon-zeta-r3k', 'X1': 'opus-1g'}
     mapped['candidates'] = {a: 'superiority' for a in ('R', 'W2', 'X1')}
     dump(man, mapped)
-    invoke('mechanism', man, '--out', out, '--arms', 'R=opus-1r', 'W2=ascon-zeta-r3k', 'X1=opus-1g2', rc=2)
+    invoke('mechanism', man, '--out', out, '--arms', 'R=opus-1r', 'W2=ascon-zeta-r3k', 'X1=opus-1g', rc=2)
     extracted = json.loads(out.read_text())
     assert extracted['arm_map'] == mapped['arm_map'] and 'C1' not in extracted['arms']
     assert extracted['arms']['R']['slot_timeouts'] == 1
@@ -230,6 +288,26 @@ def mechanism_controls():
     print('P99_NULL_WITH_TIMEOUT=FAIL (FAIL takes precedence)')
     print('P99_NULL_WITH_REASON=NOT_MEASURED (candidate PASS) P99_499=PASS P99_500=FAIL (clause and candidate)')
     assert r['matrices'][0]['tie_win_rate'] == 2/3
+    # Global collector dedupe: relabelled copies cannot contribute another observation.
+    original_man = man.read_text()
+    duplicate = matrix.parent / 'copy.json'
+    original_matrix = json.loads(matrix.read_text())
+    for different_bytes in (False, True):
+        copied = dict(original_matrix, seed=9999) if different_bytes else original_matrix
+        if different_bytes:
+            copied['scenarios'] = [dict(row, runDir=row['runDir'].replace('/runs/', '/runs/./'))
+                                   for row in original_matrix['scenarios']]
+        dump(duplicate, copied)
+        for other_arm in ('R', 'W2'):
+            mm = json.loads(original_man)
+            mm['cells'].append(dict(seed=1004, field='FP', arms={other_arm: str(duplicate)}))
+            dump(man, mm)
+            invoke('mechanism', man, '--out', out, rc=2)
+            failed = json.loads(out.read_text())['arms'][other_arm]
+            assert failed['slot_timeouts'] is None and failed['stf'] is None
+            assert any('duplicate' in error for error in failed['errors']), failed
+    man.write_text(original_man)
+    print('GLOBAL_DEDUPE_OK copied hashes and aliased runs across cells/arms')
     # A header-only CSV is a valid no-tie sample, never a fabricated 0 or 0.5.
     (run / 'blocks.csv').write_text(','.join(cols) + '\n')
     invoke('mechanism', man, '--out', out, rc=2)

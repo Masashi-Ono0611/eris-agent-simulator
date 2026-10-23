@@ -120,8 +120,8 @@ exist) and passes again after the fix.
 
 ```sh
 python3 ascon/final/make-manifest.py --logs /local/logs --stage 1 --out M.json \
-  --arms R=opus-1r W1=opus-1g W2=ascon-zeta-r3k \
-    X1=opus-1g2 X2=opus-1w X3=ascon-zeta-r3kg --path-map /mini/repo=/local/repo
+  --arms R=opus-1r W1=opus-1g2 W2=ascon-zeta-r3k \
+    X1=opus-1g X2=opus-1w X3=ascon-zeta-r3kg --path-map /mini/repo=/local/repo
 python3 ascon/final/mechanism.py M.json --out MECH.json
 python3 ascon/final/judge2.py judge --manifest M.json --mechanism MECH.json --out verdict.json
 bash ascon/final/test-evidence.sh
@@ -133,8 +133,14 @@ implicit C1. The manifest records `arm_map`; mechanism and judge inherit it, or
 accept the identical `--arms` map (conflicting maps are refused). Each candidate
 gets the unchanged frozen superiority rule independently. A missing W2 blocks
 W2 while other candidates still receive verdicts; final selection waits for
-unresolved candidates. X labels and the three known exploratory directories are
-marked exploratory. A stage-1 PASS means “go to stage 2”, never shipment.
+unresolved shipping candidates. The shipping family is exactly R/W1/W2 (three
+candidates), decided on 2026-10-23 before inspecting any candidate data. W1 is
+the defect-fixed opus-1g2; X1 is the frozen original opus-1g. X labels and the
+three known informational directories are labelled informational and excluded
+from selection. Their best outcome is `informational PASS`, never advancement
+to stage 2 or shipment; later-stage inputs are refused. Their statistics and
+PASS/FAIL/BLOCKED checks are identical. Shipping arms with stage-1 PASS may
+advance to stage 2; stage 1 alone never authorizes shipment.
 Legacy manifests explicitly requesting C1 retain their launch-only rule.
 
 The frozen stage-1 and stage-2 t critical value is **0.94**, tightened from
