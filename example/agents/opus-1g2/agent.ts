@@ -1252,6 +1252,7 @@ let ouStatePath: string | undefined;
 let ouLoaded = false;
 let ouStorageFailed = false;
 let ouMemoryOnly = false;
+let ouColdStartBlock: number | undefined;
 
 /** Tests simulate a replacement worker. Disk is intentionally untouched. */
 export function resetOuStateForTest(): void {
@@ -1265,6 +1266,7 @@ export function resetOuStateForTest(): void {
   ouLoaded = false;
   ouStorageFailed = false;
   ouMemoryOnly = false;
+  ouColdStartBlock = undefined;
 }
 
 function ouBlock(obs: AgentObservation): number {
@@ -1333,6 +1335,7 @@ function beginOuObservation(obs: AgentObservation, ctx: AgentContext): void {
     ouDrift.clear();
     ouStopped.clear();
     ouObserved.clear();
+    ouColdStartBlock = block;
     const origin = startBlock;
     ouEpoch = { key: obs.epoch ? key : `start:${origin}`, runId: obs.runId,
       startBlock: origin, lastBlock: block };
@@ -1458,7 +1461,7 @@ export type OuDecision = {
 
 // Numeric because AgentLog.signals only accepts numbers. Zero means no skipped entry.
 export const OU_SKIP = { none: 0, pending: 1, epochEnd: 2, eth: 3,
-  persistence: 4, risk: 5, confirmation: 6, usdc: 7, gasCapacity: 8 } as const;
+  persistence: 4, risk: 5, confirmation: 6, usdc: 7, gasCapacity: 8, coldStartGrace: 9 } as const;
 
 /**
  * Pure plan for one base. The caller owns confirmation history, risk latches, pending intents
@@ -1480,6 +1483,7 @@ export function ouPlan(args: {
   orderGasWei?: bigint;
   closingReserveWei?: bigint;
   entriesAllowed?: boolean;
+  coldStartGrace?: boolean;
 }): OuDecision {
   const { base, fair, anchor, position, block } = args;
   const g = (anchor - fair) / fair;
@@ -1519,6 +1523,13 @@ export function ouPlan(args: {
   const held = signedUsd > 0 ? 1 : signedUsd < 0 ? -1 : 0;
   if (!args.riskStopped && (want === 0 || want === held)) {
     out.note ||= want === 0 ? "inside the band: hold" : "positioned";
+    return out;
+  }
+  // A replacement memory-only worker cannot see orders still awaiting the keeper.
+  // Gate only fresh exposure; observed positions can still be closed during the grace.
+  if (held === 0 && args.coldStartGrace) {
+    out.skipReason = OU_SKIP.coldStartGrace;
+    out.note = "cold-start grace: entries delayed";
     return out;
   }
   const orderCost = GMX_EXECUTION_FEE_WEI + (args.orderGasWei ?? 0n);
@@ -1673,6 +1684,8 @@ function ouModule(
       confirmedBlocks,
       riskStopped,
       entriesAllowed: !ouStorageFailed,
+      coldStartGrace: ouMemoryOnly && ouColdStartBlock !== undefined &&
+        blockNo - ouColdStartBlock < 6,
       orderGasWei: gasWei,
       closingReserveWei: closingReserve,
     });

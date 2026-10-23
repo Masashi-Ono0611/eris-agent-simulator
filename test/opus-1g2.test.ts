@@ -769,18 +769,19 @@ test("memory persistence: unset state directory trades and retains intents acros
     const actions = gmxOnly([...ctx.submitted, returned].filter(Boolean) as Act[]);
     return { ctx, actions };
   };
-  const first = await call(101);
+  for (const block of [101, 102, 103]) assert.deepEqual((await call(block)).actions, []);
+  const first = await call(104);
   assert.equal(first.actions[0]?.type, "gmxIncrease");
   assert.equal(first.actions[0]?.isLong, true);
   assert.equal(first.actions[0]?.sizeDeltaUsd, (40_000n * E30).toString());
-  for (const block of [101, 102, 103, 108]) {
+  for (const block of [104, 105, 106, 111]) {
     const next = await call(block);
     assert.deepEqual(next.actions, [], `pending intent retained at ${block}`);
     assert.equal(next.ctx.logs.length, 1);
     const signals = (next.ctx.logs[0] as { signals: Record<string, number> }).signals;
     assert.equal(signals.ouPersistenceMemory, 1);
     assert.equal(signals.ouPersistenceDegraded, 0);
-    assert.equal(signals.ouPendingWETH, 101);
+    assert.equal(signals.ouPendingWETH, 104);
     assert.equal(signals.ouAnchorWETH, 3000);
   }
 });
@@ -793,7 +794,9 @@ test("memory persistence: run and epoch changes clear old pending intents", asyn
     { runId: "second", epoch: { index: 2, count: 60 } },
   ]) {
     await warmup(opts);
-    assert.equal(gmxOnly(await emitted(obsFor({ ...opts, block: 101, fairWeth: LOW })))[0]?.type,
+    for (const block of [101, 102, 103])
+      assert.deepEqual(gmxOnly(await emitted(obsFor({ ...opts, block, fairWeth: LOW }))), []);
+    assert.equal(gmxOnly(await emitted(obsFor({ ...opts, block: 104, fairWeth: LOW })))[0]?.type,
       "gmxIncrease");
   }
 });
@@ -926,14 +929,13 @@ test("calm 1003: economicGas cap is not the order price; logged balances can ent
   assert.equal(g.ouPlan({ ...base, fair: 2941.76934754, position: undefined,
     ethWei: 997775518644049000n, orderGasWei: oldOrderGas }).note,
     "ETH short of the execution fee");
-  for (const block of [1480, 1481]) await emitted(snapshot(block));
+  for (const block of [1476, 1477, 1478, 1479, 1480, 1481]) await emitted(snapshot(block));
   const actions = await emitted(snapshot(1482));
   assert.equal(gmxOnly(actions)[0]?.type, "gmxIncrease");
   assert.ok(gmxOnly(actions).some(a => a.base === "WETH"));
 });
 
 test("skip telemetry: confirmation, ETH, pending, risk, persistence and gas capacity", async () => {
-  delete process.env.ERIS_AGENT_STATE_DIR;
   const call = async (block: number, ethWei = "1000000000000000000") => {
     const ctx = fakeCtx();
     const returned = await g.decide(obsFor({ block, fairWeth: LOW, ethWei }), ctx);
@@ -953,7 +955,7 @@ test("skip telemetry: confirmation, ETH, pending, risk, persistence and gas capa
   writeFileSync(path, "{");
   g.resetOuStateForTest();
   assert.equal((await call(100)).signals.ouSkipReasonWETH, g.OU_SKIP.persistence);
-  delete process.env.ERIS_AGENT_STATE_DIR;
+  persistentState();
   g.resetOuStateForTest();
   const prior = process.env.ERIS_MAX_AGENT_BLOCK_GAS;
   process.env.ERIS_MAX_AGENT_BLOCK_GAS = "1";
@@ -969,7 +971,8 @@ test("skip telemetry: confirmation, ETH, pending, risk, persistence and gas capa
 test("economicGas: base bundle's bid is funded before OU, not the venue cap", async () => {
   delete process.env.ERIS_AGENT_STATE_DIR;
   await warmup();
-  const obs = obsFor({ block: 101, fairWeth: LOW, uniMid: 2900, curveMid: 3100 });
+  for (const block of [101, 102, 103]) await emitted(obsFor({ block }));
+  const obs = obsFor({ block: 104, fairWeth: LOW, uniMid: 2900, curveMid: 3100 });
   obs.limits!.maxPriorityFeePerGasWei = (10n ** 18n).toString();
   obs.competition = { maxCompetitorPriorityFeeWei: (2n * GWEI).toString() } as AgentObservation["competition"];
   const ctx = fakeCtx();
@@ -989,4 +992,35 @@ test("economicGas: base bundle's bid is funded before OU, not the venue cap", as
   assert.equal(signals.ouBaseGasEth, Number(baseCost) / 1e18);
   assert.ok(baseCost > 4_800_000n * GWEI / 10n, "exercise bids above the default");
   assert.ok(10n ** 18n - baseCost - 2n * 30_240_000_000_000_000n >= g.PARAMS.ouEthReserveWei);
+});
+
+test("cold-start grace: memory waits six blocks on startup and replacement worker", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  for (const start of [100, 107]) {
+    g.resetOuStateForTest();
+    const reasons: number[] = [];
+    for (let block = start; block < start + 6; block++) {
+      const ctx = fakeCtx();
+      const returned = await g.decide(obsFor({ block, fairWeth: LOW }), ctx);
+      assert.deepEqual(gmxOnly([...ctx.submitted, returned].filter(Boolean) as Act[]), []);
+      const signals = (ctx.logs.at(-1) as { signals: Record<string, number> }).signals;
+      reasons.push(signals.ouSkipReasonWETH);
+    }
+    assert.deepEqual(reasons, [9, 9, 9, 9, 9, 9]);
+    assert.equal(gmxOnly(await emitted(obsFor({ block: start + 6, fairWeth: LOW })))[0]?.type,
+      "gmxIncrease");
+  }
+});
+
+test("cold-start grace: memory permits decreases immediately", async () => {
+  delete process.env.ERIS_AGENT_STATE_DIR;
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 100, fairWeth: LOW,
+    wethPos: pos(-40_000) })))[0]?.type, "gmxDecrease");
+});
+
+test("cold-start grace: persistent mode keeps its three-observation entry", async () => {
+  for (const block of [100, 101])
+    assert.deepEqual(gmxOnly(await emitted(obsFor({ block, fairWeth: LOW }))), []);
+  assert.equal(gmxOnly(await emitted(obsFor({ block: 102, fairWeth: LOW })))[0]?.type,
+    "gmxIncrease");
 });
