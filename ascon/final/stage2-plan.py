@@ -46,6 +46,10 @@ def selected(v, judge):
     mapping = judge.resolve_arm_map(v) if stored_map is not None else dict(judge.DEFAULT_ARM_MAP, C1='opus-1a')
     # Bind prior attestations to the actual directories we will enqueue, even
     # for legacy verdicts without a map. This copy never changes the source.
+    # Keep matrix paths and attestations intact for judge.prior_problems:
+    # judge2 resolves manifest paths before recording them in the verdict,
+    # and requires each attestation's absolute matrix to match that path.
+    # Rebasing paths here would differ from judge2's prior-verdict loader.
     prior_evidence = dict(v, arm_map=mapping)
     names = [sel['F']] + ([sel['F2']] if sel.get('F2') else [])
     if len(set(names)) != len(names):
@@ -58,7 +62,7 @@ def selected(v, judge):
             raise ValueError('selected candidate is not a shippable PASS: ' + name)
         if cv.get('rule') not in ('superiority', 'noninferiority'):
             raise ValueError('missing/unknown candidate rule: ' + name)
-        cfg = {'candidates': {name: cv.get('rule')}, 'arm_map': mapping,
+        cfg = {'stage': '2', 'candidates': {name: cv.get('rule')}, 'arm_map': mapping,
                'slot_id': 'slot', 'baseline': 'B'}
         problems = judge.prior_problems(prior_evidence, cfg, name)
         if problems:
@@ -81,7 +85,7 @@ def selected(v, judge):
     # B-prime has no candidate verdict; adapt it solely for evidence validation
     # (prior_problems checks records, not statistical superiority).
     prior = dict(prior_evidence, candidates={**v['candidates'], "B'": {'verdict': 'PASS', 'rule': 'superiority'}})
-    cfg = {'candidates': {"B'": 'superiority'}, 'arm_map': mapping,
+    cfg = {'stage': '2', 'candidates': {"B'": 'superiority'}, 'arm_map': mapping,
            'slot_id': 'slot', 'baseline': 'B'}
     problems = judge.prior_problems(prior, cfg, "B'")
     if problems:

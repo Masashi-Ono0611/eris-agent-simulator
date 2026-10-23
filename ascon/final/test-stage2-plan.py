@@ -19,9 +19,16 @@ v = {'tool': 'ascon/final/judge2.py', 'stage': '1',
      'candidates': {k: {'verdict': 'PASS', 'rule': 'superiority'} for k in ('R', 'W1', 'X1')},
      'inputs': {'matrices': {}}}
 for arm, directory in mapping.items():
-    r = dict(record, arm_evidence={'ARM': 'PASS', 'COLLISION': 'PASS', 'slot': directory,
-                                 'head': 'a'*12, 'arm_tree': 'b'*12})
-    v['inputs']['matrices'][arm] = {f'{f}#{s}': r for f in ('FP', 'FD') for s in range(1003, 1007)}
+    v['inputs']['matrices'][arm] = {}
+    for f in ('FP', 'FD'):
+        for s in range(1003, 1007):
+            # judge2 records paths after resolving them against the manifest
+            # directory, with an absolute matrix binding in each attestation.
+            path = str((tmp / 'matrices' / directory / f'{f}-{s}' / 'matrix.json').resolve())
+            v['inputs']['matrices'][arm][f'{f}#{s}'] = dict(
+                copy.deepcopy(record), path=path,
+                arm_evidence={'ARM': 'PASS', 'COLLISION': 'PASS', 'slot': directory,
+                              'head': 'a'*12, 'arm_tree': 'b'*12, 'matrix': path})
 assert m.selected(v, j)[0] == ['B', 'R', 'W1']
 for change in ('partial', 'none', 'x', 'xdir', 'stage', 'floor', 'matrices', 'pending', 'placebo_record'):
     bad = copy.deepcopy(v)
@@ -93,6 +100,22 @@ for name, check in regressions.items():
     check()
     print('REGRESSION_OK ' + name)
 
+# A passing attestation cannot be reused for another matrix or repaired by
+# inventing/rebasing its path. Check every dependency, including the placebo.
+for arm in ('B', "B'", 'R', 'W1'):
+    for change in ('missing_path', 'missing_binding', 'wrong_matrix', 'relative_binding'):
+        value = copy.deepcopy(v)
+        rec = value['inputs']['matrices'][arm]['FP#1003']
+        if change == 'missing_path': del rec['path']
+        if change == 'missing_binding': del rec['arm_evidence']['matrix']
+        if change == 'wrong_matrix': rec['arm_evidence']['matrix'] += '.other'
+        if change == 'relative_binding': rec['arm_evidence']['matrix'] = 'matrix.json'
+        rejected(value, 'arm evidence matrix differs or is missing')
+before = copy.deepcopy(v)
+assert m.selected(v, j)[0] == ['B', 'R', 'W1']
+assert v == before
+print('MATRIX_BINDING_CONTROLS_OK')
+
 # Controls for disproved findings: B is validated through prior_problems.
 for change in ('missing', 'label', 'record'):
     value = copy.deepcopy(v)
@@ -126,7 +149,10 @@ for count in (1, 2, 3, 4, 8):
 cmd = [sys.executable, str(src / 'stage2-plan.py'), '--verdict', str(tmp / 'verdict.json'),
        '--lanes', 'A,B,C,D', '--order-seed', '17', '--commit', 'a'*40]
 for name in ('q1', 'q2'):
-    result = subprocess.run(cmd + ['--out', str(tmp/name)], capture_output=True, text=True)
+    # The verdict lives away from the invocation directory. Recorded absolute
+    # matrix paths must also work when invoked from a different directory.
+    result = subprocess.run(cmd + ['--out', str(tmp/name)], capture_output=True, text=True,
+                            cwd=src if name == 'q1' else tmp)
     assert result.returncode == 0, result.stdout + result.stderr
     assert 'lane A: jobs=6 estimated_hours=15.00' in result.stdout
     rows = [line for p in (tmp/name).glob('*.txt') for line in p.read_text().splitlines() if not line.startswith('#')]
