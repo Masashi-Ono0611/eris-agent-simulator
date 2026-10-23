@@ -5,22 +5,25 @@ CLI: judge --manifest M.json --mechanism MECH.json [--stage 1|2|retest]
      [--stage1-verdict V1.json | --stage2-verdict V2.json] [--out V.json] [--json]
      validate <matrix.json or matrix directory> ...
 
-Arms: B (opus-1), B' (opus-1-pb), C1 (opus-1a, launch only), R (opus-1r),
-W (one weapon arm). Stage 1 uses seeds 1003-1006, or the late-R set 1007-1010;
+Arms: explicit --arms LABEL=agent-dir (or manifest arm_map), with B/B' required.
+Stage 1 shipping family: R=opus-1r, W1=opus-1g2 (defect-fixed), W2=ascon-zeta-r3k.
+Informational only: X1=opus-1g (frozen original), X2=opus-1w, X3=ascon-zeta-r3kg.
+X arms use identical statistics but never advance or ship; no implicit C1.
+Legacy explicitly requested C1 noninferiority remains supported. Stage 1 uses seeds 1003-1006, or the late-R set 1007-1010;
 stage 2 uses 1011-1014 for both F and F2, plus FS seeds 1101-1102. Retest combines
 stage 2 with 1021-1024. FS covers launch, cdp-incident and lending-incident.
 
 R/W: d = EW11(candidate)-EW11(B), excluding launch. Pair FP/FD within seed;
 m = mean(c), f = max(0.25, sample_sd(placebo c)), SE = max(sample_sd(c), f)/sqrt(n).
-Stage 1 requires t >= 0.81 and m >= +0.20, with NO ask band (U4 approved).
-Stage 2 uses stage-1 f, t >= 0.81 and m > 0. With fewer than four paired seeds,
+Stage 1 requires t >= 0.94 and m >= +0.20, with NO ask band (U4 approved).
+Stage 2 uses stage-1 f, t >= 0.94 and m > 0. With fewer than four paired seeds,
 t uses the stricter t(n-1) critical value. Other clauses:
 2: mean(d_f) + 1.64*sd(d_f)/2 >= -0.5 FD / -0.25 FP (non-launch).
 3: non-launch regime mean <= -3 and >=75% negative (6/8 planned), AND the
 candidate's OWN tagged mechanism PnL sum < 0. Nonnegative PnL is reported as
 noise; missing attribution for such a regime is BLOCKED, never assumed zero.
 4: fewer than two non-launch epochs with delta P < -3000 USDC.
-5: timeouts 0, p99 < 500ms, tie-win difference <=10pt, STF 0; candidate slot
+5: timeouts 0, p99 < 500ms (null with a reason: NOT_MEASURED, advisory), tie-win difference <=10pt, STF 0; candidate slot
 failures and rule flags count as FAIL, unknown flags BLOCKED.
 6: launch mean over eight cells >= -3 T (STF 0 also required by clause 5).
 C1: launch noninferiority and clause 5 only; stage 1 also needs the c1L (a)-(d)
@@ -57,12 +60,13 @@ import os
 import sys
 
 PASS, FAIL, BLOCKED = "PASS", "FAIL", "BLOCKED"
+NOT_MEASURED = "NOT_MEASURED"
 FIELDS = ("FP", "FD")
 FS_FIELD = "FS"
 LAUNCH = "launch"
 REGIMES12 = ("calm", "cex-drift", "informed-flow", "whale", "lending-incident", "crash", "depeg", "vuln",
              "spike", "depeg-persist", "cdp-incident", "launch")
-T_CRIT = 0.81  # pre-freeze whole-tree MC calibration; mean floor remains +0.20
+T_CRIT = 0.94  # post-freeze three-candidate whole-tree MC tightening; mean floor remains +0.20
 T90 = {1: 3.078, 2: 1.886, 3: 1.638}  # one-sided 10% t quantiles; n >= 4 uses calibrated T_CRIT
 PLACEBO_FLOOR = 0.25
 THRESHOLD = 0.20
@@ -96,6 +100,50 @@ try:
     HERE = os.path.dirname(os.path.abspath(__file__))
 except NameError:  # run from stdin (validate only)
     HERE = None
+
+
+# Explicit stage-1 identity map. Legacy manifests remain readable without adding C1.
+DEFAULT_ARM_MAP = {"B": "opus-1", "B'": "opus-1-pb", "R": "opus-1r",
+                   "W1": "opus-1g2", "W2": "ascon-zeta-r3k", "X1": "opus-1g",
+                   "X2": "opus-1w", "X3": "ascon-zeta-r3kg"}
+EXPLORATORY_DIRS = {"opus-1g", "opus-1w", "ascon-zeta-r3kg"}
+
+
+def parse_arm_map(items):
+    import re
+    result = {"B": "opus-1", "B'": "opus-1-pb"}
+    seen = set()
+    for item in items:
+        for entry in item.split(","):
+            label, sep, directory = entry.partition("=")
+            if not sep or not (label in ("B", "B'") or re.fullmatch(r"[A-Za-z][A-Za-z0-9_-]*", label)):
+                raise ValueError("--arms requires LABEL=agent-dir")
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", directory):
+                raise ValueError("invalid arm directory")
+            if label in seen or (label in result and result[label] != directory):
+                raise ValueError("duplicate or reserved arm label: " + label)
+            seen.add(label)
+            result[label] = directory
+    if len(set(result.values())) != len(result):
+        raise ValueError("arm directories must be unique")
+    if len(result) <= 2:
+        raise ValueError("need at least one candidate")
+    return result
+
+
+def resolve_arm_map(man, items=None):
+    stored = man.get("arm_map")
+    parsed = parse_arm_map([f"{k}={v}" for k, v in stored.items()]) if isinstance(stored, dict) else None
+    if stored is not None and parsed is None:
+        raise ValueError("arm_map must be an object")
+    supplied = parse_arm_map(items) if items else None
+    if supplied and parsed and supplied != parsed:
+        raise ValueError("--arms differs from manifest arm_map")
+    return supplied or parsed
+
+
+def exploratory_arm(label, arm_map):
+    return label.startswith("X") or (arm_map or {}).get(label) in EXPLORATORY_DIRS
 
 
 # ---------------------------------------------------------------- official standings replica
@@ -631,7 +679,7 @@ def coverage_clause(skipped, failed_cells):
 
 
 def mechanism_clause(mech, arm, base, rule, expected_sha=None, mech_dir=None, need_step2=True):
-    """Clause 5 from the mechanism JSON's arms section; any missing or malformed value is BLOCKED.
+    """Clause 5: missing/malformed values BLOCKED; explicit null p99 with a reason is advisory.
     expected_sha: {arm: set of sha256 of the matrices judged for that arm}; the JSON's matrices_sha256 must
     list exactly those for the arm and for B."""
     subs = {}
@@ -655,7 +703,10 @@ def mechanism_clause(mech, arm, base, rule, expected_sha=None, mech_dir=None, ne
         return out
     count("slot_timeouts", "slot_timeouts")
     v = None if a is None else a.get("p99_decide_ms")
-    if not (_num(v) and math.isfinite(v) and v >= 0):
+    reason = None if a is None else a.get("p99_decide_ms_reason")
+    if a is not None and "p99_decide_ms" in a and v is None and isinstance(reason, str) and reason.strip():
+        subs["p99_latency"] = {"status": NOT_MEASURED, "detail": "not measured (advisory): " + reason.strip()}
+    elif not (_num(v) and math.isfinite(v) and v >= 0):
         subs["p99_latency"] = {"status": BLOCKED, "detail": "p99_decide_ms missing or malformed: %r" % (v,)}
     else:
         subs["p99_latency"] = {"status": PASS if v < P99_MS else FAIL, "detail": "p99 %.1f ms (must be < %.0f)" % (v, P99_MS)}
@@ -843,7 +894,8 @@ def inspect_arm_cell(path, seed, slot, regimes, roster, launch_only=False):
         if sc.get("seed") != seed:
             cfg.append("scenario %s has seed %r, the cell is seed %r" % (r, sc.get("seed"), seed))
         if sc.get("runDir"):
-            out["run_dirs"].append(sc["runDir"])
+            out["run_dirs"].append(os.path.realpath(sc["runDir"] if os.path.isabs(sc["runDir"]) else
+                os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(path)))), sc["runDir"])))
         else:
             cfg.append("scenario %s has no runDir" % r)
         agents = sc.get("agents") or []
@@ -949,8 +1001,13 @@ def _load_verdict(path, stage):
         _die("stage-%s verdict unreadable: %s" % (stage, e))
     if not isinstance(v, dict) or v.get("tool") != "ascon/final/judge2.py" or v.get("stage") != stage:
         _die("%s is not a judge2 stage-%s verdict" % (path, stage))
-    if (v.get("params") or {}).get("statistic") != "EW11" or (v.get("params") or {}).get("ask_floor") is not None:
+    if not isinstance(v.get("params"), dict) or (v.get("params") or {}).get("statistic") != "EW11" or (v.get("params") or {}).get("ask_floor") is not None:
         _die("prior verdict does not use the approved EW11/no-ask rules; rejudge its saved matrices")
+    for key in ("params", "candidates", "selection", "inputs", "design"):
+        if not isinstance(v.get(key), dict):
+            _die("BLOCKED: prior verdict missing/malformed " + key)
+    if not all(isinstance(cv, dict) for cv in v["candidates"].values()):
+        _die("BLOCKED: prior verdict malformed candidates")
     return v, _sha256(path)
 
 
@@ -976,7 +1033,7 @@ def _inherit_nonplan(cfg, v, stage, args):
         cfg["inherited_nonplan"].append("stage %s: %s" % (stage, x))
 
 
-MANIFEST_KEYS = {"stage", "slot_id", "baseline", "placebo", "candidates", "cells", "exclude", "threshold", "ask_floor", "design"}
+MANIFEST_KEYS = {"stage", "slot_id", "baseline", "placebo", "candidates", "cells", "exclude", "threshold", "ask_floor", "design", "arm_map"}
 DESIGN_KEYS = {"seeds", "fs_seeds", "regimes", "rosters"}
 
 
@@ -1001,6 +1058,14 @@ def build_config(args):
     for c in args.candidate or []:
         arm, _, rule = c.partition("=")
         cfg["candidates"][arm] = rule
+    cfg["arm_map"] = resolve_arm_map(man, getattr(args, "arms", None))
+    if cfg["arm_map"]:
+        mapped = {a: "superiority" for a in cfg["arm_map"] if a not in ("B", "B'")}
+        if cfg["candidates"] and cfg["candidates"] != mapped:
+            _die("candidates differ from explicit arm_map superiority candidates")
+        if cfg["baseline"] != "B" or cfg["placebo"] != "B'":
+            _die("explicit arm_map requires B and B'")
+        cfg["candidates"] = mapped
     roles = cfg["candidates"]
     for arm, rule in roles.items():
         if rule not in ("superiority", "noninferiority"):
@@ -1008,12 +1073,14 @@ def build_config(args):
     if not roles:
         _die("need at least one candidate")
     if stage == "1":
-        if sum(r == "superiority" for r in roles.values()) > 2 or sum(r == "noninferiority" for r in roles.values()) > 1:
-            _die("at most two superiority and one noninferiority candidate (R, W and C1)")
+        if sum(r == "noninferiority" for r in roles.values()) > 1:
+            _die("at most one noninferiority candidate (legacy C1)")
         arms = [cfg["baseline"], cfg["placebo"]] + list(roles)
     else:
         if len(roles) != 1:
             _die("stage %s judges exactly one candidate (F)" % stage)
+        if any(exploratory_arm(a, cfg["arm_map"]) for a in roles):
+            _die("informational arms cannot enter stage 2 or retest")
         arms = [cfg["baseline"]] + list(roles)
     if len(set(arms)) != len(arms):
         _die("arm names collide: %s" % arms)
@@ -1023,11 +1090,13 @@ def build_config(args):
     cfg["fields"] = fields
     # earlier verdicts
     cfg["prior"] = None
+    cfg["prior_problems"] = []
     plan_key = stage
     if stage == "2":
         if not args.stage1_verdict:
             _die("stage 2 needs --stage1-verdict (f and the selected candidate come from it)")
         v1, sha = _load_verdict(args.stage1_verdict, "1")
+        cfg["prior_problems"] += prior_problems(v1, cfg, F)
         sel = v1.get("selection") or {}
         if sel.get("status") != "DECIDED" or F not in (sel.get("F"), sel.get("F2")):
             _die("the stage-1 verdict does not select %s (selection %r)" % (F, sel.get("decision")))
@@ -1042,12 +1111,13 @@ def build_config(args):
         if not args.stage2_verdict:
             _die("the re-test needs --stage2-verdict")
         v2, sha = _load_verdict(args.stage2_verdict, "2")
+        cfg["prior_problems"] += prior_problems(v2, cfg, F)
         _inherit_nonplan(cfg, v2, "2", args)
         cv = (v2.get("candidates") or {}).get(F) or {}
         if cv.get("verdict") != PASS:
             _die("the stage-2 verdict does not pass %s (%r)" % (F, cv.get("verdict")))
         cfg["prior"] = {"path": os.path.abspath(args.stage2_verdict), "sha256": sha,
-                        "matrices": (v2.get("inputs") or {}).get("matrices") or {}}
+                        "matrices": (v2.get("inputs") or {}).get("matrices")}
     elif args.stage1_verdict or args.stage2_verdict:
         _die("--stage1-verdict / --stage2-verdict belong to stage 2 / retest")
     # design
@@ -1115,6 +1185,7 @@ def build_config(args):
         if not all(isinstance(p, str) and p for p in c["arms"].values()):
             _die("cell %s#%s: arm paths must be strings" % (key[1], key[0]))
         listed[key] = {"seed": key[0], "field": key[1],
+                       "arm_evidence": c.get("arm_evidence", {}),
                        "arms": {a: p if os.path.isabs(p) else os.path.join(base_dir, p) for a, p in c["arms"].items()}}
     expected = {(s, f) for s in seeds for f in FIELDS} | {(s, FS_FIELD) for s in fs_seeds}
     outside = sorted(set(listed) - expected)
@@ -1143,7 +1214,7 @@ def build_config(args):
             _die("exclude entry %r: evidence (the failure as the run reported it) is required" % (x,))
         if "rerun" in x:
             rr = x["rerun"]
-            if not (isinstance(rr, dict) and set(rr) == {"arm", "path", "sha256"} and rr["arm"] in arms
+            if not (isinstance(rr, dict) and {"arm", "path", "sha256"} <= set(rr) <= {"arm", "path", "sha256", "arm_evidence"} and rr["arm"] in arms
                     and isinstance(rr["path"], str) and rr["path"] and isinstance(rr["sha256"], str) and len(rr["sha256"]) == 64):
                 _die("exclude entry %r: rerun must be {arm (one of %s), path, sha256 (64 hex)}" % (x, arms))
             x["rerun"] = dict(rr, path=rr["path"] if os.path.isabs(rr["path"]) else os.path.join(base_dir, rr["path"]))
@@ -1179,6 +1250,73 @@ def build_config(args):
     return cfg
 
 
+def arm_problems(evidence, directory, setup, matrix=None):
+    """Lane check-arm/check-collision attestation, bound to the recorded simulator commit."""
+    if not isinstance(evidence, dict):
+        return ["missing arm evidence"]
+    if (evidence.get("ARM") != PASS or evidence.get("COLLISION") != PASS
+            or not isinstance(evidence.get("slot"), str) or not evidence["slot"]
+            or (directory is not None and evidence["slot"] != directory)):
+        return ["arm evidence must have ARM=PASS/COLLISION=PASS and matching slot directory"]
+    import re
+    if not all(isinstance(evidence.get(k), str) and re.fullmatch(r"[0-9a-f]{12,64}", evidence[k])
+               for k in ("head", "arm_tree")):
+        return ["arm evidence missing head/arm_tree"]
+    if matrix is not None and (not isinstance(evidence.get("matrix"), str) or
+            not os.path.isabs(evidence["matrix"]) or
+            os.path.realpath(evidence["matrix"]) != os.path.realpath(matrix)):
+        return ["arm evidence matrix differs or is missing"]
+    commit = (setup or {}).get("sourceCommit")
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{12,64}", commit) or not commit.startswith(evidence["head"]):
+        return ["arm evidence head differs from simulation setup"]
+    return []
+
+
+def prior_problems(v, cfg, candidate):
+    problems = []
+    cv = v["candidates"].get(candidate)
+    if not isinstance(cv, dict) or cv.get("verdict") != PASS or cv.get("rule") != cfg["candidates"][candidate]:
+        problems.append("prior verdict must PASS the same candidate and rule")
+    old_map, new_map = v.get("arm_map"), cfg["arm_map"]
+    # Only the baseline and finalist are used from the prior verdict.
+    if (old_map is None) != (new_map is None) or (new_map is not None and
+            (not isinstance(old_map, dict) or any(not new_map.get(a) or old_map.get(a) != new_map[a]
+                                                 for a in (cfg["baseline"], candidate)))):
+        problems.append("prior verdict arm map differs")
+    if any(v["params"].get(k) != cfg[k] for k in ("slot_id", "baseline")):
+        problems.append("prior verdict slot/baseline differs")
+    matrices = v["inputs"].get("matrices")
+    design = v["design"]
+    seeds, fs_seeds = design.get("seeds"), design.get("fs_seeds", [])
+    if not isinstance(seeds, list) or not seeds or not all(_is_int(s) for s in seeds) or not isinstance(fs_seeds, list) or not all(_is_int(s) for s in fs_seeds):
+        return problems + ["prior verdict missing/malformed design"]
+    if len(set(seeds)) != len(seeds) or len(set(fs_seeds)) != len(fs_seeds):
+        return problems + ["prior verdict duplicate seed schedules"]
+    if cfg["stage"] == "retest" and not fs_seeds:
+        return problems + ["prior stage-2 verdict missing FS seed schedule"]
+    if cfg["stage"] == "retest" and tuple(sorted(fs_seeds)) != FS_SEEDS:
+        note = "FS seeds %s (plan: %s)" % (sorted(fs_seeds), list(FS_SEEDS))
+        if note not in (v.get("nonplan") or []):
+            return problems + ["prior stage-2 verdict missing required FS coverage"]
+    labels = {"%s#%s" % (f, seed) for seed in seeds for f in FIELDS} | {"FS#%s" % seed for seed in fs_seeds}
+    import re
+    for arm in (cfg["baseline"], candidate):
+        records = matrices.get(arm) if isinstance(matrices, dict) else None
+        if not isinstance(records, dict) or set(records) != labels:
+            problems.append("prior verdict missing/malformed matrices for " + arm)
+            continue
+        for rec in records.values():
+            if (not isinstance(rec, dict) or not isinstance(rec.get("sha256"), str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", rec["sha256"])
+                    or not isinstance(rec.get("setup"), dict)
+                    or any(rec["setup"].get(k) is None for k in SETUP_KEYS)):
+                problems.append("prior verdict malformed matrix evidence for " + arm)
+            elif isinstance(old_map, dict):
+                problems += ["prior " + arm + ": " + p for p in
+                             arm_problems(rec.get("arm_evidence"), old_map.get(arm), rec["setup"], rec.get("path", ""))]
+    return problems
+
+
 def _inspect(cfg):
     """Everything that does not depend on the exclusions: each arm's matrix in each cell, file and runDir
     reuse, configuration problems, the arms' simulation setup against B's, and the rerun records."""
@@ -1203,12 +1341,16 @@ def _inspect(cfg):
                 path_owner[rp] = (lab, arm)
             r = inspect_arm_cell(p, key[0], slot,
                                  list(FS_REGIMES) if key[1] == FS_FIELD else cfg["design"]["regimes"],
-                                 cfg["design"]["rosters"].get(key[1]), cfg["candidates"].get(arm) == "noninferiority")
+                                 cfg["design"]["rosters"].get(key[1]), cfg["candidates"].get(arm) == "noninferiority" and key[1] != FS_FIELD)
+            evidence = c.get("arm_evidence", {}).get(arm) if isinstance(c.get("arm_evidence", {}), dict) else None
+            r["arm_evidence"] = evidence
+            if cfg.get("arm_map") or evidence is not None:
+                r["config"] += arm_problems(evidence, (cfg.get("arm_map") or {}).get(arm), r["setup"], p)
             insp[arm] = r
             if r["sha256"]:
-                st["files"].setdefault(arm, {})[lab] = {"path": p, "sha256": r["sha256"], "setup": r["setup"]}
+                st["files"].setdefault(arm, {})[lab] = {"path": p, "sha256": r["sha256"], "setup": r["setup"], "arm_evidence": evidence}
             for rd in r["run_dirs"]:
-                if rd in rd_owner and rd_owner[rd] != (lab, arm):
+                if rd in rd_owner:
                     o_lab, o_arm = rd_owner[rd]
                     for a in {arm, o_arm}:
                         st["problems"][a].append("runDir %s is in both %s %s and %s %s" % (rd, o_lab, o_arm, lab, arm))
@@ -1244,13 +1386,26 @@ def _inspect(cfg):
         else:
             r = inspect_arm_cell(rr["path"], x["seed"], slot,
                                  list(FS_REGIMES) if x["field"] == FS_FIELD else cfg["design"]["regimes"],
-                                 cfg["design"]["rosters"].get(x["field"]), cfg["candidates"].get(rr["arm"]) == "noninferiority")
+                                 cfg["design"]["rosters"].get(x["field"]), cfg["candidates"].get(rr["arm"]) == "noninferiority" and x["field"] != FS_FIELD)
+            proof = rr.get("arm_evidence")
+            identity_errors = arm_problems(proof, (cfg.get("arm_map") or {}).get(rr["arm"]), r["setup"], rr["path"])
+            original_proof = listed.get("arm_evidence") if listed else None
+            original_errors = arm_problems(original_proof, (cfg.get("arm_map") or {}).get(rr["arm"]),
+                                           listed["setup"] if listed else None,
+                                           st["files"].get(rr["arm"], {}).get("%s#%s" % (x["field"], x["seed"]), {}).get("path", ""))
             if r["config"]:
                 rec["problem"] = "rerun matrix: %s" % "; ".join(r["config"][:3])
-            elif listed is not None and set(r["run_dirs"]) & set(listed["run_dirs"]):
+            elif set(r["run_dirs"]) & set(rd_owner):
                 rec["problem"] = "the rerun shares runDirs with the listed %s matrix (not a new run)" % rr["arm"]
+            elif listed is None or r["setup"] != listed["setup"]:
+                rec["problem"] = "rerun simulation setup differs from original"
+            elif (identity_errors or original_errors or proof["slot"] != original_proof["slot"]
+                  or proof["arm_tree"] != original_proof["arm_tree"]):
+                rec["problem"] = "rerun arm identity/tree differs or is unverified"
             else:
                 rec["infra"] = r["infra"]
+    for a in arms:
+        st["problems"][a] += cfg.get("prior_problems", [])
     return st
 
 
@@ -1375,7 +1530,7 @@ def _assess(cfg, st, excl, mech, mech_path, mech_problem):
             if (arm, key) not in data or (B, key) not in data:
                 continue
             da, db = data[(arm, key)], data[(B, key)]
-            if roles.get(arm) == "noninferiority":
+            if roles.get(arm) == "noninferiority" and key[1] != FS_FIELD:
                 da = {r: v for r, v in da.items() if r == LAUNCH}
                 db = {r: v for r, v in db.items() if r == LAUNCH}
             names = sorted(db)
@@ -1470,8 +1625,17 @@ def _assess(cfg, st, excl, mech, mech_path, mech_problem):
         placebo_summary = {k: ps[k] for k in ("n", "m", "sd", "f", "se", "t", "t_crit")}
         placebo_summary.update(c=pcs, dbar_FP=pdb["FP"], dbar_FD=pdb["FD"], check=placebo_check(pcs),
                                regime_dT={"%s#%d" % (f, s): {r: v[0] for r, v in x["regimes"].items()} for (s, f), x in sorted(pl.items())})
+    for arm, result in cands.items():
+        result["exploratory"] = exploratory_arm(arm, cfg["arm_map"])
+        result["informational"] = result["exploratory"]
+        result["agent_dir"] = (cfg["arm_map"] or {}).get(arm)
+        if stage == "1":
+            result["decision"] = (("informational " + result["verdict"]) if result["informational"] else
+                                  "go to stage 2" if result["verdict"] == PASS else result["verdict"])
+            result["stage1_ship_eligible"] = False
     if stage == "1":
-        sel = select({a: v["verdict"] for a, v in cands.items()}, roles,
+        sel = select({a: v["verdict"] for a, v in cands.items()},
+                     {a: r for a, r in roles.items() if not cands[a]["informational"]},
                      {a: v.get("stats", {}).get("m") for a, v in cands.items()})
     else:
         F = list(roles)[0]
@@ -1520,7 +1684,7 @@ def cmd_judge(args):
             for a in roles:
                 cands[a] = {"rule": roles[a], "verdict": BLOCKED, "input_problems": [msg]}
             sel = {"F": None, "F2": None, "status": "PENDING", "decision": "PENDING", "note": "exclusion scope decides the result"}
-    if stage == "retest":
+    if stage == "retest" and not cfg["prior_problems"]:
         # the stage-2 cells must be the very matrices the stage-2 verdict judged
         for arm, labs in (cfg["prior"]["matrices"] or {}).items():
             for lab, rec in labs.items():
@@ -1544,7 +1708,7 @@ def cmd_judge(args):
                    "big_loss_max_exclusive": BIG_LOSS_MAX, "p99_ms": P99_MS, "tie_pt": TIE_PT, "launch_regime": LAUNCH,
                    "fs_mean_floor": FS_MEAN_FLOOR, "launch_floor": LAUNCH_FLOOR, "statistic": "EW11",
                    "slot_id": slot, "baseline": B, "placebo": Bp if stage == "1" else None},
-        "design": cfg["design"], "nonplan": cfg["nonplan"],
+        "arm_map": cfg["arm_map"], "design": cfg["design"], "nonplan": cfg["nonplan"],
         "prior": {k: v for k, v in (cfg["prior"] or {}).items() if k != "matrices"} or None,
         "inputs": {"manifest": args.manifest and os.path.abspath(args.manifest),
                    "manifest_sha256": args.manifest and _sha256(args.manifest),
@@ -1617,6 +1781,8 @@ def print_table(out):
         else:
             print("  placebo %s: not available" % p["placebo"])
     for arm, r in out["candidates"].items():
+        if r.get("exploratory"):
+            print("  %s informational: %s (cannot advance or ship)" % (arm, r.get("decision", r["verdict"])))
         if r["verdict"] == BLOCKED and "input_problems" in r:
             print("  %-4s %-14s %s" % (arm, r["rule"], r["verdict"]))
             for x in r["input_problems"][:8]:
@@ -1660,6 +1826,7 @@ def main(argv):
     j.add_argument("--stage1-verdict", dest="stage1_verdict")
     j.add_argument("--stage2-verdict", dest="stage2_verdict")
     j.add_argument("--cell", action="append", help="FIELD:SEED:ARM=PATH (matrix.json)")
+    j.add_argument("--arms", nargs="+", help="LABEL=agent-dir; B and B' always required")
     j.add_argument("--candidate", action="append", help="ARM=superiority|noninferiority")
     j.add_argument("--exclude", action="append", help="SEED:FIELD[:REGIME]=EVIDENCE (reason infra)")
     j.add_argument("--baseline")

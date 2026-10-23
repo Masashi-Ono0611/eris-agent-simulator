@@ -26,6 +26,7 @@ in decide() (opus-r3s's getBlock) lost equal-fee ties about 2:1.
 | `smoke-{calm,lending,launch}-1001.yaml` | One scenario each (`lending` is the lending-incident regime): checks that a roster starts and scores, not a result |
 | `check-arm.py` | Per matrix: the slot ran the intended arm, frozen, in every scenario |
 | `check-trap-scope.py` | Whether the trap control is still unnecessary for given scenario files and arms (see "No trap control") |
+| `stage2-plan.py` | Validates a complete judge2 stage-1 verdict and writes Step-7 FP/FD queues; controls: `test-stage2-plan.sh` |
 | `make-queues.py` | Writes a stage's lane-queue files by the cell rules (one cell = all arms of a (seed, field), on one lane, in a recorded random order), and checks a set of them (`--check`) |
 | `test-checks.sh` | Positive and negative controls for check-arm, check-trap-scope and make-queues: `/bin/bash ascon/final/test-checks.sh "$PWD"`; all harness tests: `/bin/bash ascon/eval/test-all.sh` |
 | `LINEAGE.md` | Which of our agents survived which round, and how they map onto the arms |
@@ -115,3 +116,111 @@ they were not run through `loadScenarioSet`. The 31 evaluation files now hold 35
 check-trap-scope in their own worktrees on uncommitted code; rerun it on the committed version.
 test-checks.sh failed two controls once opus-1a existed (they used opus-1a as the arm that does not
 exist) and passes again after the fix.
+
+## Building stage-1 evidence from copied logs
+
+```sh
+python3 ascon/final/make-manifest.py --logs /local/logs --stage 1 --out M.json \
+  --arms R=opus-1r W1=opus-1g2 W2=ascon-zeta-r3k \
+    X1=opus-1g X2=opus-1w X3=ascon-zeta-r3kg --path-map /mini/repo=/local/repo
+python3 ascon/final/mechanism.py M.json --out MECH.json
+python3 ascon/final/judge2.py judge --manifest M.json --mechanism MECH.json --out verdict.json
+bash ascon/final/test-evidence.sh
+```
+
+`--arms` accepts `LABEL=agent-dir` entries, comma or space separated. The default
+is the explicit map above plus required B=opus-1 and B'=opus-1-pb. There is no
+implicit C1. The manifest records `arm_map`; mechanism and judge inherit it, or
+accept the identical `--arms` map (conflicting maps are refused). Each candidate
+gets the unchanged frozen superiority rule independently. A missing W2 blocks
+W2 while other candidates still receive verdicts; final selection waits for
+unresolved shipping candidates. The shipping family is exactly R/W1/W2 (three
+candidates), decided on 2026-10-23 before inspecting any candidate data. W1 is
+the defect-fixed opus-1g2; X1 is the frozen original opus-1g. X labels and the
+three known informational directories are labelled informational and excluded
+from selection. Their best outcome is `informational PASS`, never advancement
+to stage 2 or shipment; later-stage inputs are refused. Their statistics and
+PASS/FAIL/BLOCKED checks are identical. Shipping arms with stage-1 PASS may
+advance to stage 2; stage 1 alone never authorizes shipment.
+Legacy manifests explicitly requesting C1 retain their launch-only rule.
+
+The frozen stage-1 and stage-2 t critical value is **0.94**, tightened from
+0.81 to meet the whole-tree false-ship Wilson upper-95 bound of 2% for
+R/W1/W2. The stage-1 +0.20 mean floor and all other rules are unchanged.
+Family-wise calibration for the three shippable candidates is report-only:
+
+```sh
+python3 -B ascon/final/mc.py run --noise /path/to/stepR/noise-r2r3.json \
+  --calibrate --candidates R W1 W2 --sims 40000 --rng-seed 231023 --json mc-three.json
+```
+
+This scans 0.01 grid points from the frozen threshold upward, keeps shared B
+and the frozen ranking/F/F2 limit, and reports Wilson upper-95. It does not
+change `judge2.T_CRIT`. Exploratory arms and C1 are absent from this calibration.
+
+The stage-1 design is FP/FD at seeds 1003–1006. Each job uses its last EXIT with VERDICT=PASS,
+ordered by line position within its lane log; newer killed/failed attempts do not replace it.
+That selected attempt must also have rc=0, COLLISION=PASS, ARM=PASS and matching slot/matrix
+NOTEs. An invalid latest PASS is missing, never rescued by an earlier PASS. PASS attempts in
+multiple lanes have no reliable cross-file order (run ids can be arbitrary), so are missing.
+Missing jobs are omitted; partial cells contain only observed arms. No empty cells are invented.
+Exit 0 means complete; exit 2 means incomplete/refused. `M.json.audit.json` lists selected,
+ignored and missing attempts and the path mappings, without adding unsupported manifest keys.
+
+Repeat `--path-map` for multiple roots (longest component prefix wins). Keep copied matrices
+unchanged under `runs/matrix-*/matrix.json`, alongside copied `runs/<id>/` directories.
+The audit sidecar carries the mappings into mechanism extraction for absolute runDir values;
+relative runDir values resolve against the directory containing `runs/`. If moving M.json,
+move its audit sidecar too, or pass the same mappings to `mechanism.py --path-map`.
+Hashes always cover the original matrix bytes, not rewritten paths.
+
+`MECH.json` has the judge's `arms` object, with aggregate counts, pooled pairwise tie win rate,
+exact matrix SHA256 list, and per-matrix counts/rates. Only `agents/slot.jsonl` is counted:
+decide-timeout reason lines, and `submit_failed` events containing the STF token after the
+first launch-entry reason in each scenario. Entry state resets for each scenario.
+Tie pairs have the same block, destination (`to`, the venue key available in blocks.csv),
+and integer priority fee, but different sender addresses. Each slot/other transaction pair
+counts once, including reverted transactions; a lower slot txIndex wins. This measures
+same-destination races and cannot distinguish pools behind one router. No ties yields null.
+Missing/malformed evidence yields null counts and an error, never zero failures. C1's
+separate Step-2 report/verdict and tagged mechanism PnL are not inferred by this extractor.
+
+**Unmeasured p99 (user decision 2026-10-23):** Stage 1 started without decide-duration
+logging, so p99 cannot be measured retrospectively. Mechanism extraction still writes
+`p99_decide_ms: null` with `p99_decide_ms_reason` and exits 2. The judge explicitly reports
+`p99_latency: NOT_MEASURED` (advisory) only for an explicit null with a non-empty reason
+string (whitespace alone is insufficient). This subclause does not block or fail condition 5.
+Latency's harm in equal-fee races is measured directly by tie-win difference within 10 pt
+of B and zero slot timeouts; STF and provenance checks remain enforced.
+
+Numeric p99 keeps the strict <500 ms rule: 499 ms PASS, 500 ms FAIL. A missing key,
+malformed value, or null without a valid reason stays BLOCKED. Other failures still take
+precedence. All other judge rules remain frozen. Tests cover these cases and revert the
+advisory branch in memory to verify null+reason returns to BLOCKED.
+Judge CLI exit 0 means it produced a verdict, not that a candidate passed.
+
+## Stage-2 FP/FD queue planning
+
+```sh
+python3 ascon/final/stage2-plan.py --verdict verdict.json --lanes A,B,C,D \
+  --order-seed 231023 --out /tmp/stage2-queues --commit <sha> --job-hours 2.5
+```
+
+Step 7 of `docs/plan-final.md` is authoritative: seeds 1011–1014, fields FP/FD,
+B and F; **no B′ rerun** (judge2 inherits stage-1 placebo f). A selected F2 is
+queued in the same cells, using the plan's capacity-available parallel option:
+invoking this planner assumes the supplied lanes have capacity for F2. No new
+selection or ranking is performed. Informational arms may appear in the source
+verdict but can never be F/F2. Missing/incomplete/pending verdicts exit 2 with
+BLOCKED before writing queues. The prior JSON is validated without opening its
+recorded matrix paths; this is not an independent re-audit of those matrices.
+
+The make-queues generator/checker supplies the recorded deterministic shuffle,
+whole-cell lane assignment and resource checks. With two candidates this writes
+24 jobs (6/lane on four lanes, 15 hours/lane at 2.5h/job); with only F, 16 jobs.
+`stage2-plan.json` records the source verdict hash, mappings and scheduling policy.
+`--commit` records the intended execution SHA; it does not checkout or certify
+that tree. mini-lane-start still validates resources in the actual pinned tree.
+FS seeds 1101–1102 and docker checks are separate gates, not covered by these
+FP/FD queues. Legacy C1 uses the existing full scenario file; only launch is
+judged for its noninferiority rule (no shortened C1 scenario files are generated).

@@ -429,6 +429,79 @@ def calibrate(model, args):
             "floor": J.THRESHOLD, "chosen": chosen, "grid": grid, "ablations": tables}
 
 
+def finalist_grid_ranges(pairs, grid):
+    """Grid intervals where one of the top two stage-1 passers passes stage 2.
+
+    Each pair is (label, stage1 verdict, stage2 verdict). Rank uses frozen m,
+    then label. A third passer cannot displace F/F2 just by passing stage 2.
+    """
+    pairs = sorted(pairs, key=lambda x: (-x[1]["stats"]["m"], x[0]))
+    earlier, intervals = [], []
+    for label, first, second in pairs:
+        first_cap = ship_capacity(first, first)
+        both_cap = ship_capacity(first, second)
+        # At most one higher-ranked candidate may still pass stage 1.
+        lower = sorted(earlier, reverse=True)[1] if len(earlier) >= 2 else -math.inf
+        lo = bisect.bisect_right(grid, lower)
+        hi = bisect.bisect_right(grid, both_cap)
+        if lo < hi:
+            intervals.append((lo, hi))
+        earlier.append(first_cap)
+    merged = []
+    for lo, hi in sorted(intervals):
+        if merged and lo <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(hi, merged[-1][1]))
+        else:
+            merged.append((lo, hi))
+    return merged
+
+
+def calibrate_family(model, args):
+    """Report-only tightening scan for the explicitly declared shippable family."""
+    if args.sims < 20000 or args.effect_w is not None or args.effect_launch != 0:
+        raise SystemExit("family calibration requires >=20000 sims, equal effects, zero launch effect")
+    labels = args.candidates
+    if len(set(labels)) != len(labels) or any(a in ("B", "B'", "C1") or a.startswith("X") for a in labels):
+        raise SystemExit("--candidates needs distinct shippable candidate labels (no B/B'/C1/X)")
+    grid = [i / 100 for i in range(math.ceil(args.t_crit * 100), 301)]
+    data = {}
+    for effect in [float(x) for x in args.effects.split(",")]:
+        rng = random.Random(args.rng_seed)
+        delta = [0] * (len(grid) + 1)
+        effects = {a: effect for a in labels}
+        for _ in range(args.sims):
+            s1 = sim_stage(rng, model, {"B": None, "B'": None, **effects}, STAGE1_SEEDS, J.FIELDS)
+            cp = contrasts(model, s1, "B'")
+            s2 = sim_stage(rng, model, {"B": None, **effects}, STAGE2_SEEDS, J.FIELDS)
+            fs = sim_stage(rng, model, {"B": None, **effects}, FS_SEEDS, ("FS",))
+            pairs = []
+            for arm in labels:
+                first = J.evaluate("superiority", contrasts(model, s1, arm), cp, MECH_PASS)
+                f = first["stats"]["f"] if args.stage2_f == "stage1" else J.PLACEBO_FLOOR
+                second = J.evaluate_stage2("superiority", contrasts(model, s2, arm),
+                                          contrasts(model, fs, arm), f, MECH_PASS, noop_sub=MECH_PASS["mc"])
+                pairs.append((arm, first, second))
+            for lo, hi in finalist_grid_ranges(pairs, grid):
+                delta[lo] += 1
+                delta[hi] -= 1
+        count = 0
+        rates = []
+        for i, t in enumerate(grid):
+            count += delta[i]
+            p = count / args.sims
+            rates.append(dict(ships=count, rate=p, se=math.sqrt(p*(1-p)/args.sims), upper95=upper95(p, args.sims)))
+        data[str(effect)] = rates
+        print("  family calibration sampled %+.1f (%d trials)" % (effect, args.sims), flush=True)
+    if "0.0" not in data:
+        raise SystemExit("family calibration requires null effect 0")
+    rows = [dict(t_crit=t, rates={e: rates[i] for e, rates in data.items()}) for i, t in enumerate(grid)]
+    chosen = next((row for row in rows if row["rates"]["0.0"]["upper95"] <= args.target), None)
+    print("  frozen threshold: %s" % rows[0], flush=True)
+    print("  family calibration choice: %s (report only)" % chosen, flush=True)
+    return dict(method="shared B potential finalists, frozen m ranking and F/F2 only; tightening grid 0.01",
+                candidates=labels, upper95_method="Wilson z=1.96", frozen=rows[0], chosen=chosen, grid=rows)
+
+
 def cmd_run(args):
     code_hashes = {"mc.py": _sha(os.path.abspath(__file__)), "judge2.py": _sha(os.path.join(_here, "judge2.py"))}
     noise_hash = _sha(args.noise)
@@ -438,7 +511,7 @@ def cmd_run(args):
     effects = [float(x) for x in args.effects.split(",")]
     policies = {"approved": J.THRESHOLD}
     t0 = time.time()
-    calibration = calibrate(model, args) if args.calibrate else None
+    calibration = (calibrate_family(model, args) if args.candidates else calibrate(model, args)) if args.calibrate else None
     res = {} if calibration else run_grid(model, args, effects, policies, args.sims, args.rng_seed)
     out = {"code_sha256": code_hashes,
            "noise": os.path.abspath(args.noise), "noise_sha256": noise_hash, "sims": args.sims, "rng_seed": args.rng_seed,
@@ -580,6 +653,7 @@ def main(argv):
     r.add_argument("--mechanism-pnl", type=float, default=0.0, help="assumed own tagged PnL per cell/regime; sensitivity only")
     r.add_argument("--target", type=float, default=0.02)
     r.add_argument("--t-crit", type=float, default=J.T_CRIT, help="pre-freeze MC sensitivity; default follows judge2")
+    r.add_argument("--candidates", nargs="+", help="shippable family for report-only --calibrate, e.g. R W1 W2; no C1")
     r.add_argument("--calibrate", action="store_true", help="pre-freeze t grid and one-gate ablations, >=20000 trials")
     r.add_argument("--tune", action="store_true")
     r.add_argument("--json")
@@ -591,6 +665,8 @@ def main(argv):
     if args.cmd == "run":
         if not math.isfinite(args.t_crit) or args.t_crit < 0:
             raise SystemExit("mc: --t-crit must be finite and >= 0")
+        if args.candidates and not args.calibrate:
+            raise SystemExit("--candidates requires --calibrate")
         J.T_CRIT = args.t_crit
         return cmd_run(args)
     ap.print_help()

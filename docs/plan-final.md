@@ -9,7 +9,8 @@
 - **B′**: 偽薬（placebo）。dir `opus-1-pb`。B の全取引サイズを ×0.999 にしただけの版で、効果がほぼゼロのときの差のばらつきを測るのに使う。fee や遅延は変えない（理由は「反映しなかった指摘」）。
 - **C1**: dir `opus-1a`（PR #85）。B に launch の allowance 修正（launch module の 2 か所の swapBundle 呼び出しを、承認を無制限に保つ launchSwapBundle に替える）と、改訂用 prompt P1 だけを入れた版。launch 以外の挙動は B と同一。
 - **R**: dir `opus-1r`（commit を固定して評価する）。C1 に r3 由来の機構を足した版。機構は R 設計メモ §2〜§5 のとおり: 2 脚のバンドルのみ、サイズ N* = R·e/4（R は深さ、e は正味エッジ）を上限 min($6k, NAV の 8%) で切る、入札は競合の最大 fee ×1.2 + 1 wei を上限 0.30E（E は期待利益）で切る、最小エッジ 100bps かつ最小期待利益 $25、片側だけ約定したバンドルを数えるブレーキで 36 block 停止、深さは背景で取得してキャッシュし decide() でブロッキング RPC を待たない。数値の正本は `example/agents/opus-1r/agent.ts` の PARAMS。
-- **W**: 独自の武器（weapon）を足した arm を 1 本だけ。候補は opus-1g（C1 + GMX の OU 平均回帰 M-OU、commit `4d5fac2e` 以降）と ascon-zeta-r3k（r3 系譜 + 単脚の下限 K1、自分の結果によるブレーキ K2、大きなエッジでの入札 K3）。10/23 22:00 までに Step 2 の W スクリーンで 1 本を選ぶ。
+- **W**: 独自の武器（weapon）を足した arm。出荷候補は 2 本: **W1 = opus-1g2**（opus-1g の GMX OU 平均回帰 M-OU に、10/23 の Codex レビューで見つかった欠陥の修正を入れた版: base の gas と決済手数料の予約、ブロック飛びで pending を消さない、state が無ければ新規を止める、決済の重複送信防止、リスク決済の gas 優先、決済資金を base 計画から守る）と **W2 = ascon-zeta-r3k**（r3 系譜 + 単脚の下限 K1、自分の結果によるブレーキ K2、大きなエッジでの入札 K3、commit `df0c44a0`）。10/23 のユーザー判断で W を 2 本とも入れ、さらに候補のデータを見る前に W1 を凍結版の opus-1g から修正版の opus-1g2 に入れ替えた。出荷候補は R・W1・W2 の 3 本。
+- **参考 arm（X）**: 出荷しない、比較の記録用。X1 = opus-1g（凍結版、W1 の元）、X2 = opus-1w（opus-1a + m0 の whale / 急変の取り戻し）、X3 = ascon-zeta-r3kg（r3k + 修正済みの OU）。judge2 は同じ統計で判定して報告するが、最良でも「参考 PASS」で、出荷にも 2 段にも進まない。出荷候補を 3 本に保つためで、6 本とも候補にすると t を 1.13 に上げる必要があり、本物の効果 +1.0 で出荷される確率が約 18% まで落ちる（10/23 の MC）。凍結済みの arm（B、B′、R、W2、X1）の tree は 9da19bf2 と差分 0、W1・X2・X3 は tree `68dfb2e3` 以降で走る。
 - **F / F2**: 1 段で選ばれた第 1 候補と第 2 候補。
 - **EW**: レジームごとの T の単純平均。判定には launch を除いた 11 レジームの EW（**EW11**）を使い、12 レジームの EW と公式の重み付き値は報告用の数字として併記する。
 - **slot 入替**: 1 ロスターに入れる我々の agent を `id: slot` の 1 体だけにし、dir だけを替えて比べる方式。理由: 近縁クローンを同居させると、同じ launch プールや同じ Liquity 清算を奪い合って偽の差が出る（fc の launch での −10 T は opus-1 と同じ fee の swap の後ろで revert した結果だった）。
@@ -124,7 +125,7 @@
 - **commit の注意**: laptop の worktree では `out` が symlink のため `.gitignore` の `out/` にかからず、未追跡に見える。`git add -A` や `git add .` を使わず、パスを明示して add する。laptop の worktree が共有する `node_modules` と `out` は worktree `opus-1-model` が持っているので、その branch（#82）が merge 済みでも 10/31 まで消さない。
 
 ### lane の運用［批評 14/15］
-- **lane**: mini A、mini B、laptop L（U5 でユーザー承認済み。期間は上の用語を参照）。mini は 2 lane が上限（2 lane で load1 約 16、12 コア）。手順の正本は `ascon/eval/README.md`。
+- **lane**: mini A〜D、laptop L（U5 でユーザー承認済み。期間は上の用語を参照）。mini は 4 lane が上限（10/23 の実測: 2 lane で load1 約 6〜16、4 lane で約 10〜20、decide timeout 0。6 lane を一度に起こすと約 39 で、比較に使えない）。lane は 1 本ずつ足し、15 分 load と timeout を見てから次を足す。手順の正本は `ascon/eval/README.md`。
 - **各 lane は自分の評価 worktree から走らせる**。mini では `mini-lane-start.sh` が commit ごとに `~/Developer/ascon-wt-<sha8>` を作り、既存の tree の中では checkout しない（稼働中のスクリプトや agent コードが入れ替わるため）。新しい arm を足すときは、新しい commit の tree を別に作り、late-arm 規則の diff が空であることを確かめる。
 - **laptop L の規則**（ユーザーの上限: 10/23 03:19「Air の負荷はこれが最大とし、基本は mini」）:
   - laptop で走らせる lane は最大 1 本。丸ごとのセルだけを走らせる。worktree は `ascon/eval/new-worktree.sh` で mini の評価 tree と同じ commit から作る。port 8800 番台、専用の state dir、ログは /tmp の外、`caffeinate` の下で動かす。
@@ -180,6 +181,7 @@
   - attempt の数が期待値（blocks/60 の合計）の 90% 未満、または HTTP 200 で解析できた応答が attempt の 90% 未満なら、**BLOCKED**。
   - 陽性対照で install が 0 件なら、検出器が BLOCKED。
   - P1 で install が 0 件なら PASS とし、install 率の 95% 上限と、本番約 300 call での期待 install 数の上限を記録する。soak は安全を証明するものではなく、率の上限を与えるだけ。
+  - **結果（10/23、laptop、gpt-oss:120b、reviseEveryBlocks 12）**: P1 を calm / whale / crash / launch の 4 scenario で各 30 call、計 120 call。keep 120、install 0、revert 0、読めない応答 0。install 率の 95% 上限は 2.5%（0/120、3/n）、本番約 300 call での期待 install 数の上限は約 7.5。**逸脱**: seed は陽性対照用の 1205 を使った（P1 の 1202 は未実施）。陽性対照（許容的な prompt）と P0 の run は未実施。
   - P1 で 1 件以上 install が出たら、締め直して新しい seed（1204）で測り直す［Codex C6］。締め直しは最大 2 回。
 - **本番の proxy 経路**［批評 5］: `infra/inference-proxy` をローカルで起動し、鍵 1 本で 1 call 通す。できなければ BLOCKED と記録する（**未検証**）。
 
@@ -187,16 +189,16 @@
 - **R**: R 設計メモ §2〜§5 と opus-1r の PARAMS（入札 rBidRivalMult 1.2 + 1 wei、上限 0.30E。最小エッジ rMinEdgeBps 100、最小利益 rMinProfitUsd 25、whale の目印 rWhaleEdgeBps 200 はタグだけ。ブレーキ 20 件の窓 / 8 件以上 / 40% で 36 block 停止、片側だけのバンドルを数える）。
   - 脚の guard は凍結前に決める: `rLegAllowanceBps 0`（fair に基づく厳格な guard）を既定とする。whale 窓の再生で緩めた guard がエッジを増やすと示された場合だけ緩める。R の arm は 1 本だけ。reviewer の指摘: 厳格な guard だと whale 窓で R がほとんど点火しない（STATE 02:15）。
 - **mechanism JSON**（判定の条件 5 と C1 の機構判定の入力）: judge2 は slot_timeouts、p99_decide_ms、tie_win_rate、stf、matrices_sha256、C1 の step2_mechanism / step2_report を必要とするが、これを書き出す道具がまだ無い。1 段の開始前、かつ judge2.py を hash で凍結する前に作る。
-  - `ascon/final/mechanism.py <stage manifest> --out MECH.json` を追加する（**未実装**）。arm の行列ごとに: slot_timeouts（`agents/slot.jsonl` の decide timeout 行の数）、stf（最初の launch entry 以降の STF の submit 失敗）、tie_win_rate（blocks.csv で slot と他の送信者が同じブロック・同じ venue に同じ優先手数料を払った件のうち、slot の txIndex が小さかった割合）、matrices_sha256。C1 の Step 2 の report は別ファイルにし、その sha256 も付ける。陽性対照・陰性対照付きのテストを付ける。
-  - **p99_decide_ms の取り方は決定待ち（論点）**: runtime は decide() の所要時間を記録していないので、走り終えた run からは出せない。選択肢 1: `strategyRunner.ts` の既存の決定ログ行に duration_ms を足す（全 arm に同じ影響。runtime のバイトが変わるので bundle に入るかの確認が要る。入るなら、評価で走る B は S-00048 と runtime が違うバイトになり、出荷する F も新しい runtime を含む。runtime は late-arm 規則の diff の対象なので、1 段の最初のセルより前に入れる）。選択肢 2: p99 を BLOCKED-by-design とし、条件 5 の p99 を参考値にすることをユーザーに承認してもらう（凍結前なので緩和にはあたらない）。決めないまま D1 に入ると R と C1 が BLOCKED になる。決定は `ascon/eval/README.md` に反映する。
+  - `ascon/final/mechanism.py <stage manifest> --out MECH.json`（manifest は `ascon/final/make-manifest.py` が lane の queue log から、job ごとに最後の PASS の run を選んで作る）。arm の行列ごとに: slot_timeouts（`agents/slot.jsonl` の decide timeout 行の数）、stf（最初の launch entry 以降の STF の submit 失敗）、tie_win_rate（blocks.csv で slot と他の送信者が同じブロック・同じ venue に同じ優先手数料を払った件のうち、slot の txIndex が小さかった割合）、matrices_sha256。C1 の Step 2 の report は別ファイルにし、その sha256 も付ける。陽性対照・陰性対照付きのテストを付ける。
+  - **p99_decide_ms は測定不能・参考扱い（10/23 ユーザー決定、凍結後の逸脱）**: runtime は decide() の所要時間を記録しておらず、決定前に 1 段が始まったので、走り終えた run からは出せない（runtime に計測を足すと全 arm の測り直しになり、期限に間に合わない）。mechanism.py は p99_decide_ms を null と理由付きで書き、judge2 はこの小条件を NOT_MEASURED（参考）として条件 5 を BLOCKED にしない。遅延の害（同じ手数料での順位負け）は tie 勝率の差 ±10pt と slot の timeout 0 で直接見ているので、それで代える。数値の p99 が来たときの規則（< 500ms）、キーの欠落・不正値・理由なしの null を BLOCKED にする扱いは変えない。凍結後に条件を緩める変更なので、ここに逸脱として記録する。
 - **MC**［Codex C2/S2、批評 2］:
   - 過去の差の実測（r2/r3 の同一コードのノイズ）から seed ごとの対比の分布を作り、1 段 → 2 段 → 追試まで、判断木全体を模擬する。
   - 求める性質: 効果ゼロのとき R または W を出荷してしまう率（木全体）が 2% 以下。その中で検出力を最大にする。+0.5 と +1.0 での出荷率を報告する。
-  - **凍結 commit まで（1 段のデータが 1 本も無い間）は t_crit を上下に動かしてよい。基準値は U4 承認済みの +0.20 に固定し、判断を仰ぐ帯は置かない。+0.20 より下げるにはユーザー承認が要る。凍結後は厳しくする方向にしか変えない。** 今回の採用値は **t_crit = 0.81**（1 段・2 段共通）。他の条件は締め直す必要がなく、条件 2 の係数 1.64、launch 下限 −3、f = max(0.25, sd(B′)) も維持する。n ≥ 4 で t(3)=1.638 に暗黙に切り上げていた実装を直し、n < 4 のときだけ従来の厳しい小標本値を使う。0.81 は単段の片側 10% 検定ではなく、木全体の誤出荷率から校正した値。
+  - **凍結 commit まで（1 段のデータが 1 本も無い間）は t_crit を上下に動かしてよい。基準値は U4 承認済みの +0.20 に固定し、判断を仰ぐ帯は置かない。+0.20 より下げるにはユーザー承認が要る。凍結後は厳しくする方向にしか変えない。** 採用値は **t_crit = 0.94**（1 段・2 段共通）。凍結時の 0.81 は候補 2 本（R と W）で校正した値で、10/23 に W を 2 本（W1 = opus-1g、W2 = ascon-zeta-r3k）とも入れたため、候補 3 本（R、W1、W2）で同じ MC をやり直した（同じ noise、40,000 試行/効果、seed 231023）。0.81 のままだと誤出荷率 2.56%（upper-95 2.71%）で事前登録の 2% を超えるので、2% 以下となる最小のグリッド値 0.94 に締めた（誤出荷 1.85%、upper-95 1.99%、効果 +0.5 / +1.0 での出荷率 17.5% / 38.5%、記録は `ascon-notes/stage1-arm-map-2026-10-23.md`）。締める方向なので凍結の規則の範囲内。参考 arm X は出荷しないので、この数に入れていない。他の条件は締め直す必要がなく、条件 2 の係数 1.64、launch 下限 −3、f = max(0.25, sd(B′)) も維持する。n ≥ 4 で t(3)=1.638 に暗黙に切り上げていた実装を直し、n < 4 のときだけ従来の厳しい小標本値を使う。t_crit は単段の片側 10% 検定ではなく、木全体の誤出荷率から校正した値。
   - **再現条件**: 冒頭の scratchpad 内 `stepR/noise-r2r3.json`（SHA256 `8d0e83d77b8bab7238061466edfad2ac68ba2a10c544f6b76423742761321505`）。Gaussian、scale 1、実測 launch sd 20.783/22.825、B′ は候補と同じノイズ、tau FP/FD/FS = 0.25/0.5/0.5、rho 0、F_S は F_D のコピー。R/W は両方に同じ非 launch 効果、launch/C1 効果 0、機構 PnL は各セル 0、条件 5・c1L (a)〜(d)・入力 guard・noop は PASS と仮定。これらの仮定の下での MC であり、backtest や実環境の検証ではない。
   - **探索**: `python3 -B ascon/final/mc.py run --noise <上記JSON> --calibrate --sims 40000 --rng-seed 231023`。同一乱数の 40,000 試行/効果で条件を一つずつ外し、t = 0.00〜3.00 を 0.01 刻みで比較。+0.20 と他の条件を固定すると両効果の出荷率は t に対して単調なので、Wilson upper-95（z=1.96、両側 95% 区間の上端）≤2% となる最小グリッド値 0.81 が両方の検出力を最大にする。R/W の潜在的な 2 段のセルを共通の B とともに先に生成し、F2 fallback を含め「どちらかが両段を通る」を数える。追試は出荷後なので、出荷率と KEEP 率を混同しない。
 
-  | 非 launch 真の効果（R/W とも） | 変更前 t=1.64: R/W 出荷率 ± MC SE | 採用 t=0.81: R/W 出荷率 ± MC SE |
+  | 非 launch 真の効果（R/W とも） | 変更前 t=1.64: R/W 出荷率 ± MC SE | 凍結時 t=0.81（候補 2 本）: R/W 出荷率 ± MC SE |
   |---|---|---|
   | 0 | 0.215% ± 0.023pt | 1.818% ± 0.067pt（727/40,000、upper-95 1.953%） |
   | +0.5 | 4.633% ± 0.105pt | 15.975% ± 0.183pt |
@@ -206,7 +208,7 @@
 
   - **何が検出力を制限するか**: 下表は同じ 40,000 試行/効果で条件を一つだけ外した R/W 出荷率（0 / +0.5 / +1.0、単位 %）。診断用であり、外した条件を採用するものではない。f-off は SE の f 下限全体を外し、候補の標本 sd は残す。floor-off は 1 段の +0.20 だけを外し、2 段の m′ > 0 は残す。
 
-  | 外す条件 | t=1.64: 0 / +0.5 / +1.0 | t=0.81: 0 / +0.5 / +1.0 |
+  | 外す条件 | t=1.64: 0 / +0.5 / +1.0 | 凍結時 t=0.81（候補 2 本）: 0 / +0.5 / +1.0 |
   |---|---|---|
   | t_crit | 6.650 / 26.855 / 37.940 | 6.650 / 26.855 / 37.940 |
   | +0.20 floor | 0.215 / 4.633 / 20.813 | 1.828 / 16.005 / 34.100 |
@@ -226,7 +228,7 @@
 - C1 は各セルの launch scenario だけを走らせ、launch 以外は B のセルを使い回す（Step 2 のガードが崩れたら全レジームに戻す）。launch だけの scenario ファイル（1003〜1006、1011〜1014）はまだ無いので、凍結前に作る。
 - **arm の締切**: 1 段に入れる arm は 10/23 22:00 までに review を通り、`feat/final-plan` に入っていること。間に合わない arm は落とす。
 - 割り当て: mini A に 3 セル、mini B に 3 セル、laptop L に 2 セル。
-- 共変量として、arm ごとの decide の p50 / p99（取り方は Step 4 の決定による）、同じ fee 同士の tie 勝率、R と W の点火とタグ付きの機構 PnL、host と load1 を記録する。
+- 共変量として、arm ごとの decide の p50 / p99（runtime が記録しないので今回は取れない。Step 4）、同じ fee 同士の tie 勝率、R と W の点火とタグ付きの機構 PnL、host と load1 を記録する。
 
 ### 計算資源
 
@@ -254,11 +256,11 @@
   - field を同じ seed で組にするので、field 間の共分散は c_s の中に入る。
   - 12 レジームの EW と公式の重み付き値は、報告用の数字として併記する。
 - **R と W の PASS**（すべて満たす）:
-  1. t ≥ t_crit（**0.81**、Step 4 の木全体 MC による校正）、かつ m ≥ **+0.20**。U4 は 2026-10-23 に承認済みで、判断を仰ぐ帯は置かない。n ≥ 4 では 0.81、n = 3 では max(0.81, 1.886)、n = 2 では max(0.81, 3.078)。+0.20 の引き下げにはユーザー承認が要り、凍結後は条件を緩めない。
+  1. t ≥ t_crit（**0.94**、Step 4 の木全体 MC による校正、候補 3 本）、かつ m ≥ **+0.20**。U4 は 2026-10-23 に承認済みで、判断を仰ぐ帯は置かない。n ≥ 4 では 0.94、n = 3 では max(0.94, 1.886)、n = 2 では max(0.94, 3.078)。+0.20 の引き下げにはユーザー承認が要り、凍結後は条件を緩めない。
   2. field ごとの下限: d̄_f + 1.64·sd_f/2 ≥ −0.5（F_D）/ −0.25（F_P）（launch を除いた統計量で）。点推定で判定すると、効果ゼロの候補が F_D で約 25%、F_P で約 23% 落ちる（launch を含めると約 33% / 39%）。
   3. launch 以外のレジームで「8 セル平均が −3.0 以下、かつ 6/8 以上が負」であり、**かつ** そのレジームでの slot のタグ付き機構 PnL（R のタグ、W の ouPnl 等の信号）の合計が負のもの、がない。機構の PnL が負でなければ、報告ではノイズとして記載する。帰属を問わない旧条件は効果ゼロの候補を 12.0% 落とした。W の cex-drift のセルは別に報告し、W の cex-drift には条件 3 をそのまま適用する。
   4. launch 以外の epoch で ΔP < −3,000 USDC のセルが 2 未満。
-  5. slot の timeout 0、p99 < 500ms、tie 勝率の差（B 比）±10pt 以内、STF 0。
+  5. slot の timeout 0、tie 勝率の差（B 比）±10pt 以内、STF 0。p99 < 500ms は測定不能のため参考扱い（NOT_MEASURED、Step 4 参照）。
   6. launch の非劣性: 8 セルの launch の平均 ΔT ≥ −3.0、かつ STF 0。
 - **C1 の PASS**: c1L の機構判定 (a)〜(d)（entry 後の STF 0、M1/M2 の約定数 ≥ B、launch ΔT 平均 ≥ −3.0）、かつ 1 段のセルでの launch 非劣性（8 セルの launch 平均 ≥ −3.0）、かつ条件 5。C1 の判定に 12 レジームの EW（m ≥ 0）は使わない。launch のノイズで結果がほぼ硬貨投げになるため（真の効果 +1.0 でも出荷率 44%、効果ゼロで 6.5%）。
 - **選び方**: R と W のうち PASS したものの中で、launch 以外の m が大きい方を F、もう一方を F2。片方だけ PASS ならそれが F、C1 が PASS なら F2 = C1。R も W も FAIL で C1 が PASS なら F = C1。どれも FAIL なら S-00048 のまま。
@@ -270,13 +272,13 @@
   - F_S: {launch, cdp-incident, lending-incident} × 1101〜1102 × {B, F}、12 scenario、約 2.6 lane-h。F_S のノイズモデルは F_D のコピーで仮置きなので、全レジームは回さない。
   - docker sandbox（上限付き）で launch と cdp-incident を 1 本ずつ［批評 4］。
 - **判定**（1 段の seed は混ぜない。統計量と条件は Step 6 と同じ定義、f は 1 段の B′ から）:
-  - R / W: t′ ≥ **t_crit = 0.81** かつ m′ > 0［Codex W4］、加えて条件 2〜6（条件 2 の係数は引き続き 1.64）。f は 1 段の B′ から引き継ぎ、n < 4 の guard は Step 6 と同じ。Step 4 の 40,000 試行/効果では、F2 fallback を含む木全体の R/W 出荷率は効果 0 / +0.5 / +1.0 で 1.818% / 15.975% / 34.098%（MC SE 0.067 / 0.183 / 0.237pt、帰無 upper-95 1.953%）。独立の判断木検証でも帰無 1.668%（100,000 試行、upper-95 1.749%）、+0.5/+1.0 は 15.460%/34.125%（各 20,000 試行）。これは 2 段に到達した候補に条件付けた通過率ではない。
+  - R / W1 / W2: t′ ≥ **t_crit = 0.94** かつ m′ > 0［Codex W4］、加えて条件 2〜6（条件 2 の係数は引き続き 1.64）。f は 1 段の B′ から引き継ぎ、n < 4 の guard は Step 6 と同じ。木全体の出荷率は、候補 3 本・t 0.94 で効果 0 / +0.5 / +1.0 に対し 1.85% / 17.5% / 38.5%（40,000 試行/効果、帰無 upper-95 1.99%）。凍結時（候補 2 本・t 0.81）の値は 1.818% / 15.975% / 34.098% だった。これは 2 段に到達した候補に条件付けた通過率ではない。
   - C1: launch 非劣性と条件 5。
   - F_S: 平均 d ≥ −0.5 で、launch 以外で ΔP < −3k のセルがない。
   - 絶対値のゲート（G0 = public-60 での単独評価と、チェックリスト A の絶対条件）はやめた。B 自身が G0 に FAIL している（opus-1 Q0b で T 48.07 対 56.43、2 つの世界で FAIL）ので、F と B を区別できない。代わりに「B ≥ noop なのに F < noop になるレジームがない」を段のセルから読む。
 
 ### Step 8 — 梱包と提出（10/26 17:00 → 10/27 12:00。提出操作はユーザー）［批評 18］
-- **梱包**: release worktree で `bundle:agent --submission` を実行し、次をすべて通す。
+- **梱包**: release worktree で `node --import tsx scripts/bundleAgent.ts <arm>` を実行し、次をすべて通す（`--submission` は bundler が受け付けず黙って無視する。10/23 の dry run で opus-1w・opus-1g2・r3kg の 3 本とも build・scan ACCEPT・オフライン読み込みが通り、追加ファイルも入っていた。Docker selftest は未実施）。
   - scan-submission で BLOCK 0、check:strategy
   - `constants.local.ts` が upstream とバイト一致
   - 測った commit と出荷 commit の diff が空（共通ルール）
@@ -351,7 +353,9 @@
 | 計測の汚染 | check-collision と check-arm が必須（run-matrix の PASS だけでは不十分だと 808 で実証済み）。lane は 20 秒ずらす |
 | 測った木と出す木の不一致 | 行列ごとに tree hash を記録し、出荷 commit との diff が空であることを梱包の条件にする |
 | `constants.local.ts` の書き換え | commit と bundle の前に `git diff --quiet` を通す |
-| p99 を測れずに R / C1 が BLOCKED | 凍結前に Step 4 の選択肢 1 か 2 を決める |
+| p99 を測れずに全候補が BLOCKED | 10/23 に決定: p99 は NOT_MEASURED（参考）、遅延の害は tie 勝率と timeout 0 で見る（Step 4） |
+| 判定の道具が本物のデータを厳しすぎて BLOCKED にする（10/23 の再確認レビューの Warning） | 2 段と追試では 1 段とまったく同じ arm 対応表を使う（使わない対応の変更でも止まる）。rerun は元の run と同じ commit 表記・同じ設定で取る。BLOCKED が出たら判定の前に audit を読み、道具の誤判定か本物の欠落かを分ける |
+| 判定の道具の検査が実データに合わない | 検査や parser を足したら、commit 前に mini の実ログで `~/ascon-final/judge-dryrun.sh <rev>` を流す（10/23 に 2 回、作り物のデータでは通るが実データでは止まる不具合を見つけた） |
 | 計算の遅れ | 1 段の arm の締切は 10/23 22:00。W は 1 本だけ。lane を空けないよう連鎖起動を使う |
 | laptop の負荷が対比を歪める | laptop は 1 lane まで、L はセル単位、load1 < 10 で開始、L が動く間は laptop で他の重い作業をしない。host と load1 を共変量に残す |
 | セッションの使用上限で作業が止まる | workflow の同時実行は約 8 agent まで、reviewer は Sonnet。lane は連鎖起動で回り続ける。引き継ぎは静かな時点（night1 の判定後など）で新しいセッションに行い、作業途中で自動圧縮に任せない |
