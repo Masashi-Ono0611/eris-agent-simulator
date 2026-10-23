@@ -278,7 +278,7 @@
   - 絶対値のゲート（G0 = public-60 での単独評価と、チェックリスト A の絶対条件）はやめた。B 自身が G0 に FAIL している（opus-1 Q0b で T 48.07 対 56.43、2 つの世界で FAIL）ので、F と B を区別できない。代わりに「B ≥ noop なのに F < noop になるレジームがない」を段のセルから読む。
 
 ### Step 8 — 梱包と提出（10/26 17:00 → 10/27 12:00。提出操作はユーザー）［批評 18］
-- **梱包**: release worktree で `bundle:agent --submission` を実行し、次をすべて通す。
+- **梱包**: release worktree で `node --import tsx scripts/bundleAgent.ts <arm>` を実行し、次をすべて通す（`--submission` は bundler が受け付けず黙って無視する。10/23 の dry run で opus-1w・opus-1g2・r3kg の 3 本とも build・scan ACCEPT・オフライン読み込みが通り、追加ファイルも入っていた。Docker selftest は未実施）。
   - scan-submission で BLOCK 0、check:strategy
   - `constants.local.ts` が upstream とバイト一致
   - 測った commit と出荷 commit の diff が空（共通ルール）
