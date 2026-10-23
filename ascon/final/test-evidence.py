@@ -138,18 +138,18 @@ def mechanism_controls():
     assert r['stf'] == 1 and r['slot_timeouts'] == 1 and r['tie_win_rate'] == 2/3
     assert r['matrices_sha256'] == [hashlib.sha256(matrix.read_bytes()).hexdigest()]
     assert r['p99_decide_ms'] is None and r['p99_decide_ms_reason']
-    # Real frozen judge, all other mechanism fields valid: null alone blocks clause 5.
+    # Approved advisory: explicit null with reason does not block clause 5.
     j = load('judge2')
     h = r['matrices_sha256']
     good = dict(r, slot_timeouts=0, stf=0)
     evidence = {'R': good, 'B': dict(good)}
     subs = j.mechanism_clause(evidence, 'R', 'B', 'superiority', {'R': set(h), 'B': set(h)})
-    assert subs['p99_latency']['status'] == 'BLOCKED'
+    assert subs['p99_latency']['status'] == 'NOT_MEASURED'
     assert all(v['status'] == 'PASS' for k, v in subs.items() if k != 'p99_latency')
     cells = {(s, f): {'regimes': {reg: (1.0, 1.0) for reg in j.REGIMES12}}
              for s in range(1003, 1007) for f in j.FIELDS}
     verdict = j.evaluate('superiority', cells, mechanism_subs=subs, f_override=.25)
-    assert verdict['verdict'] == 'BLOCKED', verdict
+    assert verdict['verdict'] == 'PASS', verdict
     for duration, expected in [(499, 'PASS'), (500, 'FAIL')]:
         good['p99_decide_ms'] = duration
         ss = j.mechanism_clause(evidence, 'R', 'B', 'superiority', {'R': set(h), 'B': set(h)})
@@ -158,10 +158,10 @@ def mechanism_controls():
     good['p99_decide_ms'] = None
     good['slot_timeouts'] = 1
     ss = j.mechanism_clause(evidence, 'R', 'B', 'superiority', {'R': set(h), 'B': set(h)})
-    assert ss['p99_latency']['status'] == 'BLOCKED'
+    assert ss['p99_latency']['status'] == 'NOT_MEASURED'
     assert j.evaluate('superiority', cells, mechanism_subs=ss, f_override=.25)['verdict'] == 'FAIL'
     print('P99_NULL_WITH_TIMEOUT=FAIL (FAIL takes precedence)')
-    print('P99_NULL=BLOCKED P99_499=PASS P99_500=FAIL (clause and candidate)')
+    print('P99_NULL_WITH_REASON=NOT_MEASURED (candidate PASS) P99_499=PASS P99_500=FAIL (clause and candidate)')
     assert r['matrices'][0]['tie_win_rate'] == 2/3
     # A header-only CSV is a valid no-tie sample, never a fabricated 0 or 0.5.
     (run / 'blocks.csv').write_text(','.join(cols) + '\n')

@@ -159,15 +159,16 @@ same-destination races and cannot distinguish pools behind one router. No ties y
 Missing/malformed evidence yields null counts and an error, never zero failures. C1's
 separate Step-2 report/verdict and tagged mechanism PnL are not inferred by this extractor.
 
-**Unmeasured p99:** mechanism extraction writes `p99_decide_ms: null` with a reason and exits 2.
-The frozen judge's `p99_latency` subclause is BLOCKED for null. With other clauses passing,
-condition 5 and the candidate are BLOCKED; an actual FAIL elsewhere takes precedence.
-The tests pin null → BLOCKED, 499 ms → PASS, 500 ms → FAIL, and null plus timeout → FAIL.
-Judge CLI exit 0 means it produced a verdict, not that a candidate passed.
+**Unmeasured p99 (user decision 2026-10-23):** Stage 1 started without decide-duration
+logging, so p99 cannot be measured retrospectively. Mechanism extraction still writes
+`p99_decide_ms: null` with `p99_decide_ms_reason` and exits 2. The judge explicitly reports
+`p99_latency: NOT_MEASURED` (advisory) only for an explicit null with a non-empty reason
+string (whitespace alone is insufficient). This subclause does not block or fail condition 5.
+Latency's harm in equal-fee races is measured directly by tie-win difference within 10 pt
+of B and zero slot timeouts; STF and provenance checks remain enforced.
 
-Stage 1 has already started without duration logging. Its p99 cannot be recovered from timeout
-counts or wall-clock run duration. The options are to retain BLOCKED under the frozen rules,
-or instrument all arms identically and run a newly planned evaluation with measured durations
-(runtime/tree and bundle equivalence must be reconsidered). The plan's earlier option to make
-p99 advisory required a pre-freeze decision; doing that now would change the frozen protocol
-and cannot be presented as a PASS under these rules. No judge/runtime rule is changed here.
+Numeric p99 keeps the strict <500 ms rule: 499 ms PASS, 500 ms FAIL. A missing key,
+malformed value, or null without a valid reason stays BLOCKED. Other failures still take
+precedence. All other judge rules remain frozen. Tests cover these cases and revert the
+advisory branch in memory to verify null+reason returns to BLOCKED.
+Judge CLI exit 0 means it produced a verdict, not that a candidate passed.

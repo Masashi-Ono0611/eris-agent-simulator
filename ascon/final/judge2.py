@@ -20,7 +20,7 @@ t uses the stricter t(n-1) critical value. Other clauses:
 candidate's OWN tagged mechanism PnL sum < 0. Nonnegative PnL is reported as
 noise; missing attribution for such a regime is BLOCKED, never assumed zero.
 4: fewer than two non-launch epochs with delta P < -3000 USDC.
-5: timeouts 0, p99 < 500ms, tie-win difference <=10pt, STF 0; candidate slot
+5: timeouts 0, p99 < 500ms (null with a reason: NOT_MEASURED, advisory), tie-win difference <=10pt, STF 0; candidate slot
 failures and rule flags count as FAIL, unknown flags BLOCKED.
 6: launch mean over eight cells >= -3 T (STF 0 also required by clause 5).
 C1: launch noninferiority and clause 5 only; stage 1 also needs the c1L (a)-(d)
@@ -57,6 +57,7 @@ import os
 import sys
 
 PASS, FAIL, BLOCKED = "PASS", "FAIL", "BLOCKED"
+NOT_MEASURED = "NOT_MEASURED"
 FIELDS = ("FP", "FD")
 FS_FIELD = "FS"
 LAUNCH = "launch"
@@ -631,7 +632,7 @@ def coverage_clause(skipped, failed_cells):
 
 
 def mechanism_clause(mech, arm, base, rule, expected_sha=None, mech_dir=None, need_step2=True):
-    """Clause 5 from the mechanism JSON's arms section; any missing or malformed value is BLOCKED.
+    """Clause 5: missing/malformed values BLOCKED; explicit null p99 with a reason is advisory.
     expected_sha: {arm: set of sha256 of the matrices judged for that arm}; the JSON's matrices_sha256 must
     list exactly those for the arm and for B."""
     subs = {}
@@ -655,7 +656,10 @@ def mechanism_clause(mech, arm, base, rule, expected_sha=None, mech_dir=None, ne
         return out
     count("slot_timeouts", "slot_timeouts")
     v = None if a is None else a.get("p99_decide_ms")
-    if not (_num(v) and math.isfinite(v) and v >= 0):
+    reason = None if a is None else a.get("p99_decide_ms_reason")
+    if a is not None and "p99_decide_ms" in a and v is None and isinstance(reason, str) and reason.strip():
+        subs["p99_latency"] = {"status": NOT_MEASURED, "detail": "not measured (advisory): " + reason.strip()}
+    elif not (_num(v) and math.isfinite(v) and v >= 0):
         subs["p99_latency"] = {"status": BLOCKED, "detail": "p99_decide_ms missing or malformed: %r" % (v,)}
     else:
         subs["p99_latency"] = {"status": PASS if v < P99_MS else FAIL, "detail": "p99 %.1f ms (must be < %.0f)" % (v, P99_MS)}

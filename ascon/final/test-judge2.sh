@@ -38,6 +38,26 @@ command -v python3 > /dev/null || { echo "BLOCKED: python3 not found"; exit 2; }
 T="$(mktemp -d)" || exit 2
 trap 'python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$T"' EXIT
 
+# Revert only the advisory branch in memory: the same null+reason must block again.
+python3 -B -I - "$J" <<'PYRED' || exit 1
+from pathlib import Path
+import sys
+source = Path(sys.argv[1]).read_text()
+start = source.index('    reason = None if a is None else a.get("p99_decide_ms_reason")')
+end = source.index('    elif not (_num(v) and math.isfinite(v) and v >= 0):', start)
+reverted = source[:start] + source[end:].replace('    elif not (', '    if not (', 1)
+h = "a" * 64
+arm = dict(slot_timeouts=0, p99_decide_ms=None, p99_decide_ms_reason="Runtime does not record decide duration",
+           tie_win_rate=0.5, stf=0, matrices_sha256=[h])
+for code, expected in [(source, "NOT_MEASURED"), (reverted, "BLOCKED")]:
+    ns = {"__name__": "p99_red_check", "__file__": sys.argv[1]}
+    exec(compile(code, sys.argv[1], "exec"), ns)
+    subs = ns["mechanism_clause"]({"R": arm, "B": arm}, "R", "B", "superiority", {"R": {h}, "B": {h}})
+    assert subs["p99_latency"]["status"] == expected, subs
+    assert ns["_combine"](subs) == ("PASS" if expected == "NOT_MEASURED" else "BLOCKED"), subs
+print("RED_CHECK_OK p99 advisory reverted: null+reason returns BLOCKED")
+PYRED
+
 cat > "$T/synthetic.py" <<'EOF'
 import copy, hashlib, json, math, os, random, subprocess, sys
 J, T = sys.argv[1], sys.argv[2]
@@ -303,6 +323,8 @@ def run(case, d):
                     mj[arm].pop(k, None)
                 else:
                     mj[arm][k] = v
+        for arm in case.get("p99_null", []):
+            mj[arm]["p99_decide_ms"] = None
         mj.update(case.get("mech_whole") or {})
         with open(os.path.join(d, "mech.json"), "w") as fh:
             json.dump({"arms": mj}, fh)
@@ -379,6 +401,15 @@ cases = [
     ("noisy placebo raises f", C(placebo_seed_offset={1003: 3.0, 1004: -3.0, 1005: 3.0, 1006: -3.0}), E("FAIL", "PASS", "F=C1", clause=("R", "1_mean_t", "FAIL"), R_f_gt=3.0)),
     ("no mechanism JSON", C(mech=None), E("BLOCKED", "BLOCKED", "PENDING", clause=("R", "5_mechanism", "BLOCKED"))),
     ("mechanism JSON path missing", C(mech="missing_file"), E("BLOCKED", "BLOCKED", "PENDING")),
+    ("R p99 null with reason: advisory", C(p99_null=["R"], mech_patch={"R": {"p99_decide_ms_reason": "Runtime does not record decide duration"}}),
+     E("PASS", "PASS", "F=R, F2=C1", clause=("R", "5_mechanism", "PASS"), sub=("R", "p99_latency", "NOT_MEASURED"), text_has="NOT_MEASURED")),
+    ("R p99 null without reason", C(p99_null=["R"]), E("BLOCKED", "PASS", "PENDING", sub=("R", "p99_latency", "BLOCKED"))),
+    ("R p99 null blank reason", C(p99_null=["R"], mech_patch={"R": {"p99_decide_ms_reason": "  "}}), E("BLOCKED", "PASS", "PENDING", sub=("R", "p99_latency", "BLOCKED"))),
+    ("R p99 null malformed reason", C(p99_null=["R"], mech_patch={"R": {"p99_decide_ms_reason": 1}}), E("BLOCKED", "PASS", "PENDING", sub=("R", "p99_latency", "BLOCKED"))),
+    ("R p99 missing even with reason", C(mech_patch={"R": {"p99_decide_ms": None, "p99_decide_ms_reason": "unmeasured"}}), E("BLOCKED", "PASS", "PENDING", sub=("R", "p99_latency", "BLOCKED"))),
+    ("R p99 malformed even with reason", C(mech_patch={"R": {"p99_decide_ms": "499", "p99_decide_ms_reason": "unmeasured"}}), E("BLOCKED", "PASS", "PENDING", sub=("R", "p99_latency", "BLOCKED"))),
+    ("R p99 499 ms", C(mech_patch={"R": {"p99_decide_ms": 499}}), E("PASS", "PASS", "F=R, F2=C1", sub=("R", "p99_latency", "PASS"))),
+    ("R p99 500 ms", C(mech_patch={"R": {"p99_decide_ms": 500}}), E("FAIL", "PASS", "F=C1", sub=("R", "p99_latency", "FAIL"))),
     ("R p99 missing", C(mech_patch={"R": {"p99_decide_ms": None}}), E("BLOCKED", "PASS", "PENDING", sub=("R", "p99_latency", "BLOCKED"))),
     ("TRIP mechanism arms.R is a string, not an object", C(mech_whole={"R": "PASS"}), E("BLOCKED", "PASS", "PENDING", sub=("R", "slot_timeouts", "BLOCKED"))),
     ("R p99 600 ms", C(mech_patch={"R": {"p99_decide_ms": 600}}), E("FAIL", "PASS", "F=C1", sub=("R", "p99_latency", "FAIL"))),
