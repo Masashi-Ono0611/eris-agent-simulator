@@ -104,15 +104,42 @@ except NameError:  # run from stdin (validate only)
     HERE = None
 
 
-def _equivalence_git(repo, *args):
+def _equivalence_git(repo, *args, glob_pathspecs=False):
     """Read Git metadata only; never execute external diff/textconv helpers."""
-    proc = subprocess.run(["git", "--no-replace-objects", "--literal-pathspecs", "-C", repo, *args],
+    pathspecs = "--glob-pathspecs" if glob_pathspecs else "--literal-pathspecs"
+    proc = subprocess.run(["git", "--no-replace-objects", pathspecs, "-C", repo, *args],
                           capture_output=True, text=True, timeout=30)
+    if args[0] == "grep" and proc.returncode == 1:
+        return ""  # No match, not a Git error.
     if proc.returncode:
         # Avoid echoing arbitrary Git stderr into a verdict.
         raise ValueError("git %s failed (exit %d; unavailable repository/object or ambiguous commit)" %
                          (args[0], proc.returncode))
     return proc.stdout
+
+
+def _agent_folder_unreferenced(repo, folder, commits):
+    """Whole-folder changes are safe only for unreferenced, non-shared agents."""
+    name = folder.rsplit("/", 1)[1]
+    if name in ("lib", "runtime"):
+        return False
+    for commit in commits:
+        matches = _equivalence_git(repo, "grep", "--no-textconv", "-l", "-z", "-F",
+                                   "-e", "/%s/" % name, "-e", "'../" + name,
+                                   "-e", '"../' + name, commit, "--", "example/agents", "src")
+        if any(path and not path.startswith(commit + ":" + folder + "/")
+               for path in matches.split("\0")):
+            return False
+        # Rosters name an agent folder as an entry's id (dir defaults to id) or dir.
+        # A bare word match would also hit ids like beta-m0 for folder m0.
+        # Override literal pathspecs only for these fixed globs; **/ includes root-level YAML.
+        pattern = r"""^[[:space:]]*(-[[:space:]]*)?(id|dir):[[:space:]]*["']?%s["']?[[:space:]]*(#.*)?$""" % (
+            name.replace(".", r"\."))
+        if _equivalence_git(repo, "grep", "--no-textconv", "-l", "-z", "-E",
+                            "-e", pattern, commit, "--", "**/*.yaml", "**/*.yml",
+                            glob_pathspecs=True):
+            return False
+    return True
 
 
 @lru_cache(maxsize=256)
@@ -143,7 +170,8 @@ def _simulation_equivalent_trees(repo, commit_a, commit_b):
                 # are not absence. Literal pathspecs prevent unusual names matching siblings.
                 entries = [_equivalence_git(repo, "ls-tree", "-z", c, "--", folder)
                            for c in (commit_a, commit_b)]
-                folders[folder] = (not entries[0]) != (not entries[1])
+                folders[folder] = ((not entries[0]) != (not entries[1]) and
+                                   _agent_folder_unreferenced(repo, folder, (commit_a, commit_b)))
             if folders[folder]:
                 continue
         offending.append(path)

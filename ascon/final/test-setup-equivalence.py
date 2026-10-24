@@ -139,6 +139,89 @@ class SetupEquivalence(unittest.TestCase):
                 self.assertFalse(ok, detail)
                 self.assertIn(path, detail["reason"])
 
+    def assert_not_equivalent(self, before, after):
+        for a, b in ((before, after), (after, before)):
+            ok, detail = judge.simulation_equivalent(a, b)
+            self.assertFalse(ok, detail)
+
+    def test_whole_shared_folder_addition_and_removal(self):
+        for folder, filename in (("lib", "affordable.ts"), ("runtime", "index.ts")):
+            with self.subTest(folder=folder):
+                before = self.git("rev-parse", "HEAD")
+                (self.repo / "example/agents" / folder / filename).unlink()
+                self.assert_not_equivalent(before, self.commit())
+
+    def test_roster_referenced_folder_removal(self):
+        for roster, text in (("roster.yaml", "agents:\n  - id: roster-agent\n"),
+                             ("config/nested/roster.yml", "agents:\n  - id: other\n    dir: 'roster-agent'  # pinned\n")):
+            with self.subTest(roster=roster):
+                self.write(roster, text)
+                self.write("example/agents/roster-agent/agent.ts")
+                before = self.commit()
+                (self.repo / "example/agents/roster-agent/agent.ts").unlink()
+                after = self.commit()
+                (self.repo / roster).unlink()
+                self.commit()
+                self.assert_not_equivalent(before, after)
+
+    def test_imported_new_folder(self):
+        for path, reference in (
+                ("example/agents/opus-1/agent.ts", "'../newcomer/helper'"),
+                ("example/agents/opus-1/agent.ts", '"../newcomer"'),
+                ("src/runner.ts", "'../example/agents/newcomer/helper'")):
+            with self.subTest(path=path, reference=reference):
+                self.write(path, "import helper from %s;\n" % reference)
+                before = self.commit()
+                self.write("example/agents/newcomer/helper.ts")
+                after = self.commit()
+                (self.repo / "example/agents/newcomer/helper.ts").unlink()
+                self.write(path, "original\n")
+                self.commit()
+                self.assert_not_equivalent(before, after)
+
+    def test_unreferenced_folder_literal_search_and_internal_import(self):
+        self.write("src/runner.ts", "import helper from '../example/agents/newXagent/helper';\n")
+        # Neither a bare mention nor an id that merely contains the folder name references it.
+        self.write("roster.yaml", "agents:\n  - id: prefix_new.agent_suffix\n  - id: beta-new.agent\n"
+                   "    description: new.agent\n  - id: newXagent\n")
+        before = self.commit()
+        self.write("example/agents/new.agent/agent.ts", "import helper from '../new.agent/helper';\n")
+        self.write("example/agents/new.agent/helper.ts")
+        ok, detail = judge.simulation_equivalent(before, self.commit())
+        self.assertTrue(ok, detail)
+
+    def test_grep_errors_fail_closed(self):
+        self.write("example/agents/newcomer/agent.ts")
+        changed = self.commit()
+        real_run = judge.subprocess.run
+        for roster in (False, True):
+            with self.subTest(roster=roster):
+                judge._simulation_equivalent_trees.cache_clear()
+
+                def fail_grep(cmd, **kwargs):
+                    if "grep" in cmd and ("-E" in cmd) == roster:
+                        return subprocess.CompletedProcess(cmd, 2, stdout="", stderr="fixture error")
+                    return real_run(cmd, **kwargs)
+
+                with patch.object(judge.subprocess, "run", side_effect=fail_grep):
+                    ok, detail = judge.simulation_equivalent(self.base, changed)
+                self.assertFalse(ok, detail)
+                self.assertIn("git grep failed (exit 2", detail["reason"])
+
+    def test_unsupported_diff_status(self):
+        changed = self.change("docs/guide.md")
+        real_git = judge._equivalence_git
+
+        def unsupported(repo, *args, **kwargs):
+            if args[0] == "diff":
+                return "R100\0docs/guide.md\0"
+            return real_git(repo, *args, **kwargs)
+
+        with patch.object(judge, "_equivalence_git", side_effect=unsupported):
+            ok, detail = judge.simulation_equivalent(self.base, changed)
+        self.assertFalse(ok, detail)
+        self.assertIn("unsupported git diff status", detail["reason"])
+
     def test_allowed_paths(self):
         paths = ("ascon-notes/note.md", "test/nested/test.ts", "ascon/final/helper.py",
                  "ascon/final/test-something.sh", "ascon/final/README.md", "ascon/final/LINEAGE.md",
