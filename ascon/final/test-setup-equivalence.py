@@ -164,6 +164,10 @@ class SetupEquivalence(unittest.TestCase):
                 self.commit()
                 self.assert_not_equivalent(before, after)
 
+    def test_folder_name_outside_arm_alphabet(self):
+        self.write("example/agents/odd+name/agent.ts")
+        self.assert_not_equivalent(self.base, self.commit())
+
     def test_imported_new_folder(self):
         for path, reference in (
                 ("example/agents/opus-1/agent.ts", "'../newcomer/helper'"),

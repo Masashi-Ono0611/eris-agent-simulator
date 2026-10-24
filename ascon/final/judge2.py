@@ -121,7 +121,9 @@ def _equivalence_git(repo, *args, glob_pathspecs=False):
 def _agent_folder_unreferenced(repo, folder, commits):
     """Whole-folder changes are safe only for unreferenced, non-shared agents."""
     name = folder.rsplit("/", 1)[1]
-    if name in ("lib", "runtime"):
+    import re
+    # The name goes into an ERE below; refuse anything outside the arm-map alphabet.
+    if name in ("lib", "runtime") or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]*", name):
         return False
     for commit in commits:
         matches = _equivalence_git(repo, "grep", "--no-textconv", "-l", "-z", "-F",
