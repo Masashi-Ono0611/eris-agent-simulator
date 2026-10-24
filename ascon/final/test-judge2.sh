@@ -28,7 +28,7 @@
 # Exit 2: a requested input is missing. REAL_DIR checks are optional and explicitly skipped if absent.
 set -u
 export PYTHONDONTWRITEBYTECODE=1
-src="${1:?repo}"
+src="${1:-$(cd "$(dirname "$0")/../.." && pwd -P)}"
 real="${2:-}"
 J="$src/ascon/final/judge2.py"
 MC="$src/ascon/final/mc.py"
@@ -37,6 +37,8 @@ MC="$src/ascon/final/mc.py"
 command -v python3 > /dev/null || { echo "BLOCKED: python3 not found"; exit 2; }
 T="$(mktemp -d)" || exit 2
 trap 'python3 -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" "$T"' EXIT
+
+python3 -B "$src/ascon/final/test-setup-equivalence.py" || exit 1
 
 # Revert only the advisory branch in memory: the same null+reason must block again.
 python3 -B -I - "$J" <<'PYRED' || exit 1
