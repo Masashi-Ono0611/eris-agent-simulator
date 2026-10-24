@@ -53,10 +53,12 @@ Exit 0 means a verdict was produced, 2 means input rejected; validate exits 1
 on a mismatch and 2 on unreadable inputs. No backtests are run by this tool.
 """
 import argparse
+from functools import lru_cache
 import hashlib
 import json
 import math
 import os
+import subprocess
 import sys
 
 PASS, FAIL, BLOCKED = "PASS", "FAIL", "BLOCKED"
@@ -100,6 +102,78 @@ try:
     HERE = os.path.dirname(os.path.abspath(__file__))
 except NameError:  # run from stdin (validate only)
     HERE = None
+
+
+def _equivalence_git(repo, *args):
+    """Read Git metadata only; never execute external diff/textconv helpers."""
+    proc = subprocess.run(["git", "--no-replace-objects", "--literal-pathspecs", "-C", repo, *args],
+                          capture_output=True, text=True, timeout=30)
+    if proc.returncode:
+        # Avoid echoing arbitrary Git stderr into a verdict.
+        raise ValueError("git %s failed (exit %d; unavailable repository/object or ambiguous commit)" %
+                         (args[0], proc.returncode))
+    return proc.stdout
+
+
+@lru_cache(maxsize=256)
+def _simulation_equivalent_trees(repo, commit_a, commit_b):
+    """Cache by repository and resolved, sorted commit pair, never by a moving ref."""
+    raw = _equivalence_git(repo, "diff", "--name-status", "--no-renames", "--no-ext-diff",
+                           "--no-textconv", "-z", commit_a, commit_b, "--")
+    fields = raw.split("\0")
+    if fields.pop() != "" or len(fields) % 2:
+        raise ValueError("malformed git diff --name-status output")
+    folders, offending = {}, []
+    for status, path in zip(fields[::2], fields[1::2]):
+        if status not in ("A", "D", "M", "T") or not path:
+            raise ValueError("unsupported git diff status/path: %r %r" % (status, path))
+        if path.startswith(("docs/", "ascon-notes/", "test/")):
+            continue
+        parent, _, name = path.rpartition("/")
+        if parent == "ascon/final" and not name.endswith((".yaml", ".yml")) and (
+                name.endswith(".py") or name.startswith("test-") or name in ("README.md", "LINEAGE.md")):
+            continue
+        if parent == "ascon/eval" and (name in ("README.md", "lane-eta.py") or name.startswith("test-")):
+            continue
+        parts = path.split("/")
+        if len(parts) >= 4 and parts[:2] == ["example", "agents"]:
+            folder = "/".join(parts[:3])
+            if folder not in folders:
+                # ls-tree returns success with empty output for absence; Git errors
+                # are not absence. Literal pathspecs prevent unusual names matching siblings.
+                entries = [_equivalence_git(repo, "ls-tree", "-z", c, "--", folder)
+                           for c in (commit_a, commit_b)]
+                folders[folder] = (not entries[0]) != (not entries[1])
+            if folders[folder]:
+                continue
+        offending.append(path)
+    return not offending, {
+        "changed_paths": len(fields) // 2,
+        "reason": ("changed simulation paths: " + ", ".join(repr(p) for p in offending[:5]) +
+                   (" (+%d more)" % (len(offending) - 5) if len(offending) > 5 else ""))
+                  if offending else "all changed paths are simulation-equivalent",
+    }
+
+
+def simulation_equivalent(commit_a, commit_b):
+    """Allow only the documented non-simulation paths and whole new/removed agent folders.
+
+    Per-arm head/arm_tree evidence is checked separately. Unknown or ambiguous
+    commits and every Git error fail closed, including when both inputs are equal.
+    """
+    try:
+        if not all(isinstance(c, str) and c and not c.startswith("-") for c in (commit_a, commit_b)):
+            raise ValueError("invalid sourceCommit (expected a commit identifier)")
+        directory = os.environ.get("ASCON_JUDGE_REPO") or HERE
+        if not directory:
+            raise ValueError("cannot locate judge repository")
+        repo = _equivalence_git(directory, "rev-parse", "--show-toplevel").strip()
+        commits = [_equivalence_git(repo, "rev-parse", "--verify", "--end-of-options", c + "^{commit}").strip()
+                   for c in (commit_a, commit_b)]
+        ok, detail = _simulation_equivalent_trees(repo, *sorted(commits))
+        return ok, dict(detail, resolved_commits=commits)
+    except (OSError, subprocess.SubprocessError, ValueError) as e:
+        return False, {"reason": "simulation equivalence unproven: %s" % e}
 
 
 # Explicit stage-1 identity map. Legacy manifests remain readable without adding C1.
@@ -1321,7 +1395,8 @@ def _inspect(cfg):
     """Everything that does not depend on the exclusions: each arm's matrix in each cell, file and runDir
     reuse, configuration problems, the arms' simulation setup against B's, and the rerun records."""
     arms, B, slot = cfg["arms"], cfg["baseline"], cfg["slot_id"]
-    st = {"insp": {}, "files": {}, "problems": {a: [] for a in arms}, "slot_flags": {}, "rerun": {}}
+    st = {"insp": {}, "files": {}, "problems": {a: [] for a in arms}, "slot_flags": {}, "rerun": {},
+          "setup_equivalence": []}
     path_owner, rd_owner = {}, {}
     for c in cfg["cells"]:
         key = (c["seed"], c["field"])
@@ -1363,9 +1438,21 @@ def _inspect(cfg):
             for arm, r in insp.items():
                 if arm == B or r["setup"] is None:
                     continue
-                diff = ["%s %r (B %r)" % (k, r["setup"][k], b["setup"][k]) for k in SETUP_KEYS if r["setup"][k] != b["setup"][k]]
-                if diff:
-                    st["problems"][arm].append("%s: simulation setup differs from %s's: %s" % (lab, B, "; ".join(diff)))
+                keys = [k for k in SETUP_KEYS if r["setup"][k] != b["setup"][k]]
+                if keys:
+                    if keys == ["sourceCommit"]:
+                        ok, detail = simulation_equivalent(b["setup"]["sourceCommit"], r["setup"]["sourceCommit"])
+                        if ok:
+                            st["setup_equivalence"].append(dict(
+                                detail, lab=lab, arm=arm, baseline=B, sourceCommit=r["setup"]["sourceCommit"],
+                                baseline_sourceCommit=b["setup"]["sourceCommit"]))
+                            continue
+                        reason = detail["reason"]
+                    else:
+                        reason = "equivalence requires sourceCommit to be the only differing setup key"
+                    diff = ["%s %r (B %r)" % (k, r["setup"][k], b["setup"][k]) for k in keys]
+                    st["problems"][arm].append("%s: simulation setup differs from %s's: %s; %s" %
+                                                (lab, B, "; ".join(diff), reason))
     for x in cfg["exclude"]:
         rr = x.get("rerun")
         if rr is None:
@@ -1719,6 +1806,7 @@ def cmd_judge(args):
         "infrastructure_open": res["open_infra"],
         "input_problems": {a: p for a, p in res["problems"].items() if p},
         "slot_flags": st["slot_flags"],
+        "setup_equivalence": st["setup_equivalence"],
         "cells": res["cell_rows"], "placebo": res["placebo"], "candidates": cands, "selection": sel,
     }
     if args.out:
@@ -1746,6 +1834,9 @@ def print_table(out):
               ((out["prior"] or {}).get("sha256") or "")[:12])
     if out["nonplan"]:
         print("  NON-PLAN (explicitly allowed): " + "; ".join(out["nonplan"]))
+    for eq in out.get("setup_equivalence", []):
+        print("  setup equivalence %s %s: sourceCommit %s (%s %s); %d allowed changed paths" % (
+            eq["lab"], eq["arm"], eq["sourceCommit"], eq["baseline"], eq["baseline_sourceCommit"], eq["changed_paths"]))
     d = out["design"]
     print("  design: seeds %s%s; cells listed %d, excluded whole %d" % (
         d["seeds"], (" + FS %s" % d["fs_seeds"]) if d["fs_seeds"] else "", len(out["cells"]), sum(1 for c in out["cells"] if c.get("excluded"))))
