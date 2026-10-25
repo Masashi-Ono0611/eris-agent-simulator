@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline controls; optional module path supports deliberate broken-helper red checks."""
 import importlib.util
+import json
 from pathlib import Path
 import subprocess
 import shutil
@@ -34,7 +35,7 @@ class SelftestControls(unittest.TestCase):
 
     SEEDED_PATHS = (
         'deployer/vendor/aave/cache', 'deployer/vendor/aave/artifacts',
-        'deployer/vendor/gmx-src/cache', 'deployer/vendor/gmx-src/artifacts',
+        'deployer/vendor/gmx-src/artifacts',
         'deployer/vendor/gmx-src/typechain', 'deployer/vendor/gmx-src/typechain-types',
     )
 
@@ -100,9 +101,111 @@ class SelftestControls(unittest.TestCase):
                     self.assertTrue((main / name / 'sentinel').is_file(), name)
             for name in ('', 'deployments'):
                 self.assertFalse((tree / gmx / name).is_symlink())
-            for name in ('node_modules', 'contracts', 'deployments/arbitrum'):
-                self.assertTrue((tree / gmx / name).is_symlink())
-                self.assertEqual((tree / gmx / name).resolve(), (main / gmx / name).resolve())
+            self.assertTrue((tree / gmx / 'node_modules').is_symlink())
+            self.assertEqual((tree / gmx / 'node_modules').resolve(),
+                             (main / gmx / 'node_modules').resolve())
+            for name in ('contracts', 'deployments/arbitrum'):
+                self.assertFalse((tree / gmx / name).is_symlink())
+                self.assertEqual((tree / gmx / name / 'input').read_text(), 'shared input')
+
+    def test_gmx_node_dirname_is_private(self):
+        with tempfile.TemporaryDirectory() as td:
+            main, tree = Path(td) / 'main', Path(td) / 'tree'
+            for name in self.BUILD_INPUTS + self.WRITABLE_PATHS:
+                (main / name).mkdir(parents=True, exist_ok=True)
+            relative = Path('deployer/vendor/gmx-src')
+            source, prepared = main / relative, tree / relative
+            (source / 'node_modules').mkdir()
+            (source / 'node_modules/input').write_text('dependency')
+            (source / 'utils').mkdir()
+            (source / 'deployments/localhost/sentinel').write_text('checkout A')
+            (source / 'artifacts/sentinel').write_text('artifact A')
+            (source / 'cache/solidity-files-cache.json').write_text(
+                json.dumps({'files': {str(source / 'contracts/Example.sol'): {}}}))
+            (source / 'utils/reader.cjs').write_text('''
+const fs = require('node:fs'), path = require('node:path');
+module.exports = () => ({
+  deployment: fs.readFileSync(path.join(__dirname, '../deployments/localhost/sentinel'), 'utf8'),
+  artifact: fs.readFileSync(path.join(__dirname, '../artifacts/sentinel'), 'utf8'),
+});
+''')
+            (source / 'entry.cjs').write_text('''
+const read = require('./utils/reader.cjs');
+const alias = require('./reader-alias.cjs');
+require('./utils-alias/reader.cjs');
+console.log(JSON.stringify({...read(), alias: alias(),
+  modules: Object.keys(require.cache).map(p => require('node:fs').realpathSync(p))}));
+''')
+            # Both absolute file links and relative directory links must stay local.
+            (source / 'reader-alias.cjs').symlink_to(source / 'utils/reader.cjs')
+            (source / 'utils-alias').symlink_to('utils', target_is_directory=True)
+            inventory = set(source.rglob('*'))
+            original = {p.relative_to(source): p.read_bytes()
+                        for p in source.rglob('*') if p.is_file() and not p.is_symlink()}
+            links = {p.relative_to(source): p.readlink()
+                     for p in source.rglob('*') if p.is_symlink()}
+            m.prepare_deployer(tree, main)
+            self.assertEqual(list((prepared / 'deployments/localhost').iterdir()), [])
+            self.assertEqual(list((prepared / 'cache').iterdir()), [])
+            for name, content in original.items():
+                if name.parts[0] not in ('cache', 'deployments', 'node_modules'):
+                    self.assertEqual((prepared / name).read_bytes(), content, name)
+            (prepared / 'deployments/localhost/sentinel').write_text('throwaway tree')
+            (prepared / 'artifacts/sentinel').write_text('private artifact')
+            result = subprocess.run(['node', str(prepared / 'entry.cjs')],
+                                    check=True, capture_output=True, text=True)
+            observed = json.loads(result.stdout)
+            self.assertEqual(observed['deployment'], 'throwaway tree', 'GMX __dirname escaped')
+            self.assertEqual(observed['artifact'], 'private artifact')
+            self.assertEqual(observed['alias'], {'deployment': 'throwaway tree',
+                                               'artifact': 'private artifact'})
+            self.assertEqual(len(observed['modules']), 2)
+            for module in observed['modules']:
+                self.assertTrue(Path(module).is_relative_to(prepared.resolve()), module)
+            for name, content in original.items():
+                self.assertEqual((source / name).read_bytes(), content, name)
+            for name, destination in links.items():
+                self.assertEqual((source / name).readlink(), destination)
+            self.assertEqual(set(source.rglob('*')), inventory)
+
+    def test_gmx_nested_escaping_symlink_is_blocked(self):
+        for destination in ('outside', 'missing', 'node_modules/input', 'cache/input'):
+            with self.subTest(destination=destination), tempfile.TemporaryDirectory() as td:
+                main, tree = Path(td) / 'main', Path(td) / 'tree'
+                for name in self.BUILD_INPUTS:
+                    (main / name).mkdir(parents=True)
+                source = main / 'deployer/vendor/gmx-src'
+                (source / 'utils/nested').mkdir(parents=True)
+                dest = main / destination if destination in ('outside', 'missing') else source / destination
+                if destination != 'missing':
+                    dest.parent.mkdir(parents=True, exist_ok=True)
+                    dest.write_text('fixture')
+                (source / 'utils/nested/escape.cjs').symlink_to(dest)
+                with self.assertRaises(m.Blocked):
+                    m.prepare_deployer(tree, main)
+                self.assertFalse((tree / 'deployer/vendor/gmx-src').exists())
+
+    def test_gmx_omits_credentials_without_opening_them(self):
+        with tempfile.TemporaryDirectory() as td:
+            main, tree = Path(td) / 'main', Path(td) / 'tree'
+            for name in self.BUILD_INPUTS:
+                (main / name).mkdir(parents=True)
+            source = main / 'deployer/vendor/gmx-src'
+            # Dangling synthetic links: copying/following any of these is a bug.
+            omitted = ('.git', '.env', '.env.local', 'utils/.env.test', 'utils/.npmrc',
+                       '.yarnrc.yml', '.netrc', '.pypirc', '.git-credentials',
+                       'utils/private.pem', 'utils/signing.key', 'utils/wallet.p12',
+                       'utils/service-account.json', 'utils/credentials.json',
+                       '.aws', '.ssh', '.config', '.codex', '.claude.json')
+            for name in omitted:
+                path = source / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.symlink_to(main / 'nonexistent-fixture')
+            with patch.object(Path, 'open', side_effect=AssertionError('must not open credentials')):
+                m.prepare_deployer(tree, main)
+            for name in omitted:
+                self.assertFalse((tree / 'deployer/vendor/gmx-src' / name).is_symlink(), name)
+                self.assertFalse((tree / 'deployer/vendor/gmx-src' / name).exists(), name)
 
     def test_missing_deploy_build_inputs(self):
         for missing in self.BUILD_INPUTS:
