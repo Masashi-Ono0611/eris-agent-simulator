@@ -159,11 +159,11 @@ arm fail_and_blocked     1 2 "the slot ran 'opus-1-pb'"               -- "$M" op
 echo "== check-trap-scope.py"
 S=""
 for f in "$src"/ascon/final/scen-*.yaml "$src"/ascon/final/smoke-*.yaml; do S="$S $f"; done
-# Includes the tracked scen-gmx-probe-2001.yaml in addition to the original 34 files.
+# Includes the GMX probe and two FS files in addition to the original 34 files.
 nscen="$(printf '%s\n' $S | grep -c .)"
-[ "$nscen" = 35 ] || { echo "BLOCKED: expected 35 scenario files under ascon/final, found $nscen"; exit 2; }
+[ "$nscen" = 37 ] || { echo "BLOCKED: expected 37 scenario files under ascon/final, found $nscen"; exit 2; }
 # Positive control: the final plan's scenario files and the planned or measured arms.
-trap_scope "final files, planned arms" 0 1 "PASS 35 scenario files: no regime lists lending; 5 arms" -- --scenarios $S --arms opus-1 opus-1-pb opus-1a opus-2 ascon-zeta-r3
+trap_scope "final files, planned arms" 0 1 "PASS 37 scenario files: no regime lists lending; 5 arms" -- --scenarios $S --arms opus-1 opus-1-pb opus-1a opus-2 ascon-zeta-r3
 # Negative controls on the repository's own files.
 printf '%s\n' 'regimes: [calm, agent-markets]' 'seeds: [1]' > "$T/scen-agent-markets.yaml"
 trap_scope "regime with lending" 1 1 "agent-markets: run.protocols includes lending" -- --scenarios "$T/scen-agent-markets.yaml" --arms opus-1
@@ -208,6 +208,46 @@ if [ -f "$mq_checker" ]; then
   mq_gen="$(python3 -I "$mq_checker" --stage s1 --seeds 1003-1006 --fields FP,FD --arms opus-1,opus-1-pb,opus-1a \
     --lanes A,B --order-seed 7 --out "$T/mq/good" 2>&1)"; got=$?
   report "queues generated and checked" 0 3 "PASS 24 jobs in 2 files, 8 cells" "$mq_gen" "$got"
+  # FS is a separate two-cell schedule; FP/FD paths and ordering stay unchanged.
+  out="$(python3 -I "$mq_checker" --stage s2 --seeds 1101,1102 --fields FS --arms opus-1,opus-1r \
+    --lanes A,B --order-seed 7 --out "$T/mq/fs" 2>&1)"; got=$?
+  report "FS queues generated and checked" 0 3 "PASS 4 jobs in 2 files, 2 cells" "$out" "$got"
+  out="$(python3 -I "$mq_checker" --check "$T/mq/fs" 2>&1)"; got=$?
+  report "FS queues standalone check" 0 1 "PASS 4 jobs" "$out" "$got"
+  # Mutate only copied scenarios; never alter the real checkout's resources.
+  python3 -I - "$mq_checker" "$T/mq/fs" "$T/fs-repo" <<'PY'
+import importlib.util
+from pathlib import Path
+import shutil
+import sys
+spec = importlib.util.spec_from_file_location('queues', sys.argv[1])
+mq = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(mq)
+source, fixture = Path(mq.ROOT), Path(sys.argv[3])
+queues = sys.argv[2]
+(fixture / 'ascon/final').mkdir(parents=True)
+(fixture / 'example').symlink_to(source / 'example', target_is_directory=True)
+for name in ('roster-FS.yaml', 'scen-FS-1101.yaml', 'scen-FS-1102.yaml'):
+    shutil.copyfile(source / 'ascon/final' / name, fixture / 'ascon/final' / name)
+mq.ROOT = str(fixture)
+assert mq.check(queues) == 0
+scenario = fixture / 'ascon/final/scen-FS-1101.yaml'
+good = scenario.read_text()
+for bad in (good.replace('lending-incident]', 'lending-incident, calm]'),
+            good.replace('launch, cdp-incident', 'cdp-incident, launch'),
+            good.replace('launch,', 'la unch,'),
+            good + 'regimes: [launch, cdp-incident, lending-incident, calm]\n',
+            good.replace('[1101]', '[1102]')):
+    scenario.write_text(bad)
+    assert mq.check(queues) == 1
+    sys.argv = [sys.argv[0], '--stage', 's2', '--seeds', '1101', '--fields', 'FS',
+                '--arms', 'opus-1,opus-1r', '--lanes', 'A', '--order-seed', '7',
+                '--out', str(fixture / 'refused')]
+    assert mq.main() == 2 and not (fixture / 'refused').exists()
+scenario.write_text(good)
+print('FS_SCENARIO_CONTROLS_OK extra/reordered regimes, duplicate key, wrong seed rejected')
+PY
+  [ "$?" = 0 ] || fails=1
   mq() {  # <label> <want exit> <want lines> <needle> <edit: python on the copy's s1-A.txt text as s>
     local label="$1" want="$2" lines="$3" needle="$4" edit="$5" d out got
     seq=$((seq + 1)); d="$T/mq/c$seq"; mkdir -p "$d"

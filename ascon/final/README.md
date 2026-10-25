@@ -202,6 +202,24 @@ precedence. All other judge rules remain frozen. Tests cover these cases and rev
 advisory branch in memory to verify null+reason returns to BLOCKED.
 Judge CLI exit 0 means it produced a verdict, not that a candidate passed.
 
+## Building stage-2 evidence
+
+```sh
+python3 ascon/final/make-queues.py --stage s2 --seeds 1101,1102 --fields FS \
+  --arms opus-1,opus-1r --lanes A,B --order-seed 231023 --out /local/fs-queues
+python3 ascon/final/make-queues.py --check /local/fs-queues
+python3 ascon/final/make-manifest.py --stage 2 --stage1-verdict V1.json \
+  --logs /local/logs --out M2.json --path-map /mini/repo=/local/repo
+# Or select one candidate explicitly: --arms R=opus-1r (also supports selected F2).
+# Use a fresh MECH2.json: exit 0/2 alone is not evidence; read the JSON and judge verdict.
+python3 ascon/final/mechanism.py M2.json --out MECH2.json
+python3 -m json.tool MECH2.json
+python3 ascon/final/judge2.py judge --stage 2 --stage1-verdict V1.json \
+  --manifest M2.json --mechanism MECH2.json --out V2.json
+python3 -m json.tool V2.json
+/bin/bash ascon/final/test-evidence.sh
+```
+
 ## D1 offline runner
 
 ```sh

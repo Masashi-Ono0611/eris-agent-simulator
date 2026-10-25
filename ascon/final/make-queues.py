@@ -22,6 +22,8 @@ arm) the arguments ask for appears exactly once and nothing else does; each cell
 in one block; job names follow the rule and are unique; every roster template, slot directory
 (example/agents/<arm>) and scenario file exists; the scenario file is ascon/final/scen-<seed>.yaml and
 lists exactly that seed. Exit 0 PASS (one line), 1 FAIL (one line per problem), 2 BLOCKED (cannot read).
+FS instead uses scen-FS-<seed>.yaml: exactly two inline lists, regimes
+[launch, cdp-incident, lending-incident] in that order and seeds [<seed>].
 Generation refuses (exit 2) when an arm directory, roster or scenario file is missing, and runs the same
 check on what it wrote.
 Paths are relative to the repo root (this file's ../..), which is also where lane-queue.sh resolves them.
@@ -72,8 +74,8 @@ def roster(field):
     return f"ascon/final/roster-{field}.yaml"
 
 
-def scen(seed):
-    return f"ascon/final/scen-{seed}.yaml"
+def scen(seed, field):
+    return f"ascon/final/scen-{'FS-' if field == 'FS' else ''}{seed}.yaml"
 
 
 def plan(stage, seeds, fields, arms, lanes, order_seed):
@@ -86,7 +88,7 @@ def plan(stage, seeds, fields, arms, lanes, order_seed):
             random.Random(order_seed + cell).shuffle(order)
             lane = lanes[(i + j) % len(lanes)]
             for arm in order:
-                out[lane].append((f"{stage}-{field}{seed}-{arm}", roster(field), arm, scen(seed), (seed, field)))
+                out[lane].append((f"{stage}-{field}{seed}-{arm}", roster(field), arm, scen(seed, field), (seed, field)))
             cell += 1
     return out
 
@@ -115,6 +117,19 @@ def scen_seeds(path):
     except (OSError, ValueError):
         return None
     return None
+
+
+def fs_scen_ok(path, seed):
+    """Fail closed on extra regimes, duplicate keys or unsupported YAML syntax."""
+    try:
+        with open(os.path.join(ROOT, path)) as f:
+            lines = [line.split('#', 1)[0].strip() for line in f]
+        lines = [line for line in lines if line]
+        return (len(lines) == 2 and
+                re.fullmatch(r'regimes:\s*\[\s*launch\s*,\s*cdp-incident\s*,\s*lending-incident\s*\]', lines[0]) is not None and
+                re.fullmatch(r'seeds:\s*\[\s*' + str(seed) + r'\s*\]', lines[1]) is not None)
+    except OSError:
+        return False
 
 
 def check(qdir):
@@ -187,10 +202,12 @@ def check(qdir):
             fails.append(f"FAIL {where}: roster {ros} does not exist")
         if not NAME.match(arm) or not os.path.isdir(os.path.join(ROOT, "example", "agents", arm)):
             fails.append(f"FAIL {where}: no slot dir example/agents/{arm}")
-        if sc != scen(seed):
-            fails.append(f"FAIL {where}: scenarios {sc}, want {scen(seed)}")
+        if sc != scen(seed, field):
+            fails.append(f"FAIL {where}: scenarios {sc}, want {scen(seed, field)}")
         elif scen_seeds(sc) != [seed]:
             fails.append(f"FAIL {where}: {sc} does not list exactly seed {seed} (got {scen_seeds(sc)})")
+        elif field == 'FS' and not fs_scen_ok(sc, seed):
+            fails.append(f"FAIL {where}: {sc} must list exactly FS regimes launch,cdp-incident,lending-incident in order and seed {seed}")
         cell = (seed, field)
         cell_lane.setdefault(cell, set()).add(fn)
         cell_rows.setdefault((cell, fn), []).append(n)
@@ -248,11 +265,14 @@ def main():
     except ValueError as e:
         print(f"BLOCKED {e}")
         return 2
-    need = [roster(f) for f in fields] + [scen(s) for s in seeds]
+    need = [roster(f) for f in fields] + [scen(s, f) for s in seeds for f in fields]
     gone = [p for p in need if not os.path.isfile(os.path.join(ROOT, p))]
     gone += [f"example/agents/{x}" for x in arms if not os.path.isdir(os.path.join(ROOT, "example", "agents", x))]
     if gone:
         print("BLOCKED missing: " + " ".join(gone))
+        return 2
+    if 'FS' in fields and any(not fs_scen_ok(scen(s, 'FS'), s) for s in seeds):
+        print('BLOCKED FS scenarios must list exactly FS regimes launch,cdp-incident,lending-incident in order and the requested seed')
         return 2
     os.makedirs(a.out, exist_ok=True)
     clash = [f for f in os.listdir(a.out) if f.endswith(".txt")]

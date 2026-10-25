@@ -1,0 +1,3 @@
+# Final evaluation: FS specialist regimes at seed 1102 (3 scenarios).
+regimes: [launch, cdp-incident, lending-incident]
+seeds: [1102]

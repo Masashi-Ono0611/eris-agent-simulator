@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Small synthetic runs only; invoked in a mktemp directory by test-evidence.sh."""
+import copy
 import csv
 import hashlib
 import importlib.util
@@ -22,6 +23,7 @@ def load(name):
 def invoke(name, *args, rc):
     p = subprocess.run([sys.executable, str(src / (name + '.py')), *map(str, args)], capture_output=True, text=True)
     assert p.returncode == rc, (name, p.returncode, p.stdout, p.stderr)
+    return p
 
 
 def dump(path, value):
@@ -377,6 +379,173 @@ def mechanism_controls():
     print('MECHANISM_CONTROLS_OK')
 
 
+def stage2_controls():
+    """Real CLI chain on synthetic matrices AND execution logs, with no doubles."""
+    j = load('judge2')
+    root = temp / 'stage2'
+    root.mkdir()
+    mapping = {'B': 'opus-1', "B'": 'opus-1-pb', 'R': 'opus-1r'}
+
+    def fixtures(stage):
+        logs = root / ('logs' + stage)
+        logs.mkdir()
+        cells = [(s, f) for s in (range(1003, 1007) if stage == '1' else range(1011, 1015))
+                 for f in ('FP', 'FD')]
+        if stage == '2':
+            cells += [(s, 'FS') for s in (1101, 1102)]
+        lines = []
+        for seed, field in cells:
+            regimes = j.FS_REGIMES if field == 'FS' else j.REGIMES12
+            for label, directory in mapping.items():
+                if stage == '2' and label == "B'":
+                    continue
+                job = f's{stage}-{field}{seed}-{directory}'
+                matrix = root / 'runs' / ('matrix-' + job) / 'matrix.json'
+                rows = []
+                for i, regime in enumerate(regimes, 1):
+                    run = root / 'runs' / f'{job}-{i}'
+                    (run / 'agents').mkdir(parents=True)
+                    dump(run / 'summary.json', dict(runStartBlock=100, finalBlock=110, blocksProcessed=10))
+                    (run / 'agents' / 'slot.jsonl').write_text(''.join(
+                        json.dumps(dict(agentId='slot', round=r, action={'type': 'noop'})) + '\n'
+                        for r in range(99, 111)))
+                    (run / 'blocks.csv').write_text(
+                        'blockNumber,txIndex,from,priorityFeeWei,ownerId,to\n'
+                        '101,0,a,10,slot,router\n101,1,b,10,other,router\n')
+                    agents = [dict(id=name, baseline=base, pnlUsdc=100*k)
+                              for k, (name, base) in enumerate(j.read_roster(field)) if name != 'slot']
+                    agents.append(dict(id='slot', pnlUsdc=400 if label == 'R' else 300))
+                    rows.append(dict(s=i, regime=regime, seed=seed, agents=agents,
+                                     runDir='/mini/runs/' + run.name))
+                dump(matrix, dict(schema=2, sourceCommit='e'*40, resetUnit='scenario', repeat=1,
+                                  k=len(rows), scenariosPlanned=len(rows), scenarios=rows,
+                                  scenarioKey={'commitment': 'sha256:' + '5'*64}, scenarioStreams='regime-v1'))
+                lines.append(f'NOTE_{job} run=only slot={directory} matrix=/mini/runs/{matrix.parent.name}/matrix.json '
+                             + 'head=' + 'e'*12 + ' arm_tree=' + 'a'*12 + '\n'
+                             + f'EXIT_{job}=0 VERDICT=PASS COLLISION=PASS ARM=PASS run=only\n')
+        (logs / 'A.queue.log').write_text(''.join(lines))
+        return logs
+
+    v1, v2 = root / 'V1.json', root / 'V2.json'
+    m1, m2 = root / 'M1.json', root / 'M2.json'
+    mech1, mech2 = root / 'MECH1.json', root / 'MECH2.json'
+    logs1, logs2 = fixtures('1'), fixtures('2')
+    invoke('make-manifest', '--stage', '1', '--logs', logs1, '--out', m1,
+           '--arms', 'R=opus-1r', '--path-map', f'/mini={root}', rc=0)
+    invoke('mechanism', m1, '--out', mech1, rc=2)
+    invoke('judge2', 'judge', '--manifest', m1, '--mechanism', mech1, '--out', v1, rc=0)
+    prior = json.loads(v1.read_text())
+    assert prior['candidates']['R']['verdict'] == 'PASS', prior
+    assert prior['selection']['F'] == 'R'
+    args = ['--stage', '2', '--logs', logs2, '--out', m2, '--path-map', f'/mini={root}']
+    invoke('make-manifest', *args, '--stage1-verdict', v1, rc=0)
+    complete = m2.read_bytes()
+    man = json.loads(complete)
+    assert man['stage'] == '2' and man['arm_map'] == mapping
+    assert man['candidates'] == {'R': 'superiority'} and len(man['cells']) == 10
+    assert {(c['seed'], c['field']) for c in man['cells']} == {
+        *((s, f) for s in range(1011, 1015) for f in ('FP', 'FD')), (1101, 'FS'), (1102, 'FS')}
+    assert all(set(c['arms']) == set(c['arm_evidence']) == {'B', 'R'} for c in man['cells'])
+    for c in man['cells']:
+        for arm, proof in c['arm_evidence'].items():
+            assert not j.arm_problems(proof, mapping[arm], {'sourceCommit': 'e'*40}, c['arms'][arm])
+    # Explicit selection has identical bytes, with or without the prior verdict.
+    for extra in ([], ['--stage1-verdict', v1]):
+        invoke('make-manifest', *args, '--arms', 'R=opus-1r', *extra, rc=0)
+        assert m2.read_bytes() == complete
+    invoke('mechanism', m2, '--out', mech2, rc=2)
+    measured = json.loads(mech2.read_text())
+    assert set(measured['arms']) == {'B', 'R'} and measured['arm_map'] == mapping
+    for arm, evidence in measured['arms'].items():
+        assert not evidence['errors'] and len(evidence['matrices']) == 10
+        assert evidence['matrices_sha256'] == sorted(hashlib.sha256(Path(c['arms'][arm]).read_bytes()).hexdigest()
+                                                    for c in man['cells'])
+        assert evidence['slot_timeouts'] == evidence['stf'] == 0
+        assert evidence['tie_pairs'] == 102  # 8*12 + 2*3 scenarios, including FS
+    judge_args = ['judge', '--stage', '2', '--stage1-verdict', v1,
+                  '--manifest', m2, '--mechanism', mech2, '--out', v2]
+    invoke('judge2', *judge_args, rc=0)
+    verdict = json.loads(v2.read_text())
+    assert verdict['candidates']['R']['verdict'] == 'PASS', verdict
+    assert verdict['prior']['f'] == prior['placebo']['f']
+    print('STAGE2_CHAIN_OK 10 cells -> manifest -> mechanism (10 hashes/arm, no B-prime) -> judge PASS')
+
+    # Candidate identity is inherited, never hardcoded to R.
+    renamed = copy.deepcopy(prior)
+    for obj in (renamed['arm_map'], renamed['candidates'], renamed['inputs']['matrices']):
+        obj['W1'] = obj.pop('R')
+    renamed['selection']['F'] = 'W1'
+    alternate = root / 'alternate.json'
+    dump(alternate, renamed)
+    invoke('make-manifest', *args, '--stage1-verdict', alternate, rc=0)
+    assert json.loads(m2.read_text())['candidates'] == {'W1': 'superiority'}
+    for extra in ([], ['--arms', 'R=opus-1r', 'W1=opus-1g2'], ['--arms', 'X1=opus-1g'],
+                  ['--stage1-verdict', alternate, '--arms', 'R=opus-1r']):
+        invoke('make-manifest', *args, *extra, rc=2)
+    malformed = root / 'invalid-prior.json'
+    for value in ({}, [], dict(prior, selection={'status': 'PENDING', 'F': 'R'})):
+        dump(malformed, value)
+        invoke('make-manifest', *args, '--stage1-verdict', malformed, rc=2)
+    print('STAGE2_SELECTION_OK prior label, explicit map, invalid/multiple/informational candidates refused')
+
+    lane = logs2 / 'A.queue.log'
+    original = lane.read_text()
+    target = 's2-FS1102-opus-1r'
+    attempt = ''.join(line + '\n' for line in original.splitlines() if target in line)
+    def extract(text, rc=2, other=''):
+        lane.write_text(text)
+        (logs2 / 'B.queue.log').write_text(other)
+        invoke('make-manifest', *args, '--stage1-verdict', v1, rc=rc)
+        return json.loads(Path(str(m2) + '.audit.json').read_text())
+
+    # A failed attempt plus a successful retry is eligible; duplicate PASS is not.
+    failed = attempt.replace('run=only', 'run=killed').replace('=0 VERDICT=PASS', '=1 VERDICT=FAIL')
+    assert len(extract(failed + original, rc=0)['selected']) == 20
+    assert len(extract(original + attempt.splitlines()[1] + '\n', rc=0)['selected']) == 20
+    for cross_lane in (False, True):
+        duplicate = attempt.replace('run=only', 'run=second')
+        audit = extract(original + ('' if cross_lane else duplicate), other=duplicate if cross_lane else '')
+        assert audit['missing'] == [dict(job=target, reason='ambiguous: multiple PASS runs for the same job')]
+    for old, new in [('=0 VERDICT=PASS', '=1 VERDICT=PASS'), ('ARM=PASS', 'ARM=FAIL'),
+                     ('COLLISION=PASS', 'COLLISION=FAIL'), ('slot=opus-1r', 'slot=wrong'),
+                     ('head=' + 'e'*12, 'head=')]:
+        audit = extract(original.replace(attempt, attempt.replace(old, new)))
+        assert len(audit['missing']) == 1 and audit['missing'][0]['job'] == target
+    audit = extract(original + attempt.splitlines()[1].replace('ARM=PASS', 'ARM=FAIL') + '\n')
+    assert 'conflicting EXIT' in audit['missing'][0]['reason']
+    audit = extract(original + f'NOTE_{target} run=only slot=wrong\n')
+    assert 'conflicting slot' in audit['missing'][0]['reason']
+    audit = extract(original + f'EXIT_{target}=1 VERDICT=FAIL\n')
+    assert audit['errors'] and len(audit['missing']) == 20
+    # Stage-1 and out-of-design jobs (including B-prime) never become stage-2 cells.
+    outside = attempt.replace('FS1102', 'FS1011') + attempt.replace('opus-1r', 'opus-1-pb')
+    audit = extract(original + outside + (logs1 / 'A.queue.log').read_text(), rc=0)
+    assert len(audit['ignored']) == 2 and m2.read_bytes() == complete
+    # One missing arm is BLOCKED by the judge; an absent whole FS cell is rejected as incomplete.
+    audit = extract(original.replace(attempt, ''))
+    assert len(audit['missing']) == 1 and audit['missing'][0]['job'] == target
+    invoke('mechanism', m2, '--out', mech2, rc=2)
+    invoke('judge2', *judge_args, rc=0)
+    assert json.loads(v2.read_text())['candidates']['R']['verdict'] == 'BLOCKED'
+    audit = extract(''.join(line + '\n' for line in original.splitlines() if 's2-FS1102-' not in line))
+    assert len(audit['missing']) == 2
+    result = invoke('judge2', *judge_args, rc=2)
+    assert 'FS#1102' in result.stderr and 'not listed' in result.stderr
+    print('STAGE2_GUARDS_OK retries, duplicates, invalid guards, missing FS arm/cell -> BLOCKED/incomplete')
+    extract(original, rc=0)
+    invoke('mechanism', m2, '--out', mech2, rc=2)
+    # Tamper with an FS matrix after extraction: hash provenance must block.
+    fs_path = Path(next(c for c in man['cells'] if c['field'] == 'FS')['arms']['R'])
+    saved = fs_path.read_bytes()
+    fs_path.write_bytes(saved + b'\n')
+    invoke('judge2', *judge_args, rc=0)
+    blocked = json.loads(v2.read_text())['candidates']['R']
+    assert blocked['verdict'] == 'BLOCKED'
+    assert blocked['clauses']['5_mechanism']['subclauses']['provenance']['status'] == 'BLOCKED', blocked
+    fs_path.write_bytes(saved)
+    print('STAGE2_HASH_MISMATCH_OK FS matrix tampering -> BLOCKED')
+
+
 def review_controls(kind):
     """Regression controls for the full-code review; independently runnable red probes."""
     j = load('judge2')
@@ -514,3 +683,6 @@ if which in ('all', 'manifest'):
     manifest_controls()
 if which in ('all', 'mechanism'):
     mechanism_controls()
+
+if which in ('all', 'stage2'):
+    stage2_controls()

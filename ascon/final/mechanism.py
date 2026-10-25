@@ -7,7 +7,10 @@ Tie unit is a slot/other-sender transaction pair, including reverted transaction
 blocks.csv has no venue column: its on-chain `to` destination is the venue key.
 This does not distinguish pools behind one router. Empty destinations are excluded.
 Reads OUT.audit.json path_maps emitted by make-manifest (or explicit --path-map).
-Exit 2 for unavailable evidence, including the unrecorded p99; always writes JSON.
+Exit 2 for unavailable evidence, including the unrecorded p99. Successful extraction
+currently always exits 2 and writes JSON; fatal input errors may leave no new file.
+Callers accepting 0 or 2 must read the newly written JSON and the judge's verdict,
+never interpret the exit code alone as usable evidence or a passing candidate.
 """
 import argparse
 import csv
@@ -140,7 +143,10 @@ def main():
         mappings.append((old.rstrip('/'), new.rstrip('/')))
     if man.get('exclude'):
         raise ValueError('exclusions require separately scoped evidence; refusing to aggregate excluded runs')
-    arms = {x: [] for x in [man.get('baseline', 'B'), man.get('placebo', "B'")] + list(man['candidates'])}
+    required = [man.get('baseline', 'B')]
+    if str(man.get('stage', '1')) != '2':
+        required.append(man.get('placebo', "B'"))
+    arms = {x: [] for x in required + list(man['candidates'])}
     for cell in man['cells']:
         for arm, path in cell['arms'].items():
             arms.setdefault(arm, []).append(Path(path) if Path(path).is_absolute() else a.manifest.resolve().parent / path)
