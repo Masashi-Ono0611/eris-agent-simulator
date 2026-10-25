@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""Stage-1/2 queue-log manifest. Audit/missing attempts go to OUT.audit.json.
+"""Stage-1/2/retest queue-log manifest. Audit/missing attempts go to OUT.audit.json.
 Default map shared with judge2: B=opus-1, B'=opus-1-pb; shipping R=opus-1r,
 W1=opus-1g2 (defect-fixed), W2=ascon-zeta-r3k; informational X1=opus-1g
 (frozen original), X2=opus-1w, X3=ascon-zeta-r3kg. X never advances or ships.
 --arms accepts comma/space separated LABEL=agent-dir entries (B and B' are always included).
 Stage 2 uses only B and one candidate's matrices, including FS. Its candidate is
 the stage-1 verdict's F, or an explicit --arms LABEL=dir (F or F2 with a verdict).
+Retest combines stage-2 FP/FD matrices with rt- jobs at seeds 1021-1024, no FS
+or B' matrices. --stage2-verdict supplies the candidate and prior matrix records;
+without it, --arms and the original s2- queue logs are required instead.
 Multiple PASS runs are ambiguous; log order never resolves them.
 Matrix paths are preserved/remapped without requiring local copies (validated by the judge).
 Exit 0 complete, 2 incomplete/refused (partial manifest and audit still written).
@@ -51,11 +54,37 @@ def stage2_map(items, verdict):
     return mapping
 
 
+def retest_inputs(items, verdict):
+    if verdict is None:
+        return stage2_map(items, None), None
+    prior, digest = judge2._load_verdict(str(verdict), '2')
+    if len(prior['candidates']) != 1 or prior.get('nonplan'):
+        raise ValueError('retest needs one plan stage-2 candidate')
+    label = next(iter(prior['candidates']))
+    mapping = judge2.resolve_arm_map(prior)
+    if mapping is None or label not in mapping:
+        raise ValueError('retest needs the stage-2 candidate arm map')
+    selected_map = stage2_map([f'{label}={mapping[label]}'], None)
+    if items is not None and parse_arm_map(items) != selected_map:
+        raise ValueError('--arms must match the stage-2 candidate')
+    cfg = dict(stage='retest', baseline='B', slot_id='slot', arm_map=selected_map,
+               candidates={label: 'superiority'})
+    problems = judge2.prior_problems(prior, cfg, label)
+    if prior['design'].get('seeds') != list(range(1011, 1015)):
+        problems.append('retest needs stage-2 seeds 1011-1014')
+    if any(prior.get(k) for k in ('global_problems', 'infrastructure_open', 'input_problems')):
+        problems.append('stage-2 verdict has unresolved input/infrastructure problems')
+    if problems:
+        raise ValueError('; '.join(problems))
+    return selected_map, dict(verdict=prior, path=str(verdict.resolve()), sha256=digest)
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--logs', required=True, type=Path)
-    p.add_argument('--stage', required=True, choices=['1', '2'])
+    p.add_argument('--stage', required=True, choices=['1', '2', 'retest'])
     p.add_argument('--stage1-verdict', type=Path)
+    p.add_argument('--stage2-verdict', type=Path)
     p.add_argument('--out', required=True, type=Path)
     p.add_argument('--arms', nargs='+')
     p.add_argument('--path-map', action='append', default=[])
@@ -66,15 +95,29 @@ def main():
         if not sep or not Path(old).is_absolute() or not Path(new).is_absolute():
             p.error('--path-map requires absolute mini-prefix=local-prefix')
         mappings.append((old.rstrip('/'), new.rstrip('/')))
-    if a.stage == '1' and a.stage1_verdict is not None:
+    if a.stage != '2' and a.stage1_verdict is not None:
         p.error('--stage1-verdict belongs to stage 2')
-    arm_map = (parse_arm_map(a.arms if a.arms is not None else DEFAULT) if a.stage == '1'
-               else stage2_map(a.arms, a.stage1_verdict))
+    if a.stage != 'retest' and a.stage2_verdict is not None:
+        p.error('--stage2-verdict belongs to retest')
+    prior = None
+    if a.stage == 'retest':
+        arm_map, prior = retest_inputs(a.arms, a.stage2_verdict)
+    else:
+        arm_map = (parse_arm_map(a.arms if a.arms is not None else DEFAULT) if a.stage == '1'
+                   else stage2_map(a.arms, a.stage1_verdict))
     arms = [directory for label, directory in arm_map.items() if a.stage == '1' or label != "B'"]
     design = ([(seed, field) for seed in range(1003, 1007) for field in ('FP', 'FD')]
               if a.stage == '1' else
               [(seed, field) for seed in range(1011, 1015) for field in ('FP', 'FD')]
               + [(seed, 'FS') for seed in judge2.FS_SEEDS])
+    if a.stage == 'retest':
+        design = [(seed, field) for seed in judge2.PLAN_SEEDS['retest'][0] for field in judge2.FIELDS]
+
+    def job_name(seed, field, arm):
+        prefix = ('s2' if seed < 1021 else 'rt') if a.stage == 'retest' else 's' + a.stage
+        return f'{prefix}-{field}{seed}-{arm}'
+
+    expected_jobs = {job_name(s, f, arm) for s, f in design for arm in arms}
     labels = {directory: label for label, directory in arm_map.items()}
     candidates = {label: 'superiority' for label in arm_map if label not in ('B', "B'")}
     jobs, errors = {}, []
@@ -86,7 +129,8 @@ def main():
             continue
         for no, line in enumerate(lines, 1):
             fields = 'FP|FD' if a.stage == '1' else 'FP|FD|FS'
-            m = re.match(r'^(NOTE|EXIT)_(s' + a.stage + r'-(' + fields + r')(\d+)-([A-Za-z0-9_.-]+))(?:=([^ ]+))? (.*)$', line)
+            prefix = ('rt' if prior else '(?:s2|rt)') if a.stage == 'retest' else 's' + a.stage
+            m = re.match(r'^(NOTE|EXIT)_(' + prefix + r'-(' + fields + r')(\d+)-([A-Za-z0-9_.-]+))(?:=([^ ]+))? (.*)$', line)
             if not m:
                 continue
             kind, job, field, seed, arm, rc, tail = m.groups()
@@ -111,7 +155,20 @@ def main():
     cells, evidence = {}, {}
     for seed, field in design:
         for arm in arms:
-            job = f's{a.stage}-{field}{seed}-{arm}'
+            job = job_name(seed, field, arm)
+            if prior and seed in range(1011, 1015):
+                label = labels[arm]
+                rec = prior['verdict']['inputs']['matrices'][label][f'{field}#{seed}']
+                if errors:
+                    missing.append(dict(job=job, reason='queue log parse/read errors; see audit errors'))
+                    continue
+                mapped = path_map(rec['path'], mappings)
+                cells.setdefault((seed, field), {})[label] = mapped
+                evidence.setdefault((seed, field), {})[label] = {
+                    **rec['arm_evidence'], 'matrix': str(Path(mapped).resolve())}
+                selected.append(dict(job=job, source_verdict=prior['path'],
+                                     verdict_sha256=prior['sha256'], matrix_sha256=rec['sha256']))
+                continue
             attempts = list(jobs.get(job, {}).values())
             passes = [r for r in attempts if any(e.get('VERDICT') == 'PASS' for e in r['exits'])]
             chosen = None
@@ -155,7 +212,8 @@ def main():
     # Out-of-design jobs remain visible, never silently become selected cells.
     for group in jobs.values():
         for r in group.values():
-            if (r['seed'], r['field']) not in design or r['arm'] not in arms:
+            if (r['seed'], r['field']) not in design or r['arm'] not in arms or (
+                    a.stage == 'retest' and r['job'] not in expected_jobs):
                 r['reason'] = f'ignored attempt: outside selected stage-{a.stage} design'
                 ignored.append(r)
     manifest = dict(stage=a.stage, slot_id='slot', baseline='B', placebo="B'", candidates=candidates, arm_map=arm_map,

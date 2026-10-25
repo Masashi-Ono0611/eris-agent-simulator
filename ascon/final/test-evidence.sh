@@ -6,8 +6,8 @@ tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 mkdir "$tmp/normal"
 python3 "$src/ascon/final/test-evidence.py" "$src/ascon/final" "$tmp/normal"
-# One real mutation per extractor, plus missing FS coverage in the complete chain.
-for target in manifest mechanism stage2; do
+# One real mutation per extractor, plus missing stage-2/retest coverage.
+for target in manifest mechanism stage2 retest; do
   mkdir "$tmp/$target" "$tmp/$target-work"
   cp "$src/ascon/final/"{make-manifest,mechanism,judge2,stage2-plan}.py "$tmp/$target/"
   cp "$src/ascon/final/"*.yaml "$tmp/$target/"
@@ -20,6 +20,8 @@ s = p.read_text()
 old, new = ('if len(passes) > 1:', 'if len(passes) > 100:') if kind == 'manifest' else ('timeouts += int(', 'timeouts += 0 * int(')
 if kind == 'stage2':
     old, new = ("+ [(seed, 'FS') for seed in judge2.FS_SEEDS]", '+ []')
+if kind == 'retest':
+    old, new = ("judge2.PLAN_SEEDS['retest'][0]", 'range(1021, 1025)')
 assert old in s
 p.write_text(s.replace(old, new))
 PY

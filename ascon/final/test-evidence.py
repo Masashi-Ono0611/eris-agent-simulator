@@ -31,6 +31,24 @@ def dump(path, value):
     path.write_text(json.dumps(value))
 
 
+def baseline_compare(name, args, out, rc):
+    """Same inputs/paths, byte-for-byte against the pre-retest main scripts."""
+    baseline = temp / 'baseline-9452b947'
+    baseline.mkdir(exist_ok=True)
+    repo = Path(__file__).resolve().parents[2]
+    for module in ('make-manifest', 'mechanism', 'judge2', 'stage2-plan'):
+        result = subprocess.run(['git', '-C', str(repo), 'show',
+                                 f'9452b947523818fba05d5de651deeabded4aba2f:ascon/final/{module}.py'],
+                                capture_output=True, check=True)
+        (baseline / (module + '.py')).write_bytes(result.stdout)
+    paths = [out] + ([Path(str(out) + '.audit.json')] if name == 'make-manifest' else [])
+    expected = [p.read_bytes() for p in paths]
+    result = subprocess.run([sys.executable, str(baseline / (name + '.py')), *map(str, args)],
+                            capture_output=True, text=True)
+    assert result.returncode == rc, (result.stdout, result.stderr)
+    assert [p.read_bytes() for p in paths] == expected, (name, 'baseline bytes differ')
+
+
 def manifest_controls():
     logs = temp / 'logs'
     logs.mkdir()
@@ -389,7 +407,8 @@ def stage2_controls():
     def fixtures(stage):
         logs = root / ('logs' + stage)
         logs.mkdir()
-        cells = [(s, f) for s in (range(1003, 1007) if stage == '1' else range(1011, 1015))
+        seeds = {'1': range(1003, 1007), '2': range(1011, 1015), 'retest': range(1021, 1025)}
+        cells = [(s, f) for s in seeds[stage]
                  for f in ('FP', 'FD')]
         if stage == '2':
             cells += [(s, 'FS') for s in (1101, 1102)]
@@ -397,9 +416,10 @@ def stage2_controls():
         for seed, field in cells:
             regimes = j.FS_REGIMES if field == 'FS' else j.REGIMES12
             for label, directory in mapping.items():
-                if stage == '2' and label == "B'":
+                if stage != '1' and label == "B'":
                     continue
-                job = f's{stage}-{field}{seed}-{directory}'
+                prefix = 'rt' if stage == 'retest' else 's' + stage
+                job = f'{prefix}-{field}{seed}-{directory}'
                 matrix = root / 'runs' / ('matrix-' + job) / 'matrix.json'
                 rows = []
                 for i, regime in enumerate(regimes, 1):
@@ -433,6 +453,9 @@ def stage2_controls():
     invoke('make-manifest', '--stage', '1', '--logs', logs1, '--out', m1,
            '--arms', 'R=opus-1r', '--path-map', f'/mini={root}', rc=0)
     invoke('mechanism', m1, '--out', mech1, rc=2)
+    baseline_compare('make-manifest', ['--stage', '1', '--logs', logs1, '--out', m1,
+                                     '--arms', 'R=opus-1r', '--path-map', f'/mini={root}'], m1, 0)
+    baseline_compare('mechanism', [m1, '--out', mech1], mech1, 2)
     invoke('judge2', 'judge', '--manifest', m1, '--mechanism', mech1, '--out', v1, rc=0)
     prior = json.loads(v1.read_text())
     assert prior['candidates']['R']['verdict'] == 'PASS', prior
@@ -454,6 +477,9 @@ def stage2_controls():
         invoke('make-manifest', *args, '--arms', 'R=opus-1r', *extra, rc=0)
         assert m2.read_bytes() == complete
     invoke('mechanism', m2, '--out', mech2, rc=2)
+    baseline_compare('make-manifest', [*args, '--stage1-verdict', v1], m2, 0)
+    baseline_compare('mechanism', [m2, '--out', mech2], mech2, 2)
+    print('BASELINE_BYTES_OK stage 1/2 manifests, audits and mechanisms == main 9452b947')
     measured = json.loads(mech2.read_text())
     assert set(measured['arms']) == {'B', 'R'} and measured['arm_map'] == mapping
     for arm, evidence in measured['arms'].items():
@@ -469,6 +495,8 @@ def stage2_controls():
     assert verdict['candidates']['R']['verdict'] == 'PASS', verdict
     assert verdict['prior']['f'] == prior['placebo']['f']
     print('STAGE2_CHAIN_OK 10 cells -> manifest -> mechanism (10 hashes/arm, no B-prime) -> judge PASS')
+    if which in ('all', 'retest'):
+        retest_controls(root, fixtures('retest'), logs2, v2, mapping)
 
     # Candidate identity is inherited, never hardcoded to R.
     renamed = copy.deepcopy(prior)
@@ -544,6 +572,112 @@ def stage2_controls():
     assert blocked['clauses']['5_mechanism']['subclauses']['provenance']['status'] == 'BLOCKED', blocked
     fs_path.write_bytes(saved)
     print('STAGE2_HASH_MISMATCH_OK FS matrix tampering -> BLOCKED')
+
+
+def retest_controls(root, logs, logs2, v2, mapping):
+    """Protect combined coverage/provenance at the actual three CLI boundaries."""
+    m, mech, v = (root / name for name in ('RT.json', 'RT-MECH.json', 'RT-V.json'))
+    args = ['--stage', 'retest', '--logs', logs, '--out', m, '--path-map', f'/mini={root}']
+    judge_args = ['judge', '--stage', 'retest', '--stage2-verdict', v2,
+                  '--manifest', m, '--mechanism', mech, '--out', v]
+    invoke('make-manifest', *args, '--stage2-verdict', v2, rc=0)
+    complete = m.read_bytes()
+    man = json.loads(complete)
+    assert man['stage'] == 'retest' and man['arm_map'] == mapping
+    assert man['candidates'] == {'R': 'superiority'}
+    assert {(c['seed'], c['field']) for c in man['cells']} == {
+        (s, f) for s in (*range(1011, 1015), *range(1021, 1025)) for f in ('FP', 'FD')}
+    assert all(set(c['arms']) == set(c['arm_evidence']) == {'B', 'R'} for c in man['cells'])
+    invoke('mechanism', m, '--out', mech, rc=2)
+    measured = json.loads(mech.read_text())
+    assert set(measured['arms']) == {'B', 'R'}
+    for arm, evidence in measured['arms'].items():
+        assert not evidence['errors'] and len(evidence['matrices']) == 16
+        assert evidence['p99_decide_ms'] is None and evidence['p99_decide_ms_reason']
+        assert evidence['matrices_sha256'] == sorted(
+            hashlib.sha256(Path(c['arms'][arm]).read_bytes()).hexdigest() for c in man['cells'])
+        assert evidence['tie_pairs'] == 192 and evidence['slot_timeouts'] == evidence['stf'] == 0
+    invoke('judge2', *judge_args, rc=0)
+    result = json.loads(v.read_text())
+    assert result['candidates']['R']['verdict'] == 'KEEP', result
+    assert result['candidates']['R']['n'] == 8
+    assert len(result['cells']) == 16 and result['design']['fs_seeds'] == []
+    print('RETEST_CHAIN_OK 16 FP/FD cells -> manifest -> mechanism (exit 2, 16 hashes/arm, no FS/B-prime) -> KEEP')
+
+    # With no verdict, original stage-2 lane logs are required; never synthesize old cells.
+    old_logs = logs / 'stage2.queue.log'
+    old_logs.write_text((logs2 / 'A.queue.log').read_text())
+    invoke('make-manifest', *args, '--arms', 'R=opus-1r', rc=0)
+    assert m.read_bytes() == complete
+    old_logs.unlink()
+    invoke('make-manifest', *args, '--arms', 'R=opus-1r', rc=2)
+    assert len(json.loads(Path(str(m) + '.audit.json').read_text())['missing']) == 16
+    invoke('make-manifest', *args, rc=2)
+    invoke('make-manifest', *args, '--stage2-verdict', v2, '--arms', 'W1=opus-1g2', rc=2)
+    renamed = json.loads(v2.read_text())
+    for obj in (renamed['arm_map'], renamed['candidates'], renamed['inputs']['matrices']):
+        obj['F'] = obj.pop('R')
+    renamed['selection']['F'] = 'F'
+    alternate = root / 'RT-alternate.json'
+    dump(alternate, renamed)
+    invoke('make-manifest', *args, '--stage2-verdict', alternate, rc=0)
+    assert json.loads(m.read_text())['candidates'] == {'F': 'superiority'}
+    invoke('mechanism', m, '--out', mech, rc=2)
+    invoke('judge2', *[alternate if x == v2 else x for x in judge_args], rc=0)
+    assert json.loads(v.read_text())['candidates']['F']['verdict'] == 'KEEP'
+
+    lane = logs / 'A.queue.log'
+    original = lane.read_text()
+    target = 'rt-FP1021-opus-1r'
+    attempt = ''.join(line + '\n' for line in original.splitlines() if target in line)
+    def extract(text, rc=2, other=''):
+        lane.write_text(text)
+        (logs / 'B.queue.log').write_text(other)
+        invoke('make-manifest', *args, '--stage2-verdict', v2, rc=rc)
+        return json.loads(Path(str(m) + '.audit.json').read_text())
+
+    failed = attempt.replace('run=only', 'run=killed').replace('=0 VERDICT=PASS', '=1 VERDICT=FAIL')
+    audit = extract(failed + original, rc=0)
+    assert len(audit['selected']) == 32 and len(audit['ignored']) == 1
+    assert m.read_bytes() == complete
+    assert len(extract(original + attempt.splitlines()[1] + '\n', rc=0)['selected']) == 32
+    for cross_lane in (False, True):
+        duplicate = attempt.replace('run=only', 'run=second')
+        audit = extract(original + ('' if cross_lane else duplicate), other=duplicate if cross_lane else '')
+        assert audit['missing'] == [dict(job=target, reason='ambiguous: multiple PASS runs for the same job')]
+        invoke('mechanism', m, '--out', mech, rc=2)
+        invoke('judge2', *judge_args, rc=0)
+        assert json.loads(v.read_text())['candidates']['R']['verdict'] == 'BLOCKED'
+    for replacement in ('', attempt.replace('1021', '1025'), attempt.replace('1021', '1011')):
+        audit = extract(original.replace(attempt, replacement))
+        assert len(audit['missing']) == 1 and audit['missing'][0]['job'] == target
+        assert len(audit['ignored']) == bool(replacement)
+        invoke('mechanism', m, '--out', mech, rc=2)
+        invoke('judge2', *judge_args, rc=0)
+        assert json.loads(v.read_text())['candidates']['R']['verdict'] == 'BLOCKED'
+    audit = extract(''.join(line + '\n' for line in original.splitlines() if 'rt-FP1021-' not in line))
+    assert len(audit['missing']) == 2
+    assert 'not listed' in invoke('judge2', *judge_args, rc=2).stderr
+    audit = extract(original + f'EXIT_{target}=1 VERDICT=FAIL\n')
+    assert audit['errors'] and len(audit['missing']) == 32 and not json.loads(m.read_text())['cells']
+    extract(original, rc=0)
+    assert m.read_bytes() == complete
+    invoke('mechanism', m, '--out', mech, rc=2)
+    # Both new hashes and reused stage-2 hashes are bound; even re-extracting
+    # mechanism cannot legitimize a modified stage-2 matrix.
+    for seed in (1021, 1011):
+        path = Path(next(c for c in man['cells'] if c['seed'] == seed)['arms']['R'])
+        saved = path.read_bytes()
+        path.write_bytes(saved + b'\n')
+        invoke('judge2', *judge_args, rc=0)
+        assert json.loads(v.read_text())['candidates']['R']['verdict'] == 'BLOCKED'
+        if seed == 1011:
+            invoke('mechanism', m, '--out', mech, rc=2)
+            invoke('judge2', *judge_args, rc=0)
+            blocked = json.loads(v.read_text())['candidates']['R']
+            assert blocked['verdict'] == 'BLOCKED' and 'not the matrix' in str(blocked)
+        path.write_bytes(saved)
+    print('RETEST_GUARDS_OK prior label, log fallback, retries, missing cell, duplicate attempt, wrong seed, hash mismatch')
 
 
 def review_controls(kind):
@@ -684,5 +818,5 @@ if which in ('all', 'manifest'):
 if which in ('all', 'mechanism'):
     mechanism_controls()
 
-if which in ('all', 'stage2'):
+if which in ('all', 'stage2', 'retest'):
     stage2_controls()

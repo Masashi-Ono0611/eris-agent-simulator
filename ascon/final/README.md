@@ -286,6 +286,28 @@ missing pending directories, unchanged existing file bytes/mtimes, and real
 empty-evidence dry judging. Statistical validation remains
 in `test-judge2.sh`; fixture tests do not establish live stage-1 completion.
 
+## Building retest evidence
+
+```sh
+python3 ascon/final/make-manifest.py --stage retest --stage2-verdict V2.json --logs /local/logs --out RT.json --path-map /mini/repo=/local/repo
+python3 ascon/final/mechanism.py RT.json --out RT-MECH.json
+python3 ascon/final/judge2.py judge --stage retest --stage2-verdict V2.json --manifest RT.json --mechanism RT-MECH.json --out RT-verdict.json
+```
+
+This combines V2's eight FP/FD cells (1011–1014) with eight `rt-...` cells
+(1021–1024), keeping V2's candidate label and B. FS and B′ matrices are not
+included. Without `--stage2-verdict`, extraction requires `--arms LABEL=dir`
+and the original `s2-...` logs alongside the `rt-...` logs; judging still requires
+V2. The audit sidecar records missing cells, ambiguous attempts and ignored
+retries; incomplete extraction exits 2. Copied matrix paths can be remapped,
+but the judge requires the old matrix bytes to match V2 and mechanism hashes
+to cover exactly all 16 matrices per arm. V2 must retain its FS evidence.
+
+Mechanism extraction writes JSON and exits 2 because p99 is null with a reason,
+as in stage 2. Check the new JSON and judge verdict; exit 2 alone is not evidence
+of success. Retest uses combined EW11 plus slot timeouts, STF and provenance
+(not the p99/tie-rate gates); synthetic tests do not establish a live retest.
+
 ## Stage-2 planner CLI
 
 ```sh
