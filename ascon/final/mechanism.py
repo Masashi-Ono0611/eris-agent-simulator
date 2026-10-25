@@ -144,7 +144,7 @@ def main():
     if man.get('exclude'):
         raise ValueError('exclusions require separately scoped evidence; refusing to aggregate excluded runs')
     required = [man.get('baseline', 'B')]
-    if str(man.get('stage', '1')) != '2':
+    if str(man.get('stage', '1')) not in ('2', 'retest'):
         required.append(man.get('placebo', "B'"))
     arms = {x: [] for x in required + list(man['candidates'])}
     for cell in man['cells']:
