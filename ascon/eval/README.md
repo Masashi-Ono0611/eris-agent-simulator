@@ -207,6 +207,12 @@ Run `bash ascon/eval/docker-selftest.sh <arm> <commit>` and
 Commits must already be available locally (7–40 lowercase hex); neither helper fetches or installs.
 `ASCON_HOME` selects the dependency/source checkout (default: the checkout containing the helper).
 It must have `node_modules/` and `out/`; both are linked into the new detached checkout.
+GMX project files (including artifacts/TypeChain and non-localhost deployments) are private
+APFS clones (`cp -cR`, falling back to `cp -R`); only its top-level `node_modules` is shared.
+Git metadata and credential-like paths are omitted; internal symlinks are rebased and escaping
+nested symlinks block setup. GMX `deployments/localhost` and cache start empty: this avoids
+stale addresses and absolute cache paths, at the cost of a full initial GMX recompile.
+Aave dependencies and Liquity's read-only artifact tree remain shared; Aave outputs stay private.
 The Docker wrapper prepends `~/.local/ascon-docker-shim`, `~/.homebrew/bin`, and `~/.foundry/bin` to PATH
 so child agents also receive the Colima shim.
 

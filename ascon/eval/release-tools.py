@@ -161,18 +161,20 @@ DEPLOY_BUILD_INPUTS = (
 DEPLOY_LOCAL_DIRS = (
     'deployer/deployments', 'deployer/vendor/aave/deployments',
 )
-GMX_LOCAL_DIRS = ('deployments/localhost', 'cache', 'artifacts',
-                  'typechain', 'typechain-types')
 
 
 def seed_build_output(source, target):
-    """Seed private outputs, preferring APFS copy-on-write on macOS."""
+    """Seed a private file or directory, preferring APFS copy-on-write on macOS."""
     if not source.exists():
         return
-    target.mkdir(parents=True)
+    if source.is_dir():
+        target.mkdir(parents=True)
+        paths = [str(source.resolve()) + '/.', str(target)]
+    else:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        paths = [str(source.resolve()), str(target)]
     # Copy contents into the destination, so an unsupported clone can be retried
     # even if cp already copied some files. Never retry unrelated I/O failures.
-    paths = [str(source.resolve()) + '/.', str(target)]
     if sys.platform == 'darwin':
         result = sp.run(['cp', '-cR', *paths], capture_output=True, text=True,
                         env=dict(os.environ, LC_ALL='C'))
@@ -190,28 +192,74 @@ def seed_build_output(source, target):
     print(f'SEED cp -R ({reason}): {source} -> {target}', flush=True)
 
 
-def link_readonly_children(source, target, local_dirs):
-    """Materialize mutable branches and seed existing build outputs.
+def private_gmx_omitted(relative):
+    # Names only: never open credentials, even to classify their contents.
+    return (relative.is_relative_to('cache') or
+            relative.is_relative_to('deployments/localhost') or
+            any(part.lower() in {'.git', '.npmrc', '.yarnrc.yml', '.netrc',
+                                 '.pypirc', '.git-credentials', '.ssh', '.aws',
+                                 '.kube', '.docker', '.config', '.codex', '.claude.json',
+                                 'auth.json', 'id_rsa', 'id_ed25519'} or
+                part.lower().startswith(('.env', '.dev.vars')) or
+                part.lower().endswith(('.pem', '.key', '.p12', '.pfx', '.keystore')) or
+                re.search(r'credential|secret|service[-_]?account|private[-_]?key|mnemonic', part, re.I)
+                for part in relative.parts))
 
-    TypeChain output names are isolated defensively in both common layouts.
-    Non-local deployment networks and large dependencies remain shared links.
+
+def prepare_private_gmx(source, target):
+    """Clone project modules so Node's realpath/__dirname stays in the fresh tree.
+
+    Plan before copying: prune credentials without reading them, reject escaping
+    links, and rebase internal links. Clean subtrees use one recursive APFS clone.
+    node_modules is the sole shared link; never traverse it.
     """
-    target.mkdir(parents=True, exist_ok=True)
-    branches = {name.split('/')[0] for name in local_dirs}
-    if source.is_dir():
-        for child in source.iterdir():
-            if child.name not in branches:
-                (target / child.name).symlink_to(child.absolute(), target_is_directory=child.is_dir())
-    for branch in sorted(branches):
-        nested = tuple(name.split('/', 1)[1] for name in local_dirs
-                       if name.startswith(branch + '/'))
-        if nested:
-            link_readonly_children(source / branch, target / branch, nested)
-        elif branch == 'localhost':
-            (target / branch).mkdir()
-        else:
-            seed_build_output(source / branch, target / branch)
+    source = source.resolve()
 
+    def plan(relative):
+        entry = source / relative
+        if private_gmx_omitted(relative):
+            return [], False
+        if relative == Path('node_modules'):
+            return [('dependencies', relative, None)], False
+        if entry.is_symlink():
+            try:
+                resolved = entry.resolve(strict=True)
+            except (OSError, RuntimeError) as e:
+                raise Blocked('invalid GMX symlink: ' + str(relative)) from e
+            if not resolved.is_relative_to(source):
+                raise Blocked('escaping GMX symlink: ' + str(relative))
+            destination = resolved.relative_to(source)
+            if private_gmx_omitted(destination) or destination.is_relative_to('node_modules'):
+                raise Blocked('GMX symlink targets omitted/shared path: ' + str(relative))
+            return [('link', relative, destination)], False
+        if entry.is_dir():
+            children = [plan(relative / child.name) for child in entry.iterdir()]
+            if all(clean for _, clean in children):
+                return [('copy', relative, None)], True
+            return ([('mkdir', relative, None)] +
+                    [op for ops, _ in children for op in ops]), False
+        if not entry.is_file():
+            raise Blocked('non-regular GMX input: ' + str(relative))
+        return [('copy', relative, None)], True
+
+    operations = [op for entry in source.iterdir()
+                  for op in plan(Path(entry.name))[0]]
+    target.mkdir(parents=True)
+    for kind, relative, destination in operations:
+        output = target / relative
+        if kind == 'copy':
+            seed_build_output(source / relative, output)
+        elif kind == 'mkdir':
+            output.mkdir(parents=True, exist_ok=True)
+        elif kind == 'dependencies':
+            output.symlink_to(source / relative, target_is_directory=True)
+        else:
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.symlink_to(os.path.relpath(target / destination, output.parent))
+    # A's cache embeds absolute source paths. Recompile instead of trusting a
+    # relocated cache; artifacts/TypeChain remain private clones of the originals.
+    (target / 'cache').mkdir()
+    (target / 'deployments/localhost').mkdir(parents=True)
 
 
 def prepare_deployer(tree, main_checkout):
@@ -223,7 +271,7 @@ def prepare_deployer(tree, main_checkout):
         target = tree / name
         target.parent.mkdir(parents=True, exist_ok=True)
         if name == 'deployer/vendor/gmx-src':
-            link_readonly_children(main_checkout / name, target, GMX_LOCAL_DIRS)
+            prepare_private_gmx(main_checkout / name, target)
         else:
             target.symlink_to((main_checkout / name).resolve(), target_is_directory=True)
     # --keep-fresh and Aave deploy reset these outputs. Never share them.
